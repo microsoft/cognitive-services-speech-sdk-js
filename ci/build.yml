@@ -20,4 +20,5 @@ jobs:
     name: Hosted Ubuntu 1604
   timeoutInMinutes: 30
   steps:
-  - bash: echo Hello world.
+  - bash: ./ci/check-git-head.sh
+    displayName: Repository checks
