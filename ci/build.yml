@@ -3,6 +3,12 @@
 # Licensed under the MIT license.
 #
 
+trigger:
+- master
+
+pr:
+- master
+
 resources:
 - repo: self
   clean: true
