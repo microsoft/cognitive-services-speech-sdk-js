@@ -1,0 +1,9 @@
+.gitattributes text
+.gitignore text
+LICENSE text
+
+*.md text
+*.yml text
+
+# Binary extensions:
+*.wav binary

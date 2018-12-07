@@ -1,0 +1,17 @@
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+#
+
+resources:
+- repo: self
+  clean: true
+
+jobs:
+
+- job: Pre
+  pool:
+    name: Hosted Ubuntu 1604
+  timeoutInMinutes: 30
+  steps:
+  - bash: echo Hello world.
