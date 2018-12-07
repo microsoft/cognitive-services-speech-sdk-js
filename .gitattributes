@@ -5,5 +5,8 @@ LICENSE text
 *.md text
 *.yml text
 
+# Bash only with Unix line endings
+*.sh text eol=lf
+
 # Binary extensions:
 *.wav binary
