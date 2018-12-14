@@ -1,8 +1,14 @@
 .gitattributes text
 .gitignore text
+.npmignore text
 LICENSE text
 
+*.cmd text
+*.js text
+*.json text
 *.md text
+*.ts text
+*.txt text
 *.yml text
 
 # Bash only with Unix line endings
