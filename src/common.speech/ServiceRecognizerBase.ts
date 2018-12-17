@@ -349,12 +349,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                 if (!!this.privRecognizer.speechEndDetected) {
                                     this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
                                 }
-
+                                break;
+                            case "turn.end":
                                 if (requestSession.isSpeechEnded && this.privRecognizerConfig.isContinuousRecognition) {
                                     this.cancelRecognitionLocal(requestSession, CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined, successCallback);
                                 }
-                                break;
-                            case "turn.end":
+
                                 const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(requestSession.sessionId);
                                 requestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
                                 if (!this.privRecognizerConfig.isContinuousRecognition || requestSession.isSpeechEnded) {
