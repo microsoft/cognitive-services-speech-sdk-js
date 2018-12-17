@@ -29,6 +29,7 @@
   "types": "distrib/lib/src/sdk/Exports.d.ts",
   "files": [
     "distrib/lib/**/*",
+    "distrib/browser/**/*",
     "LICENSE",
     "REDIST.txt"
   ],
