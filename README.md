@@ -68,7 +68,7 @@ Service relevant information like microphone characteristics, etc.), and
 information about the performance of the Speech Service (the time when you did
 send data and when you received data). It can be used to tune the service,
 monitor service performance and stability, and might help us to analyze
-reported problems. Without telemetry enabled, it is not possible for do any
+reported problems. Without telemetry enabled, it is not possible for us to do any
 form of detailed analysis in case of a support request.
 
 ## Contributing
