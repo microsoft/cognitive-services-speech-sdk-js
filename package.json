@@ -56,7 +56,8 @@
     "test": "npm run lint && npm run jest",
     "jest": "jest",
     "lint": "tslint -p tsconfig.json",
-    "civersion": "node ci/version.js"
+    "civersion": "node ci/version.js",
+    "prepack": "npm run build"
   },
   "jest": {
     "testEnvironment": "node"

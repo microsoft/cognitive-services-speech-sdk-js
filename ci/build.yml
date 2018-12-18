@@ -13,20 +13,64 @@ resources:
 - repo: self
   clean: true
 
-variables:
-  SPEECHSDK_JS_ROOT: .
-
 jobs:
-
-- job: Pre
+- job: Build
   pool:
-    name: Hosted Ubuntu 1604
-  timeoutInMinutes: 30
+    name: Hosted VS2017
+    demands: npm
+  timeoutInMinutes: 60
+  variables:
+    ArtifactOut: $(Build.ArtifactStagingDirectory)/Out/JavaScript
   steps:
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
-
-- template: jsbuild.yml
-  parameters:
-    dependsOn: Pre
-    condition: true
+  - bash: npm ci && npm run civersion
+    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+  - bash: |
+      F=src/common.speech/RecognizerConfig.ts
+      [[ -f $F ]] || exit 1
+      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
+      E=$?
+      rm -f "$F.bak"
+      git diff
+      exit $E
+    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+  - bash: npm pack
+    displayName: Build and pack SDK
+  - script: |
+      RunTests.cmd ^
+        SpeechSubscriptionKey:$(speech-ne-s0-key1) ^
+        SpeechRegion:northeurope ^
+        LuisSubscriptionKey:$(luis-westus-s0-201809-key1) ^
+        LuisRegion:westus ^
+        SpeechTestEndpointId:ec3432b2-8584-4736-865a-556213b9f6fd
+    displayName: Run tests
+  - task: PublishTestResults@2
+    displayName: Publish test results
+  - bash: |
+      set -u -e -o pipefail -x
+      PACKAGE_BASE=microsoft-cognitiveservices-speech-sdk
+      PACKAGE_NAME=$PACKAGE_BASE-$SPEECHSDK_SEMVER2NOMETA.tgz
+      PACKAGE_IN=$PACKAGE_NAME
+      PACKAGE_OUT="/npm"
+      ZIP_OUT="$(ArtifactOut)/SpeechSDK-JavaScript-$SPEECHSDK_SEMVER2NOMETA"
+      mkdir -p "$PACKAGE_OUT" "$ZIP_OUT"
+      cp --preserve "$PACKAGE_IN" "$PACKAGE_OUT"
+      echo SRI hash for microsoft.cognitiveservices.speech.sdk.bundle.js: sha512-"$(openssl dgst -sha512 -binary distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle.js | openssl base64 -A)"
+      cp --preserve LICENSE REDIST.txt distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle.* distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.* "$ZIP_OUT"
+    displayName: Create drop
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: $(ArtifactOut)/SpeechSDK-JavaScript-$(SPEECHSDK_SEMVER2NOMETA)
+      includeRootFolder: true
+      archiveType: zip
+      archiveFile: $(ArtifactOut)/SpeechSDK-JavaScript-$(SPEECHSDK_SEMVER2NOMETA).zip
+    displayName: Create .zip
+  - bash: rm -rf "$(ArtifactOut)/SpeechSDK-JavaScript-$(SPEECHSDK_SEMVER2NOMETA)"
+    displayName: Remove temporary directory
+  - task: PublishBuildArtifacts@1
+    displayName: Publish drop
+    inputs:
+      PathtoPublish: $(ArtifactOut)
+      ArtifactName: JavaScript
+      publishLocation: Container

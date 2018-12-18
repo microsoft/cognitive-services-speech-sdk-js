@@ -19,7 +19,7 @@
   }
 
   var baseVersion = semver.major(givenVersion) + "." + semver.minor(givenVersion) + "." + semver.patch(givenVersion);
-  var prerelease = semver.prerelease(givenVersion)
+  var prerelease = semver.prerelease(givenVersion) || []
 
   var buildId = process.env.BUILD_BUILDID || "1"
 
