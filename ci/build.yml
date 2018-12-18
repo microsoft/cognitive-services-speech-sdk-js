@@ -25,6 +25,9 @@ jobs:
   steps:
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
+  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+    displayName: Component Detection
+    # TODO condition
   - bash: npm ci && npm run civersion
     displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
   - bash: |
