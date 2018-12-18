@@ -27,7 +27,11 @@ jobs:
     displayName: Repository checks
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     displayName: Component Detection
-    # TODO condition
+    condition: >
+      and(eq(variables['System.CollectionId'], '19422243-19b9-4d85-9ca6-bc961861d287'),
+        eq(variables['System.DefinitionId'], '7863'),
+        eq(variables['Build.SourceBranch'], 'refs/heads/master'),
+        or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')))
   - bash: npm ci && npm run civersion
     displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
   - bash: |

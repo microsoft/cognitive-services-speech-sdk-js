@@ -27,7 +27,7 @@
   var inAzureDevOps = false
 
   if (process.env.SYSTEM_COLLECTIONID === "19422243-19b9-4d85-9ca6-bc961861d287" &&
-    (process.env.SYSTEM_DEFINITIONID === "4833" || process.env.SYSTEM_DEFINITIONID === "7863")) {
+     process.env.SYSTEM_DEFINITIONID === "7863") {
 
     inAzureDevOps = true
 
