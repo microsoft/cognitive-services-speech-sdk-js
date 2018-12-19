@@ -54,7 +54,7 @@
   "scripts": {
     "build": "gulp compress",
     "test": "npm run lint && npm run jest",
-    "jest": "jest --runInBand",
+    "jest": "jest --maxWorkers=2",
     "lint": "tslint -p tsconfig.json",
     "civersion": "node ci/version.js",
     "prepack": "npm run build"
