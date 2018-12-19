@@ -472,8 +472,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         // Re-enable telemetry
         afterEach(() => sdk.Recognizer.enableTelemetry(true));
 
-        // TODO re-enable
-        test.skip("testStopContinuousRecognitionAsyncWithoutTelemetry", (done: jest.DoneCallback) => {
+        test("testStopContinuousRecognitionAsyncWithoutTelemetry", (done: jest.DoneCallback) => {
             // tslint:disable-next-line:no-console
             console.info("Name: testStopContinuousRecognitionAsyncWithoutTelemetry");
             // start with telemetry disabled
