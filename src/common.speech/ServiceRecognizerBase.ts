@@ -53,6 +53,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
     private privRecognizer: Recognizer;
+    private privMustReportEndOfStream: boolean;
     protected privRecognizerConfig: RecognizerConfig;
 
     public constructor(
@@ -78,6 +79,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             throw new ArgumentNullError("recognizerConfig");
         }
 
+        this.privMustReportEndOfStream = false;
         this.privAuthentication = authentication;
         this.privConnectionFactory = connectionFactory;
         this.privAudioSource = audioSource;
@@ -318,6 +320,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     if (connectionMessage.requestId.toLowerCase() === requestSession.requestId.toLowerCase()) {
                         switch (connectionMessage.path.toLowerCase()) {
                             case "turn.start":
+                                this.privMustReportEndOfStream = true;
                                 break;
                             case "speech.startdetected":
                                 const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
@@ -349,12 +352,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                 if (!!this.privRecognizer.speechEndDetected) {
                                     this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
                                 }
-
-                                if (requestSession.isSpeechEnded && this.privRecognizerConfig.isContinuousRecognition) {
-                                    this.cancelRecognitionLocal(requestSession, CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined, successCallback);
-                                }
                                 break;
                             case "turn.end":
+                                if (requestSession.isSpeechEnded && this.privMustReportEndOfStream) {
+                                    this.privMustReportEndOfStream = false;
+                                    this.cancelRecognitionLocal(requestSession, CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined, successCallback);
+                                }
+
                                 const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(requestSession.sessionId);
                                 requestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
                                 if (!this.privRecognizerConfig.isContinuousRecognition || requestSession.isSpeechEnded) {
