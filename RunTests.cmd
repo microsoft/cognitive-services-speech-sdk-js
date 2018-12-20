@@ -14,10 +14,10 @@ set TEST_SETTING_FILE_EXISTED=0
 if EXIST "%TEST_SETTING_FILE_NAME%" set TEST_SETTING_FILE_EXISTED=1
 
 if "%~1" NEQ "" (
-    call "%~dp0BuildTestConfig.cmd" %* || (
-        echo Error creating test config.
-        exit /b 1
-    )
+  call "%~dp0BuildTestConfig.cmd" %* || (
+    echo Error creating test config.
+    exit /b 1
+  )
 ) else if %TEST_SETTING_FILE_EXISTED% EQU 0 (
   echo Warning: No test config and no parameters specified. This will probably fail. 1>&2
 )
@@ -28,7 +28,7 @@ call npm run test
 set NPM_ERROR=%ERRORLEVEL%
 
 if %TEST_SETTING_FILE_EXISTED% EQU 0 (
-    del "%TEST_SETTING_FILE_NAME%"
+  del "%TEST_SETTING_FILE_NAME%"
 )
 
 popd
