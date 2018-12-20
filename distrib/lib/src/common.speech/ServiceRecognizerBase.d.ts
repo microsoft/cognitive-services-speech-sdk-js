@@ -1,0 +1,37 @@
+import { IAudioSource, IConnection, IDisposable, Promise } from "../common/Exports";
+import { CancellationErrorCode, CancellationReason, Recognizer, SpeechRecognitionResult } from "../sdk/Exports";
+import { RequestSession } from "./Exports";
+import { IAuthentication } from "./IAuthentication";
+import { IConnectionFactory } from "./IConnectionFactory";
+import { RecognizerConfig } from "./RecognizerConfig";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+export declare abstract class ServiceRecognizerBase implements IDisposable {
+    private privAuthentication;
+    private privConnectionFactory;
+    private privAudioSource;
+    private privSpeechConfigConnectionId;
+    private privConnectionConfigurationPromise;
+    private privConnectionId;
+    private privAuthFetchEventId;
+    private privIsDisposed;
+    private privRecognizer;
+    private privMustReportEndOfStream;
+    protected privRecognizerConfig: RecognizerConfig;
+    constructor(authentication: IAuthentication, connectionFactory: IConnectionFactory, audioSource: IAudioSource, recognizerConfig: RecognizerConfig, recognizer: Recognizer);
+    readonly audioSource: IAudioSource;
+    isDisposed(): boolean;
+    dispose(reason?: string): void;
+    recognize(speechContextJson: string, successCallback: (e: SpeechRecognitionResult) => void, errorCallBack: (e: string) => void): Promise<boolean>;
+    static telemetryData: (json: string) => void;
+    static telemetryDataEnabled: boolean;
+    protected abstract processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage, requestSession: RequestSession, connection: IConnection, successCallback?: (e: SpeechRecognitionResult) => void, errorCallBack?: (e: string) => void): void;
+    protected sendTelemetryData: (requestSession: RequestSession, telemetryData: string) => Promise<boolean>;
+    protected abstract cancelRecognition(sessionId: string, requestId: string, cancellationReason: CancellationReason, errorCode: CancellationErrorCode, error: string, cancelRecoCallback: (r: SpeechRecognitionResult) => void): void;
+    protected cancelRecognitionLocal(requestSession: RequestSession, cancellationReason: CancellationReason, errorCode: CancellationErrorCode, error: string, cancelRecoCallback: (r: SpeechRecognitionResult) => void): void;
+    private fetchConnection;
+    private configureConnection;
+    private receiveMessage;
+    private sendSpeechConfig;
+    private sendSpeechContext;
+    private sendAudio;
+}

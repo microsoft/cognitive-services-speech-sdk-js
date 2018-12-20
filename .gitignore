@@ -3,7 +3,6 @@
 # ignore auto-generated (transpiled) js files
 src/**/*.js
 tests/**/*.js
-distrib/*
 secrets/*
 /**/speech.key
 .idea/
