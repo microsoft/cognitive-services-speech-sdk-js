@@ -55,7 +55,8 @@
     "build": "gulp compress",
     "test": "npm run lint && npm run jest",
     "jest": "jest",
-    "lint": "tslint -p tsconfig.json"
+    "lint": "tslint -p tsconfig.json",
+    "civersion": "node ci/version.js"
   },
   "jest": {
     "testEnvironment": "node"
