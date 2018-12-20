@@ -18,6 +18,7 @@ export abstract class SpeechConfig {
 
     /**
      * Static instance of SpeechConfig returned by passing subscriptionKey and service region.
+     * Note: Please use your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
      * @member SpeechConfig.fromSubscription
      * @function
      * @public
@@ -41,6 +42,7 @@ export abstract class SpeechConfig {
      * Creates an instance of the speech factory with specified endpoint and subscription key.
      * This method is intended only for users who use a non-standard service endpoint or paramters.
      * the language setting in uri takes precedence, and the effective language is "de-DE".
+     * Note: Please use your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
      * @member SpeechConfig.fromEndpoint
      * @function
      * @public
@@ -60,6 +62,7 @@ export abstract class SpeechConfig {
 
     /**
      * Creates an instance of the speech factory with specified initial authorization token and region.
+     * Note: Please use a token derived from your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
      * @member SpeechConfig.fromAuthorizationToken
      * @function
      * @public
