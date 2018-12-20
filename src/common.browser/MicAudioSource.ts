@@ -45,16 +45,16 @@ export class MicAudioSource implements IAudioSource {
 
     private privInitializeDeferral: Deferred<boolean>;
 
-    private privRecorder: IRecorder;
-
     private privMediaStream: MediaStream;
 
     private privContext: AudioContext;
 
-    public constructor(recorder: IRecorder, audioSourceId?: string) {
+    private readonly privConstraints: MediaStreamConstraints;
+
+    public constructor(private readonly privRecorder: IRecorder, constraints?: MediaStreamConstraints, audioSourceId?: string) {
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
-        this.privRecorder = recorder;
+        this.privConstraints = constraints || { audio: true, video: false };
     }
 
     public get format(): AudioStreamFormat {
@@ -96,7 +96,7 @@ export class MicAudioSource implements IAudioSource {
             const next = () => {
                 this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
                 getUserMedia(
-                    { audio: true, video: false },
+                    this.privConstraints,
                     (mediaStream: MediaStream) => {
                         this.privMediaStream = mediaStream;
                         this.onEvent(new AudioSourceReadyEvent(this.privId));

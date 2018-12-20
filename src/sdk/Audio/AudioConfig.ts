@@ -25,6 +25,19 @@ export abstract class AudioConfig {
     }
 
     /**
+     * Creates an AudioConfig object representing a microphone on the system based on the specified constraints.
+     * @member AudioConfig.fromMicrophoneInput
+     * @function
+     * @public
+     * @param {MediaStreamConstraints} constraints A MediaStreamConstraints object specifying the requirements for microphone media device.
+     * @returns {AudioConfig} The audio input configuration being created.
+     */
+    public static fromMicrophoneInput(constraints?: MediaStreamConstraints): AudioConfig {
+        const pcmRecorder = new PcmRecorder();
+        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, constraints));
+    }
+
+    /**
      * Creates an AudioConfig object representing the specified file.
      * @member AudioConfig.fromWavFileInput
      * @function

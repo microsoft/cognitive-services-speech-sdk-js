@@ -33,6 +33,13 @@
       true
     ],
 
+    "trailing-comma": [
+      true, {
+        "singleline": "never",
+        "multiline": "ignore"
+      }
+    ],
+
     /* Enabling strictest possible type checking on every thing we write */
     "typedef": [
       true,
