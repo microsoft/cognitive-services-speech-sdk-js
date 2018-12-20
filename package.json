@@ -57,7 +57,7 @@
     "jest": "jest",
     "lint": "tslint -p tsconfig.json",
     "civersion": "node ci/version.js",
-    "prepack": "npm link gulp && npm run build"
+    "prepack": "npm install & npm run build"
   },
   "jest": {
     "testEnvironment": "node"
