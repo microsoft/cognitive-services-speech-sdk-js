@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.3.0-alpha.0.1",
+  "version": "1.2.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
@@ -55,9 +55,7 @@
     "build": "gulp compress",
     "test": "npm run lint && npm run jest",
     "jest": "jest",
-    "lint": "tslint -p tsconfig.json",
-    "civersion": "node ci/version.js",
-    "prepack": "npm run build"
+    "lint": "tslint -p tsconfig.json"
   },
   "jest": {
     "testEnvironment": "node"
