@@ -10,4 +10,3 @@ secrets/*
 test-javascript-junit.xml
 coverage/*
 *.tgz
-.vscode/settings.json
