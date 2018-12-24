@@ -1,6 +1,10 @@
 # Microsoft Cognitive Services Speech SDK for JavaScript
 
-Visit https://aka.ms/csspeech.
+The Microsoft Cognitive Services Speech SDK for JavaScript is the JavaScript version of the Microsoft Cognitive Services Speech SDK. An in-depth description of feature set, functionality, supported platforms, as well as installation options is available [here](https://aka.ms/csspeech).
+
+This depot contains the source code and instructions for building the Microsoft Cognitive Services Speech SDK for JavaScript. Your are not required to go through the build process. We create prebuilt packages tuned for your use-cases. These are updated in regular intervals. The published packages are matching the [conceptual](https://aka.ms/csspeech) and [reference](https://aka.ms/csspeech/javascriptref) documentation.
+
+The JavaScript versions of the Cognitive Services Speech SDK supports browser scenarios as well as the use in a Node.js environment. For the browser support you find the [QuickStart here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/quickstart-js-browser). For the Node.js environment you find the [QuickStart here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/quickstart-js-node), in addition a package is available from [npmjs](https://www.npmjs.com/package/microsoft-cognitiveservices-speech-sdk).
 
 ## Build the project
 
