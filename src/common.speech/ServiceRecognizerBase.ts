@@ -191,7 +191,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             } catch { }
         }
 
-        return this.fetchConnection(requestSession).onSuccessContinueWithPromise((connection: IConnection): Promise<boolean> => {
+        return this.fetchConnection(requestSession).onSuccessContinueWith((connection: IConnection): Promise<boolean> => {
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Text,
                 "telemetry",
@@ -297,13 +297,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         requestSession: RequestSession,
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallBack: (e: string) => void,
-    ): Promise<boolean> => {
-        return this.fetchConnection(requestSession).onSuccessContinueWithPromise((connection: IConnection): Promise<boolean> => {
+    ): Promise<IConnection> => {
+        return this.fetchConnection(requestSession).on((connection: IConnection): Promise<IConnection> => {
             return connection.read()
                 .onSuccessContinueWithPromise((message: ConnectionMessage) => {
                     if (this.privIsDisposed) {
                         // We're done.
-                        return PromiseHelper.fromResult(true);
+                        return PromiseHelper.fromResult(undefined);
                     }
 
                     // indicates we are draining the queue and it came with no message;
@@ -384,6 +384,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                     return this.receiveMessage(requestSession, successCallback, errorCallBack);
                 });
+        }, (error: string) => {
         });
     }
 
@@ -445,7 +446,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
             // If speech is done, stop sending audio.
             if (!this.privIsDisposed && !requestSession.isSpeechEnded && !requestSession.isCompleted) {
-                this.fetchConnection(requestSession).onSuccessContinueWith((connection: IConnection) => {
+                this.fetchConnection(requestSession).on((connection: IConnection) => {
                     audioStreamNode.read().on(
                         (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
 
@@ -496,6 +497,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                 deferred.reject(error);
                             }
                         });
+                }, (error: string) => {
+                    deferred.reject(error);
                 });
             }
         };
