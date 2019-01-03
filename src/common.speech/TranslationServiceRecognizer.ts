@@ -80,6 +80,8 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 const translatedPhrase: TranslationPhrase = TranslationPhrase.fromJSON(connectionMessage.textBody);
 
                 if (translatedPhrase.RecognitionStatus === RecognitionStatus.Success) {
+                    requestSession.onServiceRecognized(requestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
+
                     // OK, the recognition was successful. How'd the translation do?
                     const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, requestSession);
                     if (!!this.privTranslationRecognizer.recognized) {
@@ -292,18 +294,20 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
             resultReason = ResultReason.TranslatingSpeech;
         }
 
+        const offset: number = serviceResult.Offset + requestSession.currentTurnAudioOffset;
+
         const result = new TranslationRecognitionResult(
             translations,
             requestSession.requestId,
             resultReason,
             serviceResult.Text,
             serviceResult.Duration,
-            serviceResult.Offset,
+            offset,
             serviceResult.Translation.FailureReason,
             JSON.stringify(serviceResult),
             undefined);
 
-        const ev = new TranslationRecognitionEventArgs(result, serviceResult.Offset, requestSession.sessionId);
+        const ev = new TranslationRecognitionEventArgs(result, offset, requestSession.sessionId);
         return ev;
     }
 
