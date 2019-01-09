@@ -441,7 +441,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         const audioFormat: AudioStreamFormatImpl = this.privAudioSource.format as AudioStreamFormatImpl;
 
-        const readAndUploadCycle = (_: boolean) => {
+        const readAndUploadCycle = () => {
 
             // If speech is done, stop sending audio.
             if (!this.privIsDisposed && !requestSession.isSpeechEnded && !requestSession.isCompleted) {
@@ -468,10 +468,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                                 const delay: number = Math.max(0, (lastSendTime - Date.now() + minSendTime));
 
-                                uploaded.onSuccessContinueWith((result: boolean) => {
+                                uploaded.continueWith((_: PromiseResult<boolean>) => {
+                                    // Regardless of success or failure, schedule the next upload.
+                                    // If the underlying connection was broken, the next cycle will
+                                    // get a new connection and re-transmit missing audio automatically.
                                     setTimeout(() => {
                                         lastSendTime = Date.now();
-                                        readAndUploadCycle(result);
+                                        readAndUploadCycle();
                                     }, delay);
                                 });
                             } else {
@@ -497,7 +500,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             }
         };
 
-        readAndUploadCycle(true);
+        readAndUploadCycle();
 
         return deferred.promise();
     }

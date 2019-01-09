@@ -87,7 +87,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
                 const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
 
-                requestSession.onServiceRecognized(requestSession.currentTurnAudioOffset + simple.Offset);
+                requestSession.onServiceRecognized(requestSession.currentTurnAudioOffset + simple.Offset + simple.Duration);
 
                 if (ResultReason.Canceled === resultReason) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
