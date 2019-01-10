@@ -24,6 +24,12 @@ export class Settings {
 
     public static InputDir: string = "tests/input/audio/";
 
+    public static ExecuteLongRunningTests: string = "false";
+
+    public static get ExecuteLongRunningTestsBool(): boolean {
+        return "false" !== this.ExecuteLongRunningTests;
+    }
+
     /*
      * The intent behing this setting is that at test execution time the WaveFile below will contain speech
      * that the LUIS app above will recognize as an intent with this ID.
