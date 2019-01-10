@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-import { ConsoleLoggingListener, LocalStorage, SessionStorage } from "./src/common.browser/Exports";
-import { Events, Storage } from "./src/common/Exports";
+import { ConsoleLoggingListener } from "./src/common.browser/Exports";
+import { Events } from "./src/common/Exports";
 
 // Common.Storage.SetLocalStorage(new Common.Browser.LocalStorage());
 // Common.Storage.SetSessionStorage(new Common.Browser.SessionStorage());

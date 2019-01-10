@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { WebsocketConnection } from "../common.browser/Exports";
-import { IConnection, IStringDictionary, Storage } from "../common/Exports";
+import { IConnection, IStringDictionary } from "../common/Exports";
 import { PropertyId } from "../sdk/Exports";
 import { AuthInfo, IConnectionFactory, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
 
@@ -20,17 +20,13 @@ export class TranslationConnectionFactory implements IConnectionFactory {
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
 
-            endpoint = this.host(region) + Storage.local.getOrAdd("TranslationRelativeUri", "/speech/translation/cognitiveservices/v1");
+            endpoint = "wss://" + region + ".s2s.speech.microsoft.com/speech/translation/cognitiveservices/v1";
         }
 
         const queryParams: IStringDictionary<string> = {
             from: config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
             to: config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages),
         };
-
-        if (this.isDebugModeEnabled) {
-            queryParams[TestHooksParamName] = "1";
-        }
 
         const voiceName: string = "voice";
         const featureName: string = "features";
@@ -45,14 +41,5 @@ export class TranslationConnectionFactory implements IConnectionFactory {
         headers[ConnectionIdHeader] = connectionId;
 
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), connectionId);
-    }
-
-    private host(region: string): string {
-        return Storage.local.getOrAdd("Host", "wss://" + region + ".s2s.speech.microsoft.com");
-    }
-
-    private get isDebugModeEnabled(): boolean {
-        const value = Storage.local.getOrAdd("IsDebugModeEnabled", "false");
-        return value.toLowerCase() === "true";
     }
 }
