@@ -49,10 +49,10 @@ export enum PropertyId {
     SpeechServiceAuthorization_Type,
 
     /**
-     * The Cognitive Services Custom Speech Service endpoint id. Under normal circumstances, you shouldn't
+     * The Cognitive Services Speech Service endpoint id. Under normal circumstances, you shouldn't
      * have to use this property directly.
      * Instead, use @see SpeechConfig.setEndpointId.
-     * NOTE: The endpoint id is available in the Custom Speech Portal, listed under Endpoint Details.
+     * NOTE: The endpoint id is available in the Speech Portal, listed under Endpoint Details.
      * @member PropertyId.SpeechServiceConnection_EndpointId
      */
     SpeechServiceConnection_EndpointId,
