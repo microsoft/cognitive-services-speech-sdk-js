@@ -86,7 +86,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
     }
 
     /**
-     * Sets the authorization token.
+     * Gets/Sets the authorization token.
      * If this is set, subscription key is ignored.
      * User needs to make sure the provided authorization token is valid and not expired.
      * @member SpeechTranslationConfig.prototype.authorizationToken
@@ -97,9 +97,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
     public abstract set authorizationToken(value: string);
 
     /**
-     * Sets the authorization token.
-     * If this is set, subscription key is ignored.
-     * User needs to make sure the provided authorization token is valid and not expired.
+     * Gets/Sets the speech recognition language.
      * @member SpeechTranslationConfig.prototype.speechRecognitionLanguage
      * @function
      * @public
@@ -117,7 +115,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
     public abstract addTargetLanguage(value: string): void;
 
     /**
-     * Add a (text) target language to translate into.
+     * Gets the (text) target language to translate into.
      * @member SpeechTranslationConfig.prototype.targetLanguages
      * @function
      * @public
@@ -126,7 +124,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
     public abstract get targetLanguages(): string[];
 
     /**
-     * Returns the selected voice name.
+     * Gets the selected voice name.
      * @member SpeechTranslationConfig.prototype.voiceName
      * @function
      * @public
@@ -135,7 +133,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
     public abstract get voiceName(): string;
 
     /**
-     * Sets voice of the translated language, enable voice synthesis output.
+     * Gets/Sets voice of the translated language, enable voice synthesis output.
      * @member SpeechTranslationConfig.prototype.voiceName
      * @function
      * @public
@@ -176,7 +174,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
         this.outputFormat = OutputFormat.Simple;
     }
     /**
-     * Sets the authorization token.
+     * Gets/Sets the authorization token.
      * If this is set, subscription key is ignored.
      * User needs to make sure the provided authorization token is valid and not expired.
      * @member SpeechTranslationConfigImpl.prototype.authorizationToken
@@ -191,9 +189,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     /**
-     * Sets the authorization token.
-     * If this is set, subscription key is ignored.
-     * User needs to make sure the provided authorization token is valid and not expired.
+     * Gets/Sets the speech recognition language.
      * @member SpeechTranslationConfigImpl.prototype.speechRecognitionLanguage
      * @function
      * @public
@@ -214,6 +210,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     /**
+     * Gets the output format
      * @member SpeechTranslationConfigImpl.prototype.outputFormat
      * @function
      * @public
@@ -223,6 +220,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     /**
+     * Gets/Sets the output format
      * @member SpeechTranslationConfigImpl.prototype.outputFormat
      * @function
      * @public
@@ -232,6 +230,17 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     /**
+     * Gets the endpoint id.
+     * @member SpeechTranslationConfigImpl.prototype.endpointId
+     * @function
+     * @public
+     */
+    public get endpointId(): string {
+        return this.privSpeechProperties.getProperty(PropertyId.SpeechServiceConnection_EndpointId);
+    }
+
+    /**
+     * Gets/Sets the endpoint id.
      * @member SpeechTranslationConfigImpl.prototype.endpointId
      * @function
      * @public
@@ -240,14 +249,6 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
         this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_Endpoint, value);
     }
 
-    /**
-     * @member SpeechTranslationConfigImpl.prototype.endpointId
-     * @function
-     * @public
-     */
-    public get endpointId(): string {
-        return this.privSpeechProperties.getProperty(PropertyId.SpeechServiceConnection_EndpointId);
-    }
     /**
      * Add a (text) target language to translate into.
      * @member SpeechTranslationConfigImpl.prototype.addTargetLanguage
@@ -264,7 +265,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     /**
-     * Add a (text) target language to translate into.
+     * Gets the (text) target language to translate into.
      * @member SpeechTranslationConfigImpl.prototype.targetLanguages
      * @function
      * @public
@@ -281,6 +282,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     /**
+     * Gets the voice name.
      * @member SpeechTranslationConfigImpl.prototype.voiceName
      * @function
      * @public
@@ -290,7 +292,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     /**
-     * Sets voice of the translated language, enable voice synthesis output.
+     * Gets/Sets the voice of the translated language, enable voice synthesis output.
      * @member SpeechTranslationConfigImpl.prototype.voiceName
      * @function
      * @public
@@ -314,19 +316,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     /**
-     * Allows for setting arbitrary properties.
-     * @member SpeechTranslationConfigImpl.prototype.setProperty
-     * @function
-     * @public
-     * @param {string} name - The name of the property.
-     * @param {string} value - The value of the property.
-     */
-    public setProperty(name: string, value: string): void {
-        this.privSpeechProperties.setProperty(name, value);
-    }
-
-    /**
-     * Allows for retrieving arbitrary property values.
+     * Gets an arbitrary property value.
      * @member SpeechTranslationConfigImpl.prototype.getProperty
      * @function
      * @public
@@ -336,6 +326,18 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      */
     public getProperty(name: string, def?: string): string {
         return this.privSpeechProperties.getProperty(name, def);
+    }
+
+    /**
+     * Gets/Sets an arbitrary property value.
+     * @member SpeechTranslationConfigImpl.prototype.setProperty
+     * @function
+     * @public
+     * @param {string} name - The name of the property.
+     * @param {string} value - The value of the property.
+     */
+    public setProperty(name: string, value: string): void {
+        this.privSpeechProperties.setProperty(name, value);
     }
 
     /**
