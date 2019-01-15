@@ -4,10 +4,10 @@
 import {
     IAuthentication,
     IConnectionFactory,
-    PlatformConfig,
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechServiceConfig,
     TranslationConnectionFactory,
     TranslationServiceRecognizer,
 } from "../common.speech/Exports";
@@ -31,7 +31,6 @@ import { SpeechTranslationConfig, SpeechTranslationConfigImpl } from "./SpeechTr
  */
 export class TranslationRecognizer extends Recognizer {
     private privDisposedTranslationRecognizer: boolean;
-    private privProperties: PropertyCollection;
 
     /**
      * Initializes an instance of the TranslationRecognizer.
@@ -43,7 +42,7 @@ export class TranslationRecognizer extends Recognizer {
         const configImpl = speechConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(configImpl, "speechConfig");
 
-        super(audioConfig);
+        super(audioConfig, configImpl.properties, new TranslationConnectionFactory());
 
         this.privDisposedTranslationRecognizer = false;
         this.privProperties = configImpl.properties.clone();
@@ -184,23 +183,17 @@ export class TranslationRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
 
-            this.implCloseExistingRecognizer();
-
-            this.privReco = this.implRecognizerSetup(
-                RecognitionMode.Conversation,
-                this.properties,
-                this.audioConfig,
-                new TranslationConnectionFactory());
+            this.implRecognizerStop();
 
             this.implRecognizerStart(
-                this.privReco,
+                RecognitionMode.Conversation,
                 (e: TranslationRecognitionResult) => {
-                    this.implCloseExistingRecognizer();
+                    this.implRecognizerStop();
                     if (!!cb) {
                         cb(e);
                     }
                 }, (e: string) => {
-                    this.implCloseExistingRecognizer();
+                    this.implRecognizerStop();
                     if (!!err) {
                         err(e);
                     }
@@ -230,15 +223,9 @@ export class TranslationRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
 
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
 
-            this.privReco = this.implRecognizerSetup(
-                RecognitionMode.Conversation,
-                this.properties,
-                this.audioConfig,
-                new TranslationConnectionFactory());
-
-            this.implRecognizerStart(this.privReco, undefined, undefined);
+            this.implRecognizerStart(RecognitionMode.Conversation, undefined, undefined);
 
             // report result to promise.
             if (!!cb) {
@@ -276,7 +263,7 @@ export class TranslationRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
 
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
 
             if (!!cb) {
                 try {
@@ -317,14 +304,14 @@ export class TranslationRecognizer extends Recognizer {
         }
 
         if (disposing) {
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
             this.privDisposedTranslationRecognizer = true;
             super.dispose(disposing);
         }
     }
 
-    protected createRecognizerConfig(speechConfig: PlatformConfig, recognitionMode: RecognitionMode): RecognizerConfig {
-        return new RecognizerConfig(speechConfig, RecognitionMode.Conversation, this.properties);
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(speechConfig, this.properties);
     }
 
     protected createServiceRecognizer(
@@ -336,16 +323,5 @@ export class TranslationRecognizer extends Recognizer {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
 
         return new TranslationServiceRecognizer(authentication, connectionFactory, configImpl, recognizerConfig, this);
-    }
-
-    // tslint:disable-next-line:member-ordering
-    private privReco: ServiceRecognizerBase;
-
-    private implCloseExistingRecognizer(): void {
-        if (this.privReco) {
-            this.privReco.audioSource.turnOff();
-            this.privReco.dispose();
-            this.privReco = undefined;
-        }
     }
 }

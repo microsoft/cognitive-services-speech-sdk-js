@@ -7,8 +7,6 @@ import { Events, EventType, PlatformEvent } from "../../src/common/Exports";
 import { Settings } from "../Settings";
 import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
 
-import * as request from "request";
-
 import WaitForCondition from "../Utilities";
 
 let objsToClose: any[];
@@ -126,12 +124,14 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
     objsToClose.push(r);
 
-    let speechEnded: number = 0;
     let lastOffset: number = 0;
     let recogCount: number = 0;
-    let canceled: boolean = false;
-    let inTurn: boolean = false;
     let alternatePhrase: boolean = false;
+    let connections: number = 0;
+    let disconnects: number = 0;
+    let postDisconnectReco: boolean = false;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
     r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
         try {
@@ -154,6 +154,11 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
 
                     alternatePhrase = !alternatePhrase;
                 }
+
+                if (disconnects > 0) {
+                    postDisconnectReco = true;
+                }
+
                 if (recogCount++ >= targetLoops) {
                     p.close();
                 }
@@ -167,29 +172,25 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
-            canceled = true;
         } catch (error) {
             done.fail(error);
         }
     };
 
-    r.sessionStarted = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-        inTurn = true;
-    });
+    connection.disconnected = (e: sdk.SessionEventArgs) => {
+        disconnects++;
+    };
 
-    r.sessionStopped = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-        inTurn = false;
-    });
-
-    r.speechEndDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
-        speechEnded++;
+    connection.connected = (e: sdk.SessionEventArgs) => {
+        connections++;
     };
 
     r.startContinuousRecognitionAsync(() => {
-        WaitForCondition(() => (canceled && !inTurn), () => {
+        WaitForCondition(() => (!!postDisconnectReco), () => {
             r.stopContinuousRecognitionAsync(() => {
                 try {
-                    expect(speechEnded).toEqual(1);
+                    expect(connections).toEqual(2);
+                    expect(disconnects).toEqual(1);
                     done();
                 } catch (error) {
                     done.fail(error);

@@ -5,10 +5,10 @@ import {
     IAuthentication,
     IConnectionFactory,
     OutputFormatPropertyName,
-    PlatformConfig,
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechServiceConfig,
     SpeechServiceRecognizer,
 } from "../common.speech/Exports";
 import { SpeechConnectionFactory } from "../common.speech/SpeechConnectionFactory";
@@ -32,8 +32,7 @@ import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
  * @class SpeechRecognizer
  */
 export class SpeechRecognizer extends Recognizer {
-    private privDisposedSpeechRecognizer: boolean = false;
-    private privProperties: PropertyCollection;
+    private privDisposedSpeechRecognizer: boolean;
 
     /**
      * SpeechRecognizer constructor.
@@ -42,15 +41,15 @@ export class SpeechRecognizer extends Recognizer {
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
     public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
-        super(audioConfig);
-
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         Contracts.throwIfNull(speechConfigImpl, "speechConfig");
-        this.privProperties = speechConfigImpl.properties.clone();
 
         Contracts.throwIfNullOrWhitespace(
             speechConfigImpl.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
+
+        super(audioConfig, speechConfigImpl.properties, new SpeechConnectionFactory());
+        this.privDisposedSpeechRecognizer = false;
     }
 
     /**
@@ -170,21 +169,15 @@ export class SpeechRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
 
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
 
-            this.privReco = this.implRecognizerSetup(
-                RecognitionMode.Interactive,
-                this.properties,
-                this.audioConfig,
-                new SpeechConnectionFactory());
-
-            this.implRecognizerStart(this.privReco, (e: SpeechRecognitionResult) => {
-                this.implCloseExistingRecognizer();
+            this.implRecognizerStart(RecognitionMode.Interactive, (e: SpeechRecognitionResult) => {
+                this.implRecognizerStop();
                 if (!!cb) {
                     cb(e);
                 }
             }, (e: string) => {
-                this.implCloseExistingRecognizer();
+                this.implRecognizerStop();
                 if (!!err) {
                     err(e);
                 }
@@ -214,15 +207,9 @@ export class SpeechRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
 
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
 
-            this.privReco = this.implRecognizerSetup(
-                RecognitionMode.Conversation,
-                this.properties,
-                this.audioConfig,
-                new SpeechConnectionFactory());
-
-            this.implRecognizerStart(this.privReco, undefined, undefined);
+            this.implRecognizerStart(RecognitionMode.Conversation, undefined, undefined);
 
             // report result to promise.
             if (!!cb) {
@@ -259,7 +246,7 @@ export class SpeechRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
 
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
 
             if (!!cb) {
                 try {
@@ -345,17 +332,16 @@ export class SpeechRecognizer extends Recognizer {
         }
 
         if (disposing) {
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
             this.privDisposedSpeechRecognizer = true;
         }
 
         super.dispose(disposing);
     }
 
-    protected createRecognizerConfig(speechConfig: PlatformConfig, recognitionMode: RecognitionMode): RecognizerConfig {
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
         return new RecognizerConfig(
             speechConfig,
-            recognitionMode,
             this.properties);
     }
 
@@ -366,16 +352,5 @@ export class SpeechRecognizer extends Recognizer {
         recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         return new SpeechServiceRecognizer(authentication, connectionFactory, configImpl, recognizerConfig, this);
-    }
-
-    // tslint:disable-next-line:member-ordering
-    private privReco: ServiceRecognizerBase;
-
-    private implCloseExistingRecognizer(): void {
-        if (this.privReco) {
-            this.privReco.audioSource.turnOff();
-            this.privReco.dispose();
-            this.privReco = undefined;
-        }
     }
 }

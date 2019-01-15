@@ -19,7 +19,6 @@ import {
     CancellationErrorCodePropertyName,
     EnumTranslation,
     IntentResponse,
-    RequestSession,
     ServiceRecognizerBase,
     SimpleSpeechPhrase,
     SpeechHypothesis,
@@ -42,22 +41,20 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
         connectionFactory: IConnectionFactory,
         audioSource: IAudioSource,
         recognizerConfig: RecognizerConfig,
-        recognizer: IntentRecognizer,
-        intentDataSent: boolean) {
+        recognizer: IntentRecognizer) {
         super(authentication, connectionFactory, audioSource, recognizerConfig, recognizer);
         this.privIntentRecognizer = recognizer;
-        this.privIntentDataSent = intentDataSent;
+        this.privIntentDataSent = false;
     }
 
     public setIntents(addedIntents: { [id: string]: AddedLmIntent; }, umbrellaIntent: AddedLmIntent): void {
         this.privAddedLmIntents = addedIntents;
         this.privUmbrellaIntent = umbrellaIntent;
+        this.privIntentDataSent = true;
     }
 
     protected processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
-        requestSession: RequestSession,
-        connection: IConnection,
         successCallback?: (e: IntentRecognitionResult) => void,
         errorCallBack?: (e: string) => void): void {
 
@@ -70,16 +67,16 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
 
                 result = new IntentRecognitionResult(
                     undefined,
-                    requestSession.requestId,
+                    this.privRequestSession.requestId,
                     ResultReason.RecognizingIntent,
                     speechHypothesis.Text,
                     speechHypothesis.Duration,
-                    speechHypothesis.Offset + requestSession.currentTurnAudioOffset,
+                    speechHypothesis.Offset + this.privRequestSession.currentTurnAudioOffset,
                     undefined,
                     connectionMessage.textBody,
                     undefined);
 
-                ev = new IntentRecognitionEventArgs(result, speechHypothesis.Offset + requestSession.currentTurnAudioOffset, requestSession.sessionId);
+                ev = new IntentRecognitionEventArgs(result, speechHypothesis.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
 
                 if (!!this.privIntentRecognizer.recognizing) {
                     try {
@@ -94,24 +91,23 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 break;
             case "speech.phrase":
                 const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
-
                 result = new IntentRecognitionResult(
                     undefined,
-                    requestSession.requestId,
+                    this.privRequestSession.requestId,
                     EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus),
                     simple.DisplayText,
                     simple.Duration,
-                    simple.Offset + requestSession.currentTurnAudioOffset,
+                    simple.Offset + this.privRequestSession.currentTurnAudioOffset,
                     undefined,
                     connectionMessage.textBody,
                     undefined);
 
-                ev = new IntentRecognitionEventArgs(result, result.offset + requestSession.currentTurnAudioOffset, requestSession.sessionId);
+                ev = new IntentRecognitionEventArgs(result, result.offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
 
                 const sendEvent: () => void = () => {
                     if (this.privRecognizerConfig.isContinuousRecognition) {
                         // For continuous recognition telemetry has to be sent for every phrase as per spec.
-                        this.sendTelemetryData(requestSession, requestSession.getTelemetry());
+                        this.sendTelemetryData();
                     }
 
                     if (!!this.privIntentRecognizer.recognized) {
@@ -156,7 +152,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 // Response from LUIS
                 if (this.privRecognizerConfig.isContinuousRecognition) {
                     // For continuous recognition telemetry has to be sent for every phrase as per spec.
-                    this.sendTelemetryData(requestSession, requestSession.getTelemetry());
+                    this.sendTelemetryData();
                 }
 
                 ev = this.privPendingIntentArgs;
@@ -170,7 +166,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     }
 
                     // Odd... Not sure this can happen
-                    ev = new IntentRecognitionEventArgs(new IntentRecognitionResult(), 0 /*TODO*/, requestSession.sessionId);
+                    ev = new IntentRecognitionEventArgs(new IntentRecognitionResult(), 0 /*TODO*/, this.privRequestSession.sessionId);
                 }
 
                 const intentResponse: IntentResponse = IntentResponse.fromJSON(connectionMessage.textBody);
@@ -205,11 +201,11 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                             reason,
                             ev.result.text,
                             ev.result.duration,
-                            ev.result.offset + requestSession.currentTurnAudioOffset,
+                            ev.result.offset + this.privRequestSession.currentTurnAudioOffset,
                             ev.result.errorDetails,
                             ev.result.json,
                             properties),
-                        ev.offset + requestSession.currentTurnAudioOffset,
+                        ev.offset + this.privRequestSession.currentTurnAudioOffset,
                         ev.sessionId);
                 }
 
