@@ -209,10 +209,8 @@ export abstract class Recognizer {
     protected implRecognizerStart(
         recognitionMode: RecognitionMode,
         successCallback: (e: SpeechRecognitionResult) => void,
-        errorCallback: (e: string) => void,
-        speechContext?: string,
-    ): void {
-        this.privReco.recognize(speechContext, recognitionMode, successCallback, errorCallback).on(
+        errorCallback: (e: string) => void): void {
+        this.privReco.recognize(recognitionMode, successCallback, errorCallback).on(
             /* tslint:disable:no-empty */
             (result: boolean): void => { },
             (error: string): void => {

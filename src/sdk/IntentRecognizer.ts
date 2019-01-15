@@ -150,10 +150,11 @@ export class IntentRecognizer extends Recognizer {
 
             this.implRecognizerStop();
 
-            let contextJson: string;
-
             if (Object.keys(this.privAddedLmIntents).length !== 0 || undefined !== this.privUmbrellaIntent) {
-                contextJson = this.buildSpeechContext();
+                const context: IntentContext = this.buildSpeechContext();
+
+                this.privReco.speechContext.setSection("intent", context.Intent);
+                this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
 
                 const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
                 intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
@@ -169,7 +170,7 @@ export class IntentRecognizer extends Recognizer {
                 if (!!err) {
                     err(e);
                 }
-            }, contextJson);
+            });
 
         } catch (error) {
             if (!!err) {
@@ -198,16 +199,17 @@ export class IntentRecognizer extends Recognizer {
 
             this.implRecognizerStop();
 
-            let contextJson: string;
-
             if (Object.keys(this.privAddedLmIntents).length !== 0) {
-                contextJson = this.buildSpeechContext();
+                const context: IntentContext = this.buildSpeechContext();
+
+                this.privReco.speechContext.setSection("intent", context.Intent);
+                this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
 
                 const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
                 intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
             }
 
-            this.implRecognizerStart(RecognitionMode.Conversation, undefined, undefined, contextJson);
+            this.implRecognizerStart(RecognitionMode.Conversation, undefined, undefined);
 
             // report result to promise.
             if (!!cb) {
@@ -392,7 +394,7 @@ export class IntentRecognizer extends Recognizer {
         }
     }
 
-    private buildSpeechContext(): string {
+    private buildSpeechContext(): IntentContext {
         let appId: string;
         let region: string;
         let subscriptionKey: string;
@@ -437,15 +439,22 @@ export class IntentRecognizer extends Recognizer {
             refGrammers.push(grammer);
         }
 
-        return JSON.stringify({
-            dgi: {
-                ReferenceGrammars: (undefined === this.privUmbrellaIntent) ? refGrammers : ["luis/" + appId + "-PRODUCTION"],
-            },
-            intent: {
+        return {
+            Intent: {
                 id: appId,
                 key: (subscriptionKey === undefined) ? this.privProperties.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Key]) : subscriptionKey,
                 provider: "LUIS",
             },
-        });
+            ReferenceGrammars: (undefined === this.privUmbrellaIntent) ? refGrammers : ["luis/" + appId + "-PRODUCTION"],
+        };
     }
+}
+
+interface IntentContext {
+    Intent: {
+        id: string,
+        key: string,
+        provider: string,
+    };
+    ReferenceGrammars: string[];
 }

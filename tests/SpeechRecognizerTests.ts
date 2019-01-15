@@ -2506,3 +2506,4 @@ test("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCall
         done();
     });
 }, 20000);
+

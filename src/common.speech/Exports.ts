@@ -30,6 +30,8 @@ export * from "./AddedLmIntent";
 export * from "./IntentServiceRecognizer";
 export * from "./ServiceMessages/IntentResponse";
 export * from "./RequestSession";
+export * from "./SpeechContext";
+export * from "./DynamicGrammer";
 
 export const OutputFormatPropertyName: string = "OutputFormat";
 export const CancellationErrorCodePropertyName: string = "CancellationErrorCode";
