@@ -21,7 +21,6 @@ jobs:
   timeoutInMinutes: 60
   variables:
     ArtifactOut: $(Build.ArtifactStagingDirectory)/Out/JavaScript
-    SPEECHSDK_RUN_TESTS: true
   steps:
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
@@ -65,7 +64,7 @@ jobs:
       PACKAGE_BASE=microsoft-cognitiveservices-speech-sdk
       PACKAGE_NAME=$PACKAGE_BASE-$SPEECHSDK_SEMVER2NOMETA.tgz
       PACKAGE_IN=$PACKAGE_NAME
-      PACKAGE_OUT="/npm"
+      PACKAGE_OUT="$(ArtifactOut)/npm"
       ZIP_OUT="$(ArtifactOut)/SpeechSDK-JavaScript-$SPEECHSDK_SEMVER2NOMETA"
       mkdir -p "$PACKAGE_OUT" "$ZIP_OUT"
       cp --preserve "$PACKAGE_IN" "$PACKAGE_OUT"
