@@ -25,7 +25,6 @@ npm install -g microsoft-cognitiveservices-speech-sdk
 
 ## Building
 
-
 This source code for the Cognitive Services Speeck SDK (JavaScript) is available in a public [GitHub repository](https://github.com/Microsoft/cognitive-services-speech-sdk-js). Your are not required to go through the build process. We create prebuilt packages tuned for your use-cases. These are updated in regular intervals.
 
 In order to build the Speech SDK, ensure that you have [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/) installed.
@@ -42,13 +41,13 @@ Change to the Speech SDK directory:
 cd cognitive-services-speech-sdk-js
 ```
 
-Installation the required packages is required in your enlistment.
+Install the required packages:
 
 ```
 npm install
 ```
 
-Once the dependencies are installed run the build by
+Run the build:
 
 ```
 npm run build
