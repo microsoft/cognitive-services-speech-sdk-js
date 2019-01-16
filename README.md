@@ -12,20 +12,20 @@ The JavaScript versions of the Cognitive Services Speech SDK supports browser sc
 For the latest stable version:
 
 ```bash
-npm install -g microsoft-cognitiveservices-speech-sdk
+npm install microsoft-cognitiveservices-speech-sdk
 ```
 
 ## Documentation
 
-* [Quick tutorial - Node.js](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/quickstart-js-node)
-* [Quick tutorial - Browser](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/quickstart-js-browser)
+* [Quick tutorial - Node.js](https://docs.microsoft.com/azure/cognitive-services/speech-service/quickstart-js-node)
+* [Quick tutorial - Browser](https://docs.microsoft.com/azure/cognitive-services/speech-service/quickstart-js-browser)
 * [API Reference](https://aka.ms/csspeech/javascriptref)
 * [Samples](https://aka.ms/csspeech/samples)
-* [Homepage](https://aka.ms/csspeech)
+* [Speech SDK Homepage](https://aka.ms/csspeech)
 
 ## Building
 
-This source code for the Cognitive Services Speeck SDK (JavaScript) is available in a public [GitHub repository](https://github.com/Microsoft/cognitive-services-speech-sdk-js). Your are not required to go through the build process. We create prebuilt packages tuned for your use-cases. These are updated in regular intervals.
+This source code for the Cognitive Services Speeck SDK (JavaScript) is available in a public [GitHub repository](https://github.com/Microsoft/cognitive-services-speech-sdk-js). You are not required to go through the build process. We create prebuilt packages tuned for your use-cases. These are updated in regular intervals.
 
 In order to build the Speech SDK, ensure that you have [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/) installed.
 
@@ -52,20 +52,6 @@ Run the build:
 ```
 npm run build
 ```
-
-or
-
-```
-npx gulp bundle
-```
-
-or
-
-```
-npx gulp compress
-```
-
-> Note: `npx` is packaged with NPM 5.2 or above. Update NPM / Node if you don't have it or install it globally with `npm install -g npx` (less preferable).
 
 ## Data / Telemetry
 
