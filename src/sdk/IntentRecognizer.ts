@@ -114,7 +114,8 @@ export class IntentRecognizer extends Recognizer {
     }
 
     /**
-     * Sets the authorization token used to communicate with the service.
+     * Gets/Sets the authorization token used to communicate with the service.
+     * Note: Please use a token derived from your LanguageUnderstanding subscription key for the Intent recognizer.
      * @member IntentRecognizer.prototype.authorizationToken
      * @function
      * @public

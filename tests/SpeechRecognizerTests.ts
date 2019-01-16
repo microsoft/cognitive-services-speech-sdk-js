@@ -11,6 +11,8 @@ import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
+import * as request from "request";
+
 import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import WaitForCondition from "./Utilities";
@@ -1606,132 +1608,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 done.fail(err);
             });
     }, 35000);
-
-    // Tests client reconnect after speech timeouts.
-    test.skip("Reconnect After timeout", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
-        console.info("Name: Reconnect After timeout");
-        // Pump valid speech and then silence until at least one speech end cycle hits.
-        const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-        let p: sdk.PullAudioInputStream;
-        const bigFileBuffer: Uint8Array = new Uint8Array(32 * 1024 * 30); // ~30 seconds.
-        let s: sdk.SpeechConfig;
-        if (undefined === Settings.SpeechTimeoutEndpoint || undefined === Settings.SpeechTimeoutKey) {
-            // tslint:disable-next-line:no-console
-            console.warn("Running timeout test against production, this will be very slow...");
-            s = BuildSpeechConfig();
-        } else {
-            s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechTimeoutEndpoint), Settings.SpeechTimeoutKey);
-        }
-        objsToClose.push(s);
-
-        let pumpSilence: boolean = false;
-        let bytesSent: number = 0;
-        const targetLoops: number = 250;
-
-        // Pump the audio from the wave file specified with 1 second silence between iterations indefinetly.
-        p = sdk.AudioInputStream.createPullStream(
-            {
-                close: () => { return; },
-                read: (buffer: ArrayBuffer): number => {
-                    if (pumpSilence) {
-                        bytesSent += buffer.byteLength;
-                        if (bytesSent >= 8000) {
-                            bytesSent = 0;
-                            pumpSilence = false;
-                        }
-                        return buffer.byteLength;
-                    } else {
-                        const copyArray: Uint8Array = new Uint8Array(buffer);
-                        const start: number = bytesSent;
-                        const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                        copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                        const readyToSend: number = (end - start) + 1;
-                        bytesSent += readyToSend;
-
-                        if (readyToSend < buffer.byteLength) {
-                            bytesSent = 0;
-                            pumpSilence = true;
-                        }
-
-                        return readyToSend;
-                    }
-
-                },
-            });
-
-        const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
-
-        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
-        objsToClose.push(r);
-
-        let speechEnded: number = 0;
-        let lastOffset: number = 0;
-        let recogCount: number = 0;
-        let canceled: boolean = false;
-        let inTurn: boolean = false;
-
-        r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
-            try {
-                expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(e.offset).toBeGreaterThanOrEqual(lastOffset);
-                lastOffset = e.offset;
-
-                // If there is silence exactly at the moment of disconnect, an extra speech.phrase with text ="" is returned just before the
-                // connection is disconnected.
-                if ("" !== e.result.text) {
-                    expect(e.result.text).toEqual(Settings.WaveFileText);
-                }
-                if (recogCount++ > targetLoops) {
-                    p.close();
-                }
-
-            } catch (error) {
-                done.fail(error);
-            }
-        };
-
-        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-            try {
-                expect(e.errorDetails).toBeUndefined();
-                expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
-                canceled = true;
-            } catch (error) {
-                done.fail(error);
-            }
-        };
-
-        r.sessionStarted = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-            inTurn = true;
-        });
-
-        r.sessionStopped = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-            inTurn = false;
-        });
-
-        r.speechEndDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
-            speechEnded++;
-        };
-
-        r.startContinuousRecognitionAsync(() => {
-            WaitForCondition(() => (canceled && !inTurn), () => {
-                r.stopContinuousRecognitionAsync(() => {
-                    try {
-                        expect(speechEnded).toEqual(1);
-                        done();
-                    } catch (error) {
-                        done.fail(error);
-                    }
-                }, (error: string) => {
-                    done.fail(error);
-                });
-            });
-        },
-            (err: string) => {
-                done.fail(err);
-            });
-    }, 35000);
 });
 
 test("Push Stream Async", (done: jest.DoneCallback) => {
@@ -1772,7 +1648,7 @@ test("Push Stream Async", (done: jest.DoneCallback) => {
         (error: string) => {
             done.fail(error);
         });
-});
+}, 10000);
 
 test("Bad DataType for PushStreams results in error", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console

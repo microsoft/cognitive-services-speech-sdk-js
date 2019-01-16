@@ -147,7 +147,7 @@ export class TranslationRecognizer extends Recognizer {
     }
 
     /**
-     * Sets the authorization token used to communicate with the service.
+     * Gets/Sets the authorization token used to communicate with the service.
      * @member TranslationRecognizer.prototype.authorizationToken
      * @function
      * @public

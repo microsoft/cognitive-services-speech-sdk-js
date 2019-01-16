@@ -53,6 +53,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
     private privRecognizer: Recognizer;
+    private privMustReportEndOfStream: boolean;
     protected privRecognizerConfig: RecognizerConfig;
 
     public constructor(
@@ -78,6 +79,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             throw new ArgumentNullError("recognizerConfig");
         }
 
+        this.privMustReportEndOfStream = false;
         this.privAuthentication = authentication;
         this.privConnectionFactory = connectionFactory;
         this.privAudioSource = audioSource;
@@ -189,7 +191,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             } catch { }
         }
 
-        return this.fetchConnection(requestSession).onSuccessContinueWithPromise((connection: IConnection): Promise<boolean> => {
+        return this.fetchConnection(requestSession).onSuccessContinueWith((connection: IConnection): Promise<boolean> => {
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Text,
                 "telemetry",
@@ -295,13 +297,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         requestSession: RequestSession,
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallBack: (e: string) => void,
-    ): Promise<boolean> => {
-        return this.fetchConnection(requestSession).onSuccessContinueWithPromise((connection: IConnection): Promise<boolean> => {
+    ): Promise<IConnection> => {
+        return this.fetchConnection(requestSession).on((connection: IConnection): Promise<IConnection> => {
             return connection.read()
                 .onSuccessContinueWithPromise((message: ConnectionMessage) => {
                     if (this.privIsDisposed) {
                         // We're done.
-                        return PromiseHelper.fromResult(true);
+                        return PromiseHelper.fromResult(undefined);
                     }
 
                     // indicates we are draining the queue and it came with no message;
@@ -318,6 +320,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     if (connectionMessage.requestId.toLowerCase() === requestSession.requestId.toLowerCase()) {
                         switch (connectionMessage.path.toLowerCase()) {
                             case "turn.start":
+                                this.privMustReportEndOfStream = true;
                                 break;
                             case "speech.startdetected":
                                 const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
@@ -349,12 +352,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                 if (!!this.privRecognizer.speechEndDetected) {
                                     this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
                                 }
-
-                                if (requestSession.isSpeechEnded && this.privRecognizerConfig.isContinuousRecognition) {
-                                    this.cancelRecognitionLocal(requestSession, CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined, successCallback);
-                                }
                                 break;
                             case "turn.end":
+                                if (requestSession.isSpeechEnded && this.privMustReportEndOfStream) {
+                                    this.privMustReportEndOfStream = false;
+                                    this.cancelRecognitionLocal(requestSession, CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined, successCallback);
+                                }
+
                                 const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(requestSession.sessionId);
                                 requestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
                                 if (!this.privRecognizerConfig.isContinuousRecognition || requestSession.isSpeechEnded) {
@@ -380,6 +384,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                     return this.receiveMessage(requestSession, successCallback, errorCallBack);
                 });
+        }, (error: string) => {
         });
     }
 
@@ -437,11 +442,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         const audioFormat: AudioStreamFormatImpl = this.privAudioSource.format as AudioStreamFormatImpl;
 
-        const readAndUploadCycle = (_: boolean) => {
+        const readAndUploadCycle = () => {
 
             // If speech is done, stop sending audio.
             if (!this.privIsDisposed && !requestSession.isSpeechEnded && !requestSession.isCompleted) {
-                this.fetchConnection(requestSession).onSuccessContinueWith((connection: IConnection) => {
+                this.fetchConnection(requestSession).on((connection: IConnection) => {
                     audioStreamNode.read().on(
                         (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
 
@@ -464,10 +469,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                                 const delay: number = Math.max(0, (lastSendTime - Date.now() + minSendTime));
 
-                                uploaded.onSuccessContinueWith((result: boolean) => {
+                                uploaded.continueWith((_: PromiseResult<boolean>) => {
+                                    // Regardless of success or failure, schedule the next upload.
+                                    // If the underlying connection was broken, the next cycle will
+                                    // get a new connection and re-transmit missing audio automatically.
                                     setTimeout(() => {
                                         lastSendTime = Date.now();
-                                        readAndUploadCycle(result);
+                                        readAndUploadCycle();
                                     }, delay);
                                 });
                             } else {
@@ -489,11 +497,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                 deferred.reject(error);
                             }
                         });
+                }, (error: string) => {
+                    deferred.reject(error);
                 });
             }
         };
 
-        readAndUploadCycle(true);
+        readAndUploadCycle();
 
         return deferred.promise();
     }

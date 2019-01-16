@@ -632,7 +632,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             });
     }, 10000);
 
-    test.skip("MultiPhrase", (done: jest.DoneCallback) => {
+    test("MultiPhrase", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: MultiPhrase");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -646,9 +646,11 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
         const numPhrases: number = 3;
+        const silentBuffer: ArrayBuffer = new ArrayBuffer(32000);
 
         for (let i: number = 0; i < 3; i++) {
             p.write(f);
+            p.write(silentBuffer);
         }
 
         p.close();
@@ -686,18 +688,13 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         let inTurn: boolean = false;
 
         r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
-            try {
-                switch (e.reason) {
-                    case sdk.CancellationReason.Error:
-                        done.fail(e.errorDetails);
-                        break;
-                    case sdk.CancellationReason.EndOfStream:
-                        expect(synthCount).toEqual(numPhrases);
-                        canceled = true;
-                        break;
-                }
-            } catch (error) {
-                done.fail(error);
+            switch (e.reason) {
+                case sdk.CancellationReason.Error:
+                    done.fail(e.errorDetails);
+                    break;
+                case sdk.CancellationReason.EndOfStream:
+                    canceled = true;
+                    break;
             }
         });
 
@@ -718,6 +715,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
                     for (let i: number = 0; i < synthFragmentCount; i++) {
                         p.write(rEvents[i]);
+                        p.write(silentBuffer);
                     }
                     p.close();
 
@@ -764,8 +762,14 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                         WaitForCondition(() => (canceled && !inTurn),
                             () => {
                                 r2.stopContinuousRecognitionAsync(() => {
-                                    expect(numEvents).toEqual(numPhrases);
-                                    done();
+                                    try {
+                                        expect(synthCount).toEqual(numPhrases);
+                                        expect(numEvents).toEqual(numPhrases);
+                                        done();
+                                    } catch (error) {
+                                        done.fail(error);
+                                    }
+
                                 }, (error: string) => {
                                     done.fail(error);
                                 });

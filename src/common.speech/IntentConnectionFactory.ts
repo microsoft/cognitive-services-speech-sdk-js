@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { WebsocketConnection } from "../common.browser/Exports";
-import { IConnection, IStringDictionary, Storage } from "../common/Exports";
+import { IConnection, IStringDictionary } from "../common/Exports";
 import { PropertyId } from "../sdk/Exports";
 import { AuthInfo, IConnectionFactory, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
 
@@ -20,7 +20,7 @@ export class IntentConnectionFactory implements IConnectionFactory {
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_IntentRegion);
 
-            endpoint = this.host() + Storage.local.getOrAdd("TranslationRelativeUri", "/speech/" + this.getSpeechRegionFromIntentRegion(region) + "/recognition/interactive/cognitiveservices/v1");
+            endpoint = "wss://speech.platform.bing.com/speech/" + this.getSpeechRegionFromIntentRegion(region) + "/recognition/interactive/cognitiveservices/v1";
         }
 
         const queryParams: IStringDictionary<string> = {
@@ -28,24 +28,11 @@ export class IntentConnectionFactory implements IConnectionFactory {
             language: config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
         };
 
-        if (this.isDebugModeEnabled) {
-            queryParams[TestHooksParamName] = "1";
-        }
-
         const headers: IStringDictionary<string> = {};
         headers[authInfo.headerName] = authInfo.token;
         headers[ConnectionIdHeader] = connectionId;
 
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), connectionId);
-    }
-
-    private host(): string {
-        return Storage.local.getOrAdd("Host", "wss://speech.platform.bing.com");
-    }
-
-    private get isDebugModeEnabled(): boolean {
-        const value = Storage.local.getOrAdd("IsDebugModeEnabled", "false");
-        return value.toLowerCase() === "true";
     }
 
     private getSpeechRegionFromIntentRegion(intentRegion: string): string {

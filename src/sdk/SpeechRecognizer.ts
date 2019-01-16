@@ -91,18 +91,6 @@ export class SpeechRecognizer extends Recognizer {
     }
 
     /**
-     * Sets the authorization token used to communicate with the service.
-     * @member SpeechRecognizer.prototype.authorizationToken
-     * @function
-     * @public
-     * @param {string} token - Authorization token.
-     */
-    public set authorizationToken(token: string) {
-        Contracts.throwIfNullOrWhitespace(token, "token");
-        this.properties.setProperty(PropertyId.SpeechServiceAuthorization_Token, token);
-    }
-
-    /**
      * Gets the authorization token used to communicate with the service.
      * @member SpeechRecognizer.prototype.authorizationToken
      * @function
@@ -111,6 +99,18 @@ export class SpeechRecognizer extends Recognizer {
      */
     public get authorizationToken(): string {
         return this.properties.getProperty(PropertyId.SpeechServiceAuthorization_Token);
+    }
+
+    /**
+     * Gets/Sets the authorization token used to communicate with the service.
+     * @member SpeechRecognizer.prototype.authorizationToken
+     * @function
+     * @public
+     * @param {string} token - Authorization token.
+     */
+    public set authorizationToken(token: string) {
+        Contracts.throwIfNullOrWhitespace(token, "token");
+        this.properties.setProperty(PropertyId.SpeechServiceAuthorization_Token, token);
     }
 
     /**
