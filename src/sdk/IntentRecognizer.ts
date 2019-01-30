@@ -7,10 +7,10 @@ import {
     IConnectionFactory,
     IntentConnectionFactory,
     IntentServiceRecognizer,
-    PlatformConfig,
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechServiceConfig,
 } from "../common.speech/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
@@ -35,12 +35,8 @@ import { SpeechConfigImpl } from "./SpeechConfig";
  */
 export class IntentRecognizer extends Recognizer {
     private privDisposedIntentRecognizer: boolean;
-    private privProperties: PropertyCollection;
-    private privReco: ServiceRecognizerBase;
-
     private privAddedIntents: string[][];
     private privAddedLmIntents: { [id: string]: AddedLmIntent; };
-    private privIntentDataSent: boolean;
     private privUmbrellaIntent: AddedLmIntent;
 
     /**
@@ -54,8 +50,7 @@ export class IntentRecognizer extends Recognizer {
         const configImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "speechConfig");
 
-        super(audioConfig);
-        this.privIntentDataSent = false;
+        super(audioConfig, configImpl.properties, new IntentConnectionFactory());
         this.privAddedIntents = [];
         this.privAddedLmIntents = {};
 
@@ -153,31 +148,24 @@ export class IntentRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
 
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
 
             let contextJson: string;
 
             if (Object.keys(this.privAddedLmIntents).length !== 0 || undefined !== this.privUmbrellaIntent) {
                 contextJson = this.buildSpeechContext();
-                this.privIntentDataSent = true;
+
+                const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
+                intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
             }
 
-            this.privReco = this.implRecognizerSetup(
-                RecognitionMode.Interactive,
-                this.properties,
-                this.audioConfig,
-                new IntentConnectionFactory());
-
-            const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
-            intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
-
-            this.implRecognizerStart(this.privReco, (e: IntentRecognitionResult) => {
-                this.implCloseExistingRecognizer();
+            this.implRecognizerStart(RecognitionMode.Interactive, (e: IntentRecognitionResult) => {
+                this.implRecognizerStop();
                 if (!!cb) {
                     cb(e);
                 }
             }, (e: string) => {
-                this.implCloseExistingRecognizer();
+                this.implRecognizerStop();
                 if (!!err) {
                     err(e);
                 }
@@ -208,25 +196,18 @@ export class IntentRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
 
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
 
             let contextJson: string;
 
             if (Object.keys(this.privAddedLmIntents).length !== 0) {
                 contextJson = this.buildSpeechContext();
-                this.privIntentDataSent = true;
+
+                const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
+                intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
             }
 
-            this.privReco = this.implRecognizerSetup(
-                RecognitionMode.Conversation,
-                this.properties,
-                this.audioConfig,
-                new IntentConnectionFactory());
-
-            const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
-            intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
-
-            this.implRecognizerStart(this.privReco, undefined, undefined, contextJson);
+            this.implRecognizerStart(RecognitionMode.Conversation, undefined, undefined, contextJson);
 
             // report result to promise.
             if (!!cb) {
@@ -263,7 +244,7 @@ export class IntentRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
 
-            this.implCloseExistingRecognizer();
+            this.implRecognizerStop();
 
             if (!!cb) {
                 try {
@@ -391,12 +372,13 @@ export class IntentRecognizer extends Recognizer {
         this.dispose(true);
     }
 
-    protected createRecognizerConfig(speecgConfig: PlatformConfig, recognitionMode: RecognitionMode): RecognizerConfig {
-        return new RecognizerConfig(speecgConfig, recognitionMode, this.properties);
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(speechConfig, this.properties);
     }
+
     protected createServiceRecognizer(authentication: IAuthentication, connectionFactory: IConnectionFactory, audioConfig: AudioConfig, recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
         const audioImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
-        return new IntentServiceRecognizer(authentication, connectionFactory, audioImpl, recognizerConfig, this, this.privIntentDataSent);
+        return new IntentServiceRecognizer(authentication, connectionFactory, audioImpl, recognizerConfig, this);
     }
 
     protected dispose(disposing: boolean): void {
@@ -407,14 +389,6 @@ export class IntentRecognizer extends Recognizer {
         if (disposing) {
             this.privDisposedIntentRecognizer = true;
             super.dispose(disposing);
-        }
-    }
-
-    private implCloseExistingRecognizer(): void {
-        if (this.privReco) {
-            this.privReco.audioSource.turnOff();
-            this.privReco.dispose();
-            this.privReco = undefined;
         }
     }
 

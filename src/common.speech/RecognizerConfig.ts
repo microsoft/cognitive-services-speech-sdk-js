@@ -16,30 +16,33 @@ export enum SpeechResultFormat {
 
 export class RecognizerConfig {
     private privRecognitionMode: RecognitionMode = RecognitionMode.Interactive;
-    private privPlatformConfig: PlatformConfig;
+    private privSpeechServiceConfig: SpeechServiceConfig;
     private privRecognitionActivityTimeout: number;
-    private privSpeechConfig: PropertyCollection;
+    private privParameters: PropertyCollection;
 
     constructor(
-        platformConfig: PlatformConfig,
-        recognitionMode: RecognitionMode = RecognitionMode.Interactive,
-        speechConfig: PropertyCollection) {
-        this.privPlatformConfig = platformConfig ? platformConfig : new PlatformConfig(new Context(null));
-        this.privRecognitionMode = recognitionMode;
-        this.privRecognitionActivityTimeout = recognitionMode === RecognitionMode.Interactive ? 8000 : 25000;
-        this.privSpeechConfig = speechConfig;
+        speechServiceConfig: SpeechServiceConfig,
+        parameters: PropertyCollection) {
+        this.privSpeechServiceConfig = speechServiceConfig ? speechServiceConfig : new SpeechServiceConfig(new Context(null));
+        this.privParameters = parameters;
     }
 
     public get parameters(): PropertyCollection {
-        return this.privSpeechConfig;
+        return this.privParameters;
     }
 
     public get recognitionMode(): RecognitionMode {
         return this.privRecognitionMode;
     }
 
-    public get platformConfig(): PlatformConfig {
-        return this.privPlatformConfig;
+    public set recognitionMode(value: RecognitionMode) {
+        this.privRecognitionMode = value;
+        this.privRecognitionActivityTimeout = value === RecognitionMode.Interactive ? 8000 : 25000;
+        this.privSpeechServiceConfig.Recognition = RecognitionMode[value];
+    }
+
+    public get SpeechServiceConfig(): SpeechServiceConfig {
+        return this.privSpeechServiceConfig;
     }
 
     public get recognitionActivityTimeout(): number {
@@ -51,9 +54,11 @@ export class RecognizerConfig {
     }
 }
 
+// The config is serialized and sent as the Speech.Config
 // tslint:disable-next-line:max-classes-per-file
-export class PlatformConfig {
+export class SpeechServiceConfig {
     private context: Context;
+    private recognition: string;
 
     constructor(context: Context) {
         this.context = context;
@@ -78,6 +83,13 @@ export class PlatformConfig {
         return this.context;
     }
 
+    public get Recognition(): string {
+        return this.recognition;
+    }
+
+    public set Recognition(value: string) {
+        this.recognition = value.toLowerCase();
+    }
 }
 
 // tslint:disable-next-line:max-classes-per-file

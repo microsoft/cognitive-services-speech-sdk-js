@@ -37,3 +37,5 @@ export { TranslationRecognitionCanceledEventArgs } from "./TranslationRecognitio
 export { IntentRecognitionCanceledEventArgs } from "./IntentRecognitionCanceledEventArgs";
 export { CancellationDetails } from "./CancellationDetails";
 export { CancellationErrorCode } from "./CancellationErrorCodes";
+export { ConnectionEventArgs } from "./ConnectionEventArgs";
+export { Connection } from "./Connection";

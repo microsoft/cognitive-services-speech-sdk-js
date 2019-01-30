@@ -8,15 +8,16 @@ import {
     IAuthentication,
     IConnectionFactory,
     OS,
-    PlatformConfig,
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechServiceConfig,
 } from "../common.speech/Exports";
 import { Promise, PromiseHelper } from "../common/Exports";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
+    Connection,
     PropertyCollection,
     PropertyId,
     RecognitionEventArgs,
@@ -31,16 +32,21 @@ import {
 export abstract class Recognizer {
     private privDisposed: boolean;
     protected audioConfig: AudioConfig;
+    protected privReco: ServiceRecognizerBase;
+    protected privProperties: PropertyCollection;
+    private privConnectionFactory: IConnectionFactory;
 
     /**
      * Creates and initializes an instance of a Recognizer
      * @constructor
      * @param {AudioConfig} audioInput - An optional audio input stream associated with the recognizer
      */
-    protected constructor(audioConfig: AudioConfig) {
+    protected constructor(audioConfig: AudioConfig, properties: PropertyCollection, connectionFactory: IConnectionFactory) {
         this.audioConfig = (audioConfig !== undefined) ? audioConfig : AudioConfig.fromDefaultMicrophoneInput();
-
         this.privDisposed = false;
+        this.privProperties = properties.clone();
+        this.privConnectionFactory = connectionFactory;
+        this.implCommonRecognizerSetup();
     }
 
     /**
@@ -88,6 +94,15 @@ export abstract class Recognizer {
     }
 
     /**
+     * @Internal
+     * Internal data member to support fromRecognizer* pattern methods on other classes.
+     * Do not use externally, object returned will change without warning or notive.
+     */
+    public get internalData(): object {
+        return this.privReco;
+    }
+
+    /**
      * This method performs cleanup of resources.
      * The Boolean parameter disposing indicates whether the method is called
      * from Dispose (if disposing is true) or from the finalizer (if disposing is false).
@@ -103,7 +118,10 @@ export abstract class Recognizer {
         }
 
         if (disposing) {
-            // disconnect
+            if (this.privReco) {
+                this.privReco.audioSource.turnOff();
+                this.privReco.dispose();
+            }
         }
 
         this.privDisposed = true;
@@ -141,59 +159,60 @@ export abstract class Recognizer {
     // Move to independent class
     // ################################################################################################################
     //
+    protected abstract createRecognizerConfig(speecgConfig: SpeechServiceConfig): RecognizerConfig;
 
-    protected abstract createRecognizerConfig(speecgConfig: PlatformConfig, recognitionMode: RecognitionMode): RecognizerConfig;
+    // Creates the correct service recognizer for the type
+    protected abstract createServiceRecognizer(
+        authentication: IAuthentication,
+        connectionFactory: IConnectionFactory,
+        audioConfig: AudioConfig,
+        recognizerConfig: RecognizerConfig): ServiceRecognizerBase;
 
-    protected abstract createServiceRecognizer(authentication: IAuthentication, connectionFactory: IConnectionFactory,
-                                               audioConfig: AudioConfig, recognizerConfig: RecognizerConfig): ServiceRecognizerBase;
-
-    // Setup the recognizer
-    protected implRecognizerSetup(recognitionMode: RecognitionMode, speechProperties: PropertyCollection,
-                                  audioConfig: AudioConfig, speechConnectionFactory: IConnectionFactory): ServiceRecognizerBase {
+    // Does the generic recognizer setup that is common accross all recognizer types.
+    protected implCommonRecognizerSetup(): void {
 
         let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
         let osName = "unknown";
         let osVersion = "unknown";
 
         if (typeof navigator !== "undefined") {
-            osPlatform = osPlatform  + "/" + navigator.platform;
+            osPlatform = osPlatform + "/" + navigator.platform;
             osName = navigator.userAgent;
             osVersion = navigator.appVersion;
         }
 
         const recognizerConfig = this.createRecognizerConfig(
-            new PlatformConfig(
-                new Context(new OS(osPlatform, osName, osVersion))),
-            recognitionMode); // SDK.SpeechResultFormat.Simple (Options - Simple/Detailed)
+            new SpeechServiceConfig(
+                new Context(new OS(osPlatform, osName, osVersion))));
 
-        const subscriptionKey = speechProperties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
+        const subscriptionKey = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
         const authentication = subscriptionKey ?
             new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
             new CognitiveTokenAuthentication(
                 (authFetchEventId: string): Promise<string> => {
-                    const authorizationToken = speechProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
+                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return PromiseHelper.fromResult(authorizationToken);
                 },
                 (authFetchEventId: string): Promise<string> => {
-                    const authorizationToken = speechProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
+                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return PromiseHelper.fromResult(authorizationToken);
                 });
 
-        return this.createServiceRecognizer(
+        this.privReco = this.createServiceRecognizer(
             authentication,
-            speechConnectionFactory,
-            audioConfig,
+            this.privConnectionFactory,
+            this.audioConfig,
             recognizerConfig);
     }
 
     // Start the recognition
     protected implRecognizerStart(
-        recognizer: ServiceRecognizerBase,
+        recognitionMode: RecognitionMode,
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallback: (e: string) => void,
         speechContext?: string,
     ): void {
-        recognizer.recognize(speechContext, successCallback, errorCallback).on(
+        this.privReco.recognize(speechContext, recognitionMode, successCallback, errorCallback).on(
             /* tslint:disable:no-empty */
             (result: boolean): void => { },
             (error: string): void => {
@@ -202,5 +221,11 @@ export abstract class Recognizer {
                     errorCallback("Runtime error: " + error);
                 }
             });
+    }
+
+    protected implRecognizerStop(): void {
+        if (this.privReco) {
+            this.privReco.stopRecognizing();
+        }
     }
 }

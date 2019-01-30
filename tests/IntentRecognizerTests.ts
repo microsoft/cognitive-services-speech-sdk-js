@@ -569,13 +569,16 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         expect(s).not.toBeUndefined();
         s.speechRecognitionLanguage = "en-US";
 
-        const r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s);
+        let r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s);
         expect(r instanceof sdk.Recognizer).toEqual(true);
         // Node.js doesn't have a microphone natively. So we'll take the specific message that indicates that microphone init failed as evidence it was attempted.
         r.recognizeOnceAsync(() => fail("RecognizeOnceAsync returned success when it should have failed"),
             (error: string): void => {
                 expect(error).toEqual("Error: Browser does not support Web Audio API (AudioContext is not available).");
             });
+
+        r = new sdk.IntentRecognizer(s);
+        objsToClose.push(r);
 
         r.startContinuousRecognitionAsync(() => fail("startContinuousRecognitionAsync returned success when it should have failed"),
             (error: string): void => {
