@@ -1,0 +1,29 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+export interface IDynamicGrammar {
+    ReferenceGrammars?: string[];
+    Groups?: IDynamicGrammarGroup[];
+}
+
+export interface IDynamicGrammarGroup {
+    Type: string;
+    Name?: string;
+    SubstringMatch?: string; // None, LeftRooted, PartialName
+    Items: IDynamicGrammarPeople[] | IDynamicGrammarGeneric[];
+}
+
+export interface IDynamicGrammarPeople {
+    Name: string;
+    First?: string;
+    Middle?: string;
+    Last?: string;
+    Synonyms?: string[];
+    Weight?: number;
+}
+
+export interface IDynamicGrammarGeneric {
+    Text: string;
+    Synonyms?: string[];
+    Weight?: number;
+}

@@ -1,7 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-export class DynamicGrammar {
+import {
+    IDynamicGrammar,
+    IDynamicGrammarGeneric,
+} from "./Exports";
+
+export class DynamicGrammarBuilder {
 
     private privPhrases: string[];
     private privGrammars: string[];
@@ -43,14 +48,26 @@ export class DynamicGrammar {
         this.privGrammars = undefined;
     }
 
-    public generateSpeechContext(): object {
-        if (!this.privGrammars && !this.privPhrases) {
+    public generateGrammar(): IDynamicGrammar {
+        if (this.privGrammars === undefined && this.privPhrases === undefined) {
             return undefined;
         }
 
-        const retObj: { [k: string]: any } = {};
-        /* tslint:disable:no-string-literal */
-        retObj["ReferenceGrammars"] = this.privGrammars;
-        /* tslint:enable:no-string-literal */
+        const retObj: IDynamicGrammar = {};
+        retObj.ReferenceGrammars = this.privGrammars;
+
+        if (undefined !== this.privPhrases && 0 !== this.privPhrases.length) {
+            const retPhrases: IDynamicGrammarGeneric[] = [];
+
+            this.privPhrases.forEach((value: string, index: number, array: string[]): void => {
+                retPhrases.push({
+                    Text: value,
+                });
+            });
+
+            retObj.Groups = [{ Type: "Generic", Items: retPhrases }];
+        }
+
+        return retObj;
     }
 }

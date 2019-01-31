@@ -33,7 +33,7 @@ import {
     SpeechRecognitionResult,
 } from "../sdk/Exports";
 import {
-    DynamicGrammar,
+    DynamicGrammarBuilder,
     RecognitionMode,
     RequestSession,
     SpeechContext,
@@ -67,7 +67,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privSpeechContext: SpeechContext;
-    private privDynamicGrammar: DynamicGrammar;
+    private privDynamicGrammar: DynamicGrammarBuilder;
     protected privRequestSession: RequestSession;
     protected privRecognizerConfig: RecognizerConfig;
 
@@ -103,7 +103,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privRecognizer = recognizer;
         this.privRequestSession = new RequestSession(this.privAudioSource.id());
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
-        this.privDynamicGrammar = new DynamicGrammar();
+        this.privDynamicGrammar = new DynamicGrammarBuilder();
         this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
     }
 
@@ -115,7 +115,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privSpeechContext;
     }
 
-    public get dynamicGrammar(): DynamicGrammar {
+    public get dynamicGrammar(): DynamicGrammarBuilder {
         return this.privDynamicGrammar;
     }
 

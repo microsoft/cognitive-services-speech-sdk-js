@@ -1,13 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { DynamicGrammar } from "./Exports";
+import {
+    DynamicGrammarBuilder,
+    IDynamicGrammar,
+} from "./Exports";
 
 export class SpeechContext {
     private privContext: { [section: string]: any } = {};
-    private privDynamicGrammar: DynamicGrammar;
+    private privDynamicGrammar: DynamicGrammarBuilder;
 
-    constructor(dynamicGrammar: DynamicGrammar) {
+    constructor(dynamicGrammar: DynamicGrammarBuilder) {
         this.privDynamicGrammar = dynamicGrammar;
     }
 
@@ -16,7 +19,11 @@ export class SpeechContext {
     }
 
     public toJSON(): string {
-        this.setSection("dgi", this.privDynamicGrammar.generateSpeechContext());
-        return JSON.stringify(this.privContext);
+
+        const dgi: IDynamicGrammar = this.privDynamicGrammar.generateGrammar();
+        this.setSection("dgi", dgi);
+
+        const ret: string = JSON.stringify(this.privContext);
+        return ret;
     }
 }
