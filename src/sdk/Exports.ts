@@ -39,3 +39,4 @@ export { CancellationDetails } from "./CancellationDetails";
 export { CancellationErrorCode } from "./CancellationErrorCodes";
 export { ConnectionEventArgs } from "./ConnectionEventArgs";
 export { Connection } from "./Connection";
+export { PhraseListGrammar } from "./PhraseListGrammar";

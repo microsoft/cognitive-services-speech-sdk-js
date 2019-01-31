@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { ServiceRecognizerBase } from "../src/common.speech/Exports";
@@ -50,7 +51,7 @@ afterEach(() => {
     });
 });
 
-const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig): sdk.SpeechRecognizer => {
+const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
 
     let s: sdk.SpeechConfig = speechConfig;
     if (s === undefined) {
@@ -59,7 +60,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig) => sdk.Spee
         objsToClose.push(s);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
+    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
     const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
 
     const language: string = Settings.WaveFileLanguage;
@@ -2506,3 +2507,76 @@ test("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCall
         done();
     });
 }, 20000);
+
+test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Ambiguous Speech default as expected");
+
+    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync(
+        (p2: sdk.SpeechRecognitionResult) => {
+
+            const res: sdk.SpeechRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Recognize speech.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist assists speech Reco.");
+
+    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.FromRecognizer(r);
+    phraseList.AddPhrase("Wreck a nice beach.");
+
+    r.recognizeOnceAsync(
+        (p2: sdk.SpeechRecognitionResult) => {
+
+            const res: sdk.SpeechRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Wreck a nice beach.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist extra phraselists have no effect.");
+
+    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.FromRecognizer(r);
+    phraseList.AddPhrase("Wreck a nice beach.");
+    phraseList.AddPhrase("Escaped robot fights for his life, film at 11.");
+
+    r.recognizeOnceAsync(
+        (p2: sdk.SpeechRecognitionResult) => {
+
+            const res: sdk.SpeechRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Wreck a nice beach.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});

@@ -48,7 +48,7 @@ const ValidateResultMatchesWaveFile = (res: sdk.SpeechRecognitionResult): void =
     expect(Math.abs(res.offset - Settings.LuisWaveFileOffset) / Settings.LuisWaveFileOffset).toBeLessThanOrEqual(0.05);
 };
 
-const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig) => sdk.IntentRecognizer = (speechConfig?: sdk.SpeechConfig): sdk.IntentRecognizer => {
+const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, audioFileName?: string) => sdk.IntentRecognizer = (speechConfig?: sdk.SpeechConfig, audioFileName?: string): sdk.IntentRecognizer => {
 
     let s: sdk.SpeechConfig = speechConfig;
     if (s === undefined) {
@@ -57,7 +57,8 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig) => sdk.Inte
         objsToClose.push(s);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.LuisWaveFile);
+    const fileName: string = undefined === audioFileName ? Settings.LuisWaveFile : audioFileName;
+    const f: File = WaveFileAudioInput.LoadFile(fileName);
     const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
 
     const language: string = Settings.WaveFileLanguage;
@@ -907,6 +908,79 @@ test("Bad DataType for PushStreams results in error", (done: jest.DoneCallback) 
             } catch (error) {
                 done.fail(error);
             }
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Ambiguous Speech default as expected");
+
+    const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync(
+        (p2: sdk.IntentRecognitionResult) => {
+
+            const res: sdk.IntentRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Recognize speech.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist assists speech Reco.");
+
+    const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.FromRecognizer(r);
+    phraseList.AddPhrase("Wreck a nice beach.");
+
+    r.recognizeOnceAsync(
+        (p2: sdk.IntentRecognitionResult) => {
+
+            const res: sdk.IntentRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Wreck a nice beach.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist extra phraselists have no effect.");
+
+    const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.FromRecognizer(r);
+    phraseList.AddPhrase("Wreck a nice beach.");
+    phraseList.AddPhrase("Escaped robot fights for his life, film at 11.");
+
+    r.recognizeOnceAsync(
+        (p2: sdk.IntentRecognitionResult) => {
+
+            const res: sdk.IntentRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Wreck a nice beach.");
+            done();
         },
         (error: string) => {
             done.fail(error);
