@@ -6,6 +6,10 @@ import {
     IDynamicGrammarGeneric,
 } from "./Exports";
 
+/**
+ * Responsible for building the object to be sent to the speech service to support dynamic grammars.
+ * @class DynamicGrammarBuilder
+ */
 export class DynamicGrammarBuilder {
 
     private privPhrases: string[];
