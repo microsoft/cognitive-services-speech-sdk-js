@@ -270,43 +270,48 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         // TODO there is no guarantee that SessionStoppedEvent comes before the recognizeOnceAsync() call returns?!
         //      this is why below SessionStoppedEvent checks are conditional
         r.recognizeOnceAsync((res: sdk.TranslationRecognitionResult) => {
-            expect(res).not.toBeUndefined();
-            expect(res.errorDetails).toBeUndefined();
-            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
+            try {
+                expect(res).not.toBeUndefined();
+                expect(res.errorDetails).toBeUndefined();
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-            expect(res.translations.get("de", "No Translation")).toEqual("Wie ist das Wetter?");
+                expect(res.translations.get("de", "No Translation")).toEqual("Wie ist das Wetter?");
 
-            // session events are first and last event
-            const LAST_RECORDED_EVENT_ID: number = eventIdentifier;
-            expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
-            expect(FIRST_EVENT_ID).toEqual(eventsMap[Session + ":" + SessionStartedEvent]);
+                // session events are first and last event
+                const LAST_RECORDED_EVENT_ID: number = eventIdentifier;
+                expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
+                expect(FIRST_EVENT_ID).toEqual(eventsMap[Session + ":" + SessionStartedEvent]);
 
-            if (Session + ":" + SessionStoppedEvent in eventsMap) {
-                expect(LAST_RECORDED_EVENT_ID).toEqual(eventsMap[Session + ":" + SessionStoppedEvent]);
+                if (Session + ":" + SessionStoppedEvent in eventsMap) {
+                    expect(LAST_RECORDED_EVENT_ID).toEqual(eventsMap[Session + ":" + SessionStoppedEvent]);
+                }
+
+                // end events come after start events.
+                if (Session + ":" + SessionStoppedEvent in eventsMap) {
+                    expect(eventsMap[Session + ":" + SessionStartedEvent]).toBeLessThan(eventsMap[Session + ":" + SessionStoppedEvent]);
+                }
+
+                expect((FIRST_EVENT_ID + 1)).toEqual(eventsMap[SpeechStartDetectedEvent]);
+
+                // recognition events come after session start but before session end events
+                expect(eventsMap[Session + ":" + SessionStartedEvent]).toBeLessThan(eventsMap[SpeechStartDetectedEvent]);
+
+                if (Session + ":" + SessionStoppedEvent in eventsMap) {
+                    expect(eventsMap[SpeechEndDetectedEvent]).toBeLessThan(eventsMap[Session + ":" + SessionStoppedEvent]);
+                }
+
+                // there is no partial result reported after the final result
+                // (and check that we have intermediate and final results recorded)
+                expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
+
+                // make sure events we don't expect, don't get raised
+                expect(Canceled in eventsMap).toEqual(false);
+                done();
+            } catch (error) {
+                done.fail(error);
             }
-
-            // end events come after start events.
-            if (Session + ":" + SessionStoppedEvent in eventsMap) {
-                expect(eventsMap[Session + ":" + SessionStartedEvent]).toBeLessThan(eventsMap[Session + ":" + SessionStoppedEvent]);
-            }
-
-            expect((FIRST_EVENT_ID + 1)).toEqual(eventsMap[SpeechStartDetectedEvent]);
-
-            // recognition events come after session start but before session end events
-            expect(eventsMap[Session + ":" + SessionStartedEvent]).toBeLessThan(eventsMap[SpeechStartDetectedEvent]);
-
-            if (Session + ":" + SessionStoppedEvent in eventsMap) {
-                expect(eventsMap[SpeechEndDetectedEvent]).toBeLessThan(eventsMap[Session + ":" + SessionStoppedEvent]);
-            }
-
-            // there is no partial result reported after the final result
-            // (and check that we have intermediate and final results recorded)
-            expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
-
-            // make sure events we don't expect, don't get raised
-            expect(Canceled in eventsMap).toEqual(false);
-            done();
-
         }, (error: string) => {
             done.fail(error);
         });
@@ -369,6 +374,12 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         r.recognized = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs) => {
             const result: string = e.result.translations.get("de", "");
             rEvents["Result@" + Date.now()] = result;
+            try {
+                expect(e.result.properties).not.toBeUndefined();
+                expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
         });
 
         r.startContinuousRecognitionAsync();
@@ -376,8 +387,11 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         WaitForCondition((): boolean => {
             return Object.keys(rEvents).length > 0;
         }, () => {
-            expect(rEvents[Object.keys(rEvents)[0]]).toEqual("Wie ist das Wetter?");
-
+            try {
+                expect(rEvents[Object.keys(rEvents)[0]]).toEqual("Wie ist das Wetter?");
+            } catch (error) {
+                done.fail(error);
+            }
             r.stopContinuousRecognitionAsync(() => done(), (error: string) => done.fail(error));
         });
     });
@@ -592,6 +606,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         r.recognizing = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
             try {
                 expect(e.result.reason).toEqual(sdk.ResultReason.TranslatingSpeech);
+                expect(e.result.properties).not.toBeUndefined();
+                expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
             } catch (error) {
                 done.fail(error);
             }
@@ -741,6 +757,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     r2.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
                         try {
                             expect(e.result.text).toEqual("Wie ist das Wetter?");
+                            expect(e.result.properties).not.toBeUndefined();
+                            expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
                             numEvents++;
                         } catch (error) {
                             done.fail(error);

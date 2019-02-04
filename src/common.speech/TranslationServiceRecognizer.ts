@@ -1,11 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IAudioSource, IConnection, TranslationStatus } from "../common/Exports";
+import {
+    IAudioSource,
+    MessageType,
+    TranslationStatus,
+} from "../common/Exports";
 import {
     CancellationErrorCode,
     CancellationReason,
     PropertyCollection,
+    PropertyId,
     ResultReason,
     SpeechRecognitionResult,
     TranslationRecognitionCanceledEventArgs,
@@ -20,7 +25,6 @@ import {
     CancellationErrorCodePropertyName,
     EnumTranslation,
     RecognitionStatus,
-    RequestSession,
     ServiceRecognizerBase,
     SynthesisStatus,
     TranslationHypothesis,
@@ -53,10 +57,15 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         successCallback?: (e: TranslationRecognitionResult) => void,
         errorCallBack?: (e: string) => void): void {
 
+        const resultProps: PropertyCollection = new PropertyCollection();
+        if (connectionMessage.messageType === MessageType.Text) {
+            resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
+        }
+
         switch (connectionMessage.path.toLowerCase()) {
             case "translation.hypothesis":
 
-                const result: TranslationRecognitionEventArgs = this.fireEventForResult(TranslationHypothesis.fromJSON(connectionMessage.textBody));
+                const result: TranslationRecognitionEventArgs = this.fireEventForResult(TranslationHypothesis.fromJSON(connectionMessage.textBody), resultProps);
 
                 if (!!this.privTranslationRecognizer.recognizing) {
                     try {
@@ -81,7 +90,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                     this.privRequestSession.onServiceRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
 
                     // OK, the recognition was successful. How'd the translation do?
-                    const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase);
+                    const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, resultProps);
                     if (!!this.privTranslationRecognizer.recognized) {
                         try {
                             this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, result);
@@ -121,7 +130,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         translatedPhrase.Offset,
                         undefined,
                         connectionMessage.textBody,
-                        undefined);
+                        resultProps);
 
                     if (reason === ResultReason.Canceled) {
                         const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(translatedPhrase.RecognitionStatus);
@@ -271,7 +280,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         }
     }
 
-    private fireEventForResult(serviceResult: TranslationHypothesis | TranslationPhrase): TranslationRecognitionEventArgs {
+    private fireEventForResult(serviceResult: TranslationHypothesis | TranslationPhrase, properties: PropertyCollection): TranslationRecognitionEventArgs {
         let translations: Translations;
 
         if (undefined !== serviceResult.Translation.Translations) {
@@ -303,7 +312,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
             offset,
             serviceResult.Translation.FailureReason,
             JSON.stringify(serviceResult),
-            undefined);
+            properties);
 
         const ev = new TranslationRecognitionEventArgs(result, offset, this.privRequestSession.sessionId);
         return ev;

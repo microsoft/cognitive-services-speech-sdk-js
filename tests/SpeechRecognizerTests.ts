@@ -177,6 +177,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
             expect(result).not.toBeUndefined();
             expect(result.text).toEqual(Settings.WaveFileText);
+            expect(result.properties).not.toBeUndefined();
+            expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
             done();
         }, (error: string) => {
@@ -220,6 +222,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                         expect(res.text).toEqual("What's the weather like?");
                         expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                         expect(telemetryEvents).toEqual(1);
+                        expect(res.properties).not.toBeUndefined();
+                        expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                         done();
                     } catch (error) {
                         done.fail(error);
@@ -553,6 +558,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 eventDone = true;
                 expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(e.result.text).toEqual("What's the weather like?");
+                expect(e.result.properties).not.toBeUndefined();
+                expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
             } catch (error) {
                 done.fail(error);
             }
@@ -660,6 +668,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                 done();
             },
             (error: string) => {
@@ -690,6 +701,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -752,6 +765,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -804,6 +819,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -887,6 +904,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
                 expect(res.text).toBeUndefined();
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                 expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
@@ -907,6 +926,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
                 expect(res.errorDetails).toBeUndefined();
                 expect(res.text).toBeUndefined();
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                 expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
@@ -1005,6 +1026,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(p2.reason).toEqual(sdk.ResultReason.Canceled);
                 const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
                 expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+                expect(p2.properties).not.toBeUndefined();
+                expect(p2.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 if (true === oneCalled) {
                     done();
@@ -1059,6 +1082,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -1103,6 +1128,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res.reason).toEqual(sdk.ResultReason.NoMatch);
                 const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                 expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -1440,6 +1467,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
                 expect(e.errorDetails).toContain("1006");
+
                 doneCount++;
             } catch (error) {
                 done.fail(error);
