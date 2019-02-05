@@ -1,7 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IAudioSource, IConnection } from "../common/Exports";
+import {
+    IAudioSource,
+    MessageType,
+} from "../common/Exports";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -61,6 +64,11 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
         let result: IntentRecognitionResult;
         let ev: IntentRecognitionEventArgs;
 
+        const resultProps: PropertyCollection = new PropertyCollection();
+        if (connectionMessage.messageType === MessageType.Text) {
+            resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
+        }
+
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
                 const speechHypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
@@ -74,7 +82,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     speechHypothesis.Offset + this.privRequestSession.currentTurnAudioOffset,
                     undefined,
                     connectionMessage.textBody,
-                    undefined);
+                    resultProps);
 
                 ev = new IntentRecognitionEventArgs(result, speechHypothesis.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
 
@@ -100,7 +108,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     simple.Offset + this.privRequestSession.currentTurnAudioOffset,
                     undefined,
                     connectionMessage.textBody,
-                    undefined);
+                    resultProps);
 
                 ev = new IntentRecognitionEventArgs(result, result.offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
 

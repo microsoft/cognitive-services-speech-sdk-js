@@ -99,9 +99,11 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (p2: sdk.IntentRecognitionResult) => {
 
                 const res: sdk.IntentRecognitionResult = p2;
+                expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
                 expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
-                expect(res).not.toBeUndefined();
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
                 ValidateResultMatchesWaveFile(res);
                 done();
             },
@@ -146,6 +148,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedIntent]);
                 expect(res.intentId).toEqual(Settings.LuisValidIntentId);
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
                 ValidateResultMatchesWaveFile(res);
                 done();
             },
@@ -249,6 +253,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
                 expect(res.text).toBeUndefined();
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                 expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
@@ -269,6 +275,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
                 expect(res.errorDetails).toBeUndefined();
                 expect(res.text).toBeUndefined();
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                 expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
@@ -320,6 +328,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(res.reason).toEqual(sdk.ResultReason.RecognizedIntent);
                 expect(res.intentId).toEqual(Settings.LuisValidIntentId);
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                 ValidateResultMatchesWaveFile(res);
 
                 r.stopContinuousRecognitionAsync(() => {
@@ -358,6 +369,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res.errorDetails).toBeUndefined();
                 expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
                 expect(res.intentId).toBeUndefined();
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                 ValidateResultMatchesWaveFile(res);
                 done();
             },
@@ -437,6 +451,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedIntent]);
                     expect(res.intentId).toEqual(Settings.LuisValidIntentId);
                     expect(res.text).toEqual(Settings.LuisWavFileText);
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                     numIntents++;
                 } else {
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.NoMatch]);
@@ -486,6 +503,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res.errorDetails).toBeUndefined();
                 expect(res.reason).toEqual(sdk.ResultReason.RecognizedIntent);
                 expect(res.intentId).toEqual(intentName);
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                 ValidateResultMatchesWaveFile(res);
                 done();
             },
@@ -512,6 +532,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedIntent]);
                 expect(res.intentId).toEqual(Settings.LuisValidIntentId);
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                 ValidateResultMatchesWaveFile(res);
                 expect(res.properties.getProperty(sdk.PropertyId.LanguageUnderstandingServiceResponse_JsonResult)).not.toBeUndefined();
                 done();
@@ -539,6 +562,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedIntent]);
                 expect(res.intentId).toEqual("alias");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                 ValidateResultMatchesWaveFile(res);
                 done();
             },

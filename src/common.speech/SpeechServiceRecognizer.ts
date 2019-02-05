@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IAudioSource, IConnection } from "../common/Exports";
+import { IAudioSource } from "../common/Exports";
 import {
     CancellationErrorCode,
     CancellationReason,
     OutputFormat,
     PropertyCollection,
+    PropertyId,
     ResultReason,
     SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
@@ -50,6 +51,8 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         errorCallBack?: (e: string) => void): void {
 
         let result: SpeechRecognitionResult;
+        const resultProps: PropertyCollection = new PropertyCollection();
+        resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
@@ -63,7 +66,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset,
                     undefined,
                     connectionMessage.textBody,
-                    undefined);
+                    resultProps);
 
                 const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
 
@@ -98,7 +101,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                         undefined,
                         undefined,
                         connectionMessage.textBody,
-                        undefined);
+                        resultProps);
 
                     if (!!this.privSpeechRecognizer.canceled) {
                         const cancelEvent: SpeechRecognitionCanceledEventArgs = new SpeechRecognitionCanceledEventArgs(
@@ -123,7 +126,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                                 simple.Offset + this.privRequestSession.currentTurnAudioOffset,
                                 undefined,
                                 connectionMessage.textBody,
-                                undefined);
+                                resultProps);
                         } else {
                             const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody);
 
@@ -135,7 +138,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                                 detailed.Offset + this.privRequestSession.currentTurnAudioOffset,
                                 undefined,
                                 connectionMessage.textBody,
-                                undefined);
+                                resultProps);
                         }
 
                         const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
