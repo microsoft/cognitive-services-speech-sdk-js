@@ -22,7 +22,7 @@ beforeEach(() => console.info("---------------------------------------Starting t
 test("Empty Grammar, empty output.", () => {
     const dgi: DynamicGrammarBuilder = new DynamicGrammarBuilder();
 
-    const ret: object = dgi.generateGrammar();
+    const ret: object = dgi.generateGrammarObject();
     expect(ret).toBeUndefined();
 });
 
@@ -30,7 +30,7 @@ test("Single RefGrammar", () => {
     const dgi: DynamicGrammarBuilder = new DynamicGrammarBuilder();
     dgi.addReferenceGrammar("Singlegrammar");
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.ReferenceGrammars).not.toBeUndefined();
     const refGrammars: string[] = ret.ReferenceGrammars;
@@ -43,7 +43,7 @@ test("Single RefGrammar, twice", () => {
     dgi.addReferenceGrammar("Singlegrammar");
     dgi.addReferenceGrammar("Anothergrammar");
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.ReferenceGrammars).not.toBeUndefined();
     const refGrammars: string[] = ret.ReferenceGrammars;
@@ -56,7 +56,7 @@ test("Multiple RefGrammar", () => {
     const dgi: DynamicGrammarBuilder = new DynamicGrammarBuilder();
     dgi.addReferenceGrammar(["Firstgrammar", "Secondgrammar"]);
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.ReferenceGrammars).not.toBeUndefined();
     const refGrammars: string[] = ret.ReferenceGrammars;
@@ -70,7 +70,7 @@ test("Multiple RefGrammar Twice", () => {
     dgi.addReferenceGrammar(["Firstgrammar", "Secondgrammar"]);
     dgi.addReferenceGrammar(["Thirdgrammar", "Fourthgrammar"]);
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.ReferenceGrammars).not.toBeUndefined();
     const refGrammars: string[] = ret.ReferenceGrammars;
@@ -86,7 +86,7 @@ test("Mix Multiple/Single RefGrammar", () => {
     dgi.addReferenceGrammar(["Firstgrammar", "Secondgrammar"]);
     dgi.addReferenceGrammar("Thirdgrammar");
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.ReferenceGrammars).not.toBeUndefined();
     const refGrammars: string[] = ret.ReferenceGrammars;
@@ -100,7 +100,7 @@ test("Single Phrase", () => {
     const dgi: DynamicGrammarBuilder = new DynamicGrammarBuilder();
     dgi.addPhrase("Singlephrase");
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.Groups).not.toBeUndefined();
     const dgGroups: IDynamicGrammarGroup[] = ret.Groups;
@@ -120,7 +120,7 @@ test("Single Phrase, twice", () => {
     dgi.addPhrase("Singlephrase");
     dgi.addPhrase("Anotherphrase");
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.Groups).not.toBeUndefined();
     const dgGroups: IDynamicGrammarGroup[] = ret.Groups;
@@ -142,7 +142,7 @@ test("Multiple Phrase", () => {
     const dgi: DynamicGrammarBuilder = new DynamicGrammarBuilder();
     dgi.addPhrase(["Firstphrase", "Secondphrase"]);
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.Groups).not.toBeUndefined();
     const dgGroups: IDynamicGrammarGroup[] = ret.Groups;
@@ -165,7 +165,7 @@ test("Multiple Phrase Twice", () => {
     dgi.addPhrase(["Firstphrase", "Secondphrase"]);
     dgi.addPhrase(["Thirdphrase", "Fourthphrase"]);
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.Groups).not.toBeUndefined();
     const dgGroups: IDynamicGrammarGroup[] = ret.Groups;
@@ -195,7 +195,7 @@ test("Mix Multiple/Single Phrase", () => {
     dgi.addPhrase(["Firstphrase", "Secondphrase"]);
     dgi.addPhrase("Thirdphrase");
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.Groups).not.toBeUndefined();
     const dgGroups: IDynamicGrammarGroup[] = ret.Groups;
@@ -223,7 +223,7 @@ test("Phrase and Grammars", () => {
     dgi.addPhrase(["Firstphrase", "Secondphrase"]);
     dgi.addPhrase("Thirdphrase");
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.ReferenceGrammars).not.toBeUndefined();
     const refGrammars: string[] = ret.ReferenceGrammars;
@@ -256,7 +256,7 @@ test("Clearing RefGrammars does", () => {
     dgi.addReferenceGrammar("Singlegrammar");
     dgi.clearGrammars();
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).toBeUndefined();
 });
 
@@ -265,7 +265,7 @@ test("Clearing Phrases does", () => {
     dgi.addPhrase("Singlegrammar");
     dgi.clearPhrases();
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).toBeUndefined();
 });
 
@@ -275,7 +275,7 @@ test("Add / clear / add Phrase", () => {
     dgi.clearPhrases();
     dgi.addPhrase("Singlephrase");
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.Groups).not.toBeUndefined();
     const dgGroups: IDynamicGrammarGroup[] = ret.Groups;
@@ -296,7 +296,7 @@ test("Add / clear / add RefGrammar", () => {
     dgi.clearGrammars();
     dgi.addReferenceGrammar("Singlegrammar");
 
-    const ret: IDynamicGrammar = dgi.generateGrammar();
+    const ret: IDynamicGrammar = dgi.generateGrammarObject();
     expect(ret).not.toBeUndefined();
     expect(ret.ReferenceGrammars).not.toBeUndefined();
     const refGrammars: string[] = ret.ReferenceGrammars;

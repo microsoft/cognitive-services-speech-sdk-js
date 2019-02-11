@@ -29,7 +29,7 @@ export class SpeechContext {
 
     public toJSON(): string {
 
-        const dgi: IDynamicGrammar = this.privDynamicGrammar.generateGrammar();
+        const dgi: IDynamicGrammar = this.privDynamicGrammar.generateGrammarObject();
         this.setSection("dgi", dgi);
 
         const ret: string = JSON.stringify(this.privContext);

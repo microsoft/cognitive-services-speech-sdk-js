@@ -15,7 +15,7 @@ export class DynamicGrammarBuilder {
     private privPhrases: string[];
     private privGrammars: string[];
 
-    // Adds one more reference phrases to the next context to send.
+    // Adds one more reference phrases to the dynamic grammar to send.
     // All added phrases are generic phrases.
     public addPhrase(phrase: string | string[]): void {
         if (!this.privPhrases) {
@@ -29,12 +29,12 @@ export class DynamicGrammarBuilder {
         }
     }
 
-    // Clears all phrases stored on the recognizer.
+    // Clears all phrases stored in the current object.
     public clearPhrases(): void {
         this.privPhrases = undefined;
     }
 
-    // Adds one or more reference grammars to the next context to send.
+    // Adds one or more reference grammars to the current grammar.
     public addReferenceGrammar(grammar: string | string[]): void {
         if (!this.privGrammars) {
             this.privGrammars = [];
@@ -47,12 +47,15 @@ export class DynamicGrammarBuilder {
         }
     }
 
-    // clears all grammers stored on the recognizer.
+    // clears all grammars stored on the recognizer.
     public clearGrammars(): void {
         this.privGrammars = undefined;
     }
 
-    public generateGrammar(): IDynamicGrammar {
+    // Generates an object that represents the dynamic grammar used by the Speech Service.
+    // This is done by building an object with the correct layout based on the phrases and reference grammars added to this instance
+    // of a DynamicGrammarBuilder
+    public generateGrammarObject(): IDynamicGrammar {
         if (this.privGrammars === undefined && this.privPhrases === undefined) {
             return undefined;
         }
