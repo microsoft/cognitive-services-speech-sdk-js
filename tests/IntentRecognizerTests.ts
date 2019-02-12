@@ -48,7 +48,7 @@ const ValidateResultMatchesWaveFile = (res: sdk.SpeechRecognitionResult): void =
     expect(Math.abs(res.offset - Settings.LuisWaveFileOffset) / Settings.LuisWaveFileOffset).toBeLessThanOrEqual(0.05);
 };
 
-const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig) => sdk.IntentRecognizer = (speechConfig?: sdk.SpeechConfig): sdk.IntentRecognizer => {
+const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, audioFileName?: string) => sdk.IntentRecognizer = (speechConfig?: sdk.SpeechConfig, audioFileName?: string): sdk.IntentRecognizer => {
 
     let s: sdk.SpeechConfig = speechConfig;
     if (s === undefined) {
@@ -57,7 +57,8 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig) => sdk.Inte
         objsToClose.push(s);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.LuisWaveFile);
+    const fileName: string = undefined === audioFileName ? Settings.LuisWaveFile : audioFileName;
+    const f: File = WaveFileAudioInput.LoadFile(fileName);
     const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
 
     const language: string = Settings.WaveFileLanguage;
@@ -933,6 +934,173 @@ test("Bad DataType for PushStreams results in error", (done: jest.DoneCallback) 
             } catch (error) {
                 done.fail(error);
             }
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Ambiguous Speech default as expected");
+
+    const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync(
+        (p2: sdk.IntentRecognitionResult) => {
+
+            const res: sdk.IntentRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Recognize speech.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist assists speech Reco.");
+
+    const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
+    phraseList.addPhrase("Wreck a nice beach.");
+
+    r.recognizeOnceAsync(
+        (p2: sdk.IntentRecognitionResult) => {
+
+            const res: sdk.IntentRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Wreck a nice beach.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test("Phraselist Clear works.", (done: jest.DoneCallback) => {
+
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist Clear works.");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.AmbiguousWaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let recoCount: number = 0;
+    let phraseAdded: boolean = true;
+    const dynamicPhrase: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
+    dynamicPhrase.addPhrase("Wreck a nice beach.");
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
+        try {
+            const res: sdk.IntentRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            if (phraseAdded) {
+                expect(res.text).toContain("Wreck a nice beach.");
+            } else {
+                expect(res.text).toEqual("Recognize speech.");
+            }
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.recognizeOnceAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return recoCount === 1;
+    }, () => {
+        dynamicPhrase.clear();
+        phraseAdded = false;
+        sendSilence = false;
+
+        r.startContinuousRecognitionAsync(
+            undefined,
+            (error: string) => {
+                done.fail(error);
+            });
+    });
+
+    WaitForCondition(() => {
+        return recoCount === 2;
+    }, () => {
+        done();
+    });
+}, 20000);
+
+test("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist extra phraselists have no effect.");
+
+    const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
+    phraseList.addPhrase("Wreck a nice beach.");
+    phraseList.addPhrase("Escaped robot fights for his life, film at 11.");
+
+    r.recognizeOnceAsync(
+        (p2: sdk.IntentRecognitionResult) => {
+
+            const res: sdk.IntentRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Wreck a nice beach.");
+            done();
         },
         (error: string) => {
             done.fail(error);

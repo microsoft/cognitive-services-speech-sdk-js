@@ -33,7 +33,6 @@ export class RequestSession {
     private privIsRecognizing: boolean = false;
     private privRequestCompletionDeferral: Deferred<boolean>;
     private privIsSpeechEnded: boolean = false;
-    private privContextJson: string;
     private privTurnStartAudioOffset: number = 0;
     private privLastRecoOffset: number = 0;
 
@@ -44,10 +43,6 @@ export class RequestSession {
         this.privRequestId = createNoDashGuid();
         this.privAudioNodeId = createNoDashGuid();
         this.privRequestCompletionDeferral = new Deferred<boolean>();
-    }
-
-    public get contextJson(): string {
-        return this.privContextJson;
     }
 
     public get sessionId(): string {
@@ -84,12 +79,11 @@ export class RequestSession {
         }
     }
 
-    public startNewRecognition(contextJson: string): void {
+    public startNewRecognition(): void {
         this.privIsRecognizing = true;
         this.privTurnStartAudioOffset = 0;
         this.privLastRecoOffset = 0;
         this.privRequestId = createNoDashGuid();
-        this.privContextJson = contextJson;
         this.privServiceTelemetryListener = new ServiceTelemetryListener(this.privRequestId, this.privAudioSourceId, this.privAudioNodeId);
         this.onEvent(new RecognitionTriggeredEvent(this.requestId, this.privSessionId, this.privAudioSourceId, this.privAudioNodeId));
     }

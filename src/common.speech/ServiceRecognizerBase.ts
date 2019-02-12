@@ -33,8 +33,10 @@ import {
     SpeechRecognitionResult,
 } from "../sdk/Exports";
 import {
+    DynamicGrammarBuilder,
     RecognitionMode,
     RequestSession,
+    SpeechContext,
     SpeechDetected,
 } from "./Exports";
 import {
@@ -64,6 +66,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privRecognizer: Recognizer;
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
+    private privSpeechContext: SpeechContext;
+    private privDynamicGrammar: DynamicGrammarBuilder;
     protected privRequestSession: RequestSession;
     protected privRecognizerConfig: RecognizerConfig;
 
@@ -99,10 +103,20 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privRecognizer = recognizer;
         this.privRequestSession = new RequestSession(this.privAudioSource.id());
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
+        this.privDynamicGrammar = new DynamicGrammarBuilder();
+        this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
     }
 
     public get audioSource(): IAudioSource {
         return this.privAudioSource;
+    }
+
+    public get speechContext(): SpeechContext {
+        return this.privSpeechContext;
+    }
+
+    public get dynamicGrammar(): DynamicGrammarBuilder {
+        return this.privDynamicGrammar;
     }
 
     public isDisposed(): boolean {
@@ -127,7 +141,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     public recognize(
-        speechContextJson: string,
         recoMode: RecognitionMode,
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallBack: (e: string) => void,
@@ -137,7 +150,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionConfigurationPromise = null;
         this.privRecognizerConfig.recognitionMode = recoMode;
 
-        this.privRequestSession.startNewRecognition(speechContextJson);
+        this.privRequestSession.startNewRecognition();
         this.privRequestSession.listenForServiceTelemetry(this.privAudioSource.events);
 
         return this.audioSource
@@ -364,7 +377,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
             return this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
                 .onSuccessContinueWithPromise((_: boolean) => {
-                    return this.sendSpeechContext(connection, this.privRequestSession, this.privRequestSession.contextJson).onSuccessContinueWith((_: boolean) => {
+                    return this.sendSpeechContext(connection).onSuccessContinueWith((_: boolean) => {
                         return connection;
                     });
                 });
@@ -448,7 +461,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                     return PromiseHelper.fromResult(true);
                                 } else {
                                     this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
-                                        this.sendSpeechContext(connection, this.privRequestSession, this.privRequestSession.contextJson);
+                                        this.sendSpeechContext(connection);
                                     });
                                 }
                             default:
@@ -492,12 +505,14 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return PromiseHelper.fromResult(true);
     }
 
-    private sendSpeechContext = (connection: IConnection, requestSession: RequestSession, speechContextJson: string): Promise<boolean> => {
+    private sendSpeechContext = (connection: IConnection): Promise<boolean> => {
+        const speechContextJson = this.speechContext.toJSON();
+
         if (speechContextJson) {
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Text,
                 "speech.context",
-                requestSession.requestId,
+                this.privRequestSession.requestId,
                 "application/json",
                 speechContextJson));
         }

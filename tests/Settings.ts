@@ -55,6 +55,8 @@ export class Settings {
     public static WaveFileOffset: number = 1000000;
     public static WaveFileText: string = "What's the weather like?";
 
+    public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
+
     private static IsSettingsInitialized: boolean = false;
     public static SettingsClassLock: Settings;
 
