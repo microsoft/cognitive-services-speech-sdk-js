@@ -8,6 +8,7 @@
   var rename = require('gulp-rename');
   var pump = require('pump');
   var webpack = require('webpack-stream');
+  var dtsBundleWebpack = require('dts-bundle-webpack');
 
   gulp.task("build",  function build () {
       return gulp.src([
@@ -44,7 +45,15 @@
                     test: /\.js$/,
                     loader: "source-map-loader"
                 }]
-            }
+             },
+             plugins: [
+                new dtsBundleWebpack({
+                  name: 'microsoft.cognitiveservices.speech.sdk.bundle',
+                  main: 'distrib/lib/microsoft.cognitiveservices.speech.sdk.d.ts',
+                  out: '~/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle.d.ts',
+                  outputAsModuleFolder: true,
+                })
+              ]
         }))
         .pipe(gulp.dest('distrib/browser'));
   }));

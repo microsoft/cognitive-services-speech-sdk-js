@@ -37,6 +37,7 @@
     "@types/jest": "^23.3.10",
     "@types/node": "^10.7.0",
     "@types/request": "^2.48.1",
+    "dts-bundle-webpack": "^1.0.2",
     "gulp": "^4.0.0",
     "gulp-rename": "^1.4.0",
     "gulp-sourcemaps": "^2.6.4",
