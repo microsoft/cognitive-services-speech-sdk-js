@@ -44,7 +44,7 @@
     "gulp-tslint": "^8.0.0",
     "gulp-typescript": "^3.2.3",
     "gulp-uglify": "^3.0.1",
-    "jest": "^23.6.0",
+    "jest": "^24.1.0",
     "jest-junit": "^5.1.0",
     "request": "^2.88.0",
     "semver": "^5.6.0",
