@@ -209,11 +209,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         WaitForCondition(() => {
             return !!authToken;
         }, () => {
-            // make a connection to the standard speech endpoint.
-            const endpointString: string = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com";
-
             // note: we use an empty subscription key so that we use the authorization token later.
-            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(endpointString), "");
+            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), "");
             objsToClose.push(s);
 
             // now set the authentication token
