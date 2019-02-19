@@ -43,11 +43,13 @@ export abstract class SpeechConfig {
      * This method is intended only for users who use a non-standard service endpoint or parameters.
      * Note: Please use your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
      * Note: The query parameters specified in the endpoint URL are not changed, even if they are set by any other APIs.
-     * For example, if language is defined in the uri as query parameter "language=de-DE", and also set by CreateSpeechRecognizer("en-US"),
-     * the language setting in uri takes precedence, and the effective language is "de-DE".
-     * Only the parameters that are not specified in the endpoint URL can be set by other APIs.
-     * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the fromEndpoint method,
-     * and then call setAuthorizationToken() on the created SpeechConfig instance to use the authorization token.
+     * For example, if language is defined in the uri as query parameter "language=de-DE", and also set by
+     *              SpeechConfig.speechRecognitionLanguage = "en-US", the language setting in uri takes precedence,
+     *              and the effective language is "de-DE". Only the parameters that are not specified in the
+     *              endpoint URL can be set by other APIs.
+     * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the
+     *       fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to
+     *       use the authorization token.
      * @member SpeechConfig.fromEndpoint
      * @function
      * @public
@@ -68,11 +70,12 @@ export abstract class SpeechConfig {
     /**
      * Creates an instance of the speech factory with specified initial authorization token and region.
      * Note: The caller needs to ensure that the authorization token is valid. Before the authorization token
-     * expires, the caller needs to refresh it by calling this setter with a new valid token.
-     * Note: Please use a token derived from your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
-     * As configuration values are copied when creating a new recognizer, the new token value will not apply to recognizers that have already been created.
-     * For recognizers that have been created before, you need to set authorization token of the corresponding recognizer
-     * to refresh the token. Otherwise, the recognizers will encounter errors during recognition.
+     *       expires, the caller needs to refresh it by calling this setter with a new valid token.
+     * Note: Please use a token derived from your LanguageUnderstanding subscription key in case you want
+     *       to use the Intent recognizer. As configuration values are copied when creating a new recognizer,
+     *       the new token value will not apply to recognizers that have already been created. For recognizers
+     *       that have been created before, you need to set authorization token of the corresponding recognizer
+     *       to refresh the token. Otherwise, the recognizers will encounter errors during recognition.
      * @member SpeechConfig.fromAuthorizationToken
      * @function
      * @public

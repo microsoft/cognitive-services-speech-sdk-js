@@ -42,8 +42,9 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
      * Note: The caller needs to ensure that the authorization token is valid. Before the authorization token
      *       expires, the caller needs to refresh it by setting the property authorizationToken with a new
      *       valid token. Otherwise, all the recognizers created by this SpeechTranslationConfig instance
-     *      will encounter errors during recognition.
-     * As configuration values are copied when creating a new recognizer, the new token value will not apply to recognizers that have already been created.
+     *       will encounter errors during recognition.
+     * As configuration values are copied when creating a new recognizer, the new token value will not apply
+     * to recognizers that have already been created.
      * For recognizers that have been created before, you need to set authorization token of the corresponding recognizer
      * to refresh the token. Otherwise, the recognizers will encounter errors during recognition.
      * @member SpeechTranslationConfig.fromAuthorizationToken
@@ -71,8 +72,9 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
      *       "language=de-DE", and also set by the speechRecognitionLanguage property, the language
      *       setting in uri takes precedence, and the effective language is "de-DE".
      * Only the properties that are not specified in the endpoint URL can be set by other APIs.
-     * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the fromEndpoint method,
-     * and then call setAuthorizationToken() on the created SpeechConfig instance to use the authorization token.
+     * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the
+     *       fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to
+     *       use the authorization token.
      * @member SpeechTranslationConfig.fromEndpoint
      * @function
      * @public
