@@ -186,7 +186,7 @@ export abstract class Recognizer {
                 new Context(new OS(osPlatform, osName, osVersion))));
 
         const subscriptionKey = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
-        const authentication = subscriptionKey ?
+        const authentication = (subscriptionKey && subscriptionKey !== "") ?
             new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
             new CognitiveTokenAuthentication(
                 (authFetchEventId: string): Promise<string> => {

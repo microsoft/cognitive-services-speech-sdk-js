@@ -77,7 +77,7 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
         let bytesSent: number = 0;
         let streamStopped: boolean = false;
 
-        // Pump the audio from the wave file specified with 1 second silence between iterations indefinetly.
+        // Pump the audio from the wave file specified with 1 second silence between iterations infinitely.
         const p: sdk.PullAudioInputStream = sdk.AudioInputStream.createPullStream(
             {
                 close: () => { return; },
