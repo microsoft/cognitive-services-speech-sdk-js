@@ -209,8 +209,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         WaitForCondition(() => {
             return !!authToken;
         }, () => {
+            const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1";
+
             // note: we use an empty subscription key so that we use the authorization token later.
-            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), "");
+            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(endpoint), "");
             objsToClose.push(s);
 
             // now set the authentication token
