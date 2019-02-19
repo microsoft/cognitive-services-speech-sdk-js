@@ -84,7 +84,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
      */
     public static fromEndpoint(endpoint: URL, subscriptionKey: string): SpeechTranslationConfig {
         Contracts.throwIfNull(endpoint, "endpoint");
-        Contracts.throwIfNullOrWhitespace(subscriptionKey, "subscriptionKey");
+        Contracts.throwIfNull(subscriptionKey, "subscriptionKey");
 
         const ret: SpeechTranslationConfigImpl = new SpeechTranslationConfigImpl();
         ret.properties.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
