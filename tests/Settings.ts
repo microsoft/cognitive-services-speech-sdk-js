@@ -24,7 +24,7 @@ export class Settings {
 
     public static InputDir: string = "tests/input/audio/";
 
-    public static ExecuteLongRunningTests: string = "true";
+    public static ExecuteLongRunningTests: string = "false";
 
     public static get ExecuteLongRunningTestsBool(): boolean {
         return "false" !== this.ExecuteLongRunningTests;

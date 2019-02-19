@@ -12,6 +12,7 @@ import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
+import * as request from "request";
 
 import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
@@ -184,6 +185,57 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             done();
         }, (error: string) => {
             done.fail(error);
+        });
+    });
+
+    test("testGetOutputFormatDetailed with authorization token", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testGetOutputFormatDetailed");
+
+        const req = {
+            headers: {
+                "Content-Type": "application/json",
+                "Ocp-Apim-Subscription-Key": Settings.SpeechSubscriptionKey,
+            },
+            url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
+        };
+
+        let authToken: string;
+
+        request.post(req, (error: any, response: request.Response, body: any) => {
+            authToken = body;
+        });
+
+        WaitForCondition(() => {
+            return !!authToken;
+        }, () => {
+            // make a connection to the standard speech endpoint.
+            const endpointString: string = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com";
+
+            // note: we use an empty subscription key so that we use the authorization token later.
+            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(endpointString), "");
+            objsToClose.push(s);
+
+            // now set the authentication token
+            s.authorizationToken = authToken;
+
+            s.outputFormat = sdk.OutputFormat.Detailed;
+
+            const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+            objsToClose.push(r);
+
+            expect(r.outputFormat === sdk.OutputFormat.Detailed);
+
+            r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+                expect(result).not.toBeUndefined();
+                expect(result.text).toEqual(Settings.WaveFileText);
+                expect(result.properties).not.toBeUndefined();
+                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                done();
+            }, (error: string) => {
+                done.fail(error);
+            });
         });
     });
 

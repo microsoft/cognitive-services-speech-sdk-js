@@ -261,7 +261,7 @@ export class SpeechConfigImpl extends SpeechConfig {
     }
 
     public setProperty(name: string | PropertyId, value: string): void {
-        Contracts.throwIfNullOrWhitespace(value, "value");
+        Contracts.throwIfNull(value, "value");
 
         this.privProperties.setProperty(name, value);
     }
