@@ -39,10 +39,17 @@ export abstract class SpeechConfig {
     }
 
     /**
-     * Creates an instance of the speech factory with specified endpoint and subscription key.
-     * This method is intended only for users who use a non-standard service endpoint or paramters.
-     * the language setting in uri takes precedence, and the effective language is "de-DE".
+     * Creates an instance of the speech config with specified endpoint and subscription key.
+     * This method is intended only for users who use a non-standard service endpoint or parameters.
      * Note: Please use your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
+     * Note: The query parameters specified in the endpoint URL are not changed, even if they are set by any other APIs.
+     * For example, if language is defined in the uri as query parameter "language=de-DE", and also set by
+     *              SpeechConfig.speechRecognitionLanguage = "en-US", the language setting in uri takes precedence,
+     *              and the effective language is "de-DE". Only the parameters that are not specified in the
+     *              endpoint URL can be set by other APIs.
+     * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the
+     *       fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to
+     *       use the authorization token.
      * @member SpeechConfig.fromEndpoint
      * @function
      * @public
@@ -52,7 +59,7 @@ export abstract class SpeechConfig {
      */
     public static fromEndpoint(endpoint: URL, subscriptionKey: string): SpeechConfig {
         Contracts.throwIfNull(endpoint, "endpoint");
-        Contracts.throwIfNullOrWhitespace(subscriptionKey, "subscriptionKey");
+        Contracts.throwIfNull(subscriptionKey, "subscriptionKey");
 
         const speechImpl: SpeechConfigImpl = new SpeechConfigImpl();
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
@@ -62,7 +69,13 @@ export abstract class SpeechConfig {
 
     /**
      * Creates an instance of the speech factory with specified initial authorization token and region.
-     * Note: Please use a token derived from your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
+     * Note: The caller needs to ensure that the authorization token is valid. Before the authorization token
+     *       expires, the caller needs to refresh it by calling this setter with a new valid token.
+     * Note: Please use a token derived from your LanguageUnderstanding subscription key in case you want
+     *       to use the Intent recognizer. As configuration values are copied when creating a new recognizer,
+     *       the new token value will not apply to recognizers that have already been created. For recognizers
+     *       that have been created before, you need to set authorization token of the corresponding recognizer
+     *       to refresh the token. Otherwise, the recognizers will encounter errors during recognition.
      * @member SpeechConfig.fromAuthorizationToken
      * @function
      * @public
@@ -82,7 +95,7 @@ export abstract class SpeechConfig {
     }
 
     /**
-     * Returns the current authorization token.
+     * Gets the authorization token.
      * @member SpeechConfig.prototype.authorizationToken
      * @function
      * @public
@@ -90,9 +103,9 @@ export abstract class SpeechConfig {
     public abstract get authorizationToken(): string;
 
     /**
-     * Sets the authorization token.
-     * If this is set, subscription key is ignored.
-     * User needs to make sure the provided authorization token is valid and not expired.
+     * Gets/Sets the authorization token.
+     * Note: The caller needs to ensure that the authorization token is valid. Before the authorization token
+     * expires, the caller needs to refresh it by calling this setter with a new valid token.
      * @member SpeechConfig.prototype.authorizationToken
      * @function
      * @public
@@ -109,7 +122,7 @@ export abstract class SpeechConfig {
     public abstract get speechRecognitionLanguage(): string;
 
     /**
-     * Sets the input language.
+     * Gets/Sets the input language.
      * @member SpeechConfig.prototype.speechRecognitionLanguage
      * @function
      * @public
@@ -139,14 +152,6 @@ export abstract class SpeechConfig {
     public abstract getProperty(name: string, def?: string): string;
 
     /**
-     * Sets output format.
-     * @member SpeechConfig.prototype.outputFormat
-     * @function
-     * @public
-     */
-    public abstract set outputFormat(format: OutputFormat);
-
-    /**
      * Gets output format.
      * @member SpeechConfig.prototype.outputFormat
      * @function
@@ -156,13 +161,12 @@ export abstract class SpeechConfig {
     public abstract get outputFormat(): OutputFormat;
 
     /**
-     * Sets the endpoint ID of a customized speech model that is used for speech recognition.
-     * @member SpeechConfig.prototype.endpointId
+     * Gets/Sets the output format.
+     * @member SpeechConfig.prototype.outputFormat
      * @function
      * @public
-     * @param {string} value - The endpoint ID
      */
-    public abstract set endpointId(value: string);
+    public abstract set outputFormat(format: OutputFormat);
 
     /**
      * Gets the endpoint ID of a customized speech model that is used for speech recognition.
@@ -172,6 +176,15 @@ export abstract class SpeechConfig {
      * @return {string} The endpoint ID
      */
     public abstract get endpointId(): string;
+
+    /**
+     * Gets/Sets the endpoint ID of a customized speech model that is used for speech recognition.
+     * @member SpeechConfig.prototype.endpointId
+     * @function
+     * @public
+     * @param {string} value - The endpoint ID
+     */
+    public abstract set endpointId(value: string);
 
     /**
      * Closes the configuration.
@@ -239,16 +252,16 @@ export class SpeechConfigImpl extends SpeechConfig {
         this.privProperties.setProperty(OutputFormatPropertyName, OutputFormat[value]);
     }
 
-    public set endpointId(value: string) {
-        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_EndpointId, value);
-    }
-
     public get endpointId(): string {
         return this.privProperties.getProperty(PropertyId.SpeechServiceConnection_EndpointId);
     }
 
+    public set endpointId(value: string) {
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_EndpointId, value);
+    }
+
     public setProperty(name: string | PropertyId, value: string): void {
-        Contracts.throwIfNullOrWhitespace(value, "value");
+        Contracts.throwIfNull(value, "value");
 
         this.privProperties.setProperty(name, value);
     }

@@ -6,7 +6,6 @@ import {
     createNoDashGuid,
     Deferred,
     Events,
-    IAudioStreamNode,
     IDetachable,
     IEventSource,
     PlatformEvent,
@@ -31,29 +30,19 @@ export class RequestSession {
     private privAudioNode: ReplayableAudioNode;
     private privAuthFetchEventId: string;
     private privIsAudioNodeDetached: boolean = false;
-    private privIsCompleted: boolean = false;
+    private privIsRecognizing: boolean = false;
     private privRequestCompletionDeferral: Deferred<boolean>;
     private privIsSpeechEnded: boolean = false;
-    private privIsCanceled: boolean = false;
-    private privContextJson: string;
     private privTurnStartAudioOffset: number = 0;
     private privLastRecoOffset: number = 0;
 
     protected privSessionId: string;
 
-    constructor(audioSourceId: string, contextJson: string) {
+    constructor(audioSourceId: string) {
         this.privAudioSourceId = audioSourceId;
         this.privRequestId = createNoDashGuid();
         this.privAudioNodeId = createNoDashGuid();
         this.privRequestCompletionDeferral = new Deferred<boolean>();
-        this.privContextJson = contextJson;
-        this.privServiceTelemetryListener = new ServiceTelemetryListener(this.privRequestId, this.privAudioSourceId, this.privAudioNodeId);
-
-        this.onEvent(new RecognitionTriggeredEvent(this.requestId, this.privSessionId, this.privAudioSourceId, this.privAudioNodeId));
-    }
-
-    public get contextJson(): string {
-        return this.privContextJson;
     }
 
     public get sessionId(): string {
@@ -76,12 +65,8 @@ export class RequestSession {
         return this.privIsSpeechEnded;
     }
 
-    public get isCompleted(): boolean {
-        return this.privIsCompleted;
-    }
-
-    public get isCanceled(): boolean {
-        return this.privIsCanceled;
+    public get isRecognizing(): boolean {
+        return this.privIsRecognizing;
     }
 
     public get currentTurnAudioOffset(): number {
@@ -89,7 +74,18 @@ export class RequestSession {
     }
 
     public listenForServiceTelemetry(eventSource: IEventSource<PlatformEvent>): void {
-        this.privDetachables.push(eventSource.attachListener(this.privServiceTelemetryListener));
+        if (!!this.privServiceTelemetryListener) {
+            this.privDetachables.push(eventSource.attachListener(this.privServiceTelemetryListener));
+        }
+    }
+
+    public startNewRecognition(): void {
+        this.privIsRecognizing = true;
+        this.privTurnStartAudioOffset = 0;
+        this.privLastRecoOffset = 0;
+        this.privRequestId = createNoDashGuid();
+        this.privServiceTelemetryListener = new ServiceTelemetryListener(this.privRequestId, this.privAudioSourceId, this.privAudioNodeId);
+        this.onEvent(new RecognitionTriggeredEvent(this.requestId, this.privSessionId, this.privAudioSourceId, this.privAudioNodeId));
     }
 
     public onAudioSourceAttachCompleted = (audioNode: ReplayableAudioNode, isError: boolean, error?: string): void => {
@@ -117,12 +113,12 @@ export class RequestSession {
     public onConnectionEstablishCompleted = (statusCode: number, reason?: string): void => {
         if (statusCode === 200) {
             this.onEvent(new RecognitionStartedEvent(this.requestId, this.privAudioSourceId, this.privAudioNodeId, this.privAuthFetchEventId, this.privSessionId));
-            this.privAudioNode.replay();
+            if (!!this.privAudioNode) {
+                this.privAudioNode.replay();
+            }
             this.privTurnStartAudioOffset = this.privLastRecoOffset;
             return;
         } else if (statusCode === 403) {
-            this.onComplete();
-        } else {
             this.onComplete();
         }
     }
@@ -159,8 +155,8 @@ export class RequestSession {
         return this.privServiceTelemetryListener.getTelemetry();
     }
 
-    public onCancelled(): void {
-        this.privIsCanceled = true;
+    public onStopRecognizing(): void {
+        this.privIsRecognizing = false;
     }
 
     // Should be called with the audioNode for this session has indicated that it is out of speech.
@@ -169,13 +165,15 @@ export class RequestSession {
     }
 
     protected onEvent = (event: SpeechRecognitionEvent): void => {
-        this.privServiceTelemetryListener.onEvent(event);
+        if (!!this.privServiceTelemetryListener) {
+            this.privServiceTelemetryListener.onEvent(event);
+        }
         Events.instance.onEvent(event);
     }
 
     private onComplete = (): void => {
-        if (!this.privIsCompleted) {
-            this.privIsCompleted = true;
+        if (!!this.privIsRecognizing) {
+            this.privIsRecognizing = false;
             this.detachAudioNode();
         }
     }

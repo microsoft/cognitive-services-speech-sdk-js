@@ -1,11 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IAudioSource, IConnection, TranslationStatus } from "../common/Exports";
+import {
+    IAudioSource,
+    MessageType,
+    TranslationStatus,
+} from "../common/Exports";
 import {
     CancellationErrorCode,
     CancellationReason,
     PropertyCollection,
+    PropertyId,
     ResultReason,
     SpeechRecognitionResult,
     TranslationRecognitionCanceledEventArgs,
@@ -20,7 +25,6 @@ import {
     CancellationErrorCodePropertyName,
     EnumTranslation,
     RecognitionStatus,
-    RequestSession,
     ServiceRecognizerBase,
     SynthesisStatus,
     TranslationHypothesis,
@@ -50,15 +54,18 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
     protected processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
-        requestSession: RequestSession,
-        connection: IConnection,
         successCallback?: (e: TranslationRecognitionResult) => void,
         errorCallBack?: (e: string) => void): void {
+
+        const resultProps: PropertyCollection = new PropertyCollection();
+        if (connectionMessage.messageType === MessageType.Text) {
+            resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
+        }
 
         switch (connectionMessage.path.toLowerCase()) {
             case "translation.hypothesis":
 
-                const result: TranslationRecognitionEventArgs = this.fireEventForResult(TranslationHypothesis.fromJSON(connectionMessage.textBody), requestSession);
+                const result: TranslationRecognitionEventArgs = this.fireEventForResult(TranslationHypothesis.fromJSON(connectionMessage.textBody), resultProps);
 
                 if (!!this.privTranslationRecognizer.recognizing) {
                     try {
@@ -74,14 +81,16 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
             case "translation.phrase":
                 if (this.privRecognizerConfig.isContinuousRecognition) {
                     // For continuous recognition telemetry has to be sent for every phrase as per spec.
-                    this.sendTelemetryData(requestSession, requestSession.getTelemetry());
+                    this.sendTelemetryData();
                 }
 
                 const translatedPhrase: TranslationPhrase = TranslationPhrase.fromJSON(connectionMessage.textBody);
 
                 if (translatedPhrase.RecognitionStatus === RecognitionStatus.Success) {
+                    this.privRequestSession.onServiceRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
+
                     // OK, the recognition was successful. How'd the translation do?
-                    const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, requestSession);
+                    const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, resultProps);
                     if (!!this.privTranslationRecognizer.recognized) {
                         try {
                             this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, result);
@@ -114,20 +123,20 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
                     const result = new TranslationRecognitionResult(
                         undefined,
-                        requestSession.requestId,
+                        this.privRequestSession.requestId,
                         reason,
                         translatedPhrase.Text,
                         translatedPhrase.Duration,
                         translatedPhrase.Offset,
                         undefined,
                         connectionMessage.textBody,
-                        undefined);
+                        resultProps);
 
                     if (reason === ResultReason.Canceled) {
                         const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(translatedPhrase.RecognitionStatus);
 
                         const ev = new TranslationRecognitionCanceledEventArgs(
-                            requestSession.sessionId,
+                            this.privRequestSession.sessionId,
                             cancelReason,
                             null,
                             cancelReason === CancellationReason.Error ? CancellationErrorCode.ServiceError : CancellationErrorCode.NoError,
@@ -143,8 +152,8 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                             }
                         }
                     } else {
-                        if (!(requestSession.isSpeechEnded && reason === ResultReason.NoMatch && translatedPhrase.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
-                            const ev = new TranslationRecognitionEventArgs(result, 0/*offset*/, requestSession.sessionId);
+                        if (!(this.privRequestSession.isSpeechEnded && reason === ResultReason.NoMatch && translatedPhrase.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
+                            const ev = new TranslationRecognitionEventArgs(result, 0/*offset*/, this.privRequestSession.sessionId);
 
                             if (!!this.privTranslationRecognizer.recognized) {
                                 try {
@@ -177,7 +186,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 break;
 
             case "translation.synthesis":
-                this.sendSynthesisAudio(connectionMessage.binaryBody, requestSession.sessionId);
+                this.sendSynthesisAudio(connectionMessage.binaryBody, this.privRequestSession.sessionId);
                 break;
 
             case "translation.synthesis.end":
@@ -187,7 +196,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                     case SynthesisStatus.Error:
                         if (!!this.privTranslationRecognizer.synthesizing) {
                             const result = new TranslationSynthesisResult(ResultReason.Canceled, undefined);
-                            const retEvent: TranslationSynthesisEventArgs = new TranslationSynthesisEventArgs(result, requestSession.sessionId);
+                            const retEvent: TranslationSynthesisEventArgs = new TranslationSynthesisEventArgs(result, this.privRequestSession.sessionId);
 
                             try {
                                 this.privTranslationRecognizer.synthesizing(this.privTranslationRecognizer, retEvent);
@@ -201,7 +210,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         if (!!this.privTranslationRecognizer.canceled) {
                             // And raise a canceled event to send the rich(er) error message back.
                             const canceledResult: TranslationRecognitionCanceledEventArgs = new TranslationRecognitionCanceledEventArgs(
-                                requestSession.sessionId,
+                                this.privRequestSession.sessionId,
                                 CancellationReason.Error,
                                 synthEnd.FailureReason,
                                 CancellationErrorCode.ServiceError,
@@ -217,7 +226,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         }
                         break;
                     case SynthesisStatus.Success:
-                        this.sendSynthesisAudio(undefined, requestSession.sessionId);
+                        this.sendSynthesisAudio(undefined, this.privRequestSession.sessionId);
                         break;
                     default:
                         break;
@@ -271,7 +280,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         }
     }
 
-    private fireEventForResult(serviceResult: TranslationHypothesis | TranslationPhrase, requestSession: RequestSession): TranslationRecognitionEventArgs {
+    private fireEventForResult(serviceResult: TranslationHypothesis | TranslationPhrase, properties: PropertyCollection): TranslationRecognitionEventArgs {
         let translations: Translations;
 
         if (undefined !== serviceResult.Translation.Translations) {
@@ -292,18 +301,20 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
             resultReason = ResultReason.TranslatingSpeech;
         }
 
+        const offset: number = serviceResult.Offset + this.privRequestSession.currentTurnAudioOffset;
+
         const result = new TranslationRecognitionResult(
             translations,
-            requestSession.requestId,
+            this.privRequestSession.requestId,
             resultReason,
             serviceResult.Text,
             serviceResult.Duration,
-            serviceResult.Offset,
+            offset,
             serviceResult.Translation.FailureReason,
             JSON.stringify(serviceResult),
-            undefined);
+            properties);
 
-        const ev = new TranslationRecognitionEventArgs(result, serviceResult.Offset, requestSession.sessionId);
+        const ev = new TranslationRecognitionEventArgs(result, offset, this.privRequestSession.sessionId);
         return ev;
     }
 

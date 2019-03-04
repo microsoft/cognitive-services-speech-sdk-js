@@ -24,6 +24,12 @@ export class Settings {
 
     public static InputDir: string = "tests/input/audio/";
 
+    public static ExecuteLongRunningTests: string = "false";
+
+    public static get ExecuteLongRunningTestsBool(): boolean {
+        return "false" !== this.ExecuteLongRunningTests;
+    }
+
     /*
      * The intent behing this setting is that at test execution time the WaveFile below will contain speech
      * that the LUIS app above will recognize as an intent with this ID.
@@ -48,6 +54,8 @@ export class Settings {
     public static WaveFileDuration: number = 12900000;
     public static WaveFileOffset: number = 1000000;
     public static WaveFileText: string = "What's the weather like?";
+
+    public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
 
     private static IsSettingsInitialized: boolean = false;
     public static SettingsClassLock: Settings;

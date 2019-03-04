@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IAudioSource, IConnection } from "../common/Exports";
+import { IAudioSource } from "../common/Exports";
 import {
     CancellationErrorCode,
     CancellationReason,
     OutputFormat,
     PropertyCollection,
+    PropertyId,
     ResultReason,
     SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
@@ -46,28 +47,28 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
     protected processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
-        requestSession: RequestSession,
-        connection: IConnection,
         successCallback?: (e: SpeechRecognitionResult) => void,
         errorCallBack?: (e: string) => void): void {
 
         let result: SpeechRecognitionResult;
+        const resultProps: PropertyCollection = new PropertyCollection();
+        resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
                 const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
 
                 result = new SpeechRecognitionResult(
-                    requestSession.requestId,
+                    this.privRequestSession.requestId,
                     ResultReason.RecognizingSpeech,
                     hypothesis.Text,
                     hypothesis.Duration,
-                    hypothesis.Offset + requestSession.currentTurnAudioOffset,
+                    hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset,
                     undefined,
                     connectionMessage.textBody,
-                    undefined);
+                    resultProps);
 
-                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, requestSession.sessionId);
+                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
 
                 if (!!this.privSpeechRecognizer.recognizing) {
                     try {
@@ -82,25 +83,25 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
             case "speech.phrase":
                 // Always send telemetry because we want it to to up for recognize once which will listening to the service
                 // after recognition happens.
-                this.sendTelemetryData(requestSession, requestSession.getTelemetry());
+                this.sendTelemetryData();
 
                 const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
                 const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
 
-                requestSession.onServiceRecognized(requestSession.currentTurnAudioOffset + simple.Offset);
+                this.privRequestSession.onServiceRecognized(this.privRequestSession.currentTurnAudioOffset + simple.Offset + simple.Duration);
 
                 if (ResultReason.Canceled === resultReason) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
 
                     result = new SpeechRecognitionResult(
-                        requestSession.requestId,
+                        this.privRequestSession.requestId,
                         resultReason,
                         undefined,
                         undefined,
                         undefined,
                         undefined,
                         connectionMessage.textBody,
-                        undefined);
+                        resultProps);
 
                     if (!!this.privSpeechRecognizer.canceled) {
                         const cancelEvent: SpeechRecognitionCanceledEventArgs = new SpeechRecognitionCanceledEventArgs(
@@ -108,39 +109,39 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                             undefined,
                             cancelReason === CancellationReason.Error ? CancellationErrorCode.ServiceError : CancellationErrorCode.NoError,
                             undefined,
-                            requestSession.sessionId);
+                            this.privRequestSession.sessionId);
                         try {
                             this.privSpeechRecognizer.canceled(this.privSpeechRecognizer, cancelEvent);
                             /* tslint:disable:no-empty */
                         } catch { }
                     }
                 } else {
-                    if (!(requestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
+                    if (!(this.privRequestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
                         if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
                             result = new SpeechRecognitionResult(
-                                requestSession.requestId,
+                                this.privRequestSession.requestId,
                                 resultReason,
                                 simple.DisplayText,
                                 simple.Duration,
-                                simple.Offset + requestSession.currentTurnAudioOffset,
+                                simple.Offset + this.privRequestSession.currentTurnAudioOffset,
                                 undefined,
                                 connectionMessage.textBody,
-                                undefined);
+                                resultProps);
                         } else {
                             const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody);
 
                             result = new SpeechRecognitionResult(
-                                requestSession.requestId,
+                                this.privRequestSession.requestId,
                                 resultReason,
                                 detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : undefined,
                                 detailed.Duration,
-                                detailed.Offset + requestSession.currentTurnAudioOffset,
+                                detailed.Offset + this.privRequestSession.currentTurnAudioOffset,
                                 undefined,
                                 connectionMessage.textBody,
-                                undefined);
+                                resultProps);
                         }
 
-                        const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, requestSession.sessionId);
+                        const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
 
                         if (!!this.privSpeechRecognizer.recognized) {
                             try {

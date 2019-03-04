@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { ServiceRecognizerBase } from "../src/common.speech/Exports";
@@ -11,6 +12,8 @@ import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
+import * as request from "request";
+
 import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import WaitForCondition from "./Utilities";
@@ -49,7 +52,7 @@ afterEach(() => {
     });
 });
 
-const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig): sdk.SpeechRecognizer => {
+const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
 
     let s: sdk.SpeechConfig = speechConfig;
     if (s === undefined) {
@@ -58,7 +61,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig) => sdk.Spee
         objsToClose.push(s);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
+    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
     const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
 
     const language: string = Settings.WaveFileLanguage;
@@ -176,10 +179,62 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
             expect(result).not.toBeUndefined();
             expect(result.text).toEqual(Settings.WaveFileText);
+            expect(result.properties).not.toBeUndefined();
+            expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
             done();
         }, (error: string) => {
             done.fail(error);
+        });
+    });
+
+    test("testGetOutputFormatDetailed with authorization token", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testGetOutputFormatDetailed");
+
+        const req = {
+            headers: {
+                "Content-Type": "application/json",
+                "Ocp-Apim-Subscription-Key": Settings.SpeechSubscriptionKey,
+            },
+            url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
+        };
+
+        let authToken: string;
+
+        request.post(req, (error: any, response: request.Response, body: any) => {
+            authToken = body;
+        });
+
+        WaitForCondition(() => {
+            return !!authToken;
+        }, () => {
+            const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1";
+
+            // note: we use an empty subscription key so that we use the authorization token later.
+            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(endpoint), "");
+            objsToClose.push(s);
+
+            // now set the authentication token
+            s.authorizationToken = authToken;
+
+            s.outputFormat = sdk.OutputFormat.Detailed;
+
+            const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+            objsToClose.push(r);
+
+            expect(r.outputFormat === sdk.OutputFormat.Detailed);
+
+            r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+                expect(result).not.toBeUndefined();
+                expect(result.text).toEqual(Settings.WaveFileText);
+                expect(result.properties).not.toBeUndefined();
+                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                done();
+            }, (error: string) => {
+                done.fail(error);
+            });
         });
     });
 
@@ -217,8 +272,11 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                         const res: sdk.SpeechRecognitionResult = p2;
                         expect(res).not.toBeUndefined();
                         expect(res.text).toEqual("What's the weather like?");
-                        expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                        expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                         expect(telemetryEvents).toEqual(1);
+                        expect(res.properties).not.toBeUndefined();
+                        expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                         done();
                     } catch (error) {
                         done.fail(error);
@@ -552,6 +610,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 eventDone = true;
                 expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(e.result.text).toEqual("What's the weather like?");
+                expect(e.result.properties).not.toBeUndefined();
+                expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
             } catch (error) {
                 done.fail(error);
             }
@@ -659,6 +720,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
                 done();
             },
             (error: string) => {
@@ -689,6 +753,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -751,6 +817,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -803,6 +871,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -886,6 +956,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
                 expect(res.text).toBeUndefined();
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                 expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
@@ -906,6 +978,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
                 expect(res.errorDetails).toBeUndefined();
                 expect(res.text).toBeUndefined();
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                 expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
@@ -1004,6 +1078,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(p2.reason).toEqual(sdk.ResultReason.Canceled);
                 const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
                 expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+                expect(p2.properties).not.toBeUndefined();
+                expect(p2.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 if (true === oneCalled) {
                     done();
@@ -1058,6 +1134,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather?");
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -1102,6 +1180,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res.reason).toEqual(sdk.ResultReason.NoMatch);
                 const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                 expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 done();
             },
@@ -1223,7 +1303,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
-        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s);
+        let r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s);
         objsToClose.push(r);
 
         expect(r instanceof sdk.Recognizer).toEqual(true);
@@ -1232,6 +1312,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (error: string): void => {
                 expect(error).toEqual("Error: Browser does not support Web Audio API (AudioContext is not available).");
             });
+
+        r = new sdk.SpeechRecognizer(s);
+        objsToClose.push(r);
 
         r.startContinuousRecognitionAsync(() => fail("startContinuousRecognitionAsync returned success when it should have failed"),
             (error: string): void => {
@@ -1436,6 +1519,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
                 expect(e.errorDetails).toContain("1006");
+
                 doneCount++;
             } catch (error) {
                 done.fail(error);
@@ -1606,132 +1690,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 done.fail(err);
             });
     }, 35000);
-
-    // Tests client reconnect after speech timeouts.
-    test.skip("Reconnect After timeout", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
-        console.info("Name: Reconnect After timeout");
-        // Pump valid speech and then silence until at least one speech end cycle hits.
-        const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-        let p: sdk.PullAudioInputStream;
-        const bigFileBuffer: Uint8Array = new Uint8Array(32 * 1024 * 30); // ~30 seconds.
-        let s: sdk.SpeechConfig;
-        if (undefined === Settings.SpeechTimeoutEndpoint || undefined === Settings.SpeechTimeoutKey) {
-            // tslint:disable-next-line:no-console
-            console.warn("Running timeout test against production, this will be very slow...");
-            s = BuildSpeechConfig();
-        } else {
-            s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechTimeoutEndpoint), Settings.SpeechTimeoutKey);
-        }
-        objsToClose.push(s);
-
-        let pumpSilence: boolean = false;
-        let bytesSent: number = 0;
-        const targetLoops: number = 250;
-
-        // Pump the audio from the wave file specified with 1 second silence between iterations indefinetly.
-        p = sdk.AudioInputStream.createPullStream(
-            {
-                close: () => { return; },
-                read: (buffer: ArrayBuffer): number => {
-                    if (pumpSilence) {
-                        bytesSent += buffer.byteLength;
-                        if (bytesSent >= 8000) {
-                            bytesSent = 0;
-                            pumpSilence = false;
-                        }
-                        return buffer.byteLength;
-                    } else {
-                        const copyArray: Uint8Array = new Uint8Array(buffer);
-                        const start: number = bytesSent;
-                        const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                        copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                        const readyToSend: number = (end - start) + 1;
-                        bytesSent += readyToSend;
-
-                        if (readyToSend < buffer.byteLength) {
-                            bytesSent = 0;
-                            pumpSilence = true;
-                        }
-
-                        return readyToSend;
-                    }
-
-                },
-            });
-
-        const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
-
-        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
-        objsToClose.push(r);
-
-        let speechEnded: number = 0;
-        let lastOffset: number = 0;
-        let recogCount: number = 0;
-        let canceled: boolean = false;
-        let inTurn: boolean = false;
-
-        r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
-            try {
-                expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(e.offset).toBeGreaterThanOrEqual(lastOffset);
-                lastOffset = e.offset;
-
-                // If there is silence exactly at the moment of disconnect, an extra speech.phrase with text ="" is returned just before the
-                // connection is disconnected.
-                if ("" !== e.result.text) {
-                    expect(e.result.text).toEqual(Settings.WaveFileText);
-                }
-                if (recogCount++ > targetLoops) {
-                    p.close();
-                }
-
-            } catch (error) {
-                done.fail(error);
-            }
-        };
-
-        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-            try {
-                expect(e.errorDetails).toBeUndefined();
-                expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
-                canceled = true;
-            } catch (error) {
-                done.fail(error);
-            }
-        };
-
-        r.sessionStarted = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-            inTurn = true;
-        });
-
-        r.sessionStopped = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-            inTurn = false;
-        });
-
-        r.speechEndDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
-            speechEnded++;
-        };
-
-        r.startContinuousRecognitionAsync(() => {
-            WaitForCondition(() => (canceled && !inTurn), () => {
-                r.stopContinuousRecognitionAsync(() => {
-                    try {
-                        expect(speechEnded).toEqual(1);
-                        done();
-                    } catch (error) {
-                        done.fail(error);
-                    }
-                }, (error: string) => {
-                    done.fail(error);
-                });
-            });
-        },
-            (err: string) => {
-                done.fail(err);
-            });
-    }, 35000);
 });
 
 test("Push Stream Async", (done: jest.DoneCallback) => {
@@ -1772,7 +1730,7 @@ test("Push Stream Async", (done: jest.DoneCallback) => {
         (error: string) => {
             done.fail(error);
         });
-});
+}, 10000);
 
 test("Bad DataType for PushStreams results in error", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
@@ -1823,3 +1781,1001 @@ test("Bad DataType for PushStreams results in error", (done: jest.DoneCallback) 
             done.fail(error);
         });
 });
+
+test("Connect / Disconnect", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Connect / Disconnect");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s);
+    objsToClose.push(r);
+
+    let connected: boolean = false;
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.connected = (args: sdk.ConnectionEventArgs) => {
+        connected = true;
+    };
+
+    connection.disconnected = (args: sdk.ConnectionEventArgs) => {
+        done();
+    };
+
+    connection.openConnection();
+
+    WaitForCondition(() => {
+        return connected;
+    }, () => {
+        connection.closeConnection();
+    });
+});
+
+test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Multiple RecognizeOnce calls share a connection");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let disconnected: boolean = false;
+    let connected: number = 0;
+    let firstReco: boolean = false;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.connected = (e: sdk.ConnectionEventArgs): void => {
+        connected++;
+    };
+
+    connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
+        disconnected = true;
+    };
+
+    r.recognizeOnceAsync(
+        (p2: sdk.SpeechRecognitionResult) => {
+            const res: sdk.SpeechRecognitionResult = p2;
+
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(res.text).toEqual("What's the weather like?");
+            expect(disconnected).toEqual(false);
+            firstReco = true;
+            sendSilence = false;
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return firstReco;
+    }, () => {
+        r.recognizeOnceAsync(
+            (p2: sdk.SpeechRecognitionResult) => {
+                const res: sdk.SpeechRecognitionResult = p2;
+
+                expect(res).not.toBeUndefined();
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                expect(res.text).toEqual("What's the weather like?");
+                expect(disconnected).toEqual(false);
+                expect(connected).toEqual(1);
+                done();
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+    });
+}, 15000);
+
+test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Multiple ContReco calls share a connection");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let disconnected: boolean = false;
+    let recoCount: number = 0;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
+        disconnected = true;
+    };
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+        try {
+            const res: sdk.SpeechRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(res.text).toContain("the weather like?");
+            expect(disconnected).toEqual(false);
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.startContinuousRecognitionAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return recoCount === 1;
+    }, () => {
+        r.stopContinuousRecognitionAsync(() => {
+
+            sendSilence = false;
+
+            r.startContinuousRecognitionAsync(
+                undefined,
+                (error: string) => {
+                    done.fail(error);
+                });
+        });
+    });
+
+    WaitForCondition(() => {
+        return recoCount === 2;
+    }, () => {
+        r.stopContinuousRecognitionAsync(() => {
+            done();
+        });
+    });
+}, 20000);
+
+test("StopContinous Reco does", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: StopContinous Reco does");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+    let recognizing: boolean = true;
+    let failed: boolean = false;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+
+                try {
+                    expect(recognizing).toEqual(true);
+                } catch (error) {
+                    failed = true;
+                    done.fail(error);
+                }
+
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let disconnected: boolean = false;
+    let recoCount: number = 0;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
+        disconnected = true;
+    };
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+        try {
+            const res: sdk.SpeechRecognitionResult = e.result;
+            expect(recognizing).toEqual(true);
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(res.text).toEqual("What's the weather like?");
+            expect(disconnected).toEqual(false);
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.startContinuousRecognitionAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return recoCount === 1;
+    }, () => {
+        r.stopContinuousRecognitionAsync(() => {
+            recognizing = false;
+            sendSilence = false;
+
+            setTimeout(() => {
+                if (!failed) {
+                    done();
+                }
+            }, 5000);
+        });
+    });
+
+}, 10000);
+
+test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Disconnect during reco cancels.");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let disconnected: boolean = false;
+    let recoCount: number = 0;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
+        disconnected = true;
+    };
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+        try {
+            const res: sdk.SpeechRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(res.text).toEqual("What's the weather like?");
+            expect(disconnected).toEqual(false);
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+        try {
+            expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+            expect(e.errorDetails).toContain("Disconnect");
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.startContinuousRecognitionAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return recoCount === 1;
+    }, () => {
+        connection.closeConnection();
+    });
+
+}, 10000);
+
+test("Open during reco has no effect.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Open during reco has no effect.");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let connectionCount: number = 0;
+    let recoCount: number = 0;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.connected = (e: sdk.ConnectionEventArgs): void => {
+        connectionCount++;
+    };
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+        try {
+            const res: sdk.SpeechRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(res.text).toEqual("What's the weather like?");
+            expect(connectionCount).toEqual(1);
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+        try {
+            expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.startContinuousRecognitionAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return recoCount === 1;
+    }, () => {
+        connection.openConnection();
+        sendSilence = false;
+    });
+
+    WaitForCondition(() => {
+        return recoCount === 2;
+    }, () => {
+        p.close();
+    });
+
+}, 10000);
+
+test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Connecting before reco works for cont");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let disconnected: boolean = false;
+    let connected: number = 0;
+    let recoCount: number = 0;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.connected = (e: sdk.ConnectionEventArgs): void => {
+        connected++;
+    };
+
+    connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
+        disconnected = true;
+    };
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+        try {
+            const res: sdk.SpeechRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(res.text).toEqual("What's the weather like?");
+            expect(disconnected).toEqual(false);
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    connection.openConnection();
+
+    WaitForCondition(() => {
+        return connected === 1;
+    }, () => {
+        r.startContinuousRecognitionAsync(
+            undefined,
+            (error: string) => {
+                done.fail(error);
+            });
+    });
+
+    WaitForCondition(() => {
+        return recoCount === 1;
+    }, () => {
+        r.stopContinuousRecognitionAsync(() => {
+            try {
+                expect(connected).toEqual(1);
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
+        });
+    });
+
+}, 10000);
+
+test("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Switch RecoModes during a connection (cont->single)");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let disconnected: boolean = false;
+    let recoCount: number = 0;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
+        disconnected = true;
+    };
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+        try {
+            const res: sdk.SpeechRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(res.text).toContain("the weather like?");
+            expect(disconnected).toEqual(false);
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.startContinuousRecognitionAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return recoCount === 1;
+    }, () => {
+        r.stopContinuousRecognitionAsync(() => {
+
+            sendSilence = false;
+
+            r.recognizeOnceAsync(
+                undefined,
+                (error: string) => {
+                    done.fail(error);
+                });
+        });
+    });
+
+    WaitForCondition(() => {
+        return recoCount === 2;
+    }, () => {
+        done();
+    });
+}, 20000);
+
+test("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Switch RecoModes during a connection (single->cont)");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let disconnected: boolean = false;
+    let recoCount: number = 0;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
+        disconnected = true;
+    };
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+        try {
+            const res: sdk.SpeechRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(res.text).toContain("the weather like?");
+            expect(disconnected).toEqual(false);
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.recognizeOnceAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return recoCount === 1;
+    }, () => {
+
+        sendSilence = false;
+
+        r.startContinuousRecognitionAsync(
+            undefined,
+            (error: string) => {
+                done.fail(error);
+            });
+    });
+
+    WaitForCondition(() => {
+        return recoCount === 2;
+    }, () => {
+        sendSilence = false;
+    });
+
+    WaitForCondition(() => {
+        return recoCount === 3;
+    }, () => {
+        done();
+    });
+}, 20000);
+
+test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Ambiguous Speech default as expected");
+
+    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync(
+        (p2: sdk.SpeechRecognitionResult) => {
+
+            const res: sdk.SpeechRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Recognize speech.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+// This test validates our ability to add features to the SDK in parallel / ahead of implementation by the Speech Service with no ill effects.
+test("Service accepts random speech.context sections w/o error", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Service accepts random speech.context sections w/o error.");
+
+    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    const serviceBase: ServiceRecognizerBase = r.internalData as ServiceRecognizerBase;
+    serviceBase.speechContext.setSection("BogusSection", { Value: "Some Text." });
+
+    r.recognizeOnceAsync(
+        (p2: sdk.SpeechRecognitionResult) => {
+
+            const res: sdk.SpeechRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Recognize speech.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist assists speech Reco.");
+
+    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
+    phraseList.addPhrase("Wreck a nice beach.");
+
+    r.recognizeOnceAsync(
+        (p2: sdk.SpeechRecognitionResult) => {
+
+            const res: sdk.SpeechRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Wreck a nice beach.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist extra phraselists have no effect.");
+
+    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+    objsToClose.push(r);
+
+    const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
+    phraseList.addPhrase("Wreck a nice beach.");
+    phraseList.addPhrase("Escaped robot fights for his life, film at 11.");
+
+    r.recognizeOnceAsync(
+        (p2: sdk.SpeechRecognitionResult) => {
+
+            const res: sdk.SpeechRecognitionResult = p2;
+            expect(res.errorDetails).toBeUndefined();
+            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+            expect(res).not.toBeUndefined();
+            expect(res.text).toEqual("Wreck a nice beach.");
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+});
+
+test.skip("Phraselist Clear works.", (done: jest.DoneCallback) => {
+
+    // tslint:disable-next-line:no-console
+    console.info("Name: Phraselist Clear works.");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.AmbiguousWaveFile);
+
+    let bytesSent: number = 0;
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start) + 1;
+
+                if (((end - start) + 1) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return (end - start) + 1;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let recoCount: number = 0;
+    let phraseAdded: boolean = true;
+    const dynamicPhrase: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
+    dynamicPhrase.addPhrase("Wreck a nice beach.");
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
+        try {
+            const res: sdk.IntentRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            if (phraseAdded) {
+                expect(res.text).toContain("Wreck a nice beach.");
+            } else {
+                expect(res.text).toEqual("Recognize speech.");
+            }
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.recognizeOnceAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return recoCount === 1;
+    }, () => {
+        dynamicPhrase.clear();
+        phraseAdded = false;
+        sendSilence = false;
+
+        r.startContinuousRecognitionAsync(
+            undefined,
+            (error: string) => {
+                done.fail(error);
+            });
+    });
+
+    WaitForCondition(() => {
+        return recoCount === 2;
+    }, () => {
+        done();
+    });
+}, 20000);
