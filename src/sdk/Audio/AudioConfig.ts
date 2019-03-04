@@ -25,16 +25,17 @@ export abstract class AudioConfig {
     }
 
     /**
-     * Creates an AudioConfig object representing a microphone on the system based on the specified constraints.
+     * Creates an AudioConfig object representing a microphone with the specified device ID.
      * @member AudioConfig.fromMicrophoneInput
      * @function
      * @public
-     * @param {MediaStreamConstraints} constraints A MediaStreamConstraints object specifying the requirements for microphone media device.
+     * @param {string | undefined} deviceId - Specifies the device ID of the microphone to be used.
+     *        Default microphone is used the value is omitted.
      * @returns {AudioConfig} The audio input configuration being created.
      */
-    public static fromMicrophoneInput(constraints?: MediaStreamConstraints): AudioConfig {
+    public static fromMicrophoneInput(deviceId?: string): AudioConfig {
         const pcmRecorder = new PcmRecorder();
-        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, constraints));
+        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, deviceId));
     }
 
     /**

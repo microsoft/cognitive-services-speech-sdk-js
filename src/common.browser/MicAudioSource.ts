@@ -49,12 +49,9 @@ export class MicAudioSource implements IAudioSource {
 
     private privContext: AudioContext;
 
-    private readonly privConstraints: MediaStreamConstraints;
-
-    public constructor(private readonly privRecorder: IRecorder, constraints?: MediaStreamConstraints, audioSourceId?: string) {
+    public constructor(private readonly privRecorder: IRecorder, audioSourceId?: string, private readonly deviceId?: string) {
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
-        this.privConstraints = constraints || { audio: true, video: false };
     }
 
     public get format(): AudioStreamFormat {
@@ -96,7 +93,7 @@ export class MicAudioSource implements IAudioSource {
             const next = () => {
                 this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
                 getUserMedia(
-                    this.privConstraints,
+                    { audio: this.deviceId ? { deviceId: this.deviceId } : true, video: false },
                     (mediaStream: MediaStream) => {
                         this.privMediaStream = mediaStream;
                         this.onEvent(new AudioSourceReadyEvent(this.privId));
