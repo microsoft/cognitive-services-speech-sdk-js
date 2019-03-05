@@ -9,6 +9,7 @@ import {
     AudioStreamNodeAttachedEvent,
     AudioStreamNodeAttachingEvent,
     AudioStreamNodeDetachedEvent,
+    ChunkedArrayBufferStream,
     Events,
     EventSource,
     IAudioSource,
@@ -22,7 +23,7 @@ import {
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 
-const bufferSize: number = 4096;
+export const bufferSize: number = 4096;
 
 /**
  * Represents audio input stream used for custom audio input configurations.
@@ -92,7 +93,7 @@ export abstract class PushAudioInputStream extends AudioInputStream {
      * @returns {PushAudioInputStream} The push audio input stream being created.
      */
     public static create(format?: AudioStreamFormat): PushAudioInputStream {
-        return new PushAudioInputStreamImpl(format);
+        return new PushAudioInputStreamImpl(bufferSize, format);
     }
 
     /**
@@ -124,14 +125,14 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     private privFormat: AudioStreamFormat;
     private privId: string;
     private privEvents: EventSource<AudioSourceEvent>;
-    private privStream: Stream<ArrayBuffer> = new Stream<ArrayBuffer>();
+    private privStream: Stream<ArrayBuffer>;
 
     /**
      * Creates and initalizes an instance with the given values.
      * @constructor
      * @param {AudioStreamFormat} format - The audio stream format.
      */
-    public constructor(format?: AudioStreamFormat) {
+    public constructor(chunkSize: number, format?: AudioStreamFormat) {
         super();
         if (format === undefined) {
             this.privFormat = AudioStreamFormatImpl.getDefaultInputFormat();
@@ -140,6 +141,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         }
         this.privEvents = new EventSource<AudioSourceEvent>();
         this.privId = createNoDashGuid();
+        this.privStream = new ChunkedArrayBufferStream(chunkSize);
     }
 
     /**
@@ -157,15 +159,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
      * @param {ArrayBuffer} dataBuffer - The audio buffer of which this function will make a copy.
      */
     public write(dataBuffer: ArrayBuffer): void {
-        // Break the data up into smaller chunks if needed.
-        let i: number;
-        for (i = bufferSize - 1; i < dataBuffer.byteLength; i += bufferSize) {
-            this.privStream.write(dataBuffer.slice(i - (bufferSize - 1), i + 1));
-        }
-
-        if ((i - (bufferSize - 1)) !== dataBuffer.byteLength) {
-            this.privStream.write(dataBuffer.slice(i - (bufferSize - 1), dataBuffer.byteLength));
-        }
+        this.privStream.write(dataBuffer);
     }
 
     /**

@@ -34,7 +34,7 @@ export class Stream<TBuffer> {
         return this.privId;
     }
 
-    public write = (buffer2: TBuffer): void => {
+    public write(buffer2: TBuffer): void {
         this.throwIfClosed();
         this.writeStreamChunk({
             buffer: buffer2,
@@ -59,7 +59,7 @@ export class Stream<TBuffer> {
             });
     }
 
-    public close = (): void => {
+    public close(): void {
         if (!this.privIsEnded) {
             this.writeStreamChunk({
                 buffer: null,
