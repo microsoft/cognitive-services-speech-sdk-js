@@ -890,56 +890,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     }, 35000);
 });
 
-test("Bad DataType for PushStreams results in error", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
-    console.info("Name: Bad DataType for PushStreams results in error");
-
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
-    objsToClose.push(s);
-
-    const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
-
-    // Wrong data type for ReadStreams
-    fs.createReadStream(Settings.WaveFile).on("data", (buffer: ArrayBuffer) => {
-        p.write(buffer);
-    }).on("end", () => {
-        p.close();
-    });
-
-    const r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s, config);
-    objsToClose.push(r);
-
-    expect(r).not.toBeUndefined();
-    expect(r instanceof sdk.Recognizer);
-
-    r.canceled = (r: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs) => {
-        try {
-            expect(e.errorDetails).not.toBeUndefined();
-            expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
-            expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.RuntimeError]);
-        } catch (error) {
-            done.fail(error);
-        }
-    };
-
-    r.recognizeOnceAsync(
-        (p2: sdk.SpeechRecognitionResult) => {
-            const res: sdk.SpeechRecognitionResult = p2;
-            try {
-                expect(res).not.toBeUndefined();
-                expect(res.errorDetails).not.toBeUndefined();
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
-                done();
-            } catch (error) {
-                done.fail(error);
-            }
-        },
-        (error: string) => {
-            done.fail(error);
-        });
-});
-
 test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Ambiguous Speech default as expected");

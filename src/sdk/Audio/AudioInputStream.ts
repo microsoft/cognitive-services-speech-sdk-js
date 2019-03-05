@@ -348,17 +348,42 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
                         return audioNodeId;
                     },
                     read: (): Promise<IStreamChunk<ArrayBuffer>> => {
-                        const readBuff: ArrayBuffer = new ArrayBuffer(bufferSize);
-                        const pulledBytes: number = this.privCallback.read(readBuff);
+                        let totalBytes: number = 0;
+                        let transmitBuff: ArrayBuffer;
+
+                        // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
+                        while (totalBytes < bufferSize) {
+                            // Sizing the read buffer to the delta between the perfect size and what's left means we won't ever get too much
+                            // data back.
+                            const readBuff: ArrayBuffer = new ArrayBuffer(bufferSize - totalBytes);
+                            const pulledBytes: number = this.privCallback.read(readBuff);
+
+                            // If there is no return buffer yet defined, set the return buffer to the that was just populated.
+                            // This was, if we have enough data there's no copy penalty, but if we don't we have a buffer that's the
+                            // preferred size allocated.
+                            if (undefined === transmitBuff) {
+                                transmitBuff = readBuff;
+                            } else {
+                                // Not the first bite at the apple, so fill the return buffer with the data we got back.
+                                const intView: Int8Array = new Int8Array(transmitBuff);
+                                intView.set(new Int8Array(readBuff), totalBytes);
+                            }
+
+                            // If there are no bytes to read, just break out and be done.
+                            if (0 === pulledBytes) {
+                                break;
+                            }
+
+                            totalBytes += pulledBytes;
+                        }
 
                         return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
-                            buffer: readBuff.slice(0, pulledBytes),
-                            isEnd: this.privIsClosed,
+                            buffer: transmitBuff.slice(0, totalBytes),
+                            isEnd: this.privIsClosed || totalBytes === 0,
                         });
                     },
                 };
             });
-
     }
 
     public detach(audioNodeId: string): void {
