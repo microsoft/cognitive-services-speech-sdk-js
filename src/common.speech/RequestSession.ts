@@ -80,6 +80,7 @@ export class RequestSession {
     }
 
     public startNewRecognition(): void {
+        this.privIsSpeechEnded = false;
         this.privIsRecognizing = true;
         this.privTurnStartAudioOffset = 0;
         this.privLastRecoOffset = 0;
