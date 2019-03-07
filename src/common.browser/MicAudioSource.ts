@@ -12,6 +12,7 @@ import {
     AudioStreamNodeAttachingEvent,
     AudioStreamNodeDetachedEvent,
     AudioStreamNodeErrorEvent,
+    ChunkedArrayBufferStream,
     createNoDashGuid,
     Deferred,
     Events,
@@ -51,10 +52,13 @@ export class MicAudioSource implements IAudioSource {
 
     private privContext: AudioContext;
 
-    public constructor(recorder: IRecorder, audioSourceId?: string) {
+    private privOutputChunkSize: number;
+
+    public constructor(recorder: IRecorder, outputChunkSize: number, audioSourceId?: string) {
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
         this.privRecorder = recorder;
+        this.privOutputChunkSize = outputChunkSize;
     }
 
     public get format(): AudioStreamFormat {
@@ -190,7 +194,7 @@ export class MicAudioSource implements IAudioSource {
     private listen = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
         return this.turnOn()
             .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
-                const stream = new Stream<ArrayBuffer>(audioNodeId);
+                const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
                 this.privStreams[audioNodeId] = stream;
 
                 try {

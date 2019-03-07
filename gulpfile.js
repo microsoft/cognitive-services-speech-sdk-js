@@ -56,7 +56,10 @@
               ]
         }))
         .pipe(gulp.dest('distrib/browser'));
-  }));
+  }, function () {
+      return gulp.src('./src/audioworklet/speech-processor.js')
+        .pipe(gulp.dest('./distrib/browser'));
+   }));
 
   gulp.task('compress', gulp.series("bundle", function(cb) {
     return pump([

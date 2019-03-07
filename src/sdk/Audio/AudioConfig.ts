@@ -5,7 +5,7 @@ import { AudioStreamFormat } from "../../../src/sdk/Exports";
 import { FileAudioSource, MicAudioSource, PcmRecorder } from "../../common.browser/Exports";
 import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode, Promise } from "../../common/Exports";
 import { AudioInputStream, PullAudioInputStreamCallback } from "../Exports";
-import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
+import { bufferSize, PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
 
 /**
  * Represents audio input configuration used for specifying what type of input to use (microphone, file, stream).
@@ -19,9 +19,9 @@ export abstract class AudioConfig {
      * @public
      * @returns {AudioConfig} The audio input configuration being created.
      */
-    public static fromDefaultMicrophoneInput(): AudioConfig {
-        const pcmRecorder = new PcmRecorder();
-        return new AudioConfigImpl(new MicAudioSource(pcmRecorder));
+    public static fromDefaultMicrophoneInput(speechScript?: string): AudioConfig {
+        const pcmRecorder = new PcmRecorder(speechScript);
+        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, bufferSize));
     }
 
     /**

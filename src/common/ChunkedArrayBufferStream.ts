@@ -8,8 +8,8 @@ export class ChunkedArrayBufferStream extends Stream<ArrayBuffer> {
     private privNextBufferToWrite: ArrayBuffer;
     private privNextBufferReadyBytes: number;
 
-    constructor(targetChunkSize: number) {
-        super();
+    constructor(targetChunkSize: number, streamId?: string) {
+        super(streamId);
         this.privTargetChunkSize = targetChunkSize;
         this.privNextBufferReadyBytes = 0;
     }
@@ -49,7 +49,7 @@ export class ChunkedArrayBufferStream extends Stream<ArrayBuffer> {
 
     public close(): void {
         // Send whatever is pending, then close the base class.
-        if (0 !== this.privNextBufferReadyBytes) {
+        if (0 !== this.privNextBufferReadyBytes && !this.isClosed) {
             super.write(this.privNextBufferToWrite.slice(0, this.privNextBufferReadyBytes));
         }
 
