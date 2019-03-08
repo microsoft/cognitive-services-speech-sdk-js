@@ -14,6 +14,7 @@ import {
     IWebsocketMessageFormatter,
     Promise,
 } from "../common/Exports";
+import { ProxyInfo } from "./ProxyInfo";
 import { WebsocketMessageAdapter } from "./WebsocketMessageAdapter";
 
 export class WebsocketConnection implements IConnection {
@@ -29,6 +30,7 @@ export class WebsocketConnection implements IConnection {
         queryParameters: IStringDictionary<string>,
         headers: IStringDictionary<string>,
         messageFormatter: IWebsocketMessageFormatter,
+        proxyInfo: ProxyInfo,
         connectionId?: string) {
 
         if (!uri) {
@@ -72,7 +74,8 @@ export class WebsocketConnection implements IConnection {
         this.privConnectionMessageAdapter = new WebsocketMessageAdapter(
             this.privUri,
             this.id,
-            this.privMessageFormatter);
+            this.privMessageFormatter,
+            proxyInfo);
     }
 
     public dispose = (): void => {

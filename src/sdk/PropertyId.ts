@@ -89,6 +89,38 @@ export enum PropertyId {
     SpeechServiceConnection_IntentRegion,
 
     /**
+     * The host name of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
+     * you shouldn't have to use this property directly.
+     * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
+     * NOTE: This property id was added in version 1.1.0.
+     */
+    SpeechServiceConnection_ProxyHostName,
+
+    /**
+     * The port of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
+     * you shouldn't have to use this property directly.
+     * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
+     * NOTE: This property id was added in version 1.1.0.
+     */
+    SpeechServiceConnection_ProxyPort,
+
+    /**
+     * The user name of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
+     * you shouldn't have to use this property directly.
+     * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
+     * NOTE: This property id was added in version 1.1.0.
+     */
+    SpeechServiceConnection_ProxyUserName,
+
+    /**
+     * The password of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
+     * you shouldn't have to use this property directly.
+     * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
+     * NOTE: This property id was added in version 1.1.0.
+     */
+    SpeechServiceConnection_ProxyPassword,
+
+    /**
      * The Cognitive Services Speech Service recognition Mode. Can be "INTERACTIVE", "CONVERSATION", "DICTATION".
      * This property is intended to be read-only. The SDK is using it internally.
      * @member PropertyId.SpeechServiceConnection_RecoMode
