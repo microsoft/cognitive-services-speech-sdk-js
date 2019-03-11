@@ -25,6 +25,20 @@ export abstract class AudioConfig {
     }
 
     /**
+     * Creates an AudioConfig object representing a microphone with the specified device ID.
+     * @member AudioConfig.fromMicrophoneInput
+     * @function
+     * @public
+     * @param {string | undefined} deviceId - Specifies the device ID of the microphone to be used.
+     *        Default microphone is used the value is omitted.
+     * @returns {AudioConfig} The audio input configuration being created.
+     */
+    public static fromMicrophoneInput(deviceId?: string): AudioConfig {
+        const pcmRecorder = new PcmRecorder();
+        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, deviceId));
+    }
+
+    /**
      * Creates an AudioConfig object representing the specified file.
      * @member AudioConfig.fromWavFileInput
      * @function
