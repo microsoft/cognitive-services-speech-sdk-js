@@ -2,11 +2,19 @@
 // Licensed under the MIT license.
 
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
-import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
-import { Events, EventType, ObjectDisposedError } from "../src/common/Exports";
+import {
+    ConsoleLoggingListener,
+    WebsocketMessageAdapter,
+} from "../src/common.browser/Exports";
+import { ServiceRecognizerBase } from "../src/common.speech/Exports";
+import {
+    Events,
+    EventType
+} from "../src/common/Exports";
 
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { Settings } from "./Settings";
+import { validateTelemetry } from "./TelemetryUtil";
 import { default as WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
@@ -170,26 +178,60 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
-    test("RecognizeOnceAsync1", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
-        console.info("Name: RecognizeOnceAsync1");
-        const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
-        objsToClose.push(r);
+    describe("Counts Telemetry", () => {
+        afterAll(() => {
+            ServiceRecognizerBase.telemetryData = undefined;
+        });
 
-        r.recognizeOnceAsync(
-            (res: sdk.TranslationRecognitionResult) => {
-                expect(res).not.toBeUndefined();
-                expect(res.errorDetails).toBeUndefined();
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                expect(res.translations.get("de", undefined) !== undefined).toEqual(true);
-                expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
-                expect(res.text).toEqual("What's the weather like?");
+        test("RecognizeOnceAsync1", (done: jest.DoneCallback) => {
+            // tslint:disable-next-line:no-console
+            console.info("Name: RecognizeOnceAsync1");
+            const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
+            objsToClose.push(r);
 
-                done();
-            },
-            (error: string) => {
-                done.fail(error);
-            });
+            let telemetryEvents: number = 0;
+            let sessionId: string;
+            let hypoCounter: number = 0;
+
+            r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+                sessionId = e.sessionId;
+            };
+
+            r.recognizing = (s: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+                hypoCounter++;
+            };
+
+            ServiceRecognizerBase.telemetryData = (json: string): void => {
+                // Only record telemetry events from this session.
+                if (json !== undefined &&
+                    sessionId !== undefined &&
+                    json.indexOf(sessionId) > 0) {
+                    try {
+                        expect(hypoCounter).toBeGreaterThanOrEqual(1);
+                        validateTelemetry(json, 1, hypoCounter);
+                    } catch (error) {
+                        done.fail(error);
+                    }
+                    telemetryEvents++;
+                }
+            };
+
+            r.recognizeOnceAsync(
+                (res: sdk.TranslationRecognitionResult) => {
+                    expect(res).not.toBeUndefined();
+                    expect(res.errorDetails).toBeUndefined();
+                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
+                    expect(res.translations.get("de", undefined) !== undefined).toEqual(true);
+                    expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
+                    expect(res.text).toEqual("What's the weather like?");
+                    expect(telemetryEvents).toEqual(1);
+
+                    done();
+                },
+                (error: string) => {
+                    done.fail(error);
+                });
+        });
     });
 
     test("Translate Multiple Targets", (done: jest.DoneCallback) => {
@@ -1358,7 +1400,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (err: string) => {
                 done.fail(err);
             });
-    }, 35000);
+    }, 70000);
 
     test("Bad DataType for PushStreams results in error", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console

@@ -3,6 +3,11 @@
 
 import { AudioStreamFormat, AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
 import {
+    connectivity,
+    ISpeechConfigAudioDevice,
+    type,
+} from "../common.speech/Exports";
+import {
     AudioSourceErrorEvent,
     AudioSourceEvent,
     AudioSourceInitializingEvent,
@@ -32,8 +37,6 @@ export class FileAudioSource implements IAudioSource {
     // We should stream audio at no faster than 2x real-time (i.e., send five chunks
     // per second, with the chunk size == sample rate in bytes per second * 2 / 5).
     private static readonly CHUNK_SIZE: number = FileAudioSource.SAMPLE_RATE * 2 / 5;
-
-    private static readonly UPLOAD_INTERVAL: number = 200; // milliseconds
 
     // 10 seconds of audio in bytes =
     // sample rate (bytes/second) * 600 (seconds) + 44 (size of the wave header).
@@ -132,6 +135,18 @@ export class FileAudioSource implements IAudioSource {
         return this.privEvents;
     }
 
+    public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
+        return PromiseHelper.fromResult({
+            bitspersample: FileAudioSource.FILEFORMAT.bitsPerSample,
+            channelcount: FileAudioSource.FILEFORMAT.channels,
+            connectivity: connectivity.Unknown,
+            manufacturer: "Speech SDK",
+            model: "File",
+            samplerate: FileAudioSource.FILEFORMAT.samplesPerSec,
+            type: type.Unknown,
+        });
+    }
+
     private upload = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
         return this.turnOn()
             .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
@@ -149,7 +164,11 @@ export class FileAudioSource implements IAudioSource {
                         return; // output stream was closed (somebody called TurnOff). We're done here.
                     }
 
-                    stream.write(reader.result as ArrayBuffer);
+                    stream.writeStreamChunk({
+                        buffer: reader.result as ArrayBuffer,
+                        isEnd: false,
+                        timeRecieved: Date.now(),
+                    });
 
                     if (endOffset < this.privFile.size) {
                         startOffset = endOffset;

@@ -35,6 +35,7 @@ export class RequestSession {
     private privIsSpeechEnded: boolean = false;
     private privTurnStartAudioOffset: number = 0;
     private privLastRecoOffset: number = 0;
+    private privHypothesisReceived: boolean = false;
 
     protected privSessionId: string;
 
@@ -135,8 +136,21 @@ export class RequestSession {
         }
     }
 
+    public onHypothesis(offset: number): void {
+        if (!this.privHypothesisReceived) {
+            this.privHypothesisReceived = true;
+            this.privServiceTelemetryListener.hypothesisReceived(this.privAudioNode.findTimeAtOffset(offset));
+        }
+    }
+
+    public onPhraseRecognized(offset: number): void {
+        this.privServiceTelemetryListener.phraseReceived(this.privAudioNode.findTimeAtOffset(offset));
+        this.onServiceRecognized(offset);
+    }
+
     public onServiceRecognized(offset: number): void {
         this.privLastRecoOffset = offset;
+        this.privHypothesisReceived = false;
         this.privAudioNode.shrinkBuffers(offset);
     }
 
@@ -153,7 +167,11 @@ export class RequestSession {
     }
 
     public getTelemetry = (): string => {
-        return this.privServiceTelemetryListener.getTelemetry();
+        if (this.privServiceTelemetryListener.hasTelemetry) {
+            return this.privServiceTelemetryListener.getTelemetry();
+        } else {
+            return null;
+        }
     }
 
     public onStopRecognizing(): void {
