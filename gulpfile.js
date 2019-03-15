@@ -9,6 +9,13 @@
   var pump = require('pump');
   var webpack = require('webpack-stream');
   var dtsBundleWebpack = require('dts-bundle-webpack');
+  var change = require('gulp-change');
+
+  // Replaces the reference to the http proxy with an error when web packing the output.
+  // Unlike the ws package, https-proxy-agent doesn't provide a no-op browser variant that allows clean packing.
+  function renameHttpsAgent(content) {
+    return content.replace('https-proxy-agent', 'function() { throw new Error("Proxy is not supported in webpacks");}');
+  }
 
   gulp.task("build",  function build () {
       return gulp.src([
@@ -44,8 +51,9 @@
                     enforce: 'pre',
                     test: /\.js$/,
                     loader: "source-map-loader"
-                }]
+                }],
              },
+             externals: ['https-proxy-agent'], // Forces https-proxy-agent to be treated as an external module.
              plugins: [
                 new dtsBundleWebpack({
                   name: 'microsoft.cognitiveservices.speech.sdk.bundle',
@@ -55,6 +63,7 @@
                 })
               ]
         }))
+        .pipe(change(renameHttpsAgent))
         .pipe(gulp.dest('distrib/browser'));
   }));
 

@@ -1,21 +1,44 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { isString } from "util";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
+import {
+    ConsoleLoggingListener,
+    WebsocketMessageAdapter,
+} from "../src/common.browser/Exports";
+import {
+    Events,
+    EventType,
+} from "../src/common/Exports";
 import { createNoDashGuid } from "../src/common/Guid";
 import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
+let objsToClose: any[];
+
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
+    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
 // Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
 // report the name.
-// tslint:disable-next-line:no-console
-beforeEach(() => console.info("---------------------------------------Starting test case-----------------------------------"));
+beforeEach(() => {
+    objsToClose = [];
+    // tslint:disable-next-line:no-console
+    console.info("---------------------------------------Starting test case-----------------------------------");
+});
+
+afterEach(() => {
+    // tslint:disable-next-line:no-console
+    console.info("End Time: " + new Date(Date.now()).toLocaleString());
+    objsToClose.forEach((value: any, index: number, array: any[]) => {
+        if (typeof value.close === "function") {
+            value.close();
+        }
+    });
+});
 
 test("Null Param Check, both.", () => {
     expect(() => sdk.SpeechConfig.fromSubscription(null, null)).toThrowError();
@@ -363,4 +386,90 @@ test("testClose", () => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
     s.close();
+});
+
+describe("NPM proxy test", () => {
+
+    afterEach(() => {
+        // Reset the WebSocket test hook to browser.
+        WebsocketMessageAdapter.forceNpmWebSocket = false;
+    });
+
+    // Require manual setup of a proxy server.
+    test.skip("valid proxy set", (done: jest.DoneCallback) => {
+        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        objsToClose.push(s);
+
+        // Fiddler default port
+        s.setProxy("localhost", 8888);
+        WebsocketMessageAdapter.forceNpmWebSocket = true;
+        const a: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(WaveFileAudioInput.LoadFile(Settings.WaveFile));
+
+        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+        objsToClose.push(r);
+
+        r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+            try {
+                expect(e.text).toEqual(Settings.WaveFileText);
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
+        }, (error: string): void => {
+            done.fail(error);
+        });
+    });
+
+    test("proxy set to bad port", (done: jest.DoneCallback) => {
+        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        objsToClose.push(s);
+
+        s.setProxy("localhost", 8880);
+        WebsocketMessageAdapter.forceNpmWebSocket = true;
+        const a: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(WaveFileAudioInput.LoadFile(Settings.WaveFile));
+
+        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+        objsToClose.push(r);
+
+        r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+            try {
+                expect(e).not.toBeUndefined();
+                expect(e.errorDetails).not.toBeUndefined();
+                expect(e.errorDetails).toContain("1006");
+            } catch (error) {
+                done.fail(error);
+            }
+        }, (error: string): void => {
+            try {
+                expect(error).toContain("1006");
+                done();
+            } catch (error2) {
+                done.fail(error2);
+            }
+        });
+    });
+});
+
+test("Proxy has no effect on browser WebSocket", (done: jest.DoneCallback) => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
+
+    // Fiddler default port
+    s.setProxy("localhost", 8880);
+    const a: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(WaveFileAudioInput.LoadFile(Settings.WaveFile));
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+            expect(e.text).toEqual(Settings.WaveFileText);
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    }, (error: string): void => {
+        done.fail(error);
+    });
 });

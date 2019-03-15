@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+
 import {
     ArgumentNullError,
     ConnectionClosedEvent,
@@ -21,8 +22,10 @@ import {
     Queue,
     RawWebsocketMessage,
 } from "../common/Exports";
+import { ProxyInfo } from "./ProxyInfo";
 
-import ws = require("ws");
+import * as HttpsProxyAgent from "https-proxy-agent";
+import * as ws from "ws";
 
 interface ISendItem {
     Message: ConnectionMessage;
@@ -42,13 +45,15 @@ export class WebsocketMessageAdapter {
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privConnectionId: string;
     private privUri: string;
+    private proxyInfo: ProxyInfo;
 
     public static forceNpmWebSocket: boolean = false;
 
     public constructor(
         uri: string,
         connectionId: string,
-        messageFormatter: IWebsocketMessageFormatter) {
+        messageFormatter: IWebsocketMessageFormatter,
+        proxyInfo: ProxyInfo) {
 
         if (!uri) {
             throw new ArgumentNullError("uri");
@@ -58,6 +63,7 @@ export class WebsocketMessageAdapter {
             throw new ArgumentNullError("messageFormatter");
         }
 
+        this.proxyInfo = proxyInfo;
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
         this.privConnectionId = connectionId;
         this.privMessageFormatter = messageFormatter;
@@ -85,7 +91,26 @@ export class WebsocketMessageAdapter {
             if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
-                this.privWebsocketClient = new ws(this.privUri);
+                if (this.proxyInfo !== undefined &&
+                    this.proxyInfo.HostName !== undefined &&
+                    this.proxyInfo.Port > 0) {
+                    const httpOptions: HttpsProxyAgent.IHttpsProxyAgentOptions = {
+                        host: this.proxyInfo.HostName,
+                        port: this.proxyInfo.Port,
+                    };
+
+                    if (undefined !== this.proxyInfo.UserName) {
+                        httpOptions.headers = {
+                            "Proxy-Authentication": "Basic " + new Buffer(this.proxyInfo.UserName + ":" + (this.proxyInfo.Password === undefined) ? "" : this.proxyInfo.Password).toString("base64"),
+                        };
+                    }
+
+                    const httpProxyAgent: HttpsProxyAgent = new HttpsProxyAgent(httpOptions);
+
+                    this.privWebsocketClient = new ws(this.privUri, { agent: httpProxyAgent });
+                } else {
+                    this.privWebsocketClient = new ws(this.privUri);
+                }
             }
 
             this.privWebsocketClient.binaryType = "arraybuffer";

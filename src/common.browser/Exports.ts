@@ -10,3 +10,4 @@ export * from "./PCMRecorder";
 export * from "./WebsocketConnection";
 export * from "./WebsocketMessageAdapter";
 export * from "./ReplayableAudioNode";
+export * from "./ProxyInfo";
