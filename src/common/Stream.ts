@@ -11,7 +11,7 @@ import { IStreamChunk } from "./Stream";
 export interface IStreamChunk<TBuffer> {
     isEnd: boolean;
     buffer: TBuffer;
-    timeRecieved: number;
+    timeReceived: number;
 }
 
 export class Stream<TBuffer> {
@@ -57,7 +57,7 @@ export class Stream<TBuffer> {
             this.writeStreamChunk({
                 buffer: null,
                 isEnd: true,
-                timeRecieved: Date.now(),
+                timeReceived: Date.now(),
             });
             this.privIsEnded = true;
         }

@@ -38,7 +38,7 @@ export class PcmRecorder implements IRecorder {
                     outputStream.writeStreamChunk({
                         buffer: waveFrame,
                         isEnd: false,
-                        timeRecieved: Date.now(),
+                        timeReceived: Date.now(),
                     });
                     needHeader = false;
                 }

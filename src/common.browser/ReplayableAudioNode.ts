@@ -65,7 +65,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
                 buffer: retVal,
                 isEnd: false,
-                timeRecieved: this.privBuffers[i].chunk.timeRecieved,
+                timeReceived: this.privBuffers[i].chunk.timeReceived,
             });
         }
 
@@ -124,7 +124,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             const endOffset: number = startOffset + ((value.chunk.buffer.byteLength / this.privFormat.avgBytesPerSec) * 1e7);
 
             if (offset >= startOffset && offset <= endOffset) {
-                return value.chunk.timeRecieved;
+                return value.chunk.timeReceived;
             }
         }
 

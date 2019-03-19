@@ -170,7 +170,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
             this.privStream.writeStreamChunk({
                 buffer: dataBuffer.slice(i - (bufferSize - 1), i + 1),
                 isEnd: false,
-                timeRecieved: time,
+                timeReceived: time,
             });
         }
 
@@ -178,7 +178,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
             this.privStream.writeStreamChunk({
                 buffer: dataBuffer.slice(i - (bufferSize - 1), dataBuffer.byteLength),
                 isEnd: false,
-                timeRecieved: time
+                timeReceived: time
             });
         }
     }
@@ -387,7 +387,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
                         return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
                             buffer: readBuff.slice(0, pulledBytes),
                             isEnd: this.privIsClosed,
-                            timeRecieved: Date.now(),
+                            timeReceived: Date.now(),
                         });
                     },
                 };

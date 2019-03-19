@@ -40,7 +40,7 @@ const testAudioNode: IAudioStreamNode = {
         return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
             buffer: retBuffer,
             isEnd: false,
-            timeRecieved: readCount,
+            timeReceived: readCount,
         });
     },
 };

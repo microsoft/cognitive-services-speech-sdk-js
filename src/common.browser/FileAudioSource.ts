@@ -167,7 +167,7 @@ export class FileAudioSource implements IAudioSource {
                     stream.writeStreamChunk({
                         buffer: reader.result as ArrayBuffer,
                         isEnd: false,
-                        timeRecieved: Date.now(),
+                        timeReceived: Date.now(),
                     });
 
                     if (endOffset < this.privFile.size) {

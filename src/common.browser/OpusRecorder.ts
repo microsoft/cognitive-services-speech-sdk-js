@@ -26,7 +26,7 @@ export class OpusRecorder implements IRecorder {
                     outputStream.writeStreamChunk({
                         buffer: reader.result as ArrayBuffer,
                         isEnd: false,
-                        timeRecieved: Date.now(),
+                        timeReceived: Date.now(),
                     });
                 };
             }
