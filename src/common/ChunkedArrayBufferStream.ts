@@ -17,9 +17,10 @@ export class ChunkedArrayBufferStream extends Stream<ArrayBuffer> {
 
     public writeStreamChunk(chunk: IStreamChunk<ArrayBuffer>): void {
         // No pending write, and the buffer is the right size so write it.
-        if (0 === this.privNextBufferReadyBytes &&
-            chunk.buffer.byteLength === this.privTargetChunkSize) {
+        if (chunk.isEnd ||
+            (0 === this.privNextBufferReadyBytes && chunk.buffer.byteLength === this.privTargetChunkSize)) {
             super.writeStreamChunk(chunk);
+            return;
         }
 
         let bytesCopiedFromBuffer: number = 0;
@@ -47,6 +48,7 @@ export class ChunkedArrayBufferStream extends Stream<ArrayBuffer> {
                     isEnd: false,
                     timeReceived: this.privNextBufferStartTime,
                 });
+                this.privNextBufferReadyBytes = 0;
                 this.privNextBufferToWrite = undefined;
             }
         }
