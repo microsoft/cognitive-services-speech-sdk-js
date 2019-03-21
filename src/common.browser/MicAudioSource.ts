@@ -1,7 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioStreamFormat, AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
+import {
+    AudioStreamFormat,
+    AudioStreamFormatImpl,
+} from "../../src/sdk/Audio/AudioStreamFormat";
+import {
+    connectivity,
+    ISpeechConfigAudioDevice,
+    type
+} from "../common.speech/Exports";
 import {
     AudioSourceErrorEvent,
     AudioSourceEvent,
@@ -48,6 +56,8 @@ export class MicAudioSource implements IAudioSource {
     private privMediaStream: MediaStream;
 
     private privContext: AudioContext;
+
+    private privMicrophoneLabel: string;
 
     public constructor(private readonly privRecorder: IRecorder, audioSourceId?: string, private readonly deviceId?: string) {
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
@@ -182,6 +192,58 @@ export class MicAudioSource implements IAudioSource {
 
     public get events(): EventSource<AudioSourceEvent> {
         return this.privEvents;
+    }
+
+    public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
+        return this.getMicrophoneLabel().onSuccessContinueWith((label: string) => {
+            return {
+                bitspersample: MicAudioSource.AUDIOFORMAT.bitsPerSample,
+                channelcount: MicAudioSource.AUDIOFORMAT.channels,
+                connectivity: connectivity.Unknown,
+                manufacturer: "Speech SDK",
+                model: label,
+                samplerate: MicAudioSource.AUDIOFORMAT.samplesPerSec,
+                type: type.Microphones,
+            };
+        });
+    }
+
+    private getMicrophoneLabel(): Promise<string> {
+        const defaultMicrophoneName: string = "microphone";
+
+        // If we did this already, return the value.
+        if (this.privMicrophoneLabel !== undefined) {
+            return PromiseHelper.fromResult(this.privMicrophoneLabel);
+        }
+
+        // If the stream isn't currently running, we can't query devices because security.
+        if (this.privMediaStream === undefined || !this.privMediaStream.active) {
+            return PromiseHelper.fromResult(defaultMicrophoneName);
+        }
+
+        // Get the id of the device running the audio track.
+        const microphoneDeviceId: string = this.privMediaStream.getTracks()[0].getSettings().deviceId;
+
+        // If the browser doesn't support getting the device ID, set a default and return.
+        if (undefined === microphoneDeviceId) {
+            this.privMicrophoneLabel = defaultMicrophoneName;
+            return PromiseHelper.fromResult(this.privMicrophoneLabel);
+        }
+
+        const deferred: Deferred<string> = new Deferred<string>();
+
+        // Enumerate the media devices.
+        navigator.mediaDevices.enumerateDevices().then((devices: MediaDeviceInfo[]) => {
+            for (const device of devices) {
+                if (device.deviceId === microphoneDeviceId) {
+                    // Found the device
+                    this.privMicrophoneLabel = device.label;
+                    deferred.resolve(this.privMicrophoneLabel);
+                }
+            }
+        });
+
+        return deferred.promise();
     }
 
     private listen = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {

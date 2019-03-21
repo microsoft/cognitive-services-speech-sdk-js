@@ -66,6 +66,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
             case "translation.hypothesis":
 
                 const result: TranslationRecognitionEventArgs = this.fireEventForResult(TranslationHypothesis.fromJSON(connectionMessage.textBody), resultProps);
+                this.privRequestSession.onHypothesis(result.offset);
 
                 if (!!this.privTranslationRecognizer.recognizing) {
                     try {
@@ -79,15 +80,10 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
                 break;
             case "translation.phrase":
-                if (this.privRecognizerConfig.isContinuousRecognition) {
-                    // For continuous recognition telemetry has to be sent for every phrase as per spec.
-                    this.sendTelemetryData();
-                }
-
                 const translatedPhrase: TranslationPhrase = TranslationPhrase.fromJSON(connectionMessage.textBody);
 
                 if (translatedPhrase.RecognitionStatus === RecognitionStatus.Success) {
-                    this.privRequestSession.onServiceRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
+                    this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
 
                     // OK, the recognition was successful. How'd the translation do?
                     const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, resultProps);

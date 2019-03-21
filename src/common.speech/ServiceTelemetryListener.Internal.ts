@@ -17,18 +17,20 @@ import {
 } from "../common/Exports";
 import { ConnectingToServiceEvent, RecognitionTriggeredEvent } from "./RecognitionEvents";
 
-interface ITelemetry {
+export interface ITelemetry {
     Metrics: IMetric[];
     ReceivedMessages: IStringDictionary<string[]>;
 }
 
 // tslint:disable-next-line:max-classes-per-file
-interface IMetric {
-    End: string;
+export interface IMetric {
+    End?: string;
     Error?: string;
     Id?: string;
-    Name: string;
-    Start: string;
+    Name?: string;
+    Start?: string;
+    PhraseLatencyMs?: number[];
+    FirstHypothesisLatencyMs?: number[];
 }
 
 // tslint:disable-next-line:max-classes-per-file
@@ -49,6 +51,8 @@ export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
     private privConnectionStartTime: string;
 
     private privReceivedMessages: IStringDictionary<string[]>;
+    private privPhraseLatencies: number[];
+    private privHypothesisLatencies: number[];
 
     constructor(requestId: string, audioSourceId: string, audioNodeId: string) {
         this.privRequestId = requestId;
@@ -56,6 +60,20 @@ export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
         this.privAudioNodeId = audioNodeId;
 
         this.privReceivedMessages = {};
+        this.privPhraseLatencies = [];
+        this.privHypothesisLatencies = [];
+    }
+
+    public phraseReceived(audioReceivedTime: number): void {
+        if (audioReceivedTime > 0) { // 0 indicates the time is unknown. Drop it.
+            this.privPhraseLatencies.push(Date.now() - audioReceivedTime);
+        }
+    }
+
+    public hypothesisReceived(audioReceivedTime: number): void {
+        if (audioReceivedTime > 0) { // 0 indicates the time is unknown. Drop it.
+            this.privHypothesisLatencies.push(Date.now() - audioReceivedTime);
+        }
     }
 
     public onEvent = (e: PlatformEvent): void => {
@@ -168,6 +186,18 @@ export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
             metrics.push(this.privConnectionEstablishMetric);
         }
 
+        if (this.privPhraseLatencies.length > 0) {
+            metrics.push({
+                PhraseLatencyMs: this.privPhraseLatencies,
+            });
+        }
+
+        if (this.privHypothesisLatencies.length > 0) {
+            metrics.push({
+                FirstHypothesisLatencyMs: this.privHypothesisLatencies,
+            });
+        }
+
         const telemetry: ITelemetry = {
             Metrics: metrics,
             ReceivedMessages: this.privReceivedMessages,
@@ -180,8 +210,19 @@ export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
         this.privListeningTriggerMetric = null;
         this.privMicMetric = null;
         this.privConnectionEstablishMetric = null;
-
+        this.privPhraseLatencies = [];
+        this.privHypothesisLatencies = [];
         return json;
+    }
+
+    // Determines if there are any telemetry events to send to the service.
+    public get hasTelemetry(): boolean {
+        return (Object.keys(this.privReceivedMessages).length !== 0 ||
+            this.privListeningTriggerMetric !== null ||
+            this.privMicMetric !== null ||
+            this.privConnectionEstablishMetric !== null ||
+            this.privPhraseLatencies.length !== 0 ||
+            this.privHypothesisLatencies.length !== 0);
     }
 
     public dispose = (): void => {

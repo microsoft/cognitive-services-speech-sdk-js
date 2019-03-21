@@ -3,6 +3,7 @@
 
 import { AudioStreamFormat } from "../../../src/sdk/Exports";
 import { FileAudioSource, MicAudioSource, PcmRecorder } from "../../common.browser/Exports";
+import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
 import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode, Promise } from "../../common/Exports";
 import { AudioInputStream, PullAudioInputStreamCallback } from "../Exports";
 import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
@@ -175,5 +176,9 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      */
     public get events(): EventSource<AudioSourceEvent> {
         return this.privSource.events;
+    }
+
+    public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
+        return this.privSource.deviceInfo;
     }
 }

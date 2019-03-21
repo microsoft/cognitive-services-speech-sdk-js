@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { AudioStreamFormat } from "../../src/sdk/Exports";
+import { ISpeechConfigAudioDevice } from "../common.speech/Exports";
 import { AudioSourceEvent } from "./AudioSourceEvents";
 import { EventSource } from "./EventSource";
 import { IDetachable } from "./IDetachable";
@@ -16,6 +17,7 @@ export interface IAudioSource {
     turnOff(): Promise<boolean>;
     events: EventSource<AudioSourceEvent>;
     format: AudioStreamFormat;
+    deviceInfo: Promise<ISpeechConfigAudioDevice>;
 }
 
 export interface IAudioStreamNode extends IDetachable {
