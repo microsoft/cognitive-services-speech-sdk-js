@@ -96,6 +96,7 @@ export class SpeechServiceConfig {
 export class Context {
     public system: System;
     public os: OS;
+    public audio: ISpeechConfigAudio;
 
     constructor(os: OS) {
         this.system = new System();
@@ -145,4 +146,40 @@ export class Device {
         this.model = model;
         this.version = version;
     }
+}
+
+export interface ISpeechConfigAudio {
+    source?: ISpeechConfigAudioDevice;
+    playback?: ISpeechConfigAudioDevice;
+}
+
+export interface ISpeechConfigAudioDevice {
+    manufacturer: string;
+    model: string;
+    connectivity: connectivity;
+    type: type;
+    samplerate: number;
+    bitspersample: number;
+    channelcount: number;
+}
+
+export enum connectivity {
+    Bluetooth = "Bluetooth",
+    Wired = "Wired",
+    WiFi = "WiFi",
+    Cellular = "Cellular",
+    InBuilt = "InBuilt",
+    Unknown = "Unknown",
+}
+
+export enum type {
+    Phone = "Phone",
+    Speaker = "Speaker",
+    Car = "Car",
+    Headset = "Headset",
+    Thermostat = "Thermostat",
+    Microphones = "Microphones",
+    Deskphone = "Deskphone",
+    RemoteControl = "RemoteControl",
+    Unknown  = "Unknown"
 }

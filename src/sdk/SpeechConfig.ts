@@ -95,6 +95,22 @@ export abstract class SpeechConfig {
     }
 
     /**
+     * Sets the proxy configuration.
+     * @param proxyHostName The host name of the proxy server.
+     * @param proxyPort The port number of the proxy server.
+     */
+    public abstract setProxy(proxyHostName: string, proxyPort: number): void;
+
+    /**
+     * Sets proxy configuration.
+     * @param proxyHostName The host name of the proxy server, without the protocol scheme (http://)
+     * @param porxyPort The port number of the proxy server.
+     * @param proxyUserName The user name of the proxy server.
+     * @param proxyPassword The password of the proxy server.
+     */
+    public abstract setProxy(proxyHostName: string, proxyPort: number, proxyUserName: string, proxyPassword: string): void;
+
+    /**
      * Gets the authorization token.
      * @member SpeechConfig.prototype.authorizationToken
      * @function
@@ -269,6 +285,15 @@ export class SpeechConfigImpl extends SpeechConfig {
     public getProperty(name: string | PropertyId, def?: string): string {
 
         return this.privProperties.getProperty(name, def);
+    }
+
+    public setProxy(proxyHostName: string, proxyPort: number): void;
+    public setProxy(proxyHostName: string, proxyPort: number, proxyUserName: string, proxyPassword: string): void;
+    public setProxy(proxyHostName: any, proxyPort: any, proxyUserName?: any, proxyPassword?: any): void {
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyHostName], proxyHostName);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPort], proxyPort);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyUserName], proxyUserName);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword);
     }
 
     public clone(): SpeechConfigImpl {

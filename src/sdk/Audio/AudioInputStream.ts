@@ -3,6 +3,11 @@
 
 import { createNoDashGuid } from "../../../src/common/Guid";
 import {
+    connectivity,
+    ISpeechConfigAudioDevice,
+    type,
+} from "../../common.speech/Exports";
+import {
     AudioSourceEvent,
     AudioSourceInitializingEvent,
     AudioSourceReadyEvent,
@@ -122,7 +127,7 @@ export abstract class PushAudioInputStream extends AudioInputStream {
 // tslint:disable-next-line:max-classes-per-file
 export class PushAudioInputStreamImpl extends PushAudioInputStream implements IAudioSource {
 
-    private privFormat: AudioStreamFormat;
+    private privFormat: AudioStreamFormatImpl;
     private privId: string;
     private privEvents: EventSource<AudioSourceEvent>;
     private privStream: Stream<ArrayBuffer>;
@@ -137,7 +142,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         if (format === undefined) {
             this.privFormat = AudioStreamFormatImpl.getDefaultInputFormat();
         } else {
-            this.privFormat = format;
+            this.privFormat = format as AudioStreamFormatImpl;
         }
         this.privEvents = new EventSource<AudioSourceEvent>();
         this.privId = createNoDashGuid();
@@ -159,7 +164,11 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
      * @param {ArrayBuffer} dataBuffer - The audio buffer of which this function will make a copy.
      */
     public write(dataBuffer: ArrayBuffer): void {
-        this.privStream.write(dataBuffer);
+        this.privStream.writeStreamChunk({
+            buffer: dataBuffer,
+            isEnd: false,
+            timeReceived: Date.now()
+        });
     }
 
     /**
@@ -223,6 +232,18 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         return this.privEvents;
     }
 
+    public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
+        return PromiseHelper.fromResult({
+            bitspersample: this.privFormat.bitsPerSample,
+            channelcount: this.privFormat.channels,
+            connectivity: connectivity.Unknown,
+            manufacturer: "Speech SDK",
+            model: "PushStream",
+            samplerate: this.privFormat.samplesPerSec,
+            type: type.Unknown,
+        });
+    }
+
     private onEvent = (event: AudioSourceEvent): void => {
         this.privEvents.onEvent(event);
         Events.instance.onEvent(event);
@@ -254,7 +275,7 @@ export abstract class PullAudioInputStream extends AudioInputStream {
      * @returns {PullAudioInputStream} The push audio input stream being created.
      */
     public static create(callback: PullAudioInputStreamCallback, format?: AudioStreamFormat): PullAudioInputStream {
-        return new PullAudioInputStreamImpl(callback, format);
+        return new PullAudioInputStreamImpl(callback, format as AudioStreamFormatImpl);
     }
 
     /**
@@ -276,7 +297,7 @@ export abstract class PullAudioInputStream extends AudioInputStream {
 export class PullAudioInputStreamImpl extends PullAudioInputStream implements IAudioSource {
 
     private privCallback: PullAudioInputStreamCallback;
-    private privFormat: AudioStreamFormat;
+    private privFormat: AudioStreamFormatImpl;
     private privId: string;
     private privEvents: EventSource<AudioSourceEvent>;
     private privIsClosed: boolean;
@@ -290,10 +311,10 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
      * @param {AudioStreamFormat} format - The audio data format in which audio will be
      *        returned from the callback's read() method (currently only support 16 kHz 16bit mono PCM).
      */
-    public constructor(callback: PullAudioInputStreamCallback, format?: AudioStreamFormat) {
+    public constructor(callback: PullAudioInputStreamCallback, format?: AudioStreamFormatImpl) {
         super();
         if (undefined === format) {
-            this.privFormat = AudioStreamFormat.getDefaultInputFormat();
+            this.privFormat = AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
         } else {
             this.privFormat = format;
         }
@@ -380,6 +401,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
                         return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
                             buffer: transmitBuff.slice(0, totalBytes),
                             isEnd: this.privIsClosed || totalBytes === 0,
+                            timeReceived: Date.now(),
                         });
                     },
                 };
@@ -396,6 +418,18 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
 
     public get events(): EventSource<AudioSourceEvent> {
         return this.privEvents;
+    }
+
+    public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
+        return PromiseHelper.fromResult({
+            bitspersample: this.privFormat.bitsPerSample,
+            channelcount: this.privFormat.channels,
+            connectivity: connectivity.Unknown,
+            manufacturer: "Speech SDK",
+            model: "PullStream",
+            samplerate: this.privFormat.samplesPerSec,
+            type: type.Unknown,
+        });
     }
 
     private onEvent = (event: AudioSourceEvent): void => {

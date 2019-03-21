@@ -84,6 +84,8 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     connectionMessage.textBody,
                     resultProps);
 
+                this.privRequestSession.onHypothesis(result.offset);
+
                 ev = new IntentRecognitionEventArgs(result, speechHypothesis.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
 
                 if (!!this.privIntentRecognizer.recognizing) {
@@ -110,14 +112,9 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     connectionMessage.textBody,
                     resultProps);
 
-                ev = new IntentRecognitionEventArgs(result, result.offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
+                ev = new IntentRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
 
                 const sendEvent: () => void = () => {
-                    if (this.privRecognizerConfig.isContinuousRecognition) {
-                        // For continuous recognition telemetry has to be sent for every phrase as per spec.
-                        this.sendTelemetryData();
-                    }
-
                     if (!!this.privIntentRecognizer.recognized) {
                         try {
                             this.privIntentRecognizer.recognized(this.privIntentRecognizer, ev);
@@ -148,6 +145,8 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 // If intent data was sent, the terminal result for this recognizer is an intent being found.
                 // If no intent data was sent, the terminal event is speech recognition being successful.
                 if (false === this.privIntentDataSent || ResultReason.NoMatch === ev.result.reason) {
+                    // Advance the buffers.
+                    this.privRequestSession.onPhraseRecognized(ev.offset + ev.result.duration);
                     sendEvent();
                 } else {
                     // Squirrel away the args, when the response event arrives it will build upon them
@@ -158,11 +157,6 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 break;
             case "response":
                 // Response from LUIS
-                if (this.privRecognizerConfig.isContinuousRecognition) {
-                    // For continuous recognition telemetry has to be sent for every phrase as per spec.
-                    this.sendTelemetryData();
-                }
-
                 ev = this.privPendingIntentArgs;
                 this.privPendingIntentArgs = undefined;
 
@@ -209,13 +203,14 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                             reason,
                             ev.result.text,
                             ev.result.duration,
-                            ev.result.offset + this.privRequestSession.currentTurnAudioOffset,
+                            ev.result.offset,
                             ev.result.errorDetails,
                             ev.result.json,
                             properties),
-                        ev.offset + this.privRequestSession.currentTurnAudioOffset,
+                        ev.offset,
                         ev.sessionId);
                 }
+                this.privRequestSession.onPhraseRecognized(ev.offset + ev.result.duration);
 
                 if (!!this.privIntentRecognizer.recognized) {
                     try {

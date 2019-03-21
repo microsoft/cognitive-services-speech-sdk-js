@@ -40,7 +40,11 @@ export class PcmRecorder implements IRecorder {
             if (outputStream && !outputStream.isClosed) {
                 const waveFrame = waveStreamEncoder.encode(needHeader, inputFrame);
                 if (!!waveFrame) {
-                    outputStream.write(waveFrame);
+                    outputStream.writeStreamChunk({
+                        buffer: waveFrame,
+                        isEnd: false,
+                        timeReceived: Date.now(),
+                    });
                     needHeader = false;
                 }
             }
@@ -61,7 +65,11 @@ export class PcmRecorder implements IRecorder {
                         if (outputStream && !outputStream.isClosed) {
                             const waveFrame = waveStreamEncoder.encode(needHeader, inputFrame);
                             if (!!waveFrame) {
-                                outputStream.write(waveFrame);
+                                outputStream.writeStreamChunk({
+                                    buffer: waveFrame,
+                                    isEnd: false,
+                                    timeReceived: Date.now(),
+                                });
                                 needHeader = false;
                             }
                         }

@@ -3,6 +3,7 @@
 
 import { AudioStreamFormat } from "../../../src/sdk/Exports";
 import { FileAudioSource, MicAudioSource, PcmRecorder } from "../../common.browser/Exports";
+import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
 import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode, Promise } from "../../common/Exports";
 import { AudioInputStream, PullAudioInputStreamCallback } from "../Exports";
 import { bufferSize, PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
@@ -22,6 +23,20 @@ export abstract class AudioConfig {
     public static fromDefaultMicrophoneInput(speechScript?: string): AudioConfig {
         const pcmRecorder = new PcmRecorder(speechScript);
         return new AudioConfigImpl(new MicAudioSource(pcmRecorder, bufferSize));
+    }
+
+    /**
+     * Creates an AudioConfig object representing a microphone with the specified device ID.
+     * @member AudioConfig.fromMicrophoneInput
+     * @function
+     * @public
+     * @param {string | undefined} deviceId - Specifies the device ID of the microphone to be used.
+     *        Default microphone is used the value is omitted.
+     * @returns {AudioConfig} The audio input configuration being created.
+     */
+    public static fromMicrophoneInput(deviceId?: string): AudioConfig {
+        const pcmRecorder = new PcmRecorder();
+        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, bufferSize, deviceId));
     }
 
     /**
@@ -161,5 +176,9 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      */
     public get events(): EventSource<AudioSourceEvent> {
         return this.privSource.events;
+    }
+
+    public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
+        return this.privSource.deviceInfo;
     }
 }

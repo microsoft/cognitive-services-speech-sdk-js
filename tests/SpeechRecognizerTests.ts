@@ -9,6 +9,7 @@ import { ConnectionStartEvent } from "../src/common/Exports";
 import { Events, EventType, PlatformEvent } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
+import { validateTelemetry } from "./TelemetryUtil";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
@@ -252,9 +253,22 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
             let telemetryEvents: number = 0;
             let sessionId: string;
+            let hypoCounter: number = 0;
 
             r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
                 sessionId = e.sessionId;
+            };
+
+            r.recognizing = (s: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+                hypoCounter++;
+            };
+
+            r.canceled = (s: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+                try {
+                    expect(e.errorDetails).toBeUndefined();
+                } catch (error) {
+                    done.fail(error);
+                }
             };
 
             ServiceRecognizerBase.telemetryData = (json: string): void => {
@@ -262,6 +276,11 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 if (json !== undefined &&
                     sessionId !== undefined &&
                     json.indexOf(sessionId) > 0) {
+                    try {
+                        validateTelemetry(json, 1, hypoCounter);
+                    } catch (error) {
+                        done.fail(error);
+                    }
                     telemetryEvents++;
                 }
             };
@@ -287,6 +306,86 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     done.fail(error);
                 });
         });
+        test("testStopContinuousRecognitionAsyncWithTelemetry", (done: jest.DoneCallback) => {
+            // tslint:disable-next-line:no-console
+            console.info("Name: testStopContinuousRecognitionAsyncWithTelemetry");
+
+            const s: sdk.SpeechConfig = BuildSpeechConfig();
+            objsToClose.push(s);
+
+            const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+            const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps);
+
+            const fileBuff: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+            ps.write(fileBuff);
+            ps.write(new ArrayBuffer(1024 * 32));
+            ps.write(fileBuff);
+            ps.close();
+
+            // Now, the same test, but with telemetry enabled.
+            const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, audio);
+            objsToClose.push(r);
+
+            let recoCount: number = 0;
+            let canceled: boolean = false;
+            let telemetryEvents: number = 0;
+            let hypoCounter: number = 0;
+
+            // enable telemetry data
+            sdk.Recognizer.enableTelemetry(true);
+
+            ServiceRecognizerBase.telemetryData = (json: string): void => {
+                telemetryEvents++;
+                try {
+                    validateTelemetry(json, 3, hypoCounter);
+                } catch (error) {
+                    done.fail(error);
+                }
+            };
+
+            r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
+                try {
+                    recoCount++;
+                    expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(e.result.text).toEqual("What's the weather like?");
+                    expect(e.result.properties).not.toBeUndefined();
+                    expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                } catch (error) {
+                    done.fail(error);
+                }
+            };
+
+            r.recognizing = (s: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+                hypoCounter++;
+            };
+
+            r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+                try {
+                    canceled = true;
+                    expect(e.errorDetails).toBeUndefined();
+                    expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
+                } catch (error) {
+                    done.fail(error);
+                }
+            };
+
+            r.startContinuousRecognitionAsync(
+                () => WaitForCondition(() => ((recoCount === 2) && canceled), () => {
+                    r.stopContinuousRecognitionAsync(
+                        () => {
+                            expect(telemetryEvents).toEqual(1);
+                            done();
+                        },
+                        (err: string) => {
+                            done.fail(err);
+                        });
+                }),
+                (err: string) => {
+                    done.fail(err);
+                });
+        });
+
     });
 
     test("Event Tests (RecognizeOnce)", (done: jest.DoneCallback) => {
@@ -585,66 +684,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     done.fail(err);
                 });
         });
-    });
-
-    test("testStopContinuousRecognitionAsyncWithTelemetry", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
-        console.info("Name: testStopContinuousRecognitionAsyncWithTelemetry");
-        // Now, the same test, but with telemetry enabled.
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
-        objsToClose.push(r);
-
-        let eventDone: boolean = false;
-        let canceled: boolean = false;
-        let telemetryEvents: number = 0;
-
-        // enable telemetry data
-        sdk.Recognizer.enableTelemetry(true);
-
-        ServiceRecognizerBase.telemetryData = (json: string): void => {
-            telemetryEvents++;
-        };
-
-        r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
-            try {
-                eventDone = true;
-                expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(e.result.text).toEqual("What's the weather like?");
-                expect(e.result.properties).not.toBeUndefined();
-                expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
-
-            } catch (error) {
-                done.fail(error);
-            }
-        };
-
-        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-            try {
-                canceled = true;
-                expect(e.errorDetails).toBeUndefined();
-                expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
-            } catch (error) {
-                done.fail(error);
-            }
-        };
-
-        r.startContinuousRecognitionAsync(
-            () => WaitForCondition(() => (eventDone && canceled), () => {
-                r.stopContinuousRecognitionAsync(
-                    () => {
-                        // Three? One for the phrase that was recognized.
-                        // Once for the end of stream.
-                        // Once when closed.
-                        expect(telemetryEvents).toEqual(3);
-                        done();
-                    },
-                    (err: string) => {
-                        done.fail(err);
-                    });
-            }),
-            (err: string) => {
-                done.fail(err);
-            });
     });
 
     test("Close with no recognition", () => {

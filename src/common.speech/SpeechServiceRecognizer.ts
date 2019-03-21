@@ -57,16 +57,19 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
                 const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
+                const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
 
                 result = new SpeechRecognitionResult(
                     this.privRequestSession.requestId,
                     ResultReason.RecognizingSpeech,
                     hypothesis.Text,
                     hypothesis.Duration,
-                    hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset,
+                    offset,
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
+
+                this.privRequestSession.onHypothesis(offset);
 
                 const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
 
@@ -81,14 +84,10 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 }
                 break;
             case "speech.phrase":
-                // Always send telemetry because we want it to to up for recognize once which will listening to the service
-                // after recognition happens.
-                this.sendTelemetryData();
-
                 const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
                 const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
 
-                this.privRequestSession.onServiceRecognized(this.privRequestSession.currentTurnAudioOffset + simple.Offset + simple.Duration);
+                this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + simple.Offset + simple.Duration);
 
                 if (ResultReason.Canceled === resultReason) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);

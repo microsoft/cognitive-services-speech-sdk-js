@@ -19,6 +19,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     private privBufferSerial: number = 0;
     private privBufferedBytes: number = 0;
     private privReplay: boolean = false;
+    private privLastChunkAcquiredTime: number = 0;
 
     public constructor(audioSource: IAudioStreamNode, format: AudioStreamFormatImpl) {
         this.privAudioNode = audioSource;
@@ -48,11 +49,11 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 
             let i: number = 0;
 
-            while (i < this.privBuffers.length && bytesToSeek >= this.privBuffers[i].buffer.byteLength) {
-                bytesToSeek -= this.privBuffers[i++].buffer.byteLength;
+            while (i < this.privBuffers.length && bytesToSeek >= this.privBuffers[i].chunk.buffer.byteLength) {
+                bytesToSeek -= this.privBuffers[i++].chunk.buffer.byteLength;
             }
 
-            const retVal: ArrayBuffer = this.privBuffers[i].buffer.slice(bytesToSeek);
+            const retVal: ArrayBuffer = this.privBuffers[i].chunk.buffer.slice(bytesToSeek);
 
             this.privReplayOffset += (retVal.byteLength / this.privFormat.avgBytesPerSec) * 1e+7;
 
@@ -64,14 +65,14 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
                 buffer: retVal,
                 isEnd: false,
+                timeReceived: this.privBuffers[i].chunk.timeReceived,
             });
         }
 
         return this.privAudioNode.read()
             .onSuccessContinueWith((result: IStreamChunk<ArrayBuffer>) => {
                 if (result.buffer) {
-
-                    this.privBuffers.push(new BufferEntry(result.buffer, this.privBufferSerial++, this.privBufferedBytes));
+                    this.privBuffers.push(new BufferEntry(result, this.privBufferSerial++, this.privBufferedBytes));
                     this.privBufferedBytes += result.buffer.byteLength;
                 }
                 return result;
@@ -91,7 +92,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     }
 
     // Shrinks the existing audio buffers to start at the new offset, or at the
-    // beginnign of the buffer closest to the requested offset.
+    // beginning of the buffer closest to the requested offset.
     // A replay request will start from the last shrink point.
     public shrinkBuffers(offset: number): void {
         this.privLastShrinkOffset = offset;
@@ -105,12 +106,29 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 
         let i: number = 0;
 
-        while (i < this.privBuffers.length && bytesToSeek >= this.privBuffers[i].buffer.byteLength) {
-            bytesToSeek -= this.privBuffers[i++].buffer.byteLength;
+        while (i < this.privBuffers.length && bytesToSeek >= this.privBuffers[i].chunk.buffer.byteLength) {
+            bytesToSeek -= this.privBuffers[i++].chunk.buffer.byteLength;
         }
         this.privBufferStartOffset = Math.round(offset - ((bytesToSeek / this.privFormat.avgBytesPerSec) * 1e+7));
-
         this.privBuffers = this.privBuffers.slice(i);
+    }
+
+    // Finds the time a buffer of audio was first seen by offset.
+    public findTimeAtOffset(offset: number): number {
+        if (offset < this.privBufferStartOffset) {
+            return 0;
+        }
+
+        for (const value of this.privBuffers) {
+            const startOffset: number = (value.byteOffset / this.privFormat.avgBytesPerSec) * 1e7;
+            const endOffset: number = startOffset + ((value.chunk.buffer.byteLength / this.privFormat.avgBytesPerSec) * 1e7);
+
+            if (offset >= startOffset && offset <= endOffset) {
+                return value.chunk.timeReceived;
+            }
+        }
+
+        return 0;
     }
 }
 
@@ -119,12 +137,12 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 // the ArrayBuffer directly.
 // tslint:disable-next-line:max-classes-per-file
 class BufferEntry {
-    public buffer: ArrayBuffer;
+    public chunk: IStreamChunk<ArrayBuffer>;
     public serial: number;
     public byteOffset: number;
 
-    public constructor(buffer: ArrayBuffer, serial: number, byteOffset: number) {
-        this.buffer = buffer;
+    public constructor(chunk: IStreamChunk<ArrayBuffer>, serial: number, byteOffset: number) {
+        this.chunk = chunk;
         this.serial = serial;
         this.byteOffset = byteOffset;
     }

@@ -11,6 +11,7 @@ import { IStreamChunk } from "./Stream";
 export interface IStreamChunk<TBuffer> {
     isEnd: boolean;
     buffer: TBuffer;
+    timeReceived: number;
 }
 
 export class Stream<TBuffer> {
@@ -32,14 +33,6 @@ export class Stream<TBuffer> {
 
     public get id(): string {
         return this.privId;
-    }
-
-    public write(buffer2: TBuffer): void {
-        this.throwIfClosed();
-        this.writeStreamChunk({
-            buffer: buffer2,
-            isEnd: false,
-        });
     }
 
     public getReader = (): StreamReader<TBuffer> => {
@@ -64,12 +57,13 @@ export class Stream<TBuffer> {
             this.writeStreamChunk({
                 buffer: null,
                 isEnd: true,
+                timeReceived: Date.now(),
             });
             this.privIsEnded = true;
         }
     }
 
-    private writeStreamChunk = (streamChunk: IStreamChunk<TBuffer>): void => {
+    public writeStreamChunk(streamChunk: IStreamChunk<TBuffer>): void {
         this.throwIfClosed();
         this.privStreambuffer.push(streamChunk);
         for (const readerId in this.privReaderQueues) {

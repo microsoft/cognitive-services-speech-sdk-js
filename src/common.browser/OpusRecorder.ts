@@ -23,7 +23,11 @@ export class OpusRecorder implements IRecorder {
                 const reader = new FileReader();
                 reader.readAsArrayBuffer(dataAvailableEvent.data);
                 reader.onloadend = (event: ProgressEvent) => {
-                    outputStream.write(reader.result as ArrayBuffer);
+                    outputStream.writeStreamChunk({
+                        buffer: reader.result as ArrayBuffer,
+                        isEnd: false,
+                        timeReceived: Date.now(),
+                    });
                 };
             }
         };

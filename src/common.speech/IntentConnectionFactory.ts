@@ -1,10 +1,18 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { WebsocketConnection } from "../common.browser/Exports";
+import {
+    ProxyInfo,
+    WebsocketConnection,
+} from "../common.browser/Exports";
 import { IConnection, IStringDictionary } from "../common/Exports";
 import { PropertyId } from "../sdk/Exports";
-import { AuthInfo, IConnectionFactory, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
+import {
+    AuthInfo,
+    IConnectionFactory,
+    RecognizerConfig,
+    WebsocketMessageFormatter,
+} from "./Exports";
 
 const TestHooksParamName: string = "testhooks";
 const ConnectionIdHeader: string = "X-ConnectionId";
@@ -32,7 +40,7 @@ export class IntentConnectionFactory implements IConnectionFactory {
         headers[authInfo.headerName] = authInfo.token;
         headers[ConnectionIdHeader] = connectionId;
 
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), connectionId);
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
     }
 
     private getSpeechRegionFromIntentRegion(intentRegion: string): string {

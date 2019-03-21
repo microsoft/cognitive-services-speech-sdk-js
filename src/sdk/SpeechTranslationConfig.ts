@@ -322,6 +322,15 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
         return this.privSpeechProperties.getProperty(PropertyId.SpeechServiceConnection_Region);
     }
 
+    public setProxy(proxyHostName: string, proxyPort: number): void;
+    public setProxy(proxyHostName: string, proxyPort: number, proxyUserName: string, proxyPassword: string): void;
+    public setProxy(proxyHostName: any, proxyPort: any, proxyUserName?: any, proxyPassword?: any): void {
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyHostName], proxyHostName);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPort], proxyPort);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyUserName], proxyUserName);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword);
+    }
+
     /**
      * Gets an arbitrary property value.
      * @member SpeechTranslationConfigImpl.prototype.getProperty
