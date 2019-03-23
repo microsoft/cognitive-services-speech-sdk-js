@@ -221,12 +221,14 @@ export class MicAudioSource implements IAudioSource {
             return PromiseHelper.fromResult(defaultMicrophoneName);
         }
 
+        // Setup a default
+        this.privMicrophoneLabel = defaultMicrophoneName;
+
         // Get the id of the device running the audio track.
         const microphoneDeviceId: string = this.privMediaStream.getTracks()[0].getSettings().deviceId;
 
         // If the browser doesn't support getting the device ID, set a default and return.
         if (undefined === microphoneDeviceId) {
-            this.privMicrophoneLabel = defaultMicrophoneName;
             return PromiseHelper.fromResult(this.privMicrophoneLabel);
         }
 
@@ -238,10 +240,11 @@ export class MicAudioSource implements IAudioSource {
                 if (device.deviceId === microphoneDeviceId) {
                     // Found the device
                     this.privMicrophoneLabel = device.label;
-                    deferred.resolve(this.privMicrophoneLabel);
+                    break;
                 }
             }
-        });
+            deferred.resolve(this.privMicrophoneLabel);
+        }, () => deferred.resolve(this.privMicrophoneLabel));
 
         return deferred.promise();
     }
