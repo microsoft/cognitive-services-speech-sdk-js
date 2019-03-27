@@ -42,6 +42,8 @@ interface INavigatorUserMedia extends NavigatorUserMedia {
     msGetUserMedia?: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback, errorCallback: NavigatorUserMediaErrorCallback) => void;
 }
 
+export const AudioWorkletSourceURLPropertyName = "MICROPHONE-WorkletSourceUrl";
+
 export class MicAudioSource implements IAudioSource {
 
     private static readonly AUDIOFORMAT: AudioStreamFormatImpl = AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
@@ -214,6 +216,12 @@ export class MicAudioSource implements IAudioSource {
                 type: type.Microphones,
             };
         });
+    }
+
+    public setProperty(name: string, value: string): void {
+        if (name === AudioWorkletSourceURLPropertyName) {
+            this.privRecorder.setWorkletUrl(value);
+        }
     }
 
     private getMicrophoneLabel(): Promise<string> {

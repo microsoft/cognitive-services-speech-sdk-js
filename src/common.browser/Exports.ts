@@ -5,7 +5,6 @@ export * from "./ConsoleLoggingListener";
 export * from "./IRecorder";
 export * from "./MicAudioSource";
 export * from "./FileAudioSource";
-export * from "./OpusRecorder";
 export * from "./PCMRecorder";
 export * from "./WebsocketConnection";
 export * from "./WebsocketMessageAdapter";

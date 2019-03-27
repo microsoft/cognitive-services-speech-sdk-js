@@ -5,7 +5,8 @@ import { AudioStreamFormat } from "../../../src/sdk/Exports";
 import { FileAudioSource, MicAudioSource, PcmRecorder } from "../../common.browser/Exports";
 import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
 import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode, Promise } from "../../common/Exports";
-import { AudioInputStream, PullAudioInputStreamCallback } from "../Exports";
+import { Contracts } from "../Contracts";
+import { AudioInputStream, PropertyCollection, PropertyId, PullAudioInputStreamCallback } from "../Exports";
 import { bufferSize, PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
 
 /**
@@ -20,8 +21,8 @@ export abstract class AudioConfig {
      * @public
      * @returns {AudioConfig} The audio input configuration being created.
      */
-    public static fromDefaultMicrophoneInput(speechScript?: string): AudioConfig {
-        const pcmRecorder = new PcmRecorder(speechScript);
+    public static fromDefaultMicrophoneInput(): AudioConfig {
+        const pcmRecorder = new PcmRecorder();
         return new AudioConfigImpl(new MicAudioSource(pcmRecorder, bufferSize));
     }
 
@@ -81,6 +82,28 @@ export abstract class AudioConfig {
      * @public
      */
     public abstract close(): void;
+
+    /**
+     * Sets an arbitrary property.
+     * @member SpeechConfig.prototype.setProperty
+     * @function
+     * @public
+     * @param {string} name - The name of the property to set.
+     * @param {string} value - The new value of the property.
+     */
+    public abstract setProperty(name: string, value: string): void;
+
+    /**
+     * Returns the current value of an arbitrary property.
+     * @member SpeechConfig.prototype.getProperty
+     * @function
+     * @public
+     * @param {string} name - The name of the property to query.
+     * @param {string} def - The value to return in case the property is not known.
+     * @returns {string} The current value, or provided default, of the given property.
+     */
+    public abstract getProperty(name: string, def?: string): string;
+
 }
 
 /**
@@ -176,6 +199,22 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      */
     public get events(): EventSource<AudioSourceEvent> {
         return this.privSource.events;
+    }
+
+    public setProperty(name: string, value: string): void {
+        Contracts.throwIfNull(value, "value");
+
+        if (undefined !== this.privSource.setProperty) {
+            this.privSource.setProperty(name, value);
+        }
+    }
+
+    public getProperty(name: string, def?: string): string {
+        if (undefined !== this.privSource.getProperty) {
+            return this.privSource.getProperty(name, def);
+        }
+
+        return def;
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {

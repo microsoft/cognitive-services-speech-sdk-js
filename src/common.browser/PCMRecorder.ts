@@ -6,11 +6,7 @@ import { IRecorder } from "./IRecorder";
 
 export class PcmRecorder implements IRecorder {
     private privMediaResources: IMediaResources;
-    private privSpeechProcessorScript?: string; // speech-processor.js Url
-
-    constructor(speechProcessorScript?: string) {
-        this.privSpeechProcessorScript = speechProcessorScript;
-    }
+    private privSpeechProcessorScript: string; // speech-processor.js Url
 
     public record = (context: AudioContext, mediaStream: MediaStream, outputStream: Stream<ArrayBuffer>): void => {
         const desiredSampleRate = 16000;
@@ -54,7 +50,8 @@ export class PcmRecorder implements IRecorder {
 
         // https://webaudio.github.io/web-audio-api/#audioworklet
         // Using AudioWorklet to improve audio quality and avoid audio glitches due to blocking the UI thread
-        if (this.privSpeechProcessorScript && context.audioWorklet) {
+
+        if (!!this.privSpeechProcessorScript && !!context.audioWorklet) {
             context.audioWorklet
                 .addModule(this.privSpeechProcessorScript)
                 .then(() => {
@@ -114,6 +111,10 @@ export class PcmRecorder implements IRecorder {
                 this.privMediaResources.source = null;
             }
         }
+    }
+
+    public setWorkletUrl(url: string): void {
+        this.privSpeechProcessorScript = url;
     }
 }
 

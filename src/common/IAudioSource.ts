@@ -18,6 +18,8 @@ export interface IAudioSource {
     events: EventSource<AudioSourceEvent>;
     format: AudioStreamFormat;
     deviceInfo: Promise<ISpeechConfigAudioDevice>;
+    setProperty?(name: string, value: string): void;
+    getProperty?(name: string, def?: string): string;
 }
 
 export interface IAudioStreamNode extends IDetachable {
