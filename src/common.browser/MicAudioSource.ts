@@ -64,10 +64,11 @@ export class MicAudioSource implements IAudioSource {
 
     private privOutputChunkSize: number;
 
-    public constructor(private readonly privRecorder: IRecorder,
-                       outputChunkSize: number,
-                       audioSourceId?: string,
-                       private readonly deviceId?: string) {
+    public constructor(
+        private readonly privRecorder: IRecorder,
+        outputChunkSize: number,
+        audioSourceId?: string,
+        private readonly deviceId?: string) {
 
         this.privOutputChunkSize = outputChunkSize;
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
@@ -221,6 +222,8 @@ export class MicAudioSource implements IAudioSource {
     public setProperty(name: string, value: string): void {
         if (name === AudioWorkletSourceURLPropertyName) {
             this.privRecorder.setWorkletUrl(value);
+        } else {
+            throw new Error("Property '" + name + "' is not supported on Microphone.");
         }
     }
 
