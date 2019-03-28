@@ -20,6 +20,7 @@ import {
     AudioStreamNodeAttachingEvent,
     AudioStreamNodeDetachedEvent,
     AudioStreamNodeErrorEvent,
+    ChunkedArrayBufferStream,
     createNoDashGuid,
     Deferred,
     Events,
@@ -41,6 +42,8 @@ interface INavigatorUserMedia extends NavigatorUserMedia {
     msGetUserMedia?: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback, errorCallback: NavigatorUserMediaErrorCallback) => void;
 }
 
+export const AudioWorkletSourceURLPropertyName = "MICROPHONE-WorkletSourceUrl";
+
 export class MicAudioSource implements IAudioSource {
 
     private static readonly AUDIOFORMAT: AudioStreamFormatImpl = AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
@@ -59,7 +62,15 @@ export class MicAudioSource implements IAudioSource {
 
     private privMicrophoneLabel: string;
 
-    public constructor(private readonly privRecorder: IRecorder, audioSourceId?: string, private readonly deviceId?: string) {
+    private privOutputChunkSize: number;
+
+    public constructor(
+        private readonly privRecorder: IRecorder,
+        outputChunkSize: number,
+        audioSourceId?: string,
+        private readonly deviceId?: string) {
+
+        this.privOutputChunkSize = outputChunkSize;
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
     }
@@ -208,6 +219,14 @@ export class MicAudioSource implements IAudioSource {
         });
     }
 
+    public setProperty(name: string, value: string): void {
+        if (name === AudioWorkletSourceURLPropertyName) {
+            this.privRecorder.setWorkletUrl(value);
+        } else {
+            throw new Error("Property '" + name + "' is not supported on Microphone.");
+        }
+    }
+
     private getMicrophoneLabel(): Promise<string> {
         const defaultMicrophoneName: string = "microphone";
 
@@ -252,7 +271,7 @@ export class MicAudioSource implements IAudioSource {
     private listen = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
         return this.turnOn()
             .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
-                const stream = new Stream<ArrayBuffer>(audioNodeId);
+                const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
                 this.privStreams[audioNodeId] = stream;
 
                 try {

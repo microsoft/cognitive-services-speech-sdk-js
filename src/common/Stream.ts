@@ -52,7 +52,7 @@ export class Stream<TBuffer> {
             });
     }
 
-    public close = (): void => {
+    public close(): void {
         if (!this.privIsEnded) {
             this.writeStreamChunk({
                 buffer: null,
@@ -63,7 +63,7 @@ export class Stream<TBuffer> {
         }
     }
 
-    public writeStreamChunk = (streamChunk: IStreamChunk<TBuffer>): void => {
+    public writeStreamChunk(streamChunk: IStreamChunk<TBuffer>): void {
         this.throwIfClosed();
         this.privStreambuffer.push(streamChunk);
         for (const readerId in this.privReaderQueues) {

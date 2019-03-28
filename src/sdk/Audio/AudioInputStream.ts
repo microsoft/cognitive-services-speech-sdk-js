@@ -14,6 +14,7 @@ import {
     AudioStreamNodeAttachedEvent,
     AudioStreamNodeAttachingEvent,
     AudioStreamNodeDetachedEvent,
+    ChunkedArrayBufferStream,
     Events,
     EventSource,
     IAudioSource,
@@ -27,7 +28,7 @@ import {
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 
-const bufferSize: number = 4096;
+export const bufferSize: number = 4096;
 
 /**
  * Represents audio input stream used for custom audio input configurations.
@@ -97,7 +98,7 @@ export abstract class PushAudioInputStream extends AudioInputStream {
      * @returns {PushAudioInputStream} The push audio input stream being created.
      */
     public static create(format?: AudioStreamFormat): PushAudioInputStream {
-        return new PushAudioInputStreamImpl(format);
+        return new PushAudioInputStreamImpl(bufferSize, format);
     }
 
     /**
@@ -129,14 +130,14 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     private privFormat: AudioStreamFormatImpl;
     private privId: string;
     private privEvents: EventSource<AudioSourceEvent>;
-    private privStream: Stream<ArrayBuffer> = new Stream<ArrayBuffer>();
+    private privStream: Stream<ArrayBuffer>;
 
     /**
      * Creates and initalizes an instance with the given values.
      * @constructor
      * @param {AudioStreamFormat} format - The audio stream format.
      */
-    public constructor(format?: AudioStreamFormat) {
+    public constructor(chunkSize: number, format?: AudioStreamFormat) {
         super();
         if (format === undefined) {
             this.privFormat = AudioStreamFormatImpl.getDefaultInputFormat();
@@ -145,6 +146,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         }
         this.privEvents = new EventSource<AudioSourceEvent>();
         this.privId = createNoDashGuid();
+        this.privStream = new ChunkedArrayBufferStream(chunkSize);
     }
 
     /**
@@ -162,25 +164,11 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
      * @param {ArrayBuffer} dataBuffer - The audio buffer of which this function will make a copy.
      */
     public write(dataBuffer: ArrayBuffer): void {
-        // Break the data up into smaller chunks if needed.
-        let i: number;
-        const time: number = Date.now();
-
-        for (i = bufferSize - 1; i < dataBuffer.byteLength; i += bufferSize) {
-            this.privStream.writeStreamChunk({
-                buffer: dataBuffer.slice(i - (bufferSize - 1), i + 1),
-                isEnd: false,
-                timeReceived: time,
-            });
-        }
-
-        if ((i - (bufferSize - 1)) !== dataBuffer.byteLength) {
-            this.privStream.writeStreamChunk({
-                buffer: dataBuffer.slice(i - (bufferSize - 1), dataBuffer.byteLength),
-                isEnd: false,
-                timeReceived: time
-            });
-        }
+        this.privStream.writeStreamChunk({
+            buffer: dataBuffer,
+            isEnd: false,
+            timeReceived: Date.now()
+        });
     }
 
     /**
@@ -381,18 +369,43 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
                         return audioNodeId;
                     },
                     read: (): Promise<IStreamChunk<ArrayBuffer>> => {
-                        const readBuff: ArrayBuffer = new ArrayBuffer(bufferSize);
-                        const pulledBytes: number = this.privCallback.read(readBuff);
+                        let totalBytes: number = 0;
+                        let transmitBuff: ArrayBuffer;
+
+                        // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
+                        while (totalBytes < bufferSize) {
+                            // Sizing the read buffer to the delta between the perfect size and what's left means we won't ever get too much
+                            // data back.
+                            const readBuff: ArrayBuffer = new ArrayBuffer(bufferSize - totalBytes);
+                            const pulledBytes: number = this.privCallback.read(readBuff);
+
+                            // If there is no return buffer yet defined, set the return buffer to the that was just populated.
+                            // This was, if we have enough data there's no copy penalty, but if we don't we have a buffer that's the
+                            // preferred size allocated.
+                            if (undefined === transmitBuff) {
+                                transmitBuff = readBuff;
+                            } else {
+                                // Not the first bite at the apple, so fill the return buffer with the data we got back.
+                                const intView: Int8Array = new Int8Array(transmitBuff);
+                                intView.set(new Int8Array(readBuff), totalBytes);
+                            }
+
+                            // If there are no bytes to read, just break out and be done.
+                            if (0 === pulledBytes) {
+                                break;
+                            }
+
+                            totalBytes += pulledBytes;
+                        }
 
                         return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
-                            buffer: readBuff.slice(0, pulledBytes),
-                            isEnd: this.privIsClosed,
+                            buffer: transmitBuff.slice(0, totalBytes),
+                            isEnd: this.privIsClosed || totalBytes === 0,
                             timeReceived: Date.now(),
                         });
                     },
                 };
             });
-
     }
 
     public detach(audioNodeId: string): void {
