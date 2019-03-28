@@ -181,5 +181,7 @@ export enum type {
     Microphones = "Microphones",
     Deskphone = "Deskphone",
     RemoteControl = "RemoteControl",
-    Unknown  = "Unknown"
+    Unknown = "Unknown",
+    File = "File",
+    Stream = "Stream",
 }

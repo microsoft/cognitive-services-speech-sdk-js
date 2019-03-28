@@ -143,7 +143,7 @@ export class FileAudioSource implements IAudioSource {
             manufacturer: "Speech SDK",
             model: "File",
             samplerate: FileAudioSource.FILEFORMAT.samplesPerSec,
-            type: type.Unknown,
+            type: type.File,
         });
     }
 
