@@ -1076,7 +1076,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             });
     });
 
-    test("emptyFile", (done: jest.DoneCallback) => {
+    test.skip("emptyFile", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: emptyFile");
         // Server Responses:
