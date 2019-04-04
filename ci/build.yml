@@ -60,6 +60,16 @@ jobs:
     displayName: Publish test results
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
   - bash: |
+        cd tests/packaging
+        npm install
+        npm install ../../microsoft-cognitiveservices-speech-sdk-$SPEECHSDK_SEMVER2NOMETA.tgz
+        npm run bundle
+        E=$?
+        cd ../..
+        exit $E
+    displayName: Run Test Bundle
+    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  - bash: |
       set -u -e -o pipefail -x
       PACKAGE_BASE=microsoft-cognitiveservices-speech-sdk
       PACKAGE_NAME=$PACKAGE_BASE-$SPEECHSDK_SEMVER2NOMETA.tgz
