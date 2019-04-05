@@ -43,12 +43,11 @@
     "@types/ws": "^6.0.1",
     "dts-bundle-webpack": "^1.0.2",
     "gulp": "^4.0.0",
-    "gulp-change": "^1.0.2",
     "gulp-rename": "^1.4.0",
     "gulp-sourcemaps": "^2.6.4",
+    "gulp-terser": "^1.1.7",
     "gulp-tslint": "^8.0.0",
     "gulp-typescript": "^5.0.0",
-    "gulp-uglify": "^3.0.1",
     "jest": "^24.1.0",
     "jest-junit": "^6.3.0",
     "request": "^2.88.0",
@@ -81,5 +80,6 @@
   "dependencies": {
     "https-proxy-agent": "^2.2.1",
     "ws": "^6.1.2"
-  }
+  },
+  "sideEffects": false
 }
