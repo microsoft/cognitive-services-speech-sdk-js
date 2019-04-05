@@ -1,0 +1,17 @@
+{
+  "name": "package_test",
+  "version": "1.0.0",
+  "description": "Test package for cognitive-services-speech-sdk-js",
+  "main": "../../bundleApp.js",
+  "scripts": {
+    "bundle": "gulp bundle"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "gulp": "^4.0.0",
+    "webpack-stream": "^5.2.1"
+  }
+}

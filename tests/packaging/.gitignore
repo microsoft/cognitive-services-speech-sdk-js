@@ -1,0 +1,6 @@
+# ignore the npm packages
+/**/node_modules/
+# ignore auto-generated (transpiled) js files
+distrib/*
+.idea/
+*.tgz
