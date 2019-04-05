@@ -28,10 +28,12 @@
   "browser": {
     "https-proxy-agent": false
   },
-  "main": "distrib/lib/src/sdk/Exports.js",
-  "types": "distrib/lib/src/sdk/Exports.d.ts",
+  "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
+  "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
+  "types": "distrib/lib/microsoft.cognitiveservices.speech.sdk.d.ts",
   "files": [
     "distrib/lib/**/*",
+    "distrib/es2015/**/*",
     "distrib/browser/**/*",
     "LICENSE",
     "REDIST.txt"
@@ -43,12 +45,11 @@
     "@types/ws": "^6.0.1",
     "dts-bundle-webpack": "^1.0.2",
     "gulp": "^4.0.0",
-    "gulp-change": "^1.0.2",
     "gulp-rename": "^1.4.0",
     "gulp-sourcemaps": "^2.6.4",
+    "gulp-terser": "^1.1.7",
     "gulp-tslint": "^8.0.0",
     "gulp-typescript": "^5.0.0",
-    "gulp-uglify": "^3.0.1",
     "jest": "^24.1.0",
     "jest-junit": "^6.3.0",
     "request": "^2.88.0",
@@ -60,7 +61,7 @@
     "webpack-stream": "^4.0.0"
   },
   "scripts": {
-    "build": "gulp compress",
+    "build": "gulp compress && gulp build2015",
     "test": "npm run lint && npm run jest",
     "jest": "jest",
     "lint": "tslint -p tsconfig.json",
@@ -84,5 +85,6 @@
   },
   "resolutions": {
     "extend": "3.0.2"
-  }
+  },
+  "sideEffects": false
 }

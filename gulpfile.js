@@ -1,30 +1,56 @@
 (function () {
   'use strict';
-  var gulp = require("gulp");
+  var gulp = require('gulp');
   var ts = require('gulp-typescript');
   var sourcemaps = require('gulp-sourcemaps');
-  var tslint = require("gulp-tslint");
-  var uglify = require('gulp-uglify');
+  var tslint = require('gulp-tslint');
+  var terser = require('gulp-terser');
   var rename = require('gulp-rename');
   var pump = require('pump');
   var webpack = require('webpack-stream');
   var dtsBundleWebpack = require('dts-bundle-webpack');
 
-  gulp.task("build", function build() {
+  gulp.task('build2015', function build() {
     return gulp.src([
-      "src/**/*.ts",
-      "microsoft.cognitiveservices.speech.sdk.ts"],
+      'src/**/*.ts',
+      'microsoft.cognitiveservices.speech.sdk.ts'],
       { base: '.' })
       .pipe(tslint({
-        formatter: "prose",
-        configuration: "tslint.json"
+        formatter: 'prose',
+        configuration: 'tslint.json'
       }))
       .pipe(tslint.report({
         summarizeFailureOutput: true
       }))
       .pipe(sourcemaps.init())
       .pipe(ts({
-        target: "ES5",
+        module: 'es2015',
+        target: 'es2015',
+        declaration: true,
+        noImplicitAny: true,
+        removeComments: false,
+        outDir: 'distrib/es2015'
+      }))
+      .pipe(sourcemaps.write('.'))
+      .pipe(gulp.dest('distrib/es2015'));
+  });
+
+  gulp.task('build', function build() {
+    return gulp.src([
+      'src/**/*.ts',
+      'microsoft.cognitiveservices.speech.sdk.ts'],
+      { base: '.' })
+      .pipe(tslint({
+        formatter: 'prose',
+        configuration: 'tslint.json'
+      }))
+      .pipe(tslint.report({
+        summarizeFailureOutput: true
+      }))
+      .pipe(sourcemaps.init())
+      .pipe(ts({
+        module: 'commonjs',
+        target: 'es2015',
         declaration: true,
         noImplicitAny: true,
         removeComments: false,
@@ -34,7 +60,7 @@
       .pipe(gulp.dest('distrib/lib'));
   });
 
-  gulp.task("bundle", gulp.series("build", function bundle() {
+  gulp.task('bundle', gulp.series('build', function bundle() {
     return gulp.src('bundleApp.js')
       .pipe(webpack({
         output: { filename: 'microsoft.cognitiveservices.speech.sdk.bundle.js' },
@@ -43,7 +69,7 @@
           rules: [{
             enforce: 'pre',
             test: /\.js$/,
-            loader: "source-map-loader"
+            loader: 'source-map-loader'
           }],
         },
         plugins: [
@@ -61,11 +87,11 @@
       .pipe(gulp.dest('./distrib/browser'));
   }));
 
-  gulp.task('compress', gulp.series("bundle", function (cb) {
+  gulp.task('compress', gulp.series('bundle', function (cb) {
     return pump([
       gulp.src('distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle.js'),
-      rename(function (path) { path.basename = "microsoft.cognitiveservices.speech.sdk.bundle-min"; }),
-      uglify(),
+      rename(function (path) { path.basename = 'microsoft.cognitiveservices.speech.sdk.bundle-min'; }),
+      terser(),
       gulp.dest('distrib/browser')
     ],
       cb
