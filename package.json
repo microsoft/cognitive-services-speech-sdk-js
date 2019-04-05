@@ -25,6 +25,9 @@
     "type": "git",
     "url": "https://github.com/Microsoft/cognitive-services-speech-sdk-js"
   },
+  "browser": {
+    "https-proxy-agent": false
+  },
   "main": "distrib/lib/src/sdk/Exports.js",
   "types": "distrib/lib/src/sdk/Exports.d.ts",
   "files": [
