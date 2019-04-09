@@ -92,7 +92,7 @@ export enum PropertyId {
      * The host name of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
      * you shouldn't have to use this property directly.
      * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
-     * NOTE: This property id was added in version 1.1.0.
+     * Added in version 1.4.0.
      */
     SpeechServiceConnection_ProxyHostName,
 
@@ -100,7 +100,7 @@ export enum PropertyId {
      * The port of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
      * you shouldn't have to use this property directly.
      * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
-     * NOTE: This property id was added in version 1.1.0.
+     * Added in version 1.4.0.
      */
     SpeechServiceConnection_ProxyPort,
 
@@ -108,7 +108,7 @@ export enum PropertyId {
      * The user name of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
      * you shouldn't have to use this property directly.
      * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
-     * NOTE: This property id was added in version 1.1.0.
+     * Added in version 1.4.0.
      */
     SpeechServiceConnection_ProxyUserName,
 
@@ -116,7 +116,7 @@ export enum PropertyId {
      * The password of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
      * you shouldn't have to use this property directly.
      * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
-     * NOTE: This property id was added in version 1.1.0.
+     * Added in version 1.4.0.
      */
     SpeechServiceConnection_ProxyPassword,
 

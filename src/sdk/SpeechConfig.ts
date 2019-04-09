@@ -96,6 +96,7 @@ export abstract class SpeechConfig {
 
     /**
      * Sets the proxy configuration.
+     * Added in version 1.4.0.
      * @param proxyHostName The host name of the proxy server.
      * @param proxyPort The port number of the proxy server.
      */
@@ -103,6 +104,7 @@ export abstract class SpeechConfig {
 
     /**
      * Sets proxy configuration.
+     * Added in version 1.4.0.
      * @param proxyHostName The host name of the proxy server, without the protocol scheme (http://)
      * @param porxyPort The port number of the proxy server.
      * @param proxyUserName The user name of the proxy server.
