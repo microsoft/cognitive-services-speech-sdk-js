@@ -89,34 +89,34 @@ export enum PropertyId {
     SpeechServiceConnection_IntentRegion,
 
     /**
-     * The host name of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
-     * you shouldn't have to use this property directly.
+     * The host name of the proxy server used to connect to the Cognitive Services Speech Service. Only relevant in Node.js environments.
+     * You shouldn't have to use this property directly.
      * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
-     * NOTE: This property id was added in version 1.1.0.
+     * Added in version 1.4.0.
      */
     SpeechServiceConnection_ProxyHostName,
 
     /**
-     * The port of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
-     * you shouldn't have to use this property directly.
+     * The port of the proxy server used to connect to the Cognitive Services Speech Service. Only relevant in Node.js environments.
+     * You shouldn't have to use this property directly.
      * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
-     * NOTE: This property id was added in version 1.1.0.
+     * Added in version 1.4.0.
      */
     SpeechServiceConnection_ProxyPort,
 
     /**
-     * The user name of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
-     * you shouldn't have to use this property directly.
+     * The user name of the proxy server used to connect to the Cognitive Services Speech Service. Only relevant in Node.js environments.
+     * You shouldn't have to use this property directly.
      * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
-     * NOTE: This property id was added in version 1.1.0.
+     * Added in version 1.4.0.
      */
     SpeechServiceConnection_ProxyUserName,
 
     /**
-     * The password of the proxy server used to connect to the Cognitive Services Speech Service. Under normal circumstances,
-     * you shouldn't have to use this property directly.
+     * The password of the proxy server used to connect to the Cognitive Services Speech Service. Only relevant in Node.js environments.
+     * You shouldn't have to use this property directly.
      * Instead use <see cref="SpeechConfig.SetProxy(string,int,string,string)"/>.
-     * NOTE: This property id was added in version 1.1.0.
+     * Added in version 1.4.0.
      */
     SpeechServiceConnection_ProxyPassword,
 
