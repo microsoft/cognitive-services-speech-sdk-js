@@ -151,16 +151,6 @@ export abstract class SpeechConfig {
     public abstract set speechRecognitionLanguage(value: string);
 
     /**
-     * Sets an arbitrary property.
-     * @member SpeechConfig.prototype.setProperty
-     * @function
-     * @public
-     * @param {string} name - The name of the property to set.
-     * @param {string} value - The new value of the property.
-     */
-    public abstract setProperty(name: string, value: string): void;
-
-    /**
      * Returns the current value of an arbitrary property.
      * @member SpeechConfig.prototype.getProperty
      * @function
@@ -207,6 +197,33 @@ export abstract class SpeechConfig {
     public abstract set endpointId(value: string);
 
     /**
+     * Gets the fetchToken function.
+     * @member SpeechConfig.prototype.fetchToken
+     * @function
+     * @public
+     * @returns {() => Promise<string>} FetchToken function.
+     */
+    public abstract get fetchToken(): () => Promise<string>;
+
+    /**
+     * Sets the fetchToken function.
+     * @member SpeechConfig.prototype.fetchToken
+     * @function
+     * @public
+     * @param {() => Promise<string>} fetchToken function.
+     */
+    public abstract set fetchToken(value: () => Promise<string>);
+
+    /**
+     * Provides access to custom properties.
+     * @member SpeechConfig.prototype.properties
+     * @function
+     * @public
+     * @returns {PropertyCollection} The properties.
+     */
+    public abstract get properties(): PropertyCollection;
+
+    /**
      * Closes the configuration.
      * @member SpeechConfig.prototype.close
      * @function
@@ -222,7 +239,6 @@ export abstract class SpeechConfig {
  */
 // tslint:disable-next-line:max-classes-per-file
 export class SpeechConfigImpl extends SpeechConfig {
-
     private privProperties: PropertyCollection;
 
     public constructor() {
@@ -254,6 +270,14 @@ export class SpeechConfigImpl extends SpeechConfig {
 
     public set authorizationToken(value: string) {
         this.privProperties.setProperty(PropertyId.SpeechServiceAuthorization_Token, value);
+    }
+
+    public get fetchToken(): () => Promise<string> {
+        return this.privProperties.fetchToken;
+    }
+
+    public set fetchToken(value: () => Promise<string>) {
+        this.privProperties.fetchToken = value;
     }
 
     public get speechRecognitionLanguage(): string {

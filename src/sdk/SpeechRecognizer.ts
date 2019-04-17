@@ -9,13 +9,12 @@ import {
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechServiceConfig,
-    SpeechServiceRecognizer,
+    SpeechServiceRecognizer
 } from "../common.speech/Exports";
 import { SpeechConnectionFactory } from "../common.speech/SpeechConnectionFactory";
-import { AudioConfigImpl } from "./Audio/AudioConfig";
+import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
-    AudioConfig,
     KeywordRecognitionModel,
     OutputFormat,
     PropertyCollection,
@@ -23,9 +22,9 @@ import {
     Recognizer,
     SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
-    SpeechRecognitionResult,
+    SpeechRecognitionResult
 } from "./Exports";
-import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
+import { SpeechConfig } from "./SpeechConfig";
 
 /**
  * Performs speech recognition from microphone, file, or other audio input streams, and gets transcribed text as result.
@@ -41,14 +40,13 @@ export class SpeechRecognizer extends Recognizer {
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
     public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
-        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
-        Contracts.throwIfNull(speechConfigImpl, "speechConfig");
+        Contracts.throwIfNull(speechConfig, "speechConfig");
 
         Contracts.throwIfNullOrWhitespace(
-            speechConfigImpl.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
+            speechConfig.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        super(audioConfig, speechConfigImpl.properties, new SpeechConnectionFactory());
+        super(audioConfig, speechConfig.properties, new SpeechConnectionFactory());
         this.privDisposedSpeechRecognizer = false;
     }
 
@@ -350,7 +348,6 @@ export class SpeechRecognizer extends Recognizer {
         connectionFactory: IConnectionFactory,
         audioConfig: AudioConfig,
         recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
-        const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
-        return new SpeechServiceRecognizer(authentication, connectionFactory, configImpl, recognizerConfig, this);
+        return new SpeechServiceRecognizer(authentication, connectionFactory, audioConfig as AudioConfigImpl, recognizerConfig, this);
     }
 }
