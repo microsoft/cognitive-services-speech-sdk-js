@@ -61,8 +61,7 @@
     "webpack-stream": "^4.0.0"
   },
   "scripts": {
-    "build": "gulp compress",
-    "build2015": "gulp build2015",
+    "build": "gulp compress && gulp build2015",
     "test": "npm run lint && npm run jest",
     "jest": "jest",
     "lint": "tslint -p tsconfig.json",
@@ -84,8 +83,8 @@
     "https-proxy-agent": "^2.2.1",
     "ws": "^6.1.2"
   },
-  "sideEffects": false,
   "resolutions": {
     "extend": "3.0.2"
-  }
+  },
+  "sideEffects": false
 }
