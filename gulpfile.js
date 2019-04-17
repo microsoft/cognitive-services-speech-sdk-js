@@ -10,7 +10,7 @@
   var webpack = require('webpack-stream');
   var dtsBundleWebpack = require('dts-bundle-webpack');
 
-  gulp.task('build', function build() {
+  gulp.task('build2015', function build() {
     return gulp.src([
       'src/**/*.ts',
       'microsoft.cognitiveservices.speech.sdk.ts'],
@@ -25,6 +25,31 @@
       .pipe(sourcemaps.init())
       .pipe(ts({
         module: 'es2015',
+        target: 'es2015',
+        declaration: true,
+        noImplicitAny: true,
+        removeComments: false,
+        outDir: 'distrib/es2015'
+      }))
+      .pipe(sourcemaps.write('.'))
+      .pipe(gulp.dest('distrib/es2015'));
+  });
+
+  gulp.task('build', function build() {
+    return gulp.src([
+      'src/**/*.ts',
+      'microsoft.cognitiveservices.speech.sdk.ts'],
+      { base: '.' })
+      .pipe(tslint({
+        formatter: 'prose',
+        configuration: 'tslint.json'
+      }))
+      .pipe(tslint.report({
+        summarizeFailureOutput: true
+      }))
+      .pipe(sourcemaps.init())
+      .pipe(ts({
+        module: 'commonjs',
         target: 'es2015',
         declaration: true,
         noImplicitAny: true,

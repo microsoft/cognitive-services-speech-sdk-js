@@ -28,10 +28,12 @@
   "browser": {
     "https-proxy-agent": false
   },
-  "main": "distrib/lib/src/sdk/Exports.js",
-  "types": "distrib/lib/src/sdk/Exports.d.ts",
+  "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
+  "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
+  "types": "distrib/lib/microsoft.cognitiveservices.speech.sdk.d.ts",
   "files": [
     "distrib/lib/**/*",
+    "distrib/es2015/**/*",
     "distrib/browser/**/*",
     "LICENSE",
     "REDIST.txt"
@@ -60,6 +62,7 @@
   },
   "scripts": {
     "build": "gulp compress",
+    "build2015": "gulp build2015",
     "test": "npm run lint && npm run jest",
     "jest": "jest",
     "lint": "tslint -p tsconfig.json",
