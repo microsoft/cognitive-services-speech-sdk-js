@@ -11,18 +11,16 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SpeechServiceConfig,
+    SpeechServiceConfig
 } from "../common.speech/Exports";
-import { Promise, PromiseHelper } from "../common/Exports";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
-    Connection,
     PropertyCollection,
     PropertyId,
     RecognitionEventArgs,
     SessionEventArgs,
-    SpeechRecognitionResult,
+    SpeechRecognitionResult
 } from "./Exports";
 
 /**
@@ -168,9 +166,8 @@ export abstract class Recognizer {
         audioConfig: AudioConfig,
         recognizerConfig: RecognizerConfig): ServiceRecognizerBase;
 
-    // Does the generic recognizer setup that is common accross all recognizer types.
+    // Does the generic recognizer setup that is common across all recognizer types.
     protected implCommonRecognizerSetup(): void {
-
         let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
         let osName = "unknown";
         let osVersion = "unknown";
@@ -185,18 +182,14 @@ export abstract class Recognizer {
             new SpeechServiceConfig(
                 new Context(new OS(osPlatform, osName, osVersion))));
 
-        const subscriptionKey = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
-        const authentication = (subscriptionKey && subscriptionKey !== "") ?
+        const subscriptionKey = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Key);
+        const fetchToken = this.privProperties.fetchToken || (() => {
+            const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token);
+            return Promise.resolve(authorizationToken);
+        });
+        const authentication = subscriptionKey ?
             new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
-            new CognitiveTokenAuthentication(
-                (authFetchEventId: string): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return PromiseHelper.fromResult(authorizationToken);
-                },
-                (authFetchEventId: string): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return PromiseHelper.fromResult(authorizationToken);
-                });
+            new CognitiveTokenAuthentication(fetchToken, fetchToken);
 
         this.privReco = this.createServiceRecognizer(
             authentication,
@@ -210,9 +203,9 @@ export abstract class Recognizer {
         recognitionMode: RecognitionMode,
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallback: (e: string) => void): void {
-        this.privReco.recognize(recognitionMode, successCallback, errorCallback).on(
+        this.privReco.recognize(recognitionMode, successCallback, errorCallback).then(
             /* tslint:disable:no-empty */
-            (result: boolean): void => { },
+            (): void => { },
             (error: string): void => {
                 if (!!errorCallback) {
                     // Internal error with service communication.

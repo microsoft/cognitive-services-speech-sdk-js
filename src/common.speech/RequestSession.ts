@@ -8,8 +8,7 @@ import {
     Events,
     IDetachable,
     IEventSource,
-    PlatformEvent,
-    Promise,
+    PlatformEvent
 } from "../common/Exports";
 import {
     ConnectingToServiceEvent,
@@ -59,7 +58,7 @@ export class RequestSession {
     }
 
     public get completionPromise(): Promise<boolean> {
-        return this.privRequestCompletionDeferral.promise();
+        return this.privRequestCompletionDeferral.promise;
     }
 
     public get isSpeechEnded(): boolean {

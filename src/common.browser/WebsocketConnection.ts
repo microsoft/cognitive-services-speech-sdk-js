@@ -11,14 +11,12 @@ import {
     EventSource,
     IConnection,
     IStringDictionary,
-    IWebsocketMessageFormatter,
-    Promise,
+    IWebsocketMessageFormatter
 } from "../common/Exports";
 import { ProxyInfo } from "./ProxyInfo";
 import { WebsocketMessageAdapter } from "./WebsocketMessageAdapter";
 
 export class WebsocketConnection implements IConnection {
-
     private privUri: string;
     private privMessageFormatter: IWebsocketMessageFormatter;
     private privConnectionMessageAdapter: WebsocketMessageAdapter;

@@ -7,15 +7,13 @@ import {
     IStringDictionary,
     IWebsocketMessageFormatter,
     MessageType,
-    Promise,
     RawWebsocketMessage,
 } from "../common/Exports";
 
 const CRLF: string = "\r\n";
 
 export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
-
-    public toConnectionMessage = (message: RawWebsocketMessage): Promise<ConnectionMessage> => {
+    public toConnectionMessage(message: RawWebsocketMessage): Promise<ConnectionMessage> {
         const deferral = new Deferred<ConnectionMessage>();
 
         try {
@@ -68,10 +66,10 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
             deferral.reject(`Error formatting the message. Error: ${e}`);
         }
 
-        return deferral.promise();
+        return deferral.promise;
     }
 
-    public fromConnectionMessage = (message: ConnectionMessage): Promise<RawWebsocketMessage> => {
+    public fromConnectionMessage(message: ConnectionMessage): Promise<RawWebsocketMessage> {
         const deferral = new Deferred<RawWebsocketMessage>();
 
         try {
@@ -79,7 +77,6 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
                 const payload = `${this.makeHeaders(message)}${CRLF}${message.textBody ? message.textBody : ""}`;
 
                 deferral.resolve(new RawWebsocketMessage(MessageType.Text, payload, message.id));
-
             } else if (message.messageType === MessageType.Binary) {
                 const headersString = this.makeHeaders(message);
                 const content = message.binaryBody;
@@ -108,7 +105,7 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
             deferral.reject(`Error formatting the message. ${e}`);
         }
 
-        return deferral.promise();
+        return deferral.promise;
     }
 
     private makeHeaders = (message: ConnectionMessage): string => {

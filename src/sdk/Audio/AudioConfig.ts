@@ -4,9 +4,9 @@
 import { AudioStreamFormat } from "../../../src/sdk/Exports";
 import { FileAudioSource, MicAudioSource, PcmRecorder } from "../../common.browser/Exports";
 import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
-import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode, Promise } from "../../common/Exports";
+import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode } from "../../common/Exports";
 import { Contracts } from "../Contracts";
-import { AudioInputStream, PropertyCollection, PropertyId, PullAudioInputStreamCallback } from "../Exports";
+import { AudioInputStream, PullAudioInputStreamCallback } from "../Exports";
 import { bufferSize, PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
 
 /**
@@ -85,7 +85,7 @@ export abstract class AudioConfig {
 
     /**
      * Sets an arbitrary property.
-     * @member SpeechConfig.prototype.setProperty
+     * @member AudioConfig.prototype.setProperty
      * @function
      * @public
      * @param {string} name - The name of the property to set.
@@ -95,7 +95,7 @@ export abstract class AudioConfig {
 
     /**
      * Returns the current value of an arbitrary property.
-     * @member SpeechConfig.prototype.getProperty
+     * @member AudioConfig.prototype.getProperty
      * @function
      * @public
      * @param {string} name - The name of the property to query.
@@ -103,7 +103,6 @@ export abstract class AudioConfig {
      * @returns {string} The current value, or provided default, of the given property.
      */
     public abstract getProperty(name: string, def?: string): string;
-
 }
 
 /**

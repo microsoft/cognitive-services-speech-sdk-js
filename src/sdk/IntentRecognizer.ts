@@ -24,10 +24,9 @@ import {
     PropertyCollection,
     PropertyId,
     Recognizer,
-    SpeechConfig,
+    SpeechConfig
 } from "./Exports";
 import { LanguageUnderstandingModelImpl } from "./LanguageUnderstandingModel";
-import { SpeechConfigImpl } from "./SpeechConfig";
 
 /**
  * Intent recognizer.
@@ -47,15 +46,12 @@ export class IntentRecognizer extends Recognizer {
      */
     public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
         Contracts.throwIfNullOrUndefined(speechConfig, "speechConfig");
-        const configImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
-        Contracts.throwIfNullOrUndefined(configImpl, "speechConfig");
 
-        super(audioConfig, configImpl.properties, new IntentConnectionFactory());
+        super(audioConfig, speechConfig.properties, new IntentConnectionFactory());
+
         this.privAddedIntents = [];
         this.privAddedLmIntents = {};
-
         this.privDisposedIntentRecognizer = false;
-        this.privProperties = configImpl.properties;
 
         Contracts.throwIfNullOrWhitespace(this.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage), PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
     }

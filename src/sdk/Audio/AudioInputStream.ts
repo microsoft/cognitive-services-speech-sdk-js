@@ -20,10 +20,8 @@ import {
     IAudioSource,
     IAudioStreamNode,
     IStreamChunk,
-    Promise,
-    PromiseHelper,
     Stream,
-    StreamReader,
+    StreamReader
 } from "../../common/Exports";
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
@@ -35,7 +33,6 @@ export const bufferSize: number = 4096;
  * @class AudioInputStream
  */
 export abstract class AudioInputStream {
-
     /**
      * Creates and initializes an instance.
      * @constructor
@@ -87,7 +84,6 @@ export abstract class AudioInputStream {
  */
 // tslint:disable-next-line:max-classes-per-file
 export abstract class PushAudioInputStream extends AudioInputStream {
-
     /**
      * Creates a memory backed PushAudioInputStream with the specified audio format.
      * @member PushAudioInputStream.create
@@ -126,7 +122,6 @@ export abstract class PushAudioInputStream extends AudioInputStream {
  */
 // tslint:disable-next-line:max-classes-per-file
 export class PushAudioInputStreamImpl extends PushAudioInputStream implements IAudioSource {
-
     private privFormat: AudioStreamFormatImpl;
     private privId: string;
     private privEvents: EventSource<AudioSourceEvent>;
@@ -188,36 +183,28 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     public turnOn(): Promise<boolean> {
         this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
         this.onEvent(new AudioSourceReadyEvent(this.privId));
-        return PromiseHelper.fromResult(true);
+        return Promise.resolve(true);
     }
 
-    public attach(audioNodeId: string): Promise<IAudioStreamNode> {
+    public async attach(audioNodeId: string): Promise<IAudioStreamNode> {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
-        return this.turnOn()
-            .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
-                // For now we support a single parallel reader of the pushed stream.
-                // So we can simiply hand the stream to the recognizer and let it recognize.
-
-                return this.privStream.getReader();
-            })
-            .onSuccessContinueWith((streamReader: StreamReader<ArrayBuffer>) => {
-                this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
-
-                return {
-                    detach: () => {
-                        streamReader.close();
-                        this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
-                        this.turnOff();
-                    },
-                    id: () => {
-                        return audioNodeId;
-                    },
-                    read: () => {
-                        return streamReader.read();
-                    },
-                };
-            });
+        await this.turnOn();
+        const streamReader = this.privStream.getReader();
+        this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
+        return {
+            detach: () => {
+                streamReader.close();
+                this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
+                this.turnOff();
+            },
+            id: () => {
+                return audioNodeId;
+            },
+            read: () => {
+                return streamReader.read();
+            },
+        };
     }
 
     public detach(audioNodeId: string): void {
@@ -225,7 +212,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     }
 
     public turnOff(): Promise<boolean> {
-        return PromiseHelper.fromResult(false);
+        return Promise.resolve(false);
     }
 
     public get events(): EventSource<AudioSourceEvent> {
@@ -233,7 +220,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
-        return PromiseHelper.fromResult({
+        return Promise.resolve({
             bitspersample: this.privFormat.bitsPerSample,
             channelcount: this.privFormat.channels,
             connectivity: connectivity.Unknown,
@@ -285,7 +272,6 @@ export abstract class PullAudioInputStream extends AudioInputStream {
      * @public
      */
     public abstract close(): void;
-
 }
 
 /**
@@ -295,7 +281,6 @@ export abstract class PullAudioInputStream extends AudioInputStream {
  */
 // tslint:disable-next-line:max-classes-per-file
 export class PullAudioInputStreamImpl extends PullAudioInputStream implements IAudioSource {
-
     private privCallback: PullAudioInputStreamCallback;
     private privFormat: AudioStreamFormatImpl;
     private privId: string;
@@ -349,63 +334,57 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
     public turnOn(): Promise<boolean> {
         this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
         this.onEvent(new AudioSourceReadyEvent(this.privId));
-        return PromiseHelper.fromResult(true);
+        return Promise.resolve(true);
     }
 
-    public attach(audioNodeId: string): Promise<IAudioStreamNode> {
+    public async attach(audioNodeId: string): Promise<IAudioStreamNode> {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
-        return this.turnOn()
-            .onSuccessContinueWith((result: boolean) => {
-                this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
+        await this.turnOn();
 
-                return {
-                    detach: () => {
-                        this.privCallback.close();
-                        this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
-                        this.turnOff();
-                    },
-                    id: () => {
-                        return audioNodeId;
-                    },
-                    read: (): Promise<IStreamChunk<ArrayBuffer>> => {
-                        let totalBytes: number = 0;
-                        let transmitBuff: ArrayBuffer;
+        this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
 
-                        // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
-                        while (totalBytes < bufferSize) {
-                            // Sizing the read buffer to the delta between the perfect size and what's left means we won't ever get too much
-                            // data back.
-                            const readBuff: ArrayBuffer = new ArrayBuffer(bufferSize - totalBytes);
-                            const pulledBytes: number = this.privCallback.read(readBuff);
-
-                            // If there is no return buffer yet defined, set the return buffer to the that was just populated.
-                            // This was, if we have enough data there's no copy penalty, but if we don't we have a buffer that's the
-                            // preferred size allocated.
-                            if (undefined === transmitBuff) {
-                                transmitBuff = readBuff;
-                            } else {
-                                // Not the first bite at the apple, so fill the return buffer with the data we got back.
-                                const intView: Int8Array = new Int8Array(transmitBuff);
-                                intView.set(new Int8Array(readBuff), totalBytes);
-                            }
-
-                            // If there are no bytes to read, just break out and be done.
-                            if (0 === pulledBytes) {
-                                break;
-                            }
-
-                            totalBytes += pulledBytes;
-                        }
-
-                        return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
-                            buffer: transmitBuff.slice(0, totalBytes),
-                            isEnd: this.privIsClosed || totalBytes === 0,
-                            timeReceived: Date.now(),
-                        });
-                    },
-                };
-            });
+        return {
+            detach: () => {
+                this.privCallback.close();
+                this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
+                this.turnOff();
+            },
+            id: () => {
+                return audioNodeId;
+            },
+            read: (): Promise<IStreamChunk<ArrayBuffer>> => {
+                let totalBytes: number = 0;
+                let transmitBuff: ArrayBuffer;
+                // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
+                while (totalBytes < bufferSize) {
+                    // Sizing the read buffer to the delta between the perfect size and what's left means we won't ever get too much
+                    // data back.
+                    const readBuff: ArrayBuffer = new ArrayBuffer(bufferSize - totalBytes);
+                    const pulledBytes: number = this.privCallback.read(readBuff);
+                    // If there is no return buffer yet defined, set the return buffer to the that was just populated.
+                    // This was, if we have enough data there's no copy penalty, but if we don't we have a buffer that's the
+                    // preferred size allocated.
+                    if (undefined === transmitBuff) {
+                        transmitBuff = readBuff;
+                    } else {
+                        // Not the first bite at the apple, so fill the return buffer with the data we got back.
+                        const intView: Int8Array = new Int8Array(transmitBuff);
+                        intView.set(new Int8Array(readBuff), totalBytes);
+                    }
+                    // If there are no bytes to read, just break out and be done.
+                    if (0 === pulledBytes) {
+                        break;
+                    }
+                    totalBytes += pulledBytes;
+                }
+                return Promise.resolve({
+                    buffer: transmitBuff.slice(0, totalBytes),
+                    isEnd: this.privIsClosed || totalBytes === 0,
+                    timeReceived: Date.now(),
+                });
+            },
+        };
     }
 
     public detach(audioNodeId: string): void {
@@ -413,7 +392,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
     }
 
     public turnOff(): Promise<boolean> {
-        return PromiseHelper.fromResult(false);
+        return Promise.resolve(false);
     }
 
     public get events(): EventSource<AudioSourceEvent> {
@@ -421,7 +400,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
-        return PromiseHelper.fromResult({
+        return Promise.resolve({
             bitspersample: this.privFormat.bitsPerSample,
             channelcount: this.privFormat.channels,
             connectivity: connectivity.Unknown,

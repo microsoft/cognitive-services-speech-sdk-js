@@ -28,8 +28,6 @@ import {
     IAudioSource,
     IAudioStreamNode,
     IStringDictionary,
-    Promise,
-    PromiseHelper,
     Stream,
     StreamReader,
 } from "../common/Exports";
@@ -81,7 +79,7 @@ export class MicAudioSource implements IAudioSource {
 
     public turnOn = (): Promise<boolean> => {
         if (this.privInitializeDeferral) {
-            return this.privInitializeDeferral.promise();
+            return this.privInitializeDeferral.promise;
         }
 
         this.privInitializeDeferral = new Deferred<boolean>();
@@ -145,34 +143,32 @@ export class MicAudioSource implements IAudioSource {
             }
         }
 
-        return this.privInitializeDeferral.promise();
+        return this.privInitializeDeferral.promise;
     }
 
     public id = (): string => {
         return this.privId;
     }
 
-    public attach = (audioNodeId: string): Promise<IAudioStreamNode> => {
+    public attach = async (audioNodeId: string): Promise<IAudioStreamNode> => {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
-        return this.listen(audioNodeId).onSuccessContinueWith<IAudioStreamNode>(
-            (streamReader: StreamReader<ArrayBuffer>) => {
-                this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
-                return {
-                    detach: () => {
-                        streamReader.close();
-                        delete this.privStreams[audioNodeId];
-                        this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
-                        this.turnOff();
-                    },
-                    id: () => {
-                        return audioNodeId;
-                    },
-                    read: () => {
-                        return streamReader.read();
-                    },
-                };
-            });
+        const streamReader = await this.listen(audioNodeId);
+        this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
+        return {
+            detach: () => {
+                streamReader.close();
+                delete this.privStreams[audioNodeId];
+                this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
+                this.turnOff();
+            },
+            id: () => {
+                return audioNodeId;
+            },
+            read: () => {
+                return streamReader.read();
+            },
+        };
     }
 
     public detach = (audioNodeId: string): void => {
@@ -198,7 +194,7 @@ export class MicAudioSource implements IAudioSource {
 
         this.destroyAudioContext();
 
-        return PromiseHelper.fromResult(true);
+        return Promise.resolve(true);
     }
 
     public get events(): EventSource<AudioSourceEvent> {
@@ -206,7 +202,7 @@ export class MicAudioSource implements IAudioSource {
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
-        return this.getMicrophoneLabel().onSuccessContinueWith((label: string) => {
+        return this.getMicrophoneLabel().then((label: string) => {
             return {
                 bitspersample: MicAudioSource.AUDIOFORMAT.bitsPerSample,
                 channelcount: MicAudioSource.AUDIOFORMAT.channels,
@@ -223,7 +219,7 @@ export class MicAudioSource implements IAudioSource {
         if (name === AudioWorkletSourceURLPropertyName) {
             this.privRecorder.setWorkletUrl(value);
         } else {
-            throw new Error("Property '" + name + "' is not supported on Microphone.");
+            throw new Error(`Property '${name}' is not supported on Microphone.`);
         }
     }
 
@@ -232,12 +228,12 @@ export class MicAudioSource implements IAudioSource {
 
         // If we did this already, return the value.
         if (this.privMicrophoneLabel !== undefined) {
-            return PromiseHelper.fromResult(this.privMicrophoneLabel);
+            return Promise.resolve(this.privMicrophoneLabel);
         }
 
         // If the stream isn't currently running, we can't query devices because security.
         if (this.privMediaStream === undefined || !this.privMediaStream.active) {
-            return PromiseHelper.fromResult(defaultMicrophoneName);
+            return Promise.resolve(defaultMicrophoneName);
         }
 
         // Setup a default
@@ -248,7 +244,7 @@ export class MicAudioSource implements IAudioSource {
 
         // If the browser doesn't support getting the device ID, set a default and return.
         if (undefined === microphoneDeviceId) {
-            return PromiseHelper.fromResult(this.privMicrophoneLabel);
+            return Promise.resolve(this.privMicrophoneLabel);
         }
 
         const deferred: Deferred<string> = new Deferred<string>();
@@ -265,24 +261,20 @@ export class MicAudioSource implements IAudioSource {
             deferred.resolve(this.privMicrophoneLabel);
         }, () => deferred.resolve(this.privMicrophoneLabel));
 
-        return deferred.promise();
+        return deferred.promise;
     }
 
-    private listen = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
-        return this.turnOn()
-            .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
-                const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
-                this.privStreams[audioNodeId] = stream;
-
-                try {
-                    this.privRecorder.record(this.privContext, this.privMediaStream, stream);
-                } catch (error) {
-                    this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, error));
-                    throw error;
-                }
-
-                return stream.getReader();
-            });
+    private listen = async (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
+        const _ = await this.turnOn();
+        const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
+        this.privStreams[audioNodeId] = stream;
+        try {
+            this.privRecorder.record(this.privContext, this.privMediaStream, stream);
+        } catch (error) {
+            this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, error));
+            throw error;
+        }
+        return stream.getReader();
     }
 
     private onEvent = (event: AudioSourceEvent): void => {
