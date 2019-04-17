@@ -10,6 +10,7 @@ import { PropertyId } from "./Exports";
 export class PropertyCollection {
     private privKeys: string[] = [] as string[];
     private privValues: string[] = [] as string[];
+    private privFetchToken: () => Promise<string>;
 
     /**
      * Returns the property value in type String. The parameter must have the same type as String.
@@ -84,6 +85,30 @@ export class PropertyCollection {
             clonedMap.privValues.push(this.privValues[n]);
         }
 
+        clonedMap.fetchToken = this.privFetchToken;
+
         return clonedMap;
+    }
+
+    /**
+     * Gets the fetchToken function.
+     * @member PropertyCollection.prototype.fetchToken
+     * @function
+     * @public
+     * @returns {() => Promise<string>} FetchToken function.
+     */
+    public get fetchToken(): () => Promise<string> {
+        return this.privFetchToken;
+    }
+
+    /**
+     * Sets the fetchToken function.
+     * @member PropertyCollection.prototype.fetchToken
+     * @function
+     * @public
+     * @param {() => Promise<string>} fetchToken function.
+     */
+    public set fetchToken(value: () => Promise<string>) {
+        this.privFetchToken = value;
     }
 }

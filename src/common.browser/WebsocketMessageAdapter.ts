@@ -17,8 +17,6 @@ import {
     EventSource,
     IWebsocketMessageFormatter,
     MessageType,
-    Promise,
-    PromiseHelper,
     Queue,
     RawWebsocketMessage,
 } from "../common/Exports";
@@ -77,11 +75,11 @@ export class WebsocketMessageAdapter {
 
     public open = (): Promise<ConnectionOpenResponse> => {
         if (this.privConnectionState === ConnectionState.Disconnected) {
-            return PromiseHelper.fromError<ConnectionOpenResponse>(`Cannot open a connection that is in ${this.privConnectionState} state`);
+            return Promise.reject(`Cannot open a connection that is in ${this.privConnectionState} state`);
         }
 
         if (this.privConnectionEstablishDeferral) {
-            return this.privConnectionEstablishDeferral.promise();
+            return this.privConnectionEstablishDeferral.promise;
         }
 
         this.privConnectionEstablishDeferral = new Deferred<ConnectionOpenResponse>();
@@ -96,12 +94,12 @@ export class WebsocketMessageAdapter {
                     this.proxyInfo.Port > 0) {
                     const httpOptions: HttpsProxyAgent.IHttpsProxyAgentOptions = {
                         host: this.proxyInfo.HostName,
-                        port: this.proxyInfo.Port,
+                        port: this.proxyInfo.Port
                     };
 
                     if (undefined !== this.proxyInfo.UserName) {
                         httpOptions.headers = {
-                            "Proxy-Authentication": "Basic " + new Buffer(this.proxyInfo.UserName + ":" + (this.proxyInfo.Password === undefined) ? "" : this.proxyInfo.Password).toString("base64"),
+                            "Proxy-Authentication": "Basic " + new Buffer(this.proxyInfo.UserName + ":" + (this.proxyInfo.Password === undefined) ? "" : this.proxyInfo.Password).toString("base64")
                         };
                     }
 
@@ -120,18 +118,18 @@ export class WebsocketMessageAdapter {
             this.processSendQueue();
         } catch (error) {
             this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(500, error));
-            return this.privConnectionEstablishDeferral.promise();
+            return this.privConnectionEstablishDeferral.promise;
         }
 
         this.onEvent(new ConnectionStartEvent(this.privConnectionId, this.privUri));
 
-        this.privWebsocketClient.onopen = (e: { target: WebSocket | ws }) => {
+        this.privWebsocketClient.onopen = () => {
             this.privConnectionState = ConnectionState.Connected;
             this.onEvent(new ConnectionEstablishedEvent(this.privConnectionId));
             this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(200, ""));
         };
 
-        this.privWebsocketClient.onerror = (e: { error: any; message: string; type: string; target: WebSocket | ws }) => {
+        this.privWebsocketClient.onerror = () => {
             // TODO: Understand what this is error is. Will we still get onClose ?
             if (this.privConnectionState !== ConnectionState.Connecting) {
                 // TODO: Is this required ?
@@ -139,29 +137,29 @@ export class WebsocketMessageAdapter {
             }
         };
 
-        this.privWebsocketClient.onclose = (e: { wasClean: boolean; code: number; reason: string; target: WebSocket | ws }) => {
+        this.privWebsocketClient.onclose = ({ code, reason }: ({ code: number; reason: string; })) => {
             if (this.privConnectionState === ConnectionState.Connecting) {
                 this.privConnectionState = ConnectionState.Disconnected;
-                // this.onEvent(new ConnectionEstablishErrorEvent(this.connectionId, e.code, e.reason));
-                this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(e.code, e.reason));
+                // this.onEvent(new ConnectionEstablishErrorEvent(this.connectionId, code, reason));
+                this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(code, reason));
             } else {
-                this.onEvent(new ConnectionClosedEvent(this.privConnectionId, e.code, e.reason));
+                this.onEvent(new ConnectionClosedEvent(this.privConnectionId, code, reason));
             }
 
-            this.onClose(e.code, e.reason);
+            this.onClose(code, reason);
         };
 
-        this.privWebsocketClient.onmessage = (e: { data: ws.Data; type: string; target: WebSocket | ws }) => {
+        this.privWebsocketClient.onmessage = ({ data }: { data: ws.Data }) => {
             const networkReceivedTime = new Date().toISOString();
             if (this.privConnectionState === ConnectionState.Connected) {
                 const deferred = new Deferred<ConnectionMessage>();
                 // let id = ++this.idCounter;
-                this.privReceivingMessageQueue.enqueueFromPromise(deferred.promise());
-                if (e.data instanceof ArrayBuffer) {
-                    const rawMessage = new RawWebsocketMessage(MessageType.Binary, e.data);
+                this.privReceivingMessageQueue.enqueueFromPromise(deferred.promise);
+                if (data instanceof ArrayBuffer) {
+                    const rawMessage = new RawWebsocketMessage(MessageType.Binary, data);
                     this.privMessageFormatter
                         .toConnectionMessage(rawMessage)
-                        .on((connectionMessage: ConnectionMessage) => {
+                        .then((connectionMessage: ConnectionMessage) => {
                             this.onEvent(new ConnectionMessageReceivedEvent(this.privConnectionId, networkReceivedTime, connectionMessage));
                             deferred.resolve(connectionMessage);
                         }, (error: string) => {
@@ -169,10 +167,10 @@ export class WebsocketMessageAdapter {
                             deferred.reject(`Invalid binary message format. Error: ${error}`);
                         });
                 } else {
-                    const rawMessage = new RawWebsocketMessage(MessageType.Text, e.data);
+                    const rawMessage = new RawWebsocketMessage(MessageType.Text, data);
                     this.privMessageFormatter
                         .toConnectionMessage(rawMessage)
-                        .on((connectionMessage: ConnectionMessage) => {
+                        .then((connectionMessage: ConnectionMessage) => {
                             this.onEvent(new ConnectionMessageReceivedEvent(this.privConnectionId, networkReceivedTime, connectionMessage));
                             deferred.resolve(connectionMessage);
                         }, (error: string) => {
@@ -183,22 +181,22 @@ export class WebsocketMessageAdapter {
             }
         };
 
-        return this.privConnectionEstablishDeferral.promise();
+        return this.privConnectionEstablishDeferral.promise;
     }
 
     public send = (message: ConnectionMessage): Promise<boolean> => {
         if (this.privConnectionState !== ConnectionState.Connected) {
-            return PromiseHelper.fromError<boolean>(`Cannot send on connection that is in ${this.privConnectionState} state`);
+            return Promise.reject(`Cannot send on connection that is in ${this.privConnectionState} state`);
         }
 
         const messageSendStatusDeferral = new Deferred<boolean>();
         const messageSendDeferral = new Deferred<ISendItem>();
 
-        this.privSendMessageQueue.enqueueFromPromise(messageSendDeferral.promise());
+        this.privSendMessageQueue.enqueueFromPromise(messageSendDeferral.promise);
 
         this.privMessageFormatter
             .fromConnectionMessage(message)
-            .on((rawMessage: RawWebsocketMessage) => {
+            .then((rawMessage: RawWebsocketMessage) => {
                 messageSendDeferral.resolve({
                     Message: message,
                     RawWebsocketMessage: rawMessage,
@@ -208,12 +206,12 @@ export class WebsocketMessageAdapter {
                 messageSendDeferral.reject(`Error formatting the message. ${error}`);
             });
 
-        return messageSendStatusDeferral.promise();
+        return messageSendStatusDeferral.promise;
     }
 
     public read = (): Promise<ConnectionMessage> => {
         if (this.privConnectionState !== ConnectionState.Connected) {
-            return PromiseHelper.fromError<ConnectionMessage>(`Cannot read on connection that is in ${this.privConnectionState} state`);
+            return Promise.reject(`Cannot read on connection that is in ${this.privConnectionState} state`);
         }
 
         return this.privReceivingMessageQueue.dequeue();
@@ -227,10 +225,10 @@ export class WebsocketMessageAdapter {
         } else {
             const deferral = new Deferred<boolean>();
             deferral.resolve(true);
-            return deferral.promise();
+            return deferral.promise;
         }
 
-        return this.privDisconnectDeferral.promise();
+        return this.privDisconnectDeferral.promise;
     }
 
     public get events(): EventSource<ConnectionEvent> {
@@ -241,14 +239,14 @@ export class WebsocketMessageAdapter {
         try {
             // indicates we are draining the queue and it came with no message;
             if (!sendItem) {
-                return PromiseHelper.fromResult(true);
+                return Promise.resolve(true);
             }
 
             this.onEvent(new ConnectionMessageSentEvent(this.privConnectionId, new Date().toISOString(), sendItem.Message));
             this.privWebsocketClient.send(sendItem.RawWebsocketMessage.payload);
-            return PromiseHelper.fromResult(true);
+            return Promise.resolve(true);
         } catch (e) {
-            return PromiseHelper.fromError<boolean>(`websocket send error: ${e}`);
+            return Promise.reject(`websocket send error: ${e}`);
         }
     }
 
@@ -270,14 +268,14 @@ export class WebsocketMessageAdapter {
     private processSendQueue = (): void => {
         this.privSendMessageQueue
             .dequeue()
-            .on((sendItem: ISendItem) => {
+            .then((sendItem: ISendItem) => {
                 // indicates we are draining the queue and it came with no message;
                 if (!sendItem) {
                     return;
                 }
 
                 this.sendRawMessage(sendItem)
-                    .on((result: boolean) => {
+                    .then((result: boolean) => {
                         sendItem.sendStatusDeferral.resolve(result);
                         this.processSendQueue();
                     }, (sendError: string) => {

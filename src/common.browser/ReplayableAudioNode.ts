@@ -2,12 +2,7 @@
 // Licensed under the MIT license.
 
 import { AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
-import {
-    IAudioStreamNode,
-    IStreamChunk,
-    Promise,
-    PromiseHelper,
-} from "../common/Exports";
+import { IAudioStreamNode, IStreamChunk } from "../common/Exports";
 
 export class ReplayableAudioNode implements IAudioStreamNode {
     private privAudioNode: IAudioStreamNode;
@@ -19,7 +14,6 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     private privBufferSerial: number = 0;
     private privBufferedBytes: number = 0;
     private privReplay: boolean = false;
-    private privLastChunkAcquiredTime: number = 0;
 
     public constructor(audioSource: IAudioStreamNode, format: AudioStreamFormatImpl) {
         this.privAudioNode = audioSource;
@@ -62,7 +56,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
                 this.privReplay = false;
             }
 
-            return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
+            return Promise.resolve({
                 buffer: retVal,
                 isEnd: false,
                 timeReceived: this.privBuffers[i].chunk.timeReceived,
@@ -70,7 +64,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
         }
 
         return this.privAudioNode.read()
-            .onSuccessContinueWith((result: IStreamChunk<ArrayBuffer>) => {
+            .then((result: IStreamChunk<ArrayBuffer>) => {
                 if (result.buffer) {
                     this.privBuffers.push(new BufferEntry(result, this.privBufferSerial++, this.privBufferedBytes));
                     this.privBufferedBytes += result.buffer.byteLength;

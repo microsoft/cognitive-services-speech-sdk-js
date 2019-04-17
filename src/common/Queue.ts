@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { Deferred } from "./Deferred";
 import { InvalidOperationError, ObjectDisposedError } from "./Error";
 import { IDetachable } from "./IDetachable";
 import { IDisposable } from "./IDisposable";
 import { List } from "./List";
-import { Deferred, Promise, PromiseHelper } from "./Promise";
 
 export interface IQueue<TItem> extends IDisposable {
     enqueue(item: TItem): void;
@@ -38,26 +38,39 @@ export class Queue<TItem> implements IQueue<TItem> {
 
     public enqueue = (item: TItem): void => {
         this.throwIfDispose();
-        this.enqueueFromPromise(PromiseHelper.fromResult(item));
+        this.enqueueFromPromise(Promise.resolve(item));
     }
 
     public enqueueFromPromise = (promise: Promise<TItem>): void => {
         this.throwIfDispose();
         this.privPromiseStore.add(promise);
-        promise.finally(() => {
+
+        const pending = {};
+        const rejected = {};
+
+        const getValue = (promise: Promise<any>): Promise<any> => {
+            const object = {};
+            return Promise.race([promise, object])
+                .then((value: any) => (value === object) ? pending : value, () => rejected);
+        };
+
+        const onFinally = async () => {
             while (this.privPromiseStore.length() > 0) {
-                if (!this.privPromiseStore.first().result().isCompleted) {
+                const value = await getValue(this.privPromiseStore.first());
+                if (value === pending) {
                     break;
                 } else {
                     const p = this.privPromiseStore.removeFirst();
-                    if (!p.result().isError) {
-                        this.privList.add(p.result().result);
+                    if (value !== rejected) {
+                        this.privList.add(value);
                     } else {
                         // TODO: Log as warning.
                     }
                 }
             }
-        });
+        };
+
+        promise.then(onFinally, onFinally);
     }
 
     public dequeue = (): Promise<TItem> => {
@@ -69,7 +82,7 @@ export class Queue<TItem> implements IQueue<TItem> {
             this.drain();
         }
 
-        return deferredSubscriber.promise();
+        return deferredSubscriber.promise;
     }
 
     public peek = (): Promise<TItem> => {
@@ -82,7 +95,7 @@ export class Queue<TItem> implements IQueue<TItem> {
             this.drain();
         }
 
-        return deferredSubscriber.promise();
+        return deferredSubscriber.promise;
     }
 
     public length = (): number => {
@@ -94,7 +107,7 @@ export class Queue<TItem> implements IQueue<TItem> {
         return this.privSubscribers == null;
     }
 
-    public drainAndDispose = (pendingItemProcessor: (pendingItemInQueue: TItem) => void, reason?: string): Promise<boolean> => {
+    public drainAndDispose = async (pendingItemProcessor: (pendingItemInQueue: TItem) => void, reason?: string): Promise<boolean> => {
         if (!this.isDisposed() && !this.privIsDisposing) {
             this.privDisposeReason = reason;
             this.privIsDisposing = true;
@@ -114,7 +127,7 @@ export class Queue<TItem> implements IQueue<TItem> {
                 // Reason is that between the initial const = this.; and this
                 // point there is the derral.resolve() operation that might have
                 // caused recursive calls to the Queue, especially, calling
-                // Dispose() on the queue alredy (which would reset the var
+                // Dispose() on the queue already (which would reset the var
                 // here to null!).
                 // That should generally hold true for javascript...
                 if (this.privSubscribers === subs) {
@@ -127,23 +140,21 @@ export class Queue<TItem> implements IQueue<TItem> {
             }
 
             if (this.privPromiseStore.length() > 0 && pendingItemProcessor) {
-                return PromiseHelper
-                    .whenAll(this.privPromiseStore.toArray())
-                    .continueWith(() => {
-                        this.privSubscribers = null;
-                        this.privList.forEach((item: TItem, index: number): void => {
-                            pendingItemProcessor(item);
-                        });
-                        this.privList = null;
-                        return true;
-                    });
+                await Promise
+                    .all(this.privPromiseStore.toArray());
+                this.privSubscribers = null;
+                this.privList.forEach((item: TItem, index: number): void => {
+                    pendingItemProcessor(item);
+                });
+                this.privList = null;
+                return true;
             } else {
                 this.privSubscribers = null;
                 this.privList = null;
             }
         }
 
-        return PromiseHelper.fromResult(true);
+        return Promise.resolve(true);
     }
 
     public dispose = (reason?: string): void => {
@@ -173,7 +184,7 @@ export class Queue<TItem> implements IQueue<TItem> {
                 // Reason is that between the initial const = this.; and this
                 // point there is the derral.resolve() operation that might have
                 // caused recursive calls to the Queue, especially, calling
-                // Dispose() on the queue alredy (which would reset the var
+                // Dispose() on the queue already (which would reset the var
                 // here to null!).
                 // That should generally hold true for javascript...
                 if (this.privSubscribers === subs) {
@@ -186,7 +197,7 @@ export class Queue<TItem> implements IQueue<TItem> {
                 // Reason is that between the initial const = this.; and this
                 // point there is the derral.resolve() operation that might have
                 // caused recursive calls to the Queue, especially, calling
-                // Dispose() on the queue alredy (which would reset the var
+                // Dispose() on the queue already (which would reset the var
                 // here to null!).
                 // That should generally hold true for javascript...
                 if (this.privList === lists) {

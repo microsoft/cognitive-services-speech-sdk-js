@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ArgumentNullError, Promise, PromiseHelper } from "../common/Exports";
+import { ArgumentNullError } from "../common/Exports";
 import { AuthInfo, IAuthentication } from "./IAuthentication";
 
 const AuthHeader: string = "Ocp-Apim-Subscription-Key";
@@ -33,7 +33,7 @@ export class CognitiveSubscriptionKeyAuthentication implements IAuthentication {
      * @param {string} authFetchEventId - The id to fetch.
      */
     public fetch = (authFetchEventId: string): Promise<AuthInfo> => {
-        return PromiseHelper.fromResult(this.privAuthInfo);
+        return Promise.resolve(this.privAuthInfo);
     }
 
     /**
@@ -44,6 +44,6 @@ export class CognitiveSubscriptionKeyAuthentication implements IAuthentication {
      * @param {string} authFetchEventId - The id to fetch.
      */
     public fetchOnExpiry = (authFetchEventId: string): Promise<AuthInfo> => {
-        return PromiseHelper.fromResult(this.privAuthInfo);
+        return Promise.resolve(this.privAuthInfo);
     }
 }
