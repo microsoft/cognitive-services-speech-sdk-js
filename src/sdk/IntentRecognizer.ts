@@ -151,7 +151,7 @@ export class IntentRecognizer extends Recognizer {
             this.implRecognizerStop();
 
             if (Object.keys(this.privAddedLmIntents).length !== 0 || undefined !== this.privUmbrellaIntent) {
-                const context: IntentContext = this.buildSpeechContext();
+                const context: IIntentContext = this.buildSpeechContext();
 
                 this.privReco.speechContext.setSection("intent", context.Intent);
                 this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
@@ -200,7 +200,7 @@ export class IntentRecognizer extends Recognizer {
             this.implRecognizerStop();
 
             if (Object.keys(this.privAddedLmIntents).length !== 0) {
-                const context: IntentContext = this.buildSpeechContext();
+                const context: IIntentContext = this.buildSpeechContext();
 
                 this.privReco.speechContext.setSection("intent", context.Intent);
                 this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
@@ -394,7 +394,7 @@ export class IntentRecognizer extends Recognizer {
         }
     }
 
-    private buildSpeechContext(): IntentContext {
+    private buildSpeechContext(): IIntentContext {
         let appId: string;
         let region: string;
         let subscriptionKey: string;
@@ -450,7 +450,7 @@ export class IntentRecognizer extends Recognizer {
     }
 }
 
-interface IntentContext {
+interface IIntentContext {
     Intent: {
         id: string,
         key: string,
