@@ -66,7 +66,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
             case "translation.hypothesis":
 
                 const result: TranslationRecognitionEventArgs = this.fireEventForResult(TranslationHypothesis.fromJSON(connectionMessage.textBody), resultProps);
-                this.privRequestSession.onHypothesis(result.offset);
+                this.privRequestSession.onHypothesis(this.privRequestSession.currentTurnAudioOffset + result.offset);
 
                 if (!!this.privTranslationRecognizer.recognizing) {
                     try {
@@ -82,8 +82,9 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
             case "translation.phrase":
                 const translatedPhrase: TranslationPhrase = TranslationPhrase.fromJSON(connectionMessage.textBody);
 
+                this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
+
                 if (translatedPhrase.RecognitionStatus === RecognitionStatus.Success) {
-                    this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
 
                     // OK, the recognition was successful. How'd the translation do?
                     const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, resultProps);
@@ -123,7 +124,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         reason,
                         translatedPhrase.Text,
                         translatedPhrase.Duration,
-                        translatedPhrase.Offset,
+                        this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset,
                         undefined,
                         connectionMessage.textBody,
                         resultProps);
@@ -149,7 +150,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         }
                     } else {
                         if (!(this.privRequestSession.isSpeechEnded && reason === ResultReason.NoMatch && translatedPhrase.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
-                            const ev = new TranslationRecognitionEventArgs(result, 0/*offset*/, this.privRequestSession.sessionId);
+                            const ev = new TranslationRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
 
                             if (!!this.privTranslationRecognizer.recognized) {
                                 try {
