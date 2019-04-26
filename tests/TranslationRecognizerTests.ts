@@ -1402,3 +1402,104 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             });
     }, 35000);
 });
+
+test.only("Multiple Phrase Latency Reporting", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Multiple Phrase Latency Reporting");
+
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+    s.addTargetLanguage("de-DE");
+    s.speechRecognitionLanguage = "en-US";
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+    let numSilences: number = 0;
+    let numSpeech: number = 0;
+    let bytesSent: number = 0;
+
+    let sendSilence: boolean = false;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                if (!!sendSilence) {
+                    return buffer.byteLength;
+                }
+
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                const currentSentBytes: number = (end - start) + 1;
+                bytesSent += currentSentBytes;
+
+                if ((currentSentBytes) < buffer.byteLength) {
+                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
+                    bytesSent = 0;
+                    sendSilence = true;
+                }
+
+                return currentSentBytes;
+            },
+        });
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let disconnected: boolean = false;
+    let recoCount: number = 0;
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
+        disconnected = true;
+    };
+
+    r.speechEndDetected = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        if ((++numSilences % 2) === 0) {
+            sendSilence = false;
+        }
+    };
+
+    let lastOffset: number = 0;
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+        try {
+            const res: sdk.SpeechRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+            expect(disconnected).toEqual(false);
+            expect(e.offset).toBeGreaterThan(lastOffset);
+            lastOffset = e.offset;
+
+            if ((e.result.reason === sdk.ResultReason.TranslatedSpeech) && (++numSpeech % 2 === 0)) {
+                sendSilence = false;
+            }
+
+            recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.startContinuousRecognitionAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => {
+        return recoCount === 16;
+    }, () => {
+        r.stopContinuousRecognitionAsync(() => {
+            done();
+        });
+    });
+}, 120000);
