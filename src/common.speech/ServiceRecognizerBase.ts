@@ -56,7 +56,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     private privConnectionId: string;
     private privAuthFetchEventId: string;
-    private privIsDisposed: boolean;
+    private privIsDisposed: boolean = false;
     private privRecognizer: Recognizer;
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
@@ -71,7 +71,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         audioSource: IAudioSource,
         recognizerConfig: RecognizerConfig,
         recognizer: Recognizer) {
-
         if (!authentication) {
             throw new ArgumentNullError("authentication");
         }
@@ -93,7 +92,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionFactory = connectionFactory;
         this.privAudioSource = audioSource;
         this.privRecognizerConfig = recognizerConfig;
-        this.privIsDisposed = false;
         this.privRecognizer = recognizer;
         this.privRequestSession = new RequestSession(this.privAudioSource.id());
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
@@ -119,9 +117,15 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public dispose(reason?: string): void {
         this.privIsDisposed = true;
+
         if (this.privConnectionConfigurationPromise) {
             this.privConnectionConfigurationPromise.then((connection: IConnection) => {
                 connection.dispose(reason);
+
+                this.privConnection = undefined;
+                this.privConnectionPromise = undefined;
+                this.privConfiguredConnection = undefined;
+                this.privConnectionConfigurationPromise = undefined;
             });
         }
     }
@@ -200,11 +204,18 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public async disconnect(): Promise<void> {
         this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.NoError, "Disconnecting", undefined);
 
-        try {
-            const connection = await this.privConnectionPromise;
-            connection.dispose();
-            // tslint:disable-next-line: no-empty
-        } catch { }
+        if (this.privConnectionPromise) {
+            try {
+                const connection = await this.privConnectionPromise;
+                connection.dispose();
+                // tslint:disable-next-line: no-empty
+            } catch { }
+        }
+
+        this.privConnection = undefined;
+        this.privConnectionPromise = undefined;
+        this.privConfiguredConnection = undefined;
+        this.privConnectionConfigurationPromise = undefined;
     }
 
     // Called when telemetry data is sent to the service.
