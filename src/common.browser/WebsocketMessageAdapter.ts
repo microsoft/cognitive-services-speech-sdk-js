@@ -75,7 +75,7 @@ export class WebsocketMessageAdapter {
 
     public open = (): Promise<ConnectionOpenResponse> => {
         if (this.privConnectionState === ConnectionState.Disconnected) {
-            return Promise.reject(`Cannot open a connection that is in ${this.privConnectionState} state`);
+            return Promise.reject(`Cannot open a connection that is in ${ConnectionState[this.privConnectionState]} state`);
         }
 
         if (this.privConnectionEstablishDeferral) {
@@ -186,7 +186,7 @@ export class WebsocketMessageAdapter {
 
     public send = (message: ConnectionMessage): Promise<boolean> => {
         if (this.privConnectionState !== ConnectionState.Connected) {
-            return Promise.reject(`Cannot send on connection that is in ${this.privConnectionState} state`);
+            return Promise.reject(`Cannot send on connection that is in ${ConnectionState[this.privConnectionState]} state`);
         }
 
         const messageSendStatusDeferral = new Deferred<boolean>();
@@ -211,7 +211,7 @@ export class WebsocketMessageAdapter {
 
     public read = (): Promise<ConnectionMessage> => {
         if (this.privConnectionState !== ConnectionState.Connected) {
-            return Promise.reject(`Cannot read on connection that is in ${this.privConnectionState} state`);
+            return Promise.reject(`Cannot read on connection that is in ${ConnectionState[this.privConnectionState]} state`);
         }
 
         return this.privReceivingMessageQueue.dequeue();

@@ -140,13 +140,13 @@ export class Queue<TItem> implements IQueue<TItem> {
             }
 
             if (this.privPromiseStore.length() > 0 && pendingItemProcessor) {
-                await Promise
-                    .all(this.privPromiseStore.toArray());
-                this.privSubscribers = null;
-                this.privList.forEach((item: TItem, index: number): void => {
-                    pendingItemProcessor(item);
-                });
-                this.privList = null;
+                try {
+                    await Promise.all(this.privPromiseStore.toArray());
+                } finally {
+                    this.privSubscribers = null;
+                    this.privList.forEach(pendingItemProcessor);
+                    this.privList = null;
+                }
                 return true;
             } else {
                 this.privSubscribers = null;
