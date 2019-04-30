@@ -2624,7 +2624,7 @@ test("Service accepts random speech.context sections w/o error", (done: jest.Don
         });
 });
 
-test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
+test("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Phraselist assists speech Reco.");
 
@@ -2632,7 +2632,7 @@ test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
     objsToClose.push(r);
 
     const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
-    phraseList.addPhrase("Wreck a nice beach.");
+    phraseList.addPhrase("Wreck a nice beach");
 
     r.recognizeOnceAsync(
         (p2: sdk.SpeechRecognitionResult) => {
@@ -2649,7 +2649,7 @@ test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
         });
 });
 
-test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
+test("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Phraselist extra phraselists have no effect.");
 
@@ -2657,7 +2657,7 @@ test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallba
     objsToClose.push(r);
 
     const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
-    phraseList.addPhrase("Wreck a nice beach.");
+    phraseList.addPhrase("Wreck a nice beach");
     phraseList.addPhrase("Escaped robot fights for his life, film at 11.");
 
     r.recognizeOnceAsync(
@@ -2675,7 +2675,7 @@ test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallba
         });
 });
 
-test.skip("Phraselist Clear works.", (done: jest.DoneCallback) => {
+test("Phraselist Clear works.", (done: jest.DoneCallback) => {
 
     // tslint:disable-next-line:no-console
     console.info("Name: Phraselist Clear works.");
@@ -2724,7 +2724,7 @@ test.skip("Phraselist Clear works.", (done: jest.DoneCallback) => {
     let recoCount: number = 0;
     let phraseAdded: boolean = true;
     const dynamicPhrase: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
-    dynamicPhrase.addPhrase("Wreck a nice beach.");
+    dynamicPhrase.addPhrase("Wreck a nice beach");
 
     r.recognized = (r: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
         try {
