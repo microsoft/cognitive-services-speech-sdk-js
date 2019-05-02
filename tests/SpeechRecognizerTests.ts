@@ -2715,7 +2715,7 @@ test("Phraselist Clear works.", (done: jest.DoneCallback) => {
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
-    const r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s, config);
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
     objsToClose.push(r);
 
     expect(r).not.toBeUndefined();
@@ -2726,9 +2726,9 @@ test("Phraselist Clear works.", (done: jest.DoneCallback) => {
     const dynamicPhrase: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
     dynamicPhrase.addPhrase("Wreck a nice beach");
 
-    r.recognized = (r: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
         try {
-            const res: sdk.IntentRecognitionResult = e.result;
+            const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();
             expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
             if (phraseAdded) {
