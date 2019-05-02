@@ -181,6 +181,15 @@ export class MicAudioSource implements IAudioSource {
             delete this.privStreams[audioNodeId];
             this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
         }
+
+        if (Object.keys(this.privStreams)) {
+            if (this.privMediaStream) {
+                const tracks = this.privMediaStream.getAudioTracks();
+                if (tracks && tracks[0]) {
+                    tracks[0].enabled = false;
+                }
+            }
+        }
     }
 
     public turnOff = (): Promise<boolean> => {
@@ -224,6 +233,24 @@ export class MicAudioSource implements IAudioSource {
             this.privRecorder.setWorkletUrl(value);
         } else {
             throw new Error("Property '" + name + "' is not supported on Microphone.");
+        }
+    }
+
+    public mute(): void {
+        if (this.privMediaStream) {
+            const tracks = this.privMediaStream.getAudioTracks();
+            if (tracks && tracks[0]) {
+                tracks[0].enabled = false;
+            }
+        }
+    }
+
+    public unmute(): void {
+        if (this.privMediaStream) {
+            const tracks = this.privMediaStream.getAudioTracks();
+            if (tracks && tracks[0]) {
+                tracks[0].enabled = true;
+            }
         }
     }
 
@@ -271,6 +298,11 @@ export class MicAudioSource implements IAudioSource {
     private listen = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
         return this.turnOn()
             .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
+                const tracks = this.privMediaStream.getAudioTracks();
+                if (tracks && tracks[0]) {
+                    tracks[0].enabled = true;
+                }
+
                 const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
                 this.privStreams[audioNodeId] = stream;
 
