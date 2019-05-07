@@ -1403,7 +1403,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     }, 35000);
 });
 
-test.only("Multiple Phrase Latency Reporting", (done: jest.DoneCallback) => {
+test("Multiple Phrase Latency Reporting", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Multiple Phrase Latency Reporting");
 
