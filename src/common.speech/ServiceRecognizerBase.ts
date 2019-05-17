@@ -155,6 +155,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privRequestSession.startNewRecognition();
         this.privRequestSession.listenForServiceTelemetry(this.privAudioSource.events);
 
+        // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
+        this.connectImpl();
+
         return this.audioSource
             .attach(this.privRequestSession.audioNodeId)
             .continueWithPromise<boolean>((result: PromiseResult<IAudioStreamNode>) => {
