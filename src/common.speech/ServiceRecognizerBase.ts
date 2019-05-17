@@ -171,7 +171,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
                 }
 
-                return this.audioSource.deviceInfo.onSuccessContinueWithPromise<boolean>((deviceInfo: ISpeechConfigAudioDevice) => {
+                return this.audioSource.deviceInfo.onSuccessContinueWithPromise<boolean>((deviceInfo: ISpeechConfigAudioDevice): Promise<boolean> => {
                     this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
 
                     return this.configureConnection()
@@ -193,22 +193,22 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             const completionPromise = PromiseHelper.whenAll([messageRetrievalPromise, audioSendPromise]);
 
                             return completionPromise.on((r: boolean) => {
+                                return true;
                             }, (error: string) => {
                                 this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error, successCallback);
                             });
 
                         }, (error: string) => {
                             this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error, successCallback);
-                        }).on(() => {
-                            return this.privRequestSession.completionPromise;
-                        }, (error: string) => {
-                            this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error, successCallback);
-                        }).onSuccessContinueWithPromise((_: IConnection): Promise<boolean> => {
-                            return PromiseHelper.fromResult(true);
+                        }).continueWithPromise<boolean>((result: PromiseResult<IConnection>): Promise<boolean> => {
+                            if (result.isError) {
+                                return PromiseHelper.fromError(result.error);
+                            } else {
+                                return PromiseHelper.fromResult<boolean>(true);
+                            }
                         });
                 });
             });
-
     }
 
     public stopRecognizing(): void {
