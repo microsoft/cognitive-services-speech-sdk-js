@@ -7,9 +7,11 @@ import { IRecorder } from "./IRecorder";
 export class PcmRecorder implements IRecorder {
     private privMediaResources: IMediaResources;
     private privSpeechProcessorScript: string; // speech-processor.js Url
+    private callCount: number = 0;
 
     public record = (context: AudioContext, mediaStream: MediaStream, outputStream: Stream<ArrayBuffer>): void => {
         const desiredSampleRate = 16000;
+        this.callCount++;
 
         const scriptNode = (() => {
             let bufferSize = 0;
@@ -32,7 +34,8 @@ export class PcmRecorder implements IRecorder {
         const that = this;
         scriptNode.onaudioprocess = (event: AudioProcessingEvent) => {
             const inputFrame = event.inputBuffer.getChannelData(0);
-
+            // tslint:disable-next-line:no-console
+            console.info("Processing audio " + this.callCount);
             if (outputStream && !outputStream.isClosed) {
                 const waveFrame = waveStreamEncoder.encode(needHeader, inputFrame);
                 if (!!waveFrame) {
@@ -109,6 +112,19 @@ export class PcmRecorder implements IRecorder {
                 this.privMediaResources.source.disconnect();
                 this.privMediaResources.stream.getTracks().forEach((track: any) => track.stop());
                 this.privMediaResources.source = null;
+            }
+        }
+    }
+
+    public detachMediaResources = (context: AudioContext): void => {
+        if (this.privMediaResources) {
+            if (this.privMediaResources.scriptProcessorNode) {
+                this.privMediaResources.scriptProcessorNode.disconnect(context.destination);
+                this.privMediaResources.scriptProcessorNode = null;
+            }
+            if (this.privMediaResources.source) {
+                this.privMediaResources.source.disconnect();
+                this.privMediaResources.stream.getTracks().forEach((track: MediaStreamTrack) => track.enabled = false);
             }
         }
     }

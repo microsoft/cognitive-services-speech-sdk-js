@@ -81,12 +81,19 @@ export class MicAudioSource implements IAudioSource {
 
     public turnOn = (): Promise<boolean> => {
         if (this.privInitializeDeferral) {
+            // tslint:disable-next-line:no-console
+            console.info(Date.now() + " Cached Deferral");
             return this.privInitializeDeferral.promise();
         }
+
+        // tslint:disable-next-line:no-console
+        console.info(Date.now() + " Turning on");
 
         this.privInitializeDeferral = new Deferred<boolean>();
 
         this.createAudioContext();
+        // tslint:disable-next-line:no-console
+        console.info(Date.now() + " AudioContext Created");
 
         const nav = window.navigator as INavigatorUserMedia;
 
@@ -111,11 +118,17 @@ export class MicAudioSource implements IAudioSource {
             this.privInitializeDeferral.reject(errorMsg);
             this.onEvent(new AudioSourceErrorEvent(errorMsg, "")); // mic initialized error - no streamid at this point
         } else {
+            // tslint:disable-next-line:no-console
+            console.info(Date.now() + " getUserMedia Found");
+
             const next = () => {
                 this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
                 getUserMedia(
                     { audio: this.deviceId ? { deviceId: this.deviceId } : true, video: false },
                     (mediaStream: MediaStream) => {
+                        // tslint:disable-next-line:no-console
+                        console.info(Date.now() + " GetUserMedia Success");
+
                         this.privMediaStream = mediaStream;
                         this.onEvent(new AudioSourceReadyEvent(this.privId));
                         this.privInitializeDeferral.resolve(true);
@@ -182,13 +195,10 @@ export class MicAudioSource implements IAudioSource {
             this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
         }
 
-        if (Object.keys(this.privStreams)) {
-            if (this.privMediaStream) {
-                const tracks = this.privMediaStream.getAudioTracks();
-                if (tracks && tracks[0]) {
-                    tracks[0].enabled = false;
-                }
-            }
+        if (Object.keys(this.privStreams) && Object.keys(this.privStreams).length === 0) {
+            // tslint:disable-next-line:no-console
+            console.info("Releasing media resources");
+            this.privRecorder.detachMediaResources(this.privContext);
         }
     }
 
@@ -233,24 +243,6 @@ export class MicAudioSource implements IAudioSource {
             this.privRecorder.setWorkletUrl(value);
         } else {
             throw new Error("Property '" + name + "' is not supported on Microphone.");
-        }
-    }
-
-    public mute(): void {
-        if (this.privMediaStream) {
-            const tracks = this.privMediaStream.getAudioTracks();
-            if (tracks && tracks[0]) {
-                tracks[0].enabled = false;
-            }
-        }
-    }
-
-    public unmute(): void {
-        if (this.privMediaStream) {
-            const tracks = this.privMediaStream.getAudioTracks();
-            if (tracks && tracks[0]) {
-                tracks[0].enabled = true;
-            }
         }
     }
 
