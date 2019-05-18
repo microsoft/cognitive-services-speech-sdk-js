@@ -1343,7 +1343,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         objsToClose.push(s);
 
         let r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s);
-        objsToClose.push(r);
 
         expect(r instanceof sdk.Recognizer).toEqual(true);
         // Node.js doesn't have a microphone natively. So we'll take the specific message that indicates that microphone init failed as evidence it was attempted.
@@ -1353,7 +1352,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             });
 
         r = new sdk.SpeechRecognizer(s);
-        objsToClose.push(r);
 
         r.startContinuousRecognitionAsync(() => fail("startContinuousRecognitionAsync returned success when it should have failed"),
             (error: string): void => {
