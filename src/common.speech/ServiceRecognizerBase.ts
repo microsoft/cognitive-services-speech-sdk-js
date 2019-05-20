@@ -556,9 +556,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const deferred = new Deferred<boolean>();
 
         // The time we last sent data to the service.
-        let lastSendTime: number = Date.now();
+        let nextSendTime: number = Date.now();
 
         const audioFormat: AudioStreamFormatImpl = this.privAudioSource.format as AudioStreamFormatImpl;
+
+        // Max amount to send before we start to throttle
+        const fastLaneSizeMs: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-TransmitLengthBeforThrottleMs", "5000");
+        const maxSendUnthrottledBytes: number = audioFormat.avgBytesPerSec / 1000 * parseInt(fastLaneSizeMs, 10);
 
         const readAndUploadCycle = () => {
 
@@ -570,38 +574,53 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                             // we have a new audio chunk to upload.
                             if (this.privRequestSession.isSpeechEnded) {
-                                // If service already recognized audio end then dont send any more audio
+                                // If service already recognized audio end then don't send any more audio
                                 deferred.resolve(true);
                                 return;
                             }
 
-                            const payload = (audioStreamChunk.isEnd) ? null : audioStreamChunk.buffer;
-                            const uploaded: Promise<boolean> = connection.send(
-                                new SpeechConnectionMessage(
-                                    MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
+                            let payload: ArrayBuffer;
+                            let sendDelay: number;
 
-                            if (!audioStreamChunk.isEnd) {
-
-                                // Caculate any delay to the audio stream needed. /2 to allow 2x real time transmit rate max.
-                                const minSendTime = ((payload.byteLength / audioFormat.avgBytesPerSec) / 2) * 1000;
-
-                                const delay: number = Math.max(0, (lastSendTime - Date.now() + minSendTime));
-
-                                uploaded.continueWith((_: PromiseResult<boolean>) => {
-                                    // Regardless of success or failure, schedule the next upload.
-                                    // If the underlying connection was broken, the next cycle will
-                                    // get a new connection and re-transmit missing audio automatically.
-                                    setTimeout(() => {
-                                        lastSendTime = Date.now();
-                                        readAndUploadCycle();
-                                    }, delay);
-                                });
+                            if (audioStreamChunk.isEnd) {
+                                payload = null;
+                                sendDelay = 0;
                             } else {
-                                // the audio stream has been closed, no need to schedule next
-                                // read-upload cycle.
-                                this.privRequestSession.onSpeechEnded();
-                                deferred.resolve(true);
+                                payload = audioStreamChunk.buffer;
+                                this.privRequestSession.onAudioSent(payload.byteLength);
+
+                                if (maxSendUnthrottledBytes >= this.privRequestSession.bytesSent) {
+                                    sendDelay = 0;
+                                } else {
+                                    sendDelay = Math.max(0, nextSendTime - Date.now());
+                                }
                             }
+
+                            // Are we ready to send, or need we delay more?
+                            setTimeout(() => {
+                                if (payload !== null) {
+                                    nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
+                                }
+
+                                const uploaded: Promise<boolean> = connection.send(
+                                    new SpeechConnectionMessage(
+                                        MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
+
+                                if (!audioStreamChunk.isEnd) {
+                                    uploaded.continueWith((_: PromiseResult<boolean>) => {
+
+                                        // Regardless of success or failure, schedule the next upload.
+                                        // If the underlying connection was broken, the next cycle will
+                                        // get a new connection and re-transmit missing audio automatically.
+                                        readAndUploadCycle();
+                                    });
+                                } else {
+                                    // the audio stream has been closed, no need to schedule next
+                                    // read-upload cycle.
+                                    this.privRequestSession.onSpeechEnded();
+                                    deferred.resolve(true);
+                                }
+                            }, sendDelay);
                         },
                         (error: string) => {
                             if (this.privRequestSession.isSpeechEnded) {

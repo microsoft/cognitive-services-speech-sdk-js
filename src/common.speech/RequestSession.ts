@@ -36,6 +36,7 @@ export class RequestSession {
     private privTurnStartAudioOffset: number = 0;
     private privLastRecoOffset: number = 0;
     private privHypothesisReceived: boolean = false;
+    private privBytesSent: number = 0;
 
     protected privSessionId: string;
 
@@ -74,6 +75,11 @@ export class RequestSession {
         return this.privTurnStartAudioOffset;
     }
 
+    // The number of bytes sent for the current connection.
+    // Counter is reset to 0 each time a connection is established.
+    public get bytesSent(): number {
+        return this.privBytesSent;
+    }
     public listenForServiceTelemetry(eventSource: IEventSource<PlatformEvent>): void {
         if (!!this.privServiceTelemetryListener) {
             this.privDetachables.push(eventSource.attachListener(this.privServiceTelemetryListener));
@@ -119,6 +125,7 @@ export class RequestSession {
                 this.privAudioNode.replay();
             }
             this.privTurnStartAudioOffset = this.privLastRecoOffset;
+            this.privBytesSent = 0;
             return;
         } else if (statusCode === 403) {
             this.onComplete();
@@ -152,6 +159,10 @@ export class RequestSession {
         this.privLastRecoOffset = offset;
         this.privHypothesisReceived = false;
         this.privAudioNode.shrinkBuffers(offset);
+    }
+
+    public onAudioSent(bytesSent: number): void {
+        this.privBytesSent += bytesSent;
     }
 
     public dispose = (error?: string): void => {
