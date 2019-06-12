@@ -1128,7 +1128,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         r.recognizeOnceAsync(
             (res: sdk.TranslationRecognitionResult) => {
                 expect(res).not.toBeUndefined();
-                expect(res.errorDetails).toContain("400036");
+                expect(res.errorDetails).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.translations).toBeUndefined();
                 expect(res.text).toEqual("What's the weather like?");
