@@ -605,7 +605,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             });
 
         r = new sdk.IntentRecognizer(s);
-        objsToClose.push(r);
 
         r.startContinuousRecognitionAsync(() => fail("startContinuousRecognitionAsync returned success when it should have failed"),
             (error: string): void => {
