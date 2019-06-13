@@ -191,6 +191,9 @@ export class SpeechRecognizer extends Recognizer {
                     err(error);
                 }
             }
+
+            // Destroy the recognizer.
+            this.dispose(true);
         }
     }
 
@@ -231,6 +234,9 @@ export class SpeechRecognizer extends Recognizer {
                     err(error);
                 }
             }
+
+            // Destroy the recognizer.
+            this.dispose(true);
         }
     }
 
@@ -266,6 +272,9 @@ export class SpeechRecognizer extends Recognizer {
                     err(error);
                 }
             }
+
+            // Destroy the recognizer.
+            this.dispose(true);
         }
     }
 
