@@ -19,7 +19,7 @@
   "linenums": true,
   "source": {
     "include": [
-      "./distrib/src/sdk"
+      "./distrib/lib/src/sdk"
     ],
     "includePattern": ".+\\.js(doc)?$",
     "excludePattern": "(^|\\/|\\\\)_"
