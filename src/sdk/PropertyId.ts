@@ -11,7 +11,7 @@ export enum PropertyId {
      * The Cognitive Services Speech Service subscription Key. If you are using an intent recognizer, you need to specify
      * to specify the LUIS endpoint key for your particular LUIS app. Under normal circumstances, you shouldn't
      * have to use this property directly.
-     * Instead, use @see SpeechConfig.fromSubscription.
+     * Instead, use [[SpeechConfig.fromSubscription]].
      * @member PropertyId.SpeechServiceConnection_Key
      */
     SpeechServiceConnection_Key = 0,
@@ -19,7 +19,7 @@ export enum PropertyId {
     /**
      * The Cognitive Services Speech Service endpoint (url). Under normal circumstances, you shouldn't
      * have to use this property directly.
-     * Instead, use @see SpeechConfig.fromEndpoint.
+     * Instead, use [[SpeechConfig.fromEndpoint]].
      * NOTE: This endpoint is not the same as the endpoint used to obtain an access token.
      * @member PropertyId.SpeechServiceConnection_Endpoint
      */
@@ -28,7 +28,7 @@ export enum PropertyId {
     /**
      * The Cognitive Services Speech Service region. Under normal circumstances, you shouldn't have to
      * use this property directly.
-     * Instead, use @see SpeechConfig.fromSubscription, @see SpeechConfig.fromEndpoint, @see SpeechConfig.fromAuthorizationToken.
+     * Instead, use [[SpeechConfig.fromSubscription]], [[SpeechConfig.fromEndpoint]], [[SpeechConfig.fromAuthorizationToken]].
      * @member PropertyId.SpeechServiceConnection_Region
      */
     SpeechServiceConnection_Region,
@@ -36,8 +36,8 @@ export enum PropertyId {
     /**
      * The Cognitive Services Speech Service authorization token (aka access token). Under normal circumstances,
      * you shouldn't have to use this property directly.
-     * Instead, use @see SpeechConfig.fromAuthorizationToken,
-     * @see SpeechRecognizer.setAuthorizationToken, @see IntentRecognizer.setAuthorizationToken, @see TranslationRecognizer.setAuthorizationToken.
+     * Instead, use [[SpeechConfig.fromAuthorizationToken]],
+     * [[SpeechRecognizer.authorizationToken]], [[IntentRecognizer.authorizationToken]], [[TranslationRecognizer.authorizationToken]].
      * @member PropertyId.SpeechServiceAuthorization_Token
      */
     SpeechServiceAuthorization_Token,
@@ -51,7 +51,7 @@ export enum PropertyId {
     /**
      * The Cognitive Services Speech Service endpoint id. Under normal circumstances, you shouldn't
      * have to use this property directly.
-     * Instead, use @see SpeechConfig.setEndpointId.
+     * Instead, use [[SpeechConfig.endpointId]].
      * NOTE: The endpoint id is available in the Speech Portal, listed under Endpoint Details.
      * @member PropertyId.SpeechServiceConnection_EndpointId
      */
@@ -60,8 +60,8 @@ export enum PropertyId {
     /**
      * The list of comma separated languages (BCP-47 format) used as target translation languages. Under normal circumstances,
      * you shouldn't have to use this property directly.
-     * Instead use @see SpeechTranslationConfig.addTargetLanguage,
-     * @see SpeechTranslationConfig.getTargetLanguages, @see TranslationRecognizer.getTargetLanguages.
+     * Instead use [[SpeechTranslationConfig.addTargetLanguage]],
+     * [[SpeechTranslationConfig.targetLanguages]], [[TranslationRecognizer.targetLanguages]].
      * @member PropertyId.SpeechServiceConnection_TranslationToLanguages
      */
     SpeechServiceConnection_TranslationToLanguages,
@@ -69,7 +69,7 @@ export enum PropertyId {
     /**
      * The name of the Cognitive Service Text to Speech Service Voice. Under normal circumstances, you shouldn't have to use this
      * property directly.
-     * Instead, use @see SpeechTranslationConfig.setVoiceName.
+     * Instead, use [[SpeechTranslationConfig.voiceName]].
      * NOTE: Valid voice names can be found <a href="https://aka.ms/csspeech/voicenames">here</a>.
      * @member PropertyId.SpeechServiceConnection_TranslationVoice
      */
@@ -83,7 +83,7 @@ export enum PropertyId {
 
     /**
      * The Language Understanding Service Region. Under normal circumstances, you shouldn't have to use this property directly.
-     * Instead, use @see LanguageUnderstandingModel.
+     * Instead, use [[LanguageUnderstandingModel]].
      * @member PropertyId.SpeechServiceConnection_IntentRegion
      */
     SpeechServiceConnection_IntentRegion,
@@ -130,7 +130,7 @@ export enum PropertyId {
     /**
      * The spoken language to be recognized (in BCP-47 format). Under normal circumstances, you shouldn't have to use this property
      * directly.
-     * Instead, use @see SpeechConfig.setSpeechRecognitionLanguage.
+     * Instead, use [[SpeechConfig.speechRecognitionLanguage]].
      * @member PropertyId.SpeechServiceConnection_RecoLanguage
      */
     SpeechServiceConnection_RecoLanguage,
@@ -139,7 +139,7 @@ export enum PropertyId {
      * The session id. This id is a universally unique identifier (aka UUID) representing a specific binding of an audio input stream
      * and the underlying speech recognition instance to which it is bound. Under normal circumstances, you shouldn't have to use this
      * property directly.
-     * Instead use @see SessionEventArgs.sessionId.
+     * Instead use [[SessionEventArgs.sessionId]].
      * @member PropertyId.Speech_SessionId
      */
     Speech_SessionId,
@@ -147,7 +147,7 @@ export enum PropertyId {
     /**
      * The requested Cognitive Services Speech Service response output format (simple or detailed). Under normal circumstances, you shouldn't have
      * to use this property directly.
-     * Instead use @see SpeechConfig.setOutputFormat.
+     * Instead use [[SpeechConfig.outputFormat]].
      * @member PropertyId.SpeechServiceResponse_RequestDetailedResultTrueFalse
      */
     SpeechServiceResponse_RequestDetailedResultTrueFalse,
@@ -166,7 +166,7 @@ export enum PropertyId {
 
     /**
      * The Cognitive Services Speech Service error details (in JSON format). Under normal circumstances, you shouldn't have to
-     * use this property directly. Instead use @see CancellationDetails.getErrorDetails.
+     * use this property directly. Instead use [[CancellationDetails.errorDetails]].
      * @member PropertyId.SpeechServiceResponse_JsonErrorDetails
      */
     SpeechServiceResponse_JsonErrorDetails,
@@ -190,7 +190,7 @@ export enum PropertyId {
     CancellationDetails_ReasonDetailedText,
 
     /**
-     * The Language Understanding Service response output (in JSON format). Available via @see IntentRecognitionResult.Properties.
+     * The Language Understanding Service response output (in JSON format). Available via [[IntentRecognitionResult]]
      * @member PropertyId.LanguageUnderstandingServiceResponse_JsonResult
      */
     LanguageUnderstandingServiceResponse_JsonResult,
