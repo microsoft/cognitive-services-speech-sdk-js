@@ -85,6 +85,10 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
         s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
     }
 
+    if (undefined !== Settings.proxyServer) {
+        s.setProxy(Settings.proxyServer, Settings.proxyPort);
+    }
+
     expect(s).not.toBeUndefined();
     return s;
 };

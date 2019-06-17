@@ -10,7 +10,9 @@
   var webpack = require('webpack-stream');
   var dtsBundleWebpack = require('dts-bundle-webpack');
 
-  gulp.task("build", function build() {
+  var tsProject = ts.createProject('tsconfig.json');
+
+  gulp.task("build", gulp.series(function build() {
     return gulp.src([
       "src/**/*.ts",
       "microsoft.cognitiveservices.speech.sdk.ts"],
@@ -23,16 +25,13 @@
         summarizeFailureOutput: true
       }))
       .pipe(sourcemaps.init())
-      .pipe(ts({
-        target: "ES5",
-        declaration: true,
-        noImplicitAny: true,
-        removeComments: false,
-        outDir: 'distrib/lib'
-      }))
+      .pipe(tsProject())
       .pipe(sourcemaps.write('.'))
       .pipe(gulp.dest('distrib/lib'));
-  });
+  }, function () {
+    return gulp.src('./external/**/*')
+      .pipe(gulp.dest('./distrib/lib/external/'));
+  }));
 
   gulp.task("bundle", gulp.series("build", function bundle() {
     return gulp.src('bundleApp.js')

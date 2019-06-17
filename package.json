@@ -26,7 +26,12 @@
     "url": "https://github.com/Microsoft/cognitive-services-speech-sdk-js"
   },
   "browser": {
-    "https-proxy-agent": false
+    "asn1.js-rfc2560": false,
+    "asn1.js-rfc5280": false,
+    "distrib/lib/external/ocsp/ocsp": false,
+    "https-proxy-agent": false,
+    "simple-lru-cache": false,
+    "ws": false
   },
   "main": "distrib/lib/src/sdk/Exports.js",
   "types": "distrib/lib/src/sdk/Exports.d.ts",
@@ -79,7 +84,10 @@
     "usePathForSuiteName": "true"
   },
   "dependencies": {
+    "asn1.js-rfc2560": "^5.0.0",
+    "asn1.js-rfc5280": "^3.0.0",
     "https-proxy-agent": "^2.2.1",
+    "simple-lru-cache": "0.0.2",
     "ws": "^6.1.2"
   },
   "resolutions": {
