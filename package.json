@@ -28,6 +28,7 @@
   "browser": {
     "asn1.js-rfc2560": false,
     "asn1.js-rfc5280": false,
+    "distrib/es2015/external/ocsp/ocsp": false,
     "distrib/lib/external/ocsp/ocsp": false,
     "https-proxy-agent": false,
     "simple-lru-cache": false,
