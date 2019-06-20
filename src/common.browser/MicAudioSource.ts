@@ -1,15 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {
-    AudioStreamFormat,
-    AudioStreamFormatImpl,
-} from "../../src/sdk/Audio/AudioStreamFormat";
-import {
-    connectivity,
-    ISpeechConfigAudioDevice,
-    type
-} from "../common.speech/Exports";
+import { AudioStreamFormat, AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
+import { connectivity, ISpeechConfigAudioDevice, type } from "../common.speech/Exports";
 import {
     AudioSourceErrorEvent,
     AudioSourceEvent,
@@ -31,7 +24,7 @@ import {
     Promise,
     PromiseHelper,
     Stream,
-    StreamReader,
+    StreamReader
 } from "../common/Exports";
 import { IRecorder } from "./IRecorder";
 
@@ -45,7 +38,6 @@ interface INavigatorUserMedia extends NavigatorUserMedia {
 export const AudioWorkletSourceURLPropertyName = "MICROPHONE-WorkletSourceUrl";
 
 export class MicAudioSource implements IAudioSource {
-
     private static readonly AUDIOFORMAT: AudioStreamFormatImpl = AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
 
     private privStreams: IStringDictionary<Stream<ArrayBuffer>> = {};
@@ -223,7 +215,25 @@ export class MicAudioSource implements IAudioSource {
         if (name === AudioWorkletSourceURLPropertyName) {
             this.privRecorder.setWorkletUrl(value);
         } else {
-            throw new Error("Property '" + name + "' is not supported on Microphone.");
+            throw new Error(`Property ${name} is not supported on Microphone.`);
+        }
+    }
+
+    public mute(): void {
+        if (this.privMediaStream) {
+            const tracks = this.privMediaStream.getAudioTracks();
+            if (tracks && tracks[0]) {
+                tracks[0].enabled = false;
+            }
+        }
+    }
+
+    public unmute(): void {
+        if (this.privMediaStream) {
+            const tracks = this.privMediaStream.getAudioTracks();
+            if (tracks && tracks[0]) {
+                tracks[0].enabled = true;
+            }
         }
     }
 
@@ -296,9 +306,7 @@ export class MicAudioSource implements IAudioSource {
         }
 
         // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext
-        const AudioContext = ((window as any).AudioContext)
-            || ((window as any).webkitAudioContext)
-            || false;
+        const AudioContext = ((window as any).AudioContext) || ((window as any).webkitAudioContext);
 
         if (!AudioContext) {
             throw new Error("Browser does not support Web Audio API (AudioContext is not available).");
@@ -314,24 +322,15 @@ export class MicAudioSource implements IAudioSource {
 
         this.privRecorder.releaseMediaResources(this.privContext);
 
-        // This pattern brought to you by a bug in the TypeScript compiler where it
-        // confuses the ("close" in this.privContext) with this.privContext always being null as the alternate.
-        // https://github.com/Microsoft/TypeScript/issues/11498
-        let hasClose: boolean = false;
-        if ("close" in this.privContext) {
-            hasClose = true;
-        }
-
-        if (hasClose) {
+        if (this.privContext.close) {
             this.privContext.close();
             this.privContext = null;
         } else if (null !== this.privContext && this.privContext.state === "running") {
-            // Suspend actually takes a callback, but analogous to the
-            // resume method, it'll be only fired if suspend is called
-            // in a direct response to a user action. The later is not always
-            // the case, as TurnOff is also called, when we receive an
-            // end-of-speech message from the service. So, doing a best effort
-            // fire-and-forget here.
+            // Suspend actually takes a callback, but analogous to the resume method,
+            // it'll be only fired if suspend is called in a direct response to a user action.
+            // The later is not always the case, as TurnOff is also called,
+            // when we receive an end-of-speech message from the service.
+            // So, doing a best effort fire-and-forget here.
             this.privContext.suspend();
         }
     }

@@ -11,18 +11,17 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SpeechServiceConfig,
+    SpeechServiceConfig
 } from "../common.speech/Exports";
 import { Promise, PromiseHelper } from "../common/Exports";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
-    Connection,
     PropertyCollection,
     PropertyId,
     RecognitionEventArgs,
     SessionEventArgs,
-    SpeechRecognitionResult,
+    SpeechRecognitionResult
 } from "./Exports";
 
 /**
@@ -91,6 +90,26 @@ export abstract class Recognizer {
         Contracts.throwIfDisposed(this.privDisposed);
 
         this.dispose(true);
+    }
+
+    /**
+     * Mutes audio input.
+     * @member Recognizer.prototype.mute
+     * @function
+     * @public
+     */
+    public mute(): void {
+        this.audioConfig.mute();
+    }
+
+    /**
+     * Unmutes audio input.
+     * @member Recognizer.prototype.unmute
+     * @function
+     * @public
+     */
+    public unmute(): void {
+        this.audioConfig.unmute();
     }
 
     /**
@@ -170,7 +189,6 @@ export abstract class Recognizer {
 
     // Does the generic recognizer setup that is common accross all recognizer types.
     protected implCommonRecognizerSetup(): void {
-
         let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
         let osName = "unknown";
         let osVersion = "unknown";
