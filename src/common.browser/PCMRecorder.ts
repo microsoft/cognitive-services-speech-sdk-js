@@ -47,6 +47,8 @@ export class PcmRecorder implements IRecorder {
         };
 
         const micInput = context.createMediaStreamSource(mediaStream);
+        const gainNode = context.createGain();
+        micInput.connect(gainNode);
 
         // https://webaudio.github.io/web-audio-api/#audioworklet
         // Using AudioWorklet to improve audio quality and avoid audio glitches due to blocking the UI thread
@@ -71,27 +73,30 @@ export class PcmRecorder implements IRecorder {
                             }
                         }
                     };
-                    micInput.connect(workletNode);
+                    gainNode.connect(workletNode);
                     workletNode.connect(context.destination);
                     this.privMediaResources = {
+                        gainNode,
                         scriptProcessorNode: workletNode,
                         source: micInput,
                         stream: mediaStream,
                     };
                 })
                 .catch(() => {
-                    micInput.connect(scriptNode);
+                    gainNode.connect(scriptNode);
                     scriptNode.connect(context.destination);
                     this.privMediaResources = {
+                        gainNode,
                         scriptProcessorNode: scriptNode,
                         source: micInput,
                         stream: mediaStream,
                     };
                 });
         } else {
-            micInput.connect(scriptNode);
+            gainNode.connect(scriptNode);
             scriptNode.connect(context.destination);
             this.privMediaResources = {
+                gainNode,
                 scriptProcessorNode: scriptNode,
                 source: micInput,
                 stream: mediaStream,
@@ -103,12 +108,19 @@ export class PcmRecorder implements IRecorder {
         if (this.privMediaResources) {
             if (this.privMediaResources.scriptProcessorNode) {
                 this.privMediaResources.scriptProcessorNode.disconnect(context.destination);
-                this.privMediaResources.scriptProcessorNode = null;
+                delete this.privMediaResources.scriptProcessorNode;
             }
+
             if (this.privMediaResources.source) {
                 this.privMediaResources.source.disconnect();
                 this.privMediaResources.stream.getTracks().forEach((track: any) => track.stop());
-                this.privMediaResources.source = null;
+                delete this.privMediaResources.source;
+            }
+
+            if (this.privMediaResources.gainNode) {
+                this.privMediaResources.gainNode.disconnect();
+                this.privMediaResources.gainNode.gain.cancelScheduledValues(0);
+                delete this.privMediaResources.gainNode;
             }
         }
     }
@@ -116,10 +128,23 @@ export class PcmRecorder implements IRecorder {
     public setWorkletUrl(url: string): void {
         this.privSpeechProcessorScript = url;
     }
+
+    public mute(): void {
+        if (this.privMediaResources && this.privMediaResources.gainNode) {
+            this.privMediaResources.gainNode.gain.value = 0;
+        }
+    }
+
+    public unmute(): void {
+        if (this.privMediaResources && this.privMediaResources.gainNode) {
+            this.privMediaResources.gainNode.gain.value = 1;
+        }
+    }
 }
 
 interface IMediaResources {
-    source: MediaStreamAudioSourceNode;
+    gainNode: GainNode;
     scriptProcessorNode: ScriptProcessorNode | AudioWorkletNode;
+    source: MediaStreamAudioSourceNode;
     stream: MediaStream;
 }

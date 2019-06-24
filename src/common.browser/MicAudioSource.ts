@@ -220,20 +220,14 @@ export class MicAudioSource implements IAudioSource {
     }
 
     public mute(): void {
-        if (this.privMediaStream) {
-            const tracks = this.privMediaStream.getAudioTracks();
-            if (tracks && tracks[0]) {
-                tracks[0].enabled = false;
-            }
+        if (this.privRecorder) {
+            this.privRecorder.mute();
         }
     }
 
     public unmute(): void {
-        if (this.privMediaStream) {
-            const tracks = this.privMediaStream.getAudioTracks();
-            if (tracks && tracks[0]) {
-                tracks[0].enabled = true;
-            }
+        if (this.privRecorder) {
+            this.privRecorder.unmute();
         }
     }
 
