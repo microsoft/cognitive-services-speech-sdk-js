@@ -207,6 +207,9 @@ export class TranslationRecognizer extends Recognizer {
                     err(error);
                 }
             }
+
+            // Destroy the recognizer.
+            this.dispose(true);
         }
     }
 
@@ -248,6 +251,9 @@ export class TranslationRecognizer extends Recognizer {
                     err(error);
                 }
             }
+
+            // Destroy the recognizer.
+            this.dispose(true);
         }
     }
 
@@ -283,6 +289,10 @@ export class TranslationRecognizer extends Recognizer {
                     err(error);
                 }
             }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+
         }
     }
 

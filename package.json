@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.5.0-alpha.0.1",
+  "version": "1.6.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
@@ -26,46 +26,53 @@
     "url": "https://github.com/Microsoft/cognitive-services-speech-sdk-js"
   },
   "browser": {
-    "https-proxy-agent": false
+    "asn1.js-rfc2560": false,
+    "asn1.js-rfc5280": false,
+    "distrib/es2015/external/ocsp/ocsp": false,
+    "distrib/lib/external/ocsp/ocsp": false,
+    "https-proxy-agent": false,
+    "simple-lru-cache": false,
+    "ws": false
   },
-  "main": "distrib/lib/src/sdk/Exports.js",
-  "types": "distrib/lib/src/sdk/Exports.d.ts",
+  "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
+  "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
+  "types": "distrib/lib/microsoft.cognitiveservices.speech.sdk.d.ts",
   "files": [
     "distrib/lib/**/*",
+    "distrib/es2015/**/*",
     "distrib/browser/**/*",
     "LICENSE",
     "REDIST.txt"
   ],
   "devDependencies": {
-    "@types/jest": "^23.3.10",
+    "@types/jest": "^24.0.14",
     "@types/node": "^10.7.0",
     "@types/request": "^2.48.1",
     "@types/ws": "^6.0.1",
     "dts-bundle-webpack": "^1.0.2",
-    "gulp": "^4.0.0",
-    "gulp-change": "^1.0.2",
+    "gulp": "^4.0.2",
     "gulp-rename": "^1.4.0",
-    "gulp-sourcemaps": "^2.6.4",
-    "gulp-tslint": "^8.0.0",
-    "gulp-typescript": "^5.0.0",
-    "gulp-uglify": "^3.0.1",
-    "jest": "^24.1.0",
-    "jest-junit": "^6.3.0",
+    "gulp-sourcemaps": "^2.6.5",
+    "gulp-terser": "^1.2.0",
+    "gulp-tslint": "^8.1.4",
+    "gulp-typescript": "^5.0.1",
+    "jest": "^24.8.0",
+    "jest-junit": "^6.4.0",
     "request": "^2.88.0",
     "semver": "^5.6.0",
-    "source-map-loader": "^0.2.3",
-    "ts-jest": "^23.10.5",
-    "tslint": "^5.16.0",
+    "source-map-loader": "^0.2.4",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.17.0",
     "typescript": "^3.2.1",
     "webpack-stream": "^4.0.0"
   },
   "scripts": {
-    "build": "gulp compress",
+    "build": "gulp compress && gulp build2015",
     "test": "npm run lint && npm run jest",
     "jest": "jest",
     "lint": "tslint -p tsconfig.json",
     "civersion": "node ci/version.js",
-    "prepack": "npm run build"
+    "prepare": "npm run build"
   },
   "jest": {
     "testEnvironment": "node"
@@ -79,10 +86,14 @@
     "usePathForSuiteName": "true"
   },
   "dependencies": {
+    "asn1.js-rfc2560": "^5.0.0",
+    "asn1.js-rfc5280": "^3.0.0",
     "https-proxy-agent": "^2.2.1",
+    "simple-lru-cache": "0.0.2",
     "ws": "^6.1.2"
   },
   "resolutions": {
     "extend": "3.0.2"
-  }
+  },
+  "sideEffects": false
 }

@@ -40,6 +40,8 @@
       }
     ],
 
+    "only-arrow-functions": [true, "allow-declarations"],
+
     /* Enabling strictest possible type checking on every thing we write */
     "typedef": [
       true,

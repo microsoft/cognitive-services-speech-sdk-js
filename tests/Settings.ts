@@ -57,6 +57,9 @@ export class Settings {
 
     public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
 
+    public static proxyServer: string;
+    public static proxyPort: number;
+
     private static IsSettingsInitialized: boolean = false;
     public static SettingsClassLock: Settings;
 

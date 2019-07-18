@@ -85,6 +85,10 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
         s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
     }
 
+    if (undefined !== Settings.proxyServer) {
+        s.setProxy(Settings.proxyServer, Settings.proxyPort);
+    }
+
     expect(s).not.toBeUndefined();
     return s;
 };
@@ -177,13 +181,25 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         expect(r.outputFormat === sdk.OutputFormat.Detailed);
 
-        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
-            expect(result).not.toBeUndefined();
-            expect(result.text).toEqual(Settings.WaveFileText);
-            expect(result.properties).not.toBeUndefined();
-            expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
 
-            done();
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            try {
+                expect(result).not.toBeUndefined();
+                expect(result.text).toEqual(Settings.WaveFileText);
+                expect(result.properties).not.toBeUndefined();
+                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
         }, (error: string) => {
             done.fail(error);
         });
@@ -226,13 +242,25 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
             expect(r.outputFormat === sdk.OutputFormat.Detailed);
 
-            r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
-                expect(result).not.toBeUndefined();
-                expect(result.text).toEqual(Settings.WaveFileText);
-                expect(result.properties).not.toBeUndefined();
-                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+            r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+                try {
+                    expect(e.errorDetails).toBeUndefined();
+                } catch (error) {
+                    done.fail(error);
+                }
+            };
 
-                done();
+            r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+                try {
+                    expect(result).not.toBeUndefined();
+                    expect(result.text).toEqual(Settings.WaveFileText);
+                    expect(result.properties).not.toBeUndefined();
+                    expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             }, (error: string) => {
                 done.fail(error);
             });
@@ -290,8 +318,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     try {
                         const res: sdk.SpeechRecognitionResult = p2;
                         expect(res).not.toBeUndefined();
-                        expect(res.text).toEqual("What's the weather like?");
                         expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                        expect(res.text).toEqual("What's the weather like?");
                         expect(telemetryEvents).toEqual(1);
                         expect(res.properties).not.toBeUndefined();
                         expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
@@ -306,6 +334,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     done.fail(error);
                 });
         });
+
         test("testStopContinuousRecognitionAsyncWithTelemetry", (done: jest.DoneCallback) => {
             // tslint:disable-next-line:no-console
             console.info("Name: testStopContinuousRecognitionAsyncWithTelemetry");
@@ -413,6 +442,11 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
             eventsMap[Canceled] = eventIdentifier++;
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
         };
 
         // todo eventType should be renamed and be a function getEventType()
@@ -442,61 +476,65 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         r.recognizeOnceAsync(
             (res: sdk.SpeechRecognitionResult) => {
-                expect(res).not.toBeUndefined();
-                expect(res.text).toEqual("What's the weather like?");
-                expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                try {
+                    expect(res).not.toBeUndefined();
+                    expect(res.text).toEqual("What's the weather like?");
+                    expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
 
-                // session events are first and last event
-                const LAST_RECORDED_EVENT_ID: number = --eventIdentifier;
+                    // session events are first and last event
+                    const LAST_RECORDED_EVENT_ID: number = --eventIdentifier;
 
-                expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
+                    expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
 
-                expect(Session + SessionStartedEvent in eventsMap).toEqual(true);
-                expect(eventsMap[Session + SessionStartedEvent]).toEqual(FIRST_EVENT_ID);
+                    expect(Session + SessionStartedEvent in eventsMap).toEqual(true);
+                    expect(eventsMap[Session + SessionStartedEvent]).toEqual(FIRST_EVENT_ID);
 
-                if (Session + SessionStoppedEvent in eventsMap) {
-                    expect(LAST_RECORDED_EVENT_ID).toEqual(eventsMap[Session + SessionStoppedEvent]);
-                }
-                // end events come after start events.
-                if (Session + SessionStoppedEvent in eventsMap) {
+                    if (Session + SessionStoppedEvent in eventsMap) {
+                        expect(LAST_RECORDED_EVENT_ID).toEqual(eventsMap[Session + SessionStoppedEvent]);
+                    }
+                    // end events come after start events.
+                    if (Session + SessionStoppedEvent in eventsMap) {
+                        expect(eventsMap[Session + SessionStartedEvent])
+                            .toBeLessThan(eventsMap[Session + SessionStoppedEvent]);
+                    }
+
+                    expect(eventsMap[SpeechStartDetectedEvent])
+                        .toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
+                    expect((FIRST_EVENT_ID + 1)).toEqual(eventsMap[SpeechStartDetectedEvent]);
+
+                    // make sure, first end of speech, then final result
+                    expect((LAST_RECORDED_EVENT_ID - 1)).toEqual(eventsMap[SpeechEndDetectedEvent]);
+
+                    expect((LAST_RECORDED_EVENT_ID)).toEqual(eventsMap[Recognized]);
+
+                    // recognition events come after session start but before session end events
                     expect(eventsMap[Session + SessionStartedEvent])
-                        .toBeLessThan(eventsMap[Session + SessionStoppedEvent]);
+                        .toBeLessThan(eventsMap[SpeechStartDetectedEvent]);
+
+                    if (Session + SessionStoppedEvent in eventsMap) {
+                        expect(eventsMap[SpeechEndDetectedEvent])
+                            .toBeLessThan(eventsMap[Session + SessionStoppedEvent]);
+                    }
+
+                    // there is no partial result reported after the final result
+                    // (and check that we have intermediate and final results recorded)
+                    if (Recognizing in eventsMap) {
+                        expect(eventsMap[Recognizing])
+                            .toBeGreaterThan(eventsMap[SpeechStartDetectedEvent]);
+                    }
+
+                    // speech should stop before getting the final result.
+                    expect(eventsMap[Recognized]).toBeGreaterThan(eventsMap[SpeechEndDetectedEvent]);
+
+                    expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
+
+                    // make sure events we don't expect, don't get raised
+                    expect(Canceled in eventsMap).toBeFalsy();
+
+                    done();
+                } catch (error) {
+                    done.fail(error);
                 }
-
-                expect(eventsMap[SpeechStartDetectedEvent])
-                    .toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
-                expect((FIRST_EVENT_ID + 1)).toEqual(eventsMap[SpeechStartDetectedEvent]);
-
-                // make sure, first end of speech, then final result
-                expect((LAST_RECORDED_EVENT_ID - 1)).toEqual(eventsMap[SpeechEndDetectedEvent]);
-
-                expect((LAST_RECORDED_EVENT_ID)).toEqual(eventsMap[Recognized]);
-
-                // recognition events come after session start but before session end events
-                expect(eventsMap[Session + SessionStartedEvent])
-                    .toBeLessThan(eventsMap[SpeechStartDetectedEvent]);
-
-                if (Session + SessionStoppedEvent in eventsMap) {
-                    expect(eventsMap[SpeechEndDetectedEvent])
-                        .toBeLessThan(eventsMap[Session + SessionStoppedEvent]);
-                }
-
-                // there is no partial result reported after the final result
-                // (and check that we have intermediate and final results recorded)
-                if (Recognizing in eventsMap) {
-                    expect(eventsMap[Recognizing])
-                        .toBeGreaterThan(eventsMap[SpeechStartDetectedEvent]);
-                }
-
-                // speech should stop before getting the final result.
-                expect(eventsMap[Recognized]).toBeGreaterThan(eventsMap[SpeechEndDetectedEvent]);
-
-                expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
-
-                // make sure events we don't expect, don't get raised
-                expect(Canceled in eventsMap).toBeFalsy();
-
-                done();
             }, (error: string) => {
                 done.fail(error);
             });
@@ -752,17 +790,29 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         expect(r).not.toBeUndefined();
         expect(r instanceof sdk.Recognizer);
 
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
                 const res: sdk.SpeechRecognitionResult = p2;
+                try {
+                    expect(res).not.toBeUndefined();
+                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(res.text).toEqual("What's the weather like?");
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                expect(res).not.toBeUndefined();
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(res.text).toEqual("What's the weather like?");
-                expect(res.properties).not.toBeUndefined();
-                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
 
-                done();
             },
             (error: string) => {
                 done.fail(error);
@@ -785,17 +835,29 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         expect(r).not.toBeUndefined();
         expect(r instanceof sdk.Recognizer);
 
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
-                const res: sdk.SpeechRecognitionResult = p2;
+                try {
+                    const res: sdk.SpeechRecognitionResult = p2;
 
-                expect(res).not.toBeUndefined();
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(res.text).toEqual("What's the weather like?");
-                expect(res.properties).not.toBeUndefined();
-                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    expect(res).not.toBeUndefined();
+                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(res.text).toEqual("What's the weather like?");
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                done();
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 done.fail(error);
@@ -849,17 +911,28 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         expect(r).not.toBeUndefined();
         expect(r instanceof sdk.Recognizer);
 
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
                 const res: sdk.SpeechRecognitionResult = p2;
+                try {
+                    expect(res).not.toBeUndefined();
+                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(res.text).toEqual("What's the weather like?");
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                expect(res).not.toBeUndefined();
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(res.text).toEqual("What's the weather like?");
-                expect(res.properties).not.toBeUndefined();
-                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
-
-                done();
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 done.fail(error);
@@ -903,17 +976,29 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         expect(r instanceof sdk.Recognizer);
         objsToClose.push(r);
 
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
-                const res: sdk.SpeechRecognitionResult = p2;
+                try {
+                    const res: sdk.SpeechRecognitionResult = p2;
 
-                expect(res).not.toBeUndefined();
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(res.text).toEqual("What's the weather like?");
-                expect(res.properties).not.toBeUndefined();
-                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    expect(res).not.toBeUndefined();
+                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(res.text).toEqual("What's the weather like?");
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                done();
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 done.fail(error);
@@ -927,9 +1012,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         let bytesSent: number = 0;
 
         // To make sure we don't send a ton of extra data.
-        // 5s * 16K * 2 * 1.25;
         // For reference, before the throttling was implemented, we sent 6-10x the required data.
-        const expectedBytesSent: number = 5 * 16000 * 2 * 1.25;
+        const startTime: number = Date.now();
 
         p = sdk.AudioInputStream.createPullStream(
             {
@@ -942,7 +1026,14 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
-        testInitialSilienceTimeout(config, done, () => expect(bytesSent).toBeLessThan(expectedBytesSent));
+        testInitialSilienceTimeout(config, done, (): void => {
+            const elapsed: number = Date.now() - startTime;
+
+            // We should have sent 5 seconds of audio unthrottled and then 2x the time reco took until we got a response.
+            const expectedBytesSent: number = (5 * 16000 * 2) + (2 * elapsed * 32000 / 1000);
+            expect(bytesSent).toBeLessThanOrEqual(expectedBytesSent);
+
+        });
     }, 15000);
 
     test("InitialSilenceTimeout (push)", (done: jest.DoneCallback) => {
@@ -973,9 +1064,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     const testInitialSilienceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, addedChecks?: () => void): void => {
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
-
-        // To validate the data isn't sent too fast.
-        const startTime: number = Date.now();
 
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
         objsToClose.push(r);
@@ -1010,20 +1098,22 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
-                const res: sdk.SpeechRecognitionResult = p2;
-                numReports++;
+                try {
+                    const res: sdk.SpeechRecognitionResult = p2;
+                    numReports++;
 
-                expect(res).not.toBeUndefined();
-                expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
-                expect(res.errorDetails).toBeUndefined();
-                expect(res.text).toBeUndefined();
-                expect(res.properties).not.toBeUndefined();
-                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    expect(res).not.toBeUndefined();
+                    expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
+                    expect(res.errorDetails).toBeUndefined();
+                    expect(res.text).toBeUndefined();
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
-                expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
-                expect(Date.now()).toBeGreaterThanOrEqual(startTime + ((res.offset / 1e+4) / 2));
-
+                    const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
+                    expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 fail(error);
@@ -1057,17 +1147,28 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         expect(r).not.toBeUndefined();
         expect(r instanceof sdk.Recognizer);
 
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
-                const res: sdk.SpeechRecognitionResult = p2;
-                expect(res).not.toBeUndefined();
-                expect("What's the weather like?").toEqual(res.text);
-                expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                try {
+                    const res: sdk.SpeechRecognitionResult = p2;
+                    expect(res).not.toBeUndefined();
+                    expect("What's the weather like?").toEqual(res.text);
+                    expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
 
-                r.close();
-                s.close();
-                done();
-
+                    r.close();
+                    s.close();
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 r.close();
@@ -1114,16 +1215,20 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
-                expect(p2.reason).toEqual(sdk.ResultReason.Canceled);
-                const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
-                expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
-                expect(p2.properties).not.toBeUndefined();
-                expect(p2.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                try {
+                    expect(p2.reason).toEqual(sdk.ResultReason.Canceled);
+                    const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
+                    expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+                    expect(p2.properties).not.toBeUndefined();
+                    expect(p2.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                if (true === oneCalled) {
-                    done();
-                } else {
-                    oneCalled = true;
+                    if (true === oneCalled) {
+                        done();
+                    } else {
+                        oneCalled = true;
+                    }
+                } catch (error) {
+                    done.fail(error);
                 }
             },
             (error: string) => {
@@ -1166,17 +1271,28 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         expect(r).not.toBeUndefined();
         expect(r instanceof sdk.Recognizer);
 
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
                 const res: sdk.SpeechRecognitionResult = p2;
+                try {
+                    expect(res).not.toBeUndefined();
+                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(res.text).toEqual("What's the weather?");
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                expect(res).not.toBeUndefined();
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(res.text).toEqual("What's the weather?");
-                expect(res.properties).not.toBeUndefined();
-                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
-
-                done();
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 done.fail(error);
@@ -1213,16 +1329,20 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         };
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
-                const res: sdk.SpeechRecognitionResult = p2;
+                try {
+                    const res: sdk.SpeechRecognitionResult = p2;
 
-                expect(res).not.toBeUndefined();
-                expect(res.reason).toEqual(sdk.ResultReason.NoMatch);
-                const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
-                expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
-                expect(res.properties).not.toBeUndefined();
-                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    expect(res).not.toBeUndefined();
+                    expect(res.reason).toEqual(sdk.ResultReason.NoMatch);
+                    const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
+                    expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                done();
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 done.fail(error);
@@ -1259,6 +1379,14 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     done.fail(error);
                 }
             });
+        };
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
         };
 
         r.recognizeOnceAsync();
@@ -1343,7 +1471,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         objsToClose.push(s);
 
         let r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s);
-        objsToClose.push(r);
 
         expect(r instanceof sdk.Recognizer).toEqual(true);
         // Node.js doesn't have a microphone natively. So we'll take the specific message that indicates that microphone init failed as evidence it was attempted.
@@ -1353,7 +1480,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             });
 
         r = new sdk.SpeechRecognizer(s);
-        objsToClose.push(r);
 
         r.startContinuousRecognitionAsync(() => fail("startContinuousRecognitionAsync returned success when it should have failed"),
             (error: string): void => {
@@ -1407,6 +1533,14 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
 
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
@@ -1860,16 +1994,28 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
         disconnected = true;
     };
 
+    r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
     r.recognizeOnceAsync(
         (p2: sdk.SpeechRecognitionResult) => {
-            const res: sdk.SpeechRecognitionResult = p2;
+            try {
+                const res: sdk.SpeechRecognitionResult = p2;
 
-            expect(res).not.toBeUndefined();
-            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-            expect(res.text).toEqual("What's the weather like?");
-            expect(disconnected).toEqual(false);
-            firstReco = true;
-            sendSilence = false;
+                expect(res).not.toBeUndefined();
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                expect(res.text).toEqual("What's the weather like?");
+                expect(disconnected).toEqual(false);
+                firstReco = true;
+                sendSilence = false;
+            } catch (error) {
+                done.fail(error);
+            }
         },
         (error: string) => {
             done.fail(error);
@@ -1880,14 +2026,18 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
     }, () => {
         r.recognizeOnceAsync(
             (p2: sdk.SpeechRecognitionResult) => {
-                const res: sdk.SpeechRecognitionResult = p2;
+                try {
+                    const res: sdk.SpeechRecognitionResult = p2;
 
-                expect(res).not.toBeUndefined();
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(res.text).toEqual("What's the weather like?");
-                expect(disconnected).toEqual(false);
-                expect(connected).toEqual(1);
-                done();
+                    expect(res).not.toBeUndefined();
+                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(res.text).toEqual("What's the weather like?");
+                    expect(disconnected).toEqual(false);
+                    expect(connected).toEqual(1);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 done.fail(error);
@@ -1947,6 +2097,14 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
 
     connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
         disconnected = true;
+    };
+
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
     };
 
     r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
@@ -2065,6 +2223,14 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
             expect(res.text).toEqual("What's the weather like?");
             expect(disconnected).toEqual(false);
             recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
         } catch (error) {
             done.fail(error);
         }
@@ -2255,6 +2421,7 @@ test("Open during reco has no effect.", (done: jest.DoneCallback) => {
 
     r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
         try {
+            expect(e.errorDetails).toBeUndefined();
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
             done();
         } catch (error) {
@@ -2355,6 +2522,14 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
         }
     };
 
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
     connection.openConnection();
 
     WaitForCondition(() => {
@@ -2449,6 +2624,14 @@ test("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCall
         }
     };
 
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
     r.startContinuousRecognitionAsync(
         undefined,
         (error: string) => {
@@ -2522,6 +2705,14 @@ test("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCall
     expect(r).not.toBeUndefined();
     expect(r instanceof sdk.Recognizer);
 
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
     let disconnected: boolean = false;
     let recoCount: number = 0;
 
@@ -2583,15 +2774,26 @@ test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
     const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
     objsToClose.push(r);
 
+    r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
     r.recognizeOnceAsync(
         (p2: sdk.SpeechRecognitionResult) => {
-
-            const res: sdk.SpeechRecognitionResult = p2;
-            expect(res.errorDetails).toBeUndefined();
-            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
-            expect(res).not.toBeUndefined();
-            expect(res.text).toEqual("Recognize speech.");
-            done();
+            try {
+                const res: sdk.SpeechRecognitionResult = p2;
+                expect(res.errorDetails).toBeUndefined();
+                expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                expect(res).not.toBeUndefined();
+                expect(res.text).toEqual("Recognize speech.");
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
         },
         (error: string) => {
             done.fail(error);
@@ -2609,22 +2811,33 @@ test("Service accepts random speech.context sections w/o error", (done: jest.Don
     const serviceBase: ServiceRecognizerBase = r.internalData as ServiceRecognizerBase;
     serviceBase.speechContext.setSection("BogusSection", { Value: "Some Text." });
 
+    r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
     r.recognizeOnceAsync(
         (p2: sdk.SpeechRecognitionResult) => {
-
-            const res: sdk.SpeechRecognitionResult = p2;
-            expect(res.errorDetails).toBeUndefined();
-            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
-            expect(res).not.toBeUndefined();
-            expect(res.text).toEqual("Recognize speech.");
-            done();
+            try {
+                const res: sdk.SpeechRecognitionResult = p2;
+                expect(res.errorDetails).toBeUndefined();
+                expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                expect(res).not.toBeUndefined();
+                expect(res.text).toEqual("Recognize speech.");
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
         },
         (error: string) => {
             done.fail(error);
         });
 });
 
-test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
+test("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Phraselist assists speech Reco.");
 
@@ -2632,24 +2845,35 @@ test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
     objsToClose.push(r);
 
     const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
-    phraseList.addPhrase("Wreck a nice beach.");
+    phraseList.addPhrase("Wreck a nice beach");
+
+    r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
 
     r.recognizeOnceAsync(
         (p2: sdk.SpeechRecognitionResult) => {
-
-            const res: sdk.SpeechRecognitionResult = p2;
-            expect(res.errorDetails).toBeUndefined();
-            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
-            expect(res).not.toBeUndefined();
-            expect(res.text).toEqual("Wreck a nice beach.");
-            done();
+            try {
+                const res: sdk.SpeechRecognitionResult = p2;
+                expect(res.errorDetails).toBeUndefined();
+                expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                expect(res).not.toBeUndefined();
+                expect(res.text).toEqual("Wreck a nice beach.");
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
         },
         (error: string) => {
             done.fail(error);
         });
 });
 
-test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
+test("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Phraselist extra phraselists have no effect.");
 
@@ -2657,25 +2881,36 @@ test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallba
     objsToClose.push(r);
 
     const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
-    phraseList.addPhrase("Wreck a nice beach.");
+    phraseList.addPhrase("Wreck a nice beach");
     phraseList.addPhrase("Escaped robot fights for his life, film at 11.");
+
+    r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
 
     r.recognizeOnceAsync(
         (p2: sdk.SpeechRecognitionResult) => {
-
-            const res: sdk.SpeechRecognitionResult = p2;
-            expect(res.errorDetails).toBeUndefined();
-            expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
-            expect(res).not.toBeUndefined();
-            expect(res.text).toEqual("Wreck a nice beach.");
-            done();
+            try {
+                const res: sdk.SpeechRecognitionResult = p2;
+                expect(res.errorDetails).toBeUndefined();
+                expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                expect(res).not.toBeUndefined();
+                expect(res.text).toEqual("Wreck a nice beach.");
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
         },
         (error: string) => {
             done.fail(error);
         });
 });
 
-test.skip("Phraselist Clear works.", (done: jest.DoneCallback) => {
+test("Phraselist Clear works.", (done: jest.DoneCallback) => {
 
     // tslint:disable-next-line:no-console
     console.info("Name: Phraselist Clear works.");
@@ -2715,7 +2950,7 @@ test.skip("Phraselist Clear works.", (done: jest.DoneCallback) => {
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
-    const r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s, config);
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
     objsToClose.push(r);
 
     expect(r).not.toBeUndefined();
@@ -2724,11 +2959,11 @@ test.skip("Phraselist Clear works.", (done: jest.DoneCallback) => {
     let recoCount: number = 0;
     let phraseAdded: boolean = true;
     const dynamicPhrase: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
-    dynamicPhrase.addPhrase("Wreck a nice beach.");
+    dynamicPhrase.addPhrase("Wreck a nice beach");
 
-    r.recognized = (r: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
         try {
-            const res: sdk.IntentRecognitionResult = e.result;
+            const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();
             expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
             if (phraseAdded) {
@@ -2737,6 +2972,14 @@ test.skip("Phraselist Clear works.", (done: jest.DoneCallback) => {
                 expect(res.text).toEqual("Recognize speech.");
             }
             recoCount++;
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
         } catch (error) {
             done.fail(error);
         }
