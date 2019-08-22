@@ -90,7 +90,8 @@
     "asn1.js-rfc5280": "^3.0.0",
     "https-proxy-agent": "^2.2.1",
     "simple-lru-cache": "0.0.2",
-    "ws": "^6.1.2"
+    "ws": "^6.1.2",
+    "es6-promise": "^4.2.8"
   },
   "resolutions": {
     "extend": "3.0.2"

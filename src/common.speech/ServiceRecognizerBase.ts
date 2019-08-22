@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { Promise as NativePromise } from "es6-promise";
 import { ReplayableAudioNode } from "../common.browser/Exports";
 import {
     ArgumentNullError,
@@ -46,7 +47,10 @@ import {
     IAuthentication,
 } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
+import {
+    RecognizerConfig,
+    type as AudioDeviceType
+} from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 export abstract class ServiceRecognizerBase implements IDisposable {
@@ -549,6 +553,17 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return deferred.promise();
     }
 
+    // Check if the Audio source is a real-time device.
+    // ReadAndUploadCycle needs this to avoid huge delays in recognition.
+    private isRealTimeAudioSource(audioSource: IAudioSource): Promise<boolean> {
+        return audioSource.deviceInfo.onSuccessContinueWith((deviceInfo: ISpeechConfigAudioDevice) => {
+            if (deviceInfo.type === AudioDeviceType.Microphones) {
+                return true;
+            }
+            return false;
+        });
+    }
+
     private sendAudio = (
         audioStreamNode: IAudioStreamNode): Promise<boolean> => {
         // NOTE: Home-baked promises crash ios safari during the invocation
@@ -572,71 +587,87 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             // If speech is done, stop sending audio.
             if (!this.privIsDisposed && !this.privRequestSession.isSpeechEnded && this.privRequestSession.isRecognizing) {
                 this.fetchConnection().on((connection: IConnection) => {
-                    audioStreamNode.read().on(
-                        (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
+                    audioStreamNode.read().on((audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
+                        // we have a new audio chunk to upload.
+                        if (this.privRequestSession.isSpeechEnded) {
+                            // If service already recognized audio end then don't send any more audio
+                            deferred.resolve(true);
+                            return;
+                        }
 
-                            // we have a new audio chunk to upload.
-                            if (this.privRequestSession.isSpeechEnded) {
-                                // If service already recognized audio end then don't send any more audio
-                                deferred.resolve(true);
-                                return;
-                            }
+                        let payload: ArrayBuffer;
+                        let sendDelay: number;
 
-                            let payload: ArrayBuffer;
-                            let sendDelay: number;
+                        if (audioStreamChunk.isEnd) {
+                            payload = null;
+                            sendDelay = 0;
+                        } else {
+                            payload = audioStreamChunk.buffer;
+                            this.privRequestSession.onAudioSent(payload.byteLength);
 
-                            if (audioStreamChunk.isEnd) {
-                                payload = null;
+                            if (maxSendUnthrottledBytes >= this.privRequestSession.bytesSent) {
                                 sendDelay = 0;
                             } else {
-                                payload = audioStreamChunk.buffer;
-                                this.privRequestSession.onAudioSent(payload.byteLength);
+                                sendDelay = Math.max(0, nextSendTime - Date.now());
+                            }
+                        }
 
-                                if (maxSendUnthrottledBytes >= this.privRequestSession.bytesSent) {
-                                    sendDelay = 0;
-                                } else {
-                                    sendDelay = Math.max(0, nextSendTime - Date.now());
-                                }
+                        this.isRealTimeAudioSource(this.privAudioSource).onSuccessContinueWith((isRealTimeAudioSource: boolean) => {
+                            if (payload !== null) {
+                                nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
                             }
 
-                            // Are we ready to send, or need we delay more?
-                            setTimeout(() => {
-                                if (payload !== null) {
-                                    nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
-                                }
+                            const uploaded: Promise<boolean> = connection.send(
+                                new SpeechConnectionMessage(
+                                    MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
 
-                                const uploaded: Promise<boolean> = connection.send(
-                                    new SpeechConnectionMessage(
-                                        MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
+                            if (!audioStreamChunk.isEnd) {
 
-                                if (!audioStreamChunk.isEnd) {
+                                // Do not use setTimeout for real-time audio sources (currently only Microphones),
+                                // cause sending only 1 chunk per second (approximately 1 second during throttled
+                                // JS execution time) when Browser is minimized leads to a huge and fast growing
+                                // delay.
+                                if (isRealTimeAudioSource) {
                                     uploaded.continueWith((_: PromiseResult<boolean>) => {
 
-                                        // Regardless of success or failure, schedule the next upload.
-                                        // If the underlying connection was broken, the next cycle will
-                                        // get a new connection and re-transmit missing audio automatically.
-                                        readAndUploadCycle();
+                                        // Avoid stack overflow by using ES6 native Promise
+                                        return new NativePromise((resolve: any, reject: any) => {
+                                            resolve(_.result);
+                                        }).then((_: boolean) => {
+                                            readAndUploadCycle();
+                                        });
                                     });
                                 } else {
-                                    // the audio stream has been closed, no need to schedule next
-                                    // read-upload cycle.
-                                    this.privRequestSession.onSpeechEnded();
-                                    deferred.resolve(true);
+                                    setTimeout(() => {
+                                        uploaded.continueWith((_: PromiseResult<boolean>) => {
+
+                                            // Regardless of success or failure, schedule the next upload.
+                                            // If the underlying connection was broken, the next cycle will
+                                            // get a new connection and re-transmit missing audio automatically.
+                                            readAndUploadCycle();
+                                        });
+                                    }, sendDelay);
                                 }
-                            }, sendDelay);
-                        },
-                        (error: string) => {
-                            if (this.privRequestSession.isSpeechEnded) {
-                                // For whatever reason, Reject is used to remove queue subscribers inside
-                                // the Queue.DrainAndDispose invoked from DetachAudioNode down below, which
-                                // means that sometimes things can be rejected in normal circumstances, without
-                                // any errors.
-                                deferred.resolve(true); // TODO: remove the argument, it's is completely meaningless.
                             } else {
-                                // Only reject, if there was a proper error.
-                                deferred.reject(error);
+                                // the audio stream has been closed, no need to schedule next
+                                // read-upload cycle.
+                                this.privRequestSession.onSpeechEnded();
+                                deferred.resolve(true);
                             }
                         });
+                    },
+                    (error: string) => {
+                        if (this.privRequestSession.isSpeechEnded) {
+                            // For whatever reason, Reject is used to remove queue subscribers inside
+                            // the Queue.DrainAndDispose invoked from DetachAudioNode down below, which
+                            // means that sometimes things can be rejected in normal circumstances, without
+                            // any errors.
+                            deferred.resolve(true); // TODO: remove the argument, it's is completely meaningless.
+                        } else {
+                            // Only reject, if there was a proper error.
+                            deferred.reject(error);
+                        }
+                    });
                 }, (error: string) => {
                     deferred.reject(error);
                 });
