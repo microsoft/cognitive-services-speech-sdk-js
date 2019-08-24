@@ -359,16 +359,26 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             let canceled: boolean = false;
             let telemetryEvents: number = 0;
             let hypoCounter: number = 0;
+            let sessionId: string;
 
             // enable telemetry data
             sdk.Recognizer.enableTelemetry(true);
 
+            r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+                sessionId = e.sessionId;
+            };
+
             ServiceRecognizerBase.telemetryData = (json: string): void => {
-                telemetryEvents++;
-                try {
-                    validateTelemetry(json, 3, hypoCounter);
-                } catch (error) {
-                    done.fail(error);
+                // Only record telemetry events from this session.
+                if (json !== undefined &&
+                    sessionId !== undefined &&
+                    json.indexOf(sessionId) > 0) {
+                    telemetryEvents++;
+                    try {
+                        validateTelemetry(json, 3, hypoCounter);
+                    } catch (error) {
+                        done.fail(error);
+                    }
                 }
             };
 
@@ -401,14 +411,12 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
             r.startContinuousRecognitionAsync(
                 () => WaitForCondition(() => ((recoCount === 2) && canceled), () => {
-                    r.stopContinuousRecognitionAsync(
-                        () => {
-                            expect(telemetryEvents).toEqual(1);
-                            done();
-                        },
-                        (err: string) => {
-                            done.fail(err);
-                        });
+                    try {
+                        expect(telemetryEvents).toEqual(1);
+                        done();
+                    } catch (err) {
+                        done.fail(err);
+                    }
                 }),
                 (err: string) => {
                     done.fail(err);
@@ -2057,6 +2065,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     let bytesSent: number = 0;
     let sendSilence: boolean = false;
     let p: sdk.PullAudioInputStream;
+    let sessionId: string;
 
     p = sdk.AudioInputStream.createPullStream(
         {
@@ -2093,6 +2102,18 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     let disconnected: boolean = false;
     let recoCount: number = 0;
 
+    r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        if (undefined === sessionId) {
+            sessionId = e.sessionId;
+        } else {
+            try {
+                expect(e.sessionId).toEqual(sessionId);
+            } catch (error) {
+                done.fail(error);
+            }
+        }
+    };
+
     const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
     connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
@@ -2101,6 +2122,8 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
 
     r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
+            // tslint:disable-next-line:no-console
+            console.warn(e);
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
             done.fail(error);

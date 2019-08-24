@@ -37,8 +37,8 @@ export class RequestSession {
     private privLastRecoOffset: number = 0;
     private privHypothesisReceived: boolean = false;
     private privBytesSent: number = 0;
-
-    protected privSessionId: string;
+    private privRecogNumber: number = 0;
+    private privSessionId: string;
 
     constructor(audioSourceId: string) {
         this.privAudioSourceId = audioSourceId;
@@ -75,6 +75,10 @@ export class RequestSession {
         return this.privTurnStartAudioOffset;
     }
 
+    public get recogNumber(): number {
+        return this.privRecogNumber;
+    }
+
     // The number of bytes sent for the current connection.
     // Counter is reset to 0 each time a connection is established.
     public get bytesSent(): number {
@@ -92,6 +96,7 @@ export class RequestSession {
         this.privTurnStartAudioOffset = 0;
         this.privLastRecoOffset = 0;
         this.privRequestId = createNoDashGuid();
+        this.privRecogNumber++;
         this.privServiceTelemetryListener = new ServiceTelemetryListener(this.privRequestId, this.privAudioSourceId, this.privAudioNodeId);
         this.onEvent(new RecognitionTriggeredEvent(this.requestId, this.privSessionId, this.privAudioSourceId, this.privAudioNodeId));
     }
@@ -186,7 +191,7 @@ export class RequestSession {
     }
 
     public onStopRecognizing(): void {
-        this.privIsRecognizing = false;
+        this.onComplete();
     }
 
     // Should be called with the audioNode for this session has indicated that it is out of speech.

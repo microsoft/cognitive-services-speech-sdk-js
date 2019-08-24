@@ -566,15 +566,18 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         // Max amount to send before we start to throttle
         const fastLaneSizeMs: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-TransmitLengthBeforThrottleMs", "5000");
         const maxSendUnthrottledBytes: number = audioFormat.avgBytesPerSec / 1000 * parseInt(fastLaneSizeMs, 10);
+        const startRecogNumber: number = this.privRequestSession.recogNumber;
 
         const readAndUploadCycle = () => {
 
             // If speech is done, stop sending audio.
-            if (!this.privIsDisposed && !this.privRequestSession.isSpeechEnded && this.privRequestSession.isRecognizing) {
+            if (!this.privIsDisposed &&
+                !this.privRequestSession.isSpeechEnded &&
+                this.privRequestSession.isRecognizing &&
+                this.privRequestSession.recogNumber === startRecogNumber) {
                 this.fetchConnection().on((connection: IConnection) => {
                     audioStreamNode.read().on(
                         (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
-
                             // we have a new audio chunk to upload.
                             if (this.privRequestSession.isSpeechEnded) {
                                 // If service already recognized audio end then don't send any more audio
