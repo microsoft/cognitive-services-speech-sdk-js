@@ -40,3 +40,6 @@ export { CancellationErrorCode } from "./CancellationErrorCodes";
 export { ConnectionEventArgs } from "./ConnectionEventArgs";
 export { Connection } from "./Connection";
 export { PhraseListGrammar } from "./PhraseListGrammar";
+export { DialogServiceConfig } from "./DialogServiceConfig";
+export { DialogServiceConnector } from "./DialogServiceConnector";
+export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
