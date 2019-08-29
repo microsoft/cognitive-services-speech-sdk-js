@@ -397,6 +397,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privConnectionConfigurationPromise;
     }
 
+    protected receiveMessageOverride: (sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
+
     private receiveMessage = (
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallBack: (e: string) => void,
@@ -404,6 +406,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.fetchConnection().on((connection: IConnection): Promise<IConnection> => {
             return connection.read()
                 .onSuccessContinueWithPromise((message: ConnectionMessage) => {
+                    if (this.receiveMessageOverride !== undefined) {
+                        return this.receiveMessageOverride(successCallback, errorCallBack);
+                    }
                     if (this.privIsDisposed || !this.privRequestSession.isRecognizing) {
                         // We're done.
                         return PromiseHelper.fromResult(undefined);

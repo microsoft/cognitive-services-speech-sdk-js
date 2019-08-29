@@ -42,3 +42,6 @@ export { Connection } from "./Connection";
 export { PhraseListGrammar } from "./PhraseListGrammar";
 export { ServicePropertyChannel } from "./ServicePropertyChannel";
 export { ProfanityOption } from "./ProfanityOption";
+export { DialogServiceConfig } from "./DialogServiceConfig";
+export { DialogServiceConnector } from "./DialogServiceConnector";
+export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
