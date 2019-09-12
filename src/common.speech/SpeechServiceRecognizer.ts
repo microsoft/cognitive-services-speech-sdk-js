@@ -56,6 +56,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
+            case "speech.fragment":
                 const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
                 const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
 
