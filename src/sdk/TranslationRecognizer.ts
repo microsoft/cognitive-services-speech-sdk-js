@@ -189,6 +189,7 @@ export class TranslationRecognizer extends Recognizer {
                 RecognitionMode.Conversation,
                 (e: TranslationRecognitionResult) => {
                     this.implRecognizerStop();
+
                     if (!!cb) {
                         cb(e);
                     }

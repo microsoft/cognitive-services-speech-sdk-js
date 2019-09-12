@@ -7,8 +7,11 @@ import {
     WebsocketMessageAdapter,
 } from "../src/common.browser/Exports";
 import {
+    ConnectionStartEvent,
     Events,
     EventType,
+    IDetachable,
+    PlatformEvent,
 } from "../src/common/Exports";
 import { createNoDashGuid } from "../src/common/Guid";
 import { Settings } from "./Settings";
@@ -39,6 +42,55 @@ afterEach(() => {
         }
     });
 });
+
+const BuildSpeechRecognizerFromWaveFile: (speechConfig: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
+
+    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+
+    const language: string = Settings.WaveFileLanguage;
+    if (speechConfig.speechRecognitionLanguage === undefined) {
+        speechConfig.speechRecognitionLanguage = language;
+    }
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(speechConfig, config);
+    expect(r).not.toBeUndefined();
+
+    return r;
+};
+
+const BuildIntentRecognizerFromWaveFile: (speechConfig: sdk.SpeechConfig, fileName?: string) => sdk.IntentRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.IntentRecognizer => {
+
+    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+
+    const language: string = Settings.WaveFileLanguage;
+    if (speechConfig.speechRecognitionLanguage === undefined) {
+        speechConfig.speechRecognitionLanguage = language;
+    }
+
+    const r: sdk.IntentRecognizer = new sdk.IntentRecognizer(speechConfig, config);
+    expect(r).not.toBeUndefined();
+
+    return r;
+};
+
+const BuildTranslationRecognizerFromWaveFile: (speechConfig: sdk.SpeechTranslationConfig, fileName?: string) => sdk.TranslationRecognizer = (speechConfig?: sdk.SpeechTranslationConfig, fileName?: string): sdk.TranslationRecognizer => {
+
+    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+
+    const language: string = Settings.WaveFileLanguage;
+    if (speechConfig.speechRecognitionLanguage === undefined) {
+        speechConfig.speechRecognitionLanguage = language;
+    }
+    speechConfig.addTargetLanguage("en-us");
+
+    const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(speechConfig, config);
+    expect(r).not.toBeUndefined();
+
+    return r;
+};
 
 test("Null Param Check, both.", () => {
     expect(() => sdk.SpeechConfig.fromSubscription(null, null)).toThrowError();
@@ -471,5 +523,275 @@ test("Proxy has no effect on browser WebSocket", (done: jest.DoneCallback) => {
         }
     }, (error: string): void => {
         done.fail(error);
+    });
+});
+
+test("Region & Key getter test (Speech)", () => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
+
+    expect(s.subscriptionKey).toEqual(Settings.SpeechSubscriptionKey);
+    expect(s.region).toEqual(Settings.SpeechRegion);
+});
+
+test("Region & Key getter test (Translation)", () => {
+    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
+
+    expect(s.subscriptionKey).toEqual(Settings.SpeechSubscriptionKey);
+    expect(s.region).toEqual(Settings.SpeechRegion);
+});
+
+describe("Connection URL Tests", () => {
+    let uri: string;
+    let detachObject: IDetachable;
+
+    beforeEach(() => {
+        detachObject = Events.instance.attachListener({
+            onEvent: (event: PlatformEvent) => {
+                if (event instanceof ConnectionStartEvent) {
+                    const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                    uri = connectionEvent.uri;
+                }
+            },
+        });
+    });
+
+    afterEach(() => {
+        if (undefined !== detachObject) {
+            detachObject.detach();
+            detachObject = undefined;
+        }
+
+        uri = undefined;
+    });
+
+    function testUrlParameter(
+        createMethod: (url: URL, key: string) => sdk.SpeechConfig | sdk.SpeechTranslationConfig,
+        setMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => void,
+        recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer,
+        done: jest.DoneCallback,
+        ...urlSubStrings: string[]
+    ): void {
+
+        const s: sdk.SpeechConfig | sdk.SpeechTranslationConfig = createMethod(new URL("wss://fake.host.name"), "fakekey");
+        objsToClose.push(s);
+
+        setMethod(s);
+
+        const r: { recognizeOnceAsync: (cb?: (e: sdk.RecognitionResult) => void, err?: (e: string) => void) => void } = recognizerCreateMethod(s);
+        objsToClose.push(r);
+
+        r.recognizeOnceAsync(
+            (p2: any): void => {
+                try {
+                    expect(uri).not.toBeUndefined();
+                    // Make sure there's only a single ? in the URL.
+                    expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+                    urlSubStrings.forEach((value: string, index: number, array: string[]) => {
+                        expect(uri).toContain(value);
+                    });
+
+                    expect(p2.errorDetails).not.toBeUndefined();
+                    expect(sdk.ResultReason[p2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
+
+                    const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
+                    expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+                    expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
+            });
+    }
+
+    describe.each([
+        [sdk.SpeechConfig.fromEndpoint, BuildSpeechRecognizerFromWaveFile],
+        [sdk.SpeechTranslationConfig.fromEndpoint, BuildTranslationRecognizerFromWaveFile],
+        [sdk.SpeechConfig.fromEndpoint, BuildIntentRecognizerFromWaveFile]])("Common URL Tests",
+            (createMethod: any,
+             recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer) => {
+                test("setServiceProperty (single)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: setServiceProperty");
+
+                    const propName: string = "someProperty";
+                    const val: string = "someValue";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setServiceProperty(propName, val, sdk.ServicePropertyChannel.UriQueryParameter);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val);
+                });
+
+                test("setServiceProperty (change)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: setServiceProperty");
+
+                    const propName: string = "someProperty";
+                    const val: string = "someValue";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setServiceProperty(propName, val, sdk.ServicePropertyChannel.UriQueryParameter);
+                            s.setServiceProperty(propName, val + "1", sdk.ServicePropertyChannel.UriQueryParameter);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val + "1");
+                });
+
+                test("setServiceProperty (multiple)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: setServiceProperty");
+
+                    const propName: string = "someProperty";
+                    const val: string = "someValue";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setServiceProperty(propName + "1", val + "1", sdk.ServicePropertyChannel.UriQueryParameter);
+                            s.setServiceProperty(propName + "2", val + "2", sdk.ServicePropertyChannel.UriQueryParameter);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "1" + "=" + val + "1",
+                        propName + "2" + "=" + val + "2"
+                    );
+                });
+
+                test("setProfanity", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: setProfanity");
+
+                    const propName: string = "profanity";
+                    const val: string = "masked";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProfanity(sdk.ProfanityOption.Masked);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                });
+
+                test("enableAudioLogging", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: enableAudioLogging");
+
+                    const propName: string = "storeAudio";
+                    const val: string = "true";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.enableAudioLogging();
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                });
+
+                test("requestWordLevelTimestamps", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: requestWordLevelTimestamps");
+
+                    const propName: string = "wordLevelTimestamps";
+                    const val: string = "true";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.requestWordLevelTimestamps();
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                });
+
+                test("initialSilenceTimeoutMs", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: initialSilenceTimeoutMs");
+
+                    const propName: string = "initialSilenceTimeoutMs";
+                    const val: string = "251";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs], val);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                });
+
+                test("endSilenceTimeoutMs", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: initialSilenceTimeoutMs");
+
+                    const propName: string = "endSilenceTimeoutMs";
+                    const val: string = "251";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs], val);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                });
+
+                test("stableIntermediateThreshold", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: stableIntermediateThreshold");
+
+                    const propName: string = "stableIntermediateThreshold";
+                    const val: string = "5";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceResponse_StablePartialResultThreshold], val);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                });
+            });
+
+    test("enableDictation (Speech)", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: enableDictation");
+
+        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        objsToClose.push(s);
+
+        s.enableDictation();
+
+        const r: sdk.SpeechRecognizer = BuildSpeechRecognizerFromWaveFile(s);
+        objsToClose.push(r);
+
+        r.startContinuousRecognitionAsync(
+            () => {
+                try {
+                    expect(uri).not.toBeUndefined();
+                    // Make sure there's only a single ? in the URL.
+                    expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+                    expect(uri).toContain("/dictation/");
+                    expect(uri).not.toContain("/conversation/");
+                    expect(uri).not.toContain("/interactive/");
+
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
+            });
     });
 });

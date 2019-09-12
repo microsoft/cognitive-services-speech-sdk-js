@@ -5,8 +5,16 @@ import {
     ProxyInfo,
     WebsocketConnection,
 } from "../common.browser/Exports";
-import { IConnection, IStringDictionary } from "../common/Exports";
-import { PropertyId } from "../sdk/Exports";
+import {
+    IConnection,
+    IStringDictionary
+} from "../common/Exports";
+import {
+    PropertyId
+} from "../sdk/Exports";
+import {
+    ConnectionFactoryBase
+} from "./ConnectionFactoryBase";
 import {
     AuthInfo,
     IConnectionFactory,
@@ -17,7 +25,7 @@ import {
 const TestHooksParamName: string = "testhooks";
 const ConnectionIdHeader: string = "X-ConnectionId";
 
-export class IntentConnectionFactory implements IConnectionFactory {
+export class IntentConnectionFactory extends ConnectionFactoryBase {
 
     public create = (
         config: RecognizerConfig,
@@ -35,6 +43,8 @@ export class IntentConnectionFactory implements IConnectionFactory {
             format: "simple",
             language: config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
         };
+
+        this.setCommonUrlParams(config, queryParams, endpoint);
 
         const headers: IStringDictionary<string> = {};
         headers[authInfo.headerName] = authInfo.token;

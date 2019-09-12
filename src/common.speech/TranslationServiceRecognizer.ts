@@ -231,9 +231,11 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         errorCode: CancellationErrorCode,
         error: string,
         cancelRecoCallback: (e: SpeechRecognitionResult) => void): void {
+
+        const properties: PropertyCollection = new PropertyCollection();
+        properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
+
         if (!!this.privTranslationRecognizer.canceled) {
-            const properties: PropertyCollection = new PropertyCollection();
-            properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
             const cancelEvent: TranslationRecognitionCanceledEventArgs = new TranslationRecognitionCanceledEventArgs(
                 sessionId,
@@ -246,23 +248,23 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 this.privTranslationRecognizer.canceled(this.privTranslationRecognizer, cancelEvent);
                 /* tslint:disable:no-empty */
             } catch { }
+        }
 
-            if (!!cancelRecoCallback) {
-                const result: TranslationRecognitionResult = new TranslationRecognitionResult(
-                    undefined, // Translations
-                    requestId,
-                    ResultReason.Canceled,
-                    undefined, // Text
-                    undefined, // Druation
-                    undefined, // Offset
-                    error,
-                    undefined, // Json
-                    properties);
-                try {
-                    cancelRecoCallback(result);
-                    /* tslint:disable:no-empty */
-                } catch { }
-            }
+        if (!!cancelRecoCallback) {
+            const result: TranslationRecognitionResult = new TranslationRecognitionResult(
+                undefined, // Translations
+                requestId,
+                ResultReason.Canceled,
+                undefined, // Text
+                undefined, // Druation
+                undefined, // Offset
+                error,
+                undefined, // Json
+                properties);
+            try {
+                cancelRecoCallback(result);
+                /* tslint:disable:no-empty */
+            } catch { }
         }
     }
 
