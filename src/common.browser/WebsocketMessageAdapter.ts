@@ -104,7 +104,7 @@ export class WebsocketMessageAdapter {
                 if (this.proxyInfo !== undefined &&
                     this.proxyInfo.HostName !== undefined &&
                     this.proxyInfo.Port > 0) {
-                    const httpProxyOptions: HttpsProxyAgent.IHttpsProxyAgentOptions = {
+                    const httpProxyOptions: HttpsProxyAgent.HttpsProxyAgentOptions = {
                         host: this.proxyInfo.HostName,
                         port: this.proxyInfo.Port,
                     };

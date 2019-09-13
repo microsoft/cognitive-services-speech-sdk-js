@@ -9,5 +9,5 @@ module.exports = {
     moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
     collectCoverage: true,
     "reporters": ["default", "jest-junit"],
-    setupTestFrameworkScriptFile: "./secrets/TestConfiguration.ts"
+    setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"]
 };
