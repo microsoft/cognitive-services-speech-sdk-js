@@ -1,9 +1,21 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { OutputFormatPropertyName } from "../common.speech/Exports";
+import {
+    ForceDictationPropertyName,
+    OutputFormatPropertyName,
+    ServicePropertiesPropertyName
+} from "../common.speech/Exports";
+import { IStringDictionary } from "../common/Exports";
 import { Contracts } from "./Contracts";
-import { OutputFormat, PropertyCollection, PropertyId, SpeechConfig } from "./Exports";
+import {
+    OutputFormat,
+    ProfanityOption,
+    PropertyCollection,
+    PropertyId,
+    ServicePropertyChannel,
+    SpeechConfig,
+} from "./Exports";
 
 /**
  * Speech translation configuration.
@@ -173,6 +185,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
  */
 // tslint:disable-next-line:max-classes-per-file
 export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
+
     private privSpeechProperties: PropertyCollection;
 
     public constructor() {
@@ -376,4 +389,27 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     public close(): void {
         return;
     }
+
+    public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
+        const currentProperties: IStringDictionary<string> = JSON.parse(this.privSpeechProperties.getProperty(ServicePropertiesPropertyName, "{}"));
+
+        currentProperties[name] = value;
+
+        this.privSpeechProperties.setProperty(ServicePropertiesPropertyName, JSON.stringify(currentProperties));
+    }
+
+    public setProfanity(profanity: ProfanityOption): void {
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceResponse_ProfanityOption, ProfanityOption[profanity]);
+    }
+
+    public enableAudioLogging(): void {
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_EnableAudioLogging, "true");
+    }
+    public requestWordLevelTimestamps(): void {
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "true");
+    }
+    public enableDictation(): void {
+        this.privSpeechProperties.setProperty(ForceDictationPropertyName, "true");
+    }
+
 }

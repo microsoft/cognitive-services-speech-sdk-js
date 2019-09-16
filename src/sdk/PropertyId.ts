@@ -194,4 +194,68 @@ export enum PropertyId {
      * @member PropertyId.LanguageUnderstandingServiceResponse_JsonResult
      */
     LanguageUnderstandingServiceResponse_JsonResult,
+
+   /**
+    * The URL string built from speech configuration.
+    * This property is intended to be read-only. The SDK is using it internally.
+    * NOTE: Added in version 1.7.0.
+    */
+    SpeechServiceConnection_Url,
+
+   /**
+    * The initial silence timeout value (in milliseconds) used by the service.
+    * Added in version 1.7.0
+    */
+    SpeechServiceConnection_InitialSilenceTimeoutMs,
+
+   /**
+    * The end silence timeout value (in milliseconds) used by the service.
+    * Added in version 1.7.0
+    */
+    SpeechServiceConnection_EndSilenceTimeoutMs,
+
+   /**
+    * A boolean value specifying whether audio logging is enabled in the service or not.
+    * Added in version 1.7.0
+    */
+    SpeechServiceConnection_EnableAudioLogging,
+
+   /**
+    * The requested Cognitive Services Speech Service response output profanity setting.
+    * Allowed values are "masked", "removed", and "raw".
+    * Added in version 1.7.0.
+    */
+    SpeechServiceResponse_ProfanityOption,
+
+   /**
+    * A string value specifying which post processing option should be used by service.
+    * Allowed values are "TrueText".
+    * Added in version 1.7.0
+    */
+    SpeechServiceResponse_PostProcessingOption,
+
+   /**
+    *  A boolean value specifying whether to include word-level timestamps in the response result.
+    * Added in version 1.7.0
+    */
+    SpeechServiceResponse_RequestWordLevelTimestamps,
+
+   /**
+    * The number of times a word has to be in partial results to be returned.
+    * Added in version 1.7.0
+    */
+    SpeechServiceResponse_StablePartialResultThreshold,
+
+   /**
+    * A string value specifying the output format option in the response result. Internal use only.
+    * Added in version 1.7.0.
+    */
+    SpeechServiceResponse_OutputFormatOption,
+
+   /**
+    * A boolean value to request for stabilizing translation partial results by omitting words in the end.
+    * Added in version 1.7.0.
+    */
+    SpeechServiceResponse_TranslationRequestStablePartialResult,
+
 }

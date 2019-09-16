@@ -36,3 +36,5 @@ export * from "./DynamicGrammarInterfaces";
 
 export const OutputFormatPropertyName: string = "OutputFormat";
 export const CancellationErrorCodePropertyName: string = "CancellationErrorCode";
+export const ServicePropertiesPropertyName: string = "ServiceProperties";
+export const ForceDictationPropertyName: string = "ForceDication";

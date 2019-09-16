@@ -40,3 +40,5 @@ export { CancellationErrorCode } from "./CancellationErrorCodes";
 export { ConnectionEventArgs } from "./ConnectionEventArgs";
 export { Connection } from "./Connection";
 export { PhraseListGrammar } from "./PhraseListGrammar";
+export { ServicePropertyChannel } from "./ServicePropertyChannel";
+export { ProfanityOption } from "./ProfanityOption";

@@ -5,13 +5,32 @@ import {
     ProxyInfo,
     WebsocketConnection,
 } from "../common.browser/Exports";
-import { OutputFormatPropertyName } from "../common.speech/Exports";
-import { IConnection, IStringDictionary } from "../common/Exports";
-import { OutputFormat, PropertyId } from "../sdk/Exports";
-import { AuthInfo, IConnectionFactory, RecognitionMode, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
-import { QueryParameterNames } from "./QueryParameterNames";
+import {
+    ForceDictationPropertyName,
+    OutputFormatPropertyName,
+} from "../common.speech/Exports";
+import {
+    IConnection,
+    IStringDictionary
+} from "../common/Exports";
+import {
+    OutputFormat,
+    PropertyId
+} from "../sdk/Exports";
+import {
+    ConnectionFactoryBase
+} from "./ConnectionFactoryBase";
+import {
+    AuthInfo,
+    RecognitionMode,
+    RecognizerConfig,
+    WebsocketMessageFormatter
+} from "./Exports";
+import {
+    QueryParameterNames
+} from "./QueryParameterNames";
 
-export class SpeechConnectionFactory implements IConnectionFactory {
+export class SpeechConnectionFactory extends ConnectionFactoryBase {
 
     private readonly interactiveRelativeUri: string = "/speech/recognition/interactive/cognitiveservices/v1";
     private readonly conversationRelativeUri: string = "/speech/recognition/conversation/cognitiveservices/v1";
@@ -43,6 +62,8 @@ export class SpeechConnectionFactory implements IConnectionFactory {
             queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
         }
 
+        this.setCommonUrlParams(config, queryParams, endpoint);
+
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
 
@@ -50,7 +71,11 @@ export class SpeechConnectionFactory implements IConnectionFactory {
 
             switch (config.recognitionMode) {
                 case RecognitionMode.Conversation:
-                    endpoint = host + this.conversationRelativeUri;
+                    if (config.parameters.getProperty(ForceDictationPropertyName, "false") === "true") {
+                        endpoint = host + this.dictationRelativeUri;
+                    } else {
+                        endpoint = host + this.conversationRelativeUri;
+                    }
                     break;
                 case RecognitionMode.Dictation:
                     endpoint = host + this.dictationRelativeUri;
