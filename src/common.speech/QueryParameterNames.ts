@@ -23,4 +23,25 @@ export class QueryParameterNames {
     public static get TranslationToParamName(): string {
         return "to";
     }
+    public static get Profanify(): string {
+        return "profanity";
+    }
+    public static get EnableAudioLogging(): string {
+        return "storeAudio";
+    }
+    public static get EnableWordLevelTimestamps(): string {
+        return "wordLevelTimestamps";
+    }
+    public static get InitialSilenceTimeoutMs(): string {
+        return "initialSilenceTimeoutMs";
+    }
+    public static get EndSilenceTimeoutMs(): string {
+        return "endSilenceTimeoutMs";
+    }
+    public static get StableIntermediateThreshold(): string {
+        return "stableIntermediateThreshold";
+    }
+    public static get StableTranslation(): string {
+        return "stableTranslation";
+    }
 }

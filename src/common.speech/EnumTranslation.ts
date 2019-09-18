@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { CancellationReason, ResultReason } from "../sdk/Exports";
+import {
+    CancellationErrorCode,
+    CancellationReason,
+    ResultReason
+} from "../sdk/Exports";
 import { RecognitionStatus } from "./Exports";
 
 export class EnumTranslation {
@@ -22,7 +26,6 @@ export class EnumTranslation {
                 reason = ResultReason.Canceled;
                 break;
         }
-
         return reason;
     }
 
@@ -43,4 +46,23 @@ export class EnumTranslation {
         }
         return reason;
     }
+
+    public static implTranslateCancelErrorCode(recognitionStatus: RecognitionStatus): CancellationErrorCode {
+        let reason: CancellationErrorCode = CancellationErrorCode.NoError;
+        switch (recognitionStatus) {
+            case RecognitionStatus.Error:
+                reason = CancellationErrorCode.ServiceError;
+                break;
+            case RecognitionStatus.TooManyRequests:
+                reason = CancellationErrorCode.TooManyRequests;
+                break;
+            default:
+                reason = CancellationErrorCode.NoError;
+                break;
+        }
+
+        return reason;
+
+    }
+
 }

@@ -43,3 +43,5 @@ export { PhraseListGrammar } from "./PhraseListGrammar";
 export { DialogServiceConfig } from "./DialogServiceConfig";
 export { DialogServiceConnector } from "./DialogServiceConnector";
 export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
+export { ServicePropertyChannel } from "./ServicePropertyChannel";
+export { ProfanityOption } from "./ProfanityOption";

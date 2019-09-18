@@ -8,8 +8,7 @@
   },
   "author": "",
   "license": "MIT",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "gulp": "^4.0.0",
     "webpack-stream": "^5.2.1"

@@ -32,4 +32,5 @@ export enum RecognitionStatus {
     BabbleTimeout,
     Error,
     EndOfDictation,
+    TooManyRequests,
 }

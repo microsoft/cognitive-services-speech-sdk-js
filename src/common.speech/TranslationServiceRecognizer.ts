@@ -132,22 +132,11 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                     if (reason === ResultReason.Canceled) {
                         const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(translatedPhrase.RecognitionStatus);
 
-                        const ev = new TranslationRecognitionCanceledEventArgs(
-                            this.privRequestSession.sessionId,
+                        this.cancelRecognitionLocal(
                             cancelReason,
-                            null,
-                            cancelReason === CancellationReason.Error ? CancellationErrorCode.ServiceError : CancellationErrorCode.NoError,
-                            result);
-
-                        if (!!this.privTranslationRecognizer.canceled) {
-                            try {
-                                this.privTranslationRecognizer.canceled(this.privTranslationRecognizer, ev);
-                                /* tslint:disable:no-empty */
-                            } catch (error) {
-                                // Not going to let errors in the event handler
-                                // trip things up.
-                            }
-                        }
+                            EnumTranslation.implTranslateCancelErrorCode(translatedPhrase.RecognitionStatus),
+                            undefined,
+                            successCallback);
                     } else {
                         if (!(this.privRequestSession.isSpeechEnded && reason === ResultReason.NoMatch && translatedPhrase.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
                             const ev = new TranslationRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
@@ -162,22 +151,22 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                                 }
                             }
                         }
-                    }
 
-                    // report result to promise.
-                    if (!!successCallback) {
-                        try {
-                            successCallback(result);
-                        } catch (e) {
-                            if (!!errorCallBack) {
-                                errorCallBack(e);
+                        // report result to promise.
+                        if (!!successCallback) {
+                            try {
+                                successCallback(result);
+                            } catch (e) {
+                                if (!!errorCallBack) {
+                                    errorCallBack(e);
+                                }
                             }
+                            // Only invoke the call back once.
+                            // and if it's successful don't invoke the
+                            // error after that.
+                            successCallback = undefined;
+                            errorCallBack = undefined;
                         }
-                        // Only invoke the call back once.
-                        // and if it's successful don't invoke the
-                        // error after that.
-                        successCallback = undefined;
-                        errorCallBack = undefined;
                     }
                 }
                 break;
@@ -242,9 +231,11 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         errorCode: CancellationErrorCode,
         error: string,
         cancelRecoCallback: (e: SpeechRecognitionResult) => void): void {
+
+        const properties: PropertyCollection = new PropertyCollection();
+        properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
+
         if (!!this.privTranslationRecognizer.canceled) {
-            const properties: PropertyCollection = new PropertyCollection();
-            properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
             const cancelEvent: TranslationRecognitionCanceledEventArgs = new TranslationRecognitionCanceledEventArgs(
                 sessionId,
@@ -257,23 +248,23 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 this.privTranslationRecognizer.canceled(this.privTranslationRecognizer, cancelEvent);
                 /* tslint:disable:no-empty */
             } catch { }
+        }
 
-            if (!!cancelRecoCallback) {
-                const result: TranslationRecognitionResult = new TranslationRecognitionResult(
-                    undefined, // Translations
-                    requestId,
-                    ResultReason.Canceled,
-                    undefined, // Text
-                    undefined, // Druation
-                    undefined, // Offset
-                    error,
-                    undefined, // Json
-                    properties);
-                try {
-                    cancelRecoCallback(result);
-                    /* tslint:disable:no-empty */
-                } catch { }
-            }
+        if (!!cancelRecoCallback) {
+            const result: TranslationRecognitionResult = new TranslationRecognitionResult(
+                undefined, // Translations
+                requestId,
+                ResultReason.Canceled,
+                undefined, // Text
+                undefined, // Druation
+                undefined, // Offset
+                error,
+                undefined, // Json
+                properties);
+            try {
+                cancelRecoCallback(result);
+                /* tslint:disable:no-empty */
+            } catch { }
         }
     }
 

@@ -252,9 +252,10 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
         error: string,
         cancelRecoCallback: (e: SpeechRecognitionResult) => void): void {
 
+        const properties: PropertyCollection = new PropertyCollection();
+        properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
+
         if (!!this.privIntentRecognizer.canceled) {
-            const properties: PropertyCollection = new PropertyCollection();
-            properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
             const cancelEvent: IntentRecognitionCanceledEventArgs = new IntentRecognitionCanceledEventArgs(
                 cancellationReason,
@@ -267,23 +268,23 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 this.privIntentRecognizer.canceled(this.privIntentRecognizer, cancelEvent);
                 /* tslint:disable:no-empty */
             } catch { }
+        }
 
-            if (!!cancelRecoCallback) {
-                const result: IntentRecognitionResult = new IntentRecognitionResult(
-                    undefined, // Intent Id
-                    requestId,
-                    ResultReason.Canceled,
-                    undefined, // Text
-                    undefined, // Druation
-                    undefined, // Offset
-                    error,
-                    undefined, // Json
-                    properties);
-                try {
-                    cancelRecoCallback(result);
-                    /* tslint:disable:no-empty */
-                } catch { }
-            }
+        if (!!cancelRecoCallback) {
+            const result: IntentRecognitionResult = new IntentRecognitionResult(
+                undefined, // Intent Id
+                requestId,
+                ResultReason.Canceled,
+                undefined, // Text
+                undefined, // Druation
+                undefined, // Offset
+                error,
+                undefined, // Json
+                properties);
+            try {
+                cancelRecoCallback(result);
+                /* tslint:disable:no-empty */
+            } catch { }
         }
     }
 }

@@ -56,6 +56,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
+            case "speech.fragment":
                 const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
                 const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
 
@@ -92,28 +93,12 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 if (ResultReason.Canceled === resultReason) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
 
-                    result = new SpeechRecognitionResult(
-                        this.privRequestSession.requestId,
-                        resultReason,
+                    this.cancelRecognitionLocal(
+                        cancelReason,
+                        EnumTranslation.implTranslateCancelErrorCode(simple.RecognitionStatus),
                         undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        connectionMessage.textBody,
-                        resultProps);
+                        successCallback);
 
-                    if (!!this.privSpeechRecognizer.canceled) {
-                        const cancelEvent: SpeechRecognitionCanceledEventArgs = new SpeechRecognitionCanceledEventArgs(
-                            cancelReason,
-                            undefined,
-                            cancelReason === CancellationReason.Error ? CancellationErrorCode.ServiceError : CancellationErrorCode.NoError,
-                            undefined,
-                            this.privRequestSession.sessionId);
-                        try {
-                            this.privSpeechRecognizer.canceled(this.privSpeechRecognizer, cancelEvent);
-                            /* tslint:disable:no-empty */
-                        } catch { }
-                    }
                 } else {
                     if (!(this.privRequestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
                         if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
@@ -152,23 +137,23 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                             }
                         }
                     }
+                    // report result to promise.
+                    if (!!successCallback) {
+                        try {
+                            successCallback(result);
+                        } catch (e) {
+                            if (!!errorCallBack) {
+                                errorCallBack(e);
+                            }
+                        }
+                        // Only invoke the call back once.
+                        // and if it's successful don't invoke the
+                        // error after that.
+                        successCallback = undefined;
+                        errorCallBack = undefined;
+                    }
                 }
 
-                // report result to promise.
-                if (!!successCallback) {
-                    try {
-                        successCallback(result);
-                    } catch (e) {
-                        if (!!errorCallBack) {
-                            errorCallBack(e);
-                        }
-                    }
-                    // Only invoke the call back once.
-                    // and if it's successful don't invoke the
-                    // error after that.
-                    successCallback = undefined;
-                    errorCallBack = undefined;
-                }
                 break;
             default:
                 break;

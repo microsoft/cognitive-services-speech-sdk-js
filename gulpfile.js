@@ -69,6 +69,7 @@
             loader: 'source-map-loader'
           }],
         },
+        mode: 'none',
         plugins: [
           new dtsBundleWebpack({
             name: 'microsoft.cognitiveservices.speech.sdk.bundle',

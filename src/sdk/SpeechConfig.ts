@@ -1,9 +1,20 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { OutputFormatPropertyName } from "../common.speech/Exports";
+import {
+    ForceDictationPropertyName,
+    OutputFormatPropertyName,
+    ServicePropertiesPropertyName
+} from "../common.speech/Exports";
+import { IStringDictionary } from "../common/Exports";
 import { Contracts } from "./Contracts";
-import { OutputFormat, PropertyCollection, PropertyId } from "./Exports";
+import {
+    OutputFormat,
+    ProfanityOption,
+    PropertyCollection,
+    PropertyId,
+    ServicePropertyChannel
+} from "./Exports";
 
 /**
  * Speech configuration.
@@ -54,16 +65,18 @@ export abstract class SpeechConfig {
      * @function
      * @public
      * @param {URL} endpoint - The service endpoint to connect to.
-     * @param {string} subscriptionKey - The subscription key.
+     * @param {string} subscriptionKey - The subscription key. If a subscription key is not specified, an authorization token must be set.
      * @returns {SpeechConfig} A speech factory instance.
      */
-    public static fromEndpoint(endpoint: URL, subscriptionKey: string): SpeechConfig {
+    public static fromEndpoint(endpoint: URL, subscriptionKey?: string): SpeechConfig {
         Contracts.throwIfNull(endpoint, "endpoint");
-        Contracts.throwIfNull(subscriptionKey, "subscriptionKey");
 
         const speechImpl: SpeechConfigImpl = new SpeechConfigImpl();
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
-        speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
+
+        if (undefined !== subscriptionKey) {
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
+        }
         return speechImpl;
     }
 
@@ -214,6 +227,71 @@ export abstract class SpeechConfig {
      */
     /* tslint:disable:no-empty */
     public close(): void { }
+
+    /**
+     * @member SpeechConfig.prototype.subscriptionKey
+     * @function
+     * @public
+     * @return {SubscriptionKey} The subscription key set on the config.
+     */
+    public abstract get subscriptionKey(): string;
+
+    /**
+     * @member SpeechConfig.prototype.region
+     * @function
+     * @public
+     * @return {region} The region set on the config.
+     */
+    public abstract get region(): string;
+
+    /**
+     * @member SpeechConfig.prototype.setServiceProperty
+     * @function
+     * @public
+     * @param {name} The name of the property.
+     * @param {value} Value to set.
+     * @param {channel} The channel used to pass the specified property to service.
+     * @summary Sets a property value that will be passed to service using the specified channel.
+     * Added in version 1.7.0.
+     */
+    public abstract setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void;
+
+    /**
+     * @member SpeechConfig.prototype.setProfanity
+     * @function
+     * @public
+     * @param {profanity} Profanity option to set.
+     * @summary Sets profanity option.
+     * Added in version 1.7.0.
+     */
+    public abstract setProfanity(profanity: ProfanityOption): void;
+
+    /**
+     * @member SpeechConfig.prototype.enableAudioLogging
+     * @function
+     * @public
+     * @summary Enable audio logging in service.
+     * Added in version 1.7.0.
+     */
+    public abstract enableAudioLogging(): void;
+
+    /**
+     * @member SpeechConfig.prototype.requestWordLevelTimestamps
+     * @function
+     * @public
+     * @summary Includes word-level timestamps.
+     * Added in version 1.7.0.
+     */
+    public abstract requestWordLevelTimestamps(): void;
+
+    /**
+     * @member SpeechConfig.prototype.enableDictation
+     * @function
+     * @public
+     * @summary Enable dictation. Only supported in speech continuous recognition.
+     * Added in version 1.7.0.
+     */
+    public abstract enableDictation(): void;
 }
 
 /**
@@ -298,6 +376,28 @@ export class SpeechConfigImpl extends SpeechConfig {
         this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPort], proxyPort);
         this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyUserName], proxyUserName);
         this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword);
+    }
+
+    public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
+        const currentProperties: IStringDictionary<string>  = JSON.parse( this.privProperties.getProperty(ServicePropertiesPropertyName, "{}"));
+
+        currentProperties[name] = value;
+
+        this.privProperties.setProperty(ServicePropertiesPropertyName, JSON.stringify(currentProperties));
+    }
+
+    public setProfanity(profanity: ProfanityOption): void {
+        this.privProperties.setProperty(PropertyId.SpeechServiceResponse_ProfanityOption, ProfanityOption[profanity]);
+    }
+
+    public enableAudioLogging(): void {
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_EnableAudioLogging, "true");
+    }
+    public requestWordLevelTimestamps(): void {
+        this.privProperties.setProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "true");
+    }
+    public enableDictation(): void {
+        this.privProperties.setProperty(ForceDictationPropertyName, "true");
     }
 
     public clone(): SpeechConfigImpl {

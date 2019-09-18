@@ -5,7 +5,7 @@ import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { ServiceRecognizerBase } from "../src/common.speech/Exports";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
-import { ConnectionStartEvent } from "../src/common/Exports";
+import { ConnectionStartEvent, IDetachable } from "../src/common/Exports";
 import { Events, EventType, PlatformEvent } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
@@ -53,7 +53,7 @@ afterEach(() => {
     });
 });
 
-const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
+export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
 
     let s: sdk.SpeechConfig = speechConfig;
     if (s === undefined) {
@@ -229,7 +229,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1";
 
             // note: we use an empty subscription key so that we use the authorization token later.
-            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(endpoint), "");
+            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(endpoint));
             objsToClose.push(s);
 
             // now set the authentication token
@@ -264,6 +264,47 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             }, (error: string) => {
                 done.fail(error);
             });
+        });
+    });
+
+    test("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: fromEndPoint with Subscription key");
+
+        const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1";
+
+        // note: we use an empty subscription key so that we use the authorization token later.
+        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(endpoint), Settings.SpeechSubscriptionKey);
+        objsToClose.push(s);
+
+        s.outputFormat = sdk.OutputFormat.Detailed;
+
+        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+        objsToClose.push(r);
+
+        expect(r.outputFormat === sdk.OutputFormat.Detailed);
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            try {
+                expect(result).not.toBeUndefined();
+                expect(result.text).toEqual(Settings.WaveFileText);
+                expect(result.properties).not.toBeUndefined();
+                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
+        }, (error: string) => {
+            done.fail(error);
         });
     });
 
@@ -359,16 +400,26 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             let canceled: boolean = false;
             let telemetryEvents: number = 0;
             let hypoCounter: number = 0;
+            let sessionId: string;
 
             // enable telemetry data
             sdk.Recognizer.enableTelemetry(true);
 
+            r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+                sessionId = e.sessionId;
+            };
+
             ServiceRecognizerBase.telemetryData = (json: string): void => {
-                telemetryEvents++;
-                try {
-                    validateTelemetry(json, 3, hypoCounter);
-                } catch (error) {
-                    done.fail(error);
+                // Only record telemetry events from this session.
+                if (json !== undefined &&
+                    sessionId !== undefined &&
+                    json.indexOf(sessionId) > 0) {
+                    telemetryEvents++;
+                    try {
+                        validateTelemetry(json, 3, hypoCounter);
+                    } catch (error) {
+                        done.fail(error);
+                    }
                 }
             };
 
@@ -401,14 +452,12 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
             r.startContinuousRecognitionAsync(
                 () => WaitForCondition(() => ((recoCount === 2) && canceled), () => {
-                    r.stopContinuousRecognitionAsync(
-                        () => {
-                            expect(telemetryEvents).toEqual(1);
-                            done();
-                        },
-                        (err: string) => {
-                            done.fail(err);
-                        });
+                    try {
+                        expect(telemetryEvents).toEqual(1);
+                        done();
+                    } catch (err) {
+                        done.fail(err);
+                    }
                 }),
                 (err: string) => {
                     done.fail(err);
@@ -1564,44 +1613,59 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             });
     });
 
-    test("Endpoint URL With Parameter Test", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
-        console.info("Name: Endpoint URL With Parameter Test");
+    describe("Connection URL Tests", () => {
         let uri: string;
+        let detachObject: IDetachable;
 
-        Events.instance.attachListener({
-            onEvent: (event: PlatformEvent) => {
-                if (event instanceof ConnectionStartEvent) {
-                    const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
-                    uri = connectionEvent.uri;
-                }
-            },
+        beforeEach(() => {
+            detachObject = Events.instance.attachListener({
+                onEvent: (event: PlatformEvent) => {
+                    if (event instanceof ConnectionStartEvent) {
+                        const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                        uri = connectionEvent.uri;
+                    }
+                },
+            });
         });
 
-        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL("wss://fake.host.name?somequeryParam=Value"), "fakekey");
-        objsToClose.push(s);
+        afterEach(() => {
+            if (undefined !== detachObject) {
+                detachObject.detach();
+                detachObject = undefined;
+            }
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
-        objsToClose.push(r);
+            uri = undefined;
+        });
 
-        r.recognizeOnceAsync(
-            (p2: sdk.SpeechRecognitionResult) => {
-                try {
-                    expect(uri).not.toBeUndefined();
-                    // Make sure there's only a single ? in the URL.
-                    expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+        test("Endpoint URL With Parameter Test", (done: jest.DoneCallback) => {
+            // tslint:disable-next-line:no-console
+            console.info("Name: Endpoint URL With Parameter Test");
 
-                    expect(p2.errorDetails).not.toBeUndefined();
-                    expect(sdk.ResultReason[p2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
+            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL("wss://fake.host.name?somequeryParam=Value"), "fakekey");
+            objsToClose.push(s);
 
-                    const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
-                    expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
-                    expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
-                    done();
-                } catch (error) {
-                    done.fail(error);
-                }
-            });
+            const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+            objsToClose.push(r);
+
+            r.recognizeOnceAsync(
+                (p2: sdk.SpeechRecognitionResult) => {
+                    try {
+                        expect(uri).not.toBeUndefined();
+                        // Make sure there's only a single ? in the URL.
+                        expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+
+                        expect(p2.errorDetails).not.toBeUndefined();
+                        expect(sdk.ResultReason[p2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
+
+                        const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
+                        expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+                        expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
+                        done();
+                    } catch (error) {
+                        done.fail(error);
+                    }
+                });
+        });
     });
 
     test("Connection Errors Propogate Async", (done: jest.DoneCallback) => {
@@ -2057,6 +2121,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     let bytesSent: number = 0;
     let sendSilence: boolean = false;
     let p: sdk.PullAudioInputStream;
+    let sessionId: string;
 
     p = sdk.AudioInputStream.createPullStream(
         {
@@ -2093,6 +2158,18 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     let disconnected: boolean = false;
     let recoCount: number = 0;
 
+    r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        if (undefined === sessionId) {
+            sessionId = e.sessionId;
+        } else {
+            try {
+                expect(e.sessionId).toEqual(sessionId);
+            } catch (error) {
+                done.fail(error);
+            }
+        }
+    };
+
     const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
     connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
@@ -2101,6 +2178,8 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
 
     r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
+            // tslint:disable-next-line:no-console
+            console.warn(e);
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
             done.fail(error);
