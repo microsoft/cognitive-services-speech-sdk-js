@@ -7,7 +7,7 @@ import { IStringDictionary } from "../src/common/IDictionary";
 export const validateTelemetry: (json: string, numPhrases: number, numHypothesis: number) => void = (json: string, numPhrases: number, numHypothesis: number): void => {
     const telemetryMessage: ITelemetry = JSON.parse(json);
 
-    if (0 > numPhrases) {
+    if (0 < numPhrases) {
         let phrases: string[] = telemetryMessage.ReceivedMessages["speech.phrase"];
         if (undefined === phrases) {
             phrases = telemetryMessage.ReceivedMessages["translation.phrase"];
@@ -16,8 +16,11 @@ export const validateTelemetry: (json: string, numPhrases: number, numHypothesis
         expect(phrases.length).toEqual(numPhrases);
     }
 
-    if (0 > numHypothesis) {
-        const hypothesis: string[] = telemetryMessage.ReceivedMessages["speech.hypothesis"];
+    if (0 < numHypothesis) {
+        let hypothesis: string[] = telemetryMessage.ReceivedMessages["speech.hypothesis"];
+        if (undefined === hypothesis) {
+            hypothesis = telemetryMessage.ReceivedMessages["translation.hypothesis"];
+        }
         expect(hypothesis.length).toEqual(numHypothesis);
     }
 
