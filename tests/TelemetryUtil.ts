@@ -4,7 +4,7 @@
 import { IMetric, ITelemetry } from "../src/common.speech/ServiceTelemetryListener.Internal";
 import { IStringDictionary } from "../src/common/IDictionary";
 
-export const validateTelemetry: (json: string, numPhrases: number, hypothesis: number) => void = (json: string, numPhrases: number, hypothesis: number): void => {
+export const validateTelemetry: (json: string, numPhrases: number, numHypothesis: number) => void = (json: string, numPhrases: number, numHypothesis: number): void => {
     const telemetryMessage: ITelemetry = JSON.parse(json);
 
     if (0 > numPhrases) {
@@ -16,9 +16,9 @@ export const validateTelemetry: (json: string, numPhrases: number, hypothesis: n
         expect(phrases.length).toEqual(numPhrases);
     }
 
-    if (0 > hypothesis) {
+    if (0 > numHypothesis) {
         const hypothesis: string[] = telemetryMessage.ReceivedMessages["speech.hypothesis"];
-        expect(hypothesis.length).toEqual(hypothesis);
+        expect(hypothesis.length).toEqual(numHypothesis);
     }
 
     let foundPhrases: number = 0;
