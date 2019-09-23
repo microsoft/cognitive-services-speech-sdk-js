@@ -1444,9 +1444,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         postCall = true;
     });
 
-    test("InitialSilenceTimeout Continous", (done: jest.DoneCallback) => {
+    test("InitialSilenceTimeout Continuous", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
-        console.info("Name: InitialSilenceTimeout Continous");
+        console.info("Name: InitialSilenceTimeout Continuous");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 

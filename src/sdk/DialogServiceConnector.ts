@@ -3,6 +3,7 @@
 
 import { DialogConnectionFactory } from "../common.speech/DialogConnectorFactory";
 import {
+    DialogServiceAdapter,
     IAuthentication,
     IConnectionFactory,
     RecognitionMode,
@@ -13,7 +14,7 @@ import {
 import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
-import { DialogServiceConfig } from "./DialogServiceConfig";
+import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
 import {
     AudioConfig,
     Recognizer,
@@ -29,18 +30,19 @@ export class DialogServiceConnector extends Recognizer {
     private privIsDisposed: boolean;
 
     /**
-     * Initializes an instance of the TranslationRecognizer.
+     * Initializes an instance of the DialogServiceConnector.
      * @constructor
-     * @param {SpeechTranslationConfig} speechConfig - Set of properties to configure this recognizer.
+     * @param {DialogServiceConfig} speechConfig - Set of properties to configure this recognizer.
      * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
      */
     public constructor(dialogConfig: DialogServiceConfig, audioConfig?: AudioConfig) {
+        const dialogServiceConfigImpl = dialogConfig as DialogServiceConfigImpl;
         Contracts.throwIfNull(dialogConfig, "dialogConfig");
 
-        super(audioConfig, dialogConfig.properties, new DialogConnectionFactory());
+        super(audioConfig, dialogServiceConfigImpl.properties, new DialogConnectionFactory());
 
         this.privIsDisposed = false;
-        this.privProperties = dialogConfig.properties.clone();
+        this.privProperties = dialogServiceConfigImpl.properties.clone();
     }
 
     /**
@@ -157,9 +159,8 @@ export class DialogServiceConnector extends Recognizer {
         audioConfig: AudioConfig,
         recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
 
-        // const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
+        const audioSource: AudioConfigImpl = audioConfig as AudioConfigImpl;
 
-        // return new DialogServiceAdapter(authentication, connectionFactory, configImpl, recognizerConfig, this);
-        return null;
+        return new DialogServiceAdapter(authentication, connectionFactory, audioSource, recognizerConfig, this);
     }
 }
