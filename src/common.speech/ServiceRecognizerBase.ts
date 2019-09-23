@@ -56,11 +56,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privSpeechServiceConfigConnectionId: string;
 
     // A promise for a configured connection.
-    // Do not consume directly, call fethConnection instead.
+    // Do not consume directly, call fetchConnection instead.
     private privConnectionConfigurationPromise: Promise<IConnection>;
 
     // A promise for a connection, but one that has not had the speech context sent yet.
-    // Do no consume directly, call fetchConnection insted.
+    // Do not consume directly, call fetchConnection instead.
     private privConnectionPromise: Promise<IConnection>;
     private privConnectionId: string;
     private privAuthFetchEventId: string;

@@ -75,7 +75,8 @@ export class WebsocketConnection implements IConnection {
             this.privUri,
             this.id,
             this.privMessageFormatter,
-            proxyInfo);
+            proxyInfo,
+            headers);
     }
 
     public dispose = (): void => {

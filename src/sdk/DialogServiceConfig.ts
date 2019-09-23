@@ -9,26 +9,14 @@ import { OutputFormat, PropertyCollection, PropertyId, SpeechConfig } from "./Ex
  * Dialog Service configuration.
  * @class DialogServiceConfig
  */
-export class DialogServiceConfig extends SpeechConfig {
-    /**
-     * Not used in DialogServiceConfig
-     * @member DialogServiceConfig.authorizationToken
-     */
-    public authorizationToken: string;
+export abstract class DialogServiceConfig extends SpeechConfig {
 
     /**
-     * Not used in DialogServiceConfig
-     * @member DialogServiceConfig.endpointId
-     */
-    public endpointId: string;
-
-    private privSpeechProperties: PropertyCollection;
-    /**
-     * Creates an instance of recognizer config.
+     * Creates an instance of DialogService config.
+     * @constructor
      */
     protected constructor() {
         super();
-        this.privSpeechProperties = new PropertyCollection();
     }
 
     /**
@@ -46,12 +34,12 @@ export class DialogServiceConfig extends SpeechConfig {
         Contracts.throwIfNullOrWhitespace(subscriptionKey, "subscriptionKey");
         Contracts.throwIfNullOrWhitespace(region, "region");
 
-        const ret: DialogServiceConfig = new DialogServiceConfig();
-        ret.setProperty(PropertyId.Conversation_ApplicationId, botSecret);
-        ret.setProperty(PropertyId.Conversation_DialogType, "botframework");
-        ret.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
-        ret.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        return ret;
+        const configImpl: DialogServiceConfigImpl = new DialogServiceConfigImpl();
+        configImpl.setProperty(PropertyId.Conversation_ApplicationId, botSecret);
+        configImpl.setProperty(PropertyId.Conversation_DialogType, "bot_framework");
+        configImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
+        configImpl.setProperty(PropertyId.SpeechServiceConnection_Region, region);
+        return configImpl;
     }
 
     /**
@@ -69,17 +57,59 @@ export class DialogServiceConfig extends SpeechConfig {
         Contracts.throwIfNullOrWhitespace(subscriptionKey, "subscriptionKey");
         Contracts.throwIfNullOrWhitespace(region, "region");
 
-        const ret: DialogServiceConfig = new DialogServiceConfig();
-        ret.setProperty(PropertyId.Conversation_ApplicationId, appId);
-        ret.setProperty(PropertyId.Conversation_DialogType, "botframework");
-        ret.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
-        ret.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        return ret;
+        const configImpl: DialogServiceConfigImpl = new DialogServiceConfigImpl();
+        configImpl.setProperty(PropertyId.Conversation_ApplicationId, appId);
+        configImpl.setProperty(PropertyId.Conversation_DialogType, "bot_framework");
+        configImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
+        configImpl.setProperty(PropertyId.SpeechServiceConnection_Region, region);
+        return configImpl;
+    }
+
+    /**
+     * Not used in DialogServiceConfig
+     * @member DialogServiceConfig.authorizationToken
+     */
+    public authorizationToken: string;
+
+    /**
+     * Not used in DialogServiceConfig
+     * @member DialogServiceConfig.endpointId
+     */
+    public endpointId: string;
+
+}
+
+/**
+ * Dialog Service configuration.
+ * @class DialogServiceConfigImpl
+ */
+// tslint:disable-next-line:max-classes-per-file
+export class DialogServiceConfigImpl extends DialogServiceConfig {
+
+    private privSpeechProperties: PropertyCollection;
+
+    /**
+     * Creates an instance of dialogService config.
+     */
+    public constructor() {
+        super();
+        this.privSpeechProperties = new PropertyCollection();
+    }
+
+    /**
+     * Provides access to custom properties.
+     * @member DialogServiceConfigImpl.prototype.properties
+     * @function
+     * @public
+     * @returns {PropertyCollection} The properties.
+     */
+    public get properties(): PropertyCollection {
+        return this.privSpeechProperties;
     }
 
     /**
      * Gets/Sets the corresponding backend application identifier.
-     * @member DialogServiceConfig.prototype.Conversation_ApplicationId
+     * @member DialogServiceConfigImpl.prototype.Conversation_ApplicationId
      * @function
      * @public
      * @param {string} value - The application identifier to set.
@@ -91,7 +121,7 @@ export class DialogServiceConfig extends SpeechConfig {
 
     /**
      * Gets/Sets the speech recognition language.
-     * @member DialogServiceConfig.prototype.speechRecognitionLanguage
+     * @member DialogServiceConfigImpl.prototype.speechRecognitionLanguage
      * @function
      * @public
      * @param {string} value - The language to set.
@@ -103,7 +133,7 @@ export class DialogServiceConfig extends SpeechConfig {
 
     /**
      * Sets output format.
-     * @member SpeechConfig.prototype.outputFormat
+     * @member DialogServiceConfigImpl.prototype.outputFormat
      * @function
      * @public
      * @param {OutputFormat} - The output format to set.
@@ -114,7 +144,7 @@ export class DialogServiceConfig extends SpeechConfig {
 
     /**
      * Sets a named property as value
-     * @member SpeechTranslationConfig.prototype.setProperty
+     * @member DialogServiceConfigImpl.prototype.setProperty
      * @function
      * @public
      * @param {PropertyId | string} name - The property to set.
@@ -126,11 +156,11 @@ export class DialogServiceConfig extends SpeechConfig {
 
     /**
      * Sets a named property as value
-     * @member SpeechTranslationConfig.prototype.setProperty
+     * @member DialogServiceConfigImpl.prototype.getProperty
      * @function
      * @public
      * @param {PropertyId | string} name - The property to get.
-     * @param {string} def - The value to return in case the property is not known.
+     * @param {string} def - The default value to return in case the property is not known.
      * @returns {string} The current value, or provided default, of the given property.
      */
     public getProperty(name: string | PropertyId, def?: string): string {
@@ -142,7 +172,7 @@ export class DialogServiceConfig extends SpeechConfig {
      * Only relevant in Node.js environments.
      * Added in version 1.4.0.
      * @param proxyHostName The host name of the proxy server, without the protocol scheme (http://)
-     * @param porxyPort The port number of the proxy server.
+     * @param proxyPort The port number of the proxy server.
      * @param proxyUserName The user name of the proxy server.
      * @param proxyPassword The password of the proxy server.
      */
@@ -157,24 +187,36 @@ export class DialogServiceConfig extends SpeechConfig {
         }
     }
 
-    /**
-     * Provides access to custom properties.
-     * @member DialogServiceConfig.prototype.properties
-     * @function
-     * @public
-     * @returns {PropertyCollection} The properties.
-     */
-    public get properties(): PropertyCollection {
-        return this.privSpeechProperties;
+    public get subscriptionKey(): string {
+        throw new Error("Method not implemented.");
+    }
+    public get region(): string {
+        throw new Error("Method not implemented.");
+    }
+    public setServiceProperty(name: string, value: string, channel: import("./ServicePropertyChannel").ServicePropertyChannel): void {
+        throw new Error("Method not implemented.");
+    }
+    public setProfanity(profanity: import("./ProfanityOption").ProfanityOption): void {
+        throw new Error("Method not implemented.");
+    }
+    public enableAudioLogging(): void {
+        throw new Error("Method not implemented.");
+    }
+    public requestWordLevelTimestamps(): void {
+        throw new Error("Method not implemented.");
+    }
+    public enableDictation(): void {
+        throw new Error("Method not implemented.");
     }
 
     /**
      * Dispose of associated resources.
-     * @member DialogServiceConfig.prototype.close
+     * @member DialogServiceConfigImpl.prototype.close
      * @function
      * @public
      */
     public close(): void {
         return;
     }
+
 }

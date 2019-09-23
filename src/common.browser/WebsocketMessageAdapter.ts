@@ -51,6 +51,7 @@ export class WebsocketMessageAdapter {
     private privConnectionId: string;
     private privUri: string;
     private proxyInfo: ProxyInfo;
+    private privHeaders: { [key: string]: string; };
 
     public static forceNpmWebSocket: boolean = false;
 
@@ -58,7 +59,8 @@ export class WebsocketMessageAdapter {
         uri: string,
         connectionId: string,
         messageFormatter: IWebsocketMessageFormatter,
-        proxyInfo: ProxyInfo) {
+        proxyInfo: ProxyInfo,
+        headers: { [key: string]: string; }) {
 
         if (!uri) {
             throw new ArgumentNullError("uri");
@@ -74,6 +76,7 @@ export class WebsocketMessageAdapter {
         this.privMessageFormatter = messageFormatter;
         this.privConnectionState = ConnectionState.None;
         this.privUri = uri;
+        this.privHeaders = headers;
     }
 
     public get state(): ConnectionState {
@@ -117,7 +120,7 @@ export class WebsocketMessageAdapter {
                     }
 
                     const httpProxyAgent: HttpsProxyAgent = new HttpsProxyAgent(httpProxyOptions);
-                    const httpsOptions: http.RequestOptions = { agent: httpProxyAgent };
+                    const httpsOptions: http.RequestOptions = { agent: httpProxyAgent , headers: this.privHeaders };
 
                     this.privWebsocketClient = new ws(this.privUri, httpsOptions as ws.ClientOptions);
 
@@ -150,7 +153,7 @@ export class WebsocketMessageAdapter {
                     this.privCertificateValidatedDeferral.resolve(true);
 
                     const ocspAgent: ocsp.Agent = new ocsp.Agent({});
-                    const options: ws.ClientOptions = { agent: ocspAgent };
+                    const options: ws.ClientOptions = { agent: ocspAgent, headers: this.privHeaders };
                     this.privWebsocketClient = new ws(this.privUri, options);
                 }
             }

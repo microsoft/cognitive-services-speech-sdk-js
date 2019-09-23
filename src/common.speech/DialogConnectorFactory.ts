@@ -62,7 +62,7 @@ export class DialogConnectionFactory implements IConnectionFactory {
 
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
 
-        const endpoint: string = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
+        const endpoint: string = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
 
         const headers: IStringDictionary<string> = {};
         headers[authHeader] = applicationId;
