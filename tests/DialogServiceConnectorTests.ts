@@ -118,7 +118,7 @@ test("Create DialogServiceConnector", () => {
     expect(connector instanceof sdk.DialogServiceConnector);
 });
 
-describe.each([true])("Service-based tests", (forceNodeWebSocket: boolean) => {
+describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean) => {
 
     beforeAll(() => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
