@@ -78,6 +78,30 @@ export class DialogServiceConnector extends Recognizer {
     public activityReceived: (sender: DialogServiceConnector, event: ActivityReceivedEventArgs) => void;
 
     /**
+     * Starts a connection to the service.
+     * Users can optionally call connect() to manually set up a connection in advance, before starting interactions.
+     *
+     * Note: On return, the connection might not be ready yet. Please subscribe to the Connected event to
+     * be notified when the connection is established.
+     * @member DialogServiceConnector.prototype.connect
+     * @function
+     * @public
+     */
+    public connect(): void {
+        this.privReco.connect();
+    }
+
+    /**
+     * Closes the connection the service.
+     * Users can optionally call disconnect() to manually shutdown the connection of the associated DialogServiceConnector.
+     *
+     * If disconnect() is called during a recognition, recognition will fail and cancel with an error.
+     */
+    public disconnect(): void {
+        this.privReco.disconnect();
+    }
+
+    /**
      * Starts recognition and stops after the first utterance is recognized.
      * @member DialogServiceConnector.prototype.recognizeOnceAsync
      * @function
