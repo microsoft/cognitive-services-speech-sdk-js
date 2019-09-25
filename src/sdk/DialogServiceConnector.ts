@@ -19,8 +19,11 @@ import {
     AudioConfig,
     Recognizer,
     SpeechRecognitionCanceledEventArgs,
-    SpeechRecognitionEventArgs
+    SpeechRecognitionEventArgs,
+    SpeechRecognitionResult
 } from "./Exports";
+// import { StackData } from "stack-utils";
+// import { RecognitionResult } from "../../distrib/lib/src/sdk/Exports";
 
 /**
  * Dialog Service Connector
@@ -103,46 +106,46 @@ export class DialogServiceConnector extends Recognizer {
 
     /**
      * Starts recognition and stops after the first utterance is recognized.
-     * @member DialogServiceConnector.prototype.recognizeOnceAsync
+     * @member DialogServiceConnector.prototype.listenOnceAsync
      * @function
      * @public
-     * @param cb - Callback that received the result when the translation has completed.
+     * @param cb - Callback that received the result when the reco has completed.
      * @param err - Callback invoked in case of an error.
      */
-    public listenOnceAsync(cb: () => void, err?: (e: string) => void): void {
-        return;
-        // try {
-        //     Contracts.throwIfDisposed(this.privIsDisposed);
+    public listenOnceAsync(cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
+        try {
+            Contracts.throwIfDisposed(this.privIsDisposed);
 
-        //     this.implRecognizerStop();
+            this.implRecognizerStop();
 
-        //     this.implRecognizerStart(
-        //         RecognitionMode.Conversation,
-        //         () => {
-        //             this.implRecognizerStop();
-        //             if (!!cb) {
-        //                 cb();
-        //             }
-        //         },
-        //         (e: string) => {
-        //             this.implRecognizerStop();
-        //             if (!!err) {
-        //                 err(e);
-        //             }
-        //         });
-        // } catch (error) {
-        //     if (!!err) {
-        //         if (error instanceof Error) {
-        //             const typedError: Error = error as Error;
-        //             err(typedError.name + ": " + typedError.message);
-        //         } else {
-        //             err(error);
-        //         }
-        //     }
+            this.implRecognizerStart(
+                RecognitionMode.Conversation,
+                (e: SpeechRecognitionResult) => {
+                    this.implRecognizerStop();
 
-        //     // Destroy the recognizer.
-        //     this.dispose(true);
-        // }
+                    if (!!cb) {
+                        cb(e);
+                    }
+                },
+                (e: string) => {
+                    this.implRecognizerStop();
+                    if (!!err) {
+                        err(e);
+                    }
+                });
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
     }
 
     public sendActivity(activity: string, cb: (interactionId: string) => void): void {

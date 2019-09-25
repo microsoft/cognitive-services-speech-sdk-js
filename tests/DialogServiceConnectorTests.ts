@@ -132,8 +132,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         // tslint:disable-next-line:no-console
         console.info("Name: Connect / Disconnect");
 
-        const forcedNodeWebSocket: boolean = WebsocketMessageAdapter.forceNpmWebSocket;
-
         const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
         objsToClose.push(dialogConfig);
 
@@ -165,5 +163,27 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         }, () => {
             connection.closeConnection();
         });
+    });
+
+    test("ListenOnceAsync", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: ListenOnceAsync");
+
+        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        objsToClose.push(dialogConfig);
+
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
+        objsToClose.push(connector);
+
+        connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            expect(result).not.toBeUndefined();
+            expect(result.errorDetails).toBeUndefined();
+            expect(result.text).not.toBeUndefined();
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+
     });
 });
