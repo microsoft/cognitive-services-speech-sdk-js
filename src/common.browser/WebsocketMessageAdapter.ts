@@ -102,8 +102,7 @@ export class WebsocketMessageAdapter {
                 // Browser handles cert checks.
                 this.privCertificateValidatedDeferral.resolve(true);
 
-                const httpsOptions: http.RequestOptions = { headers: this.privHeaders };
-                this.privWebsocketClient = new ws(this.privUri, httpsOptions as ws.ClientOptions);
+                this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
                 if (this.proxyInfo !== undefined &&
                     this.proxyInfo.HostName !== undefined &&
