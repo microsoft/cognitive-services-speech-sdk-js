@@ -9,6 +9,7 @@ import {
     ConnectionMessage,
     ConnectionOpenResponse,
     ConnectionState,
+    createGuid,
     createNoDashGuid,
     Deferred,
     EventSource,
@@ -33,6 +34,7 @@ import {
     SpeechRecognitionResult,
 } from "../sdk/Exports";
 import {
+    AgentConfig,
     DynamicGrammarBuilder,
     ISpeechConfigAudio,
     ISpeechConfigAudioDevice,
@@ -62,7 +64,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     // A promise for a connection, but one that has not had the speech context sent yet.
     // Do not consume directly, call fetchConnection instead.
     private privConnectionPromise: Promise<IConnection>;
-    private privConnectionId: string;
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
     private privRecognizer: Recognizer;
@@ -70,6 +71,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privSpeechContext: SpeechContext;
     private privDynamicGrammar: DynamicGrammarBuilder;
+    protected privAgentConfig: AgentConfig;
+    protected privConnectionId: string;
     protected privRequestSession: RequestSession;
     protected privRecognizerConfig: RecognizerConfig;
 
@@ -107,6 +110,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
         this.privDynamicGrammar = new DynamicGrammarBuilder();
         this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
+        this.privAgentConfig = new AgentConfig();
     }
 
     public get audioSource(): IAudioSource {
@@ -119,6 +123,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public get dynamicGrammar(): DynamicGrammarBuilder {
         return this.privDynamicGrammar;
+    }
+
+    public get agentConfig(): AgentConfig {
+        return this.privAgentConfig;
     }
 
     public isDisposed(): boolean {
@@ -388,8 +396,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
             return this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
                 .onSuccessContinueWithPromise((_: boolean) => {
-                    return this.sendSpeechContext(connection).onSuccessContinueWith((_: boolean) => {
-                        return connection;
+                    return this.sendAgentConfig(connection).onSuccessContinueWithPromise((_: boolean) => {
+                        return this.sendSpeechContext(connection).onSuccessContinueWithPromise((_: boolean) => {
+                            return this.sendAgentContext(connection).onSuccessContinueWith((_: boolean) => {
+                                return connection;
+                            });
+                        });
                     });
                 });
         });
@@ -536,6 +548,47 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 speechContextJson));
         }
         return PromiseHelper.fromResult(true);
+    }
+
+    private sendAgentConfig = (connection: IConnection): Promise<boolean> => {
+        if (this.agentConfig) {
+
+            const jsonObj = this.agentConfig.get();
+            jsonObj.botInfo.connectionId = this.privConnectionId;
+            this.agentConfig.set(jsonObj);
+
+            const agentConfigJson = this.agentConfig.toJsonString();
+
+            return connection.send(new SpeechConnectionMessage(
+                MessageType.Text,
+                "agent.config",
+                this.privRequestSession.requestId,
+                "application/json",
+                agentConfigJson));
+        }
+
+        return PromiseHelper.fromResult(true);
+    }
+
+    private sendAgentContext = (connection: IConnection): Promise<boolean> => {
+        const guid: string = createGuid();
+
+        const agentContext: any = {
+            channelData: "",
+            context: {
+                interactionId: guid
+            },
+            version: 0.5
+        };
+
+        const agentContextJson = JSON.stringify(agentContext);
+
+        return connection.send(new SpeechConnectionMessage(
+            MessageType.Text,
+            "speech.agent.context",
+            this.privRequestSession.requestId,
+            "application/json",
+            agentContextJson));
     }
 
     private sendFinalAudio(): Promise<boolean> {
