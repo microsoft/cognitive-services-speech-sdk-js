@@ -3,8 +3,8 @@
 
 import {
     IAudioSource,
+    IConnection,
     MessageType,
-    TranslationStatus,
 } from "../common/Exports";
 import {
     CancellationErrorCode,
@@ -13,17 +13,16 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
+    SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
-    TranslationRecognitionResult,
-    Translations,
-    TranslationSynthesisEventArgs,
-    TranslationSynthesisResult
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
     EnumTranslation,
     RecognitionStatus,
-    ServiceRecognizerBase
+    ServiceRecognizerBase,
+    SimpleSpeechPhrase,
+    SpeechHypothesis,
 } from "./Exports";
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
@@ -46,9 +45,82 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
     protected processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
-        successCallback?: (e: TranslationRecognitionResult) => void,
+        successCallback?: (e: SpeechRecognitionResult) => void,
         errorCallBack?: (e: string) => void): void {
-        return;
+
+        const resultProps: PropertyCollection = new PropertyCollection();
+        if (connectionMessage.messageType === MessageType.Text) {
+            resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
+        }
+
+        let result: SpeechRecognitionResult;
+
+        switch (connectionMessage.path.toLowerCase()) {
+            case "speech.phrase":
+                const speechPhrase: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
+
+                this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + speechPhrase.Offset + speechPhrase.Duration);
+
+                if (speechPhrase.RecognitionStatus === RecognitionStatus.Success) {
+                    const args: SpeechRecognitionEventArgs = this.fireEventForResult(speechPhrase, resultProps);
+                    if (!!this.privDialogServiceConnector.recognized) {
+                        try {
+                            this.privDialogServiceConnector.recognized(this.privDialogServiceConnector, args);
+                            /* tslint:disable:no-empty */
+                        } catch (error) {
+                            // Not going to let errors in the event handler
+                            // trip things up.
+                        }
+                    }
+
+                    // report result to promise.
+                    if (!!successCallback) {
+                        try {
+                            successCallback(args.result);
+                        } catch (e) {
+                            if (!!errorCallBack) {
+                                errorCallBack(e);
+                            }
+                        }
+                        // Only invoke the call back once.
+                        // and if it's successful don't invoke the
+                        // error after that.
+                        successCallback = undefined;
+                        errorCallBack = undefined;
+                    }
+                }
+                break;
+            case "speech.hypothesis":
+                    const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
+                    const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
+
+                    result = new SpeechRecognitionResult(
+                        this.privRequestSession.requestId,
+                        ResultReason.RecognizingSpeech,
+                        hypothesis.Text,
+                        hypothesis.Duration,
+                        offset,
+                        undefined,
+                        connectionMessage.textBody,
+                        resultProps);
+
+                    this.privRequestSession.onHypothesis(offset);
+
+                    const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
+
+                    if (!!this.privDialogServiceConnector.recognizing) {
+                        try {
+                            this.privDialogServiceConnector.recognizing(this.privDialogServiceConnector, ev);
+                            /* tslint:disable:no-empty */
+                        } catch (error) {
+                            // Not going to let errors in the event handler
+                            // trip things up.
+                        }
+                    }
+                    break;
+            default:
+                break;
+        }
     }
 
     // Cancels recognition.
@@ -95,43 +167,24 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     //     }
     }
 
-    // private fireEventForResult(serviceResult: TranslationHypothesis | TranslationPhrase, properties: PropertyCollection): TranslationRecognitionEventArgs {
-    //     let translations: Translations;
+    private fireEventForResult(serviceResult: SimpleSpeechPhrase, properties: PropertyCollection): SpeechRecognitionEventArgs {
+        const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(serviceResult.RecognitionStatus);
 
-    //     if (undefined !== serviceResult.Translation.Translations) {
-    //         translations = new Translations();
-    //         for (const translation of serviceResult.Translation.Translations) {
-    //             translations.set(translation.Language, translation.Text);
-    //         }
-    //     }
+        const offset: number = serviceResult.Offset + this.privRequestSession.currentTurnAudioOffset;
 
-    //     let resultReason: ResultReason;
-    //     if (serviceResult instanceof TranslationPhrase) {
-    //         if (serviceResult.Translation.TranslationStatus === TranslationStatus.Success) {
-    //             resultReason = ResultReason.TranslatedSpeech;
-    //         } else {
-    //             resultReason = ResultReason.RecognizedSpeech;
-    //         }
-    //     } else {
-    //         resultReason = ResultReason.TranslatingSpeech;
-    //     }
+        const result = new SpeechRecognitionResult(
+            this.privRequestSession.requestId,
+            resultReason,
+            serviceResult.DisplayText,
+            serviceResult.Duration,
+            offset,
+            undefined,
+            JSON.stringify(serviceResult),
+            properties);
 
-    //     const offset: number = serviceResult.Offset + this.privRequestSession.currentTurnAudioOffset;
-
-    //     const result = new TranslationRecognitionResult(
-    //         translations,
-    //         this.privRequestSession.requestId,
-    //         resultReason,
-    //         serviceResult.Text,
-    //         serviceResult.Duration,
-    //         offset,
-    //         serviceResult.Translation.FailureReason,
-    //         JSON.stringify(serviceResult),
-    //         properties);
-
-    //     const ev = new TranslationRecognitionEventArgs(result, offset, this.privRequestSession.sessionId);
-    //     return ev;
-    // }
+        const ev = new SpeechRecognitionEventArgs(result, offset, this.privRequestSession.sessionId);
+        return ev;
+    }
 
     // private sendSynthesisAudio(audio: ArrayBuffer, sessionId: string): void {
     //     const reason = (undefined === audio) ? ResultReason.SynthesizingAudioCompleted : ResultReason.SynthesizingAudio;

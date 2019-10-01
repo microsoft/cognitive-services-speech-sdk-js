@@ -4,6 +4,7 @@
 import { DialogConnectionFactory } from "../common.speech/DialogConnectorFactory";
 import {
     DialogServiceAdapter,
+    IAgentConfig,
     IAuthentication,
     IConnectionFactory,
     RecognitionMode,
@@ -22,8 +23,6 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult
 } from "./Exports";
-// import { StackData } from "stack-utils";
-// import { RecognitionResult } from "../../distrib/lib/src/sdk/Exports";
 
 /**
  * Dialog Service Connector
@@ -118,6 +117,9 @@ export class DialogServiceConnector extends Recognizer {
 
             this.implRecognizerStop();
 
+            const agentConfig = this.buildAgentConfig();
+            this.privReco.agentConfig.set(agentConfig);
+
             this.implRecognizerStart(
                 RecognitionMode.Conversation,
                 (e: SpeechRecognitionResult) => {
@@ -189,5 +191,15 @@ export class DialogServiceConnector extends Recognizer {
         const audioSource: AudioConfigImpl = audioConfig as AudioConfigImpl;
 
         return new DialogServiceAdapter(authentication, connectionFactory, audioSource, recognizerConfig, this);
+    }
+
+    private buildAgentConfig(): IAgentConfig {
+        return {
+            botInfo: {
+                commType: "Default",
+                connectionId: ""
+            },
+            version: 0.2
+        };
     }
 }
