@@ -7,7 +7,8 @@ import {
 } from "../common.browser/Exports";
 import { IConnection, IStringDictionary } from "../common/Exports";
 import { PropertyId } from "../sdk/Exports";
-import { AuthInfo, IConnectionFactory, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
+import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
+import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
 import { QueryParameterNames } from "./QueryParameterNames";
 
 const baseUrl: string = "convai.speech.microsoft.com";
@@ -44,7 +45,7 @@ function getDialogSpecificValues(dialogType: string): IBackendValues {
     throw new Error(`Invalid dialog type '${dialogType}'`);
 }
 
-export class DialogConnectionFactory implements IConnectionFactory {
+export class DialogConnectionFactory extends ConnectionFactoryBase {
 
     public create = (
         config: RecognizerConfig,

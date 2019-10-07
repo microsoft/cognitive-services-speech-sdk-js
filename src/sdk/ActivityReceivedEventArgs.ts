@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 
 /**
- * Defines contents of speech recognizing/recognized event.
- * @class SpeechRecognitionEventArgs
+ * Defines contents of received message/events.
+ * @class ActivityReceivedEventArgs
  */
 export class ActivityReceivedEventArgs {
     private privActivity: string;
