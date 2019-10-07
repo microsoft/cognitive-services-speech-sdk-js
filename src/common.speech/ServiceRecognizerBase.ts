@@ -66,7 +66,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privConnectionPromise: Promise<IConnection>;
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
-    private privRecognizer: Recognizer;
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privSpeechContext: SpeechContext;
@@ -75,6 +74,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected privConnectionId: string;
     protected privRequestSession: RequestSession;
     protected privRecognizerConfig: RecognizerConfig;
+    protected privRecognizer: Recognizer;
 
     public constructor(
         authentication: IAuthentication,
@@ -317,8 +317,122 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
-    private fetchConnection = (): Promise<IConnection> => {
+    protected fetchConnection = (): Promise<IConnection> => {
         return this.configureConnection();
+    }
+
+    protected receiveMessageOverride: (message: ConnectionMessage, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
+
+    protected receiveMessage = (
+        successCallback: (e: SpeechRecognitionResult) => void,
+        errorCallBack: (e: string) => void,
+    ): Promise<IConnection> => {
+        return this.fetchConnection().on((connection: IConnection): Promise<IConnection> => {
+            return connection.read()
+                .onSuccessContinueWithPromise((message: ConnectionMessage) => {
+                    if (this.receiveMessageOverride !== undefined) {
+                        return this.receiveMessageOverride(message, successCallback, errorCallBack);
+                    }
+                    if (this.privIsDisposed || !this.privRequestSession.isRecognizing) {
+                        // We're done.
+                        return PromiseHelper.fromResult(undefined);
+                    }
+
+                    // indicates we are draining the queue and it came with no message;
+                    if (!message) {
+                        if (!this.privRequestSession.isRecognizing) {
+                            return PromiseHelper.fromResult(true);
+                        } else {
+                            return this.receiveMessage(successCallback, errorCallBack);
+                        }
+                    }
+
+                    const connectionMessage = SpeechConnectionMessage.fromConnectionMessage(message);
+
+                    if (connectionMessage.requestId.toLowerCase() === this.privRequestSession.requestId.toLowerCase()) {
+                        switch (connectionMessage.path.toLowerCase()) {
+                            case "turn.start":
+                                this.privMustReportEndOfStream = true;
+                                break;
+                            case "speech.startdetected":
+                                const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
+
+                                const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
+
+                                if (!!this.privRecognizer.speechStartDetected) {
+                                    this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
+                                }
+
+                                break;
+                            case "speech.enddetected":
+
+                                let json: string;
+
+                                if (connectionMessage.textBody.length > 0) {
+                                    json = connectionMessage.textBody;
+                                } else {
+                                    // If the request was empty, the JSON returned is empty.
+                                    json = "{ Offset: 0 }";
+                                }
+
+                                const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
+
+                                this.privRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset);
+
+                                const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
+
+                                if (!!this.privRecognizer.speechEndDetected) {
+                                    this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
+                                }
+                                break;
+                            case "turn.end":
+                                this.sendTelemetryData();
+
+                                if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) {
+                                    this.privMustReportEndOfStream = false;
+                                    this.cancelRecognitionLocal(CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined, successCallback);
+                                }
+
+                                const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
+                                this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
+
+                                if (!this.privRecognizerConfig.isContinuousRecognition || this.privRequestSession.isSpeechEnded) {
+                                    if (!!this.privRecognizer.sessionStopped) {
+                                        this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
+                                    }
+
+                                    return PromiseHelper.fromResult(true);
+                                } else {
+                                    this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
+                                        this.sendSpeechContext(connection);
+                                    });
+                                }
+                            default:
+                                this.processTypeSpecificMessages(
+                                    connectionMessage,
+                                    successCallback,
+                                    errorCallBack);
+                        }
+                    }
+
+                    return this.receiveMessage(successCallback, errorCallBack);
+                });
+        }, (error: string) => {
+        });
+    }
+
+    protected sendSpeechContext = (connection: IConnection): Promise<boolean> => {
+        const speechContextJson = this.speechContext.toJSON();
+
+        if (speechContextJson) {
+            return connection.send(new SpeechConnectionMessage(
+                MessageType.Text,
+                "speech.context",
+                this.privRequestSession.requestId,
+                "application/json",
+                speechContextJson));
+        }
+        return PromiseHelper.fromResult(true);
     }
 
     // Establishes a websocket connection to the end point.
@@ -409,106 +523,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privConnectionConfigurationPromise;
     }
 
-    protected receiveMessageOverride: (sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
-
-    private receiveMessage = (
-        successCallback: (e: SpeechRecognitionResult) => void,
-        errorCallBack: (e: string) => void,
-    ): Promise<IConnection> => {
-        return this.fetchConnection().on((connection: IConnection): Promise<IConnection> => {
-            return connection.read()
-                .onSuccessContinueWithPromise((message: ConnectionMessage) => {
-                    if (this.receiveMessageOverride !== undefined) {
-                        return this.receiveMessageOverride(successCallback, errorCallBack);
-                    }
-                    if (this.privIsDisposed || !this.privRequestSession.isRecognizing) {
-                        // We're done.
-                        return PromiseHelper.fromResult(undefined);
-                    }
-
-                    // indicates we are draining the queue and it came with no message;
-                    if (!message) {
-                        if (!this.privRequestSession.isRecognizing) {
-                            return PromiseHelper.fromResult(true);
-                        } else {
-                            return this.receiveMessage(successCallback, errorCallBack);
-                        }
-                    }
-
-                    const connectionMessage = SpeechConnectionMessage.fromConnectionMessage(message);
-
-                    if (connectionMessage.requestId.toLowerCase() === this.privRequestSession.requestId.toLowerCase()) {
-                        switch (connectionMessage.path.toLowerCase()) {
-                            case "turn.start":
-                                this.privMustReportEndOfStream = true;
-                                break;
-                            case "speech.startdetected":
-                                const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
-
-                                const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
-
-                                if (!!this.privRecognizer.speechStartDetected) {
-                                    this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
-                                }
-
-                                break;
-                            case "speech.enddetected":
-
-                                let json: string;
-
-                                if (connectionMessage.textBody.length > 0) {
-                                    json = connectionMessage.textBody;
-                                } else {
-                                    // If the request was empty, the JSON returned is empty.
-                                    json = "{ Offset: 0 }";
-                                }
-
-                                const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
-
-                                this.privRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset);
-
-                                const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
-
-                                if (!!this.privRecognizer.speechEndDetected) {
-                                    this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
-                                }
-                                break;
-                            case "turn.end":
-                                this.sendTelemetryData();
-
-                                if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) {
-                                    this.privMustReportEndOfStream = false;
-                                    this.cancelRecognitionLocal(CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined, successCallback);
-                                }
-
-                                const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
-                                this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
-
-                                if (!this.privRecognizerConfig.isContinuousRecognition || this.privRequestSession.isSpeechEnded) {
-                                    if (!!this.privRecognizer.sessionStopped) {
-                                        this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
-                                    }
-
-                                    return PromiseHelper.fromResult(true);
-                                } else {
-                                    this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
-                                        this.sendSpeechContext(connection);
-                                    });
-                                }
-                            default:
-                                this.processTypeSpecificMessages(
-                                    connectionMessage,
-                                    successCallback,
-                                    errorCallBack);
-                        }
-                    }
-
-                    return this.receiveMessage(successCallback, errorCallBack);
-                });
-        }, (error: string) => {
-        });
-    }
-
     private sendSpeechServiceConfig = (connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<boolean> => {
         // filter out anything that is not required for the service to work.
         if (ServiceRecognizerBase.telemetryDataEnabled !== true) {
@@ -536,27 +550,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return PromiseHelper.fromResult(true);
     }
 
-    private sendSpeechContext = (connection: IConnection): Promise<boolean> => {
-        const speechContextJson = this.speechContext.toJSON();
-
-        if (speechContextJson) {
-            return connection.send(new SpeechConnectionMessage(
-                MessageType.Text,
-                "speech.context",
-                this.privRequestSession.requestId,
-                "application/json",
-                speechContextJson));
-        }
-        return PromiseHelper.fromResult(true);
-    }
-
     private sendAgentConfig = (connection: IConnection): Promise<boolean> => {
         if (this.agentConfig) {
-
-            const jsonObj = this.agentConfig.get();
-            jsonObj.botInfo.connectionId = this.privConnectionId;
-            this.agentConfig.set(jsonObj);
-
             const agentConfigJson = this.agentConfig.toJsonString();
 
             return connection.send(new SpeechConnectionMessage(

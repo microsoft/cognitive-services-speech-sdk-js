@@ -15,6 +15,8 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { PropertyId } from "../src/sdk/Exports";
 import WaitForCondition from "./Utilities";
+import { validateTelemetry } from "./TelemetryUtil";
+import { ServiceRecognizerBase } from "../src/common.speech/Exports";
 
 let objsToClose: any[];
 
@@ -174,6 +176,54 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
+
+        let telemetryEvents: number = 0;
+        let sessionId: string;
+        let hypoCounter: number = 0;
+
+        connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
+            sessionId = e.sessionId;
+        };
+
+        connector.recognizing = (s: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
+            hypoCounter++;
+        };
+
+        // ServiceRecognizerBase.telemetryData = (json: string): void => {
+        //     // Only record telemetry events from this session.
+        //     if (json !== undefined &&
+        //         sessionId !== undefined &&
+        //         json.indexOf(sessionId) > 0) {
+        //         try {
+        //             expect(hypoCounter).toBeGreaterThanOrEqual(1);
+        //             validateTelemetry(json, 1, hypoCounter);
+        //         } catch (error) {
+        //             done.fail(error);
+        //         }
+        //         telemetryEvents++;
+        //     }
+        // };
+
+        connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+            try {
+                expect(e.activity).not.toBeNull();
+            }
+            catch (error) {
+                done.fail(error);
+            }
+        }
+
+        connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error){
+                done.fail(error);
+            }
+        }
+
+        connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+            expect(e.sessionId).toEqual(sessionId);
+        }
 
         connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
             expect(result).not.toBeUndefined();

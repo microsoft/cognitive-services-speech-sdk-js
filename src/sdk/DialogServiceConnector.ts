@@ -23,6 +23,7 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult
 } from "./Exports";
+import { PropertyId } from "./PropertyId";
 
 /**
  * Dialog Service Connector
@@ -197,7 +198,7 @@ export class DialogServiceConnector extends Recognizer {
         return {
             botInfo: {
                 commType: "Default",
-                connectionId: ""
+                connectionId: this.privProperties.getProperty(PropertyId.Conversation_ApplicationId)
             },
             version: 0.2
         };
