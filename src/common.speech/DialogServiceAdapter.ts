@@ -2,17 +2,22 @@
 // Licensed under the MIT license.
 
 import {
+    ConnectionMessage,
     IAudioSource,
     IConnection,
     MessageType,
+    PromiseHelper,
 } from "../common/Exports";
 import {
+    ActivityReceivedEventArgs,
     CancellationErrorCode,
     CancellationReason,
     DialogServiceConnector,
     PropertyCollection,
     PropertyId,
+    RecognitionEventArgs,
     ResultReason,
+    SessionEventArgs,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
@@ -22,6 +27,7 @@ import {
     RecognitionStatus,
     ServiceRecognizerBase,
     SimpleSpeechPhrase,
+    SpeechDetected,
     SpeechHypothesis,
 } from "./Exports";
 import { IAuthentication } from "./IAuthentication";
@@ -41,6 +47,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         super(authentication, connectionFactory, audioSource, recognizerConfig, dialogServiceConnector);
         this.privDialogServiceConnector = dialogServiceConnector;
+
+        this.receiveMessageOverride = this.receiveDialogMessageOverride;
     }
 
     protected processTypeSpecificMessages(
@@ -91,33 +99,45 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 }
                 break;
             case "speech.hypothesis":
-                    const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
-                    const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
+                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
+                const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
 
-                    result = new SpeechRecognitionResult(
-                        this.privRequestSession.requestId,
-                        ResultReason.RecognizingSpeech,
-                        hypothesis.Text,
-                        hypothesis.Duration,
-                        offset,
-                        undefined,
-                        connectionMessage.textBody,
-                        resultProps);
+                result = new SpeechRecognitionResult(
+                    this.privRequestSession.requestId,
+                    ResultReason.RecognizingSpeech,
+                    hypothesis.Text,
+                    hypothesis.Duration,
+                    offset,
+                    undefined,
+                    connectionMessage.textBody,
+                    resultProps);
 
-                    this.privRequestSession.onHypothesis(offset);
+                this.privRequestSession.onHypothesis(offset);
 
-                    const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
+                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
 
-                    if (!!this.privDialogServiceConnector.recognizing) {
-                        try {
-                            this.privDialogServiceConnector.recognizing(this.privDialogServiceConnector, ev);
-                            /* tslint:disable:no-empty */
-                        } catch (error) {
-                            // Not going to let errors in the event handler
-                            // trip things up.
-                        }
+                if (!!this.privDialogServiceConnector.recognizing) {
+                    try {
+                        this.privDialogServiceConnector.recognizing(this.privDialogServiceConnector, ev);
+                        /* tslint:disable:no-empty */
+                    } catch (error) {
+                        // Not going to let errors in the event handler
+                        // trip things up.
                     }
-                    break;
+                }
+                break;
+            case "response":
+                const activity = new ActivityReceivedEventArgs(connectionMessage.textBody);
+
+                if (!!this.privDialogServiceConnector.activityReceived) {
+                    try {
+                        this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
+                        /* tslint:disable:no-empty */
+                    } catch (error) {
+                        // Not going to let errors in the event handler
+                        // trip things up.
+                    }
+                }
             default:
                 break;
         }
@@ -166,6 +186,89 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     //         }
     //     }
     }
+
+    private receiveDialogMessageOverride = (
+        message: ConnectionMessage,
+        successCallback: (e: SpeechRecognitionResult) => void,
+        errorCallBack: (e: string) => void
+        ): any => {
+            if (this.isDisposed()) {
+                // We're done.
+                return PromiseHelper.fromResult(undefined);
+            }
+
+            if (!message) {
+                return this.receiveMessage(successCallback, errorCallBack);
+            }
+
+            const connectionMessage = SpeechConnectionMessage.fromConnectionMessage(message);
+
+            switch (connectionMessage.path.toLowerCase()) {
+                case "turn.start":
+                //     if (connectionMessage.requestId.toLowerCase() === this.privRequestSession.requestId.toLowerCase())
+                //     {
+
+                //     } else {
+                //     }
+                    break;
+                case "speech.startdetected":
+                    const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
+
+                    const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
+
+                    if (!!this.privRecognizer.speechStartDetected) {
+                        this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
+                    }
+
+                    break;
+                case "speech.enddetected":
+
+                    let json: string;
+
+                    if (connectionMessage.textBody.length > 0) {
+                        json = connectionMessage.textBody;
+                    } else {
+                        // If the request was empty, the JSON returned is empty.
+                        json = "{ Offset: 0 }";
+                    }
+
+                    const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
+
+                    this.privRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset);
+
+                    const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
+
+                    if (!!this.privRecognizer.speechEndDetected) {
+                        this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
+                    }
+                    break;
+                case "turn.end":
+                    this.sendTelemetryData();
+
+                    const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
+                    this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
+
+                    if (this.privRequestSession.isSpeechEnded) {
+                        if (!!this.privRecognizer.sessionStopped) {
+                            this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
+                        }
+
+                        return PromiseHelper.fromResult(true);
+                    } else {
+                        this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
+                            this.sendSpeechContext(connection);
+                        });
+                    }
+                    break;
+                default:
+                    this.processTypeSpecificMessages(
+                        connectionMessage,
+                        successCallback,
+                        errorCallBack);
+            }
+
+            return this.receiveMessage(successCallback, errorCallBack);
+        }
 
     private fireEventForResult(serviceResult: SimpleSpeechPhrase, properties: PropertyCollection): SpeechRecognitionEventArgs {
         const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(serviceResult.RecognitionStatus);

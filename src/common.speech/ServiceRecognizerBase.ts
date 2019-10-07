@@ -66,7 +66,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privConnectionPromise: Promise<IConnection>;
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
-    private privRecognizer: Recognizer;
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privSpeechContext: SpeechContext;
@@ -75,6 +74,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected privConnectionId: string;
     protected privRequestSession: RequestSession;
     protected privRecognizerConfig: RecognizerConfig;
+    protected privRecognizer: Recognizer;
 
     public constructor(
         authentication: IAuthentication,
@@ -317,101 +317,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
-    private fetchConnection = (): Promise<IConnection> => {
+    protected fetchConnection = (): Promise<IConnection> => {
         return this.configureConnection();
     }
 
-    // Establishes a websocket connection to the end point.
-    private connectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
-        if (this.privConnectionPromise) {
-            if (this.privConnectionPromise.result().isCompleted &&
-                (this.privConnectionPromise.result().isError
-                    || this.privConnectionPromise.result().result.state() === ConnectionState.Disconnected)) {
-                this.privConnectionId = null;
-                this.privConnectionPromise = null;
-                return this.connectImpl();
-            } else {
-                return this.privConnectionPromise;
-            }
-        }
+    protected receiveMessageOverride: (message: ConnectionMessage, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
 
-        this.privAuthFetchEventId = createNoDashGuid();
-        this.privConnectionId = createNoDashGuid();
-
-        this.privRequestSession.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
-
-        const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
-
-        this.privConnectionPromise = authPromise
-            .continueWithPromise((result: PromiseResult<AuthInfo>) => {
-                if (result.isError) {
-                    this.privRequestSession.onAuthCompleted(true, result.error);
-                    throw new Error(result.error);
-                } else {
-                    this.privRequestSession.onAuthCompleted(false);
-                }
-
-                const connection: IConnection = this.privConnectionFactory.create(this.privRecognizerConfig, result.result, this.privConnectionId);
-
-                this.privRequestSession.listenForServiceTelemetry(connection.events);
-
-                // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
-                // it'll stop sending events.
-                connection.events.attach((event: ConnectionEvent) => {
-                    this.connectionEvents.onEvent(event);
-                });
-
-                return connection.open().onSuccessContinueWithPromise((response: ConnectionOpenResponse): Promise<IConnection> => {
-                    if (response.statusCode === 200) {
-                        this.privRequestSession.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
-                        this.privRequestSession.onConnectionEstablishCompleted(response.statusCode);
-
-                        return PromiseHelper.fromResult<IConnection>(connection);
-                    } else if (response.statusCode === 403 && !isUnAuthorized) {
-                        return this.connectImpl(true);
-                    } else {
-                        this.privRequestSession.onConnectionEstablishCompleted(response.statusCode, response.reason);
-                        return PromiseHelper.fromError<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
-                    }
-                });
-            });
-
-        return this.privConnectionPromise;
-    }
-
-    // Takes an established websocket connection to the endpoint and sends speech configuration information.
-    private configureConnection(): Promise<IConnection> {
-        if (this.privConnectionConfigurationPromise) {
-            if (this.privConnectionConfigurationPromise.result().isCompleted &&
-                (this.privConnectionConfigurationPromise.result().isError
-                    || this.privConnectionConfigurationPromise.result().result.state() === ConnectionState.Disconnected)) {
-
-                this.privConnectionConfigurationPromise = null;
-                return this.configureConnection();
-            } else {
-                return this.privConnectionConfigurationPromise;
-            }
-        }
-
-        this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
-            return this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
-                .onSuccessContinueWithPromise((_: boolean) => {
-                    return this.sendAgentConfig(connection).onSuccessContinueWithPromise((_: boolean) => {
-                        return this.sendSpeechContext(connection).onSuccessContinueWithPromise((_: boolean) => {
-                            return this.sendAgentContext(connection).onSuccessContinueWith((_: boolean) => {
-                                return connection;
-                            });
-                        });
-                    });
-                });
-        });
-
-        return this.privConnectionConfigurationPromise;
-    }
-
-    protected receiveMessageOverride: (sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
-
-    private receiveMessage = (
+    protected receiveMessage = (
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallBack: (e: string) => void,
     ): Promise<IConnection> => {
@@ -419,7 +331,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             return connection.read()
                 .onSuccessContinueWithPromise((message: ConnectionMessage) => {
                     if (this.receiveMessageOverride !== undefined) {
-                        return this.receiveMessageOverride(successCallback, errorCallBack);
+                        return this.receiveMessageOverride(message, successCallback, errorCallBack);
                     }
                     if (this.privIsDisposed || !this.privRequestSession.isRecognizing) {
                         // We're done.
@@ -513,6 +425,108 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         });
     }
 
+    protected sendSpeechContext = (connection: IConnection): Promise<boolean> => {
+        const speechContextJson = this.speechContext.toJSON();
+
+        if (speechContextJson) {
+            return connection.send(new SpeechConnectionMessage(
+                MessageType.Text,
+                "speech.context",
+                this.privRequestSession.requestId,
+                "application/json",
+                speechContextJson));
+        }
+        return PromiseHelper.fromResult(true);
+    }
+
+    // Establishes a websocket connection to the end point.
+    private connectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
+        if (this.privConnectionPromise) {
+            if (this.privConnectionPromise.result().isCompleted &&
+                (this.privConnectionPromise.result().isError
+                    || this.privConnectionPromise.result().result.state() === ConnectionState.Disconnected)) {
+                this.privConnectionId = null;
+                this.privConnectionPromise = null;
+                return this.connectImpl();
+            } else {
+                return this.privConnectionPromise;
+            }
+        }
+
+        this.privAuthFetchEventId = createNoDashGuid();
+        this.privConnectionId = createNoDashGuid();
+
+        this.privRequestSession.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
+
+        const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
+
+        this.privConnectionPromise = authPromise
+            .continueWithPromise((result: PromiseResult<AuthInfo>) => {
+                if (result.isError) {
+                    this.privRequestSession.onAuthCompleted(true, result.error);
+                    throw new Error(result.error);
+                } else {
+                    this.privRequestSession.onAuthCompleted(false);
+                }
+
+                const connection: IConnection = this.privConnectionFactory.create(this.privRecognizerConfig, result.result, this.privConnectionId);
+
+                this.privRequestSession.listenForServiceTelemetry(connection.events);
+
+                // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
+                // it'll stop sending events.
+                connection.events.attach((event: ConnectionEvent) => {
+                    this.connectionEvents.onEvent(event);
+                });
+
+                return connection.open().onSuccessContinueWithPromise((response: ConnectionOpenResponse): Promise<IConnection> => {
+                    if (response.statusCode === 200) {
+                        this.privRequestSession.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
+                        this.privRequestSession.onConnectionEstablishCompleted(response.statusCode);
+
+                        return PromiseHelper.fromResult<IConnection>(connection);
+                    } else if (response.statusCode === 403 && !isUnAuthorized) {
+                        return this.connectImpl(true);
+                    } else {
+                        this.privRequestSession.onConnectionEstablishCompleted(response.statusCode, response.reason);
+                        return PromiseHelper.fromError<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
+                    }
+                });
+            });
+
+        return this.privConnectionPromise;
+    }
+
+    // Takes an established websocket connection to the endpoint and sends speech configuration information.
+    private configureConnection(): Promise<IConnection> {
+        if (this.privConnectionConfigurationPromise) {
+            if (this.privConnectionConfigurationPromise.result().isCompleted &&
+                (this.privConnectionConfigurationPromise.result().isError
+                    || this.privConnectionConfigurationPromise.result().result.state() === ConnectionState.Disconnected)) {
+
+                this.privConnectionConfigurationPromise = null;
+                return this.configureConnection();
+            } else {
+                return this.privConnectionConfigurationPromise;
+            }
+        }
+
+        this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
+            return this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
+                .onSuccessContinueWithPromise((_: boolean) => {
+                    return this.sendAgentConfig(connection).onSuccessContinueWithPromise((_: boolean) => {
+                        return this.sendSpeechContext(connection).onSuccessContinueWithPromise((_: boolean) => {
+                            return this.sendAgentContext(connection).onSuccessContinueWith((_: boolean) => {
+                                return connection;
+                            });
+                        });
+                    });
+                });
+        });
+
+        return this.privConnectionConfigurationPromise;
+    }
+
     private sendSpeechServiceConfig = (connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<boolean> => {
         // filter out anything that is not required for the service to work.
         if (ServiceRecognizerBase.telemetryDataEnabled !== true) {
@@ -540,27 +554,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return PromiseHelper.fromResult(true);
     }
 
-    private sendSpeechContext = (connection: IConnection): Promise<boolean> => {
-        const speechContextJson = this.speechContext.toJSON();
-
-        if (speechContextJson) {
-            return connection.send(new SpeechConnectionMessage(
-                MessageType.Text,
-                "speech.context",
-                this.privRequestSession.requestId,
-                "application/json",
-                speechContextJson));
-        }
-        return PromiseHelper.fromResult(true);
-    }
-
     private sendAgentConfig = (connection: IConnection): Promise<boolean> => {
         if (this.agentConfig) {
-
-            const jsonObj = this.agentConfig.get();
-            jsonObj.botInfo.connectionId = this.privConnectionId;
-            this.agentConfig.set(jsonObj);
-
             const agentConfigJson = this.agentConfig.toJsonString();
 
             return connection.send(new SpeechConnectionMessage(
