@@ -18,6 +18,7 @@ import { Contracts } from "./Contracts";
 import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
 import {
     AudioConfig,
+    PropertyCollection,
     Recognizer,
     SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
@@ -35,7 +36,7 @@ export class DialogServiceConnector extends Recognizer {
     /**
      * Initializes an instance of the DialogServiceConnector.
      * @constructor
-     * @param {DialogServiceConfig} speechConfig - Set of properties to configure this recognizer.
+     * @param {DialogServiceConfig} dialogConfig - Set of properties to configure this recognizer.
      * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
      */
     public constructor(dialogConfig: DialogServiceConfig, audioConfig?: AudioConfig) {
@@ -102,6 +103,40 @@ export class DialogServiceConnector extends Recognizer {
      */
     public disconnect(): void {
         this.privReco.disconnect();
+    }
+
+    /**
+     * Gets the authorization token used to communicate with the service.
+     * @member DialogServiceConnector.prototype.authorizationToken
+     * @function
+     * @public
+     * @returns {string} Authorization token.
+     */
+    public get authorizationToken(): string {
+        return this.properties.getProperty(PropertyId.SpeechServiceAuthorization_Token);
+    }
+
+    /**
+     * Sets the authorization token used to communicate with the service.
+     * @member DialogServiceConnector.prototype.authorizationToken
+     * @function
+     * @public
+     * @param {string} token - Authorization token.
+     */
+    public set authorizationToken(token: string) {
+        Contracts.throwIfNullOrWhitespace(token, "token");
+        this.properties.setProperty(PropertyId.SpeechServiceAuthorization_Token, token);
+    }
+
+    /**
+     * The collection of properties and their values defined for this DialogServiceConnector.
+     * @member DialogServiceConnector.prototype.properties
+     * @function
+     * @public
+     * @returns {PropertyCollection} The collection of properties and their values defined for this DialogServiceConnector.
+     */
+    public get properties(): PropertyCollection {
+        return this.privProperties;
     }
 
     /**
@@ -198,7 +233,7 @@ export class DialogServiceConnector extends Recognizer {
         return {
             botInfo: {
                 commType: "Default",
-                connectionId: this.privProperties.getProperty(PropertyId.Conversation_ApplicationId)
+                connectionId: this.properties.getProperty(PropertyId.Conversation_ApplicationId)
             },
             version: 0.2
         };

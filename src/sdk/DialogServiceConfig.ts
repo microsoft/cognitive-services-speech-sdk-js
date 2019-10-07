@@ -120,7 +120,17 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
     }
 
     /**
-     * Gets/Sets the speech recognition language.
+     * Gets the speech recognition language.
+     * @member DialogServiceConfigImpl.prototype.speechRecognitionLanguage
+     * @function
+     * @public
+     */
+    public get speechRecognitionLanguage(): string {
+        return this.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
+    }
+
+    /**
+     * Sets the speech recognition language.
      * @member DialogServiceConfigImpl.prototype.speechRecognitionLanguage
      * @function
      * @public
@@ -187,9 +197,16 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
         }
     }
 
+    /**
+     * The subscription key set on the config.
+     * @member DialogServiceConfigImpl.prototype.subscriptionKey
+     * @function
+     * @public
+     */
     public get subscriptionKey(): string {
-        throw new Error("Method not implemented.");
+        return this.properties.getProperty(PropertyId.SpeechServiceConnection_Key);
     }
+
     public get region(): string {
         throw new Error("Method not implemented.");
     }
