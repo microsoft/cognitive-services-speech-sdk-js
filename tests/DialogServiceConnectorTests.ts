@@ -13,10 +13,7 @@ import {
 import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-import { PropertyId } from "../src/sdk/Exports";
 import WaitForCondition from "./Utilities";
-import { validateTelemetry } from "./TelemetryUtil";
-import { ServiceRecognizerBase } from "../src/common.speech/Exports";
 
 let objsToClose: any[];
 
@@ -37,7 +34,7 @@ beforeEach(() => {
 afterEach(() => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
+    objsToClose.forEach((value: any) => {
         if (typeof value.close === "function") {
             value.close();
         }
@@ -150,11 +147,11 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             console.info("Error code: %d, error details: %s, error reason: %d", args.errorCode, args.errorDetails, args.reason);
         };
 
-        connection.connected = (args: sdk.ConnectionEventArgs) => {
+        connection.connected = () => {
             connected = true;
         };
 
-        connection.disconnected = (args: sdk.ConnectionEventArgs) => {
+        connection.disconnected = () => {
             done();
         };
 
@@ -177,15 +174,13 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
 
-        let telemetryEvents: number = 0;
         let sessionId: string;
-        let hypoCounter: number = 0;
 
         connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
             sessionId = e.sessionId;
         };
 
-        connector.recognizing = (s: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
+        connector.recognizing = (): void => {
             hypoCounter++;
         };
 
