@@ -256,6 +256,31 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public static telemetryData: (json: string) => void;
     public static telemetryDataEnabled: boolean = true;
 
+    public sendMessage = (message: string): void => {
+
+        const interactionGuid: string = createGuid();
+        const requestId: string = createNoDashGuid();
+
+        const agentMessage: any = {
+            context: {
+                interactionId: interactionGuid
+            },
+            messagePayload: message,
+            version: 0.5
+        };
+
+        const agentMessageJson = JSON.stringify(agentMessage);
+
+        this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
+            connection.send(new SpeechConnectionMessage(
+                MessageType.Text,
+                "agent",
+                requestId,
+                "application/json",
+                agentMessageJson));
+        });
+    }
+
     protected abstract processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
         successCallback?: (e: SpeechRecognitionResult) => void,

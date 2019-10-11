@@ -174,6 +174,9 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
         objsToClose.push(dialogConfig);
 
+        dialogConfig.setProxy("localhost", 8888);
+        //dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
+
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
 
@@ -235,5 +238,148 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             done.fail(error);
         });
 
+    });
+
+    test("Multiple ListenOnceAsync", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: Multiple ListenOnceAsync");
+
+        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        objsToClose.push(dialogConfig);
+
+        dialogConfig.setProxy("localhost", 8888);
+        dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
+
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
+        objsToClose.push(connector);
+
+        let sessionId: string;
+
+        let firstReco: boolean = false;
+        let connected: number = 0;
+        let disconnected: boolean = false;
+
+        const connection: sdk.Connection = sdk.Connection.fromRecognizer(connector);
+
+        connection.connected = (e: sdk.ConnectionEventArgs): void => {
+            connected++;
+        }
+
+        connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
+            sessionId = e.sessionId;
+        };
+
+        connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+            try {
+                expect(e.activity).not.toBeNull();
+            }
+            catch (error) {
+                done.fail(error);
+            }
+        }
+
+        connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error){
+                done.fail(error);
+            }
+        }
+
+        connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+            expect(e.sessionId).toEqual(sessionId);
+        }
+
+        connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            expect(result).not.toBeUndefined();
+            expect(result.errorDetails).toBeUndefined();
+            expect(result.text).not.toBeUndefined();
+            firstReco = true;
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+
+        WaitForCondition(() => {
+            return firstReco;}
+            , () => {
+            connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult) => {
+                expect(result2).not.toBeUndefined();
+                expect(connected).toEqual(1);
+                expect(disconnected).toEqual(false);
+                done();
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+        });
+    }, 15000);
+
+    test("Send/Receive messages", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: Send/Receive messages");
+
+        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        objsToClose.push(dialogConfig);
+
+        dialogConfig.setProxy("localhost", 8888);
+
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
+        objsToClose.push(connector);
+
+        let telemetryEvents: number = 0;
+        let sessionId: string;
+        let hypoCounter: number = 0;
+
+        connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
+            sessionId = e.sessionId;
+        };
+
+        connector.recognizing = (s: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
+            hypoCounter++;
+        };
+
+        // ServiceRecognizerBase.telemetryData = (json: string): void => {
+        //     // Only record telemetry events from this session.
+        //     if (json !== undefined &&
+        //         sessionId !== undefined &&
+        //         json.indexOf(sessionId) > 0) {
+        //         try {
+        //             expect(hypoCounter).toBeGreaterThanOrEqual(1);
+        //             validateTelemetry(json, 1, hypoCounter);
+        //         } catch (error) {
+        //             done.fail(error);
+        //         }
+        //         telemetryEvents++;
+        //     }
+        // };
+
+        let activityCount: number = 0;
+        connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+            try {
+                expect(e.activity).not.toBeNull();
+                activityCount++;
+            }
+            catch (error) {
+                done.fail(error);
+            }
+        }
+
+        connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error){
+                done.fail(error);
+            }
+        }
+
+        connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+            expect(e.sessionId).toEqual(sessionId);
+        }
+
+        const message: any = {"speak":"say this","text":"some text","type":"message type"};
+        connector.sendActivity(message);
+
+        WaitForCondition(() => (activityCount === 1), done);
     });
 });
