@@ -62,15 +62,7 @@ export class DialogConnectionFactory implements IConnectionFactory {
 
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
 
-        // const endpoint: string = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
-
-        // Temporary workaround, connect to SR endpoint
-        // const  interactiveRelativeUri: string = "/speech/recognition/interactive/cognitiveservices/v1";
-        // const host: string = "wss://" + region + ".stt.speech.microsoft.com";
-        // const endpoint = host + interactiveRelativeUri;
-
-        // Temporary INT endpoint
-        const endpoint: string = `wss://int.convai.speech.microsoft.com/api/v3`;
+        const endpoint: string = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
 
         const headers: IStringDictionary<string> = {};
         headers[authHeader] = applicationId;

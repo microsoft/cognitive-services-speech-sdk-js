@@ -47,6 +47,9 @@ export class DialogServiceConnector extends Recognizer {
 
         this.privIsDisposed = false;
         this.privProperties = dialogServiceConfigImpl.properties.clone();
+
+        const agentConfig = this.buildAgentConfig();
+        this.privReco.agentConfig.set(agentConfig);
     }
 
     /**
@@ -153,9 +156,6 @@ export class DialogServiceConnector extends Recognizer {
 
             this.implRecognizerStop();
 
-            const agentConfig = this.buildAgentConfig();
-            this.privReco.agentConfig.set(agentConfig);
-
             this.implRecognizerStart(
                 RecognitionMode.Conversation,
                 (e: SpeechRecognitionResult) => {
@@ -186,8 +186,8 @@ export class DialogServiceConnector extends Recognizer {
         }
     }
 
-    public sendActivity(activity: string, cb: (interactionId: string) => void): void {
-        return;
+    public sendActivity(activity: string): void {
+        this.privReco.sendMessage(activity);
     }
 
     /**
@@ -230,9 +230,11 @@ export class DialogServiceConnector extends Recognizer {
     }
 
     private buildAgentConfig(): IAgentConfig {
+        const communicationType = this.properties.getProperty("Conversation_Communication_Type", "Default");
+
         return {
             botInfo: {
-                commType: "Default",
+                commType: communicationType,
                 connectionId: this.properties.getProperty(PropertyId.Conversation_ApplicationId)
             },
             version: 0.2

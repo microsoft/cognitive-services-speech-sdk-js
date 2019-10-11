@@ -3,6 +3,7 @@
 
 import {
     ConnectionMessage,
+    createGuid,
     IAudioSource,
     IConnection,
     MessageType,
@@ -20,6 +21,7 @@ import {
     SessionEventArgs,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
+    SpeechRecognitionCanceledEventArgs,
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
@@ -151,40 +153,39 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         errorCode: CancellationErrorCode,
         error: string,
         cancelRecoCallback: (e: SpeechRecognitionResult) => void): void {
-        return;
-    //     if (!!this.privTranslationRecognizer.canceled) {
-    //         const properties: PropertyCollection = new PropertyCollection();
-    //         properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
-    //         const cancelEvent: TranslationRecognitionCanceledEventArgs = new TranslationRecognitionCanceledEventArgs(
-    //             sessionId,
-    //             cancellationReason,
-    //             error,
-    //             errorCode,
-    //             undefined);
+        if (!!this.privDialogServiceConnector.canceled) {
+            const properties: PropertyCollection = new PropertyCollection();
+            properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
-    //         try {
-    //             this.privTranslationRecognizer.canceled(this.privTranslationRecognizer, cancelEvent);
-    //             /* tslint:disable:no-empty */
-    //         } catch { }
+            const cancelEvent: SpeechRecognitionCanceledEventArgs = new SpeechRecognitionCanceledEventArgs(
+                cancellationReason,
+                error,
+                errorCode,
+                undefined,
+                sessionId);
 
-    //         if (!!cancelRecoCallback) {
-    //             const result: TranslationRecognitionResult = new TranslationRecognitionResult(
-    //                 undefined, // Translations
-    //                 requestId,
-    //                 ResultReason.Canceled,
-    //                 undefined, // Text
-    //                 undefined, // Druation
-    //                 undefined, // Offset
-    //                 error,
-    //                 undefined, // Json
-    //                 properties);
-    //             try {
-    //                 cancelRecoCallback(result);
-    //                 /* tslint:disable:no-empty */
-    //             } catch { }
-    //         }
-    //     }
+            try {
+                this.privDialogServiceConnector.canceled(this.privDialogServiceConnector, cancelEvent);
+                /* tslint:disable:no-empty */
+            } catch { }
+
+            if (!!cancelRecoCallback) {
+                const result: SpeechRecognitionResult = new SpeechRecognitionResult(
+                    undefined, // ResultId
+                    ResultReason.Canceled,
+                    undefined, // Text
+                    undefined, // Druation
+                    undefined, // Offset
+                    error,
+                    undefined, // Json
+                    properties);
+                try {
+                    cancelRecoCallback(result);
+                    /* tslint:disable:no-empty */
+                } catch { }
+            }
+        }
     }
 
     private receiveDialogMessageOverride = (
@@ -205,11 +206,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             switch (connectionMessage.path.toLowerCase()) {
                 case "turn.start":
-                //     if (connectionMessage.requestId.toLowerCase() === this.privRequestSession.requestId.toLowerCase())
-                //     {
-
-                //     } else {
-                //     }
                     break;
                 case "speech.startdetected":
                     const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
@@ -288,21 +284,4 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         const ev = new SpeechRecognitionEventArgs(result, offset, this.privRequestSession.sessionId);
         return ev;
     }
-
-    // private sendSynthesisAudio(audio: ArrayBuffer, sessionId: string): void {
-    //     const reason = (undefined === audio) ? ResultReason.SynthesizingAudioCompleted : ResultReason.SynthesizingAudio;
-    //     const result = new TranslationSynthesisResult(reason, audio);
-    //     const retEvent: TranslationSynthesisEventArgs = new TranslationSynthesisEventArgs(result, sessionId);
-
-    //     if (!!this.privTranslationRecognizer.synthesizing) {
-    //         try {
-    //             this.privTranslationRecognizer.synthesizing(this.privTranslationRecognizer, retEvent);
-    //             /* tslint:disable:no-empty */
-    //         } catch (error) {
-    //             // Not going to let errors in the event handler
-    //             // trip things up.
-    //         }
-    //     }
-
-    // }
 }
