@@ -11,8 +11,8 @@ import {
     Events,
     EventType,
 } from "../src/common/Exports";
-import { AudioStreamFormat } from "../src/sdk/Exports";
 import { BaseAudioPlayer } from "../src/sdk/Audio/BaseAudioPlayer";
+import { AudioStreamFormat } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
 import { validateTelemetry } from "./TelemetryUtil";
 import WaitForCondition from "./Utilities";

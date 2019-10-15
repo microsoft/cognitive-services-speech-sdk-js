@@ -108,7 +108,7 @@ export class BaseAudioPlayer {
         const channelCount = this.audioFormat.channels;
         const bufferSource = this.audioContext.createBufferSource();
         const frameCount = this.samples.length / channelCount;
-        const audioBuffer = this.audioContext.createBuffer(channelCount, frameCount, this.audioFormat.bitsPerSample);
+        const audioBuffer = this.audioContext.createBuffer(channelCount, frameCount, this.audioFormat.samplesPerSec);
 
         // TODO: Should we do the conversion in the pushAudioSample instead?
         for (let channel = 0; channel < channelCount; channel++) {
