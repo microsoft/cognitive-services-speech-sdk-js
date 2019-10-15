@@ -32,6 +32,7 @@ import { PropertyId } from "./PropertyId";
  */
 export class DialogServiceConnector extends Recognizer {
     private privIsDisposed: boolean;
+    private privResultCallback: (e: SpeechRecognitionResult) => void;
 
     /**
      * Initializes an instance of the DialogServiceConnector.
@@ -154,6 +155,10 @@ export class DialogServiceConnector extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
 
+            this.connect();
+
+            this.privResultCallback = cb;
+
             this.implRecognizerStop();
 
             this.implRecognizerStart(
@@ -161,8 +166,8 @@ export class DialogServiceConnector extends Recognizer {
                 (e: SpeechRecognitionResult) => {
                     this.implRecognizerStop();
 
-                    if (!!cb) {
-                        cb(e);
+                    if (!!this.privResultCallback) {
+                        this.privResultCallback(e);
                     }
                 },
                 (e: string) => {
@@ -187,7 +192,7 @@ export class DialogServiceConnector extends Recognizer {
     }
 
     public sendActivity(activity: string): void {
-        this.privReco.sendMessage(activity);
+       // this.privReco.sendMessage(activity);
     }
 
     /**

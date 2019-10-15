@@ -70,9 +70,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privSpeechContext: SpeechContext;
     private privDynamicGrammar: DynamicGrammarBuilder;
-    protected privAgentConfig: AgentConfig;
+    private privAgentConfig: AgentConfig;
+    private privRequestSession: RequestSession;
     protected privConnectionId: string;
-    protected privRequestSession: RequestSession;
     protected privRecognizerConfig: RecognizerConfig;
     protected privRecognizer: Recognizer;
 
@@ -150,11 +150,18 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privRecognizerConfig.recognitionMode;
     }
 
+    protected recognizeOverride: (recoMode: RecognitionMode, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
+
     public recognize(
         recoMode: RecognitionMode,
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallBack: (e: string) => void,
     ): Promise<boolean> {
+
+        if (this.recognizeOverride !== undefined)
+        {
+            return this.recognizeOverride(recoMode, successCallback, errorCallBack);
+        }
 
         // Clear the existing configuration promise to force a re-transmission of config and context.
         this.privConnectionConfigurationPromise = null;
@@ -256,31 +263,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public static telemetryData: (json: string) => void;
     public static telemetryDataEnabled: boolean = true;
 
-    public sendMessage = (message: string): void => {
-
-        const interactionGuid: string = createGuid();
-        const requestId: string = createNoDashGuid();
-
-        const agentMessage: any = {
-            context: {
-                interactionId: interactionGuid
-            },
-            messagePayload: message,
-            version: 0.5
-        };
-
-        const agentMessageJson = JSON.stringify(agentMessage);
-
-        this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
-            connection.send(new SpeechConnectionMessage(
-                MessageType.Text,
-                "agent",
-                requestId,
-                "application/json",
-                agentMessageJson));
-        });
-    }
-
     protected abstract processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
         successCallback?: (e: SpeechRecognitionResult) => void,
@@ -342,7 +324,14 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
-    protected fetchConnection = (): Promise<IConnection> => {
+    protected fetchConnectionOverride: () => any = undefined;
+
+    private fetchConnection = (): Promise<IConnection> => {
+        if (this.fetchConnectionOverride !== undefined)
+        {
+            return this.fetchConnectionOverride();
+        }
+
         return this.configureConnection();
     }
 
@@ -464,8 +453,15 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return PromiseHelper.fromResult(true);
     }
 
+    protected connectImplOverride: (isUnAuthorized: boolean) => any = undefined;
+
     // Establishes a websocket connection to the end point.
-    private connectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
+    protected connectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
+
+        if (this.connectImplOverride !== undefined) {
+            return this.connectImplOverride(isUnAuthorized);
+        }
+
         if (this.privConnectionPromise) {
             if (this.privConnectionPromise.result().isCompleted &&
                 (this.privConnectionPromise.result().isError
@@ -522,8 +518,14 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privConnectionPromise;
     }
 
+    protected configConnectionOverride: () => any = undefined;
+
     // Takes an established websocket connection to the endpoint and sends speech configuration information.
     private configureConnection(): Promise<IConnection> {
+        if (this.configConnectionOverride !== undefined) {
+            return this.configConnectionOverride();
+        }
+
         if (this.privConnectionConfigurationPromise) {
             if (this.privConnectionConfigurationPromise.result().isCompleted &&
                 (this.privConnectionConfigurationPromise.result().isError
@@ -539,12 +541,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
             return this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
                 .onSuccessContinueWithPromise((_: boolean) => {
-                    return this.sendAgentConfig(connection).onSuccessContinueWithPromise((_: boolean) => {
-                        return this.sendSpeechContext(connection).onSuccessContinueWithPromise((_: boolean) => {
-                            return this.sendAgentContext(connection).onSuccessContinueWith((_: boolean) => {
-                                return connection;
-                            });
-                        });
+                    return this.sendSpeechContext(connection).onSuccessContinueWith((_: boolean) => {
+                        return connection;
                     });
                 });
         });
@@ -552,7 +550,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privConnectionConfigurationPromise;
     }
 
-    private sendSpeechServiceConfig = (connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<boolean> => {
+    protected sendSpeechServiceConfig = (connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<boolean> => {
         // filter out anything that is not required for the service to work.
         if (ServiceRecognizerBase.telemetryDataEnabled !== true) {
             const withTelemetry = JSON.parse(SpeechServiceConfigJson);
@@ -579,42 +577,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return PromiseHelper.fromResult(true);
     }
 
-    private sendAgentConfig = (connection: IConnection): Promise<boolean> => {
-        if (this.agentConfig) {
-            const agentConfigJson = this.agentConfig.toJsonString();
-
-            return connection.send(new SpeechConnectionMessage(
-                MessageType.Text,
-                "agent.config",
-                this.privRequestSession.requestId,
-                "application/json",
-                agentConfigJson));
-        }
-
-        return PromiseHelper.fromResult(true);
-    }
-
-    private sendAgentContext = (connection: IConnection): Promise<boolean> => {
-        const guid: string = createGuid();
-
-        const agentContext: any = {
-            channelData: "",
-            context: {
-                interactionId: guid
-            },
-            version: 0.5
-        };
-
-        const agentContextJson = JSON.stringify(agentContext);
-
-        return connection.send(new SpeechConnectionMessage(
-            MessageType.Text,
-            "speech.agent.context",
-            this.privRequestSession.requestId,
-            "application/json",
-            agentContextJson));
-    }
-
     private sendFinalAudio(): Promise<boolean> {
         const deferred = new Deferred<boolean>();
 
@@ -631,7 +593,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return deferred.promise();
     }
 
-    private sendAudio = (
+    protected sendAudio = (
         audioStreamNode: IAudioStreamNode): Promise<boolean> => {
         // NOTE: Home-baked promises crash ios safari during the invocation
         // of the error callback chain (looks like the recursion is way too deep, and
