@@ -71,7 +71,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privSpeechContext: SpeechContext;
     private privDynamicGrammar: DynamicGrammarBuilder;
     private privAgentConfig: AgentConfig;
-    private privRequestSession: RequestSession;
+    protected privRequestSession: RequestSession;
     protected privConnectionId: string;
     protected privRecognizerConfig: RecognizerConfig;
     protected privRecognizer: Recognizer;
@@ -158,8 +158,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         errorCallBack: (e: string) => void,
     ): Promise<boolean> {
 
-        if (this.recognizeOverride !== undefined)
-        {
+        if (this.recognizeOverride !== undefined) {
             return this.recognizeOverride(recoMode, successCallback, errorCallBack);
         }
 
@@ -322,17 +321,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 error,
                 cancelRecoCallback);
         }
-    }
-
-    protected fetchConnectionOverride: () => any = undefined;
-
-    private fetchConnection = (): Promise<IConnection> => {
-        if (this.fetchConnectionOverride !== undefined)
-        {
-            return this.fetchConnectionOverride();
-        }
-
-        return this.configureConnection();
     }
 
     protected receiveMessageOverride: (message: ConnectionMessage, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
@@ -516,35 +504,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected configConnectionOverride: () => any = undefined;
 
-    // Takes an established websocket connection to the endpoint and sends speech configuration information.
-    private configureConnection(): Promise<IConnection> {
-        if (this.configConnectionOverride !== undefined) {
-            return this.configConnectionOverride();
-        }
-
-        if (this.privConnectionConfigurationPromise) {
-            if (this.privConnectionConfigurationPromise.result().isCompleted &&
-                (this.privConnectionConfigurationPromise.result().isError
-                    || this.privConnectionConfigurationPromise.result().result.state() === ConnectionState.Disconnected)) {
-
-                this.privConnectionConfigurationPromise = null;
-                return this.configureConnection();
-            } else {
-                return this.privConnectionConfigurationPromise;
-            }
-        }
-
-        this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
-            return this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
-                .onSuccessContinueWithPromise((_: boolean) => {
-                    return this.sendSpeechContext(connection).onSuccessContinueWith((_: boolean) => {
-                        return connection;
-                    });
-                });
-        });
-
-        return this.privConnectionConfigurationPromise;
-    }
+    protected fetchConnectionOverride: () => any = undefined;
 
     protected sendSpeechServiceConfig = (connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<boolean> => {
         // filter out anything that is not required for the service to work.
@@ -571,22 +531,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         return PromiseHelper.fromResult(true);
-    }
-
-    private sendFinalAudio(): Promise<boolean> {
-        const deferred = new Deferred<boolean>();
-
-        this.fetchConnection().on((connection: IConnection) => {
-            connection.send(new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, null)).on((_: boolean) => {
-                deferred.resolve(true);
-            }, (error: string) => {
-                deferred.reject(error);
-            });
-        }, (error: string) => {
-            deferred.reject(error);
-        });
-
-        return deferred.promise();
     }
 
     protected sendAudio = (
@@ -689,5 +633,59 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         readAndUploadCycle();
 
         return deferred.promise();
+    }
+
+    private sendFinalAudio(): Promise<boolean> {
+        const deferred = new Deferred<boolean>();
+
+        this.fetchConnection().on((connection: IConnection) => {
+            connection.send(new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, null)).on((_: boolean) => {
+                deferred.resolve(true);
+            }, (error: string) => {
+                deferred.reject(error);
+            });
+        }, (error: string) => {
+            deferred.reject(error);
+        });
+
+        return deferred.promise();
+    }
+
+    private fetchConnection = (): Promise<IConnection> => {
+        if (this.fetchConnectionOverride !== undefined) {
+            return this.fetchConnectionOverride();
+        }
+
+        return this.configureConnection();
+    }
+
+    // Takes an established websocket connection to the endpoint and sends speech configuration information.
+    private configureConnection(): Promise<IConnection> {
+        if (this.configConnectionOverride !== undefined) {
+            return this.configConnectionOverride();
+        }
+
+        if (this.privConnectionConfigurationPromise) {
+            if (this.privConnectionConfigurationPromise.result().isCompleted &&
+                (this.privConnectionConfigurationPromise.result().isError
+                    || this.privConnectionConfigurationPromise.result().result.state() === ConnectionState.Disconnected)) {
+
+                this.privConnectionConfigurationPromise = null;
+                return this.configureConnection();
+            } else {
+                return this.privConnectionConfigurationPromise;
+            }
+        }
+
+        this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
+            return this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
+                .onSuccessContinueWithPromise((_: boolean) => {
+                    return this.sendSpeechContext(connection).onSuccessContinueWith((_: boolean) => {
+                        return connection;
+                    });
+                });
+        });
+
+        return this.privConnectionConfigurationPromise;
     }
 }
