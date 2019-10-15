@@ -30,9 +30,9 @@ import {
     RecognitionEventArgs,
     ResultReason,
     SessionEventArgs,
+    SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
-    SpeechRecognitionCanceledEventArgs,
 } from "../sdk/Exports";
 import {
     AgentConfig,
@@ -46,9 +46,9 @@ import {
     SpeechDetected,
     SpeechHypothesis,
 } from "./Exports";
-import { AuthInfo,IAuthentication } from "./IAuthentication";
+import { AuthInfo, IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig, RecognitionMode } from "./RecognizerConfig";
+import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 export class DialogServiceAdapter extends ServiceRecognizerBase {
@@ -90,7 +90,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privDialogIsDisposed = false;
     }
 
-    public isDisposed() {
+    public isDisposed(): boolean {
         return this.privDialogIsDisposed;
     }
 
@@ -309,6 +309,108 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 });
         }
 
+        protected sendAudio = (
+            audioStreamNode: IAudioStreamNode): Promise<boolean> => {
+            // NOTE: Home-baked promises crash ios safari during the invocation
+            // of the error callback chain (looks like the recursion is way too deep, and
+            // it blows up the stack). The following construct is a stop-gap that does not
+            // bubble the error up the callback chain and hence circumvents this problem.
+            // TODO: rewrite with ES6 promises.
+            const deferred = new Deferred<boolean>();
+
+            // The time we last sent data to the service.
+            let nextSendTime: number = Date.now();
+
+            const audioFormat: AudioStreamFormatImpl = this.privDialogAudioSource.format as AudioStreamFormatImpl;
+
+            // Max amount to send before we start to throttle
+            const fastLaneSizeMs: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-TransmitLengthBeforThrottleMs", "5000");
+            const maxSendUnthrottledBytes: number = audioFormat.avgBytesPerSec / 1000 * parseInt(fastLaneSizeMs, 10);
+            const startRecogNumber: number = this.privDialogRequestSession.recogNumber;
+
+            const readAndUploadCycle = () => {
+
+                // If speech is done, stop sending audio.
+                if (!this.privDialogIsDisposed &&
+                    !this.privDialogRequestSession.isSpeechEnded &&
+                    this.privDialogRequestSession.isRecognizing &&
+                    this.privDialogRequestSession.recogNumber === startRecogNumber) {
+                    this.fetchDialogConnection().on((connection: IConnection) => {
+                        audioStreamNode.read().on(
+                            (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
+                                // we have a new audio chunk to upload.
+                                if (this.privDialogRequestSession.isSpeechEnded) {
+                                    // If service already recognized audio end then don't send any more audio
+                                    deferred.resolve(true);
+                                    return;
+                                }
+
+                                let payload: ArrayBuffer;
+                                let sendDelay: number;
+
+                                if (audioStreamChunk.isEnd) {
+                                    payload = null;
+                                    sendDelay = 0;
+                                } else {
+                                    payload = audioStreamChunk.buffer;
+                                    this.privDialogRequestSession.onAudioSent(payload.byteLength);
+
+                                    if (maxSendUnthrottledBytes >= this.privDialogRequestSession.bytesSent) {
+                                        sendDelay = 0;
+                                    } else {
+                                        sendDelay = Math.max(0, nextSendTime - Date.now());
+                                    }
+                                }
+
+                                // Are we ready to send, or need we delay more?
+                                setTimeout(() => {
+                                    if (payload !== null) {
+                                        nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
+                                    }
+
+                                    const uploaded: Promise<boolean> = connection.send(
+                                        new SpeechConnectionMessage(
+                                            MessageType.Binary, "audio", this.privDialogRequestSession.requestId, null, payload));
+
+                                    if (!audioStreamChunk.isEnd) {
+                                        uploaded.continueWith((_: PromiseResult<boolean>) => {
+
+                                            // Regardless of success or failure, schedule the next upload.
+                                            // If the underlying connection was broken, the next cycle will
+                                            // get a new connection and re-transmit missing audio automatically.
+                                            readAndUploadCycle();
+                                        });
+                                    } else {
+                                        // the audio stream has been closed, no need to schedule next
+                                        // read-upload cycle.
+                                        this.privDialogRequestSession.onSpeechEnded();
+                                        deferred.resolve(true);
+                                    }
+                                }, sendDelay);
+                            },
+                            (error: string) => {
+                                if (this.privDialogRequestSession.isSpeechEnded) {
+                                    // For whatever reason, Reject is used to remove queue subscribers inside
+                                    // the Queue.DrainAndDispose invoked from DetachAudioNode down below, which
+                                    // means that sometimes things can be rejected in normal circumstances, without
+                                    // any errors.
+                                    deferred.resolve(true); // TODO: remove the argument, it's is completely meaningless.
+                                } else {
+                                    // Only reject, if there was a proper error.
+                                    deferred.reject(error);
+                                }
+                            });
+                    }, (error: string) => {
+                        deferred.reject(error);
+                    });
+                }
+            };
+
+            readAndUploadCycle();
+
+            return deferred.promise();
+        }
+
     // Establishes a websocket connection to the end point.
     private dialogConnectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
         if (this.privDialogConnectionPromise) {
@@ -463,9 +565,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             return this.sendSpeechServiceConfig(connection, this.privDialogRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
                 .onSuccessContinueWithPromise((_: boolean) => {
                     return this.sendAgentConfig(connection).onSuccessContinueWith((_: boolean) => {
-                        //return this.sendAgentContext(connection).onSuccessContinueWith((_: boolean) => {
-                            return connection;
-                        //});
+                        return connection;
                     });
                 });
         });
@@ -480,7 +580,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private sendPreAudioMessages(): void {
         this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection): void => {
             this.sendAgentContext(connection);
-        })
+        });
     }
 
     private sendMessage = (message: string): void => {
@@ -561,108 +661,5 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         const ev = new SpeechRecognitionEventArgs(result, offset, this.privDialogRequestSession.sessionId);
         return ev;
-    }
-
-
-    protected sendAudio = (
-        audioStreamNode: IAudioStreamNode): Promise<boolean> => {
-        // NOTE: Home-baked promises crash ios safari during the invocation
-        // of the error callback chain (looks like the recursion is way too deep, and
-        // it blows up the stack). The following construct is a stop-gap that does not
-        // bubble the error up the callback chain and hence circumvents this problem.
-        // TODO: rewrite with ES6 promises.
-        const deferred = new Deferred<boolean>();
-
-        // The time we last sent data to the service.
-        let nextSendTime: number = Date.now();
-
-        const audioFormat: AudioStreamFormatImpl = this.privDialogAudioSource.format as AudioStreamFormatImpl;
-
-        // Max amount to send before we start to throttle
-        const fastLaneSizeMs: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-TransmitLengthBeforThrottleMs", "5000");
-        const maxSendUnthrottledBytes: number = audioFormat.avgBytesPerSec / 1000 * parseInt(fastLaneSizeMs, 10);
-        const startRecogNumber: number = this.privDialogRequestSession.recogNumber;
-
-        const readAndUploadCycle = () => {
-
-            // If speech is done, stop sending audio.
-            if (!this.privDialogIsDisposed &&
-                !this.privDialogRequestSession.isSpeechEnded &&
-                this.privDialogRequestSession.isRecognizing &&
-                this.privDialogRequestSession.recogNumber === startRecogNumber) {
-                this.fetchDialogConnection().on((connection: IConnection) => {
-                    audioStreamNode.read().on(
-                        (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
-                            // we have a new audio chunk to upload.
-                            if (this.privDialogRequestSession.isSpeechEnded) {
-                                // If service already recognized audio end then don't send any more audio
-                                deferred.resolve(true);
-                                return;
-                            }
-
-                            let payload: ArrayBuffer;
-                            let sendDelay: number;
-
-                            if (audioStreamChunk.isEnd) {
-                                payload = null;
-                                sendDelay = 0;
-                            } else {
-                                payload = audioStreamChunk.buffer;
-                                this.privDialogRequestSession.onAudioSent(payload.byteLength);
-
-                                if (maxSendUnthrottledBytes >= this.privDialogRequestSession.bytesSent) {
-                                    sendDelay = 0;
-                                } else {
-                                    sendDelay = Math.max(0, nextSendTime - Date.now());
-                                }
-                            }
-
-                            // Are we ready to send, or need we delay more?
-                            setTimeout(() => {
-                                if (payload !== null) {
-                                    nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
-                                }
-
-                                const uploaded: Promise<boolean> = connection.send(
-                                    new SpeechConnectionMessage(
-                                        MessageType.Binary, "audio", this.privDialogRequestSession.requestId, null, payload));
-
-                                if (!audioStreamChunk.isEnd) {
-                                    uploaded.continueWith((_: PromiseResult<boolean>) => {
-
-                                        // Regardless of success or failure, schedule the next upload.
-                                        // If the underlying connection was broken, the next cycle will
-                                        // get a new connection and re-transmit missing audio automatically.
-                                        readAndUploadCycle();
-                                    });
-                                } else {
-                                    // the audio stream has been closed, no need to schedule next
-                                    // read-upload cycle.
-                                    this.privDialogRequestSession.onSpeechEnded();
-                                    deferred.resolve(true);
-                                }
-                            }, sendDelay);
-                        },
-                        (error: string) => {
-                            if (this.privDialogRequestSession.isSpeechEnded) {
-                                // For whatever reason, Reject is used to remove queue subscribers inside
-                                // the Queue.DrainAndDispose invoked from DetachAudioNode down below, which
-                                // means that sometimes things can be rejected in normal circumstances, without
-                                // any errors.
-                                deferred.resolve(true); // TODO: remove the argument, it's is completely meaningless.
-                            } else {
-                                // Only reject, if there was a proper error.
-                                deferred.reject(error);
-                            }
-                        });
-                }, (error: string) => {
-                    deferred.reject(error);
-                });
-            }
-        };
-
-        readAndUploadCycle();
-
-        return deferred.promise();
     }
 }
