@@ -45,3 +45,4 @@ export { DialogServiceConnector } from "./DialogServiceConnector";
 export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 export { ServicePropertyChannel } from "./ServicePropertyChannel";
 export { ProfanityOption } from "./ProfanityOption";
+export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";
