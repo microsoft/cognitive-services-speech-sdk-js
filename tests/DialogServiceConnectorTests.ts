@@ -175,7 +175,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(dialogConfig);
 
         dialogConfig.setProxy("localhost", 8888);
-        //dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
+        dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -301,13 +301,19 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         });
 
         WaitForCondition(() => {
-            return firstReco;}
-            , () => {
+            return firstReco;
+        }, () => {
             connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult) => {
-                expect(result2).not.toBeUndefined();
-                expect(connected).toEqual(1);
-                expect(disconnected).toEqual(false);
-                done();
+                try {
+                    const recoResult: sdk.SpeechRecognitionResult = result2;
+                    expect(recoResult).not.toBeUndefined();
+                    expect(recoResult.text).toEqual("What's the weather like?");
+                    expect(connected).toEqual(1);
+                    expect(disconnected).toEqual(false);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 done.fail(error);
