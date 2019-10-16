@@ -4,6 +4,7 @@
 import { DialogConnectionFactory } from "../common.speech/DialogConnectorFactory";
 import {
     DialogServiceAdapter,
+    IAgentConfig,
     IAuthentication,
     IConnectionFactory,
     RecognitionMode,
@@ -17,10 +18,13 @@ import { Contracts } from "./Contracts";
 import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
 import {
     AudioConfig,
+    PropertyCollection,
     Recognizer,
     SpeechRecognitionCanceledEventArgs,
-    SpeechRecognitionEventArgs
+    SpeechRecognitionEventArgs,
+    SpeechRecognitionResult
 } from "./Exports";
+import { PropertyId } from "./PropertyId";
 
 /**
  * Dialog Service Connector
@@ -32,7 +36,7 @@ export class DialogServiceConnector extends Recognizer {
     /**
      * Initializes an instance of the DialogServiceConnector.
      * @constructor
-     * @param {DialogServiceConfig} speechConfig - Set of properties to configure this recognizer.
+     * @param {DialogServiceConfig} dialogConfig - Set of properties to configure this recognizer.
      * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
      */
     public constructor(dialogConfig: DialogServiceConfig, audioConfig?: AudioConfig) {
@@ -43,6 +47,9 @@ export class DialogServiceConnector extends Recognizer {
 
         this.privIsDisposed = false;
         this.privProperties = dialogServiceConfigImpl.properties.clone();
+
+        const agentConfig = this.buildAgentConfig();
+        this.privReco.agentConfig.set(agentConfig);
     }
 
     /**
@@ -102,51 +109,85 @@ export class DialogServiceConnector extends Recognizer {
     }
 
     /**
-     * Starts recognition and stops after the first utterance is recognized.
-     * @member DialogServiceConnector.prototype.recognizeOnceAsync
+     * Gets the authorization token used to communicate with the service.
+     * @member DialogServiceConnector.prototype.authorizationToken
      * @function
      * @public
-     * @param cb - Callback that received the result when the translation has completed.
-     * @param err - Callback invoked in case of an error.
+     * @returns {string} Authorization token.
      */
-    public listenOnceAsync(cb: () => void, err?: (e: string) => void): void {
-        return;
-        // try {
-        //     Contracts.throwIfDisposed(this.privIsDisposed);
-
-        //     this.implRecognizerStop();
-
-        //     this.implRecognizerStart(
-        //         RecognitionMode.Conversation,
-        //         () => {
-        //             this.implRecognizerStop();
-        //             if (!!cb) {
-        //                 cb();
-        //             }
-        //         },
-        //         (e: string) => {
-        //             this.implRecognizerStop();
-        //             if (!!err) {
-        //                 err(e);
-        //             }
-        //         });
-        // } catch (error) {
-        //     if (!!err) {
-        //         if (error instanceof Error) {
-        //             const typedError: Error = error as Error;
-        //             err(typedError.name + ": " + typedError.message);
-        //         } else {
-        //             err(error);
-        //         }
-        //     }
-
-        //     // Destroy the recognizer.
-        //     this.dispose(true);
-        // }
+    public get authorizationToken(): string {
+        return this.properties.getProperty(PropertyId.SpeechServiceAuthorization_Token);
     }
 
-    public sendActivity(activity: string, cb: (interactionId: string) => void): void {
-        return;
+    /**
+     * Sets the authorization token used to communicate with the service.
+     * @member DialogServiceConnector.prototype.authorizationToken
+     * @function
+     * @public
+     * @param {string} token - Authorization token.
+     */
+    public set authorizationToken(token: string) {
+        Contracts.throwIfNullOrWhitespace(token, "token");
+        this.properties.setProperty(PropertyId.SpeechServiceAuthorization_Token, token);
+    }
+
+    /**
+     * The collection of properties and their values defined for this DialogServiceConnector.
+     * @member DialogServiceConnector.prototype.properties
+     * @function
+     * @public
+     * @returns {PropertyCollection} The collection of properties and their values defined for this DialogServiceConnector.
+     */
+    public get properties(): PropertyCollection {
+        return this.privProperties;
+    }
+
+    /**
+     * Starts recognition and stops after the first utterance is recognized.
+     * @member DialogServiceConnector.prototype.listenOnceAsync
+     * @function
+     * @public
+     * @param cb - Callback that received the result when the reco has completed.
+     * @param err - Callback invoked in case of an error.
+     */
+    public listenOnceAsync(cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
+        try {
+            Contracts.throwIfDisposed(this.privIsDisposed);
+
+            this.implRecognizerStop();
+
+            this.implRecognizerStart(
+                RecognitionMode.Conversation,
+                (e: SpeechRecognitionResult) => {
+                    this.implRecognizerStop();
+
+                    if (!!cb) {
+                        cb(e);
+                    }
+                },
+                (e: string) => {
+                    this.implRecognizerStop();
+                    if (!!err) {
+                        err(e);
+                    }
+                });
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
+    }
+
+    public sendActivity(activity: string): void {
+        this.privReco.sendMessage(activity);
     }
 
     /**
@@ -186,5 +227,17 @@ export class DialogServiceConnector extends Recognizer {
         const audioSource: AudioConfigImpl = audioConfig as AudioConfigImpl;
 
         return new DialogServiceAdapter(authentication, connectionFactory, audioSource, recognizerConfig, this);
+    }
+
+    private buildAgentConfig(): IAgentConfig {
+        const communicationType = this.properties.getProperty("Conversation_Communication_Type", "Default");
+
+        return {
+            botInfo: {
+                commType: communicationType,
+                connectionId: this.properties.getProperty(PropertyId.Conversation_ApplicationId)
+            },
+            version: 0.2
+        };
     }
 }
