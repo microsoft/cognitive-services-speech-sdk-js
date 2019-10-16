@@ -323,7 +323,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
-    protected receiveMessageOverride: (message: ConnectionMessage, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
+    protected receiveMessageOverride: (sc?: (e: SpeechRecognitionResult) => void, ec?: (e: string) => void) => any = undefined;
 
     protected receiveMessage = (
         successCallback: (e: SpeechRecognitionResult) => void,
@@ -333,7 +333,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             return connection.read()
                 .onSuccessContinueWithPromise((message: ConnectionMessage) => {
                     if (this.receiveMessageOverride !== undefined) {
-                        return this.receiveMessageOverride(message, successCallback, errorCallBack);
+                        return this.receiveMessageOverride();
                     }
                     if (this.privIsDisposed || !this.privRequestSession.isRecognizing) {
                         // We're done.
