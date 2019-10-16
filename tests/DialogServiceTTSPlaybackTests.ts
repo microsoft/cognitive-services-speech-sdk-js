@@ -82,4 +82,3 @@ test("Play TTS from a file", (done: jest.DoneCallback) => {
 
     // expect(() => sdk.DialogServiceConfig.fromBotSecret(null, null, null)).toThrowError();
 });
-
