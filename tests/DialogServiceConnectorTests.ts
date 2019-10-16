@@ -240,6 +240,78 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
     });
 
+    test.skip("ListenOnceAsync with audio response", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: ListenOnceAsync with audio response");
+
+        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        objsToClose.push(dialogConfig);
+
+        // dialogConfig.setProxy("localhost", 8888);
+        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
+
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatheratthebeach.wav");
+        objsToClose.push(connector);
+
+        let sessionId: string;
+        let hypoCounter: number = 0;
+
+        connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
+            sessionId = e.sessionId;
+        };
+
+        connector.recognizing = (s: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
+            hypoCounter++;
+        };
+
+        // ServiceRecognizerBase.telemetryData = (json: string): void => {
+        //     // Only record telemetry events from this session.
+        //     if (json !== undefined &&
+        //         sessionId !== undefined &&
+        //         json.indexOf(sessionId) > 0) {
+        //         try {
+        //             expect(hypoCounter).toBeGreaterThanOrEqual(1);
+        //             validateTelemetry(json, 1, hypoCounter);
+        //         } catch (error) {
+        //             done.fail(error);
+        //         }
+        //         telemetryEvents++;
+        //     }
+        // };
+
+        connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+            try {
+                expect(e.activity).not.toBeNull();
+                done();
+            }
+            catch (error) {
+                done.fail(error);
+            }
+        }
+
+        connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+            try {
+                done.fail(e.errorDetails);
+            } catch (error){
+                done.fail(error);
+            }
+        }
+
+        connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+            expect(e.sessionId).toEqual(sessionId);
+        }
+
+        connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            expect(result).not.toBeUndefined();
+            expect(result.errorDetails).toBeUndefined();
+            expect(result.text).not.toBeUndefined();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+
+    });
+
     test("Multiple ListenOnceAsync", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: Multiple ListenOnceAsync");

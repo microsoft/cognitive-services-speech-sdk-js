@@ -9,19 +9,22 @@ import {
     MessageType,
     PromiseHelper,
 } from "../common/Exports";
+import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
 import {
     ActivityReceivedEventArgs,
+    AudioOutputStream,
     CancellationErrorCode,
     CancellationReason,
     DialogServiceConnector,
     PropertyCollection,
     PropertyId,
+    PullAudioOutputStream,
     RecognitionEventArgs,
     ResultReason,
     SessionEventArgs,
+    SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
-    SpeechRecognitionCanceledEventArgs,
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
@@ -35,6 +38,7 @@ import {
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
+import { ActivityPayloadResponse, messageDataStreamType } from "./ServiceMessages/ActivityResponsePayload";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 export class DialogServiceAdapter extends ServiceRecognizerBase {
@@ -129,8 +133,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 }
                 break;
             case "response":
-                const activity = new ActivityReceivedEventArgs(connectionMessage.textBody);
+                const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(connectionMessage.textBody);
+                let pullAudioOutputStream: PullAudioOutputStreamImpl;
+                if (activityPayload.messageDataStreamType === messageDataStreamType.TextToSpeechAudio) {
+                    pullAudioOutputStream = AudioOutputStream.createPullStream() as PullAudioOutputStreamImpl;
+                }
 
+                const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
                 if (!!this.privDialogServiceConnector.activityReceived) {
                     try {
                         this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
