@@ -10,7 +10,7 @@ import {
     Stream,
     StreamReader,
 } from "../../common/Exports";
-import { AudioStreamFormat, PushAudioOutputStreamCallback } from "../Exports";
+import { AudioStreamFormat } from "../Exports";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 
 export const bufferSize: number = 4096;
