@@ -29,14 +29,14 @@ export abstract class AudioOutputStream {
 
     /**
      * Creates a memory backed PullAudioOutputStream with the specified audio format.
-     * @member AudioInputStream.createPushStream
+     * @member AudioInputStream.createPullStream
      * @function
      * @public
      * @param {AudioStreamFormat} format - The audio data format in which audio will be
      *        written to the push audio stream's write() method (currently only support 16 kHz 16bit mono PCM).
      * @returns {PullAudioOutputStream} The audio input stream being created.
      */
-    public static createPushStream(format?: AudioStreamFormat): PullAudioOutputStream {
+    public static createPullStream(format?: AudioStreamFormat): PullAudioOutputStream {
         return PullAudioOutputStream.create(format);
     }
 
@@ -70,13 +70,13 @@ export abstract class PullAudioOutputStream extends AudioOutputStream {
     }
 
     /**
-     * Writes the audio data specified by making an internal copy of the data.
-     * @member PullAudioOutputStream.prototype.write
+     * Reads audio data from the internal buffer.
+     * @member PullAudioOutputStream.prototype.read
      * @function
      * @public
-     * @param {ArrayBuffer} dataBuffer - The audio buffer of which this function will make a copy.
+     * @returns {Promise<ArrayBuffer>} Audio buffer data.
      */
-    public abstract write(dataBuffer: ArrayBuffer): void;
+    public abstract read(): Promise<ArrayBuffer>;
 
     /**
      * Closes the stream.
