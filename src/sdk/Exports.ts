@@ -4,6 +4,7 @@
 export { AudioConfig } from "./Audio/AudioConfig";
 export { AudioStreamFormat } from "./Audio/AudioStreamFormat";
 export { AudioInputStream, PullAudioInputStream, PushAudioInputStream } from "./Audio/AudioInputStream";
+export { AudioOutputStream, PullAudioOutputStream} from "./Audio/AudioOutputStream";
 export { CancellationReason } from "./CancellationReason";
 export { PullAudioInputStreamCallback } from "./Audio/PullAudioInputStreamCallback";
 export { KeywordRecognitionModel } from "./KeywordRecognitionModel";
@@ -45,3 +46,4 @@ export { DialogServiceConnector } from "./DialogServiceConnector";
 export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 export { ServicePropertyChannel } from "./ServicePropertyChannel";
 export { ProfanityOption } from "./ProfanityOption";
+export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";

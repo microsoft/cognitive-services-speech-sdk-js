@@ -7,8 +7,8 @@ import {
 } from "../common.browser/Exports";
 import { IConnection, IStringDictionary } from "../common/Exports";
 import { PropertyId } from "../sdk/Exports";
-import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
 import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
+import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
 import { QueryParameterNames } from "./QueryParameterNames";
 
 const baseUrl: string = "convai.speech.microsoft.com";
