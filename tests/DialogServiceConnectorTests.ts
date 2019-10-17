@@ -192,21 +192,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             hypoCounter++;
         };
 
-        // ServiceRecognizerBase.telemetryData = (json: string): void => {
-        //     // Only record telemetry events from this session.
-        //     if (json !== undefined &&
-        //         sessionId !== undefined &&
-        //         json.indexOf(sessionId) > 0) {
-        //         try {
-        //             expect(hypoCounter).toBeGreaterThanOrEqual(1);
-        //             validateTelemetry(json, 1, hypoCounter);
-        //         } catch (error) {
-        //             done.fail(error);
-        //         }
-        //         telemetryEvents++;
-        //     }
-        // };
-
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
             try {
                 expect(e.activity).not.toBeNull();
@@ -401,6 +386,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(dialogConfig);
 
         dialogConfig.setProxy("localhost", 8888);
+        dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -416,21 +402,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         connector.recognizing = (s: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
             hypoCounter++;
         };
-
-        // ServiceRecognizerBase.telemetryData = (json: string): void => {
-        //     // Only record telemetry events from this session.
-        //     if (json !== undefined &&
-        //         sessionId !== undefined &&
-        //         json.indexOf(sessionId) > 0) {
-        //         try {
-        //             expect(hypoCounter).toBeGreaterThanOrEqual(1);
-        //             validateTelemetry(json, 1, hypoCounter);
-        //         } catch (error) {
-        //             done.fail(error);
-        //         }
-        //         telemetryEvents++;
-        //     }
-        // };
 
         let activityCount: number = 0;
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {

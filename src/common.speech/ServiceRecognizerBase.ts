@@ -239,7 +239,14 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.connectImpl().result();
     }
 
+    protected disconnectOverride: () => any = undefined;
+
     public disconnect(): void {
+        if (this.disconnectOverride !== undefined) {
+            this.disconnectOverride();
+            return;
+        }
+
         this.cancelRecognitionLocal(CancellationReason.Error,
             CancellationErrorCode.NoError,
             "Disconnecting",
@@ -261,6 +268,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     // Used for testing Telemetry capture.
     public static telemetryData: (json: string) => void;
     public static telemetryDataEnabled: boolean = true;
+
+    public sendMessage(message: string): void {}
 
     protected abstract processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,

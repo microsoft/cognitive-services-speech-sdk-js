@@ -189,7 +189,7 @@ export class DialogServiceConnector extends Recognizer {
     }
 
     public sendActivity(activity: string): void {
-       // this.privReco.sendMessage(activity);
+        this.privReco.sendMessage(activity);
     }
 
     /**
