@@ -33,6 +33,6 @@ export class ActivityReceivedEventArgs {
     }
 
     public get audioStream(): PullAudioOutputStream {
-        return this.audioStream;
+        return this.privAudioStream;
     }
 }

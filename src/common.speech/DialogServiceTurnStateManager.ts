@@ -20,6 +20,8 @@ export class DialogServiceTurnStateManager {
         }
         const turnState: DialogServiceTurnState = new DialogServiceTurnState(id);
         this.privTurnMap.set(id, turnState);
+        // tslint:disable-next-line:no-console
+        console.info("Start ghiziturn:" + id);
         return this.privTurnMap.get(id);
     }
 
@@ -31,9 +33,11 @@ export class DialogServiceTurnStateManager {
         if (!this.privTurnMap.has(id)) {
             throw new InvalidOperationError("Service error: Received turn end for an unknown turn id:" + id);
         }
+        // tslint:disable-next-line:no-console
+        console.info("Complete ghiziturn:" + id);
         const turnState = this.privTurnMap.get(id);
-        this.privTurnMap.delete(id);
         turnState.complete();
+        this.privTurnMap.delete(id);
         return turnState;
     }
 }

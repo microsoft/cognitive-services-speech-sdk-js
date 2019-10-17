@@ -268,6 +268,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // trip things up.
                     }
                 }
+                break;
+
             default:
                 break;
         }
@@ -614,6 +616,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                             case "turn.end":
                                 const turnEndRequestId = connectionMessage.requestId.toUpperCase();
                                 // TODO: enable for this recognizer?   this.sendTelemetryData();
+                                // tslint:disable-next-line:no-console
+                                console.info("Turn.end ghiziturn:" + turnEndRequestId);
 
                                 // turn started by the service
                                 if (turnEndRequestId !== this.privRequestSession.requestId.toUpperCase()) {

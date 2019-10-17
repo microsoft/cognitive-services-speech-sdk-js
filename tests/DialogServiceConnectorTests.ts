@@ -174,8 +174,8 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
         objsToClose.push(dialogConfig);
 
-        dialogConfig.setProxy("localhost", 8888);
-        dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
+        // dialogConfig.setProxy("localhost", 8888);
+        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -232,10 +232,10 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
         objsToClose.push(dialogConfig);
 
-        dialogConfig.setProxy("localhost", 8888);
+        // dialogConfig.setProxy("localhost", 8888);
         // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
-        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatheratthebeach.wav");
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatherinthemountain.wav");
         objsToClose.push(connector);
 
         let sessionId: string;
@@ -290,8 +290,10 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.activity).not.toBeNull();
                 if (e.activity.type === "message") {
-                    expect(e.audioStream).not.toBeNull();
-                    audioReadLoop(e.audioStream, done);
+                    if ((e.activity.speak !== null) && (e.activity.speak !== undefined)) {
+                        expect(e.audioStream).not.toBeNull();
+                        audioReadLoop(e.audioStream, done);
+                    }
                 }
             } catch (error) {
                 done.fail(error);
@@ -318,7 +320,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         (error: string) => {
             done.fail(error);
         });
-    });
+    }, 15000);
 
     test("Multiple ListenOnceAsync", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -327,8 +329,8 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
         objsToClose.push(dialogConfig);
 
-        dialogConfig.setProxy("localhost", 8888);
-        dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
+        // dialogConfig.setProxy("localhost", 8888);
+        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -408,8 +410,8 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
         objsToClose.push(dialogConfig);
 
-        dialogConfig.setProxy("localhost", 8888);
-        dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
+        // dialogConfig.setProxy("localhost", 8888);
+        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -452,6 +454,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const message: any = {"speak":"say this","text":"some text","type":"message type"};
         connector.sendActivity(message);
 
-        WaitForCondition(() => (activityCount === 1), done);
+        WaitForCondition(() => (activityCount >= 1), done);
     });
 });
