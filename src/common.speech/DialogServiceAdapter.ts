@@ -267,6 +267,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // trip things up.
                     }
                 }
+                break;
+
             default:
                 break;
         }
@@ -522,12 +524,54 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 case "turn.end":
                     const turnEndRequestId = connectionMessage.requestId.toUpperCase();
 
-                    // turn started by the service
-                    if (turnEndRequestId !== this.privRequestSession.requestId.toUpperCase()) {
-                        this.privTurnStateManager.CompleteTurn(turnEndRequestId);
-                    } else {
-                        // Audio session turn
-                        this.sendTelemetryData();
+                                // turn started by the service
+                                if (turnRequestId !== this.privRequestSession.requestId.toUpperCase()) {
+                                    this.privTurnStateManager.StartTurn(turnRequestId);
+                                }
+                                break;
+                            case "speech.startdetected":
+                                const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
+
+                                const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privDialogRequestSession.sessionId);
+
+                                if (!!this.privRecognizer.speechStartDetected) {
+                                    this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
+                                }
+
+                                break;
+                            case "speech.enddetected":
+
+                                let json: string;
+
+                                if (connectionMessage.textBody.length > 0) {
+                                    json = connectionMessage.textBody;
+                                } else {
+                                    // If the request was empty, the JSON returned is empty.
+                                    json = "{ Offset: 0 }";
+                                }
+
+                                const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
+
+                                this.privDialogRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privDialogRequestSession.currentTurnAudioOffset);
+
+                                const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privDialogRequestSession.currentTurnAudioOffset, this.privDialogRequestSession.sessionId);
+
+                                if (!!this.privRecognizer.speechEndDetected) {
+                                    this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
+                                }
+                                break;
+
+                            case "turn.end":
+                                const turnEndRequestId = connectionMessage.requestId.toUpperCase();
+                                // TODO: enable for this recognizer?   this.sendTelemetryData();
+                                // tslint:disable-next-line:no-console
+                                console.info("Turn.end ghiziturn:" + turnEndRequestId);
+
+                                // turn started by the service
+                                if (turnEndRequestId !== this.privRequestSession.requestId.toUpperCase()) {
+                                    this.privTurnStateManager.CompleteTurn(turnEndRequestId);
+                                } else {
+                                    // Audio session turn
 
                         const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
                         this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);

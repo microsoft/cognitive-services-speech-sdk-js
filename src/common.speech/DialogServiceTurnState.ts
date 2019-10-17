@@ -22,6 +22,8 @@ export class DialogServiceTurnState {
     public processActivityPayload(payload: ActivityPayloadResponse): PullAudioOutputStreamImpl {
         if (payload.messageDataStreamType === MessageDataStreamType.TextToSpeechAudio) {
             this.privAudioStream = AudioOutputStream.createPullStream() as PullAudioOutputStreamImpl;
+            // tslint:disable-next-line:no-console
+            console.info("Audio ghiziturn:" + this.privRequestId);
         }
         return this.privAudioStream;
     }
