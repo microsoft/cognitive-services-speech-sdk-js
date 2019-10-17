@@ -175,7 +175,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(dialogConfig);
 
         dialogConfig.setProxy("localhost", 8888);
-        //dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
+        dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -191,21 +191,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         connector.recognizing = (s: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
             hypoCounter++;
         };
-
-        // ServiceRecognizerBase.telemetryData = (json: string): void => {
-        //     // Only record telemetry events from this session.
-        //     if (json !== undefined &&
-        //         sessionId !== undefined &&
-        //         json.indexOf(sessionId) > 0) {
-        //         try {
-        //             expect(hypoCounter).toBeGreaterThanOrEqual(1);
-        //             validateTelemetry(json, 1, hypoCounter);
-        //         } catch (error) {
-        //             done.fail(error);
-        //         }
-        //         telemetryEvents++;
-        //     }
-        // };
 
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
             try {
@@ -301,13 +286,19 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         });
 
         WaitForCondition(() => {
-            return firstReco;}
-            , () => {
+            return firstReco;
+        }, () => {
             connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult) => {
-                expect(result2).not.toBeUndefined();
-                expect(connected).toEqual(1);
-                expect(disconnected).toEqual(false);
-                done();
+                try {
+                    const recoResult: sdk.SpeechRecognitionResult = result2;
+                    expect(recoResult).not.toBeUndefined();
+                    expect(recoResult.text).toEqual("What's the weather like?");
+                    expect(connected).toEqual(1);
+                    expect(disconnected).toEqual(false);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
             (error: string) => {
                 done.fail(error);
@@ -323,6 +314,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(dialogConfig);
 
         dialogConfig.setProxy("localhost", 8888);
+        dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -338,21 +330,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         connector.recognizing = (s: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
             hypoCounter++;
         };
-
-        // ServiceRecognizerBase.telemetryData = (json: string): void => {
-        //     // Only record telemetry events from this session.
-        //     if (json !== undefined &&
-        //         sessionId !== undefined &&
-        //         json.indexOf(sessionId) > 0) {
-        //         try {
-        //             expect(hypoCounter).toBeGreaterThanOrEqual(1);
-        //             validateTelemetry(json, 1, hypoCounter);
-        //         } catch (error) {
-        //             done.fail(error);
-        //         }
-        //         telemetryEvents++;
-        //     }
-        // };
 
         let activityCount: number = 0;
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {

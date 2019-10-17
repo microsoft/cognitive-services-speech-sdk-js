@@ -154,6 +154,8 @@ export class DialogServiceConnector extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
 
+            this.connect();
+
             this.implRecognizerStop();
 
             this.implRecognizerStart(
