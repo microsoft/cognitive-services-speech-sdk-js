@@ -69,6 +69,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privDialogConnectionPromise: Promise<IConnection>;
 
     private privSuccessCallback: (e: SpeechRecognitionResult) => void;
+    private privConnectionLoop: Promise<IConnection>;
+    private terminateMessageLoop: boolean;
 
     public constructor(
         authentication: IAuthentication,
@@ -86,6 +88,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.connectImplOverride = this.dialogConnectImpl;
         this.configConnectionOverride = this.configConnection;
         this.fetchConnectionOverride = this.fetchDialogConnection;
+        this.disconnectOverride = this.privDisconnect;
         this.privDialogAudioSource = audioSource;
         this.privDialogRequestSession = new RequestSession(audioSource.id());
         this.privDialogConnectionFactory = connectionFactory;
@@ -101,6 +104,54 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         if (this.privConnectionConfigPromise) {
             this.privConnectionConfigPromise.onSuccessContinueWith((connection: IConnection) => {
                 connection.dispose(reason);
+            });
+        }
+    }
+
+    public sendMessage = (message: string): void => {
+
+        this.dialogConnectImpl();
+
+        this.sendPreAudioMessages();
+
+        const interactionGuid: string = createGuid();
+        const requestId: string = createNoDashGuid();
+
+        const agentMessage: any = {
+            context: {
+                interactionId: interactionGuid
+            },
+            messagePayload: message,
+            version: 0.5
+        };
+
+        const agentMessageJson = JSON.stringify(agentMessage);
+
+        this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection) => {
+            connection.send(new SpeechConnectionMessage(
+                MessageType.Text,
+                "agent",
+                requestId,
+                "application/json",
+                agentMessageJson));
+        });
+    }
+
+    protected privDisconnect(): void {
+        this.cancelRecognitionLocal(CancellationReason.Error,
+            CancellationErrorCode.NoError,
+            "Disconnecting",
+            undefined);
+
+        this.terminateMessageLoop = true;
+        if (this.privDialogConnectionPromise.result().isCompleted) {
+            if (!this.privDialogConnectionPromise.result().isError) {
+                this.privDialogConnectionPromise.result().result.dispose();
+                this.privDialogConnectionPromise = null;
+            }
+        } else {
+            this.privDialogConnectionPromise.onSuccessContinueWith((connection: IConnection) => {
+                connection.dispose();
             });
         }
     }
@@ -467,19 +518,25 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 });
             });
 
+        this.privConnectionLoop = this.startMessageLoop();
         return this.privDialogConnectionPromise;
     }
 
     private receiveDialogMessageOverride = (
         successCallback?: (e: SpeechRecognitionResult) => void,
         errorCallBack?: (e: string) => void
-        ): any => {
-            return this.fetchConnectionOverride().on((connection: IConnection): Promise<IConnection> => {
+        ): Promise<IConnection> => {
+
+            // we won't rely on the cascading promises of the connection since we want to continually be available to receive messages
+            const communicationCustodian: Deferred<IConnection> = new Deferred<IConnection>();
+
+            this.fetchDialogConnection().on((connection: IConnection): Promise<IConnection> => {
                 return connection.read()
-                    .onSuccessContinueWithPromise((message: ConnectionMessage) => {
-                        if (this.isDisposed()) {
+                    .onSuccessContinueWithPromise((message: ConnectionMessage): Promise<IConnection> => {
+                        if (this.isDisposed() || this.terminateMessageLoop) {
                             // We're done.
-                            return PromiseHelper.fromResult(undefined);
+                            communicationCustodian.resolve(undefined);
+                            return PromiseHelper.fromResult<IConnection>(undefined);
                         }
 
                         if (!message) {
@@ -523,7 +580,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 }
                                 break;
                             case "turn.end":
-                                this.sendTelemetryData();
+                                // TODO: enable for this recognizer?   this.sendTelemetryData();
 
                                 const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privDialogRequestSession.sessionId);
                                 this.privDialogRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
@@ -533,7 +590,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                         this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                                     }
                                 } else {
-                                    this.fetchConnectionOverride().onSuccessContinueWith((connection: IConnection) => {
+                                    this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection) => {
                                         this.sendSpeechContext(connection);
                                     });
                                 }
@@ -548,17 +605,19 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         return this.receiveDialogMessageOverride();
                 });
             }, (error: string) => {
-                this.privSuccessCallback = undefined;
+                this.terminateMessageLoop = true;
             });
+
+            return communicationCustodian.promise();
         }
 
-    private startMessageLoop(): Promise<boolean> {
+    private startMessageLoop(): Promise<IConnection> {
+
+        this.terminateMessageLoop = false;
 
         const messageRetrievalPromise = this.receiveDialogMessageOverride();
 
-        const completionPromise = PromiseHelper.whenAll([messageRetrievalPromise]);
-
-        return completionPromise.on((r: boolean) => {
+        return messageRetrievalPromise.on((r: IConnection) => {
             return true;
         }, (error: string) => {
             this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error, this.privSuccessCallback/*successCallback*/);
@@ -588,8 +647,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 });
         });
 
-        this.startMessageLoop();
-
         return this.privConnectionConfigPromise;
     }
 
@@ -600,31 +657,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private sendPreAudioMessages(): void {
         this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection): void => {
             this.sendAgentContext(connection);
-        });
-    }
-
-    private sendMessage = (message: string): void => {
-
-        const interactionGuid: string = createGuid();
-        const requestId: string = createNoDashGuid();
-
-        const agentMessage: any = {
-            context: {
-                interactionId: interactionGuid
-            },
-            messagePayload: message,
-            version: 0.5
-        };
-
-        const agentMessageJson = JSON.stringify(agentMessage);
-
-        this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection) => {
-            connection.send(new SpeechConnectionMessage(
-                MessageType.Text,
-                "agent",
-                requestId,
-                "application/json",
-                agentMessageJson));
         });
     }
 
