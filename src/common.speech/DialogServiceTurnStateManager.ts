@@ -18,7 +18,7 @@ export class DialogServiceTurnStateManager {
         if (this.privTurnMap.has(id)) {
             throw new InvalidOperationError("Service error: There is already a turn with id:" + id);
         }
-        const turnState: DialogServiceTurnState = new DialogServiceTurnState(id);
+        const turnState: DialogServiceTurnState = new DialogServiceTurnState(this, id);
         this.privTurnMap.set(id, turnState);
         // tslint:disable-next-line:no-console
         console.info("Start debugturn:" + id);

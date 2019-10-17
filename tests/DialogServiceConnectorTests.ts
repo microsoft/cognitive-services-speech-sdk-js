@@ -13,10 +13,35 @@ import {
 import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-import { PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
+import { PullAudioOutputStream } from "../src/sdk/Exports";
 import WaitForCondition from "./Utilities";
-import { validateTelemetry } from "./TelemetryUtil";
-import { ServiceRecognizerBase } from "../src/common.speech/Exports";
+
+// tslint:disable-next-line:no-console
+const consoleInfo = console.info;
+
+// tslint:disable-next-line:no-console
+console.info = (...args: any[]): void => {
+
+    const formatConsoleDate = (): string => {
+        const date = new Date();
+        const hour = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+        const milliseconds = date.getMilliseconds();
+
+        return "[" +
+               ((hour < 10) ? "0" + hour : hour) +
+               ":" +
+               ((minutes < 10) ? "0" + minutes : minutes) +
+               ":" +
+               ((seconds < 10) ? "0" + seconds : seconds) +
+               "." +
+               ("00" + milliseconds).slice(-3) +
+               "] ";
+            };
+    const timestamp = formatConsoleDate(); //  `[${new Date().toTimeString()}]`;
+    consoleInfo.apply(this, [timestamp, args]);
+};
 
 let objsToClose: any[];
 
