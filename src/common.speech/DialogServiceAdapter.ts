@@ -26,6 +26,7 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
+import { DialogServiceTurnStateManager } from "./DialogServiceTurnStateManager";
 import {
     CancellationErrorCodePropertyName,
     EnumTranslation,
@@ -38,11 +39,16 @@ import {
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
-import { ActivityPayloadResponse, messageDataStreamType } from "./ServiceMessages/ActivityResponsePayload";
+import { ActivityPayloadResponse } from "./ServiceMessages/ActivityResponsePayload";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privDialogServiceConnector: DialogServiceConnector;
+
+    // Turns are of two kinds:
+    // 1: SR turns, end when the SR result is returned and then turn end.
+    // 2: Service turns where an activity is sent by the service along with the audio.
+    private privTurnStateManager: DialogServiceTurnStateManager;
 
     public constructor(
         authentication: IAuthentication,
@@ -55,6 +61,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privDialogServiceConnector = dialogServiceConnector;
 
         this.receiveMessageOverride = this.receiveDialogMessageOverride;
+        this.privTurnStateManager = new DialogServiceTurnStateManager();
     }
 
     protected processTypeSpecificMessages(
@@ -132,13 +139,22 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     }
                 }
                 break;
-            case "response":
-                const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(connectionMessage.textBody);
-                let pullAudioOutputStream: PullAudioOutputStreamImpl;
-                if (activityPayload.messageDataStreamType === messageDataStreamType.TextToSpeechAudio) {
-                    pullAudioOutputStream = AudioOutputStream.createPullStream() as PullAudioOutputStreamImpl;
-                }
 
+            case "audio":
+                const audioRequestId = connectionMessage.requestId.toUpperCase();
+
+                if (audioRequestId !== this.privRequestSession.requestId.toUpperCase()) {
+                    const turn = this.privTurnStateManager.GetTurn(audioRequestId);
+                    turn.audioStream.write(connectionMessage.binaryBody);
+                }
+                break;
+
+            case "response":
+                const responseRequestId = connectionMessage.requestId.toUpperCase();
+                const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(connectionMessage.textBody);
+                const turn = this.privTurnStateManager.GetTurn(responseRequestId);
+
+                const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload);
                 const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
                 if (!!this.privDialogServiceConnector.activityReceived) {
                     try {
@@ -215,6 +231,12 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             switch (connectionMessage.path.toLowerCase()) {
                 case "turn.start":
+                    const turnRequestId = connectionMessage.requestId.toUpperCase();
+
+                    // turn started by the service
+                    if (turnRequestId !== this.privRequestSession.requestId.toUpperCase()) {
+                        this.privTurnStateManager.StartTurn(turnRequestId);
+                    }
                     break;
                 case "speech.startdetected":
                     const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
@@ -247,23 +269,33 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
                     }
                     break;
+
                 case "turn.end":
-                    this.sendTelemetryData();
+                    const turnEndRequestId = connectionMessage.requestId.toUpperCase();
 
-                    const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
-                    this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
-
-                    if (this.privRequestSession.isSpeechEnded) {
-                        if (!!this.privRecognizer.sessionStopped) {
-                            this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
-                        }
-
-                        return PromiseHelper.fromResult(true);
+                    // turn started by the service
+                    if (turnEndRequestId !== this.privRequestSession.requestId.toUpperCase()) {
+                        this.privTurnStateManager.CompleteTurn(turnEndRequestId);
                     } else {
-                        this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
-                            this.sendSpeechContext(connection);
-                        });
+                        // Audio session turn
+                        this.sendTelemetryData();
+
+                        const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
+                        this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
+
+                        if (this.privRequestSession.isSpeechEnded) {
+                            if (!!this.privRecognizer.sessionStopped) {
+                                this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
+                            }
+
+                            return PromiseHelper.fromResult(true);
+                        } else {
+                            this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
+                                this.sendSpeechContext(connection);
+                            });
+                        }
                     }
+
                     break;
                 default:
                     this.processTypeSpecificMessages(

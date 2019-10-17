@@ -13,7 +13,7 @@ import {
 import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-import { PropertyId } from "../src/sdk/Exports";
+import { PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
 import WaitForCondition from "./Utilities";
 import { validateTelemetry } from "./TelemetryUtil";
 import { ServiceRecognizerBase } from "../src/common.speech/Exports";
@@ -240,14 +240,14 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
     });
 
-    test.skip("ListenOnceAsync with audio response", (done: jest.DoneCallback) => {
+    test("ListenOnceAsync with audio response", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: ListenOnceAsync with audio response");
 
         const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
         objsToClose.push(dialogConfig);
 
-        // dialogConfig.setProxy("localhost", 8888);
+        dialogConfig.setProxy("localhost", 8888);
         // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatheratthebeach.wav");
@@ -279,20 +279,44 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         //     }
         // };
 
+        const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
+            audioStream.read().on((audioBuffer: ArrayBuffer) => {
+                try {
+                    if (audioBuffer !== null) {
+                        expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(1);
+                    } else {
+                        done();
+                    }
+
+                } catch (error) {
+                    done.fail(error);
+                }
+
+                if (audioBuffer != null) {
+                    audioReadLoop(audioStream, done);
+                }
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+        };
+
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
             try {
                 expect(e.activity).not.toBeNull();
-                done();
-            }
-            catch (error) {
+                if (e.activity.type === "message") {
+                    expect(e.audioStream).not.toBeNull();
+                    audioReadLoop(e.audioStream, done);
+                }
+            } catch (error) {
                 done.fail(error);
             }
         }
 
         connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
             try {
-                done.fail(e.errorDetails);
-            } catch (error){
+                // done.fail(e.errorDetails);
+            } catch (error) {
                 done.fail(error);
             }
         }
@@ -309,7 +333,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         (error: string) => {
             done.fail(error);
         });
-
     });
 
     test("Multiple ListenOnceAsync", (done: jest.DoneCallback) => {
