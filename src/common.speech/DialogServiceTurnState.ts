@@ -23,7 +23,7 @@ export class DialogServiceTurnState {
         if (payload.messageDataStreamType === MessageDataStreamType.TextToSpeechAudio) {
             this.privAudioStream = AudioOutputStream.createPullStream() as PullAudioOutputStreamImpl;
             // tslint:disable-next-line:no-console
-            console.info("Audio ghiziturn:" + this.privRequestId);
+            console.info("Audio debugturn:" + this.privRequestId);
         }
         return this.privAudioStream;
     }
