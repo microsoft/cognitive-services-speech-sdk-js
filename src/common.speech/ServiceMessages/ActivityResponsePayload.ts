@@ -37,7 +37,7 @@ export class ActivityPayloadResponse implements IActivityPayloadResponse {
     }
 }
 
-export enum messageDataStreamType {
+export enum MessageDataStreamType {
     None = 0,
     TextToSpeechAudio = 1,
 }
