@@ -249,7 +249,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 {
                     const audioRequestId = connectionMessage.requestId.toUpperCase();
                     const turn = this.privTurnStateManager.GetTurn(audioRequestId);
-                    turn.audioStream.write(connectionMessage.binaryBody);
+                    if (!connectionMessage.binaryBody) {
+                        turn.endAudioStream();
+                    } else {
+                        turn.audioStream.write(connectionMessage.binaryBody);
+                    }
                 }
                 break;
 
@@ -560,7 +564,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             this.fetchDialogConnection().on((connection: IConnection): Promise<IConnection> => {
                 return connection.read()
                     .onSuccessContinueWithPromise((message: ConnectionMessage): Promise<IConnection> => {
-                        if (this.isDisposed() || this.terminateMessageLoop) {
+                        const isDisposed: boolean = this.isDisposed();
+                        const terminateMessageLoop = (!this.isDisposed() && this.terminateMessageLoop);
+                        if (isDisposed || terminateMessageLoop) {
                             // We're done.
                             communicationCustodian.resolve(undefined);
                             return PromiseHelper.fromResult<IConnection>(undefined);
@@ -626,7 +632,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                                     // TODO: enable for this recognizer?   this.sendTelemetryData();
                                     // tslint:disable-next-line:no-console
-                                    console.info("Turn.end debugturn:" + turnEndRequestId);
+                                    // console.info("Turn.end debugturn:" + turnEndRequestId);
                                     const audioSessionReqId = this.privRequestSession.requestId.toUpperCase();
 
                                     // turn started by the service

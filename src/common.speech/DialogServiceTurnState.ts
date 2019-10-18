@@ -19,7 +19,7 @@ export class DialogServiceTurnState {
         this.privTurnManager = manager;
         this.resetTurnEndTimeout();
         // tslint:disable-next-line:no-console
-        console.info("DialogServiceTurnState debugturn start:" + this.privRequestId);
+        // console.info("DialogServiceTurnState debugturn start:" + this.privRequestId);
     }
 
     public get audioStream(): PullAudioOutputStreamImpl {
@@ -32,19 +32,22 @@ export class DialogServiceTurnState {
         if (payload.messageDataStreamType === MessageDataStreamType.TextToSpeechAudio) {
             this.privAudioStream = AudioOutputStream.createPullStream() as PullAudioOutputStreamImpl;
             // tslint:disable-next-line:no-console
-            console.info("Audio start debugturn:" + this.privRequestId);
+            // console.info("Audio start debugturn:" + this.privRequestId);
         }
         return this.privAudioStream;
+    }
+
+    public endAudioStream(): void {
+        if (this.privAudioStream !== null && !this.privAudioStream.isClosed) {
+            this.privAudioStream.close();
+        }
     }
 
     public complete(): void {
         if (this.privTimeoutToken !== undefined) {
             clearTimeout(this.privTimeoutToken);
         }
-
-        if (this.privAudioStream !== null) {
-            this.privAudioStream.close();
-        }
+        this.endAudioStream();
     }
 
     private resetTurnEndTimeout(): void {
@@ -52,11 +55,11 @@ export class DialogServiceTurnState {
             clearTimeout(this.privTimeoutToken);
         }
         // tslint:disable-next-line:no-console
-        console.info("Timeout reset debugturn:" + this.privRequestId);
+        // console.info("Timeout reset debugturn:" + this.privRequestId);
 
         this.privTimeoutToken = setTimeout((): void => {
             // tslint:disable-next-line:no-console
-            console.info("Timeout complete debugturn:" + this.privRequestId);
+            // console.info("Timeout complete debugturn:" + this.privRequestId);
 
             this.privTurnManager.CompleteTurn(this.privRequestId);
             return;
