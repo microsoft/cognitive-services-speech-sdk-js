@@ -244,28 +244,29 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 break;
 
             case "audio":
-                const audioRequestId = connectionMessage.requestId.toUpperCase();
-
-                if (audioRequestId !== this.privRequestSession.requestId.toUpperCase()) {
+                {
+                    const audioRequestId = connectionMessage.requestId.toUpperCase();
                     const turn = this.privTurnStateManager.GetTurn(audioRequestId);
                     turn.audioStream.write(connectionMessage.binaryBody);
                 }
                 break;
 
             case "response":
-                const responseRequestId = connectionMessage.requestId.toUpperCase();
-                const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(connectionMessage.textBody);
-                const turn = this.privTurnStateManager.GetTurn(responseRequestId);
+                {
+                    const responseRequestId = connectionMessage.requestId.toUpperCase();
+                    const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(connectionMessage.textBody);
+                    const turn = this.privTurnStateManager.GetTurn(responseRequestId);
 
-                const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload);
-                const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
-                if (!!this.privDialogServiceConnector.activityReceived) {
-                    try {
-                        this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
-                        /* tslint:disable:no-empty */
-                    } catch (error) {
-                        // Not going to let errors in the event handler
-                        // trip things up.
+                    const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload);
+                    const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
+                    if (!!this.privDialogServiceConnector.activityReceived) {
+                        try {
+                            this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
+                            /* tslint:disable:no-empty */
+                        } catch (error) {
+                            // Not going to let errors in the event handler
+                            // trip things up.
+                        }
                     }
                 }
                 break;
@@ -574,11 +575,18 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                         switch (connectionMessage.path.toLowerCase()) {
                             case "turn.start":
-                                const turnRequestId = connectionMessage.requestId.toUpperCase();
+                                {
+                                    const turnRequestId = connectionMessage.requestId.toUpperCase();
+                                    const audioSessionReqId = this.privRequestSession.requestId.toUpperCase();
 
-                                // turn started by the service
-                                if (turnRequestId !== this.privRequestSession.requestId.toUpperCase()) {
-                                    this.privTurnStateManager.StartTurn(turnRequestId);
+                                    // turn started by the service
+                                    if (turnRequestId !== audioSessionReqId) {
+                                        this.privTurnStateManager.StartTurn(turnRequestId);
+                                    } else {
+                                        // tslint:disable-next-line:no-console
+                                        console.info("Audio session turn.start:", audioSessionReqId);
+                                    }
+
                                 }
                                 break;
                             case "speech.startdetected":
@@ -614,32 +622,36 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 break;
 
                             case "turn.end":
-                                const turnEndRequestId = connectionMessage.requestId.toUpperCase();
-                                // TODO: enable for this recognizer?   this.sendTelemetryData();
-                                // tslint:disable-next-line:no-console
-                                console.info("Turn.end debugturn:" + turnEndRequestId);
+                                {
+                                    const turnEndRequestId = connectionMessage.requestId.toUpperCase();
 
-                                // turn started by the service
-                                if (turnEndRequestId !== this.privRequestSession.requestId.toUpperCase()) {
-                                    this.privTurnStateManager.CompleteTurn(turnEndRequestId);
-                                } else {
-                                    // Audio session turn
+                                    // TODO: enable for this recognizer?   this.sendTelemetryData();
+                                    // tslint:disable-next-line:no-console
+                                    console.info("Turn.end debugturn:" + turnEndRequestId);
+                                    const audioSessionReqId = this.privRequestSession.requestId.toUpperCase();
 
-                                    const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privDialogRequestSession.sessionId);
-                                    this.privDialogRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
-
-                                    if (this.privDialogRequestSession.isSpeechEnded) {
-                                        if (!!this.privRecognizer.sessionStopped) {
-                                            this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
-                                        }
+                                    // turn started by the service
+                                    if (turnEndRequestId !== audioSessionReqId) {
+                                        this.privTurnStateManager.CompleteTurn(turnEndRequestId);
                                     } else {
-                                        this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection) => {
-                                            this.sendSpeechContext(connection);
-                                        });
+                                        // Audio session turn
+
+                                        const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privDialogRequestSession.sessionId);
+                                        this.privDialogRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
+
+                                        if (this.privDialogRequestSession.isSpeechEnded) {
+                                            if (!!this.privRecognizer.sessionStopped) {
+                                                this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
+                                            }
+                                        } else {
+                                            this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection) => {
+                                                this.sendSpeechContext(connection);
+                                            });
+                                        }
                                     }
                                 }
-
                                 break;
+
                             default:
                                 this.processTypeSpecificMessages(
                                     connectionMessage,
