@@ -148,10 +148,12 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     }
 
     protected privDisconnect(): void {
-        this.cancelRecognitionLocal(CancellationReason.Error,
-            CancellationErrorCode.NoError,
-            "Disconnecting",
-            undefined);
+        // tslint:disable-next-line:no-console
+        console.info("privDisconnect");
+        // this.cancelRecognitionLocal(CancellationReason.Error,
+        //     CancellationErrorCode.NoError,
+        //     "Disconnecting",
+        //     undefined);
 
         this.terminateMessageLoop = true;
         if (this.privDialogConnectionPromise.result().isCompleted) {
@@ -350,7 +352,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     let audioNode: ReplayableAudioNode;
 
                     if (result.isError) {
-                        this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error, successCallback);
+                        // tslint:disable-next-line:no-console
+                        console.info("Error in listenOnce: " + result.error);
+                        // this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error, successCallback);
                         return PromiseHelper.fromError<boolean>(result.error);
                     } else {
                         audioNode = new ReplayableAudioNode(result.result, this.audioSource.format as AudioStreamFormatImpl);
@@ -371,21 +375,16 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 const audioSendPromise = this.sendAudio(audioNode);
 
                                 // /* tslint:disable:no-empty */
-                                audioSendPromise.on((_: boolean) => { }, (error: string) => {
-                                    this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error, successCallback);
-                                });
-
-                                const completionPromise = PromiseHelper.whenAll([audioSendPromise]);
-
-                                /* tslint:disable:no-empty */
-                                completionPromise.on((_: boolean) => {
-                                    return true;
-                                }, (error: string) => {
-                                    this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error, successCallback);
+                                audioSendPromise.on((_: boolean) => { /*add? return true;*/ }, (error: string) => {
+                                    // tslint:disable-next-line:no-console
+                                    console.info("Error in listenOnce audioSendPromise: " + error);
+                                    // this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error, successCallback);
                                 });
 
                             }, (error: string) => {
-                                this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error, successCallback);
+                                // tslint:disable-next-line:no-console
+                                console.info("Error in listenOnce configConnection: " + error);
+                                // this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error, successCallback);
                             }).continueWithPromise<boolean>((result: PromiseResult<IConnection>): Promise<boolean> => {
                                 if (result.isError) {
                                     return PromiseHelper.fromError(result.error);
@@ -589,12 +588,41 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         }
                     }
 
-                    break;
-                default:
-                    this.processTypeSpecificMessages(
-                        connectionMessage,
-                        successCallback,
-                        errorCallBack);
+                        return this.receiveDialogMessageOverride();
+                });
+            }, (error: string) => {
+                this.terminateMessageLoop = true;
+            });
+
+            return communicationCustodian.promise();
+        }
+
+    private startMessageLoop(): Promise<IConnection> {
+
+        this.terminateMessageLoop = false;
+
+        const messageRetrievalPromise = this.receiveDialogMessageOverride();
+
+        return messageRetrievalPromise.on((r: IConnection) => {
+            return true;
+        }, (error: string) => {
+            // tslint:disable-next-line:no-console
+            console.info("Error in startMessageLoop promise: " + error);
+            // this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error, this.privSuccessCallback/*successCallback*/);
+        });
+    }
+
+    // Takes an established websocket connection to the endpoint and sends speech configuration information.
+    private configConnection(): Promise<IConnection> {
+        if (this.privConnectionConfigPromise) {
+            if (this.privConnectionConfigPromise.result().isCompleted &&
+                (this.privConnectionConfigPromise.result().isError
+                    || this.privConnectionConfigPromise.result().result.state() === ConnectionState.Disconnected)) {
+
+                this.privConnectionConfigPromise = null;
+                return this.configConnection();
+            } else {
+                return this.privConnectionConfigPromise;
             }
         }
 
