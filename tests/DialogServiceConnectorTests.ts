@@ -103,6 +103,18 @@ function BuildConnectorFromWaveFile(dialogServiceConfig?: sdk.DialogServiceConfi
     return connector;
 }
 
+function PostDoneTest(done: jest.DoneCallback, ms: number): any {
+   return setTimeout((): void => {
+        done();
+    }, ms);
+}
+
+function PostFailTest(done: jest.DoneCallback, ms: number, error?: string): any {
+    return setTimeout((): void => {
+         done.fail(error);
+     }, ms);
+}
+
 // DialogServiceConfig tests: begin
 test("Create DialogServiceConfig from bot secret, null params", () => {
     // tslint:disable-next-line:no-console
@@ -295,7 +307,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
                     if (audioBuffer !== null) {
                         expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(1);
                     } else {
-                        done();
+                        PostDoneTest(done, 2000);
                     }
 
                 } catch (error) {
