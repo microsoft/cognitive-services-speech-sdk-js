@@ -248,7 +248,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 {
                     const audioRequestId = connectionMessage.requestId.toUpperCase();
                     const turn = this.privTurnStateManager.GetTurn(audioRequestId);
-                    turn.audioStream.write(connectionMessage.binaryBody);
+                    if (!connectionMessage.binaryBody) {
+                        turn.endAudioStream();
+                    } else {
+                        turn.audioStream.write(connectionMessage.binaryBody);
+                    }
                 }
                 break;
 
@@ -519,7 +523,31 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     if (!!this.privRecognizer.speechEndDetected) {
                         this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
                     }
-                    break;
+                });
+            });
+
+        this.privConnectionLoop = this.startMessageLoop();
+        return this.privDialogConnectionPromise;
+    }
+
+    private receiveDialogMessageOverride = (
+        successCallback?: (e: SpeechRecognitionResult) => void,
+        errorCallBack?: (e: string) => void
+        ): Promise<IConnection> => {
+
+            // we won't rely on the cascading promises of the connection since we want to continually be available to receive messages
+            const communicationCustodian: Deferred<IConnection> = new Deferred<IConnection>();
+
+            this.fetchDialogConnection().on((connection: IConnection): Promise<IConnection> => {
+                return connection.read()
+                    .onSuccessContinueWithPromise((message: ConnectionMessage): Promise<IConnection> => {
+                        const isDisposed: boolean = this.isDisposed();
+                        const terminateMessageLoop = (!this.isDisposed() && this.terminateMessageLoop);
+                        if (isDisposed || terminateMessageLoop) {
+                            // We're done.
+                            communicationCustodian.resolve(undefined);
+                            return PromiseHelper.fromResult<IConnection>(undefined);
+                        }
 
                         if (!message) {
                             return this.receiveDialogMessageOverride();
@@ -581,7 +609,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                                     // TODO: enable for this recognizer?   this.sendTelemetryData();
                                     // tslint:disable-next-line:no-console
-                                    console.info("Turn.end debugturn:" + turnEndRequestId);
+                                    // console.info("Turn.end debugturn:" + turnEndRequestId);
                                     const audioSessionReqId = this.privRequestSession.requestId.toUpperCase();
 
                                     // turn started by the service

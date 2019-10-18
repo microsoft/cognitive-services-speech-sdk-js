@@ -126,6 +126,40 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream {
     }
 
     /**
+     * Checks if the stream is closed
+     * @member PullAudioOutputStreamImpl.prototype.isClosed
+     * @property
+     * @public
+     */
+    public get isClosed(): boolean {
+        return this.privStream.isClosed;
+    }
+
+    /**
+     * Gets the id of the stream
+     * @member PullAudioOutputStreamImpl.prototype.id
+     * @property
+     * @public
+     */
+    public get id(): string {
+        return this.privId;
+    }
+
+    /**
+     * Reads data from the buffer
+     * @member PullAudioOutputStreamImpl.prototype.read
+     * @function
+     * @public
+     * @param {ArrayBuffer} dataBuffer - The audio buffer of which this function will make a copy.
+     */
+    public read(): Promise<ArrayBuffer> {
+        return this.streamReader.read()
+            .onSuccessContinueWithPromise<ArrayBuffer>((chunk: IStreamChunk<ArrayBuffer>) => {
+                return PromiseHelper.fromResult(chunk.buffer);
+            });
+    }
+
+    /**
      * Writes the audio data specified by making an internal copy of the data.
      * @member PullAudioOutputStreamImpl.prototype.write
      * @function
@@ -148,16 +182,5 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream {
      */
     public close(): void {
         this.privStream.close();
-    }
-
-    public id(): string {
-        return this.privId;
-    }
-
-    public read(): Promise<ArrayBuffer> {
-        return this.streamReader.read()
-            .onSuccessContinueWithPromise<ArrayBuffer>((chunk: IStreamChunk<ArrayBuffer>) => {
-                return PromiseHelper.fromResult(chunk.buffer);
-            });
     }
 }
