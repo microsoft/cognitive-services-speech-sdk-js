@@ -248,10 +248,19 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 {
                     const audioRequestId = connectionMessage.requestId.toUpperCase();
                     const turn = this.privTurnStateManager.GetTurn(audioRequestId);
-                    if (!connectionMessage.binaryBody) {
-                        turn.endAudioStream();
-                    } else {
-                        turn.audioStream.write(connectionMessage.binaryBody);
+                    try {
+                        // Empty binary message signals end of stream.
+                        if (!connectionMessage.binaryBody) {
+                            turn.endAudioStream();
+                        } else {
+                            turn.audioStream.write(connectionMessage.binaryBody);
+                        }
+                    } catch (error) {
+                        // Not going to let errors in the event handler
+                        // trip things up.
+
+                        // tslint:disable-next-line:no-console
+                        // console.info("'audio' debugturn:" + audioRequestId + " | Exception:" + error);
                     }
                 }
                 break;
