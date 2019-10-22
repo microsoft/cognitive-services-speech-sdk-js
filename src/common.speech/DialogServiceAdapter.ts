@@ -76,6 +76,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privSuccessCallback: (e: SpeechRecognitionResult) => void;
     private privConnectionLoop: Promise<IConnection>;
     private terminateMessageLoop: boolean;
+    private agentConfigSent: boolean;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -104,6 +105,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privDialogRequestSession = new RequestSession(audioSource.id());
         this.privDialogConnectionFactory = connectionFactory;
         this.privDialogIsDisposed = false;
+        this.agentConfigSent = false;
     }
 
     public isDisposed(): boolean {
@@ -120,11 +122,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     }
 
     public sendMessage = (message: string): void => {
-
-        this.dialogConnectImpl();
-
-        this.sendPreAudioMessages();
-
         const interactionGuid: string = createGuid();
         const requestId: string = createNoDashGuid();
 
@@ -511,7 +508,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     || this.privDialogConnectionPromise.result().result.state() === ConnectionState.Disconnected)) {
                 this.privConnectionId = null;
                 this.privDialogConnectionPromise = null;
-                return this.dialogConnectImpl();
             } else {
                 return this.privDialogConnectionPromise;
             }
@@ -734,8 +730,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     }
 
     private sendAgentConfig = (connection: IConnection): Promise<boolean> => {
-        if (this.agentConfig) {
+        if (this.agentConfig && !this.agentConfigSent) {
             const agentConfigJson = this.agentConfig.toJsonString();
+
+            this.agentConfigSent = true;
 
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Text,
