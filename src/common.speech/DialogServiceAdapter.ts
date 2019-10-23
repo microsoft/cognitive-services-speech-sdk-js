@@ -587,7 +587,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                             case "turn.start":
                                 {
                                     const turnRequestId = connectionMessage.requestId.toUpperCase();
-                                    const audioSessionReqId = this.privRequestSession.requestId.toUpperCase();
+                                    const audioSessionReqId = this.privDialogRequestSession.requestId.toUpperCase();
 
                                     // turn started by the service
                                     if (turnRequestId !== audioSessionReqId) {
@@ -636,9 +636,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                     const turnEndRequestId = connectionMessage.requestId.toUpperCase();
 
                                     // TODO: enable for this recognizer?   this.sendTelemetryData();
+                                    const audioSessionReqId = this.privDialogRequestSession.requestId.toUpperCase();
+
                                     // tslint:disable-next-line:no-console
-                                    // console.info("Turn.end debugturn:" + turnEndRequestId);
-                                    const audioSessionReqId = this.privRequestSession.requestId.toUpperCase();
+                                    // console.info("****Turn.end debugturn:" + turnEndRequestId + " audioSessionReqId:" + audioSessionReqId);
 
                                     // turn started by the service
                                     if (turnEndRequestId !== audioSessionReqId) {
@@ -647,17 +648,17 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                         // Audio session turn
 
                                         const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privDialogRequestSession.sessionId);
-                                        this.privDialogRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
+                                        this.privDialogRequestSession.onServiceTurnEndResponse(false); // this.privRecognizerConfig.isContinuousRecognition);
 
                                         if (this.privDialogRequestSession.isSpeechEnded) {
                                             if (!!this.privRecognizer.sessionStopped) {
                                                 this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                                             }
-                                        } else {
-                                            this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection) => {
-                                                this.sendSpeechContext(connection);
-                                            });
-                                        }
+                                        } // else {
+                                        //     this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection) => {
+                                        //         // this.sendSpeechContext(connection);
+                                        //     });
+                                        // }
                                     }
                                 }
                                 break;
