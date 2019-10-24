@@ -357,7 +357,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 case "speech.startdetected":
                     const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
 
-            return this.audioSource
+            return this.privDialogAudioSource
                 .attach(this.privDialogRequestSession.audioNodeId)
                 .continueWithPromise<boolean>((result: PromiseResult<IAudioStreamNode>) => {
                     let audioNode: ReplayableAudioNode;
@@ -368,11 +368,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error, successCallback);
                         return PromiseHelper.fromError<boolean>(result.error);
                     } else {
-                        audioNode = new ReplayableAudioNode(result.result, this.audioSource.format as AudioStreamFormatImpl);
+                        audioNode = new ReplayableAudioNode(result.result, this.privDialogAudioSource.format as AudioStreamFormatImpl);
                         this.privDialogRequestSession.onAudioSourceAttachCompleted(audioNode, false);
                     }
 
-                    return this.audioSource.deviceInfo.onSuccessContinueWithPromise<boolean>((deviceInfo: ISpeechConfigAudioDevice): Promise<boolean> => {
+                    return this.privDialogAudioSource.deviceInfo.onSuccessContinueWithPromise<boolean>((deviceInfo: ISpeechConfigAudioDevice): Promise<boolean> => {
                         this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
 
                         return this.configConnection()
