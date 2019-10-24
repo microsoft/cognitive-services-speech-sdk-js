@@ -103,6 +103,7 @@ export class RequestSession {
 
     public onAudioSourceAttachCompleted = (audioNode: ReplayableAudioNode, isError: boolean, error?: string): void => {
         this.privAudioNode = audioNode;
+        this.privIsAudioNodeDetached = false;
 
         if (isError) {
             this.onComplete();
