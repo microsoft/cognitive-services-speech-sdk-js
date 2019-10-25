@@ -295,7 +295,7 @@ export abstract class SpeechConfig {
 }
 
 /**
- * @private
+ * @public
  * @class SpeechConfigImpl
  */
 // tslint:disable-next-line:max-classes-per-file

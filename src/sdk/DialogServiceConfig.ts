@@ -1,82 +1,95 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { OutputFormatPropertyName } from "../common.speech/Exports";
 import { Contracts } from "./Contracts";
-import { OutputFormat, PropertyCollection, PropertyId, SpeechConfig } from "./Exports";
+import { PropertyCollection, PropertyId, ServicePropertyChannel, SpeechConfigImpl } from "./Exports";
 
 /**
- * Dialog Service configuration.
+ * Class that defines base configurations for dialog service connector
  * @class DialogServiceConfig
  */
-export abstract class DialogServiceConfig extends SpeechConfig {
+export abstract class DialogServiceConfig {
 
     /**
      * Creates an instance of DialogService config.
      * @constructor
      */
-    protected constructor() {
-        super();
-    }
+    protected constructor() { }
 
     /**
-     * Creates a DialogServiceConfig instance from a direct line speech bot secret.
-     * @member DialogServiceConfig.fromBotSecret
+     * Sets an arbitrary property.
+     * @member DialogServiceConfig.prototype.setProperty
      * @function
      * @public
-     * @param {string} botSecret - Speech channel bot secret key.
-     * @param {string} subscriptionKey - The subscription key.
-     * @param {string} region - The region name (see the <a href="https://aka.ms/csspeech/region">region page</a>).
-     * @returns {DialogServiceConfig} The dialog service config.
+     * @param {string} name - The name of the property to set.
+     * @param {string} value - The new value of the property.
      */
-    public static fromBotSecret(botSecret: string, subscriptionKey: string, region: string): DialogServiceConfig {
-        Contracts.throwIfNullOrWhitespace(botSecret, "botSecret");
-        Contracts.throwIfNullOrWhitespace(subscriptionKey, "subscriptionKey");
-        Contracts.throwIfNullOrWhitespace(region, "region");
-
-        const configImpl: DialogServiceConfigImpl = new DialogServiceConfigImpl();
-        configImpl.setProperty(PropertyId.Conversation_ApplicationId, botSecret);
-        configImpl.setProperty(PropertyId.Conversation_DialogType, "bot_framework");
-        configImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
-        configImpl.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        return configImpl;
-    }
+    public abstract setProperty(name: string, value: string): void;
 
     /**
-     * Creates a DialogServiceConfig instance from a speech commands app id.
-     * @member DialogServiceConfig.fromSpeechCommandsAppId
+     * Returns the current value of an arbitrary property.
+     * @member DialogServiceConfig.prototype.getProperty
      * @function
      * @public
-     * @param {string} appId - Speech Commands app id.
-     * @param {string} subscriptionKey - The subscription key.
-     * @param {string} region - The region name (see the <a href="https://aka.ms/csspeech/region">region page</a>).
-     * @returns {DialogServiceConfig} The dialog service config.
+     * @param {string} name - The name of the property to query.
+     * @param {string} def - The value to return in case the property is not known.
+     * @returns {string} The current value, or provided default, of the given property.
      */
-    public static fromSpeechCommandsAppId(appId: string, subscriptionKey: string, region: string): DialogServiceConfig {
-        Contracts.throwIfNullOrWhitespace(appId, "appId");
-        Contracts.throwIfNullOrWhitespace(subscriptionKey, "subscriptionKey");
-        Contracts.throwIfNullOrWhitespace(region, "region");
+    public abstract getProperty(name: string, def?: string): string;
 
-        const configImpl: DialogServiceConfigImpl = new DialogServiceConfigImpl();
-        configImpl.setProperty(PropertyId.Conversation_ApplicationId, appId);
-        configImpl.setProperty(PropertyId.Conversation_DialogType, "bot_framework");
-        configImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
-        configImpl.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        return configImpl;
-    }
+    /**
+     * @member DialogServiceConfig.prototype.setServiceProperty
+     * @function
+     * @public
+     * @param {name} The name of the property.
+     * @param {value} Value to set.
+     * @param {channel} The channel used to pass the specified property to service.
+     * @summary Sets a property value that will be passed to service using the specified channel.
+     */
+    public abstract setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void;
+
+    /**
+     * Sets the proxy configuration.
+     * Only relevant in Node.js environments.
+     * Added in version 1.4.0.
+     * @param proxyHostName The host name of the proxy server.
+     * @param proxyPort The port number of the proxy server.
+     */
+    public abstract setProxy(proxyHostName: string, proxyPort: number): void;
+
+    /**
+     * Sets the proxy configuration.
+     * Only relevant in Node.js environments.
+     * Added in version 1.4.0.
+     * @param proxyHostName The host name of the proxy server, without the protocol scheme (http://)
+     * @param porxyPort The port number of the proxy server.
+     * @param proxyUserName The user name of the proxy server.
+     * @param proxyPassword The password of the proxy server.
+     */
+    public abstract setProxy(proxyHostName: string, proxyPort: number, proxyUserName: string, proxyPassword: string): void;
+
+    /**
+     * Returns the configured language.
+     * @member DialogServiceConfig.prototype.speechRecognitionLanguage
+     * @function
+     * @public
+     */
+    public abstract get speechRecognitionLanguage(): string;
+
+    /**
+     * Gets/Sets the input language.
+     * @member DialogServiceConfig.prototype.speechRecognitionLanguage
+     * @function
+     * @public
+     * @param {string} value - The language to use for recognition.
+     */
+    public abstract set speechRecognitionLanguage(value: string);
 
     /**
      * Not used in DialogServiceConfig
-     * @member DialogServiceConfig.authorizationToken
+     * @member DialogServiceConfig.applicationId
      */
-    public authorizationToken: string;
-
-    /**
-     * Not used in DialogServiceConfig
-     * @member DialogServiceConfig.endpointId
-     */
-    public endpointId: string;
-
+    public applicationId: string;
 }
 
 /**
@@ -86,14 +99,16 @@ export abstract class DialogServiceConfig extends SpeechConfig {
 // tslint:disable-next-line:max-classes-per-file
 export class DialogServiceConfigImpl extends DialogServiceConfig {
 
-    private privSpeechProperties: PropertyCollection;
+    // private privSpeechProperties: PropertyCollection;
+    private privSpeechConfig: SpeechConfigImpl;
 
     /**
      * Creates an instance of dialogService config.
      */
     public constructor() {
         super();
-        this.privSpeechProperties = new PropertyCollection();
+        // this.privSpeechProperties = new PropertyCollection();
+        this.privSpeechConfig = new SpeechConfigImpl();
     }
 
     /**
@@ -104,19 +119,7 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      * @returns {PropertyCollection} The properties.
      */
     public get properties(): PropertyCollection {
-        return this.privSpeechProperties;
-    }
-
-    /**
-     * Gets/Sets the corresponding backend application identifier.
-     * @member DialogServiceConfigImpl.prototype.Conversation_ApplicationId
-     * @function
-     * @public
-     * @param {string} value - The application identifier to set.
-     */
-    public set applicationId(value: string) {
-        Contracts.throwIfNullOrWhitespace(value, "value");
-        this.setProperty(PropertyId.Conversation_ApplicationId, value);
+        return this.privSpeechConfig.properties;
     }
 
     /**
@@ -126,7 +129,8 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      * @public
      */
     public get speechRecognitionLanguage(): string {
-        return this.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
+        return this.privSpeechConfig.speechRecognitionLanguage;
+        // return this.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
     }
 
     /**
@@ -138,18 +142,8 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      */
     public set speechRecognitionLanguage(value: string) {
         Contracts.throwIfNullOrWhitespace(value, "value");
-        this.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, value);
-    }
-
-    /**
-     * Sets output format.
-     * @member DialogServiceConfigImpl.prototype.outputFormat
-     * @function
-     * @public
-     * @param {OutputFormat} - The output format to set.
-     */
-    public set outputFormat(value: OutputFormat) {
-        this.setProperty(OutputFormatPropertyName, `${value}`);
+        this.privSpeechConfig.speechRecognitionLanguage = value;
+        // this.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, value);
     }
 
     /**
@@ -161,7 +155,8 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      * @param {string} value - The value.
      */
     public setProperty(name: string | PropertyId, value: string): void {
-        this.privSpeechProperties.setProperty(name, value);
+        this.privSpeechConfig.setProperty(name, value);
+        // this.privSpeechProperties.setProperty(name, value);
     }
 
     /**
@@ -174,7 +169,8 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      * @returns {string} The current value, or provided default, of the given property.
      */
     public getProperty(name: string | PropertyId, def?: string): string {
-        return this.privSpeechProperties.getProperty(name, def);
+        return this.privSpeechConfig.getProperty(name);
+        // return this.privSpeechProperties.getProperty(name, def);
     }
 
     /**
@@ -187,6 +183,8 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      * @param proxyPassword The password of the proxy server.
      */
     public setProxy(proxyHostName: string, proxyPort: number, proxyUserName?: string, proxyPassword?: string): void {
+        //this.setProxy(proxyHostName, proxyPort, proxyUserName, proxyPassword);
+
         this.setProperty(PropertyId.SpeechServiceConnection_ProxyHostName, proxyHostName);
         this.setProperty(PropertyId.SpeechServiceConnection_ProxyPort, `${proxyPort}`);
         if (proxyUserName) {
@@ -197,33 +195,9 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
         }
     }
 
-    /**
-     * The subscription key set on the config.
-     * @member DialogServiceConfigImpl.prototype.subscriptionKey
-     * @function
-     * @public
-     */
-    public get subscriptionKey(): string {
-        return this.properties.getProperty(PropertyId.SpeechServiceConnection_Key);
-    }
-
-    public get region(): string {
-        throw new Error("Method not implemented.");
-    }
     public setServiceProperty(name: string, value: string, channel: import("./ServicePropertyChannel").ServicePropertyChannel): void {
-        throw new Error("Method not implemented.");
-    }
-    public setProfanity(profanity: import("./ProfanityOption").ProfanityOption): void {
-        throw new Error("Method not implemented.");
-    }
-    public enableAudioLogging(): void {
-        throw new Error("Method not implemented.");
-    }
-    public requestWordLevelTimestamps(): void {
-        throw new Error("Method not implemented.");
-    }
-    public enableDictation(): void {
-        throw new Error("Method not implemented.");
+        this.privSpeechConfig.setServiceProperty(name, value, channel);
+        // throw new Error("Method not implemented.");
     }
 
     /**
@@ -235,5 +209,4 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
     public close(): void {
         return;
     }
-
 }

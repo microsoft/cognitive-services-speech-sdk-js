@@ -188,7 +188,7 @@ export class DialogServiceConnector extends Recognizer {
         }
     }
 
-    public sendActivity(activity: string): void {
+    public sendActivityAsync(activity: string): void {
         this.privReco.sendMessage(activity);
     }
 
