@@ -88,6 +88,9 @@ function BuildBotFrameworkConfig(): sdk.BotFrameworkConfig {
         config.setProxy(Settings.proxyServer, Settings.proxyPort);
     }
 
+    // TODO - REMOVE, this is temporary for testing during the service transition
+    config.setProperty(PropertyId.Conversation_ApplicationId, Settings.BotSecret);
+
     expect(config).not.toBeUndefined();
     return config;
 }
@@ -205,9 +208,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        // This will go away soon
-        dialogConfig.setProperty(PropertyId.Conversation_ApplicationId, Settings.BotSecret);
-        dialogConfig.setProxy("localhost", 8888);
+        //dialogConfig.setProxy("localhost", 8888);
 
         const connector: sdk.DialogServiceConnector = new sdk.DialogServiceConnector(dialogConfig);
         objsToClose.push(connector);
@@ -243,7 +244,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         // tslint:disable-next-line:no-console
         console.info("Name: ListenOnceAsync");
 
-        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
         //dialogConfig.setProxy("localhost", 8888);
@@ -307,7 +308,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         // tslint:disable-next-line:no-console
         console.info("Name: ListenOnceAsync with audio response");
 
-        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
         //dialogConfig.setProxy("localhost", 8888);
@@ -404,7 +405,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         // tslint:disable-next-line:no-console
         console.info("Name: Successive ListenOnceAsync with audio response");
 
-        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
         //dialogConfig.setProxy("localhost", 8888);
@@ -501,7 +502,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         // tslint:disable-next-line:no-console
         console.info("Name: Successive ListenOnceAsync calls");
 
-        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
         // dialogConfig.setProxy("localhost", 8888);
@@ -656,7 +657,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
     test("Successive ListenOnce with timeout", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: Successive ListenOnce with timeout");
-        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
         // dialogConfig.setProxy("localhost", 8888);
@@ -741,13 +742,13 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             });
         });
 
-    }, 600000);
+    }, /*600000*/);
 
     test("Send/Receive messages", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: Send/Receive messages");
 
-        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
         // dialogConfig.setProxy("localhost", 8888);
@@ -794,7 +795,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         // tslint:disable-next-line:no-console
         console.info("Name: Send multiple messages");
 
-        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
        // dialogConfig.setProxy("localhost", 8888);
@@ -845,7 +846,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         // tslint:disable-next-line:no-console
         console.info("Name: Send/Receive messages during ListenOnce");
 
-        const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
        // dialogConfig.setProxy("localhost", 8888);

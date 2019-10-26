@@ -99,7 +99,6 @@ export abstract class DialogServiceConfig {
 // tslint:disable-next-line:max-classes-per-file
 export class DialogServiceConfigImpl extends DialogServiceConfig {
 
-    // private privSpeechProperties: PropertyCollection;
     private privSpeechConfig: SpeechConfigImpl;
 
     /**
@@ -107,7 +106,6 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      */
     public constructor() {
         super();
-        // this.privSpeechProperties = new PropertyCollection();
         this.privSpeechConfig = new SpeechConfigImpl();
     }
 
@@ -130,7 +128,6 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      */
     public get speechRecognitionLanguage(): string {
         return this.privSpeechConfig.speechRecognitionLanguage;
-        // return this.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
     }
 
     /**
@@ -143,7 +140,6 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
     public set speechRecognitionLanguage(value: string) {
         Contracts.throwIfNullOrWhitespace(value, "value");
         this.privSpeechConfig.speechRecognitionLanguage = value;
-        // this.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, value);
     }
 
     /**
@@ -156,7 +152,6 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      */
     public setProperty(name: string | PropertyId, value: string): void {
         this.privSpeechConfig.setProperty(name, value);
-        // this.privSpeechProperties.setProperty(name, value);
     }
 
     /**
@@ -170,7 +165,6 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      */
     public getProperty(name: string | PropertyId, def?: string): string {
         return this.privSpeechConfig.getProperty(name);
-        // return this.privSpeechProperties.getProperty(name, def);
     }
 
     /**
@@ -183,8 +177,6 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      * @param proxyPassword The password of the proxy server.
      */
     public setProxy(proxyHostName: string, proxyPort: number, proxyUserName?: string, proxyPassword?: string): void {
-        //this.setProxy(proxyHostName, proxyPort, proxyUserName, proxyPassword);
-
         this.setProperty(PropertyId.SpeechServiceConnection_ProxyHostName, proxyHostName);
         this.setProperty(PropertyId.SpeechServiceConnection_ProxyPort, `${proxyPort}`);
         if (proxyUserName) {
@@ -197,7 +189,6 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
 
     public setServiceProperty(name: string, value: string, channel: import("./ServicePropertyChannel").ServicePropertyChannel): void {
         this.privSpeechConfig.setServiceProperty(name, value, channel);
-        // throw new Error("Method not implemented.");
     }
 
     /**
