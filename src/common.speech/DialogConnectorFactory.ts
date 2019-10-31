@@ -67,19 +67,14 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         headers[authInfo.headerName] = authInfo.token;
         headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
 
-        // TODO Remove these after we've verified against a registered bot that doesn't require applicationId (Jitendra to provide)
-        headers[authHeader] = applicationId;
-        const endpoint: string = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
-
-        // TODO Uncomment once the above is removed
-        // let endpoint: string;
-        // // ApplicationId is only required for CustomCommands
-        // if (applicationId === "") {
-        //     endpoint = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
-        // } else {
-        //     endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
-        //     headers[authHeader] = applicationId;
-        // }
+        let endpoint: string;
+        // ApplicationId is only required for CustomCommands
+        if (applicationId === "") {
+            endpoint = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
+        } else {
+            endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
+            headers[authHeader] = applicationId;
+        }
 
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
     }
