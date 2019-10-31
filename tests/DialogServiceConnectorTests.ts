@@ -10,11 +10,10 @@ import {
     Events,
     EventType,
 } from "../src/common/Exports";
+import { PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
-import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
-
-import { PullAudioOutputStream, SpeechRecognitionEventArgs, PropertyId } from "../src/sdk/Exports";
 import WaitForCondition from "./Utilities";
+import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 // tslint:disable-next-line:no-console
 const consoleInfo = console.info;
@@ -90,7 +89,7 @@ function BuildBotFrameworkConfig(): sdk.BotFrameworkConfig {
     }
 
     // TODO - REMOVE, this is temporary for testing during the service transition
-    //config.setProperty(PropertyId.Conversation_ApplicationId, Settings.BotSecret);
+    // config.setProperty(PropertyId.Conversation_ApplicationId, Settings.BotSecret);
 
     expect(config).not.toBeUndefined();
     return config;
@@ -132,7 +131,7 @@ function PostFailTest(done: jest.DoneCallback, ms: number, error?: string): any 
 }
 
 function sleep(milliseconds: number): Promise<any> {
-    return new Promise( resolve => setTimeout(resolve, milliseconds));
+    return new Promise((resolve: any) => setTimeout(resolve, milliseconds));
 }
 
 // DialogServiceConfig tests: begin
@@ -150,13 +149,6 @@ test("Create BotFrameworkConfig from subscription, null subscription", () => {
     expect(() => sdk.BotFrameworkConfig.fromSubscription(null, Settings.SpeechRegion)).toThrowError();
 });
 
-
-// test("Create DialogServiceConfig from bot secret, valid params", () => {
-
-// })
-
-// DialogServiceConfig tests: end
-
 test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create DialogServiceConnector, BotFrameworkConfig.fromSubscription");
@@ -173,7 +165,6 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
     expect(connector).not.toBeUndefined();
     expect(connector instanceof sdk.DialogServiceConnector);
 });
-
 
 // test("Create DialogServiceConnector with SpeechCommandsConfig", () => {
 //     // tslint:disable-next-line:no-console
@@ -210,7 +201,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(dialogConfig);
 
         // For Debug
-        //dialogConfig.setProxy("localhost", 8888);
+        // dialogConfig.setProxy("localhost", 8888);
 
         const connector: sdk.DialogServiceConnector = new sdk.DialogServiceConnector(dialogConfig);
         objsToClose.push(connector);
@@ -249,7 +240,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        //dialogConfig.setProxy("localhost", 8888);
+        // dialogConfig.setProxy("localhost", 8888);
         // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
@@ -313,7 +304,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        //dialogConfig.setProxy("localhost", 8888);
+        // dialogConfig.setProxy("localhost", 8888);
         // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatherinthemountain.wav");
@@ -410,7 +401,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        //dialogConfig.setProxy("localhost", 8888);
+        // dialogConfig.setProxy("localhost", 8888);
         // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatherinthemountain.wav");
@@ -880,7 +871,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             expect(e.sessionId).toEqual(sessionId);
         };
 
-        const message: any = {"speak": "This is speech","text": "This is text","type": "message"}
+        const message: any = {speak: "This is speech", text: "This is text", type: "message"};
         connector.sendActivityAsync(message);
 
         WaitForCondition(() => (activityCount >= 1), done);
@@ -969,7 +960,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         connector.speechStartDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
             try {
-                const message: any = {"speak": "This is speech","text": "This is text","type": "message"};
+                const message: any = {speak: "This is speech", text: "This is text", type: "message"};
                 connector.sendActivityAsync(message);
             } catch (error) {
                 done.fail(error);
