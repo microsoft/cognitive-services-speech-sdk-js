@@ -20,8 +20,6 @@ export class DialogServiceTurnStateManager {
         }
         const turnState: DialogServiceTurnState = new DialogServiceTurnState(this, id);
         this.privTurnMap.set(id, turnState);
-        // tslint:disable-next-line:no-console
-        // console.info("Start debugturn:" + id);
         return this.privTurnMap.get(id);
     }
 
@@ -33,8 +31,6 @@ export class DialogServiceTurnStateManager {
         if (!this.privTurnMap.has(id)) {
             throw new InvalidOperationError("Service error: Received turn end for an unknown turn id:" + id);
         }
-        // tslint:disable-next-line:no-console
-        // console.info("Complete debugturn:" + id);
         const turnState = this.privTurnMap.get(id);
         turnState.complete();
         this.privTurnMap.delete(id);

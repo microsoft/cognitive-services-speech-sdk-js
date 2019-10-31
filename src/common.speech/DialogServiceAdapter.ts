@@ -145,14 +145,15 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     }
 
     protected privDisconnect(): void {
-        // tslint:disable-next-line:no-console
-        console.info("privDisconnect");
-        // this.cancelRecognitionLocal(CancellationReason.Error,
-        //     CancellationErrorCode.NoError,
-        //     "Disconnecting",
-        //     undefined);
+        this.cancelRecognition(this.privDialogRequestSession.sessionId,
+            this.privDialogRequestSession.requestId,
+            CancellationReason.Error,
+            CancellationErrorCode.NoError,
+            "Disconnecting",
+            undefined);
 
         this.terminateMessageLoop = true;
+        this.agentConfigSent = false;
         if (this.privDialogConnectionPromise.result().isCompleted) {
             if (!this.privDialogConnectionPromise.result().isError) {
                 this.privDialogConnectionPromise.result().result.dispose();
@@ -255,9 +256,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
-
-                        // tslint:disable-next-line:no-console
-                        // console.info("'audio' debugturn:" + audioRequestId + " | Exception:" + error);
                     }
                 }
                 break;
@@ -267,6 +265,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     const responseRequestId = connectionMessage.requestId.toUpperCase();
                     const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(connectionMessage.textBody);
                     const turn = this.privTurnStateManager.GetTurn(responseRequestId);
+
+                    // update the conversation Id
+                    if (activityPayload.conversationId) {
+                        const updateAgentConfig = this.agentConfig.get();
+                        updateAgentConfig.botInfo.conversationId = activityPayload.conversationId;
+                        this.agentConfig.set(updateAgentConfig);
+                    }
 
                     const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload);
                     const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
@@ -363,9 +368,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     let audioNode: ReplayableAudioNode;
 
                     if (result.isError) {
-                        // tslint:disable-next-line:no-console
-                        console.info("Error in listenOnce: " + result.error);
-                        // this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error, successCallback);
+                        this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error, successCallback);
                         return PromiseHelper.fromError<boolean>(result.error);
                     } else {
                         audioNode = new ReplayableAudioNode(result.result, this.privDialogAudioSource.format as AudioStreamFormatImpl);
@@ -387,15 +390,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                                 // /* tslint:disable:no-empty */
                                 audioSendPromise.on((_: boolean) => { /*add? return true;*/ }, (error: string) => {
-                                    // tslint:disable-next-line:no-console
-                                    console.info("Error in listenOnce audioSendPromise: " + error);
-                                    // this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error, successCallback);
+                                    this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error, successCallback);
                                 });
 
                             }, (error: string) => {
-                                // tslint:disable-next-line:no-console
-                                console.info("Error in listenOnce configConnection: " + error);
-                                // this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error, successCallback);
+                                this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error, successCallback);
                             }).continueWithPromise<boolean>((result: PromiseResult<IConnection>): Promise<boolean> => {
                                 if (result.isError) {
                                     return PromiseHelper.fromError(result.error);
@@ -515,7 +514,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             if (this.privDialogConnectionPromise.result().isCompleted &&
                 (this.privDialogConnectionPromise.result().isError
                     || this.privDialogConnectionPromise.result().result.state() === ConnectionState.Disconnected)) {
-                this.privConnectionId = null;
+                this.agentConfigSent = false;
                 this.privDialogConnectionPromise = null;
             } else {
                 return this.privDialogConnectionPromise;
@@ -523,7 +522,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }
 
         this.privDialogAuthFetchEventId = createNoDashGuid();
-        this.privConnectionId = createNoDashGuid();
+
+        // keep the connectionId for reconnect events
+        if (this.privConnectionId === undefined) {
+            this.privConnectionId = createNoDashGuid();
+        }
 
                     if (!!this.privRecognizer.speechEndDetected) {
                         this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
@@ -569,11 +572,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                     // turn started by the service
                                     if (turnRequestId !== audioSessionReqId) {
                                         this.privTurnStateManager.StartTurn(turnRequestId);
-                                    } else {
-                                        // tslint:disable-next-line:no-console
-                                        console.info("Audio session turn.start:", audioSessionReqId);
                                     }
-
                                 }
                                 break;
                             case "speech.startdetected":
@@ -612,11 +611,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 {
                                     const turnEndRequestId = connectionMessage.requestId.toUpperCase();
 
-                                    // TODO: enable for this recognizer?   this.sendTelemetryData();
                                     const audioSessionReqId = this.privDialogRequestSession.requestId.toUpperCase();
-
-                                    // tslint:disable-next-line:no-console
-                                    // console.info("****Turn.end debugturn:" + turnEndRequestId + " audioSessionReqId:" + audioSessionReqId);
 
                                     // turn started by the service
                                     if (turnEndRequestId !== audioSessionReqId) {
@@ -625,17 +620,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                         // Audio session turn
 
                                         const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privDialogRequestSession.sessionId);
-                                        this.privDialogRequestSession.onServiceTurnEndResponse(false); // this.privRecognizerConfig.isContinuousRecognition);
+                                        this.privDialogRequestSession.onServiceTurnEndResponse(false);
 
                                         if (this.privDialogRequestSession.isSpeechEnded) {
                                             if (!!this.privRecognizer.sessionStopped) {
                                                 this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                                             }
-                                        } // else {
-                                        //     this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection) => {
-                                        //         // this.sendSpeechContext(connection);
-                                        //     });
-                                        // }
+                                        }
                                     }
                                 }
                                 break;
@@ -666,9 +657,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return messageRetrievalPromise.on((r: IConnection) => {
             return true;
         }, (error: string) => {
-            // tslint:disable-next-line:no-console
-            console.info("Error in startMessageLoop promise: " + error);
-            // this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error, this.privSuccessCallback/*successCallback*/);
+            this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error, this.privSuccessCallback);
         });
     }
 
