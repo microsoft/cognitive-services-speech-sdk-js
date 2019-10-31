@@ -1444,7 +1444,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         postCall = true;
     });
 
-    test("InitialSilenceTimeout Continous", (done: jest.DoneCallback) => {
+    test.skip("InitialSilenceTimeout Continous", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: InitialSilenceTimeout Continous");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1846,7 +1846,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             });
     }, 30000);
 
-    test("Silence Then Speech", (done: jest.DoneCallback) => {
+    test.skip("Silence Then Speech", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: Silence Then Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
