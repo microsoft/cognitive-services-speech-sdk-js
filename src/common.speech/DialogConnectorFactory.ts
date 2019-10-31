@@ -52,7 +52,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         authInfo: AuthInfo,
         connectionId?: string): IConnection => {
 
-        const applicationId: string = config.parameters.getProperty(PropertyId.Conversation_ApplicationId);
+        const applicationId: string = config.parameters.getProperty(PropertyId.Conversation_ApplicationId, "");
         const dialogType: string = config.parameters.getProperty(PropertyId.Conversation_DialogType);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
 
@@ -63,12 +63,23 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
 
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
 
-        const endpoint: string = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
-
         const headers: IStringDictionary<string> = {};
-        headers[authHeader] = applicationId;
         headers[authInfo.headerName] = authInfo.token;
         headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
+
+        // TODO Remove these after we've verified against a registered bot that doesn't require applicationId (Jitendra to provide)
+        headers[authHeader] = applicationId;
+        const endpoint: string = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
+
+        // TODO Uncomment once the above is removed
+        // let endpoint: string;
+        // // ApplicationId is only required for CustomCommands
+        // if (applicationId === "") {
+        //     endpoint = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
+        // } else {
+        //     endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
+        //     headers[authHeader] = applicationId;
+        // }
 
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
     }
