@@ -7,6 +7,7 @@ module.exports = {
     testRegex: "tests/.*Tests\\.ts$",
     testPathIgnorePatterns: ["/lib/", "/es2015/", "/node_modules/", "/src/"],
     moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
+    collectCoverage: true,
     "reporters": ["default", "jest-junit"],
     setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"]
 };
