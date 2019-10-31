@@ -90,7 +90,7 @@ function BuildBotFrameworkConfig(): sdk.BotFrameworkConfig {
     }
 
     // TODO - REMOVE, this is temporary for testing during the service transition
-    config.setProperty(PropertyId.Conversation_ApplicationId, Settings.BotSecret);
+    //config.setProperty(PropertyId.Conversation_ApplicationId, Settings.BotSecret);
 
     expect(config).not.toBeUndefined();
     return config;
