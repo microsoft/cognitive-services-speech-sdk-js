@@ -33,6 +33,8 @@ export * from "./RequestSession";
 export * from "./SpeechContext";
 export * from "./DynamicGrammarBuilder";
 export * from "./DynamicGrammarInterfaces";
+export * from "./DialogServiceAdapter";
+export * from "./AgentConfig";
 
 export const OutputFormatPropertyName: string = "OutputFormat";
 export const CancellationErrorCodePropertyName: string = "CancellationErrorCode";
