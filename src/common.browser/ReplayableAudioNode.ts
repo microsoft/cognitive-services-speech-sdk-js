@@ -85,7 +85,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     }
 
     public replay(): void {
-        if (0 !== this.privBuffers.length) {
+        if (this.privBuffers && 0 !== this.privBuffers.length) {
             this.privReplay = true;
             this.privReplayOffset = this.privLastShrinkOffset;
         }

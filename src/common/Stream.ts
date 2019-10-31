@@ -113,7 +113,7 @@ export class StreamReader<TBuffer> {
         return this.privReaderQueue
             .dequeue()
             .onSuccessContinueWith((streamChunk: IStreamChunk<TBuffer>) => {
-                if (streamChunk.isEnd) {
+                if (streamChunk === undefined || streamChunk.isEnd) {
                     this.privReaderQueue.dispose("End of stream reached");
                 }
 
