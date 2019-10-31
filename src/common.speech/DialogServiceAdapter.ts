@@ -20,6 +20,7 @@ import {
     PromiseResult,
 } from "../common/Exports";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
+import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 import {
     ActivityReceivedEventArgs,
     AudioOutputStream,
@@ -51,7 +52,7 @@ import {
 } from "./Exports";
 import { AuthInfo, IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
+import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig";
 import { ActivityPayloadResponse } from "./ServiceMessages/ActivityResponsePayload";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
@@ -94,6 +95,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privDialogServiceConnector = dialogServiceConnector;
         this.privDialogAuthentication = authentication;
         this.receiveMessageOverride = this.receiveDialogMessageOverride;
+        this.privTurnStateManager = new DialogServiceTurnStateManager();
         this.recognizeOverride = this.listenOnce;
         this.connectImplOverride = this.dialogConnectImpl;
         this.configConnectionOverride = this.configConnection;
@@ -103,7 +105,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privDialogRequestSession = new RequestSession(audioSource.id());
         this.privDialogConnectionFactory = connectionFactory;
         this.privDialogIsDisposed = false;
-        this.privTurnStateManager = new DialogServiceTurnStateManager();
         this.agentConfigSent = false;
     }
 
@@ -301,38 +302,44 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         error: string,
         cancelRecoCallback: (e: SpeechRecognitionResult) => void): void {
 
-        if (!!this.privDialogServiceConnector.canceled) {
-            const properties: PropertyCollection = new PropertyCollection();
-            properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
+            this.terminateMessageLoop = true;
 
-            const cancelEvent: SpeechRecognitionCanceledEventArgs = new SpeechRecognitionCanceledEventArgs(
-                cancellationReason,
-                error,
-                errorCode,
-                undefined,
-                sessionId);
+            if (!!this.privDialogRequestSession.isRecognizing) {
+                this.privDialogRequestSession.onStopRecognizing();
+            }
 
-            try {
-                this.privDialogServiceConnector.canceled(this.privDialogServiceConnector, cancelEvent);
-                /* tslint:disable:no-empty */
-            } catch { }
+            if (!!this.privDialogServiceConnector.canceled) {
+                const properties: PropertyCollection = new PropertyCollection();
+                properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
-            if (!!cancelRecoCallback) {
-                const result: SpeechRecognitionResult = new SpeechRecognitionResult(
-                    undefined, // ResultId
-                    ResultReason.Canceled,
-                    undefined, // Text
-                    undefined, // Druation
-                    undefined, // Offset
+                const cancelEvent: SpeechRecognitionCanceledEventArgs = new SpeechRecognitionCanceledEventArgs(
+                    cancellationReason,
                     error,
-                    undefined, // Json
-                    properties);
+                    errorCode,
+                    undefined,
+                    sessionId);
+
                 try {
-                    cancelRecoCallback(result);
+                    this.privDialogServiceConnector.canceled(this.privDialogServiceConnector, cancelEvent);
                     /* tslint:disable:no-empty */
                 } catch { }
+
+                if (!!cancelRecoCallback) {
+                    const result: SpeechRecognitionResult = new SpeechRecognitionResult(
+                        undefined, // ResultId
+                        ResultReason.Canceled,
+                        undefined, // Text
+                        undefined, // Druation
+                        undefined, // Offset
+                        error,
+                        undefined, // Json
+                        properties);
+                    try {
+                        cancelRecoCallback(result);
+                        /* tslint:disable:no-empty */
+                    } catch { }
+                }
             }
-        }
     }
 
     protected listenOnce = (
@@ -350,17 +357,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             this.sendPreAudioMessages();
 
-            switch (connectionMessage.path.toLowerCase()) {
-                case "turn.start":
-                    const turnRequestId = connectionMessage.requestId.toUpperCase();
-
-                    // turn started by the service
-                    if (turnRequestId !== this.privRequestSession.requestId.toUpperCase()) {
-                        this.privTurnStateManager.StartTurn(turnRequestId);
-                    }
-                    break;
-                case "speech.startdetected":
-                    const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
+            this.privSuccessCallback = successCallback;
 
             return this.privDialogAudioSource
                 .attach(this.privDialogRequestSession.audioNodeId)
@@ -528,8 +525,40 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             this.privConnectionId = createNoDashGuid();
         }
 
-                    if (!!this.privRecognizer.speechEndDetected) {
-                        this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
+        this.privDialogRequestSession.onPreConnectionStart(this.privDialogAuthFetchEventId, this.privConnectionId);
+
+        const authPromise = isUnAuthorized ? this.privDialogAuthentication.fetchOnExpiry(this.privDialogAuthFetchEventId) : this.privDialogAuthentication.fetch(this.privDialogAuthFetchEventId);
+
+        this.privDialogConnectionPromise = authPromise
+            .continueWithPromise((result: PromiseResult<AuthInfo>) => {
+                if (result.isError) {
+                    this.privDialogRequestSession.onAuthCompleted(true, result.error);
+                    throw new Error(result.error);
+                } else {
+                    this.privDialogRequestSession.onAuthCompleted(false);
+                }
+
+                const connection: IConnection = this.privDialogConnectionFactory.create(this.privRecognizerConfig, result.result, this.privConnectionId);
+
+                this.privDialogRequestSession.listenForServiceTelemetry(connection.events);
+
+                // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
+                // it'll stop sending events.
+                connection.events.attach((event: ConnectionEvent) => {
+                    this.connectionEvents.onEvent(event);
+                });
+
+                return connection.open().onSuccessContinueWithPromise((response: ConnectionOpenResponse): Promise<IConnection> => {
+                    if (response.statusCode === 200) {
+                        this.privDialogRequestSession.onPreConnectionStart(this.privDialogAuthFetchEventId, this.privConnectionId);
+                        this.privDialogRequestSession.onConnectionEstablishCompleted(response.statusCode);
+
+                        return PromiseHelper.fromResult<IConnection>(connection);
+                    } else if (response.statusCode === 403 && !isUnAuthorized) {
+                        return this.dialogConnectImpl(true);
+                    } else {
+                        this.privDialogRequestSession.onConnectionEstablishCompleted(response.statusCode, response.reason);
+                        return PromiseHelper.fromError<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
                     }
                 });
             });
@@ -637,7 +666,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                     successCallback,
                                     errorCallBack);
                         }
-                    }
 
                         return this.receiveDialogMessageOverride();
                 });
