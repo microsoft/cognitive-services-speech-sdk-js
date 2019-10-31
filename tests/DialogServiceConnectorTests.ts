@@ -83,14 +83,11 @@ function BuildCommandsServiceConfig(): sdk.DialogServiceConfig {
 }
 
 function BuildBotFrameworkConfig(): sdk.BotFrameworkConfig {
-    const config: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const config: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, Settings.BotRegion);
 
     if (undefined !== Settings.proxyServer) {
         config.setProxy(Settings.proxyServer, Settings.proxyPort);
     }
-
-    // TODO - REMOVE, this is temporary for testing during the service transition
-    //config.setProperty(PropertyId.Conversation_ApplicationId, Settings.BotSecret);
 
     expect(config).not.toBeUndefined();
     return config;
@@ -143,11 +140,11 @@ test("Create BotFrameworkConfig from subscription, null params", () => {
 });
 
 test("Create BotFrameworkConfig from subscription, null Region", () => {
-    expect(() => sdk.BotFrameworkConfig.fromSubscription(Settings.SpeechSubscriptionKey, null)).toThrowError();
+    expect(() => sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, null)).toThrowError();
 });
 
 test("Create BotFrameworkConfig from subscription, null subscription", () => {
-    expect(() => sdk.BotFrameworkConfig.fromSubscription(null, Settings.SpeechRegion)).toThrowError();
+    expect(() => sdk.BotFrameworkConfig.fromSubscription(null, Settings.BotRegion)).toThrowError();
 });
 
 
@@ -161,7 +158,7 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
     // tslint:disable-next-line:no-console
     console.info("Name: Create DialogServiceConnector, BotFrameworkConfig.fromSubscription");
 
-    const connectorConfig: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const connectorConfig: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, Settings.BotRegion);
     expect(connectorConfig).not.toBeUndefined();
 
     const file: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
@@ -179,7 +176,7 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
 //     // tslint:disable-next-line:no-console
 //     console.info("Name: Create DialogServiceConnector with SpeechCommandsConfig");
 
-//     const connectorConfig: sdk.DialogServiceConfig = sdk.DialogServiceConfig.fromBotSecret(Settings.BotSecret, Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+//     const connectorConfig: sdk.DialogServiceConfig = sdk.DialogServiceConfig.fromBotSecret(Settings.BotSecret, Settings.BotSubscription, Settings.SpeechRegion);
 //     expect(connectorConfig).not.toBeUndefined();
 
 //     const file: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);

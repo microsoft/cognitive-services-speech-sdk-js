@@ -23,6 +23,8 @@ export class Settings {
     public static LuisAppEndPointHref: string = "<<YOUR_LUIS_APP_URL>>";
 
     public static BotSecret: string = "<<YOUR_BOT_SECRET>>";
+    public static BotSubscription: string = "<<YOUR_BOT_SUBSCRIPTION>>";
+    public static BotRegion: string = "<<YOUR_BOT_REGION>>";
 
     public static InputDir: string = "tests/input/audio/";
 
