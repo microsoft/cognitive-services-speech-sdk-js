@@ -96,7 +96,7 @@ export abstract class Recognizer {
     /**
      * @Internal
      * Internal data member to support fromRecognizer* pattern methods on other classes.
-     * Do not use externally, object returned will change without warning or notive.
+     * Do not use externally, object returned will change without warning or notice.
      */
     public get internalData(): object {
         return this.privReco;
@@ -168,7 +168,7 @@ export abstract class Recognizer {
         audioConfig: AudioConfig,
         recognizerConfig: RecognizerConfig): ServiceRecognizerBase;
 
-    // Does the generic recognizer setup that is common accross all recognizer types.
+    // Does the generic recognizer setup that is common across all recognizer types.
     protected implCommonRecognizerSetup(): void {
 
         let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";

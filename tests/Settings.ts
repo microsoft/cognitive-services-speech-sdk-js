@@ -12,7 +12,7 @@ export class Settings {
 
     // Endpoint and key for timeout testing.
     // Endpoint should reduce standard speech timeout to value specified in SpeechServiceTimeoutSeconds
-    // If undefined, production timeout of 10 seconds will be used, but at the cost of greatly incrased test
+    // If undefined, production timeout of 10 seconds will be used, but at the cost of greatly increased test
     // duration.
     public static SpeechTimeoutEndpoint: string;
     public static SpeechTimeoutKey: string;
@@ -21,6 +21,8 @@ export class Settings {
     public static LuisSubscriptionKey: string = "<<YOUR_LUIS_SUBSCRIPTION_KEY>>";
     public static LuisRegion: string = "<<YOUR_LUIS_REGION>>";
     public static LuisAppEndPointHref: string = "<<YOUR_LUIS_APP_URL>>";
+
+    public static BotSecret: string = "<<YOUR_BOT_SECRET>>";
 
     public static InputDir: string = "tests/input/audio/";
 
@@ -31,7 +33,7 @@ export class Settings {
     }
 
     /*
-     * The intent behing this setting is that at test execution time the WaveFile below will contain speech
+     * The intent behind this setting is that at test execution time the WaveFile below will contain speech
      * that the LUIS app above will recognize as an intent with this ID.
      *
      * Since the default wave file asks "What's the weather like?", an intent with the Id of "Weather" seems reasonable.

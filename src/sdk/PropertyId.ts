@@ -258,4 +258,27 @@ export enum PropertyId {
     */
     SpeechServiceResponse_TranslationRequestStablePartialResult,
 
+    /**
+     * Identifier used to connect to the backend service.
+     * @member PropertyId.Conversation_ApplicationId
+     */
+    Conversation_ApplicationId,
+
+    /**
+     * Type of dialog backend to connect to.
+     * @member PropertyId.Conversation_DialogType
+     */
+    Conversation_DialogType,
+
+    /**
+     * Silence timeout for listening
+     * @member PropertyId.Conversation_Initial_Silence_Timeout
+     */
+    Conversation_Initial_Silence_Timeout,
+
+    /**
+     * From Id to add to speech recognition activities.
+     * @member PropertyId.Conversation_From_Id
+     */
+    Conversation_From_Id
 }
