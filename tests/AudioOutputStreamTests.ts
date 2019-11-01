@@ -94,7 +94,6 @@ test("PullAudioOutputStreamImpl multiple writes read after close", (done: jest.D
     readLoop();
 });
 
-
 test("PullAudioOutputStreamImpl multiple writes and reads", (done: jest.DoneCallback) => {
     const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl(bufferSize);
 
