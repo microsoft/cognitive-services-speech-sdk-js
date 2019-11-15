@@ -442,7 +442,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 let payload: ArrayBuffer;
                                 let sendDelay: number;
 
-                                if (audioStreamChunk.isEnd) {
+                                if (!audioStreamChunk || audioStreamChunk.isEnd) {
                                     payload = null;
                                     sendDelay = 0;
                                 } else {
@@ -466,7 +466,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                         new SpeechConnectionMessage(
                                             MessageType.Binary, "audio", this.privDialogRequestSession.requestId, null, payload));
 
-                                    if (!audioStreamChunk.isEnd) {
+                                    if (audioStreamChunk && !audioStreamChunk.isEnd) {
                                         uploaded.continueWith((_: PromiseResult<boolean>) => {
 
                                             // Regardless of success or failure, schedule the next upload.
