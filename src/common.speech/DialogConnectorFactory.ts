@@ -25,7 +25,7 @@ const botFramework: IBackendValues = {
     version: "v3"
 };
 
-const speechCommands: IBackendValues = {
+const customCommands: IBackendValues = {
     authHeader: "X-CommandsAppId",
     resourcePath: "commands",
     version: "v1"
@@ -35,8 +35,8 @@ const pathSuffix: string = "api";
 
 function getDialogSpecificValues(dialogType: string): IBackendValues {
     switch (dialogType) {
-        case "speech_commands": {
-            return speechCommands;
+        case "custom_commands": {
+            return customCommands;
         }
         case "bot_framework": {
             return botFramework;
