@@ -17,6 +17,18 @@
         }
         },
         {
+            "name": "Debug Jest Test MatchRegex",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/node_modules/.bin/jest",
+            "args": ["--runInBand", "--coverage", "false", "${fileBasename}", "-t", "^(Connect \/ Disconnect)$",],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "windows": {
+                "program": "${workspaceFolder}/node_modules/jest/bin/jest",
+            }
+          },
+        {
         "type": "node",
         "request": "launch",
         "name": "Jest Current File",

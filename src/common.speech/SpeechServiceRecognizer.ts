@@ -69,7 +69,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
-
+                    
                 this.privRequestSession.onHypothesis(offset);
 
                 const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
