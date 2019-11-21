@@ -5,6 +5,19 @@ import { ConnectionMessage } from "./ConnectionMessage";
 import { IStringDictionary } from "./IDictionary";
 import { EventType, PlatformEvent } from "./PlatformEvent";
 
+export class USPEvent extends PlatformEvent {
+    private privJsonResult: string;
+
+    constructor(eventName: string, eventType: EventType = EventType.Info, jsonstring: string) {
+      super(eventName, eventType);
+      this.privJsonResult = jsonstring;
+    }
+
+    public get jsonString(): string {
+        return this.jsonString;
+    }
+}
+
 export class ConnectionEvent extends PlatformEvent {
     private privConnectionId: string;
 

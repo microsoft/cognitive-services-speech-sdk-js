@@ -6,6 +6,7 @@ import {
     ArgumentNullError,
     ConnectionClosedEvent,
     ConnectionEvent,
+    USPEvent,
     ConnectionMessage,
     ConnectionOpenResponse,
     ConnectionState,
@@ -68,6 +69,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privIsDisposed: boolean;
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
+    private privUSPEvents: EventSource<USPEvent>;
     private privSpeechContext: SpeechContext;
     private privDynamicGrammar: DynamicGrammarBuilder;
     private privAgentConfig: AgentConfig;
