@@ -244,6 +244,7 @@ export class DialogServiceConnector extends Recognizer {
 
         return {
             botInfo: {
+                CommandsCulture: undefined,
                 commType: communicationType,
                 connectionId: this.properties.getProperty(PropertyId.Conversation_ApplicationId),
                 conversationId: undefined,
