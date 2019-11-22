@@ -644,23 +644,23 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                                 this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                                             }
                                         }
-                                    }
 
-                                    // report result to promise.
-                                    if (!!this.privSuccessCallback && this.privLastResult) {
-                                        try {
-                                            this.privSuccessCallback(this.privLastResult);
-                                            this.privLastResult = null;
-                                        } catch (e) {
-                                            if (!!errorCallBack) {
-                                                errorCallBack(e);
+                                        // report result to promise.
+                                        if (!!this.privSuccessCallback && this.privLastResult) {
+                                            try {
+                                                this.privSuccessCallback(this.privLastResult);
+                                                this.privLastResult = null;
+                                            } catch (e) {
+                                                if (!!errorCallBack) {
+                                                    errorCallBack(e);
+                                                }
                                             }
+                                            // Only invoke the call back once.
+                                            // and if it's successful don't invoke the
+                                            // error after that.
+                                            this.privSuccessCallback = undefined;
+                                            errorCallBack = undefined;
                                         }
-                                        // Only invoke the call back once.
-                                        // and if it's successful don't invoke the
-                                        // error after that.
-                                        this.privSuccessCallback = undefined;
-                                        errorCallBack = undefined;
                                     }
                                 }
                                 break;
