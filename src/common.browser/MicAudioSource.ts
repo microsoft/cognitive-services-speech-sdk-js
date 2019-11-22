@@ -161,9 +161,9 @@ export class MicAudioSource implements IAudioSource {
                 return {
                     detach: () => {
                         streamReader.close();
+                        this.turnOff();
                         delete this.privStreams[audioNodeId];
                         this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
-                        this.turnOff();
                     },
                     id: () => {
                         return audioNodeId;
