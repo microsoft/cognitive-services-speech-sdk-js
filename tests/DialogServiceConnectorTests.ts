@@ -951,6 +951,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.activity).not.toBeNull();
                 activityCount++;
+                // console.error("activityCount = " + activityCount);
             } catch (error) {
                 done.fail(error);
             }
@@ -982,6 +983,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             expect(result.errorDetails).toBeUndefined();
             expect(result.text).not.toBeUndefined();
             recoDone = true;
+            // console.info("recoDone = " + recoDone);
         },
         (error: string) => {
             done.fail(error);

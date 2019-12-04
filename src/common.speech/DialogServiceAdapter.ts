@@ -170,7 +170,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     protected processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
         successCallback?: (e: SpeechRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): void {
+        errorCallBack?: (e: string) => void): boolean {
 
         const resultProps: PropertyCollection = new PropertyCollection();
         if (connectionMessage.messageType === MessageType.Text) {
@@ -178,6 +178,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }
 
         let result: SpeechRecognitionResult;
+        let processed: boolean;
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.phrase":
@@ -213,6 +214,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         errorCallBack = undefined;
                     }
                 }
+                processed = true;
                 break;
             case "speech.hypothesis":
                 const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
@@ -241,6 +243,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // trip things up.
                     }
                 }
+                processed = true;
                 break;
 
             case "audio":
@@ -259,6 +262,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // trip things up.
                     }
                 }
+                processed = true;
                 break;
 
             case "response":
@@ -286,11 +290,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         }
                     }
                 }
+                processed = true;
                 break;
 
             default:
                 break;
         }
+        return processed;
     }
 
     // Cancels recognition.

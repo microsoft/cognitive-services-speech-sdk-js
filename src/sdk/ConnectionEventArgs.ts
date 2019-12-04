@@ -11,3 +11,11 @@ import { SessionEventArgs } from "./Exports";
  */
 export class ConnectionEventArgs extends SessionEventArgs {
 }
+
+/**
+ * Defines payload for connection events like Connected/Disconnected.
+ * Added in version 1.2.0
+ */
+// tslint:disable-next-line:max-classes-per-file
+export class ServiceEventArgs extends SessionEventArgs {
+}

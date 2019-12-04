@@ -9,10 +9,12 @@ import {
 import {
     ConnectionEvent,
     IDetachable,
+    ServiceEvent,
 } from "../common/Exports";
 import {
     ConnectionEventArgs,
     Recognizer,
+    ServiceEventArgs,
 } from "./Exports";
 
 /**
@@ -31,6 +33,7 @@ import {
 export class Connection {
     private privServiceRecognizer: ServiceRecognizerBase;
     private privEventListener: IDetachable;
+    private privNetworkEventListener: IDetachable;
 
     /**
      * Gets the Connection instance from the specified recognizer.
@@ -55,6 +58,12 @@ export class Connection {
             }
         });
 
+        ret.privNetworkEventListener = ret.privServiceRecognizer.NetworkEvents.attach((e: ServiceEvent): void =>  {
+            if (!!ret.ServiceMessageReceived) {
+                ret.ServiceMessageReceived(new ServiceEventArgs(e.jsonString, e.name));
+            }
+        });
+
         return ret;
     }
 
@@ -74,11 +83,13 @@ export class Connection {
      * Closes the connection the service.
      * Users can optionally call closeConnection() to manually shutdown the connection of the associated Recognizer.
      *
-     * If closeConnection() is called during recognition, recognition will fail and cancel wtih an error.
+     * If closeConnection() is called during recognition, recognition will fail and cancel with an error.
      */
     public closeConnection(): void {
         this.privServiceRecognizer.disconnect();
     }
+
+    public ServiceMessageReceived: (args: ServiceEventArgs) => void;
 
     /**
      * The Connected event to indicate that the recognizer is connected to service.

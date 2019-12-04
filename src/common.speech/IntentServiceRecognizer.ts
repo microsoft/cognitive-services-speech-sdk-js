@@ -59,10 +59,11 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
     protected processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
         successCallback?: (e: IntentRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): void {
+        errorCallBack?: (e: string) => void): boolean {
 
         let result: IntentRecognitionResult;
         let ev: IntentRecognitionEventArgs;
+        let processed: boolean = false;
 
         const resultProps: PropertyCollection = new PropertyCollection();
         if (connectionMessage.messageType === MessageType.Text) {
@@ -97,7 +98,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                         // trip things up.
                     }
                 }
-
+                processed = true;
                 break;
             case "speech.phrase":
                 const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
@@ -153,7 +154,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     // and then return
                     this.privPendingIntentArgs = ev;
                 }
-
+                processed = true;
                 break;
             case "response":
                 // Response from LUIS
@@ -237,10 +238,12 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     successCallback = undefined;
                     errorCallBack = undefined;
                 }
+                processed = true;
                 break;
             default:
                 break;
         }
+        return processed;
     }
 
     // Cancels recognition.
