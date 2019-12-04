@@ -7,7 +7,7 @@ import { SessionEventArgs } from "./Exports";
 
 /**
  * Defines payload for any Service message event
- * Added in version 1.2.0
+ * Added in version 1.9.0
  */
 
 export class ServiceEventArgs extends SessionEventArgs {

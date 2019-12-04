@@ -110,10 +110,6 @@ test("speech.event from service", (done: jest.DoneCallback) => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(Settings.VoiceSignatureEnrollmentEndpoint), Settings.VoiceSignatureEnrollmentKey);
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile("whatstheweatherlike.wav");
-
-    let sessionId: string;
-
     const file: File = WaveFileAudioInput.LoadFile(Settings.VoiceSignatureWaveFile);
     const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(file);
 
@@ -133,17 +129,9 @@ test("speech.event from service", (done: jest.DoneCallback) => {
     expectedText += "Thank you and goodbye.";
 
     phraseList.addPhrase(expectedText);
-
+    let sessionId: string;
     r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-        if (undefined === sessionId) {
-            sessionId = e.sessionId;
-        } else {
-            try {
-                expect(e.sessionId).toEqual(sessionId);
-            } catch (error) {
-                done.fail(error);
-            }
-        }
+        sessionId = e.sessionId;
     };
 
     r.sessionStopped = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
@@ -153,7 +141,7 @@ test("speech.event from service", (done: jest.DoneCallback) => {
     const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
     let receivedSpeechEvent: boolean = false;
-    connection.ServiceMessageReceived = (e: sdk.ServiceEventArgs): void => {
+    connection.receivedServiceMessage = (e: sdk.ServiceEventArgs): void => {
        // tslint:disable-next-line:no-console
        console.info("Receuved a Service message: '" + e.jsonString + "'");
        if ( e.eventName === "speech.event" ) {

@@ -28,7 +28,7 @@ call npm run test
 set NPM_ERROR=%ERRORLEVEL%
 
 if %TEST_SETTING_FILE_EXISTED% EQU 0 (
-    del "%TEST_SETTING_FILE_NAME%"
+  del "%TEST_SETTING_FILE_NAME%"
 )
 
 popd

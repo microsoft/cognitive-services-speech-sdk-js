@@ -33,7 +33,7 @@ import {
 export class Connection {
     private privServiceRecognizer: ServiceRecognizerBase;
     private privEventListener: IDetachable;
-    private privNetworkEventListener: IDetachable;
+    private privServiceEventListener: IDetachable;
 
     /**
      * Gets the Connection instance from the specified recognizer.
@@ -58,9 +58,9 @@ export class Connection {
             }
         });
 
-        ret.privNetworkEventListener = ret.privServiceRecognizer.NetworkEvents.attach((e: ServiceEvent): void =>  {
-            if (!!ret.ServiceMessageReceived) {
-                ret.ServiceMessageReceived(new ServiceEventArgs(e.jsonString, e.name));
+        ret.privServiceEventListener = ret.privServiceRecognizer.ServiceEvents.attach((e: ServiceEvent): void =>  {
+            if (!!ret.receivedServiceMessage) {
+                ret.receivedServiceMessage(new ServiceEventArgs(e.jsonString, e.name));
             }
         });
 
@@ -89,7 +89,7 @@ export class Connection {
         this.privServiceRecognizer.disconnect();
     }
 
-    public ServiceMessageReceived: (args: ServiceEventArgs) => void;
+    public receivedServiceMessage: (args: ServiceEventArgs) => void;
 
     /**
      * The Connected event to indicate that the recognizer is connected to service.

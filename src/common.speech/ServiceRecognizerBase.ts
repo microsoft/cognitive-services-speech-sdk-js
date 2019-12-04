@@ -69,7 +69,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privIsDisposed: boolean;
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
-    private privNetworkEvents: EventSource<ServiceEvent>;
+    private privServiceEvents: EventSource<ServiceEvent>;
     private privSpeechContext: SpeechContext;
     private privDynamicGrammar: DynamicGrammarBuilder;
     private privAgentConfig: AgentConfig;
@@ -110,7 +110,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privRecognizer = recognizer;
         this.privRequestSession = new RequestSession(this.privAudioSource.id());
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
-        this.privNetworkEvents = new EventSource<ServiceEvent>();
+        this.privServiceEvents = new EventSource<ServiceEvent>();
         this.privDynamicGrammar = new DynamicGrammarBuilder();
         this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
         this.privAgentConfig = new AgentConfig();
@@ -149,8 +149,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privConnectionEvents;
     }
 
-    public get NetworkEvents(): EventSource<ServiceEvent> {
-        return this.privNetworkEvents;
+    public get ServiceEvents(): EventSource<ServiceEvent> {
+        return this.privServiceEvents;
     }
 
     public get recognitionMode(): RecognitionMode {
@@ -438,9 +438,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                     successCallback,
                                     errorCallBack)) {
                                         // here are some messages that the derived class has not processed, dispatch them to connect class
-                                        //  speech.event is the first arg.
-                                        if (!!this.privNetworkEvents) {
-                                            this.NetworkEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
+                                        if (!!this.privServiceEvents) {
+                                            this.ServiceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
                                         }
                                     }
 
@@ -620,8 +619,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             setTimeout(() => {
                                 if (payload !== null) {
                                     nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
-                                    // tslint:disable-next-line:no-console
-                                    console.warn("Audio size: " + payload.byteLength);
                                 }
 
                                 const uploaded: Promise<boolean> = connection.send(

@@ -36,7 +36,7 @@ interface ISendItem {
     RawWebsocketMessage: RawWebsocketMessage;
     sendStatusDeferral: Deferred<boolean>;
 }
-// all events on the connection. weixu
+
 export class WebsocketMessageAdapter {
     private privConnectionState: ConnectionState;
     private privMessageFormatter: IWebsocketMessageFormatter;
