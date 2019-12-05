@@ -58,7 +58,7 @@ export class Connection {
             }
         });
 
-        ret.privServiceEventListener = ret.privServiceRecognizer.ServiceEvents.attach((e: ServiceEvent): void =>  {
+        ret.privServiceEventListener = ret.privServiceRecognizer.serviceEvents.attach((e: ServiceEvent): void =>  {
             if (!!ret.receivedServiceMessage) {
                 ret.receivedServiceMessage(new ServiceEventArgs(e.jsonString, e.name));
             }

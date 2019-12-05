@@ -5,7 +5,6 @@ import { ConnectionMessage } from "./ConnectionMessage";
 import { IStringDictionary } from "./IDictionary";
 import { EventType, PlatformEvent } from "./PlatformEvent";
 
-// tslint:disable-next-line:max-classes-per-file
 export class ServiceEvent extends PlatformEvent {
     private privJsonResult: string;
 

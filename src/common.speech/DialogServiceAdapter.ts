@@ -18,6 +18,7 @@ import {
     Promise,
     PromiseHelper,
     PromiseResult,
+    ServiceEvent,
 } from "../common/Exports";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
@@ -667,10 +668,14 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 break;
 
                             default:
-                                this.processTypeSpecificMessages(
+                                if (!this.processTypeSpecificMessages(
                                     connectionMessage,
                                     successCallback,
-                                    errorCallBack);
+                                    errorCallBack)) {
+                                        if (!!this.serviceEvents) {
+                                            this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
+                                        }
+                                    }
                         }
 
                         return this.receiveDialogMessageOverride();

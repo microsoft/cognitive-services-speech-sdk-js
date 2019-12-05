@@ -149,7 +149,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privConnectionEvents;
     }
 
-    public get ServiceEvents(): EventSource<ServiceEvent> {
+    public get serviceEvents(): EventSource<ServiceEvent> {
         return this.privServiceEvents;
     }
 
@@ -439,7 +439,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                     errorCallBack)) {
                                         // here are some messages that the derived class has not processed, dispatch them to connect class
                                         if (!!this.privServiceEvents) {
-                                            this.ServiceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
+                                            this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
                                         }
                                     }
 
