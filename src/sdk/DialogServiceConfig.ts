@@ -187,7 +187,7 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
         }
     }
 
-    public setServiceProperty(name: string, value: string, channel: import("./ServicePropertyChannel").ServicePropertyChannel): void {
+    public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
         this.privSpeechConfig.setServiceProperty(name, value, channel);
     }
 
