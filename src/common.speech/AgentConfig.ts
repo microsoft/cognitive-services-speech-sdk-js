@@ -28,7 +28,8 @@ export interface IAgentConfig {
     botInfo: {
         commType: string,
         connectionId: string,
-        conversationId: string
+        conversationId: string,
+        fromId: string
     };
     version: number;
 }
