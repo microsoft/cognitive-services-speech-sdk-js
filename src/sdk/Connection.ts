@@ -89,6 +89,9 @@ export class Connection {
         this.privServiceRecognizer.disconnect();
     }
 
+    /**
+     * Any message from service that is not being processed by any other top level recognizers.
+     */
     public receivedServiceMessage: (args: ServiceEventArgs) => void;
 
     /**
