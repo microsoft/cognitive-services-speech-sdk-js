@@ -5,8 +5,9 @@ import {
     ProxyInfo,
     WebsocketConnection,
 } from "../common.browser/Exports";
+import { OutputFormatPropertyName } from "../common.speech/Exports";
 import { IConnection, IStringDictionary } from "../common/Exports";
-import { PropertyId } from "../sdk/Exports";
+import { OutputFormat, PropertyId } from "../sdk/Exports";
 import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
 import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
 import { QueryParameterNames } from "./QueryParameterNames";
@@ -60,6 +61,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
 
         const queryParams: IStringDictionary<string> = {};
         queryParams[QueryParameterNames.LanguageParamName] = language;
+        queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(PropertyId.SpeechServiceResponse_OutputFormatOption, OutputFormat[OutputFormat.Simple]).toLowerCase();
 
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
 

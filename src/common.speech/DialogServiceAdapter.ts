@@ -77,6 +77,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privConnectionLoop: Promise<IConnection>;
     private terminateMessageLoop: boolean;
     private agentConfigSent: boolean;
+    private privLastResult: SpeechRecognitionResult;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -106,6 +107,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privDialogConnectionFactory = connectionFactory;
         this.privDialogIsDisposed = false;
         this.agentConfigSent = false;
+        this.privLastResult = null;
     }
 
     public isDisposed(): boolean {
@@ -187,6 +189,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                 if (speechPhrase.RecognitionStatus === RecognitionStatus.Success) {
                     const args: SpeechRecognitionEventArgs = this.fireEventForResult(speechPhrase, resultProps);
+                    this.privLastResult = args.result;
+
                     if (!!this.privDialogServiceConnector.recognized) {
                         try {
                             this.privDialogServiceConnector.recognized(this.privDialogServiceConnector, args);
@@ -195,22 +199,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                             // Not going to let errors in the event handler
                             // trip things up.
                         }
-                    }
-
-                    // report result to promise.
-                    if (!!this.privSuccessCallback) {
-                        try {
-                            this.privSuccessCallback(args.result);
-                        } catch (e) {
-                            if (!!errorCallBack) {
-                                errorCallBack(e);
-                            }
-                        }
-                        // Only invoke the call back once.
-                        // and if it's successful don't invoke the
-                        // error after that.
-                        this.privSuccessCallback = undefined;
-                        errorCallBack = undefined;
                     }
                 }
                 break;
@@ -655,6 +643,23 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                             if (!!this.privRecognizer.sessionStopped) {
                                                 this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                                             }
+                                        }
+
+                                        // report result to promise.
+                                        if (!!this.privSuccessCallback && this.privLastResult) {
+                                            try {
+                                                this.privSuccessCallback(this.privLastResult);
+                                                this.privLastResult = null;
+                                            } catch (e) {
+                                                if (!!errorCallBack) {
+                                                    errorCallBack(e);
+                                                }
+                                            }
+                                            // Only invoke the call back once.
+                                            // and if it's successful don't invoke the
+                                            // error after that.
+                                            this.privSuccessCallback = undefined;
+                                            errorCallBack = undefined;
                                         }
                                     }
                                 }

@@ -32,6 +32,7 @@ import { PropertyId } from "./PropertyId";
  */
 export class DialogServiceConnector extends Recognizer {
     private privIsDisposed: boolean;
+    private isTurnComplete: boolean;
 
     /**
      * Initializes an instance of the DialogServiceConnector.
@@ -45,6 +46,7 @@ export class DialogServiceConnector extends Recognizer {
 
         super(audioConfig, dialogServiceConfigImpl.properties, new DialogConnectionFactory());
 
+        this.isTurnComplete = true;
         this.privIsDisposed = false;
         this.privProperties = dialogServiceConfigImpl.properties.clone();
 
@@ -151,40 +153,46 @@ export class DialogServiceConnector extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public listenOnceAsync(cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privIsDisposed);
+        if (this.isTurnComplete) {
+            try {
+                Contracts.throwIfDisposed(this.privIsDisposed);
 
-            this.connect();
+                this.connect();
 
-            this.implRecognizerStop();
+                this.implRecognizerStop();
+                this.isTurnComplete = false;
 
-            this.implRecognizerStart(
-                RecognitionMode.Conversation,
-                (e: SpeechRecognitionResult) => {
-                    this.implRecognizerStop();
+                this.implRecognizerStart(
+                    RecognitionMode.Conversation,
+                    (e: SpeechRecognitionResult) => {
+                        this.implRecognizerStop();
 
-                    if (!!cb) {
-                        cb(e);
+                        this.isTurnComplete = true;
+
+                        if (!!cb) {
+                            cb(e);
+                        }
+                    },
+                    (e: string) => {
+                        this.implRecognizerStop();
+                        this.isTurnComplete = true;
+                        if (!!err) {
+                            err(e);
+                        }
+                    });
+            } catch (error) {
+                if (!!err) {
+                    if (error instanceof Error) {
+                        const typedError: Error = error as Error;
+                        err(typedError.name + ": " + typedError.message);
+                    } else {
+                        err(error);
                     }
-                },
-                (e: string) => {
-                    this.implRecognizerStop();
-                    if (!!err) {
-                        err(e);
-                    }
-                });
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
                 }
-            }
 
-            // Destroy the recognizer.
-            this.dispose(true);
+                // Destroy the recognizer.
+                this.dispose(true);
+            }
         }
     }
 
@@ -238,7 +246,8 @@ export class DialogServiceConnector extends Recognizer {
             botInfo: {
                 commType: communicationType,
                 connectionId: this.properties.getProperty(PropertyId.Conversation_ApplicationId),
-                conversationId: undefined
+                conversationId: undefined,
+                fromId: this.properties.getProperty(PropertyId.Conversation_From_Id, undefined)
             },
             version: 0.2
         };
