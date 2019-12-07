@@ -45,26 +45,26 @@
     "REDIST.txt"
   ],
   "devDependencies": {
-    "@types/jest": "^24.0.15",
-    "@types/node": "^12.6.8",
-    "@types/request": "^2.48.2",
-    "@types/ws": "^6.0.1",
-    "asn1.js": "^5.0.0",
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.12.14",
+    "@types/request": "^2.48.3",
+    "@types/ws": "^6.0.4",
+    "asn1.js": "^5.2.0",
     "dts-bundle-webpack": "^1.0.2",
     "gulp": "^4.0.2",
-    "gulp-rename": "^1.4.0",
+    "gulp-rename": "^2.0.0",
     "gulp-sourcemaps": "^2.6.5",
     "gulp-terser": "^1.2.0",
     "gulp-tslint": "^8.1.4",
     "gulp-typescript": "^5.0.1",
-    "jest": "^24.8.0",
-    "jest-junit": "^7.0.0",
+    "jest": "^24.9.0",
+    "jest-junit": "^10.0.0",
     "request": "^2.88.0",
     "semver": "^6.3.0",
     "source-map-loader": "^0.2.4",
-    "ts-jest": "^24.0.2",
-    "tslint": "^5.18.0",
-    "typescript": "^3.5.3",
+    "ts-jest": "^24.2.0",
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.3",
     "webpack-stream": "^5.2.1"
   },
   "scripts": {
@@ -89,9 +89,9 @@
   "dependencies": {
     "asn1.js-rfc2560": "^5.0.0",
     "asn1.js-rfc5280": "^3.0.0",
-    "https-proxy-agent": "^3.0.0",
+    "https-proxy-agent": "^3.0.1",
     "simple-lru-cache": "0.0.2",
-    "ws": "^7.1.1"
+    "ws": "^7.2.0"
   },
   "resolutions": {
     "extend": "3.0.2"
