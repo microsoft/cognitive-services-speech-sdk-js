@@ -48,11 +48,12 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
     protected processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
         successCallback?: (e: SpeechRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): void {
+        errorCallBack?: (e: string) => void): boolean {
 
         let result: SpeechRecognitionResult;
         const resultProps: PropertyCollection = new PropertyCollection();
         resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
+        let processed: boolean = false;
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
@@ -83,6 +84,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                         // trip things up.
                     }
                 }
+                processed = true;
                 break;
             case "speech.phrase":
                 const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
@@ -153,11 +155,12 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                         errorCallBack = undefined;
                     }
                 }
-
+                processed = true;
                 break;
             default:
                 break;
         }
+        return processed;
     }
 
     // Cancels recognition.

@@ -19,6 +19,13 @@ import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import WaitForCondition from "./Utilities";
 
+import {
+    DynamicGrammarBuilder,
+    IDynamicGrammar,
+    IDynamicGrammarGeneric,
+    IDynamicGrammarGroup,
+} from "../src/common.speech/Exports";
+
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
 const Recognized: string = "Recognized";
@@ -92,7 +99,90 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     expect(s).not.toBeUndefined();
     return s;
 };
+/*
+test("speech.event from service", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: speech.event from service");
 
+    expect(Settings.VoiceSignatureEnrollmentEndpoint && Settings.VoiceSignatureEnrollmentEndpoint.length > 0);
+    expect(Settings.VoiceSignatureEnrollmentKey && Settings.VoiceSignatureEnrollmentKey.length > 0);
+
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(Settings.VoiceSignatureEnrollmentEndpoint), Settings.VoiceSignatureEnrollmentKey);
+    objsToClose.push(s);
+
+    const file: File = WaveFileAudioInput.LoadFile(Settings.VoiceSignatureWaveFile);
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(file);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
+
+    expect(r).not.toBeUndefined();
+    expect(r instanceof sdk.Recognizer);
+
+    let sessionDone: boolean = false;
+
+    const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
+    let expectedText: string;
+    expectedText = "Hello, it's a good day for me to teach you the sound of my voice. You have learned what I look like, now you can hear what I sound like.";
+    expectedText += "The sound of my voice will help the transcription service to recognize my unique voice in the future.";
+    expectedText += "Training will provide a better experience with greater accuracy when talking or dictating.";
+    expectedText += "Thank you and goodbye.";
+
+    phraseList.addPhrase(expectedText);
+    let sessionId: string;
+    r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        sessionId = e.sessionId;
+    };
+
+    r.sessionStopped = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        sessionDone = true;
+    };
+
+    const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    let receivedSpeechEvent: boolean = false;
+    connection.receivedServiceMessage = (e: sdk.ServiceEventArgs): void => {
+       // tslint:disable-next-line:no-console
+       console.info("Receuved a Service message: '" + e.jsonString + "'");
+       if ( e.eventName === "speech.event" ) {
+           receivedSpeechEvent = true;
+       }
+    };
+
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        sessionDone = true;
+        try {
+            expect(e.errorDetails).toBeUndefined();
+            expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+        try {
+            const res: sdk.SpeechRecognitionResult = e.result;
+            expect(res).not.toBeUndefined();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    r.startContinuousRecognitionAsync(
+        undefined,
+        (error: string) => {
+            done.fail(error);
+        });
+
+    WaitForCondition(() => (sessionDone), () => {
+        r.stopContinuousRecognitionAsync(() => {
+           expect(receivedSpeechEvent).toEqual(true);
+           done();
+        });
+    });
+
+}, 200000);
+*/
 test("testSpeechRecognizer1", () => {
     // tslint:disable-next-line:no-console
     console.info("Name: testSpeechRecognizer1");

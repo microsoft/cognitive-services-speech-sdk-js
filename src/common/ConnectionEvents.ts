@@ -5,6 +5,20 @@ import { ConnectionMessage } from "./ConnectionMessage";
 import { IStringDictionary } from "./IDictionary";
 import { EventType, PlatformEvent } from "./PlatformEvent";
 
+export class ServiceEvent extends PlatformEvent {
+    private privJsonResult: string;
+
+    constructor(eventName: string, jsonstring: string, eventType: EventType = EventType.Info) {
+      super(eventName, eventType);
+      this.privJsonResult = jsonstring;
+    }
+
+    public get jsonString(): string {
+        return this.privJsonResult;
+    }
+}
+
+// tslint:disable-next-line:max-classes-per-file
 export class ConnectionEvent extends PlatformEvent {
     private privConnectionId: string;
 
