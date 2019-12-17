@@ -752,7 +752,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             if (this.privRecognizerConfig.parameters.getProperty(PropertyId.Conversation_DialogType) === "custom_commands") {
                 const config = this.agentConfig.get();
-                config.botInfo.CommandsCulture = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-US");
+                config.botInfo.commandsCulture = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-us");
                 this.agentConfig.set(config);
             }
             const agentConfigJson = this.agentConfig.toJsonString();
