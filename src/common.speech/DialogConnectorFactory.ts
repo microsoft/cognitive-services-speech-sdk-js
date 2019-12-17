@@ -78,6 +78,8 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
             headers[authHeader] = applicationId;
         }
 
+        this.setCommonUrlParams(config, queryParams, endpoint);
+
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
     }
 }
