@@ -55,9 +55,11 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
     protected processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
         successCallback?: (e: TranslationRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): void {
+        errorCallBack?: (e: string) => void): boolean {
 
         const resultProps: PropertyCollection = new PropertyCollection();
+        let processed: boolean = false;
+
         if (connectionMessage.messageType === MessageType.Text) {
             resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
         }
@@ -77,7 +79,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         // trip things up.
                     }
                 }
-
+                processed = true;
                 break;
             case "translation.phrase":
                 const translatedPhrase: TranslationPhrase = TranslationPhrase.fromJSON(connectionMessage.textBody);
@@ -169,10 +171,12 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         }
                     }
                 }
+                processed = true;
                 break;
 
             case "translation.synthesis":
                 this.sendSynthesisAudio(connectionMessage.binaryBody, this.privRequestSession.sessionId);
+                processed = true;
                 break;
 
             case "translation.synthesis.end":
@@ -217,10 +221,12 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                     default:
                         break;
                 }
+                processed = true;
                 break;
             default:
                 break;
         }
+        return processed;
     }
 
     // Cancels recognition.

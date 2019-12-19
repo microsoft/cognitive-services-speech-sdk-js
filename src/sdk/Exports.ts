@@ -39,6 +39,7 @@ export { IntentRecognitionCanceledEventArgs } from "./IntentRecognitionCanceledE
 export { CancellationDetails } from "./CancellationDetails";
 export { CancellationErrorCode } from "./CancellationErrorCodes";
 export { ConnectionEventArgs } from "./ConnectionEventArgs";
+export { ServiceEventArgs } from "./ServiceEventArgs";
 export { Connection } from "./Connection";
 export { PhraseListGrammar } from "./PhraseListGrammar";
 export { DialogServiceConfig } from "./DialogServiceConfig";

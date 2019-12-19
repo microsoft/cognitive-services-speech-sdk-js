@@ -18,6 +18,7 @@ import {
     Promise,
     PromiseHelper,
     PromiseResult,
+    ServiceEvent,
 } from "../common/Exports";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
@@ -77,6 +78,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privConnectionLoop: Promise<IConnection>;
     private terminateMessageLoop: boolean;
     private agentConfigSent: boolean;
+    private privLastResult: SpeechRecognitionResult;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -106,6 +108,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privDialogConnectionFactory = connectionFactory;
         this.privDialogIsDisposed = false;
         this.agentConfigSent = false;
+        this.privLastResult = null;
     }
 
     public isDisposed(): boolean {
@@ -170,7 +173,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     protected processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
         successCallback?: (e: SpeechRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): void {
+        errorCallBack?: (e: string) => void): boolean {
 
         const resultProps: PropertyCollection = new PropertyCollection();
         if (connectionMessage.messageType === MessageType.Text) {
@@ -178,6 +181,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }
 
         let result: SpeechRecognitionResult;
+        let processed: boolean;
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.phrase":
@@ -187,6 +191,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                 if (speechPhrase.RecognitionStatus === RecognitionStatus.Success) {
                     const args: SpeechRecognitionEventArgs = this.fireEventForResult(speechPhrase, resultProps);
+                    this.privLastResult = args.result;
+
                     if (!!this.privDialogServiceConnector.recognized) {
                         try {
                             this.privDialogServiceConnector.recognized(this.privDialogServiceConnector, args);
@@ -196,23 +202,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                             // trip things up.
                         }
                     }
-
-                    // report result to promise.
-                    if (!!this.privSuccessCallback) {
-                        try {
-                            this.privSuccessCallback(args.result);
-                        } catch (e) {
-                            if (!!errorCallBack) {
-                                errorCallBack(e);
-                            }
-                        }
-                        // Only invoke the call back once.
-                        // and if it's successful don't invoke the
-                        // error after that.
-                        this.privSuccessCallback = undefined;
-                        errorCallBack = undefined;
-                    }
                 }
+                processed = true;
                 break;
             case "speech.hypothesis":
                 const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
@@ -241,6 +232,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // trip things up.
                     }
                 }
+                processed = true;
                 break;
 
             case "audio":
@@ -259,6 +251,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // trip things up.
                     }
                 }
+                processed = true;
                 break;
 
             case "response":
@@ -286,11 +279,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         }
                     }
                 }
+                processed = true;
                 break;
 
             default:
                 break;
         }
+        return processed;
     }
 
     // Cancels recognition.
@@ -442,7 +437,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 let payload: ArrayBuffer;
                                 let sendDelay: number;
 
-                                if (audioStreamChunk.isEnd) {
+                                if (!audioStreamChunk || audioStreamChunk.isEnd) {
                                     payload = null;
                                     sendDelay = 0;
                                 } else {
@@ -466,7 +461,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                         new SpeechConnectionMessage(
                                             MessageType.Binary, "audio", this.privDialogRequestSession.requestId, null, payload));
 
-                                    if (!audioStreamChunk.isEnd) {
+                                    if (audioStreamChunk && !audioStreamChunk.isEnd) {
                                         uploaded.continueWith((_: PromiseResult<boolean>) => {
 
                                             // Regardless of success or failure, schedule the next upload.
@@ -656,15 +651,36 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                                 this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                                             }
                                         }
+
+                                        // report result to promise.
+                                        if (!!this.privSuccessCallback && this.privLastResult) {
+                                            try {
+                                                this.privSuccessCallback(this.privLastResult);
+                                                this.privLastResult = null;
+                                            } catch (e) {
+                                                if (!!errorCallBack) {
+                                                    errorCallBack(e);
+                                                }
+                                            }
+                                            // Only invoke the call back once.
+                                            // and if it's successful don't invoke the
+                                            // error after that.
+                                            this.privSuccessCallback = undefined;
+                                            errorCallBack = undefined;
+                                        }
                                     }
                                 }
                                 break;
 
                             default:
-                                this.processTypeSpecificMessages(
+                                if (!this.processTypeSpecificMessages(
                                     connectionMessage,
                                     successCallback,
-                                    errorCallBack);
+                                    errorCallBack)) {
+                                        if (!!this.serviceEvents) {
+                                            this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
+                                        }
+                                    }
                         }
 
                         return this.receiveDialogMessageOverride();

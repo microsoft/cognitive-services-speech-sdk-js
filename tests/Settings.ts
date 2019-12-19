@@ -8,6 +8,9 @@ export class Settings {
     public static SpeechRegion: string = "<<YOUR_REGION>>";
     public static SpeechEndpoint: string;
 
+    public static VoiceSignatureEnrollmentEndpoint: string = "wss://10.91.185.105:8446/speech/voicesignature?&language=en-us";
+    public static VoiceSignatureEnrollmentKey: string;
+
     public static SpeechTestEndpointId: string = "<<YOUR_TEST_ENDPOINT_ID>>";
 
     // Endpoint and key for timeout testing.
@@ -54,6 +57,7 @@ export class Settings {
     public static LuisAppId: string = "b687b851-56c5-4d31-816f-35a741a3f0be";
 
     public static WaveFile: string = Settings.InputDir + "whatstheweatherlike.wav";
+    public static VoiceSignatureWaveFile: string = Settings.InputDir + "StreamingEnrollment.wav";
     public static WaveFileLanguage: string = "en-US";
     public static WaveFileDuration: number = 12900000;
     public static WaveFileOffset: number = 1000000;

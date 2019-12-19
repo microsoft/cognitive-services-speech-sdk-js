@@ -5,8 +5,9 @@ import {
     ProxyInfo,
     WebsocketConnection,
 } from "../common.browser/Exports";
+import { OutputFormatPropertyName } from "../common.speech/Exports";
 import { IConnection, IStringDictionary } from "../common/Exports";
-import { PropertyId } from "../sdk/Exports";
+import { OutputFormat, PropertyId } from "../sdk/Exports";
 import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
 import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
 import { QueryParameterNames } from "./QueryParameterNames";
@@ -25,7 +26,7 @@ const botFramework: IBackendValues = {
     version: "v3"
 };
 
-const speechCommands: IBackendValues = {
+const customCommands: IBackendValues = {
     authHeader: "X-CommandsAppId",
     resourcePath: "commands",
     version: "v1"
@@ -35,8 +36,8 @@ const pathSuffix: string = "api";
 
 function getDialogSpecificValues(dialogType: string): IBackendValues {
     switch (dialogType) {
-        case "speech_commands": {
-            return speechCommands;
+        case "custom_commands": {
+            return customCommands;
         }
         case "bot_framework": {
             return botFramework;
@@ -60,6 +61,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
 
         const queryParams: IStringDictionary<string> = {};
         queryParams[QueryParameterNames.LanguageParamName] = language;
+        queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(PropertyId.SpeechServiceResponse_OutputFormatOption, OutputFormat[OutputFormat.Simple]).toLowerCase();
 
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
 
@@ -75,6 +77,8 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
             endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
             headers[authHeader] = applicationId;
         }
+
+        this.setCommonUrlParams(config, queryParams, endpoint);
 
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
     }

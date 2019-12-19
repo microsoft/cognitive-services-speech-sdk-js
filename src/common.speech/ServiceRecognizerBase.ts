@@ -22,6 +22,7 @@ import {
     Promise,
     PromiseHelper,
     PromiseResult,
+    ServiceEvent,
 } from "../common/Exports";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 import {
@@ -68,6 +69,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privIsDisposed: boolean;
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
+    private privServiceEvents: EventSource<ServiceEvent>;
     private privSpeechContext: SpeechContext;
     private privDynamicGrammar: DynamicGrammarBuilder;
     private privAgentConfig: AgentConfig;
@@ -108,6 +110,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privRecognizer = recognizer;
         this.privRequestSession = new RequestSession(this.privAudioSource.id());
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
+        this.privServiceEvents = new EventSource<ServiceEvent>();
         this.privDynamicGrammar = new DynamicGrammarBuilder();
         this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
         this.privAgentConfig = new AgentConfig();
@@ -144,6 +147,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public get connectionEvents(): EventSource<ConnectionEvent> {
         return this.privConnectionEvents;
+    }
+
+    public get serviceEvents(): EventSource<ServiceEvent> {
+        return this.privServiceEvents;
     }
 
     public get recognitionMode(): RecognitionMode {
@@ -274,7 +281,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected abstract processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
         successCallback?: (e: SpeechRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): void;
+        errorCallBack?: (e: string) => void): boolean;
 
     protected sendTelemetryData = () => {
         const telemetryData = this.privRequestSession.getTelemetry();
@@ -422,11 +429,20 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                         this.sendSpeechContext(connection);
                                     });
                                 }
+                                break;
+
                             default:
-                                this.processTypeSpecificMessages(
+
+                                if (!this.processTypeSpecificMessages(
                                     connectionMessage,
                                     successCallback,
-                                    errorCallBack);
+                                    errorCallBack)) {
+                                        // here are some messages that the derived class has not processed, dispatch them to connect class
+                                        if (!!this.privServiceEvents) {
+                                            this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
+                                        }
+                                    }
+
                         }
                     }
 
@@ -479,7 +495,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
 
         this.privConnectionPromise = authPromise
-            .continueWithPromise((result: PromiseResult<AuthInfo>) => {
+                .continueWithPromise((result: PromiseResult<AuthInfo>) => {
                 if (result.isError) {
                     this.privRequestSession.onAuthCompleted(true, result.error);
                     throw new Error(result.error);
