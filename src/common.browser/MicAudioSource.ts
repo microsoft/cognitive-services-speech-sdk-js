@@ -75,7 +75,7 @@ export class MicAudioSource implements IAudioSource {
         this.privEvents = new EventSource<AudioSourceEvent>();
     }
 
-    public get format(): AudioStreamFormat {
+    public get format(): AudioStreamFormatImpl {
         return MicAudioSource.AUDIOFORMAT;
     }
 

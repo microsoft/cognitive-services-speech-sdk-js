@@ -152,7 +152,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     /**
      * Format information for the audio
      */
-    public get format(): AudioStreamFormat {
+    public get format(): AudioStreamFormatImpl {
         return this.privFormat;
     }
 
@@ -327,7 +327,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
     /**
      * Format information for the audio
      */
-    public get format(): AudioStreamFormat {
+    public get format(): AudioStreamFormatImpl {
         return this.privFormat;
     }
 

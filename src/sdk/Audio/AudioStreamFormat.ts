@@ -48,6 +48,8 @@ export abstract class AudioStreamFormat {
  */
 // tslint:disable-next-line:max-classes-per-file
 export class AudioStreamFormatImpl extends AudioStreamFormat {
+    private privHeader: ArrayBuffer;
+
     /**
      * Creates an instance with the given values.
      * @constructor
@@ -63,6 +65,36 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
         this.channels = channels;
         this.avgBytesPerSec = this.samplesPerSec * this.channels * (this.bitsPerSample / 8);
         this.blockAlign = this.channels * Math.max(this.bitsPerSample, 8);
+
+        this.privHeader = new ArrayBuffer(44);
+
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
+        const view = new DataView(this.privHeader);
+
+        /* RIFF identifier */
+        this.setString(view, 0, "RIFF");
+        /* file length */
+        view.setUint32(4, 0, true);
+        /* RIFF type & Format */
+        this.setString(view, 8, "WAVEfmt ");
+        /* format chunk length */
+        view.setUint32(16, 16, true);
+        /* sample format (raw) */
+        view.setUint16(20, 1, true);
+        /* channel count */
+        view.setUint16(22, this.channels, true);
+        /* sample rate */
+        view.setUint32(24, this.samplesPerSec, true);
+        /* byte rate (sample rate * block align) */
+        view.setUint32(28, this.avgBytesPerSec, true);
+        /* block align (channel count * bytes per sample) */
+        view.setUint16(32, this.channels * (this.bitsPerSample / 8), true);
+        /* bits per sample */
+        view.setUint16(34, this.bitsPerSample, true);
+        /* data chunk identifier */
+        this.setString(view, 36, "data");
+        /* data chunk length */
+        view.setUint32(40, 0, true);
     }
 
     /**
@@ -131,4 +163,14 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
      * @public
      */
     public blockAlign: number;
+
+    public get header(): ArrayBuffer {
+        return this.privHeader;
+    }
+
+    private setString = (view: DataView, offset: number, str: string): void => {
+        for (let i = 0; i < str.length; i++) {
+            view.setUint8(offset + i, str.charCodeAt(i));
+        }
+    }
 }
