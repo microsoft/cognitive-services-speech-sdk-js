@@ -508,6 +508,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     || this.privDialogConnectionPromise.result().result.state() === ConnectionState.Disconnected)) {
                 this.agentConfigSent = false;
                 this.privDialogConnectionPromise = null;
+                this.terminateMessageLoop = true;
+                return this.configConnection();
             } else {
                 return this.privDialogConnectionPromise;
             }
@@ -717,6 +719,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             } else {
                 return this.privConnectionConfigPromise;
             }
+        }
+
+        if (this.terminateMessageLoop) {
+            return PromiseHelper.fromResult<IConnection>(undefined);
         }
 
         this.privConnectionConfigPromise = this.dialogConnectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
