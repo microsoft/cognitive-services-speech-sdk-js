@@ -56,7 +56,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
     private privConnectionFactory: IConnectionFactory;
     private privAudioSource: IAudioSource;
-    private privSpeechServiceConfigConnectionId: string;
 
     // A promise for a configured connection.
     // Do not consume directly, call fetchConnection instead.
@@ -276,7 +275,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public static telemetryData: (json: string) => void;
     public static telemetryDataEnabled: boolean = true;
 
-    public sendMessage(message: string): void {}
+    public sendMessage(message: string): void { }
 
     protected abstract processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
@@ -427,6 +426,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                 } else {
                                     this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
                                         this.sendSpeechContext(connection);
+                                        this.sendWaveHeader(connection);
                                     });
                                 }
                                 break;
@@ -437,11 +437,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                     connectionMessage,
                                     successCallback,
                                     errorCallBack)) {
-                                        // here are some messages that the derived class has not processed, dispatch them to connect class
-                                        if (!!this.privServiceEvents) {
-                                            this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
-                                        }
+                                    // here are some messages that the derived class has not processed, dispatch them to connect class
+                                    if (!!this.privServiceEvents) {
+                                        this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
                                     }
+                                }
 
                         }
                     }
@@ -464,6 +464,16 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 speechContextJson));
         }
         return PromiseHelper.fromResult(true);
+    }
+
+    protected sendWaveHeader(connection: IConnection): Promise<boolean> {
+        return connection.send(new SpeechConnectionMessage(
+            MessageType.Binary,
+            "audio",
+            this.privRequestSession.requestId,
+            null,
+            this.audioSource.format.header
+        ));
     }
 
     protected connectImplOverride: (isUnAuthorized: boolean) => any = undefined;
@@ -495,7 +505,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
 
         this.privConnectionPromise = authPromise
-                .continueWithPromise((result: PromiseResult<AuthInfo>) => {
+            .continueWithPromise((result: PromiseResult<AuthInfo>) => {
                 if (result.isError) {
                     this.privRequestSession.onAuthCompleted(true, result.error);
                     throw new Error(result.error);
@@ -550,7 +560,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         if (SpeechServiceConfigJson) { // && this.privConnectionId !== this.privSpeechServiceConfigConnectionId) {
-            this.privSpeechServiceConfigConnectionId = this.privConnectionId;
+          //  this.privSpeechServiceConfigConnectionId = this.privConnectionId;
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Text,
                 "speech.config",
@@ -627,7 +637,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                                 if (!audioStreamChunk.isEnd) {
                                     uploaded.continueWith((_: PromiseResult<boolean>) => {
-
+                                        // this.writeBufferToConsole(payload);
                                         // Regardless of success or failure, schedule the next upload.
                                         // If the underlying connection was broken, the next cycle will
                                         // get a new connection and re-transmit missing audio automatically.
@@ -662,6 +672,21 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         readAndUploadCycle();
 
         return deferred.promise();
+    }
+
+    private writeBufferToConsole(buffer: ArrayBuffer): void {
+        let out: string = "Buffer Size: ";
+        if (null === buffer) {
+            out += "null";
+        } else {
+            const readView: Uint8Array = new Uint8Array(buffer);
+            out += buffer.byteLength + "\r\n";
+            for (let i: number = 0; i < buffer.byteLength; i++) {
+                out += readView[i] + " ";
+            }
+        }
+        // tslint:disable-next-line:no-console
+        console.info(out);
     }
 
     private sendFinalAudio(): Promise<boolean> {
@@ -709,8 +734,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
             return this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
                 .onSuccessContinueWithPromise((_: boolean) => {
-                    return this.sendSpeechContext(connection).onSuccessContinueWith((_: boolean) => {
-                        return connection;
+                    return this.sendSpeechContext(connection).onSuccessContinueWithPromise((_: boolean) => {
+                        return this.sendWaveHeader(connection).onSuccessContinueWith((_: boolean) => {
+                            return connection;
+                        });
                     });
                 });
         });

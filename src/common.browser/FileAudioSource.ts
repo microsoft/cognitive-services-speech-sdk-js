@@ -58,7 +58,7 @@ export class FileAudioSource implements IAudioSource {
         this.privFile = file;
     }
 
-    public get format(): AudioStreamFormat {
+    public get format(): AudioStreamFormatImpl {
         return FileAudioSource.FILEFORMAT;
     }
 

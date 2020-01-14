@@ -19,7 +19,7 @@ export class WaveFileAudioInput {
     public static LoadArrayFromFile(filename: string): ArrayBuffer {
         const fileContents: Buffer = fs.readFileSync(filename);
 
-        const ret = Uint8Array.from(fileContents);
+        const ret = Uint8Array.from(fileContents.slice(44));
 
         return ret.buffer;
     }

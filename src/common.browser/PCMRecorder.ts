@@ -34,7 +34,7 @@ export class PcmRecorder implements IRecorder {
             const inputFrame = event.inputBuffer.getChannelData(0);
 
             if (outputStream && !outputStream.isClosed) {
-                const waveFrame = waveStreamEncoder.encode(needHeader, inputFrame);
+                const waveFrame = waveStreamEncoder.encode(inputFrame);
                 if (!!waveFrame) {
                     outputStream.writeStreamChunk({
                         buffer: waveFrame,
@@ -60,7 +60,7 @@ export class PcmRecorder implements IRecorder {
                         const inputFrame: Float32Array = ev.data as Float32Array;
 
                         if (outputStream && !outputStream.isClosed) {
-                            const waveFrame = waveStreamEncoder.encode(needHeader, inputFrame);
+                            const waveFrame = waveStreamEncoder.encode(inputFrame);
                             if (!!waveFrame) {
                                 outputStream.writeStreamChunk({
                                     buffer: waveFrame,

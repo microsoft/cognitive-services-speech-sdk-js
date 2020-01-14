@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioStreamFormat } from "../../../src/sdk/Exports";
+import { AudioStreamFormatImpl } from "../../../src/sdk/Audio/AudioStreamFormat";
 import { FileAudioSource, MicAudioSource, PcmRecorder } from "../../common.browser/Exports";
 import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
 import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode, Promise } from "../../common/Exports";
@@ -128,7 +128,7 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
     /**
      * Format information for the audio
      */
-    public get format(): AudioStreamFormat {
+    public get format(): AudioStreamFormatImpl {
         return this.privSource.format;
     }
 

@@ -44,8 +44,8 @@ afterEach(() => {
 const ValidateResultMatchesWaveFile = (res: sdk.SpeechRecognitionResult): void => {
     expect(res).not.toBeUndefined();
     expect(res.text).toEqual(Settings.LuisWavFileText);
-    expect(Math.abs(res.duration - Settings.LuisWaveFileDuration) / Settings.LuisWaveFileDuration).toBeLessThanOrEqual(0.05);
-    expect(Math.abs(res.offset - Settings.LuisWaveFileOffset) / Settings.LuisWaveFileOffset).toBeLessThanOrEqual(0.05);
+    expect(Math.abs(res.duration - Settings.LuisWaveFileDuration) / Settings.LuisWaveFileDuration).toBeLessThanOrEqual(0.10);
+    expect(Math.abs(res.offset - Settings.LuisWaveFileOffset) / Settings.LuisWaveFileOffset).toBeLessThanOrEqual(0.10);
 };
 
 const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, audioFileName?: string) => sdk.IntentRecognizer = (speechConfig?: sdk.SpeechConfig, audioFileName?: string): sdk.IntentRecognizer => {

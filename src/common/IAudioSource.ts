@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioStreamFormat } from "../../src/sdk/Exports";
+import { AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
 import { ISpeechConfigAudioDevice } from "../common.speech/Exports";
 import { AudioSourceEvent } from "./AudioSourceEvents";
 import { EventSource } from "./EventSource";
@@ -16,7 +16,7 @@ export interface IAudioSource {
     detach(audioNodeId: string): void;
     turnOff(): Promise<boolean>;
     events: EventSource<AudioSourceEvent>;
-    format: AudioStreamFormat;
+    format: AudioStreamFormatImpl;
     deviceInfo: Promise<ISpeechConfigAudioDevice>;
     setProperty?(name: string, value: string): void;
     getProperty?(name: string, def?: string): string;
