@@ -967,7 +967,7 @@ test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
         });
 });
 
-test("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
+test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Phraselist assists speech Reco.");
 
@@ -1102,7 +1102,7 @@ test("Phraselist Clear works.", (done: jest.DoneCallback) => {
     });
 }, 20000);
 
-test("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
+test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Phraselist extra phraselists have no effect.");
 
