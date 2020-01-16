@@ -30,6 +30,7 @@ export interface IAgentConfig {
         connectionId: string,
         conversationId: string,
         fromId: string
+        commandsCulture: string
     };
     version: number;
 }

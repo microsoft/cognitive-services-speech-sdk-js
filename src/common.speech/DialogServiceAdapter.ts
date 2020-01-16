@@ -749,8 +749,15 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
     private sendAgentConfig = (connection: IConnection): Promise<boolean> => {
         if (this.agentConfig && !this.agentConfigSent) {
+
+            if (this.privRecognizerConfig.parameters.getProperty(PropertyId.Conversation_DialogType) === "custom_commands") {
+                const config = this.agentConfig.get();
+                config.botInfo.commandsCulture = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-us");
+                this.agentConfig.set(config);
+            }
             const agentConfigJson = this.agentConfig.toJsonString();
 
+            // guard against sending this multiple times on one connection
             this.agentConfigSent = true;
 
             return connection.send(new SpeechConnectionMessage(
