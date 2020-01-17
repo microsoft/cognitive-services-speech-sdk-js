@@ -566,6 +566,72 @@ describe("Connection URL Tests", () => {
         uri = undefined;
     });
 
+    function testHostConnection(
+        createMethod: (url: URL, key: string) => sdk.SpeechConfig | sdk.SpeechTranslationConfig,
+        hostName: string,
+        expectedHostName: string,
+        recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer,
+        done: jest.DoneCallback
+    ): void {
+
+        const s: sdk.SpeechConfig | sdk.SpeechTranslationConfig = createMethod(new URL(hostName), "fakekey");
+        objsToClose.push(s);
+
+        const r: { recognizeOnceAsync: (cb?: (e: sdk.RecognitionResult) => void, err?: (e: string) => void) => void } = recognizerCreateMethod(s);
+        objsToClose.push(r);
+
+        r.recognizeOnceAsync(
+            (p2: any): void => {
+                try {
+                    expect(uri).not.toBeUndefined();
+                    // Make sure there's only a single ? in the URL.
+                    expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+
+                    expect(uri.startsWith(expectedHostName)).toBe(true);
+
+                    expect(p2.errorDetails).not.toBeUndefined();
+                    expect(sdk.ResultReason[p2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
+
+                    const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
+                    expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+                    expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
+            });
+    }
+
+    describe.each([
+        [sdk.SpeechConfig.fromHost, BuildSpeechRecognizerFromWaveFile],
+        [sdk.SpeechTranslationConfig.fromHost, BuildTranslationRecognizerFromWaveFile],
+        [sdk.SpeechConfig.fromHost, BuildIntentRecognizerFromWaveFile]])("FromHost Tests",
+            (createMethod: any,
+             recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer) => {
+
+                test("Simple Host and protocol", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: Simple Host and protocol");
+
+                    testHostConnection(createMethod,
+                        "ws://fakehost",
+                        "ws://fakehost/",
+                        recognizerCreateMethod,
+                        done);
+                });
+
+                test("Simple Host, protocol, and port", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: Simple Host and protocol");
+
+                    testHostConnection(createMethod,
+                        "ws://fakehost:8080",
+                        "ws://fakehost:8080/",
+                        recognizerCreateMethod,
+                        done);
+                });
+            });
+
     function testUrlParameter(
         createMethod: (url: URL, key: string) => sdk.SpeechConfig | sdk.SpeechTranslationConfig,
         setMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => void,
@@ -604,7 +670,6 @@ describe("Connection URL Tests", () => {
                 }
             });
     }
-
     describe.each([
         [sdk.SpeechConfig.fromEndpoint, BuildSpeechRecognizerFromWaveFile],
         [sdk.SpeechTranslationConfig.fromEndpoint, BuildTranslationRecognizerFromWaveFile],
