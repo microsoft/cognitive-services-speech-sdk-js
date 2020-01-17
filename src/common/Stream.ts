@@ -6,7 +6,6 @@ import { createNoDashGuid } from "./Guid";
 import { IStringDictionary } from "./IDictionary";
 import { Promise } from "./Promise";
 import { Queue } from "./Queue";
-import { IStreamChunk } from "./Stream";
 
 export interface IStreamChunk<TBuffer> {
     isEnd: boolean;
