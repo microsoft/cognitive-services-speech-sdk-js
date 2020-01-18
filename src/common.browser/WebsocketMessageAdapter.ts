@@ -49,14 +49,14 @@ export class WebsocketMessageAdapter {
     private privDisconnectDeferral: Deferred<boolean>;
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privConnectionId: string;
-    private privUri: URL;
+    private privUri: string;
     private proxyInfo: ProxyInfo;
     private privHeaders: { [key: string]: string; };
 
     public static forceNpmWebSocket: boolean = false;
 
     public constructor(
-        uri: URL,
+        uri: string,
         connectionId: string,
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
@@ -98,13 +98,13 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.Connecting;
 
         try {
-            const enableOCSP: boolean = process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0" && this.privUri.protocol !== "ws:";
+            const enableOCSP: boolean = process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0" && !this.privUri.startsWith("ws:");
 
             if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 // Browser handles cert checks.
                 this.privCertificateValidatedDeferral.resolve(true);
 
-                this.privWebsocketClient = new WebSocket(this.privUri.href);
+                this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
                 if (this.proxyInfo !== undefined &&
                     this.proxyInfo.HostName !== undefined &&
@@ -124,9 +124,9 @@ export class WebsocketMessageAdapter {
                     }
 
                     const httpProxyAgent: HttpsProxyAgent = new HttpsProxyAgent(httpProxyOptions);
-                    const httpsOptions: http.RequestOptions = { agent: httpProxyAgent , headers: this.privHeaders };
+                    const httpsOptions: http.RequestOptions = { agent: httpProxyAgent, headers: this.privHeaders };
 
-                    this.privWebsocketClient = new ws(this.privUri.href, httpsOptions as ws.ClientOptions);
+                    this.privWebsocketClient = new ws(this.privUri, httpsOptions as ws.ClientOptions);
 
                     // Register to be notified when WebSocket upgrade happens so we can check the validity of the
                     // Certificate.
@@ -163,7 +163,7 @@ export class WebsocketMessageAdapter {
                     if (enableOCSP) {
                         options.agent = new ocsp.Agent({});
                     }
-                    this.privWebsocketClient = new ws(this.privUri.href, options);
+                    this.privWebsocketClient = new ws(this.privUri, options);
                 }
             }
 
@@ -177,7 +177,7 @@ export class WebsocketMessageAdapter {
             return this.privConnectionEstablishDeferral.promise();
         }
 
-        this.onEvent(new ConnectionStartEvent(this.privConnectionId, this.privUri.href));
+        this.onEvent(new ConnectionStartEvent(this.privConnectionId, this.privUri));
 
         this.privWebsocketClient.onopen = (e: { target: WebSocket | ws }) => {
             this.privCertificateValidatedDeferral.promise().on((): void => {

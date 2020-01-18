@@ -95,7 +95,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
         Contracts.throwIfNull(hostName, "hostName");
 
         const speechImpl: SpeechTranslationConfigImpl = new SpeechTranslationConfigImpl();
-        speechImpl.setProperty(PropertyId.SpeechServiceConnection_Host, hostName.protocol + "//" + hostName.hostname + (hostName.port === undefined ? "" : ":" + hostName.port));
+        speechImpl.setProperty(PropertyId.SpeechServiceConnection_Host, hostName.protocol + "//" + hostName.hostname + (hostName.port === "" ? "" : ":" + hostName.port));
 
         if (undefined !== subscriptionKey) {
             speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);

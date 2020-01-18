@@ -17,8 +17,6 @@ import {
 import { ProxyInfo } from "./ProxyInfo";
 import { WebsocketMessageAdapter } from "./WebsocketMessageAdapter";
 
-import { URL } from "url";
-
 export class WebsocketConnection implements IConnection {
 
     private privUri: string;
@@ -74,7 +72,7 @@ export class WebsocketConnection implements IConnection {
         this.privId = connectionId ? connectionId : createNoDashGuid();
 
         this.privConnectionMessageAdapter = new WebsocketMessageAdapter(
-            new URL(this.privUri),
+            this.privUri,
             this.id,
             this.privMessageFormatter,
             proxyInfo,
