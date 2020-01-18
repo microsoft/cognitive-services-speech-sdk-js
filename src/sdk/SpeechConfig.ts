@@ -81,6 +81,33 @@ export abstract class SpeechConfig {
     }
 
     /**
+     * Creates an instance of the speech config with specified host and subscription key.
+     * This method is intended only for users who use a non-default service host. Standard resource path will be assumed.
+     * For services with a non-standard resource path or no path at all, use fromEndpoint instead.
+     * Note: Query parameters are not allowed in the host URI and must be set by other APIs.
+     * Note: To use an authorization token with fromHost, use fromHost(URL),
+     * and then set the AuthorizationToken property on the created SpeechConfig instance.
+     * Note: Added in version 1.9.0.
+     * @member SpeechConfig.fromHost
+     * @function
+     * @public
+     * @param {URL} host - The service endpoint to connect to. Format is "protocol://host:port" where ":port" is optional.
+     * @param {string} subscriptionKey - The subscription key. If a subscription key is not specified, an authorization token must be set.
+     * @returns {SpeechConfig} A speech factory instance.
+     */
+    public static fromHost(hostName: URL, subscriptionKey?: string): SpeechConfig {
+        Contracts.throwIfNull(hostName, "hostName");
+
+        const speechImpl: SpeechConfigImpl = new SpeechConfigImpl();
+        speechImpl.setProperty(PropertyId.SpeechServiceConnection_Host, hostName.protocol + "//" + hostName.hostname + (hostName.port === undefined ? "" : ":" + hostName.port));
+
+        if (undefined !== subscriptionKey) {
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
+        }
+        return speechImpl;
+    }
+
+    /**
      * Creates an instance of the speech factory with specified initial authorization token and region.
      * Note: The caller needs to ensure that the authorization token is valid. Before the authorization token
      *       expires, the caller needs to refresh it by calling this setter with a new valid token.
@@ -379,7 +406,7 @@ export class SpeechConfigImpl extends SpeechConfig {
     }
 
     public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
-        const currentProperties: IStringDictionary<string>  = JSON.parse( this.privProperties.getProperty(ServicePropertiesPropertyName, "{}"));
+        const currentProperties: IStringDictionary<string> = JSON.parse(this.privProperties.getProperty(ServicePropertiesPropertyName, "{}"));
 
         currentProperties[name] = value;
 

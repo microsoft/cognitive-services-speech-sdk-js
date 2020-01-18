@@ -77,6 +77,33 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
     }
 
     /**
+     * Creates an instance of the speech config with specified host and subscription key.
+     * This method is intended only for users who use a non-default service host. Standard resource path will be assumed.
+     * For services with a non-standard resource path or no path at all, use fromEndpoint instead.
+     * Note: Query parameters are not allowed in the host URI and must be set by other APIs.
+     * Note: To use an authorization token with fromHost, use fromHost(URL),
+     * and then set the AuthorizationToken property on the created SpeechConfig instance.
+     * Note: Added in version 1.9.0.
+     * @member SpeechConfig.fromHost
+     * @function
+     * @public
+     * @param {URL} host - The service endpoint to connect to. Format is "protocol://host:port" where ":port" is optional.
+     * @param {string} subscriptionKey - The subscription key. If a subscription key is not specified, an authorization token must be set.
+     * @returns {SpeechConfig} A speech factory instance.
+     */
+    public static fromHost(hostName: URL, subscriptionKey?: string): SpeechConfig {
+        Contracts.throwIfNull(hostName, "hostName");
+
+        const speechImpl: SpeechTranslationConfigImpl = new SpeechTranslationConfigImpl();
+        speechImpl.setProperty(PropertyId.SpeechServiceConnection_Host, hostName.protocol + "//" + hostName.hostname + (hostName.port === undefined ? "" : ":" + hostName.port));
+
+        if (undefined !== subscriptionKey) {
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
+        }
+        return speechImpl;
+    }
+
+    /**
      * Creates an instance of the speech translation config with specified endpoint and subscription key.
      * This method is intended only for users who use a non-standard service endpoint or paramters.
      * Note: The query properties specified in the endpoint URL are not changed, even if they are
@@ -365,7 +392,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @param {string} name - The name of the property.
      * @param {string} value - The value of the property.
      */
-    public setProperty(name: string, value: string): void {
+    public setProperty(name: string | PropertyId, value: string): void {
         this.privSpeechProperties.setProperty(name, value);
     }
 
