@@ -85,7 +85,9 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         }
 
         const headers: IStringDictionary<string> = {};
-        headers[authInfo.headerName] = authInfo.token;
+        if (authInfo.token !== undefined && authInfo.token !== "") {
+            headers[authInfo.headerName] = authInfo.token;
+        }
         headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
