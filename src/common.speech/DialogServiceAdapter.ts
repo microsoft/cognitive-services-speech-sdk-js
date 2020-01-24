@@ -500,6 +500,15 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             return deferred.promise();
         }
 
+    protected sendWaveHeader(connection: IConnection): Promise<boolean> {
+        return connection.send(new SpeechConnectionMessage(
+            MessageType.Binary,
+            "audio",
+            this.privDialogRequestSession.requestId,
+            null,
+            this.audioSource.format.header));
+        }
+
     // Establishes a websocket connection to the end point.
     private dialogConnectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
         if (this.privDialogConnectionPromise) {
@@ -722,14 +731,14 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }
 
         if (this.terminateMessageLoop) {
-            return PromiseHelper.fromResult<IConnection>(undefined);
+            return PromiseHelper.fromError(`Connection to service terminated.`);
         }
 
         this.privConnectionConfigPromise = this.dialogConnectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
             return this.sendSpeechServiceConfig(connection, this.privDialogRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
                 .onSuccessContinueWithPromise((_: boolean) => {
                     return this.sendAgentConfig(connection).onSuccessContinueWith((_: boolean) => {
-                        return connection;
+                            return connection;
                     });
                 });
         });
@@ -744,6 +753,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private sendPreAudioMessages(): void {
         this.fetchDialogConnection().onSuccessContinueWith((connection: IConnection): void => {
             this.sendAgentContext(connection);
+            this.sendWaveHeader(connection);
         });
     }
 
