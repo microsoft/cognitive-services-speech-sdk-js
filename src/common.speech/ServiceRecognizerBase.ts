@@ -611,7 +611,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             let payload: ArrayBuffer;
                             let sendDelay: number;
 
-                            if (audioStreamChunk.isEnd) {
+                            if (!audioStreamChunk || audioStreamChunk.isEnd) {
                                 payload = null;
                                 sendDelay = 0;
                             } else {
