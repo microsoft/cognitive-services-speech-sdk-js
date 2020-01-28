@@ -66,16 +66,24 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
 
         const headers: IStringDictionary<string> = {};
-        headers[authInfo.headerName] = authInfo.token;
+        if (authInfo.token !== undefined && authInfo.token !== "") {
+            headers[authInfo.headerName] = authInfo.token;
+        }
         headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
 
-        let endpoint: string;
-        // ApplicationId is only required for CustomCommands
-        if (applicationId === "") {
-            endpoint = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
+        let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, "");
+        if (endpoint === "") {
+            // ApplicationId is only required for CustomCommands
+            if (applicationId === "") {
+                endpoint = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
+            } else {
+                endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
+                headers[authHeader] = applicationId;
+            }
         } else {
-            endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
-            headers[authHeader] = applicationId;
+            if (applicationId !== "") {
+                headers[authHeader] = applicationId;
+            }
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);
