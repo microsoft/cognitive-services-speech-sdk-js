@@ -64,7 +64,7 @@
     "source-map-loader": "^0.2.4",
     "ts-jest": "^24.2.0",
     "tslint": "^5.20.1",
-    "typescript": "^3.7.3",
+    "typescript": "^3.5.3",
     "webpack-stream": "^5.2.1"
   },
   "scripts": {
