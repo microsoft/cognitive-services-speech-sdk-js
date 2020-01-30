@@ -475,7 +475,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             MessageType.Binary,
             "audio",
             this.privRequestSession.requestId,
-            null,
+            "audio/x-wav",
             this.audioSource.format.header
         ));
     }
@@ -639,7 +639,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                                 const uploaded: Promise<boolean> = connection.send(
                                     new SpeechConnectionMessage(
-                                        MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
+                                        MessageType.Binary, "audio", this.privRequestSession.requestId, "audio/x-wav", payload));
 
                                 if (!audioStreamChunk.isEnd) {
                                     uploaded.continueWith((_: PromiseResult<boolean>) => {
