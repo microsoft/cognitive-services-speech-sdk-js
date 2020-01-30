@@ -66,7 +66,10 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
 
         const headers: IStringDictionary<string> = {};
-        headers[authInfo.headerName] = authInfo.token;
+
+        if (authInfo.token !== undefined && authInfo.token !== "") {
+            headers[authInfo.headerName] = authInfo.token;
+        }
         headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
 
         let endpoint: string;
