@@ -475,7 +475,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             MessageType.Binary,
             "audio",
             this.privRequestSession.requestId,
-            null,
+            "audio/x-wav",
             this.audioSource.format.header
         ));
     }
