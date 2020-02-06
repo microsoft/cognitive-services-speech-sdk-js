@@ -293,7 +293,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @public
      */
     public set endpointId(value: string) {
-        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_Endpoint, value);
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_EndpointId, value);
     }
 
     /**
