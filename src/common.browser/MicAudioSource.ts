@@ -36,7 +36,7 @@ import {
 import { IRecorder } from "./IRecorder";
 
 // Extending the default definition with browser specific definitions for backward compatibility
-interface INavigatorUserMedia extends NavigatorUserMedia {
+interface INavigator extends Navigator {
     webkitGetUserMedia?: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback, errorCallback: NavigatorUserMediaErrorCallback) => void;
     mozGetUserMedia?: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback, errorCallback: NavigatorUserMediaErrorCallback) => void;
     msGetUserMedia?: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback, errorCallback: NavigatorUserMediaErrorCallback) => void;
@@ -88,7 +88,7 @@ export class MicAudioSource implements IAudioSource {
 
         this.createAudioContext();
 
-        const nav = window.navigator as INavigatorUserMedia;
+        const nav = window.navigator as INavigator;
 
         let getUserMedia = (
             nav.getUserMedia ||

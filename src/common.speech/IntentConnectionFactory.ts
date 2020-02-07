@@ -35,8 +35,8 @@ export class IntentConnectionFactory extends ConnectionFactoryBase {
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_IntentRegion);
-
-            endpoint = "wss://speech.platform.bing.com/speech/" + this.getSpeechRegionFromIntentRegion(region) + "/recognition/interactive/cognitiveservices/v1";
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://speech.platform.bing.com");
+            endpoint = host + "/speech/" + this.getSpeechRegionFromIntentRegion(region) + "/recognition/interactive/cognitiveservices/v1";
         }
 
         const queryParams: IStringDictionary<string> = {
@@ -47,8 +47,12 @@ export class IntentConnectionFactory extends ConnectionFactoryBase {
         this.setCommonUrlParams(config, queryParams, endpoint);
 
         const headers: IStringDictionary<string> = {};
-        headers[authInfo.headerName] = authInfo.token;
+        if (authInfo.token !== undefined && authInfo.token !== "") {
+            headers[authInfo.headerName] = authInfo.token;
+        }
         headers[ConnectionIdHeader] = connectionId;
+
+        config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
     }

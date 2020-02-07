@@ -36,8 +36,8 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
-
-            endpoint = "wss://" + region + ".s2s.speech.microsoft.com/speech/translation/cognitiveservices/v1";
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + ".s2s.speech.microsoft.com");
+            endpoint = host + "/speech/translation/cognitiveservices/v1";
         }
 
         const queryParams: IStringDictionary<string> = {
@@ -63,8 +63,12 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         }
 
         const headers: IStringDictionary<string> = {};
-        headers[authInfo.headerName] = authInfo.token;
+        if (authInfo.token !== undefined && authInfo.token !== "") {
+            headers[authInfo.headerName] = authInfo.token;
+        }
         headers[ConnectionIdHeader] = connectionId;
+
+        config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
     }

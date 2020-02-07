@@ -72,6 +72,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privSpeechContext: SpeechContext;
     private privDynamicGrammar: DynamicGrammarBuilder;
     private privAgentConfig: AgentConfig;
+    private privServiceHasSentMessage: boolean;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
     protected privRecognizerConfig: RecognizerConfig;
@@ -347,6 +348,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.fetchConnection().on((connection: IConnection): Promise<IConnection> => {
             return connection.read()
                 .onSuccessContinueWithPromise((message: ConnectionMessage) => {
+
                     if (this.receiveMessageOverride !== undefined) {
                         return this.receiveMessageOverride();
                     }
@@ -363,6 +365,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             return this.receiveMessage(successCallback, errorCallBack);
                         }
                     }
+
+                    this.privServiceHasSentMessage = true;
 
                     const connectionMessage = SpeechConnectionMessage.fromConnectionMessage(message);
 
@@ -471,7 +475,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             MessageType.Binary,
             "audio",
             this.privRequestSession.requestId,
-            null,
+            "audio/x-wav",
             this.audioSource.format.header
         ));
     }
@@ -488,9 +492,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (this.privConnectionPromise) {
             if (this.privConnectionPromise.result().isCompleted &&
                 (this.privConnectionPromise.result().isError
-                    || this.privConnectionPromise.result().result.state() === ConnectionState.Disconnected)) {
+                    || this.privConnectionPromise.result().result.state() === ConnectionState.Disconnected) &&
+                this.privServiceHasSentMessage === true) {
                 this.privConnectionId = null;
                 this.privConnectionPromise = null;
+                this.privServiceHasSentMessage = false;
                 return this.connectImpl();
             } else {
                 return this.privConnectionPromise;
@@ -611,7 +617,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             let payload: ArrayBuffer;
                             let sendDelay: number;
 
-                            if (audioStreamChunk.isEnd) {
+                            if (!audioStreamChunk || audioStreamChunk.isEnd) {
                                 payload = null;
                                 sendDelay = 0;
                             } else {

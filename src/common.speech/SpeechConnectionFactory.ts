@@ -42,6 +42,8 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         connectionId?: string): IConnection => {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
+        const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
+        const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + ".stt.speech.microsoft.com");
 
         const queryParams: IStringDictionary<string> = {};
 
@@ -65,10 +67,6 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         this.setCommonUrlParams(config, queryParams, endpoint);
 
         if (!endpoint) {
-            const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
-
-            const host: string = "wss://" + region + ".stt.speech.microsoft.com";
-
             switch (config.recognitionMode) {
                 case RecognitionMode.Conversation:
                     if (config.parameters.getProperty(ForceDictationPropertyName, "false") === "true") {
@@ -87,8 +85,12 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         }
 
         const headers: IStringDictionary<string> = {};
-        headers[authInfo.headerName] = authInfo.token;
+        if (authInfo.token !== undefined && authInfo.token !== "") {
+            headers[authInfo.headerName] = authInfo.token;
+        }
         headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
+
+        config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
     }
