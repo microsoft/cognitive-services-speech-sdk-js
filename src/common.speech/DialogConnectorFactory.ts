@@ -71,18 +71,17 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         }
         headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
 
+        if (applicationId !== "") {
+            headers[authHeader] = applicationId;
+        }
+
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, "");
         if (endpoint === "") {
-            // ApplicationId is only required for CustomCommands
+            // ApplicationId is only required for CustomCommands, so we're using that to determine default endpoint
             if (applicationId === "") {
                 endpoint = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
             } else {
                 endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
-                headers[authHeader] = applicationId;
-            }
-        } else {
-            if (applicationId !== "") {
-                headers[authHeader] = applicationId;
             }
         }
 
