@@ -698,6 +698,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 });
             }, (error: string) => {
                 this.terminateMessageLoop = true;
+                communicationCustodian.resolve(undefined);
+                return PromiseHelper.fromResult<IConnection>(undefined);
             });
 
             return communicationCustodian.promise();
@@ -731,6 +733,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }
 
         if (this.terminateMessageLoop) {
+            this.terminateMessageLoop = false;
             return PromiseHelper.fromError(`Connection to service terminated.`);
         }
 
