@@ -128,7 +128,7 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
     /**
      * Format information for the audio
      */
-    public get format(): AudioStreamFormatImpl {
+    public get format(): Promise<AudioStreamFormatImpl> {
         return this.privSource.format;
     }
 

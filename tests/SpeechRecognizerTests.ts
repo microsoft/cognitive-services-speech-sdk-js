@@ -25,6 +25,7 @@ import {
     IDynamicGrammarGeneric,
     IDynamicGrammarGroup,
 } from "../src/common.speech/Exports";
+import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
@@ -247,6 +248,31 @@ test("testGetParameters", () => {
     expect(r.endpointId === r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, null)); // todo: is this really the correct mapping?
 });
 
+test("BadWavFileProducesError", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: BadWavFileProducesError");
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
+    const bigFile: File = ByteBufferAudioFile.Load([bigFileBuffer.buffer]);
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(bigFile);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+
+    /* tslint:disable:no-empty */
+    r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    }, (error: string) => {
+        try {
+            expect(error).not.toBeUndefined();
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+});
+
 describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     beforeAll(() => {
@@ -282,6 +308,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
             try {
                 expect(result).not.toBeUndefined();
+                expect(result.errorDetails).toBeUndefined();
                 expect(result.text).toEqual(Settings.WaveFileText);
                 expect(result.properties).not.toBeUndefined();
                 expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
@@ -1165,7 +1192,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
-        testInitialSilienceTimeout(config, done, (): void => {
+        testInitialSilenceTimeout(config, done, (): void => {
             const elapsed: number = Date.now() - startTime;
 
             // We should have sent 5 seconds of audio unthrottled and then 2x the time reco took until we got a response.
@@ -1185,22 +1212,22 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         p.write(bigFileBuffer.buffer);
         p.close();
 
-        testInitialSilienceTimeout(config, done);
+        testInitialSilenceTimeout(config, done);
     }, 15000);
 
     test("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: InitialSilenceTimeout (File)");
-
+        const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
         const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
-        const bigFile: File = ByteBufferAudioFile.Load(bigFileBuffer.buffer);
+        const bigFile: File = ByteBufferAudioFile.Load([audioFormat.header, bigFileBuffer.buffer]);
 
         const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(bigFile);
 
-        testInitialSilienceTimeout(config, done);
+        testInitialSilenceTimeout(config, done);
     }, 15000);
 
-    const testInitialSilienceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, addedChecks?: () => void): void => {
+    const testInitialSilenceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, addedChecks?: () => void): void => {
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
@@ -1396,7 +1423,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
                     bytesSent += (end - start) + 1;
 
-                    if (bytesSent > (fileBuffer.byteLength / 2)) {
+                    if (bytesSent > (fileBuffer.byteLength / 3)) {
                         p.close();
                     }
 
@@ -1424,7 +1451,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 try {
                     expect(res).not.toBeUndefined();
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                    expect(res.text).toEqual("What's the weather?");
+                    expect(res.text).toEqual("What's the?");
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 

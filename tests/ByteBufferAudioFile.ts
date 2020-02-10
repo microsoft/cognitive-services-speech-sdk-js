@@ -2,10 +2,9 @@
 // Licensed under the MIT license.
 
 export class ByteBufferAudioFile {
-    public static Load(buffer: ArrayBuffer): File {
+    public static Load(buffers: ArrayBuffer[]): File {
 
-        const parts: ArrayBuffer[] = [buffer];
-        const file: File = new File(parts, "file.wav");
+        const file: File = new File(buffers, "file.wav");
 
         return file;
     }

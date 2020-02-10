@@ -17,7 +17,9 @@ import {
     AudioStreamNodeAttachingEvent,
     AudioStreamNodeDetachedEvent,
     AudioStreamNodeErrorEvent,
+    ChunkedArrayBufferStream,
     createNoDashGuid,
+    Deferred,
     Events,
     EventSource,
     IAudioSource,
@@ -31,18 +33,7 @@ import {
 
 export class FileAudioSource implements IAudioSource {
 
-    // Recommended sample rate (bytes/second).
-    private static readonly SAMPLE_RATE: number = 16000 * 2; // 16 kHz * 16 bits
-
-    // We should stream audio at no faster than 2x real-time (i.e., send five chunks
-    // per second, with the chunk size == sample rate in bytes per second * 2 / 5).
-    private static readonly CHUNK_SIZE: number = FileAudioSource.SAMPLE_RATE * 2 / 5;
-
-    // 10 seconds of audio in bytes =
-    // sample rate (bytes/second) * 600 (seconds) + 44 (size of the wave header).
-    private static readonly MAX_SIZE: number = FileAudioSource.SAMPLE_RATE * 600 + 44;
-
-    private static readonly FILEFORMAT: AudioStreamFormatImpl = AudioStreamFormat.getWaveFormatPCM(16000, 16, 1) as AudioStreamFormatImpl;
+    private privAudioFormatPromise: Promise<AudioStreamFormatImpl>;
 
     private privStreams: IStringDictionary<Stream<ArrayBuffer>> = {};
 
@@ -56,10 +47,13 @@ export class FileAudioSource implements IAudioSource {
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
         this.privFile = file;
+
+        // Read the header.
+        this.privAudioFormatPromise = this.readHeader();
     }
 
-    public get format(): AudioStreamFormatImpl {
-        return FileAudioSource.FILEFORMAT;
+    public get format(): Promise<AudioStreamFormatImpl> {
+        return this.privAudioFormatPromise;
     }
 
     public turnOn = (): Promise<boolean> => {
@@ -69,10 +63,6 @@ export class FileAudioSource implements IAudioSource {
             return PromiseHelper.fromError<boolean>(errorMsg);
         } else if (this.privFile.name.lastIndexOf(".wav") !== this.privFile.name.length - 4) {
             const errorMsg = this.privFile.name + " is not supported. Only WAVE files are allowed at the moment.";
-            this.onEvent(new AudioSourceErrorEvent(errorMsg, ""));
-            return PromiseHelper.fromError<boolean>(errorMsg);
-        } else if (this.privFile.size > FileAudioSource.MAX_SIZE) {
-            const errorMsg = this.privFile.name + " exceeds the maximum allowed file size (" + FileAudioSource.MAX_SIZE + ").";
             this.onEvent(new AudioSourceErrorEvent(errorMsg, ""));
             return PromiseHelper.fromError<boolean>(errorMsg);
         }
@@ -136,64 +126,104 @@ export class FileAudioSource implements IAudioSource {
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
-        return PromiseHelper.fromResult({
-            bitspersample: FileAudioSource.FILEFORMAT.bitsPerSample,
-            channelcount: FileAudioSource.FILEFORMAT.channels,
-            connectivity: connectivity.Unknown,
-            manufacturer: "Speech SDK",
-            model: "File",
-            samplerate: FileAudioSource.FILEFORMAT.samplesPerSec,
-            type: type.File,
+        return this.privAudioFormatPromise.onSuccessContinueWithPromise<ISpeechConfigAudioDevice>((result: AudioStreamFormatImpl) => {
+            return PromiseHelper.fromResult({
+                bitspersample: result.bitsPerSample,
+                channelcount: result.channels,
+                connectivity: connectivity.Unknown,
+                manufacturer: "Speech SDK",
+                model: "File",
+                samplerate: result.samplesPerSec,
+                type: type.File,
+            });
         });
+    }
+
+    private readHeader = (): Promise<AudioStreamFormatImpl> => {
+        // Read the wave header.
+        const header: Blob = this.privFile.slice(0, 44);
+        const headerReader: FileReader = new FileReader();
+
+        const headerResult: Deferred<AudioStreamFormatImpl> = new Deferred<AudioStreamFormatImpl>();
+
+        const processHeader = (event: Event): void => {
+            const header: ArrayBuffer = (event.target as FileReader).result as ArrayBuffer;
+
+            const view: DataView = new DataView(header);
+
+            // RIFF 4 bytes.
+            const riff: string = String.fromCharCode(view.getUint8(0), view.getUint8(1), view.getUint8(2), view.getUint8(3));
+            if ("RIFF" !== riff) {
+                headerResult.reject("Invalid WAV header in file, RIFF was not found");
+            }
+
+            // length, 4 bytes
+            // RIFF Type & fmt 8 bytes
+            const type: string = String.fromCharCode(
+                view.getUint8(8),
+                view.getUint8(9),
+                view.getUint8(10),
+                view.getUint8(11),
+                view.getUint8(12),
+                view.getUint8(13),
+                view.getUint8(14));
+            if ("WAVEfmt" !== type) {
+                headerResult.reject("Invalid WAV header in file, WAVEfmt was not found");
+            }
+
+            const channelCount: number = view.getUint16(22, true);
+            const sampleRate: number = view.getUint32(24, true);
+            const bitsPerSample: number = view.getUint16(34, true);
+
+            headerResult.resolve(AudioStreamFormat.getWaveFormatPCM(sampleRate, bitsPerSample, channelCount) as AudioStreamFormatImpl);
+
+        };
+
+        headerReader.onload = processHeader;
+        headerReader.readAsArrayBuffer(header);
+        return headerResult.promise();
     }
 
     private upload = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
         return this.turnOn()
-            .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
-                const stream = new Stream<ArrayBuffer>(audioNodeId);
+            .onSuccessContinueWithPromise<StreamReader<ArrayBuffer>>((_: boolean) => {
+                return this.privAudioFormatPromise.onSuccessContinueWith<StreamReader<ArrayBuffer>>((format: AudioStreamFormatImpl) => {
+                    const fileStream: ChunkedArrayBufferStream = new ChunkedArrayBufferStream(3200);
 
-                this.privStreams[audioNodeId] = stream;
+                    const reader: FileReader = new FileReader();
 
-                const reader: FileReader = new FileReader();
+                    const stream = new ChunkedArrayBufferStream(format.avgBytesPerSec / 10, audioNodeId);
 
-                let startOffset = 0;
-                let endOffset = FileAudioSource.CHUNK_SIZE;
+                    this.privStreams[audioNodeId] = stream;
 
-                const processNextChunk = (event: Event): void => {
-                    if (stream.isClosed) {
-                        return; // output stream was closed (somebody called TurnOff). We're done here.
-                    }
+                    const processFile = (event: Event): void => {
+                        if (stream.isClosed) {
+                            return; // output stream was closed (somebody called TurnOff). We're done here.
+                        }
 
-                    stream.writeStreamChunk({
-                        buffer: reader.result as ArrayBuffer,
-                        isEnd: false,
-                        timeReceived: Date.now(),
-                    });
-
-                    if (endOffset < this.privFile.size) {
-                        startOffset = endOffset;
-                        endOffset = Math.min(endOffset + FileAudioSource.CHUNK_SIZE, this.privFile.size);
-                        const chunk = this.privFile.slice(startOffset, endOffset);
-                        reader.readAsArrayBuffer(chunk);
-                    } else {
-                        // we've written the entire file to the output stream, can close it now.
+                        stream.writeStreamChunk({
+                            buffer: reader.result as ArrayBuffer,
+                            isEnd: false,
+                            timeReceived: Date.now(),
+                        });
                         stream.close();
-                    }
-                };
+                    };
 
-                reader.onload = processNextChunk;
+                    reader.onload = processFile;
 
-                reader.onerror = (event: ProgressEvent) => {
-                    const errorMsg = `Error occurred while processing '${this.privFile.name}'. ${event}`;
-                    this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, errorMsg));
-                    throw new Error(errorMsg);
-                };
+                    reader.onerror = (event: ProgressEvent) => {
+                        const errorMsg = `Error occurred while processing '${this.privFile.name}'. ${event}`;
+                        this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, errorMsg));
+                        throw new Error(errorMsg);
+                    };
 
-                const chunk = this.privFile.slice(startOffset, endOffset);
-                reader.readAsArrayBuffer(chunk);
+                    const chunk = this.privFile.slice(44);
+                    reader.readAsArrayBuffer(chunk);
 
-                return stream.getReader();
+                    return stream.getReader();
+                });
             });
+
     }
 
     private onEvent = (event: AudioSourceEvent): void => {

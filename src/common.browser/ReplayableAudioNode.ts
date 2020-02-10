@@ -11,7 +11,7 @@ import {
 
 export class ReplayableAudioNode implements IAudioStreamNode {
     private privAudioNode: IAudioStreamNode;
-    private privFormat: AudioStreamFormatImpl;
+    private privBytesPerSecond: number;
     private privBuffers: BufferEntry[] = [];
     private privReplayOffset: number = 0;
     private privLastShrinkOffset: number = 0;
@@ -21,9 +21,9 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     private privReplay: boolean = false;
     private privLastChunkAcquiredTime: number = 0;
 
-    public constructor(audioSource: IAudioStreamNode, format: AudioStreamFormatImpl) {
+    public constructor(audioSource: IAudioStreamNode, bytesPerSecond: number) {
         this.privAudioNode = audioSource;
-        this.privFormat = format;
+        this.privBytesPerSecond = bytesPerSecond;
     }
 
     public id = (): string => {
@@ -42,7 +42,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             // So how many bytes do we need to seek to get the right offset?
             const offsetToSeek: number = this.privReplayOffset - this.privBufferStartOffset;
 
-            let bytesToSeek: number = Math.round(offsetToSeek * this.privFormat.avgBytesPerSec * 1e-7);
+            let bytesToSeek: number = Math.round(offsetToSeek * this.privBytesPerSecond * 1e-7);
             if (0 !== (bytesToSeek % 2)) {
                 bytesToSeek++;
             }
@@ -55,7 +55,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 
             const retVal: ArrayBuffer = this.privBuffers[i].chunk.buffer.slice(bytesToSeek);
 
-            this.privReplayOffset += (retVal.byteLength / this.privFormat.avgBytesPerSec) * 1e+7;
+            this.privReplayOffset += (retVal.byteLength / this.privBytesPerSecond) * 1e+7;
 
             // If we've reached the end of the buffers, stop replaying.
             if (i === this.privBuffers.length - 1) {
@@ -102,14 +102,14 @@ export class ReplayableAudioNode implements IAudioStreamNode {
         // So how many bytes do we need to seek to get the right offset?
         const offsetToSeek: number = offset - this.privBufferStartOffset;
 
-        let bytesToSeek: number = Math.round(offsetToSeek * this.privFormat.avgBytesPerSec * 1e-7);
+        let bytesToSeek: number = Math.round(offsetToSeek * this.privBytesPerSecond * 1e-7);
 
         let i: number = 0;
 
         while (i < this.privBuffers.length && bytesToSeek >= this.privBuffers[i].chunk.buffer.byteLength) {
             bytesToSeek -= this.privBuffers[i++].chunk.buffer.byteLength;
         }
-        this.privBufferStartOffset = Math.round(offset - ((bytesToSeek / this.privFormat.avgBytesPerSec) * 1e+7));
+        this.privBufferStartOffset = Math.round(offset - ((bytesToSeek / this.privBytesPerSecond) * 1e+7));
         this.privBuffers = this.privBuffers.slice(i);
     }
 
@@ -120,8 +120,8 @@ export class ReplayableAudioNode implements IAudioStreamNode {
         }
 
         for (const value of this.privBuffers) {
-            const startOffset: number = (value.byteOffset / this.privFormat.avgBytesPerSec) * 1e7;
-            const endOffset: number = startOffset + ((value.chunk.buffer.byteLength / this.privFormat.avgBytesPerSec) * 1e7);
+            const startOffset: number = (value.byteOffset / this.privBytesPerSecond) * 1e7;
+            const endOffset: number = startOffset + ((value.chunk.buffer.byteLength / this.privBytesPerSecond) * 1e7);
 
             if (offset >= startOffset && offset <= endOffset) {
                 return value.chunk.timeReceived;

@@ -75,8 +75,8 @@ export class MicAudioSource implements IAudioSource {
         this.privEvents = new EventSource<AudioSourceEvent>();
     }
 
-    public get format(): AudioStreamFormatImpl {
-        return MicAudioSource.AUDIOFORMAT;
+    public get format(): Promise<AudioStreamFormatImpl> {
+        return PromiseHelper.fromResult(MicAudioSource.AUDIOFORMAT);
     }
 
     public turnOn = (): Promise<boolean> => {
