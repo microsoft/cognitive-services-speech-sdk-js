@@ -7,7 +7,7 @@ import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
 import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode, Promise } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import { AudioInputStream, PropertyCollection, PropertyId, PullAudioInputStreamCallback } from "../Exports";
-import { bufferSize, PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
+import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
 
 /**
  * Represents audio input configuration used for specifying what type of input to use (microphone, file, stream).
@@ -23,7 +23,7 @@ export abstract class AudioConfig {
      */
     public static fromDefaultMicrophoneInput(): AudioConfig {
         const pcmRecorder = new PcmRecorder();
-        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, bufferSize));
+        return new AudioConfigImpl(new MicAudioSource(pcmRecorder));
     }
 
     /**
@@ -37,7 +37,7 @@ export abstract class AudioConfig {
      */
     public static fromMicrophoneInput(deviceId?: string): AudioConfig {
         const pcmRecorder = new PcmRecorder();
-        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, bufferSize, deviceId));
+        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, deviceId));
     }
 
     /**

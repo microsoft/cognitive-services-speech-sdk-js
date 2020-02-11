@@ -66,11 +66,10 @@ export class MicAudioSource implements IAudioSource {
 
     public constructor(
         private readonly privRecorder: IRecorder,
-        outputChunkSize: number,
         audioSourceId?: string,
         private readonly deviceId?: string) {
 
-        this.privOutputChunkSize = outputChunkSize;
+        this.privOutputChunkSize = MicAudioSource.AUDIOFORMAT.avgBytesPerSec / 10;
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
     }
