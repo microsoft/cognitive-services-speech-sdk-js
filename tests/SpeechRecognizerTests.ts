@@ -1034,7 +1034,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         const f: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile44k);
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream(format);
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
-        let i: number;
 
         p.write(f);
         p.close();
