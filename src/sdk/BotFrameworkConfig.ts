@@ -25,6 +25,7 @@ export class BotFrameworkConfig extends DialogServiceConfigImpl {
      * @public
      * @param subscription Subscription key associated with the bot
      * @param region The region name (see the <a href="https://aka.ms/csspeech/region">region page</a>).
+     * @param botId Optional, ID for using a specific bot.
      * @returns {BotFrameworkConfig} A new bot framework config.
      */
     public static fromSubscription(subscription: string, region: string, botId?: string): BotFrameworkConfig {
