@@ -69,7 +69,7 @@ afterEach(() => {
 });
 
 function BuildCommandsServiceConfig(): sdk.DialogServiceConfig {
-    const config: sdk.SpeechCommandsConfig = sdk.SpeechCommandsConfig.fromSubscription(Settings.BotSecret, Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const config: sdk.CustomCommandsConfig = sdk.CustomCommandsConfig.fromSubscription(Settings.BotSecret, Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
     if (undefined !== Settings.proxyServer) {
         config.setProxy(Settings.proxyServer, Settings.proxyPort);
@@ -164,9 +164,9 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
     expect(connector instanceof sdk.DialogServiceConnector);
 });
 
-// test("Create DialogServiceConnector with SpeechCommandsConfig", () => {
+// test("Create DialogServiceConnector with CustomCommandsConfig", () => {
 //     // tslint:disable-next-line:no-console
-//     console.info("Name: Create DialogServiceConnector with SpeechCommandsConfig");
+//     console.info("Name: Create DialogServiceConnector with CustomCommandsConfig");
 
 //     const connectorConfig: sdk.DialogServiceConfig = sdk.DialogServiceConfig.fromBotSecret(Settings.BotSecret, Settings.BotSubscription, Settings.SpeechRegion);
 //     expect(connectorConfig).not.toBeUndefined();
