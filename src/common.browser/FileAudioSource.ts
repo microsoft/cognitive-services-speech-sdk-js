@@ -2,11 +2,7 @@
 // Licensed under the MIT license.
 
 import { AudioStreamFormat, AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
-import {
-    connectivity,
-    ISpeechConfigAudioDevice,
-    type,
-} from "../common.speech/Exports";
+import { connectivity, ISpeechConfigAudioDevice, type } from "../common.speech/Exports";
 import {
     AudioSourceErrorEvent,
     AudioSourceEvent,
@@ -26,11 +22,10 @@ import {
     Promise,
     PromiseHelper,
     Stream,
-    StreamReader,
+    StreamReader
 } from "../common/Exports";
 
 export class FileAudioSource implements IAudioSource {
-
     // Recommended sample rate (bytes/second).
     private static readonly SAMPLE_RATE: number = 16000 * 2; // 16 kHz * 16 bits
 
@@ -145,6 +140,14 @@ export class FileAudioSource implements IAudioSource {
             samplerate: FileAudioSource.FILEFORMAT.samplesPerSec,
             type: type.File,
         });
+    }
+
+    public mute(): void {
+        throw new Error("Not implemented");
+    }
+
+    public unmute(): void {
+        throw new Error("Not implemented");
     }
 
     private upload = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {

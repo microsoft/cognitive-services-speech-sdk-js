@@ -2,11 +2,7 @@
 // Licensed under the MIT license.
 
 import { createNoDashGuid } from "../../../src/common/Guid";
-import {
-    connectivity,
-    ISpeechConfigAudioDevice,
-    type,
-} from "../../common.speech/Exports";
+import { connectivity, ISpeechConfigAudioDevice, type } from "../../common.speech/Exports";
 import {
     AudioSourceEvent,
     AudioSourceInitializingEvent,
@@ -23,7 +19,7 @@ import {
     Promise,
     PromiseHelper,
     Stream,
-    StreamReader,
+    StreamReader
 } from "../../common/Exports";
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
@@ -35,7 +31,6 @@ export const bufferSize: number = 4096;
  * @class AudioInputStream
  */
 export abstract class AudioInputStream {
-
     /**
      * Creates and initializes an instance.
      * @constructor
@@ -79,6 +74,14 @@ export abstract class AudioInputStream {
      * @public
      */
     public abstract close(): void;
+
+    public mute(): void {
+        throw new Error("Not implemented");
+    }
+
+    public unmute(): void {
+        throw new Error("Not implemented");
+    }
 }
 
 /**
@@ -87,7 +90,6 @@ export abstract class AudioInputStream {
  */
 // tslint:disable-next-line:max-classes-per-file
 export abstract class PushAudioInputStream extends AudioInputStream {
-
     /**
      * Creates a memory backed PushAudioInputStream with the specified audio format.
      * @member PushAudioInputStream.create
@@ -126,7 +128,6 @@ export abstract class PushAudioInputStream extends AudioInputStream {
  */
 // tslint:disable-next-line:max-classes-per-file
 export class PushAudioInputStreamImpl extends PushAudioInputStream implements IAudioSource {
-
     private privFormat: AudioStreamFormatImpl;
     private privId: string;
     private privEvents: EventSource<AudioSourceEvent>;
@@ -215,7 +216,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
                     },
                     read: () => {
                         return streamReader.read();
-                    },
+                    }
                 };
             });
     }
@@ -240,7 +241,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
             manufacturer: "Speech SDK",
             model: "PushStream",
             samplerate: this.privFormat.samplesPerSec,
-            type: type.Stream,
+            type: type.Stream
         });
     }
 
@@ -285,7 +286,6 @@ export abstract class PullAudioInputStream extends AudioInputStream {
      * @public
      */
     public abstract close(): void;
-
 }
 
 /**
@@ -295,7 +295,6 @@ export abstract class PullAudioInputStream extends AudioInputStream {
  */
 // tslint:disable-next-line:max-classes-per-file
 export class PullAudioInputStreamImpl extends PullAudioInputStream implements IAudioSource {
-
     private privCallback: PullAudioInputStreamCallback;
     private privFormat: AudioStreamFormatImpl;
     private privId: string;
@@ -401,7 +400,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
                         return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
                             buffer: transmitBuff.slice(0, totalBytes),
                             isEnd: this.privIsClosed || totalBytes === 0,
-                            timeReceived: Date.now(),
+                            timeReceived: Date.now()
                         });
                     },
                 };
@@ -428,7 +427,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
             manufacturer: "Speech SDK",
             model: "PullStream",
             samplerate: this.privFormat.samplesPerSec,
-            type: type.Stream,
+            type: type.Stream
         });
     }
 

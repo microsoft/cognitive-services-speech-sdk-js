@@ -104,6 +104,21 @@ export abstract class AudioConfig {
      */
     public abstract getProperty(name: string, def?: string): string;
 
+    /**
+     * Mutes audio input.
+     * @member AudioConfig.prototype.mute
+     * @function
+     * @public
+     */
+    public abstract mute(): void;
+
+    /**
+     * Unmutes audio input.
+     * @member AudioConfig.prototype.unmute
+     * @function
+     * @public
+     */
+    public abstract unmute(): void;
 }
 
 /**
@@ -204,25 +219,30 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
     public setProperty(name: string, value: string): void {
         Contracts.throwIfNull(value, "value");
 
-        if (undefined !== this.privSource.setProperty) {
+        if (this.privSource.setProperty) {
             this.privSource.setProperty(name, value);
         } else {
             throw new Error("This AudioConfig instance does not support setting properties.");
         }
-
     }
 
     public getProperty(name: string, def?: string): string {
-        if (undefined !== this.privSource.getProperty) {
+        if (this.privSource.getProperty) {
             return this.privSource.getProperty(name, def);
         } else {
             throw new Error("This AudioConfig instance does not support getting properties.");
         }
-
-        return def;
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
         return this.privSource.deviceInfo;
+    }
+
+    public mute(): void {
+        this.privSource.mute();
+    }
+
+    public unmute(): void {
+        this.privSource.unmute();
     }
 }
