@@ -66,17 +66,16 @@ export class MicAudioSource implements IAudioSource {
 
     public constructor(
         private readonly privRecorder: IRecorder,
-        outputChunkSize: number,
         private readonly deviceId?: string,
         audioSourceId?: string ) {
 
-        this.privOutputChunkSize = outputChunkSize;
+        this.privOutputChunkSize = MicAudioSource.AUDIOFORMAT.avgBytesPerSec / 10;
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
     }
 
-    public get format(): AudioStreamFormatImpl {
-        return MicAudioSource.AUDIOFORMAT;
+    public get format(): Promise<AudioStreamFormatImpl> {
+        return PromiseHelper.fromResult(MicAudioSource.AUDIOFORMAT);
     }
 
     public turnOn = (): Promise<boolean> => {

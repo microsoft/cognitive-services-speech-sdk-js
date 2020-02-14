@@ -111,7 +111,7 @@ const checkRead: (checkedCount: number, testTarget: number, testNode: IAudioStre
     };
 
 test("Data in, Data out", (done: jest.DoneCallback) => {
-    const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat);
+    const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat.avgBytesPerSec);
 
     checkRead(1, 20, testNode, done);
 });
@@ -119,7 +119,7 @@ test("Data in, Data out", (done: jest.DoneCallback) => {
 test("Shrink half buffer and continue. (No torn pages)", (done: jest.DoneCallback) => {
     const testTarget: number = 20;
 
-    const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat);
+    const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat.avgBytesPerSec);
 
     let testCount: number = 0;
     const fillReadBuffer: () => void = (): void => {
@@ -142,7 +142,7 @@ test("Shrink half buffer and continue. (No torn pages)", (done: jest.DoneCallbac
 test("Shrink half buffer and replay. (No torn pages)", (done: jest.DoneCallback) => {
     const testTarget: number = 20;
 
-    const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat);
+    const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat.avgBytesPerSec);
 
     let testCount: number = 0;
     const fillReadBuffer: () => void = (): void => {
@@ -167,7 +167,7 @@ test("Shrink half buffer and replay. (No torn pages)", (done: jest.DoneCallback)
 test("Shrink buffer and replay. (Torn pages)", (done: jest.DoneCallback) => {
     const testTarget: number = 20;
 
-    const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat);
+    const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat.avgBytesPerSec);
 
     let testCount: number = 0;
     const fillReadBuffer: () => void = (): void => {
@@ -193,7 +193,7 @@ describe("Time tests", () => {
     test("Find time received of buffer", (done: jest.DoneCallback) => {
         const testTarget: number = 20;
 
-        const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat);
+        const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat.avgBytesPerSec);
 
         let testCount: number = 0;
         const fillReadBuffer: () => void = (): void => {
@@ -222,7 +222,7 @@ describe("Time tests", () => {
     test("Offset requested not in buffer (low)", (done: jest.DoneCallback) => {
         const testTarget: number = 20;
 
-        const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat);
+        const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat.avgBytesPerSec);
 
         let testCount: number = 0;
         const fillReadBuffer: () => void = (): void => {
@@ -255,7 +255,7 @@ describe("Time tests", () => {
     test("Offset requested not in buffer (high)", (done: jest.DoneCallback) => {
         const testTarget: number = 20;
 
-        const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat);
+        const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat.avgBytesPerSec);
 
         let testCount: number = 0;
         const fillReadBuffer: () => void = (): void => {
