@@ -52,7 +52,6 @@ export { ProfanityOption } from "./ProfanityOption";
 export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";
 export { Conversation,
     ConversationExpirationEventArgs,
-    ConversationImpl,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
