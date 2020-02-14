@@ -600,6 +600,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 // turn started by the service
                                 if (turnRequestId !== audioSessionReqId) {
                                     this.privTurnStateManager.StartTurn(turnRequestId);
+                                } else
+                                {
+                                    this.privDialogRequestSession.onServiceTurnStartResponse();
                                 }
                             }
                             break;
