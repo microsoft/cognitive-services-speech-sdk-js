@@ -224,7 +224,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 }
             };
 
-            r.sessionStopped = (s, e) => {
+            r.sessionStopped = (s: sdk.SpeechRecognizer, e: sdk.SpeechRecognitionEventArgs) => {
                 try {
                     expect(telemetryEvents).toEqual(1);
                     done();

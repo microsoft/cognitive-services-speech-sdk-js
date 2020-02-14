@@ -175,6 +175,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionConfigurationPromise = null;
         this.privRecognizerConfig.recognitionMode = recoMode;
 
+        this.privSuccessCallback = successCallback;
+        this.privErrorCallback = errorCallBack;
+
         this.privRequestSession.startNewRecognition();
         this.privRequestSession.listenForServiceTelemetry(this.privAudioSource.events);
 
@@ -236,7 +239,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public stopRecognizing(): Promise<boolean> {
         if (this.privRequestSession.isRecognizing) {
-            this.audioSource.detach(this.privRequestSession.audioNodeId);
+            this.audioSource.turnOff();
             return this.sendFinalAudio().onSuccessContinueWithPromise((_: boolean) => {
                 this.privRequestSession.onStopRecognizing();
                 return this.privRequestSession.turnCompletionPromise.onSuccessContinueWith((_: boolean) => {

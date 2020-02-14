@@ -444,7 +444,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 }
             };
 
-            r.sessionStopped = (s, e) => {
+            r.sessionStopped = (s: sdk.SpeechRecognizer, e: sdk.SpeechRecognitionEventArgs) => {
                 try {
                     expect(telemetryEvents).toEqual(1);
                     done();
@@ -2289,7 +2289,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
             const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();
             expect(disconnected).toEqual(false);
-            if (0 != recoCount % 2) {
+            if (0 !== recoCount % 2) {
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.NoMatch]);
             } else {
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
@@ -2700,7 +2700,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
         try {
             const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();
-            if (0 == recoCount) {
+            if (0 === recoCount) {
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
             } else {
@@ -2806,7 +2806,7 @@ test("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCall
         try {
             const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();
-            if (0 == recoCount % 2) {
+            if (0 === recoCount % 2) {
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toContain("the weather like?");
             } else {
