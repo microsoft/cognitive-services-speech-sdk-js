@@ -252,17 +252,22 @@ export class SpeechRecognizer extends Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
 
-            this.implRecognizerStop();
-
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
+            this.implRecognizerStop().on((_: boolean) => {
+                if (!!cb) {
+                    try {
+                        cb();
+                    } catch (e) {
+                        if (!!err) {
+                            err(e);
+                        }
                     }
                 }
-            }
+            }, (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
+
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {

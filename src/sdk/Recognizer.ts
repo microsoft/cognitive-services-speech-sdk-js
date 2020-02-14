@@ -221,9 +221,10 @@ export abstract class Recognizer {
             });
     }
 
-    protected implRecognizerStop(): void {
+    protected implRecognizerStop(): Promise<boolean> {
         if (this.privReco) {
-            this.privReco.stopRecognizing();
+            return this.privReco.stopRecognizing();
         }
+        return PromiseHelper.fromResult(true);
     }
 }

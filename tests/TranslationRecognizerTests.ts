@@ -208,7 +208,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     json.indexOf(sessionId) > 0) {
                     try {
                         expect(hypoCounter).toBeGreaterThanOrEqual(1);
-                        validateTelemetry(json, 1, hypoCounter);
+                        validateTelemetry(json, 2, hypoCounter); // 2 phrases because the extra silence at the end of conversation mode.
                     } catch (error) {
                         done.fail(error);
                     }
@@ -224,6 +224,15 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 }
             };
 
+            r.sessionStopped = (s, e) => {
+                try {
+                    expect(telemetryEvents).toEqual(1);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
+            };
+
             r.recognizeOnceAsync(
                 (res: sdk.TranslationRecognitionResult) => {
                     expect(res).not.toBeUndefined();
@@ -232,9 +241,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(res.translations.get("de", undefined) !== undefined).toEqual(true);
                     expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
                     expect(res.text).toEqual("What's the weather like?");
-                    expect(telemetryEvents).toEqual(1);
-
-                    done();
                 },
                 (error: string) => {
                     done.fail(error);

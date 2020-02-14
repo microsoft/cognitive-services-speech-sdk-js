@@ -56,10 +56,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
         this.privIntentDataSent = true;
     }
 
-    protected processTypeSpecificMessages(
-        connectionMessage: SpeechConnectionMessage,
-        successCallback?: (e: IntentRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): boolean {
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
 
         let result: IntentRecognitionResult;
         let ev: IntentRecognitionEventArgs;
@@ -127,19 +124,19 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     }
 
                     // report result to promise.
-                    if (!!successCallback) {
+                    if (!!this.privSuccessCallback) {
                         try {
-                            successCallback(result);
+                            this.privSuccessCallback(result);
                         } catch (e) {
-                            if (!!errorCallBack) {
-                                errorCallBack(e);
+                            if (!!this.privErrorCallback) {
+                                this.privErrorCallback(e);
                             }
                         }
                         // Only invoke the call back once.
                         // and if it's successful don't invoke the
                         // error after that.
-                        successCallback = undefined;
-                        errorCallBack = undefined;
+                        this.privSuccessCallback = undefined;
+                        this.privErrorCallback = undefined;
                     }
                 };
 
@@ -224,19 +221,19 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 }
 
                 // report result to promise.
-                if (!!successCallback) {
+                if (!!this.privSuccessCallback) {
                     try {
-                        successCallback(ev.result);
+                        this.privSuccessCallback(ev.result);
                     } catch (e) {
-                        if (!!errorCallBack) {
-                            errorCallBack(e);
+                        if (!!this.privErrorCallback) {
+                            this.privErrorCallback(e);
                         }
                     }
                     // Only invoke the call back once.
                     // and if it's successful don't invoke the
                     // error after that.
-                    successCallback = undefined;
-                    errorCallBack = undefined;
+                    this.privSuccessCallback = undefined;
+                    this.privErrorCallback = undefined;
                 }
                 processed = true;
                 break;
@@ -252,8 +249,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
         requestId: string,
         cancellationReason: CancellationReason,
         errorCode: CancellationErrorCode,
-        error: string,
-        cancelRecoCallback: (e: SpeechRecognitionResult) => void): void {
+        error: string): void {
 
         const properties: PropertyCollection = new PropertyCollection();
         properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
@@ -273,7 +269,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
             } catch { }
         }
 
-        if (!!cancelRecoCallback) {
+        if (!!this.privSuccessCallback) {
             const result: IntentRecognitionResult = new IntentRecognitionResult(
                 undefined, // Intent Id
                 requestId,
@@ -285,7 +281,8 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 undefined, // Json
                 properties);
             try {
-                cancelRecoCallback(result);
+                this.privSuccessCallback(result);
+                this.privSuccessCallback = undefined;
                 /* tslint:disable:no-empty */
             } catch { }
         }
