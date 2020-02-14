@@ -168,10 +168,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    protected processTypeSpecificMessages(
-        connectionMessage: SpeechConnectionMessage,
-        successCallback?: (e: SpeechRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): boolean {
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
 
         const resultProps: PropertyCollection = new PropertyCollection();
         if (connectionMessage.messageType === MessageType.Text) {
@@ -341,6 +338,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         errorCallback: (e: string) => void
     ): any => {
         this.privRecognizerConfig.recognitionMode = recoMode;
+      
+        this.privSuccessCallback = successCallback;
+        this.privErrorCallback = errorCallback;
 
         this.privDialogRequestSession.startNewRecognition();
         this.privDialogRequestSession.listenForServiceTelemetry(this.privDialogAudioSource.events);
@@ -349,9 +349,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.dialogConnectImpl();
 
         this.sendPreAudioMessages();
-
-        this.privSuccessCallback = successCallback;
-        this.privErrorCallback = errorCallback;
 
         return this.privDialogAudioSource
             .attach(this.privDialogRequestSession.audioNodeId)
@@ -572,10 +569,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return this.privDialogConnectionPromise;
     }
 
-    private receiveDialogMessageOverride = (
-        successCallback?: (e: SpeechRecognitionResult) => void,
-        errorCallBack?: (e: string) => void
-    ): Promise<IConnection> => {
+    private receiveDialogMessageOverride = (): Promise<IConnection> => {
 
         // we won't rely on the cascading promises of the connection since we want to continually be available to receive messages
         const communicationCustodian: Deferred<IConnection> = new Deferred<IConnection>();
@@ -668,25 +662,22 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                             this.privSuccessCallback(this.privLastResult);
                                             this.privLastResult = null;
                                         } catch (e) {
-                                            if (!!errorCallBack) {
-                                                errorCallBack(e);
+                                            if (!!this.privErrorCallback) {
+                                                this.privErrorCallback(e);
                                             }
                                         }
                                         // Only invoke the call back once.
                                         // and if it's successful don't invoke the
                                         // error after that.
                                         this.privSuccessCallback = undefined;
-                                        errorCallBack = undefined;
+                                        this.privErrorCallback = undefined;
                                     }
                                 }
                             }
                             break;
 
                         default:
-                            if (!this.processTypeSpecificMessages(
-                                connectionMessage,
-                                successCallback,
-                                errorCallBack)) {
+                            if (!this.processTypeSpecificMessages(connectionMessage)) {
                                 if (!!this.serviceEvents) {
                                     this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
                                 }
@@ -695,11 +686,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                     return this.receiveDialogMessageOverride();
                 });
-            }, (error: string) => {
-                this.terminateMessageLoop = true;
-                communicationCustodian.resolve(undefined);
-                return PromiseHelper.fromResult<IConnection>(undefined);
-            });
+        }, (error: string) => {
+            this.terminateMessageLoop = true;
+            communicationCustodian.resolve(undefined);
+            return PromiseHelper.fromResult<IConnection>(undefined);
+        });
 
         return communicationCustodian.promise();
     }

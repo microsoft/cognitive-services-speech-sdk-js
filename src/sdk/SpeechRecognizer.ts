@@ -166,35 +166,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public recognizeOnceAsync(cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
-
-            this.implRecognizerStop();
-
-            this.implRecognizerStart(RecognitionMode.Interactive, (e: SpeechRecognitionResult) => {
-                this.implRecognizerStop();
-                if (!!cb) {
-                    cb(e);
-                }
-            }, (e: string) => {
-                this.implRecognizerStop();
-                if (!!err) {
-                    err(e);
-                }
-            });
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
-        }
+            this.recognizeOnceAsyncImpl(RecognitionMode.Interactive, cb, err);
     }
 
     /**
@@ -207,37 +179,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
-
-            this.implRecognizerStop();
-
-            this.implRecognizerStart(RecognitionMode.Conversation, undefined, undefined);
-
-            // report result to promise.
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-                cb = undefined;
-            }
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
-        }
+        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation, cb, err);
     }
 
     /**
@@ -249,38 +191,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
-
-            this.implRecognizerStop().on((_: boolean) => {
-                if (!!cb) {
-                    try {
-                        cb();
-                    } catch (e) {
-                        if (!!err) {
-                            err(e);
-                        }
-                    }
-                }
-            }, (error: string) => {
-                if (!!err) {
-                    err(error);
-                }
-            });
-
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
-        }
+        this.stopContinuousRecognitionAsyncImpl(cb, err);
     }
 
     /**
@@ -346,7 +257,7 @@ export class SpeechRecognizer extends Recognizer {
         }
 
         if (disposing) {
-            this.implRecognizerStop();
+            this.implRecognizerStop(); // Dispose is synchronous, so just start it....
             this.privDisposedSpeechRecognizer = true;
         }
 

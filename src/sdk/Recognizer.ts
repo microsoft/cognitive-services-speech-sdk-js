@@ -205,6 +205,148 @@ export abstract class Recognizer {
             recognizerConfig);
     }
 
+    protected recognizeOnceAsyncImpl(recognitionMode: RecognitionMode, cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
+        try {
+            Contracts.throwIfDisposed(this.privDisposed);
+
+            this.implRecognizerStop().on((_: boolean): void => {
+                try {
+                    this.implRecognizerStart(recognitionMode, (e: SpeechRecognitionResult) => {
+                        this.implRecognizerStop().on((_: boolean): void => {
+                            if (!!cb) {
+                                cb(e);
+                            }
+                        }, (error: string): void => {
+                            if (!!err) {
+                                err(error);
+                            }
+                        });
+
+                    }, (e: string) => {
+                        this.implRecognizerStop(); // We're already in an error path so best effort here.
+                        if (!!err) {
+                            err(e);
+                        }
+                    });
+                } catch (error) {
+                    if (!!err) {
+                        if (error instanceof Error) {
+                            const typedError: Error = error as Error;
+                            err(typedError.name + ": " + typedError.message);
+                        } else {
+                            err(error);
+                        }
+                    }
+
+                    // Destroy the recognizer.
+                    this.dispose(true);
+                }
+            }, (error: string): void => {
+                if (!!err) {
+                    err(error);
+                }
+            });
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
+    }
+
+    public startContinuousRecognitionAsyncImpl(recognitionMode: RecognitionMode, cb?: () => void, err?: (e: string) => void): void {
+        try {
+            Contracts.throwIfDisposed(this.privDisposed);
+
+            this.implRecognizerStop().on((_: boolean): void => {
+                this.implRecognizerStart(recognitionMode, undefined, undefined);
+                try {
+                    // report result to promise.
+                    if (!!cb) {
+                        try {
+                            cb();
+                        } catch (e) {
+                            if (!!err) {
+                                err(e);
+                            }
+                        }
+                        cb = undefined;
+                    }
+                } catch (error) {
+                    if (!!err) {
+                        if (error instanceof Error) {
+                            const typedError: Error = error as Error;
+                            err(typedError.name + ": " + typedError.message);
+                        } else {
+                            err(error);
+                        }
+                    }
+
+                    // Destroy the recognizer.
+                    this.dispose(true);
+                }
+            }, (error: string): void => {
+                if (!!err) {
+                    err(error);
+                }
+            });
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
+    }
+
+    protected stopContinuousRecognitionAsyncImpl(cb?: () => void, err?: (e: string) => void): void {
+        try {
+            Contracts.throwIfDisposed(this.privDisposed);
+
+            this.implRecognizerStop().on((_: boolean) => {
+                if (!!cb) {
+                    try {
+                        cb();
+                    } catch (e) {
+                        if (!!err) {
+                            err(e);
+                        }
+                    }
+                }
+            }, (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
+
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
+    }
+
     // Start the recognition
     protected implRecognizerStart(
         recognitionMode: RecognitionMode,
