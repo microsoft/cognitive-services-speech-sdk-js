@@ -67,18 +67,23 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
 
         const headers: IStringDictionary<string> = {};
 
-        if (authInfo.token !== undefined && authInfo.token !== "") {
+        if (authInfo.token != null && authInfo.token !== "") {
             headers[authInfo.headerName] = authInfo.token;
         }
         headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
 
-        let endpoint: string;
-        // ApplicationId is only required for CustomCommands
-        if (applicationId === "") {
-            endpoint = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
-        } else {
-            endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
+        if (applicationId !== "") {
             headers[authHeader] = applicationId;
+        }
+
+        let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, "");
+        if (endpoint === "") {
+            // ApplicationId is only required for CustomCommands, so we're using that to determine default endpoint
+            if (applicationId === "") {
+                endpoint = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
+            } else {
+                endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
+            }
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);

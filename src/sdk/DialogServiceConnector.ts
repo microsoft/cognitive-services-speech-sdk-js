@@ -144,6 +144,10 @@ export class DialogServiceConnector extends Recognizer {
         return this.privProperties;
     }
 
+    public set activityTemplate(messagePayload: string) {
+        this.privReco.activityTemplate = messagePayload;
+    }
+
     /**
      * Starts recognition and stops after the first utterance is recognized.
      * @member DialogServiceConnector.prototype.listenOnceAsync

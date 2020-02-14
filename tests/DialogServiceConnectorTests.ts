@@ -69,7 +69,7 @@ afterEach(() => {
 });
 
 function BuildCommandsServiceConfig(): sdk.DialogServiceConfig {
-    const config: sdk.SpeechCommandsConfig = sdk.SpeechCommandsConfig.fromSubscription(Settings.BotSecret, Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const config: sdk.CustomCommandsConfig = sdk.CustomCommandsConfig.fromSubscription(Settings.BotSecret, Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
     if (undefined !== Settings.proxyServer) {
         config.setProxy(Settings.proxyServer, Settings.proxyPort);
@@ -88,7 +88,6 @@ function BuildBotFrameworkConfig(): sdk.BotFrameworkConfig {
         config.setProxy(Settings.proxyServer, Settings.proxyPort);
     }
 
-    // config.setProperty(PropertyId.Conversation_ApplicationId, Settings.BotSecret);
     expect(config).not.toBeUndefined();
     return config;
 }
@@ -147,6 +146,11 @@ test("Create BotFrameworkConfig from subscription, null subscription", () => {
     expect(() => sdk.BotFrameworkConfig.fromSubscription(null, Settings.BotRegion)).toThrowError();
 });
 
+test("Create BotFrameworkConfig, null optional botId", () => {
+    const connectorConfig: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, Settings.BotRegion, "");
+    expect(connectorConfig).not.toBeUndefined();
+});
+
 test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create DialogServiceConnector, BotFrameworkConfig.fromSubscription");
@@ -164,9 +168,9 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
     expect(connector instanceof sdk.DialogServiceConnector);
 });
 
-// test("Create DialogServiceConnector with SpeechCommandsConfig", () => {
+// test("Create DialogServiceConnector with CustomCommandsConfig", () => {
 //     // tslint:disable-next-line:no-console
-//     console.info("Name: Create DialogServiceConnector with SpeechCommandsConfig");
+//     console.info("Name: Create DialogServiceConnector with CustomCommandsConfig");
 
 //     const connectorConfig: sdk.DialogServiceConfig = sdk.DialogServiceConfig.fromBotSecret(Settings.BotSecret, Settings.BotSubscription, Settings.SpeechRegion);
 //     expect(connectorConfig).not.toBeUndefined();
@@ -189,6 +193,26 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
     afterAll(() => {
         WebsocketMessageAdapter.forceNpmWebSocket = false;
+    });
+
+    test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Create BotFrameworkConfig, invalid optional botId");
+
+        const botConfig: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, Settings.BotRegion, "potato");
+        objsToClose.push(botConfig);
+
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(botConfig);
+        objsToClose.push(connector);
+
+        // the service should return an error if an invalid botId was specified, even though the subscription is valid
+        connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            done.fail();
+        },
+        (error: string) => {
+            expect(error).toContain("1006");
+            done();
+        });
     });
 
     test("Connect / Disconnect", (done: jest.DoneCallback) => {
