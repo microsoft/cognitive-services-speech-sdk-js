@@ -44,6 +44,7 @@ export { Connection } from "./Connection";
 export { PhraseListGrammar } from "./PhraseListGrammar";
 export { DialogServiceConfig } from "./DialogServiceConfig";
 export { BotFrameworkConfig } from "./BotFrameworkConfig";
+export { CustomCommandsConfig } from "./CustomCommandsConfig";
 export { DialogServiceConnector } from "./DialogServiceConnector";
 export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 export { ServicePropertyChannel } from "./ServicePropertyChannel";
