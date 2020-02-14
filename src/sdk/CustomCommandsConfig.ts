@@ -6,13 +6,13 @@ import { DialogServiceConfigImpl } from "./DialogServiceConfig";
 import { PropertyId } from "./Exports";
 
 /**
- * Class that defines configurations for the dialog service connector object for using a SpeechCommands backend.
- * @class SpeechCommandsConfig
+ * Class that defines configurations for the dialog service connector object for using a CustomCommands backend.
+ * @class CustomCommandsConfig
  */
-export class SpeechCommandsConfig extends DialogServiceConfigImpl {
+export class CustomCommandsConfig extends DialogServiceConfigImpl {
 
     /**
-     * Creates an instance of SpeechCommandsConfig.
+     * Creates an instance of CustomCommandsConfig.
      */
     public constructor() {
         super();
@@ -20,25 +20,25 @@ export class SpeechCommandsConfig extends DialogServiceConfigImpl {
 
     /**
      * Creates an instance of the bot framework config with the specified subscription and region.
-     * @member SpeechCommandsConfig.fromSubscription
+     * @member CustomCommandsConfig.fromSubscription
      * @function
      * @public
      * @param applicationId Speech Commands application id.
      * @param subscription Subscription key associated with the bot
      * @param region The region name (see the <a href="https://aka.ms/csspeech/region">region page</a>).
-     * @returns {SpeechCommandsConfig} A new bot framework config.
+     * @returns {CustomCommandsConfig} A new bot framework config.
      */
-    public static fromSubscription(applicationId: string, subscription: string, region: string): SpeechCommandsConfig {
+    public static fromSubscription(applicationId: string, subscription: string, region: string): CustomCommandsConfig {
         Contracts.throwIfNullOrWhitespace(applicationId, "applicationId");
         Contracts.throwIfNullOrWhitespace(subscription, "subscription");
         Contracts.throwIfNullOrWhitespace(region, "region");
 
-        const speechCommandsConfig: SpeechCommandsConfig = new DialogServiceConfigImpl();
-        speechCommandsConfig.setProperty(PropertyId.Conversation_DialogType, "custom_commands");
-        speechCommandsConfig.setProperty(PropertyId.Conversation_ApplicationId, applicationId);
-        speechCommandsConfig.setProperty(PropertyId.SpeechServiceConnection_Key, subscription);
-        speechCommandsConfig.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        return speechCommandsConfig;
+        const customCommandsConfig: CustomCommandsConfig = new DialogServiceConfigImpl();
+        customCommandsConfig.setProperty(PropertyId.Conversation_DialogType, "custom_commands");
+        customCommandsConfig.setProperty(PropertyId.Conversation_ApplicationId, applicationId);
+        customCommandsConfig.setProperty(PropertyId.SpeechServiceConnection_Key, subscription);
+        customCommandsConfig.setProperty(PropertyId.SpeechServiceConnection_Region, region);
+        return customCommandsConfig;
     }
 
     /**
@@ -48,30 +48,30 @@ export class SpeechCommandsConfig extends DialogServiceConfigImpl {
      * As configuration values are copied when creating a new recognizer, the new token value will not apply to recognizers that have already been created.
      * For recognizers that have been created before, you need to set authorization token of the corresponding recognizer
      * to refresh the token. Otherwise, the recognizers will encounter errors during recognition.
-     * @member SpeechCommandsConfig.fromAuthorizationToken
+     * @member CustomCommandsConfig.fromAuthorizationToken
      * @function
      * @public
      * @param applicationId Speech Commands application id.
      * @param authorizationToken The authorization token associated with the application.
      * @param region The region name (see the <a href="https://aka.ms/csspeech/region">region page</a>).
-     * @returns {SpeechCommandsConfig} A new speech commands config.
+     * @returns {CustomCommandsConfig} A new speech commands config.
      */
-    public static fromAuthorizationToken(applicationId: string, authorizationToken: string, region: string): SpeechCommandsConfig {
+    public static fromAuthorizationToken(applicationId: string, authorizationToken: string, region: string): CustomCommandsConfig {
         Contracts.throwIfNullOrWhitespace(applicationId, "applicationId");
         Contracts.throwIfNullOrWhitespace(authorizationToken, "authorizationToken");
         Contracts.throwIfNullOrWhitespace(region, "region");
 
-        const speechCommandsConfig: SpeechCommandsConfig = new DialogServiceConfigImpl();
-        speechCommandsConfig.setProperty(PropertyId.Conversation_DialogType, "custom_commands");
-        speechCommandsConfig.setProperty(PropertyId.Conversation_ApplicationId, applicationId);
-        speechCommandsConfig.setProperty(PropertyId.SpeechServiceAuthorization_Token, authorizationToken);
-        speechCommandsConfig.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        return speechCommandsConfig;
+        const customCommandsConfig: CustomCommandsConfig = new DialogServiceConfigImpl();
+        customCommandsConfig.setProperty(PropertyId.Conversation_DialogType, "custom_commands");
+        customCommandsConfig.setProperty(PropertyId.Conversation_ApplicationId, applicationId);
+        customCommandsConfig.setProperty(PropertyId.SpeechServiceAuthorization_Token, authorizationToken);
+        customCommandsConfig.setProperty(PropertyId.SpeechServiceConnection_Region, region);
+        return customCommandsConfig;
     }
 
     /**
      * Sets the corresponding backend application identifier.
-     * @member SpeechCommandsConfig.prototype.Conversation_ApplicationId
+     * @member CustomCommandsConfig.prototype.Conversation_ApplicationId
      * @function
      * @public
      * @param {string} value - The application identifier to set.
@@ -83,7 +83,7 @@ export class SpeechCommandsConfig extends DialogServiceConfigImpl {
 
     /**
      * Gets the corresponding backend application identifier.
-     * @member SpeechCommandsConfig.prototype.Conversation_ApplicationId
+     * @member CustomCommandsConfig.prototype.Conversation_ApplicationId
      * @function
      * @public
      * @param {string} value - The application identifier to get.

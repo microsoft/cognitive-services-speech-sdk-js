@@ -73,6 +73,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privDynamicGrammar: DynamicGrammarBuilder;
     private privAgentConfig: AgentConfig;
     private privServiceHasSentMessage: boolean;
+    private privActivityTemplate: string;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
     protected privRecognizerConfig: RecognizerConfig;
@@ -287,6 +288,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public static telemetryDataEnabled: boolean = true;
 
     public sendMessage(message: string): void { }
+
+    public set activityTemplate(messagePayload: string) { this.privActivityTemplate = messagePayload; }
+    public get activityTemplate(): string { return this.privActivityTemplate; }
 
     protected abstract processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,

@@ -782,6 +782,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             context: {
                 interactionId: guid
             },
+            messagePayload: this.activityTemplate ? this.activityTemplate : undefined,
             version: 0.5
         };
 
