@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Multi-device Conversation is a Preview feature.
 
 export { Conversation, ConversationImpl } from "./Conversation";
 export { ConversationExpirationEventArgs } from "./ConversationExpirationEventArgs";

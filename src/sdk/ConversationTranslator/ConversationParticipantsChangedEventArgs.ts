@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+// Multi-device Conversation is a Preview feature.
 
 import { SessionEventArgs } from "../Exports";
 import { IParticipant, ParticipantChangedReason } from "./Exports";
