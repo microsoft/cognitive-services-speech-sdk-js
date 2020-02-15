@@ -50,3 +50,12 @@ export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 export { ServicePropertyChannel } from "./ServicePropertyChannel";
 export { ProfanityOption } from "./ProfanityOption";
 export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";
+export { Conversation,
+    ConversationExpirationEventArgs,
+    ConversationParticipantsChangedEventArgs,
+    ConversationTranslationCanceledEventArgs,
+    ConversationTranslationEventArgs,
+    ConversationTranslationResult,
+    ConversationTranslator,
+    ParticipantChangedReason
+    } from "./ConversationTranslator/Exports";

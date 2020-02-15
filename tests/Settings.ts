@@ -66,6 +66,9 @@ export class Settings {
 
     public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
 
+    public static ConversationTranslatorHost: string = "";
+    public static ConversationTranslatorSpeechHost: string = "";
+
     public static proxyServer: string;
     public static proxyPort: number;
 
