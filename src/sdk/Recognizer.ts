@@ -211,7 +211,7 @@ export abstract class Recognizer {
 
             this.implRecognizerStop().on((_: boolean): void => {
                 try {
-                    this.implRecognizerStart(recognitionMode, (e: SpeechRecognitionResult) => {
+                    this.privReco.recognize(recognitionMode, (e: SpeechRecognitionResult) => {
                         this.implRecognizerStop().on((_: boolean): void => {
                             if (!!cb) {
                                 cb(e);
@@ -226,6 +226,11 @@ export abstract class Recognizer {
                         this.implRecognizerStop(); // We're already in an error path so best effort here.
                         if (!!err) {
                             err(e);
+                        }
+                    }).on((_:boolean):void=>{},
+                    (error:string)=>{
+                        if (!!err) {
+                            err(error);
                         }
                     });
                 } catch (error) {
@@ -266,8 +271,7 @@ export abstract class Recognizer {
             Contracts.throwIfDisposed(this.privDisposed);
 
             this.implRecognizerStop().on((_: boolean): void => {
-                this.implRecognizerStart(recognitionMode, undefined, undefined);
-                try {
+                this.privReco.recognize(recognitionMode, undefined, undefined).on((_: boolean): void => {
                     // report result to promise.
                     if (!!cb) {
                         try {
@@ -279,23 +283,19 @@ export abstract class Recognizer {
                         }
                         cb = undefined;
                     }
-                } catch (error) {
+                }, (error: string): void => {
                     if (!!err) {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
+                        err(error);
                     }
-
                     // Destroy the recognizer.
                     this.dispose(true);
-                }
+                });
             }, (error: string): void => {
                 if (!!err) {
                     err(error);
                 }
+                // Destroy the recognizer.
+                this.dispose(true);
             });
         } catch (error) {
             if (!!err) {
@@ -345,22 +345,6 @@ export abstract class Recognizer {
             // Destroy the recognizer.
             this.dispose(true);
         }
-    }
-
-    // Start the recognition
-    protected implRecognizerStart(
-        recognitionMode: RecognitionMode,
-        successCallback: (e: SpeechRecognitionResult) => void,
-        errorCallback: (e: string) => void): void {
-        this.privReco.recognize(recognitionMode, successCallback, errorCallback).on(
-            /* tslint:disable:no-empty */
-            (result: boolean): void => { },
-            (error: string): void => {
-                if (!!errorCallback) {
-                    // Internal error with service communication.
-                    errorCallback("Runtime error: " + error);
-                }
-            });
     }
 
     protected implRecognizerStop(): Promise<boolean> {

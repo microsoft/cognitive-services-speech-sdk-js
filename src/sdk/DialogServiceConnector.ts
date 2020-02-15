@@ -166,7 +166,7 @@ export class DialogServiceConnector extends Recognizer {
                 this.implRecognizerStop();
                 this.isTurnComplete = false;
 
-                this.implRecognizerStart(
+                this.privReco.recognize(
                     RecognitionMode.Conversation,
                     (e: SpeechRecognitionResult) => {
                         this.implRecognizerStop();
@@ -182,6 +182,11 @@ export class DialogServiceConnector extends Recognizer {
                         this.isTurnComplete = true;
                         if (!!err) {
                             err(e);
+                        }
+                    }).on((_:boolean):void=>{},
+                    (error:string):void =>{
+                        if(!!err){
+                            err(error);
                         }
                     });
             } catch (error) {

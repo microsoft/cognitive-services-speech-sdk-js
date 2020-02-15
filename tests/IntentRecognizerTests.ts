@@ -11,7 +11,7 @@ import { Settings } from "./Settings";
 import { default as WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-import * as fs from "fs";
+import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
 let objsToClose: any[];
 
@@ -215,7 +215,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
-        testInitialSilienceTimeout(config, done, (): void => {
+        testInitialSilenceTimeout(config, done, (): void => {
             const elapsed: number = Date.now() - startTime;
 
             // We should have sent 5 seconds of audio unthrottled and then 2x the time reco took until we got a response.
@@ -235,22 +235,23 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         p.write(bigFileBuffer.buffer);
         p.close();
 
-        testInitialSilienceTimeout(config, done);
+        testInitialSilenceTimeout(config, done);
     });
 
     test("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: InitialSilenceTimeout (File)");
+        const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
 
         const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
-        const bigFile: File = ByteBufferAudioFile.Load(bigFileBuffer.buffer);
+        const bigFile: File = ByteBufferAudioFile.Load([audioFormat.header, bigFileBuffer.buffer]);
 
         const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(bigFile);
 
-        testInitialSilienceTimeout(config, done);
+        testInitialSilenceTimeout(config, done);
     });
 
-    const testInitialSilienceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, addedChecks?: () => void): void => {
+    const testInitialSilenceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, addedChecks?: () => void): void => {
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
@@ -668,7 +669,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         objsToClose.push(s);
 
         const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(s);
-        objsToClose.push(r);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs) => {
             try {

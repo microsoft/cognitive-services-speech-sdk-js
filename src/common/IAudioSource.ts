@@ -16,7 +16,7 @@ export interface IAudioSource {
     detach(audioNodeId: string): void;
     turnOff(): Promise<boolean>;
     events: EventSource<AudioSourceEvent>;
-    format: AudioStreamFormatImpl;
+    format: Promise<AudioStreamFormatImpl>;
     deviceInfo: Promise<ISpeechConfigAudioDevice>;
     setProperty?(name: string, value: string): void;
     getProperty?(name: string, def?: string): string;

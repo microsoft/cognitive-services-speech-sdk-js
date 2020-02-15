@@ -28,8 +28,6 @@ import {
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 
-export const bufferSize: number = 4096;
-
 /**
  * Represents audio input stream used for custom audio input configurations.
  * @class AudioInputStream
@@ -98,7 +96,7 @@ export abstract class PushAudioInputStream extends AudioInputStream {
      * @returns {PushAudioInputStream} The push audio input stream being created.
      */
     public static create(format?: AudioStreamFormat): PushAudioInputStream {
-        return new PushAudioInputStreamImpl(bufferSize, format);
+        return new PushAudioInputStreamImpl(format);
     }
 
     /**
@@ -137,7 +135,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
      * @constructor
      * @param {AudioStreamFormat} format - The audio stream format.
      */
-    public constructor(chunkSize: number, format?: AudioStreamFormat) {
+    public constructor(format?: AudioStreamFormat) {
         super();
         if (format === undefined) {
             this.privFormat = AudioStreamFormatImpl.getDefaultInputFormat();
@@ -146,14 +144,14 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         }
         this.privEvents = new EventSource<AudioSourceEvent>();
         this.privId = createNoDashGuid();
-        this.privStream = new ChunkedArrayBufferStream(chunkSize);
+        this.privStream = new ChunkedArrayBufferStream(this.privFormat.avgBytesPerSec / 10);
     }
 
     /**
      * Format information for the audio
      */
-    public get format(): AudioStreamFormatImpl {
-        return this.privFormat;
+    public get format(): Promise<AudioStreamFormatImpl> {
+        return PromiseHelper.fromResult(this.privFormat);
     }
 
     /**
@@ -301,6 +299,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
     private privId: string;
     private privEvents: EventSource<AudioSourceEvent>;
     private privIsClosed: boolean;
+    private privBufferSize: number;
 
     /**
      * Creates a PullAudioInputStream that delegates to the specified callback interface for
@@ -322,13 +321,14 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
         this.privId = createNoDashGuid();
         this.privCallback = callback;
         this.privIsClosed = false;
+        this.privBufferSize = this.privFormat.avgBytesPerSec / 10;
     }
 
     /**
      * Format information for the audio
      */
-    public get format(): AudioStreamFormatImpl {
-        return this.privFormat;
+    public get format(): Promise<AudioStreamFormatImpl> {
+        return PromiseHelper.fromResult(this.privFormat);
     }
 
     /**
@@ -373,10 +373,10 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
                         let transmitBuff: ArrayBuffer;
 
                         // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
-                        while (totalBytes < bufferSize) {
+                        while (totalBytes < this.privBufferSize) {
                             // Sizing the read buffer to the delta between the perfect size and what's left means we won't ever get too much
                             // data back.
-                            const readBuff: ArrayBuffer = new ArrayBuffer(bufferSize - totalBytes);
+                            const readBuff: ArrayBuffer = new ArrayBuffer(this.privBufferSize - totalBytes);
                             const pulledBytes: number = this.privCallback.read(readBuff);
 
                             // If there is no return buffer yet defined, set the return buffer to the that was just populated.

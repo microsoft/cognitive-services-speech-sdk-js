@@ -7,14 +7,19 @@ import {
     IStreamChunk,
 } from "../src/common/Exports";
 import {
-    bufferSize,
     PushAudioInputStreamImpl,
 } from "../src/sdk/Audio/AudioInputStream";
+import {
+    AudioStreamFormat,
+    AudioStreamFormatImpl,
+} from "../src/sdk/Audio/AudioStreamFormat";
 import { Settings } from "./Settings";
 
+let bufferSize: number;
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
+    bufferSize = (AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl).avgBytesPerSec / 10;
 });
 
 // Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
@@ -23,7 +28,7 @@ beforeAll(() => {
 beforeEach(() => console.info("---------------------------------------Starting test case-----------------------------------"));
 
 test("Push segments into small blocks", (done: jest.DoneCallback) => {
-    const ps: PushAudioInputStreamImpl = new PushAudioInputStreamImpl(bufferSize);
+    const ps: PushAudioInputStreamImpl = new PushAudioInputStreamImpl();
 
     const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
     const abView: Uint8Array = new Uint8Array(ab);
@@ -68,7 +73,7 @@ test("Push segments into small blocks", (done: jest.DoneCallback) => {
 });
 
 test("Stream returns all data when closed", (done: jest.DoneCallback) => {
-    const ps: PushAudioInputStreamImpl = new PushAudioInputStreamImpl(bufferSize);
+    const ps: PushAudioInputStreamImpl = new PushAudioInputStreamImpl();
 
     const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
     const abView: Uint8Array = new Uint8Array(ab);
@@ -119,7 +124,7 @@ test("Stream returns all data when closed", (done: jest.DoneCallback) => {
 });
 
 test("Stream blocks when not closed", (done: jest.DoneCallback) => {
-    const ps: PushAudioInputStreamImpl = new PushAudioInputStreamImpl(bufferSize);
+    const ps: PushAudioInputStreamImpl = new PushAudioInputStreamImpl();
 
     const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
     const abView: Uint8Array = new Uint8Array(ab);
@@ -187,7 +192,7 @@ test("Stream blocks when not closed", (done: jest.DoneCallback) => {
 });
 
 test("nonAligned data is fine", (done: jest.DoneCallback) => {
-    const ps: PushAudioInputStreamImpl = new PushAudioInputStreamImpl(bufferSize);
+    const ps: PushAudioInputStreamImpl = new PushAudioInputStreamImpl();
 
     const dataSize: number = bufferSize * 1.25;
     const ab: ArrayBuffer = new ArrayBuffer(dataSize);
