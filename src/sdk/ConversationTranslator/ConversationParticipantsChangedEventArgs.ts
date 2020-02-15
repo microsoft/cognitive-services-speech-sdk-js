@@ -3,7 +3,8 @@
 // Multi-device Conversation is a Preview feature.
 
 import { SessionEventArgs } from "../Exports";
-import { IParticipant, ParticipantChangedReason } from "./Exports";
+import { ParticipantChangedReason } from "./Exports";
+import { IParticipant } from "./IParticipant";
 
 export class ConversationParticipantsChangedEventArgs extends SessionEventArgs {
     private privReason: ParticipantChangedReason;

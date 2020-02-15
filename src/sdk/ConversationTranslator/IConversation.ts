@@ -3,7 +3,7 @@
 // Multi-device Conversation is a Preview feature.
 
 import { PropertyCollection, SpeechTranslationConfig } from "../Exports";
-import { IParticipant, IUser } from "./Exports";
+import { IParticipant, IUser } from "./IParticipant";
 
 /**
  * Manages conversations.

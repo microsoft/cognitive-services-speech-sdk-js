@@ -5,7 +5,8 @@
 import { IDisposable } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import { PropertyCollection, SpeechTranslationConfig } from "../Exports";
-import { IConversation, IParticipant, IUser } from "./Exports";
+import { IConversation } from "./IConversation";
+import { IParticipant, IUser } from "./IParticipant";
 
 export abstract class Conversation implements IConversation {
 

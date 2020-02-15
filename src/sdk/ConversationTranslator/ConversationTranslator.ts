@@ -8,8 +8,8 @@ import {
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
-    ConversationTranslationEventArgs,
-    IConversationTranslator } from "./Exports";
+    ConversationTranslationEventArgs} from "./Exports";
+import { IConversationTranslator } from "./IConversationTranslator";
 
 export class ConversationTranslator implements IConversationTranslator, IDisposable {
 

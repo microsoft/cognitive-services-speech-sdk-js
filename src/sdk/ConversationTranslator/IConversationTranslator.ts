@@ -7,8 +7,8 @@ import {
   ConversationExpirationEventArgs,
   ConversationParticipantsChangedEventArgs,
   ConversationTranslationCanceledEventArgs,
-  ConversationTranslationEventArgs,
-  IConversation } from "./Exports";
+  ConversationTranslationEventArgs } from "./Exports";
+import { IConversation } from "./IConversation";
 
 /**
  * A conversation translator that enables a connected experience where participants can use their
