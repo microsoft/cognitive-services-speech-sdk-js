@@ -18,9 +18,7 @@ import { validateTelemetry } from "./TelemetryUtil";
 import { default as WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-import * as fs from "fs";
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
-import { doesNotReject } from "assert";
 
 let objsToClose: any[];
 
@@ -1171,7 +1169,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         s.speechRecognitionLanguage = "en-US";
         s.addTargetLanguage("en-US");
 
-        let r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s);
+        const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s);
         expect(r instanceof sdk.Recognizer).toEqual(true);
         // Node.js doesn't have a microphone natively. So we'll take the specific message that indicates that microphone init failed as evidence it was attempted.
         r.recognizeOnceAsync(() => done.fail("RecognizeOnceAsync returned success when it should have failed"),
@@ -1194,7 +1192,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         s.speechRecognitionLanguage = "en-US";
         s.addTargetLanguage("en-US");
 
-        let r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s);
+        const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s);
         expect(r instanceof sdk.Recognizer).toEqual(true);
 
         r.startContinuousRecognitionAsync(() => done.fail("startContinuousRecognitionAsync returned success when it should have failed"),
@@ -1218,7 +1216,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
 
-        let pass: boolean = false;
         r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
