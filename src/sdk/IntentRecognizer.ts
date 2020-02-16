@@ -145,46 +145,19 @@ export class IntentRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public recognizeOnceAsync(cb?: (e: IntentRecognitionResult) => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
+        Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
 
-            this.implRecognizerStop();
+        if (Object.keys(this.privAddedLmIntents).length !== 0 || undefined !== this.privUmbrellaIntent) {
+            const context: IIntentContext = this.buildSpeechContext();
 
-            if (Object.keys(this.privAddedLmIntents).length !== 0 || undefined !== this.privUmbrellaIntent) {
-                const context: IIntentContext = this.buildSpeechContext();
+            this.privReco.speechContext.setSection("intent", context.Intent);
+            this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
 
-                this.privReco.speechContext.setSection("intent", context.Intent);
-                this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
-
-                const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
-                intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
-            }
-
-            this.implRecognizerStart(RecognitionMode.Interactive, (e: IntentRecognitionResult) => {
-                this.implRecognizerStop();
-                if (!!cb) {
-                    cb(e);
-                }
-            }, (e: string) => {
-                this.implRecognizerStop();
-                if (!!err) {
-                    err(e);
-                }
-            });
-
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
+            const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
+            intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
         }
+
+        this.recognizeOnceAsyncImpl(RecognitionMode.Interactive, cb, err);
     }
 
     /**
@@ -197,47 +170,17 @@ export class IntentRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
+        if (Object.keys(this.privAddedLmIntents).length !== 0) {
+            const context: IIntentContext = this.buildSpeechContext();
 
-            this.implRecognizerStop();
+            this.privReco.speechContext.setSection("intent", context.Intent);
+            this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
 
-            if (Object.keys(this.privAddedLmIntents).length !== 0) {
-                const context: IIntentContext = this.buildSpeechContext();
-
-                this.privReco.speechContext.setSection("intent", context.Intent);
-                this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
-
-                const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
-                intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
-            }
-
-            this.implRecognizerStart(RecognitionMode.Conversation, undefined, undefined);
-
-            // report result to promise.
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-                cb = undefined;
-            }
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
+            const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
+            intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
         }
+
+        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation, cb, err);
     }
 
     /**
@@ -249,33 +192,7 @@ export class IntentRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
-
-            this.implRecognizerStop();
-
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-            }
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
-        }
+        this.stopContinuousRecognitionAsyncImpl(cb, err);
     }
 
     /**

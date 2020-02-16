@@ -10,6 +10,7 @@ import {
     IEventSource,
     PlatformEvent,
     Promise,
+    PromiseState
 } from "../common/Exports";
 import {
     ConnectingToServiceEvent,
@@ -31,7 +32,6 @@ export class RequestSession {
     private privAuthFetchEventId: string;
     private privIsAudioNodeDetached: boolean = false;
     private privIsRecognizing: boolean = false;
-    private privRequestCompletionDeferral: Deferred<boolean>;
     private privIsSpeechEnded: boolean = false;
     private privTurnStartAudioOffset: number = 0;
     private privLastRecoOffset: number = 0;
@@ -39,12 +39,16 @@ export class RequestSession {
     private privBytesSent: number = 0;
     private privRecogNumber: number = 0;
     private privSessionId: string;
+    private privTurnDeferral: Deferred<boolean>;
 
     constructor(audioSourceId: string) {
         this.privAudioSourceId = audioSourceId;
         this.privRequestId = createNoDashGuid();
         this.privAudioNodeId = createNoDashGuid();
-        this.privRequestCompletionDeferral = new Deferred<boolean>();
+        this.privTurnDeferral = new Deferred<boolean>();
+
+        // We're not in a turn, so resolve.
+        this.privTurnDeferral.resolve(true);
     }
 
     public get sessionId(): string {
@@ -59,8 +63,8 @@ export class RequestSession {
         return this.privAudioNodeId;
     }
 
-    public get completionPromise(): Promise<boolean> {
-        return this.privRequestCompletionDeferral.promise();
+    public get turnCompletionPromise(): Promise<boolean> {
+        return this.privTurnDeferral.promise();
     }
 
     public get isSpeechEnded(): boolean {
@@ -139,6 +143,8 @@ export class RequestSession {
     }
 
     public onServiceTurnEndResponse = (continuousRecognition: boolean): void => {
+        this.privTurnDeferral.resolve(true);
+
         if (!continuousRecognition || this.isSpeechEnded) {
             this.onComplete();
         } else {
@@ -147,6 +153,15 @@ export class RequestSession {
             this.privRequestId = createNoDashGuid();
             this.privAudioNode.replay();
         }
+    }
+
+    public onServiceTurnStartResponse = (): void => {
+        if (this.privTurnDeferral.state() === PromiseState.None) {
+            // What? How are we starting a turn with another not done?
+            this.privTurnDeferral.reject("Another turn started before current completed.");
+        }
+
+        this.privTurnDeferral = new Deferred<boolean>();
     }
 
     public onHypothesis(offset: number): void {

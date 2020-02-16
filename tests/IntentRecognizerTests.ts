@@ -669,7 +669,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         objsToClose.push(s);
 
         const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(s);
-        objsToClose.push(r);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs) => {
             try {
