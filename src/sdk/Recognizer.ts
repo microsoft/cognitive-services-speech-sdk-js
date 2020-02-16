@@ -227,12 +227,13 @@ export abstract class Recognizer {
                         if (!!err) {
                             err(e);
                         }
-                    }).on((_:boolean):void=>{},
-                    (error:string)=>{
-                        if (!!err) {
-                            err(error);
-                        }
-                    });
+                    /* tslint:disable:no-empty */
+                    }).on((_: boolean): void => { },
+                        (error: string) => {
+                            if (!!err) {
+                                err(error);
+                            }
+                        });
                 } catch (error) {
                     if (!!err) {
                         if (error instanceof Error) {

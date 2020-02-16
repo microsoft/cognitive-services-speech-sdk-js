@@ -368,7 +368,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
 
                         return this.configConnection()
-                            .continueWithPromise<boolean>((result: PromiseResult<IConnection>):Promise<boolean> => {
+                            .continueWithPromise<boolean>((result: PromiseResult<IConnection>): Promise<boolean> => {
                                 if (result.isError) {
                                     this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error);
                                     return PromiseHelper.fromError(result.error);

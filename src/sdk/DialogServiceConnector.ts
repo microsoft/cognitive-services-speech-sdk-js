@@ -183,12 +183,13 @@ export class DialogServiceConnector extends Recognizer {
                         if (!!err) {
                             err(e);
                         }
-                    }).on((_:boolean):void=>{},
-                    (error:string):void =>{
-                        if(!!err){
-                            err(error);
-                        }
-                    });
+                        /* tslint:disable:no-empty */
+                    }).on((_: boolean): void => { },
+                        (error: string): void => {
+                            if (!!err) {
+                                err(error);
+                            }
+                        });
             } catch (error) {
                 if (!!err) {
                     if (error instanceof Error) {
@@ -231,7 +232,7 @@ export class DialogServiceConnector extends Recognizer {
             this.privIsDisposed = true;
             super.dispose(disposing);
         }
-}
+    }
 
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
         return new RecognizerConfig(speechConfig, this.privProperties);
