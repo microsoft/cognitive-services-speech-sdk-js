@@ -303,8 +303,13 @@ export class WebsocketMessageAdapter {
             }
 
             this.onEvent(new ConnectionMessageSentEvent(this.privConnectionId, new Date().toISOString(), sendItem.Message));
-            this.privWebsocketClient.send(sendItem.RawWebsocketMessage.payload);
+
+            // add a check for the ws readystate in order to stop the red console error 'WebSocket is already in CLOSING or CLOSED state' appearing
+            if (this.isWebsocketOpen) {
+                this.privWebsocketClient.send(sendItem.RawWebsocketMessage.payload);
+            }
             return PromiseHelper.fromResult(true);
+
         } catch (e) {
             return PromiseHelper.fromError<boolean>(`websocket send error: ${e}`);
         }
@@ -351,4 +356,9 @@ export class WebsocketMessageAdapter {
         this.privConnectionEvents.onEvent(event);
         Events.instance.onEvent(event);
     }
+
+    private get isWebsocketOpen(): boolean {
+        return this.privWebsocketClient && this.privWebsocketClient.readyState === this.privWebsocketClient.OPEN;
+    }
+
 }
