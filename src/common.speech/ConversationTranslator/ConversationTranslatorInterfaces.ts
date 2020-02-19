@@ -66,7 +66,7 @@ export interface IInternalParticipant {
 /** Users participating in the conversation */
 export class InternalParticipants {
 
-    constructor(public participants: IInternalParticipant[] = []) {
+    constructor(public participants: IInternalParticipant[] = [], public meId?: string) {
 
     }
 
@@ -93,6 +93,14 @@ export class InternalParticipants {
 
     public deleteParticipant(id: string): void {
         this.participants = this.participants.filter((p: IInternalParticipant) => p.id !== id);
+    }
+
+    public get host(): IInternalParticipant {
+        return this.participants.find((p: IInternalParticipant) => p.isHost === true );
+    }
+
+    public get me(): IInternalParticipant {
+        return this.getParticipant(this.meId);
     }
 }
 

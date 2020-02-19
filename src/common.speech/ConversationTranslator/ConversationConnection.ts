@@ -38,7 +38,6 @@ export class ConversationConnection implements IConversationConnection, IDisposa
     private privConversationRecognizer: ConversationTranslatorRecognizer;
     private privRecoConnection: Connection;
     private privIsConnected: boolean = false;
-    private privMe: IInternalParticipant;
     private privParticipants: InternalParticipants;
     private privRoom: IInternalConversation;
     private privIsDisposed: boolean = false;
@@ -48,7 +47,7 @@ export class ConversationConnection implements IConversationConnection, IDisposa
     private privIsExiting: boolean;
 
     public get isMutedByHost(): boolean {
-        return this.privMe.isHost ? false : this.privMe?.isMuted;
+        return this.privParticipants.me?.isHost ? false : this.privParticipants.me?.isMuted;
     }
 
     public get isConnected(): boolean {
@@ -60,7 +59,11 @@ export class ConversationConnection implements IConversationConnection, IDisposa
     }
 
     public get me(): Participant {
-        return this.privMe ? this.toParticipant(this.privMe) : undefined;
+        return this.toParticipant(this.privParticipants.me);
+    }
+
+    public get host(): Participant {
+        return this.toParticipant(this.privParticipants.host);
     }
 
     public constructor(speechConfig: SpeechTranslationConfig) {
@@ -91,6 +94,7 @@ export class ConversationConnection implements IConversationConnection, IDisposa
         try {
 
             this.privRoom = room;
+            this.privParticipants.meId = room.participantId;
 
             if (!!this.privConversationRecognizer) {
                 // close the existing recognizer
@@ -183,9 +187,6 @@ export class ConversationConnection implements IConversationConnection, IDisposa
                                 break;
                         }
                         this.privParticipants.addOrUpdateParticipant(updatedParticipant);
-                        if (updatedParticipant.id === this.privMe.id) {
-                            this.privMe = this.privParticipants.getParticipant(this.privRoom.participantId);
-                        }
 
                         if (!!this.participantsChanged) {
                             this.participantsChanged(this, new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.Updated,
@@ -206,7 +207,6 @@ export class ConversationConnection implements IConversationConnection, IDisposa
             this.privConversationRecognizer.muteAllCommandReceived = ((r: ConversationTranslatorRecognizer, e: MuteAllEventArgs) => {
                 try {
                     this.privParticipants.participants.forEach((p: IInternalParticipant) => p.isMuted = (p.isHost ? false : e.isMuted));
-                    this.privMe = this.privParticipants.getParticipant(this.privRoom.participantId);
                     if (!!this.participantsChanged) {
                         this.participantsChanged(this, new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.Updated,
                             this.toParticipants(false), e.sessionId));
@@ -290,9 +290,8 @@ export class ConversationConnection implements IConversationConnection, IDisposa
                     // save the participants
                     // enable the conversation
                     this.privParticipants.participants = [...e.participants];
-                    this.privMe = this.privParticipants.getParticipant(this.privRoom.participantId);
 
-                    if (this.privMe !== undefined) {
+                    if (this.privParticipants.me !== undefined) {
                         this.privIsReady = true;
                     }
 
@@ -415,7 +414,6 @@ export class ConversationConnection implements IConversationConnection, IDisposa
         this.privIsConnected = false;
         this.privIsConversationConnected = false;
         this.privIsReady = false;
-        this.privMe = undefined;
         this.privParticipants = undefined;
         this.privRoom = undefined;
         this.privSpeechTranslationConfig = undefined;
@@ -435,18 +433,17 @@ export class ConversationConnection implements IConversationConnection, IDisposa
 
     /** Helpers */
     private canSend(): boolean {
-        return this.privMe && !this.privMe.isMuted && this.privIsConnected && this.privIsConversationConnected;
+        return this.privIsConnected && this.privIsConversationConnected && !this.privParticipants.me?.isMuted;
     }
 
     private canSendAsHost(): boolean {
-        return this.privMe && this.privMe.isHost && this.privIsConnected && this.privIsConversationConnected;
+        return this.privParticipants.me.isHost && this.privIsConnected && this.privIsConversationConnected;
     }
 
     /** Participant Helpers */
     private toParticipants(includeHost: boolean): Participant[] {
 
-        let participants: Participant[] = [];
-        participants = this.privParticipants.participants.map((p: IInternalParticipant) => {
+        const participants: Participant[] = this.privParticipants.participants.map((p: IInternalParticipant) => {
             return this.toParticipant(p);
         });
         if (!includeHost) {

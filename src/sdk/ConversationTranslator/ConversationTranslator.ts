@@ -46,8 +46,6 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     private privTranslationRecognizer: TranslationRecognizer;
     private privIsSpeaking: boolean = false;
     private privConversation: ConversationImpl;
-    private privMe: Participant;
-    private privHost: Participant;
 
     public constructor(audioConfig?: AudioConfig) {
         this.privProperties = new PropertyCollection();
@@ -132,11 +130,6 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                         this.privConversation.startConversationAsync(() => {
                             this.addEvents();
 
-                            // save a copy of the current user
-                            this.privMe = this.privConversation.connection.me;
-                            // save a copy of the host
-                            this.privHost = this.participants.find((p: Participant) => p.isHost === true);
-
                             if (!!cb) {
                                 try {
                                     cb();
@@ -170,10 +163,6 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
                 this.privSpeechTranslationConfig = conversation.config;
 
-                // save a copy of the current user
-                this.privMe = this.privConversation.connection.me;
-                // save a copy of the host
-                this.privHost = this.participants.find((p: Participant) => p.isHost === true);
 
                 this.addEvents();
                 if (!!cb) {
@@ -533,7 +522,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 if (event.reason === ParticipantChangedReason.LeftConversation) {
                     // check the id
                     event.participants.forEach( (p: Participant) => {
-                        if ((p.id === this.privMe.id) || (p.id === this.privHost.id)) {
+                        if ((p.id === this.privConversation?.connection?.me?.id) || (p.id === this.privConversation?.connection?.host?.id)) {
                             // the current user or the host is leaving
                             this.privConversation.deleteConversationAsync();
                             this.cancel();
