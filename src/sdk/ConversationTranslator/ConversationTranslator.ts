@@ -163,7 +163,6 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
                 this.privSpeechTranslationConfig = conversation.config;
 
-
                 this.addEvents();
                 if (!!cb) {
                     try {
@@ -243,13 +242,30 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         this.stopSpeaking();
     }
 
+    public isDisposed(): boolean {
+        return this.privIsDisposed;
+    }
+
+    public dispose(reason?: string): void {
+        if (this.isDisposed) {
+            return;
+        }
+        this.privIsDisposed = true;
+        this.privSpeechTranslationConfig?.close();
+        this.privSpeechRecognitionLanguage = undefined;
+        this.privProperties = undefined;
+        this.privAudioConfig = undefined;
+        this.privSpeechTranslationConfig = undefined;
+        this.privConversation = undefined;
+    }
+
     /**
      * Connect to the speech translation recognizer.
      * Currently there is no language validation performed before sending the SpeechLanguage code to the service.
      * If it's an invalid language the raw error will be: 'Error during WebSocket handshake: Unexpected response code: 400'
      * e.g. pass in 'fr' instead of 'fr-FR', or a text-only language 'cy'
      */
-    public connectTranslatorRecognizer(): void {
+    private connectTranslatorRecognizer(): void {
 
         try {
 
@@ -358,7 +374,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     /**
      * Handle the start speaking request
      */
-    public startSpeaking(): void {
+    private startSpeaking(): void {
         // TODO: fail silently if speak not supported currently
         if (!this.canSpeak()) { return; }
 
@@ -375,7 +391,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     /**
      * Handle the stop speaking request
      */
-    public stopSpeaking(): void {
+    private stopSpeaking(): void {
         if (this.privTranslationRecognizer === undefined) { return; }
 
         if (!this.privIsSpeaking) {
@@ -416,23 +432,6 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             this.cancelSpeech();
         });
-    }
-
-    public isDisposed(): boolean {
-        return this.privIsDisposed;
-    }
-
-    public dispose(reason?: string): void {
-        if (this.isDisposed) {
-            return;
-        }
-        this.privIsDisposed = true;
-        this.privSpeechTranslationConfig?.close();
-        this.privSpeechRecognitionLanguage = undefined;
-        this.privProperties = undefined;
-        this.privAudioConfig = undefined;
-        this.privSpeechTranslationConfig = undefined;
-        this.privConversation = undefined;
     }
 
     private startContinuousRecognition(): void {
