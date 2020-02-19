@@ -35,6 +35,7 @@ export * from "./DynamicGrammarBuilder";
 export * from "./DynamicGrammarInterfaces";
 export * from "./DialogServiceAdapter";
 export * from "./AgentConfig";
+export * from "./ConversationTranslator/Exports";
 
 export const OutputFormatPropertyName: string = "OutputFormat";
 export const CancellationErrorCodePropertyName: string = "CancellationErrorCode";

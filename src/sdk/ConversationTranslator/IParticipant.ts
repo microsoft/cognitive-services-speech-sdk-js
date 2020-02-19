@@ -13,6 +13,18 @@ export interface IUser {
     readonly userId: string;
 }
 
+export class User implements IUser {
+    private privUserId: string;
+
+    constructor(userId: string) {
+        this.privUserId = userId;
+    }
+
+    public get userId(): string {
+        return this.privUserId;
+    }
+}
+
 /**
  * Represents a participant in a conversation.
  * Added in version 1.4.0
@@ -37,4 +49,58 @@ export interface IParticipant {
     readonly preferredLanguage: string;
     /** Contains properties of the participant. */
     readonly properties: PropertyCollection;
+}
+
+// tslint:disable-next-line: max-classes-per-file
+export class Participant implements IParticipant {
+    private privAvatar: string;
+    private privDisplayName: string;
+    private privId: string;
+    private privIsHost: boolean;
+    private privIsMuted: boolean;
+    private privIsUsingTts: boolean;
+    private privPreferredLanguage: string;
+    private privPoperties: PropertyCollection;
+
+    constructor(id: string, avatar: string, displayName: string, isHost: boolean, isMuted: boolean, isUsingTts: boolean, preferredLanguage: string) {
+        this.privId = id;
+        this.privAvatar = avatar;
+        this.privDisplayName = displayName;
+        this.privIsHost = isHost;
+        this.privIsMuted = isMuted;
+        this.privIsUsingTts = isUsingTts;
+        this.privPreferredLanguage = preferredLanguage;
+        this.privPoperties = new PropertyCollection();
+    }
+    public get avatar(): string {
+        return this.privAvatar;
+    }
+
+    public get displayName(): string {
+        return this.privDisplayName;
+    }
+
+    public get id(): string {
+        return this.privId;
+    }
+
+    public get preferredLanguage(): string {
+        return this.privPreferredLanguage;
+    }
+
+    public get isHost(): boolean {
+        return this.privIsHost;
+    }
+
+    public get isMuted(): boolean {
+        return this.privIsMuted;
+    }
+
+    public get isUsingTts(): boolean {
+        return this.privIsUsingTts;
+    }
+
+    public get properties(): PropertyCollection {
+        return this.privPoperties;
+    }
 }

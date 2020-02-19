@@ -133,6 +133,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privAgentConfig;
     }
 
+    public set conversationTranslatorToken(token: string) {
+        this.privRecognizerConfig.parameters.setProperty(PropertyId.ConversationTranslator_Token, token);
+    }
+
     public isDisposed(): boolean {
         return this.privIsDisposed;
     }
@@ -648,7 +652,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                         new SpeechConnectionMessage(
                                             MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
 
-                                    if (!audioStreamChunk.isEnd) {
+                                    if (!audioStreamChunk?.isEnd) {
                                         uploaded.continueWith((_: PromiseResult<boolean>) => {
                                             // this.writeBufferToConsole(payload);
                                             // Regardless of success or failure, schedule the next upload.

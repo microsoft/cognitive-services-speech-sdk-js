@@ -57,5 +57,7 @@ export { Conversation,
     ConversationTranslationEventArgs,
     ConversationTranslationResult,
     ConversationTranslator,
-    ParticipantChangedReason
+    Participant,
+    ParticipantChangedReason,
+    User
     } from "./ConversationTranslator/Exports";
