@@ -24,7 +24,8 @@ import {
     ConversationTranslatorMessageTypes,
     IConversationConnection,
     IInternalConversation,
-    IInternalParticipant} from "./ConversationTranslatorInterfaces";
+    IInternalParticipant,
+    InternalParticipants} from "./ConversationTranslatorInterfaces";
 import { ConversationTranslatorRecognizer } from "./ConversationTranslatorRecognizer";
 
 /**
@@ -38,10 +39,9 @@ export class ConversationConnection implements IConversationConnection, IDisposa
     private privRecoConnection: Connection;
     private privIsConnected: boolean = false;
     private privMe: IInternalParticipant;
-    private privParticipants: IInternalParticipant[];
+    private privParticipants: InternalParticipants;
     private privRoom: IInternalConversation;
     private privIsDisposed: boolean = false;
-    // private privProperties: PropertyCollection;
     private privSpeechTranslationConfig: SpeechTranslationConfig;
     private privIsConversationConnected: boolean;
     private privIsReady: boolean;
@@ -70,10 +70,9 @@ export class ConversationConnection implements IConversationConnection, IDisposa
             speechConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
         }
 
-        // this.privProperties = config;
         this.privSpeechTranslationConfig = speechConfig;
         this.privIsConversationConnected = false;
-        this.privParticipants = [];
+        this.privParticipants = new InternalParticipants();
         this.privIsReady = false;
         this.privIsExiting = false;
     }
@@ -86,10 +85,6 @@ export class ConversationConnection implements IConversationConnection, IDisposa
     public textMessageReceived: (sender: ConversationConnection, event: ConversationTranslationEventArgs) => void;
     public transcribed: (sender: ConversationConnection, event: ConversationTranslationEventArgs) => void;
     public transcribing: (sender: ConversationConnection, event: ConversationTranslationEventArgs) => void;
-
-    // public onEvent(): void {
-    //     throw new Error("Method not implemented.");
-    // }
 
     public connect(room: IInternalConversation): void {
 
@@ -167,7 +162,7 @@ export class ConversationConnection implements IConversationConnection, IDisposa
 
             this.privConversationRecognizer.participantUpdateCommandReceived = ((r: ConversationTranslatorRecognizer, e: ParticipantAttributeEventArgs) => {
                 try {
-                    const updatedParticipant: any = this.findParticipantById(e.id);
+                    const updatedParticipant: any = this.privParticipants.getParticipant(e.id);
                     if (updatedParticipant !== undefined) {
 
                         switch (e.key) {
@@ -187,12 +182,16 @@ export class ConversationConnection implements IConversationConnection, IDisposa
                                 updatedParticipant.translateToLanguages = e.value;
                                 break;
                         }
-                        this.addOrUpdateParticipants([updatedParticipant]);
+                        this.privParticipants.addOrUpdateParticipant(updatedParticipant);
+                        if (updatedParticipant.id === this.privMe.id) {
+                            this.privMe = this.privParticipants.getParticipant(this.privRoom.participantId);
+                        }
 
                         if (!!this.participantsChanged) {
                             this.participantsChanged(this, new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.Updated,
                                 [this.toParticipant(updatedParticipant)], e.sessionId));
                         }
+
                     }
                 } catch (e) {
                     // tslint:disable-next-line: no-console
@@ -206,7 +205,8 @@ export class ConversationConnection implements IConversationConnection, IDisposa
 
             this.privConversationRecognizer.muteAllCommandReceived = ((r: ConversationTranslatorRecognizer, e: MuteAllEventArgs) => {
                 try {
-                    this.privParticipants.forEach((p: IInternalParticipant) => p.isMuted = (p.isHost ? false : e.isMuted));
+                    this.privParticipants.participants.forEach((p: IInternalParticipant) => p.isMuted = (p.isHost ? false : e.isMuted));
+                    this.privMe = this.privParticipants.getParticipant(this.privRoom.participantId);
                     if (!!this.participantsChanged) {
                         this.participantsChanged(this, new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.Updated,
                             this.toParticipants(false), e.sessionId));
@@ -220,8 +220,8 @@ export class ConversationConnection implements IConversationConnection, IDisposa
             this.privConversationRecognizer.participantJoinCommandReceived = ((r: ConversationTranslatorRecognizer, e: ParticipantEventArgs) => {
 
                 try {
-                    this.addOrUpdateParticipants([e.participant]);
-                    const newParticipant: IInternalParticipant = this.findParticipantById(e.participant.id);
+                    this.privParticipants.addOrUpdateParticipant(e.participant);
+                    const newParticipant: IInternalParticipant = this.privParticipants.getParticipant(e.participant.id);
                     if (newParticipant !== undefined) {
                         if (!!this.participantsChanged) {
                             this.participantsChanged(this, new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.JoinedConversation,
@@ -237,9 +237,9 @@ export class ConversationConnection implements IConversationConnection, IDisposa
             this.privConversationRecognizer.participantLeaveCommandReceived = ((r: ConversationTranslatorRecognizer, e: ParticipantEventArgs) => {
 
                 try {
-                    const ejectedParticipant: IInternalParticipant = this.findParticipantById(e.participant.id);
+                    const ejectedParticipant: IInternalParticipant = this.privParticipants.getParticipant(e.participant.id);
                     if (ejectedParticipant !== undefined) {
-                        this.deleteParticipant(e.participant.id);
+                        this.privParticipants.deleteParticipant(e.participant.id);
                     }
                     if (!!this.participantsChanged) {
                         this.participantsChanged(this, new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.LeftConversation,
@@ -289,8 +289,8 @@ export class ConversationConnection implements IConversationConnection, IDisposa
                     }
                     // save the participants
                     // enable the conversation
-                    this.privParticipants = [...e.participants];
-                    this.privMe = this.findParticipantById(this.privRoom.participantId);
+                    this.privParticipants.participants = [...e.participants];
+                    this.privMe = this.privParticipants.getParticipant(this.privRoom.participantId);
 
                     if (this.privMe !== undefined) {
                         this.privIsReady = true;
@@ -416,8 +416,7 @@ export class ConversationConnection implements IConversationConnection, IDisposa
         this.privIsConversationConnected = false;
         this.privIsReady = false;
         this.privMe = undefined;
-        this.privParticipants = [];
-        // this.privProperties = undefined;
+        this.privParticipants = undefined;
         this.privRoom = undefined;
         this.privSpeechTranslationConfig = undefined;
     }
@@ -443,47 +442,11 @@ export class ConversationConnection implements IConversationConnection, IDisposa
         return this.privMe && this.privMe.isHost && this.privIsConnected && this.privIsConversationConnected;
     }
 
-    /** Participant helpers
-     *  TODO: turn into a class / repository of participants  [there is IStringDictionary available]
-     */
-    private findParticipantById(id: string): IInternalParticipant {
-        return this.privParticipants.find((p: { id: string; }) => p.id === id);
-    }
-
-    private deleteParticipant(id: string): void {
-        this.privParticipants = this.privParticipants.filter((p: IInternalParticipant) => p.id !== id);
-    }
-
-    private addOrUpdateParticipants(participants: IInternalParticipant[]): void {
-        participants.forEach((participant: IInternalParticipant) => {
-            const index = this.privParticipants.findIndex((p: { id: string; }) => p.id === participant.id);
-            if (index > -1) {
-                if (participant.displayName !== undefined) {
-                    this.privParticipants[index].displayName = participant.displayName;
-                }
-                if (participant.isMuted !== undefined) {
-                    this.privParticipants[index].isMuted = participant.isMuted;
-                }
-                if (participant.isUsingTts !== undefined) {
-                    this.privParticipants[index].isUsingTts = participant.isUsingTts;
-                }
-                if (participant.preferredLanguage !== undefined) {
-                    this.privParticipants[index].preferredLanguage = participant.preferredLanguage;
-                }
-            } else {
-                // add the participant
-                this.privParticipants.push(participant);
-            }
-        });
-
-        // update me
-        this.privMe = this.findParticipantById(this.privRoom.participantId);
-    }
-
+    /** Participant Helpers */
     private toParticipants(includeHost: boolean): Participant[] {
 
         let participants: Participant[] = [];
-        participants = this.privParticipants.map((p: IInternalParticipant) => {
+        participants = this.privParticipants.participants.map((p: IInternalParticipant) => {
             return this.toParticipant(p);
         });
         if (!includeHost) {

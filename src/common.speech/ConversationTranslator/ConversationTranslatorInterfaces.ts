@@ -17,14 +17,6 @@ import {
     ParticipantsListEventArgs } from "./ConversationTranslatorEventArgs";
 
 /**
- * Add internal properties for implementation of Conservation
- */
-// export interface IConversationImpl extends IConversation {
-//     client: ConversationClient;
-//     room: IInternalConversation;
-// }
-
-/**
  * Internal conversation data
  */
 export interface IInternalConversation {
@@ -69,6 +61,39 @@ export interface IInternalParticipant {
     isMuted?: boolean;
     isUsingTts?: boolean;
     preferredLanguage?: string;
+}
+
+/** Users participating in the conversation */
+export class InternalParticipants {
+
+    constructor(public participants: IInternalParticipant[] = []) {
+
+    }
+
+    public addOrUpdateParticipant(value: IInternalParticipant): void {
+        if (value === undefined) {
+            return;
+        }
+
+        const exists: number = this.getParticipantIndex(value.id);
+        if (exists > -1) {
+            this.participants.splice(exists, 1, value);
+        } else {
+            this.participants.push(value);
+        }
+    }
+
+    public getParticipantIndex(id: string): number {
+        return this.participants.findIndex((p: IInternalParticipant) => p.id === id);
+    }
+
+    public getParticipant(id: string): IInternalParticipant {
+        return this.participants.find((p: IInternalParticipant) => p.id === id);
+    }
+
+    public deleteParticipant(id: string): void {
+        this.participants = this.participants.filter((p: IInternalParticipant) => p.id !== id);
+    }
 }
 
 /**
