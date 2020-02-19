@@ -15,6 +15,7 @@ import {
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import WaitForCondition from "./Utilities";
+import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 // tslint:disable-next-line:no-console
 const consoleInfo = console.info;
@@ -377,56 +378,6 @@ describe("conversation service tests", () => {
 
     }, 20000);
 
-    // test("Start Conversation, join as host with speech language and speak", (done: jest.DoneCallback) => {
-
-    //     // tslint:disable-next-line:no-console
-    //     console.info("Start Conversation, join as host with speech language and speak");
-
-    //     let audioStopped: boolean = false;
-
-    //     // start a room
-    //     const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
-    //     if (endpointHost !== "") { config.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-    //     if (speechEndpointHost !== "") { config.setProperty("ConversationTranslator_SpeechHost", speechEndpointHost); }
-
-    //     const c: sdk.Conversation = sdk.Conversation.createConversationAsync(config);
-    //     objsToClose.push(c);
-
-    //     const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator();
-    //     if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-    //     if (speechEndpointHost !== "") { ct.properties.setProperty("ConversationTranslator_SpeechHost", speechEndpointHost); }
-
-    //     ct.canceled = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs) => {
-    //         // TODO: need to use non-mic input as the web audio is not supported here
-    //         expect(e.errorDetails).toContain("Browser");
-    //         audioStopped = true;
-    //         done();
-    //     });
-    //     ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs) => {
-    //         setTimeout(startSpeaking, 100);
-    //     });
-
-    //     objsToClose.push(ct);
-
-    //     function startSpeaking(): void {
-    //         // connect to the speech socket
-    //         ct.startTranscribingAsync();
-    //         setTimeout(stopSpeaking, 1000);
-    //     }
-
-    //     function stopSpeaking(): void {
-    //         // connect to the speech socket
-    //         ct.stopTranscribingAsync();
-    //     }
-
-    //     c.startConversationAsync(() => {
-    //         ct.joinConversationAsync(c, "Host");
-    //     });
-
-    //     WaitForCondition(() => (audioStopped), done);
-
-    // }, 20000);
-
     test("Start Conversation, join as host and eject participant", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
@@ -677,5 +628,63 @@ describe("conversation translator service tests",  () => {
             WaitForCondition(() => (errorMessage !== ""), done);
         }));
     }, 20000);
+
+    test("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback) => {
+
+        // tslint:disable-next-line:no-console
+        console.info("Start Conversation, join as host with speech language and speak");
+
+        // audio config
+        const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
+        const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+
+        let counter: number = 0;
+
+        // start a room
+        const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+
+        const c = sdk.Conversation.createConversationAsync(config, (() => {
+            expect(c.conversationId.length).toEqual(5);
+
+            const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator(audioConfig);
+            if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
+            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+
+            ct.canceled = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs) => {
+                done();
+            });
+
+            ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs) => {
+                startSpeaking();
+            });
+
+            ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
+                expect(e.result).toContain("weather");
+                counter++;
+                done();
+            });
+
+            function startSpeaking(): void {
+                try {
+                    ct.startTranscribingAsync();
+                } catch (error) {
+                    done.fail(error);
+                }
+            }
+
+            objsToClose.push(ct);
+
+            c.startConversationAsync(() => {
+                ct.joinConversationAsync(c, "Host");
+            });
+        }));
+
+        objsToClose.push(c);
+
+        WaitForCondition(() => (counter > 0), done);
+
+    }, 30000);
 
 });
