@@ -521,8 +521,21 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 if (event.reason === ParticipantChangedReason.LeftConversation) {
                     // check the id
                     event.participants.forEach( (p: Participant) => {
-                        if ((p.id === this.privConversation?.connection?.me?.id) || (p.id === this.privConversation?.connection?.host?.id)) {
-                            // the current user or the host is leaving
+
+                        let forceExit: boolean = false;
+
+                        try {
+                            if ((p.id === this.privConversation.connection.me.id) || (p.id === this.privConversation.connection.host.id)) {
+                                // the current user or the host is leaving
+                                forceExit = true;
+                            }
+                        } catch (e) {
+                            // the connection has already been closed
+                            forceExit = true;
+                        }
+
+                        if (forceExit) {
+                            // shut down speech and leave the conversation
                             this.privConversation.deleteConversationAsync();
                             this.cancel();
                         }
