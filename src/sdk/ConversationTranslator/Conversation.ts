@@ -16,7 +16,6 @@ export abstract class Conversation implements IConversation {
     public abstract set authorizationToken(value: string);
 
     public abstract get config(): SpeechTranslationConfig;
-    public abstract set config(value: SpeechTranslationConfig);
 
     public abstract get conversationId(): string;
     public abstract get properties(): PropertyCollection;
@@ -53,40 +52,40 @@ export abstract class Conversation implements IConversation {
     public abstract deleteConversationAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /** End a conversation. */
-    public abstract endConversationAsync(): void;
+    public abstract endConversationAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /** Lock a conversation. This will prevent new participants from joining. */
-    public abstract lockConversationAsync(): void;
+    public abstract lockConversationAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Mute all other participants in the conversation. After this no other participants will
      * have their speech recognitions broadcast, nor be able to send text messages.
      */
-    public abstract muteAllParticipantsAsync(): void;
+    public abstract muteAllParticipantsAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Mute a participant.
      * @param userId A user identifier
      */
-    public abstract muteParticipantAsync(userId: string): void;
+    public abstract muteParticipantAsync(userId: string, cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Remove a participant from a conversation using the user id, Participant or User object
      * @param userId A user identifier
      */
-    public abstract removeParticipantAsync(userId: string | IParticipant | IUser): void;
+    public abstract removeParticipantAsync(userId: string | IParticipant | IUser, cb?: () => void, err?: (e: string) => void): void;
 
     /** Unlocks a conversation. */
-    public abstract unlockConversationAsync(): void;
+    public abstract unlockConversationAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /** Unmute all other participants in the conversation. */
-    public abstract unmuteAllParticipantsAsync(): void;
+    public abstract unmuteAllParticipantsAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Unmute a participant.
      * @param userId A user identifier
      */
-    public abstract unmuteParticipantAsync(userId: string): void;
+    public abstract unmuteParticipantAsync(userId: string, cb?: () => void, err?: (e: string) => void): void;
 }
 
 // tslint:disable-next-line: max-classes-per-file
@@ -124,10 +123,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
     public get config(): SpeechTranslationConfig {
         return this.privConfig;
     }
-    public set config(value: SpeechTranslationConfig) {
-        this.privConfig = value;
-    }
-
     // get the conversation Id
     public get conversationId(): string {
         return this.privRoom ? this.privRoom.roomId : "";
@@ -219,6 +214,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                         }
                     }
                 }));
+
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
@@ -360,59 +356,139 @@ export class ConversationImpl extends Conversation implements IDisposable {
     /***
      * Issues a request to close the client websockets
      */
-    public endConversationAsync(): void {
+    public endConversationAsync(cb?: () => void, err?: (e: string) => void): void {
         try {
             if (!!this.privConnection) {
                 this.privConnection.disconnect();
             }
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
+
         } catch (error) {
-            //
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
+            }
         }
     }
 
     /**
      * Issues a request to lock the conversation
      */
-    public lockConversationAsync(): void {
+    public lockConversationAsync(cb?: () => void, err?: (e: string) => void): void {
         try {
             if (!!this.privConnection) {
                 this.privConnection.toggleLockRoom(true);
             }
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
+
         } catch (error) {
-            //
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
+            }
         }
     }
 
     /**
      * Issues a request to mute the conversation
      */
-    public muteAllParticipantsAsync(): void {
+    public muteAllParticipantsAsync(cb?: () => void, err?: (e: string) => void): void {
         try {
             if (!!this.privConnection) {
                 this.privConnection.toggleMuteAll(true);
             }
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
+
         } catch (error) {
-            //
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
+            }
         }
     }
 
     /**
      * Issues a request to mute a participant in the conversation
      */
-    public muteParticipantAsync(userId: string): void {
+    public muteParticipantAsync(userId: string, cb?: () => void, err?: (e: string) => void): void {
         try {
             if (!!this.privConnection) {
                 this.privConnection.toggleMuteParticipant(userId, true);
             }
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
+
         } catch (error) {
-            //
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
+            }
         }
     }
 
     /**
      * Issues a request to remove a participant from the conversation
      */
-    public removeParticipantAsync(userId: string | IParticipant | IUser): void {
+    public removeParticipantAsync(userId: string | IParticipant | IUser, cb?: () => void, err?: (e: string) => void): void {
 
         try {
             let participantId: string = "";
@@ -431,47 +507,126 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 this.privConnection.ejectParticpant(participantId);
             }
 
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
+
         } catch (error) {
-            //
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
+            }
         }
     }
 
     /**
      * Issues a request to unlock the conversation
      */
-    public unlockConversationAsync(): void {
+    public unlockConversationAsync(cb?: () => void, err?: (e: string) => void): void {
         try {
             if (!!this.privConnection) {
                 this.privConnection.toggleLockRoom(false);
             }
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
+
         } catch (error) {
-            //
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
+            }
         }
     }
 
     /**
      * Issues a request to unmute all participants in the conversation
      */
-    public unmuteAllParticipantsAsync(): void {
+    public unmuteAllParticipantsAsync(cb?: () => void, err?: (e: string) => void): void {
         try {
             if (!!this.privConnection) {
                 this.privConnection.toggleMuteAll(false);
             }
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
+
         } catch (error) {
-            //
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
+            }
         }
     }
 
     /**
      * Issues a request to unmute a participant in the conversation
      */
-    public unmuteParticipantAsync(userId: string): void {
+    public unmuteParticipantAsync(userId: string, cb?: () => void, err?: (e: string) => void): void {
         try {
             if (!!this.privConnection) {
                 this.privConnection.toggleMuteParticipant(userId, false);
             }
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
+
         } catch (error) {
-            //
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
+            }
         }
     }
 
@@ -493,7 +648,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConnection.disconnect();
             this.privConnection = undefined;
         }
-        this.config = undefined;
+        this.privConfig = undefined;
         this.privLanguage = undefined;
         this.privProperties = undefined;
         this.privRoom = undefined;
