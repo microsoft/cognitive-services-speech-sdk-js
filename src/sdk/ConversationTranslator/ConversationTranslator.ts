@@ -468,6 +468,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             this.privTranslationRecognizer?.close();
             this.privTranslationRecognizerConnection?.close();
             this.privTranslationRecognizerConnection = undefined;
+            this.privTranslationRecognizer = undefined;
         } catch (e) {
             // ignore the error
         }
