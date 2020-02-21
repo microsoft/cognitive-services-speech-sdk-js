@@ -62,7 +62,6 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     private privConversationRequestSession: ConversationRequestSession;
     private privConnectionConfigPromise: Promise<IConnection>;
     private privConversationConnectionPromise: Promise<IConnection>;
-    private privSuccessCallback: (e: SpeechRecognitionResult) => void;
     private privConnectionLoop: Promise<IConnection>;
     private terminateMessageLoop: boolean;
 
@@ -145,8 +144,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         requestId: string,
         cancellationReason: CancellationReason,
         errorCode: CancellationErrorCode,
-        error: string,
-        cancelRecoCallback: (e: any) => void): void {
+        error: string): void {
 
             this.terminateMessageLoop = true;
 
@@ -617,7 +615,12 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         return messageRetrievalPromise.on((r: IConnection) => {
             return true;
         }, (error: string) => {
-            this.cancelRecognition("", "", CancellationReason.Error, CancellationErrorCode.RuntimeError, error, this.privSuccessCallback);
+            this.cancelRecognition(
+                this.privRequestSession ? this.privRequestSession.sessionId : "",
+                this.privRequestSession ? this.privRequestSession.requestId : "",
+                CancellationReason.Error,
+                CancellationErrorCode.RuntimeError,
+                error);
         });
     }
 
