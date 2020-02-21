@@ -215,8 +215,6 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                     this.connectionEvents.onEvent(event);
                 });
 
-                // TODO: if there is an invalid host an error isn't being bubbled up. The Conversation should be closed automatically if
-                // the websocket connection isn't opened successfully. e.g. "Error in connection establishment: net::ERR_NAME_NOT_RESOLVED"
                 return connection.open().onSuccessContinueWithPromise((response: ConnectionOpenResponse): Promise<IConnection> => {
                     if (response.statusCode === 200) {
                         this.privConversationRequestSession.onPreConnectionStart(this.privConversationAuthFetchEventId, this.privConnectionId);

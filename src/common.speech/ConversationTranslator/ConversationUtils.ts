@@ -7,36 +7,49 @@ import { IRequestOptions, IResponse } from "./ConversationTranslatorInterfaces";
  * Config settings for Conversation Translator
  */
 export const ConversationTranslatorConfig = {
-  apiVersion: "2.0",
-  clientAppId: "FC539C22-1767-4F1F-84BC-B4D811114F15",
-  defaultLanguageCode: "en-US",
-  defaultRequestOptions: {
+    apiVersion: "2.0",
+    auth: {
+        placeholderRegion: "westus",
+        placeholderSubscriptionKey: "abcdefghijklmnopqrstuvwxyz012345",
+    },
+    clientAppId: "FC539C22-1767-4F1F-84BC-B4D811114F15",
+    defaultLanguageCode: "en-US",
+    defaultRequestOptions: {
     headers: {
-      Accept: "application/json",
+        Accept: "application/json",
     },
     ignoreCache: false,
     timeout: 5000,
-  },
-  host: "dev.microsofttranslator.com",
-  params: {
-      apiVersion: "api-version",
-      clientAppId: "X-ClientAppId",
-      correlationId: "X-CorrelationId",
-      languageCode: "language",
-      nickname: "nickname",
-      profanity: "profanity",
-      requestId: "x-requestid",
-      roomId: "roomid",
-      sessionToken: "token",
-      subscriptionKey: "Ocp-Apim-Subscription-Key",
-      subscriptionRegion: "Ocp-Apim-Subscription-Region",
-      token: "X-CapitoToken"
-  },
-  restPath: "/capito/room",
-  speechHost: "{region}.s2s.speech.microsoft.com",
-  speechPath: "/speech/translation/cognitiveservices/v1",
-  textMessageMaxLength: 1000,
-  webSocketPath: "/capito/translate"
+    },
+    host: "dev.microsofttranslator.com",
+    params: {
+        apiVersion: "api-version",
+        clientAppId: "X-ClientAppId",
+        correlationId: "X-CorrelationId",
+        languageCode: "language",
+        nickname: "nickname",
+        profanity: "profanity",
+        requestId: "x-requestid",
+        roomId: "roomid",
+        sessionToken: "token",
+        subscriptionKey: "Ocp-Apim-Subscription-Key",
+        subscriptionRegion: "Ocp-Apim-Subscription-Region",
+        token: "X-CapitoToken",
+    },
+    restPath: "/capito/room",
+    speechHost: "{region}.s2s.speech.microsoft.com",
+    speechPath: "/speech/translation/cognitiveservices/v1",
+    strings: {
+        invalidArgs: "Required input not found: {arg}.",
+        invalidParticipantRequest: "The requested participant was not found.",
+        permissionDeniedConnect: "Required credentials not found.",
+        permissionDeniedConversation: "Invalid operation: only the host can {command} the conversation.",
+        permissionDeniedParticipant: "Invalid operation: only the host can {command} a participant.",
+        permissionDeniedSend: "Invalid operation: the conversation is not in a connected state.",
+        permissionDeniedStart: "Invalid operation: there is already an active conversation.",
+    },
+    textMessageMaxLength: 1000,
+    webSocketPath: "/capito/translate"
 };
 
 /**

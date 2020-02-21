@@ -82,8 +82,8 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     public joinConversationAsync(conversation: any, nickname: any, lang?: any, cb?: () => void, err?: (e: string) => void): void {
 
         try {
-            Contracts.throwIfNullOrUndefined(conversation, "conversation");
-            Contracts.throwIfNullOrUndefined(nickname, "nickname");
+            Contracts.throwIfNullOrWhitespace(conversation, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "conversation id"));
+            Contracts.throwIfNullOrWhitespace(nickname, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "nickname"));
 
             if (this.privConversation) {
                 this.privConversation.dispose();
@@ -94,14 +94,15 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             if (typeof conversation === "string") {
 
-                if (lang === undefined) { lang = ConversationTranslatorConfig.defaultLanguageCode; }
+                if (lang === undefined || lang === null || lang === "") { lang = ConversationTranslatorConfig.defaultLanguageCode; }
 
                 // create a placecholder config
-                this.privSpeechTranslationConfig = SpeechTranslationConfig.fromSubscription("abcdefghijklmnopqrstuvwxyz012345", "westus");
+                this.privSpeechTranslationConfig = SpeechTranslationConfig.fromSubscription(
+                    ConversationTranslatorConfig.auth.placeholderSubscriptionKey,
+                    ConversationTranslatorConfig.auth.placeholderRegion);
                 this.privSpeechTranslationConfig.setProfanity(ProfanityOption.Masked);
                 this.privSpeechTranslationConfig.addTargetLanguage(lang);
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage], lang);
-
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], nickname);
 
                 const endpoint: string = this.privProperties.getProperty(PropertyId.ConversationTranslator_Host);
@@ -168,8 +169,8 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 this.privConversation = conversation as ConversationImpl;
                 this.privConversation.conversationTranslator = this;
 
-                Contracts.throwIfNullOrUndefined(this.privConversation, "conversation not available");
-                Contracts.throwIfNullOrUndefined(this.privConversation.room.token, "missing credentials");
+                Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedConnect);
+                Contracts.throwIfNullOrUndefined(this.privConversation.room.token, ConversationTranslatorConfig.strings.permissionDeniedConnect);
 
                 this.privSpeechTranslationConfig = conversation.config;
 
@@ -206,31 +207,26 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     public leaveConversationAsync(cb?: () => void, err?: (e: string) => void): void {
 
         try {
-            this.privConversation.endConversationAsync(
+
+            // stop the speech websocket
+            this.cancelSpeech();
+
+            // stop the websocket
+            this.privConversation.endConversationAsync(cb, err);
+
+            // https delete request
+            this.privConversation.deleteConversationAsync(
                 (() => {
-                    this.privConversation.deleteConversationAsync(
-                        (() => {
-                            if (!!cb) {
-                                try {
-                                    cb();
-                                } catch (e) {
-                                    if (!!err) {
-                                        err(e);
-                                    }
-                                }
-                                cb = undefined;
-                            }
-                        }),
-                        ((error: any) => {
+                    if (!!cb) {
+                        try {
+                            cb();
+                        } catch (e) {
                             if (!!err) {
-                                if (error instanceof Error) {
-                                    const typedError: Error = error as Error;
-                                    err(typedError.name + ": " + typedError.message);
-                                } else {
-                                    err(error);
-                                }
+                                err(e);
                             }
-                        }));
+                        }
+                        cb = undefined;
+                    }
                 }),
                 ((error: any) => {
                     if (!!err) {
@@ -243,8 +239,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                     }
                 }));
 
-            // make sure the capito connection is closed
-            this.cancel();
+            this.dispose();
 
         } catch (error) {
             if (!!err) {
@@ -262,57 +257,152 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     /**
      * Send a text message
      * @param message
+     * @param cb
+     * @param err
      */
     public sendTextMessageAsync(message: string, cb?: () => void, err?: (e: string) => void): void {
-        this.privConversation?.connection?.sendMessageRequest(this.privConversation.room.roomId, this.privConversation.room.participantId, message, cb, err);
 
-        if (!!cb) {
-            try {
-                cb();
-            } catch (e) {
-                if (!!err) {
-                    err(e);
-                }
-            }
-            cb = undefined;
-        }
+        Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedSend);
+        Contracts.throwIfNullOrWhitespace(message, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", message));
+
+        this.privConversation?.sendTextMessageAsync(message, cb, err);
     }
 
     /**
      * Start speaking
+     * @param cb
+     * @param err
      */
     public startTranscribingAsync(cb?: () => void, err?: (e: string) => void): void {
 
-        if (!this.canSpeak()) { return; }
+        Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedSend);
+        Contracts.throwIfNullOrUndefined(this.privConversation.room.token, ConversationTranslatorConfig.strings.permissionDeniedConnect);
+        Contracts.throwIfNullOrUndefined(!this.canSpeak(), ConversationTranslatorConfig.strings.permissionDeniedSend);
 
         if (this.privTranslationRecognizer === undefined) {
-            this.connectTranslatorRecognizer();
-            if (this.privTranslationRecognizer !== undefined) {
-                this.startContinuousRecognition();
-            }
+            this.connectTranslatorRecognizer(
+                (() => {
+                    this.startContinuousRecognition(
+                    (() => {
+                        this.privIsSpeaking = true;
+
+                        if (!!cb) {
+                            try {
+                                cb();
+                            } catch (e) {
+                                if (!!err) {
+                                    err(e);
+                                }
+                            }
+                            cb = undefined;
+                        }
+                    }),
+                    ((error: any) => {
+
+                        this.privIsSpeaking = false;
+                        this.fireCancelEvent(error);
+                        this.cancelSpeech();
+                        if (!!err) {
+                            if (error instanceof Error) {
+                                const typedError: Error = error as Error;
+                                err(typedError.name + ": " + typedError.message);
+                            } else {
+                                err(error);
+                            }
+                        }
+                    }));
+                }),
+                ((error: any) => {
+                    if (!!err) {
+                        if (error instanceof Error) {
+                            const typedError: Error = error as Error;
+                            err(typedError.name + ": " + typedError.message);
+                        } else {
+                            err(error);
+                        }
+                    }
+                }));
         } else {
-            this.startContinuousRecognition();
+            this.startContinuousRecognition(
+                (() => {
+                    this.privIsSpeaking = true;
+
+                    if (!!cb) {
+                        try {
+                            cb();
+                        } catch (e) {
+                            if (!!err) {
+                                err(e);
+                            }
+                        }
+                        cb = undefined;
+                    }
+                }),
+                ((error: any) => {
+                    this.privIsSpeaking = false;
+                    this.fireCancelEvent(error);
+                    this.cancelSpeech();
+
+                    if (!!err) {
+                        if (error instanceof Error) {
+                            const typedError: Error = error as Error;
+                            err(typedError.name + ": " + typedError.message);
+                        } else {
+                            err(error);
+                        }
+                    }
+                }));
         }
     }
 
     /**
      * Stop speaking
+     * @param cb
+     * @param err
      */
     public stopTranscribingAsync(cb?: () => void, err?: (e: string) => void): void {
-        if (this.privTranslationRecognizer === undefined) { return; }
+
+        Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedSend);
+        Contracts.throwIfNullOrUndefined(this.privTranslationRecognizer, ConversationTranslatorConfig.strings.permissionDeniedSend);
 
         if (!this.privIsSpeaking) {
             this.cancelSpeech();
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
             return;
         }
 
         // stop the recognition but leave the websocket open
         this.privIsSpeaking = false;
         this.privTranslationRecognizer.stopContinuousRecognitionAsync(() => {
-            //
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
         }, (error: any) => {
 
-            this.fireCancelEvent(error);
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
             this.cancelSpeech();
         });
     }
@@ -322,15 +412,18 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     }
 
     public dispose(reason?: string): void {
-        if (this.isDisposed) {
+        if (this.isDisposed && !this.privIsSpeaking) {
             return;
         }
+        this.cancelSpeech();
         this.privIsDisposed = true;
         this.privSpeechTranslationConfig?.close();
         this.privSpeechRecognitionLanguage = undefined;
         this.privProperties = undefined;
         this.privAudioConfig = undefined;
         this.privSpeechTranslationConfig = undefined;
+        this.privConversation?.dispose();
+        this.privConversation = undefined;
     }
 
     /**
@@ -338,19 +431,20 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * Currently there is no language validation performed before sending the SpeechLanguage code to the service.
      * If it's an invalid language the raw error will be: 'Error during WebSocket handshake: Unexpected response code: 400'
      * e.g. pass in 'fr' instead of 'fr-FR', or a text-only language 'cy'
+     * @param cb
+     * @param err
      */
-    private connectTranslatorRecognizer(): void {
+    private connectTranslatorRecognizer(cb?: () => void, err?: (e: string) => void): void {
 
         try {
-
-            Contracts.throwIfNullOrUndefined(this.privConversation.room.token, "Missing credentials");
 
             if (this.privAudioConfig === undefined) {
                 this.privAudioConfig = AudioConfig.fromDefaultMicrophoneInput();
             }
 
             // clear the temp subscription key if it's a participant joining
-            if (this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Key]) === "abcdefghijklmnopqrstuvwxyz012345") {
+            if (this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Key])
+                    === ConversationTranslatorConfig.auth.placeholderSubscriptionKey) {
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
 
@@ -388,7 +482,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
                 try {
                     this.cancelSpeech();
-                    this.fireCancelEvent(e);
+                    this.fireCancelEvent(e); // ?
                 } catch (error) {
                     //
                 }
@@ -407,33 +501,47 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             };
 
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+                cb = undefined;
+            }
+
         } catch (error) {
 
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
             this.cancelSpeech();
-            this.fireCancelEvent(error);
+            // this.fireCancelEvent(error);
 
         }
     }
 
     /**
      * Handle the start speaking request
+     * @param cb
+     * @param err
      */
-    private startContinuousRecognition(): void {
-        this.privTranslationRecognizer.startContinuousRecognitionAsync(
-            () => { this.onStartContinuousRecognitionSuccess(); },
-            (error: any) => { this.onStartContinuousRecognitionFailure(error); });
+    private startContinuousRecognition(cb?: () => void, err?: (e: string) => void): void {
+        this.privTranslationRecognizer.startContinuousRecognitionAsync(cb, err);
     }
 
-    private onStartContinuousRecognitionSuccess(): void {
-        this.privIsSpeaking = true;
-    }
-
-    private onStartContinuousRecognitionFailure(error: any): void {
-        this.privIsSpeaking = false;
-        this.fireCancelEvent(error);
-        this.cancelSpeech();
-    }
-
+    /**
+     * Fire a cancel event
+     * @param error
+     */
     private fireCancelEvent(error: any): void {
         try {
             if (!!this.canceled) {
@@ -451,6 +559,9 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         }
     }
 
+    /**
+     * Cancel the speech websocket
+     */
     private cancelSpeech(): void {
         try {
             this.privIsSpeaking = false;
