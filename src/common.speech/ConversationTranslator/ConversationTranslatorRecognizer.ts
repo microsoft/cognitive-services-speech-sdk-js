@@ -1,15 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ConversationConnectionFactory } from "../../common.speech/ConversationTranslator/ConversationConnectionFactory";
-import {
-    ConversationTranslatorCommandTypes,
-    ConversationTranslatorMessageTypes,
-    IEjectParticipantCommand,
-    IInstantMessageCommand,
-    ILockConversationCommand,
-    IMuteAllCommand,
-    IMuteCommand } from "../../common.speech/ConversationTranslator/ConversationTranslatorInterfaces";
 import {
     IAuthentication,
     IConnectionFactory,
@@ -21,12 +12,14 @@ import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
 import { Contracts } from "../../sdk/Contracts";
 import { AudioConfig,
     ConversationExpirationEventArgs,
+    ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     PropertyCollection,
     Recognizer,
     SessionEventArgs,
-    SpeechTranslationConfig } from "../../sdk/Exports";
+    SpeechTranslationConfig} from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
+import { ConversationConnectionFactory } from "./ConversationConnectionFactory";
 import { ConversationServiceAdapter } from "./ConversationServiceAdapter";
 import {
     ConversationReceivedTranslationEventArgs,
@@ -35,7 +28,15 @@ import {
     ParticipantAttributeEventArgs,
     ParticipantEventArgs,
     ParticipantsListEventArgs } from "./ConversationTranslatorEventArgs";
-import { IConversationTranslatorRecognizer } from "./ConversationTranslatorInterfaces";
+import {
+    ConversationTranslatorCommandTypes,
+    ConversationTranslatorMessageTypes,
+    IConversationTranslatorRecognizer,
+    IEjectParticipantCommand,
+    IInstantMessageCommand,
+    ILockConversationCommand,
+    IMuteAllCommand,
+    IMuteCommand } from "./ConversationTranslatorInterfaces";
 
 /**
  * Sends messages to the Conversation Translator websocket and listens for incoming events containing websocket messages.
@@ -68,27 +69,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
     public connectionClosed: (sender: IConversationTranslatorRecognizer, event: SessionEventArgs) => void;
     public translationReceived: (sender: IConversationTranslatorRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
     public participantsListReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantsListEventArgs) => void;
-
-    /**
-     * Connect to the recognizer
-     * @param token
-     */
-    public connect(token: string, cb?: () => void, err?: (e: string) => void): void {
-        Contracts.throwIfNullOrWhitespace(token, "token");
-        this.privReco.conversationTranslatorToken = token;
-        this.privReco.connect();
-
-        if (!!cb) {
-            cb();
-        }
-    }
-
-    /**
-     * Disconnect from the recognizer
-     */
-    public disconnect(): void {
-        this.privReco.disconnect();
-    }
+    public participantsChanged: (sender: IConversationTranslatorRecognizer, event: ConversationParticipantsChangedEventArgs) => void;
 
     /**
      * Return the speech language used by the recognizer
@@ -105,26 +86,122 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
     }
 
     /**
+     * Connect to the recognizer
+     * @param token
+     */
+    public connect(token: string, cb?: () => void, err?: (e: string) => void): void {
+        try {
+
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            Contracts.throwIfNullOrWhitespace(token, "token");
+            this.privReco.conversationTranslatorToken = token;
+            this.privReco.connect();
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+            }
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            // this.dispose(true);
+        }
+    }
+
+    /**
+     * Disconnect from the recognizer
+     */
+    public disconnect(cb?: () => void, err?: (e: string) => void): void {
+        try {
+
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            this.privReco.disconnect();
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+            }
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            // this.dispose(true);
+        }
+    }
+
+    /**
      * Send the text message command to the websocket
      * @param conversationId
      * @param participantId
      * @param message
      */
-    public sendMessageRequest(conversationId: string, participantId: string, message: string): void {
+    public sendMessageRequest(conversationId: string, participantId: string, message: string, cb?: () => void, err?: (e: string) => void): void {
 
-        Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
-        Contracts.throwIfNullOrWhitespace(participantId, "participantId");
-        Contracts.throwIfNullOrWhitespace(message, "message");
+        try {
 
-        const command: IInstantMessageCommand = {
-            // tslint:disable-next-line: object-literal-shorthand
-            participantId: participantId,
-            roomId: conversationId,
-            text: message,
-            type: ConversationTranslatorMessageTypes.instantMessage
-        };
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(participantId, "participantId");
+            Contracts.throwIfNullOrWhitespace(message, "message");
 
-        this.sendMessage(command);
+            const command: IInstantMessageCommand = {
+                // tslint:disable-next-line: object-literal-shorthand
+                participantId: participantId,
+                roomId: conversationId,
+                text: message,
+                type: ConversationTranslatorMessageTypes.instantMessage
+            };
+
+            this.privReco.sendMessage(JSON.stringify(command));
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+            }
+
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
     }
 
     /**
@@ -133,22 +210,48 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      * @param participantId
      * @param isLocked
      */
-    public sendLockRequest(conversationId: string, participantId: string, isLocked: boolean): void {
+    public sendLockRequest(conversationId: string, participantId: string, isLocked: boolean, cb?: () => void, err?: (e: string) => void): void {
 
-        Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
-        Contracts.throwIfNullOrWhitespace(participantId, "participantId");
-        Contracts.throwIfNullOrUndefined(isLocked, "isLocked");
+        try {
 
-        const command: ILockConversationCommand = {
-            command: ConversationTranslatorCommandTypes.setLockState,
-            // tslint:disable-next-line: object-literal-shorthand
-            participantId: participantId,
-            roomid: conversationId,
-            type: ConversationTranslatorMessageTypes.participantCommand,
-            value: isLocked
-        };
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(participantId, "participantId");
+            Contracts.throwIfNullOrUndefined(isLocked, "isLocked");
 
-        this.sendMessage(command);
+            const command: ILockConversationCommand = {
+                command: ConversationTranslatorCommandTypes.setLockState,
+                // tslint:disable-next-line: object-literal-shorthand
+                participantId: participantId,
+                roomid: conversationId,
+                type: ConversationTranslatorMessageTypes.participantCommand,
+                value: isLocked
+            };
+
+            this.privReco.sendMessage(JSON.stringify(command));
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+            }
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
     }
 
     /**
@@ -157,22 +260,48 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      * @param participantId
      * @param isMuted
      */
-    public sendMuteAllRequest(conversationId: string, participantId: string, isMuted: boolean): void {
+    public sendMuteAllRequest(conversationId: string, participantId: string, isMuted: boolean, cb?: () => void, err?: (e: string) => void): void {
 
-        Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
-        Contracts.throwIfNullOrWhitespace(participantId, "participantId");
-        Contracts.throwIfNullOrUndefined(isMuted, "isMuted");
+        try {
 
-        const command: IMuteAllCommand = {
-            command: ConversationTranslatorCommandTypes.setMuteAll,
-            // tslint:disable-next-line: object-literal-shorthand
-            participantId: participantId, // the id of the host
-            roomid: conversationId,
-            type: ConversationTranslatorMessageTypes.participantCommand,
-            value: isMuted
-        };
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(participantId, "participantId");
+            Contracts.throwIfNullOrUndefined(isMuted, "isMuted");
 
-        this.sendMessage(command);
+            const command: IMuteAllCommand = {
+                command: ConversationTranslatorCommandTypes.setMuteAll,
+                // tslint:disable-next-line: object-literal-shorthand
+                participantId: participantId, // the id of the host
+                roomid: conversationId,
+                type: ConversationTranslatorMessageTypes.participantCommand,
+                value: isMuted
+            };
+
+            this.privReco.sendMessage(JSON.stringify(command));
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+            }
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
     }
 
     /**
@@ -181,22 +310,48 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      * @param participantId
      * @param isMuted
      */
-    public sendMuteRequest(conversationId: string, participantId: string, isMuted: boolean): void {
+    public sendMuteRequest(conversationId: string, participantId: string, isMuted: boolean, cb?: () => void, err?: (e: string) => void): void {
 
-        Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
-        Contracts.throwIfNullOrWhitespace(participantId, "participantId");
-        Contracts.throwIfNullOrUndefined(isMuted, "isMuted");
+        try {
 
-        const command: IMuteCommand = {
-            command: ConversationTranslatorCommandTypes.setMute,
-            // tslint:disable-next-line: object-literal-shorthand
-            participantId: participantId, // the id of the participant
-            roomid: conversationId,
-            type: ConversationTranslatorMessageTypes.participantCommand,
-            value: isMuted
-        };
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(participantId, "participantId");
+            Contracts.throwIfNullOrUndefined(isMuted, "isMuted");
 
-        this.sendMessage(command);
+            const command: IMuteCommand = {
+                command: ConversationTranslatorCommandTypes.setMute,
+                // tslint:disable-next-line: object-literal-shorthand
+                participantId: participantId, // the id of the participant
+                roomid: conversationId,
+                type: ConversationTranslatorMessageTypes.participantCommand,
+                value: isMuted
+            };
+
+            this.privReco.sendMessage(JSON.stringify(command));
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+            }
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
     }
 
     /**
@@ -204,20 +359,47 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      * @param conversationId
      * @param participantId
      */
-    public sendEjectRequest(conversationId: string, participantId: string): void {
+    public sendEjectRequest(conversationId: string, participantId: string, cb?: () => void, err?: (e: string) => void): void {
 
-        Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
-        Contracts.throwIfNullOrWhitespace(participantId, "participantId");
+        try {
 
-        const command: IEjectParticipantCommand = {
-            command: ConversationTranslatorCommandTypes.ejectParticipant,
-            // tslint:disable-next-line: object-literal-shorthand
-            participantId: participantId,
-            roomid: conversationId,
-            type: ConversationTranslatorMessageTypes.participantCommand,
-        };
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(participantId, "participantId");
 
-        this.sendMessage(command);
+            const command: IEjectParticipantCommand = {
+                command: ConversationTranslatorCommandTypes.ejectParticipant,
+                // tslint:disable-next-line: object-literal-shorthand
+                participantId: participantId,
+                roomid: conversationId,
+                type: ConversationTranslatorMessageTypes.participantCommand,
+            };
+
+            this.privReco.sendMessage(JSON.stringify(command));
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+            }
+
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
     }
 
     /**
@@ -272,17 +454,4 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
         return new ConversationServiceAdapter(authentication, connectionFactory, audioSource, recognizerConfig, this);
     }
 
-    /**
-     * Takes the outgoing message and stringifies it for submission to the websocket
-     * @param message
-     */
-    private sendMessage(message: any): void {
-
-        // validate the current state and silently fail
-        if (undefined === message) { return; }
-        if (undefined === this.privReco) { return; }
-
-        // send the message
-        this.privReco.sendMessage(JSON.stringify(message));
-    }
 }

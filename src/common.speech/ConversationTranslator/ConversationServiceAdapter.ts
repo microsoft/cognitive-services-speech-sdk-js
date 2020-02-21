@@ -101,21 +101,23 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    public sendMessage = (message: string): void => {
+    public sendMessage = (message: string): Promise<boolean> => {
         this.fetchConversationConnection().onSuccessContinueWith((connection: IConnection) => {
             connection.send(new ConversationConnectionMessage(
                 MessageType.Text,
                 message));
         });
+        return PromiseHelper.fromResult<boolean>(true);
     }
 
     protected privDisconnect(): void {
-        this.cancelRecognition(this.privConversationRequestSession.sessionId,
-            this.privConversationRequestSession.requestId,
-            CancellationReason.Error,
-            CancellationErrorCode.NoError,
-            "Disconnecting",
-            undefined);
+        // TODO: get the HTTPS delete working in sync for ejecting participant
+        // this.cancelRecognition(this.privConversationRequestSession.sessionId,
+        //     this.privConversationRequestSession.requestId,
+        //     CancellationReason.Error,
+        //     CancellationErrorCode.NoError,
+        //     "Disconnecting",
+        //     undefined);
 
         this.terminateMessageLoop = true;
         if (this.privConversationConnectionPromise.result().isCompleted) {

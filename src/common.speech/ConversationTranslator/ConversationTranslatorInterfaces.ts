@@ -121,36 +121,6 @@ export interface IConversationTranslatorRecognizer {
 }
 
 /**
- * Wrapper for managing the connections to the Conversation and Speech websockets.
- */
-export interface IConversationConnection {
-
-    isConnected: boolean;
-    isMutedByHost: boolean;
-    participants: IInternalParticipant[];
-
-    connect(room: IInternalConversation): void;
-    disconnect(): void;
-    sendTextMessage(message: string): void;
-    toggleLockRoom(isLocked: boolean): void;
-    toggleMuteAll(isMuted: boolean): void;
-    toggleMuteParticipant(participantId: string, isMuted: boolean): void;
-    ejectParticpant(participantId: string): void;
-    // startSpeaking(): void;
-    // stopSpeaking(): void;
-    // onEvent(): void;
-    canceled: (sender: IConversationConnection, event: ConversationTranslationCanceledEventArgs) => void;
-    conversationExpiration: (sender: IConversationConnection, event: ConversationExpirationEventArgs) => void;
-    participantsChanged: (sender: IConversationConnection, event: ConversationParticipantsChangedEventArgs) => void;
-    sessionStarted: (sender: IConversationConnection, event: SessionEventArgs) => void;
-    sessionStopped: (sender: IConversationConnection, event: SessionEventArgs) => void;
-    textMessageReceived: (sender: IConversationConnection, event: ConversationTranslationEventArgs) => void;
-    transcribed: (sender: IConversationConnection, event: ConversationTranslationEventArgs) => void;
-    transcribing: (sender: IConversationConnection, event: ConversationTranslationEventArgs) => void;
-
-}
-
-/**
  * Error message returned from the Conversation Translator websocket
  */
 export interface IConversationResponseErrorMessage {

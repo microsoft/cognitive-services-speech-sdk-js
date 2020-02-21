@@ -1,7 +1,19 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-export { ConversationConnection } from "./ConversationConnection";
 export { ConversationManager } from "./ConversationManager";
-export { IInternalConversation } from "./ConversationTranslatorInterfaces";
 export { ConversationTranslatorConfig } from "./ConversationUtils";
+export { ConversationTranslatorRecognizer } from "./ConversationTranslatorRecognizer";
+export {
+    ConversationReceivedTranslationEventArgs,
+    LockRoomEventArgs,
+    MuteAllEventArgs,
+    ParticipantAttributeEventArgs,
+    ParticipantEventArgs,
+    ParticipantsListEventArgs } from "./ConversationTranslatorEventArgs";
+export {
+    ConversationTranslatorCommandTypes,
+    ConversationTranslatorMessageTypes,
+    IInternalConversation,
+    IInternalParticipant,
+    InternalParticipants} from "./ConversationTranslatorInterfaces";

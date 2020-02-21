@@ -20,7 +20,7 @@ export class ConversationManager {
      * @param callback
      * @param errorCallback
      */
-    public createOrJoin(args: PropertyCollection, conversationCode: string, callback?: any, errorCallback?: any): void {
+    public createOrJoin(args: PropertyCollection, conversationCode: string, cb?: any, err?: any): void {
 
         try {
 
@@ -69,7 +69,7 @@ export class ConversationManager {
 
                 if (!response.ok) {
 
-                    if (!!errorCallback) {
+                    if (!!err) {
                         // get the error
                         let errorMessage: string = `Creating/Joining room failed with HTTP ${response.status}`;
                         let errMessageRaw: IConversationResponseError;
@@ -80,7 +80,7 @@ export class ConversationManager {
                             // ignore
                         }
 
-                        errorCallback(errorMessage);
+                        err(errorMessage);
                     }
                     return;
                 }
@@ -88,15 +88,28 @@ export class ConversationManager {
                 if (conversation) {
                     conversation.requestId = requestId;
                 }
-                if (!!callback) {
-                    callback(conversation);
+                if (!!cb) {
+                    try {
+                        cb(conversation);
+                    } catch (e) {
+                        if (!!err) {
+                            err(e);
+                        }
+                    }
+                    cb = undefined;
                 }
 
             });
 
-        } catch (e) {
-            if (!!errorCallback) {
-                errorCallback(`Creating/Joining room failed. ${e}`);
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
             }
         }
     }
@@ -107,7 +120,7 @@ export class ConversationManager {
      * @param sessionToken
      * @param callback
      */
-    public leave(args: PropertyCollection, sessionToken: string, callback?: any): void {
+    public leave(args: PropertyCollection, sessionToken: string, cb?: any, err?: any): void {
 
         try {
 
@@ -135,13 +148,28 @@ export class ConversationManager {
                     // ignore errors on delete
                 }
 
-                if (!!callback) {
-                    callback();
+                if (!!cb) {
+                    try {
+                        cb();
+                    } catch (e) {
+                        if (!!err) {
+                            err(e);
+                        }
+                    }
+                    cb = undefined;
                 }
             });
 
-        } catch (e) {
-            // ignore errors on delete
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+
+                } else {
+                    err(error);
+                }
+            }
         }
     }
 
