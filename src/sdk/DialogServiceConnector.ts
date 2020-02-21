@@ -166,7 +166,7 @@ export class DialogServiceConnector extends Recognizer {
                 this.implRecognizerStop();
                 this.isTurnComplete = false;
 
-                this.implRecognizerStart(
+                this.privReco.recognize(
                     RecognitionMode.Conversation,
                     (e: SpeechRecognitionResult) => {
                         this.implRecognizerStop();
@@ -183,7 +183,13 @@ export class DialogServiceConnector extends Recognizer {
                         if (!!err) {
                             err(e);
                         }
-                    });
+                        /* tslint:disable:no-empty */
+                    }).on((_: boolean): void => { },
+                        (error: string): void => {
+                            if (!!err) {
+                                err(error);
+                            }
+                        });
             } catch (error) {
                 if (!!err) {
                     if (error instanceof Error) {
@@ -226,7 +232,7 @@ export class DialogServiceConnector extends Recognizer {
             this.privIsDisposed = true;
             super.dispose(disposing);
         }
-}
+    }
 
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
         return new RecognizerConfig(speechConfig, this.privProperties);

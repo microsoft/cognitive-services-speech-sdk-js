@@ -18,7 +18,6 @@ import { validateTelemetry } from "./TelemetryUtil";
 import { default as WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-import * as fs from "fs";
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
 let objsToClose: any[];
@@ -209,7 +208,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     json.indexOf(sessionId) > 0) {
                     try {
                         expect(hypoCounter).toBeGreaterThanOrEqual(1);
-                        validateTelemetry(json, 1, hypoCounter);
+                        validateTelemetry(json, 2, hypoCounter); // 2 phrases because the extra silence at the end of conversation mode.
                     } catch (error) {
                         done.fail(error);
                     }
@@ -225,6 +224,15 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 }
             };
 
+            r.sessionStopped = (s: sdk.SpeechRecognizer, e: sdk.SpeechRecognitionEventArgs) => {
+                try {
+                    expect(telemetryEvents).toEqual(1);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
+            };
+
             r.recognizeOnceAsync(
                 (res: sdk.TranslationRecognitionResult) => {
                     expect(res).not.toBeUndefined();
@@ -233,9 +241,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(res.translations.get("de", undefined) !== undefined).toEqual(true);
                     expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
                     expect(res.text).toEqual("What's the weather like?");
-                    expect(telemetryEvents).toEqual(1);
-
-                    done();
                 },
                 (error: string) => {
                     done.fail(error);
@@ -1156,30 +1161,49 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
     });
 
-    test("Default mic is used when audio config is not specified.", () => {
+    test("Default mic is used when audio config is not specified. (once)", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
-        console.info("Name: Default mic is used when audio config is not specified.");
+        console.info("Name: Default mic is used when audio config is not specified. (once)");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         expect(s).not.toBeUndefined();
         s.speechRecognitionLanguage = "en-US";
         s.addTargetLanguage("en-US");
 
-        let r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s);
+        const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s);
         expect(r instanceof sdk.Recognizer).toEqual(true);
         // Node.js doesn't have a microphone natively. So we'll take the specific message that indicates that microphone init failed as evidence it was attempted.
-        r.recognizeOnceAsync(() => fail("RecognizeOnceAsync returned success when it should have failed"),
+        r.recognizeOnceAsync(() => done.fail("RecognizeOnceAsync returned success when it should have failed"),
             (error: string): void => {
-                expect(error).not.toBeUndefined();
-                expect(error).toEqual("Error: Browser does not support Web Audio API (AudioContext is not available).");
+                try {
+                    expect(error).not.toBeUndefined();
+                    expect(error).toEqual("Error: Browser does not support Web Audio API (AudioContext is not available).");
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             });
+    });
 
-        r = new sdk.TranslationRecognizer(s);
+    test("Default mic is used when audio config is not specified. (Cont)", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: Default mic is used when audio config is not specified. (Cont)");
+        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        expect(s).not.toBeUndefined();
+        s.speechRecognitionLanguage = "en-US";
+        s.addTargetLanguage("en-US");
+
+        const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s);
         expect(r instanceof sdk.Recognizer).toEqual(true);
 
-        r.startContinuousRecognitionAsync(() => fail("startContinuousRecognitionAsync returned success when it should have failed"),
+        r.startContinuousRecognitionAsync(() => done.fail("startContinuousRecognitionAsync returned success when it should have failed"),
             (error: string): void => {
-                expect(error).not.toBeUndefined();
-                expect(error).toEqual("Error: Browser does not support Web Audio API (AudioContext is not available).");
+                try {
+                    expect(error).not.toBeUndefined();
+                    expect(error).toEqual("Error: Browser does not support Web Audio API (AudioContext is not available).");
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             });
     });
 
@@ -1191,22 +1215,18 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         s.addTargetLanguage("en-US");
 
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
-        objsToClose.push(r);
 
-        let pass: boolean = false;
         r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
-                pass = true;
+                done();
             } catch (error) {
                 done.fail(error);
             }
         };
 
         r.startContinuousRecognitionAsync();
-
-        WaitForCondition(() => pass, () => r.stopContinuousRecognitionAsync(() => done(), (error: string) => done.fail(error)));
     });
 
     test("Connection Errors Propogate Sync", (done: jest.DoneCallback) => {
@@ -1217,7 +1237,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         s.addTargetLanguage("en-US");
 
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
-        objsToClose.push(r);
 
         let doneCount: number = 0;
         r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {

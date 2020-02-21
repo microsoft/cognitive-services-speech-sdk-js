@@ -180,38 +180,8 @@ export class TranslationRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public recognizeOnceAsync(cb?: (e: TranslationRecognitionResult) => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-
-            this.implRecognizerStop();
-
-            this.implRecognizerStart(
-                RecognitionMode.Conversation,
-                (e: TranslationRecognitionResult) => {
-                    this.implRecognizerStop();
-
-                    if (!!cb) {
-                        cb(e);
-                    }
-                }, (e: string) => {
-                    this.implRecognizerStop();
-                    if (!!err) {
-                        err(e);
-                    }
-                });
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
-        }
+        Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
+        this.recognizeOnceAsyncImpl(RecognitionMode.Conversation, cb, err);
     }
 
     /**
@@ -224,38 +194,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-
-            this.implRecognizerStop();
-
-            this.implRecognizerStart(RecognitionMode.Conversation, undefined, undefined);
-
-            // report result to promise.
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-                cb = undefined;
-            }
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
-        }
+        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation, cb, err);
     }
 
     /**
@@ -267,34 +206,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-
-            this.implRecognizerStop();
-
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-            }
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
-
-        }
+        this.stopContinuousRecognitionAsyncImpl(cb, err);
     }
 
     /**

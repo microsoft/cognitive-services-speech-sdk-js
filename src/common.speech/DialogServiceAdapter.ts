@@ -74,7 +74,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     // Do not consume directly, call fetchDialogConnection instead.
     private privDialogConnectionPromise: Promise<IConnection>;
 
-    private privSuccessCallback: (e: SpeechRecognitionResult) => void;
     private privConnectionLoop: Promise<IConnection>;
     private terminateMessageLoop: boolean;
     private agentConfigSent: boolean;
@@ -153,8 +152,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             this.privDialogRequestSession.requestId,
             CancellationReason.Error,
             CancellationErrorCode.NoError,
-            "Disconnecting",
-            undefined);
+            "Disconnecting");
 
         this.terminateMessageLoop = true;
         this.agentConfigSent = false;
@@ -170,10 +168,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    protected processTypeSpecificMessages(
-        connectionMessage: SpeechConnectionMessage,
-        successCallback?: (e: SpeechRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): boolean {
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
 
         const resultProps: PropertyCollection = new PropertyCollection();
         if (connectionMessage.messageType === MessageType.Text) {
@@ -294,8 +289,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         requestId: string,
         cancellationReason: CancellationReason,
         errorCode: CancellationErrorCode,
-        error: string,
-        cancelRecoCallback: (e: SpeechRecognitionResult) => void): void {
+        error: string): void {
 
         this.terminateMessageLoop = true;
 
@@ -319,7 +313,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 /* tslint:disable:no-empty */
             } catch { }
 
-            if (!!cancelRecoCallback) {
+            if (!!this.privSuccessCallback) {
                 const result: SpeechRecognitionResult = new SpeechRecognitionResult(
                     undefined, // ResultId
                     ResultReason.Canceled,
@@ -330,7 +324,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     undefined, // Json
                     properties);
                 try {
-                    cancelRecoCallback(result);
+                    this.privSuccessCallback(result);
+                    this.privSuccessCallback = undefined;
                     /* tslint:disable:no-empty */
                 } catch { }
             }
@@ -341,8 +336,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         recoMode: RecognitionMode,
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallback: (e: string) => void
-    ): any => {
+    ): Promise<boolean> => {
         this.privRecognizerConfig.recognitionMode = recoMode;
+
+        this.privSuccessCallback = successCallback;
+        this.privErrorCallback = errorCallback;
 
         this.privDialogRequestSession.startNewRecognition();
         this.privDialogRequestSession.listenForServiceTelemetry(this.privDialogAudioSource.events);
@@ -352,15 +350,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.sendPreAudioMessages();
 
-        this.privSuccessCallback = successCallback;
-
         return this.privDialogAudioSource
             .attach(this.privDialogRequestSession.audioNodeId)
             .continueWithPromise<boolean>((result: PromiseResult<IAudioStreamNode>) => {
                 let audioNode: ReplayableAudioNode;
 
                 if (result.isError) {
-                    this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error, successCallback);
+                    this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error);
                     return PromiseHelper.fromError<boolean>(result.error);
                 }
 
@@ -372,7 +368,12 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
 
                         return this.configConnection()
-                            .on((_: IConnection) => {
+                            .continueWithPromise<boolean>((result: PromiseResult<IConnection>): Promise<boolean> => {
+                                if (result.isError) {
+                                    this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error);
+                                    return PromiseHelper.fromError(result.error);
+                                }
+
                                 const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privDialogRequestSession.sessionId);
 
                                 if (!!this.privRecognizer.sessionStarted) {
@@ -383,25 +384,17 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                                 // /* tslint:disable:no-empty */
                                 audioSendPromise.on((_: boolean) => { /*add? return true;*/ }, (error: string) => {
-                                    this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error, successCallback);
+                                    this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
                                 });
 
-                            }, (error: string) => {
-                                this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error, successCallback);
-                            }).continueWithPromise<boolean>((result: PromiseResult<IConnection>): Promise<boolean> => {
-                                if (result.isError) {
-                                    return PromiseHelper.fromError(result.error);
-                                } else {
-                                    return PromiseHelper.fromResult<boolean>(true);
-                                }
+                                return PromiseHelper.fromResult(true);
                             });
                     });
                 });
             });
     }
 
-    protected sendAudio = (
-        audioStreamNode: IAudioStreamNode): Promise<boolean> => {
+    protected sendAudio = (audioStreamNode: IAudioStreamNode): Promise<boolean> => {
         return this.privDialogAudioSource.format.onSuccessContinueWithPromise<boolean>((audioFormat: AudioStreamFormatImpl) => {
             // NOTE: Home-baked promises crash ios safari during the invocation
             // of the error callback chain (looks like the recursion is way too deep, and
@@ -577,10 +570,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return this.privDialogConnectionPromise;
     }
 
-    private receiveDialogMessageOverride = (
-        successCallback?: (e: SpeechRecognitionResult) => void,
-        errorCallBack?: (e: string) => void
-    ): Promise<IConnection> => {
+    private receiveDialogMessageOverride = (): Promise<IConnection> => {
 
         // we won't rely on the cascading promises of the connection since we want to continually be available to receive messages
         const communicationCustodian: Deferred<IConnection> = new Deferred<IConnection>();
@@ -611,6 +601,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 // turn started by the service
                                 if (turnRequestId !== audioSessionReqId) {
                                     this.privTurnStateManager.StartTurn(turnRequestId);
+                                } else {
+                                    this.privDialogRequestSession.onServiceTurnStartResponse();
                                 }
                             }
                             break;
@@ -673,25 +665,22 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                             this.privSuccessCallback(this.privLastResult);
                                             this.privLastResult = null;
                                         } catch (e) {
-                                            if (!!errorCallBack) {
-                                                errorCallBack(e);
+                                            if (!!this.privErrorCallback) {
+                                                this.privErrorCallback(e);
                                             }
                                         }
                                         // Only invoke the call back once.
                                         // and if it's successful don't invoke the
                                         // error after that.
                                         this.privSuccessCallback = undefined;
-                                        errorCallBack = undefined;
+                                        this.privErrorCallback = undefined;
                                     }
                                 }
                             }
                             break;
 
                         default:
-                            if (!this.processTypeSpecificMessages(
-                                connectionMessage,
-                                successCallback,
-                                errorCallBack)) {
+                            if (!this.processTypeSpecificMessages(connectionMessage)) {
                                 if (!!this.serviceEvents) {
                                     this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
                                 }
@@ -718,7 +707,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return messageRetrievalPromise.on((r: IConnection) => {
             return true;
         }, (error: string) => {
-            this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error, this.privSuccessCallback);
+            this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
         });
     }
 

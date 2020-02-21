@@ -67,7 +67,7 @@ export class MicAudioSource implements IAudioSource {
     public constructor(
         private readonly privRecorder: IRecorder,
         private readonly deviceId?: string,
-        audioSourceId?: string ) {
+        audioSourceId?: string) {
 
         this.privOutputChunkSize = MicAudioSource.AUDIOFORMAT.avgBytesPerSec / 10;
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
@@ -85,7 +85,17 @@ export class MicAudioSource implements IAudioSource {
 
         this.privInitializeDeferral = new Deferred<boolean>();
 
-        this.createAudioContext();
+        try {
+            this.createAudioContext();
+        } catch (error) {
+            if (error instanceof Error) {
+                const typedError: Error = error as Error;
+                this.privInitializeDeferral.reject(typedError.name + ": " + typedError.message);
+            } else {
+                this.privInitializeDeferral.reject(error);
+            }
+            return this.privInitializeDeferral.promise();
+        }
 
         const nav = window.navigator as INavigator;
 

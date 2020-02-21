@@ -178,7 +178,7 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      * @param {string} audioNodeId - The audio node id.
      */
     public detach(audioNodeId: string): void {
-        return this.detach(audioNodeId);
+        return this.privSource.detach(audioNodeId);
     }
 
     /**

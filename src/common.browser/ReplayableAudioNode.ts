@@ -95,6 +95,10 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     // beginning of the buffer closest to the requested offset.
     // A replay request will start from the last shrink point.
     public shrinkBuffers(offset: number): void {
+        if (this.privBuffers === undefined) {
+            return;
+        }
+
         this.privLastShrinkOffset = offset;
 
         // Find the start point in the buffers.
@@ -115,7 +119,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 
     // Finds the time a buffer of audio was first seen by offset.
     public findTimeAtOffset(offset: number): number {
-        if (offset < this.privBufferStartOffset) {
+        if (offset < this.privBufferStartOffset || this.privBuffers === undefined) {
             return 0;
         }
 
