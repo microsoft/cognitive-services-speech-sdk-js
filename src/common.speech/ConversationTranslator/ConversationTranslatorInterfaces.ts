@@ -70,7 +70,11 @@ export class InternalParticipants {
 
     }
 
-    public addOrUpdateParticipant(value: IInternalParticipant): void {
+    /**
+     * Add or update a participant
+     * @param value
+     */
+    public addOrUpdateParticipant(value: IInternalParticipant): IInternalParticipant {
         if (value === undefined) {
             return;
         }
@@ -81,31 +85,51 @@ export class InternalParticipants {
         } else {
             this.participants.push(value);
         }
+
+        // ensure it was added ok
+        return this.getParticipant(value.id);
     }
 
+    /**
+     * Find the participant's position in the participants list.
+     * @param id
+     */
     public getParticipantIndex(id: string): number {
         return this.participants.findIndex((p: IInternalParticipant) => p.id === id);
     }
 
+    /**
+     * Find the participant by id.
+     * @param id
+     */
     public getParticipant(id: string): IInternalParticipant {
         return this.participants.find((p: IInternalParticipant) => p.id === id);
     }
 
+    /***
+     * Remove a participant from the participants list.
+     */
     public deleteParticipant(id: string): void {
         this.participants = this.participants.filter((p: IInternalParticipant) => p.id !== id);
     }
 
+    /***
+     * Helper to return the conversation host.
+     */
     public get host(): IInternalParticipant {
         return this.participants.find((p: IInternalParticipant) => p.isHost === true );
     }
 
+    /**
+     * Helper to return the current user.
+     */
     public get me(): IInternalParticipant {
         return this.getParticipant(this.meId);
     }
 }
 
 /**
- * Recognizer for handling Conservation Translator websocket messages
+ * Recognizer for handling Conversation Translator websocket messages
  */
 export interface IConversationTranslatorRecognizer {
     canceled: (sender: IConversationTranslatorRecognizer, event: ConversationTranslationCanceledEventArgs) => void;

@@ -85,6 +85,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
         return this.privProperties;
     }
 
+    public isDisposed(): boolean {
+        return this.privIsDisposed;
+    }
+
     /**
      * Connect to the recognizer
      * @param token
