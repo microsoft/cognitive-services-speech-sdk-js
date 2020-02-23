@@ -294,20 +294,13 @@ export enum PropertyId {
     ConversationTranslator_Host,
 
     /**
-     * Set the host for speech service calls. This host is used for the
-     * service to service call from the speech service to the Conversation Translator service for relaying
-     * recognitions.
-     */
-    ConversationTranslator_SpeechHost,
-
-    /**
      * Optionally set the the host's display name.
      * Used when joining a conversation.
      */
     ConversationTranslator_Name,
 
     /**
-     * Optionally override the default value of the X-CorrelationId request header.
+     * Optionally set a value for the X-CorrelationId request header.
      * Used for troubleshooting errors in the server logs. It should be a valid guid.
      */
     ConversationTranslator_CorrelationId,

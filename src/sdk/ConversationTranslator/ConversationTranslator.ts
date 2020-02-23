@@ -19,7 +19,7 @@ import {
     SpeechTranslationConfig,
     TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
-    TranslationRecognizer } from "../Exports";
+    TranslationRecognizer} from "../Exports";
 import { ConversationImpl } from "./Conversation";
 import {
     ConversationExpirationEventArgs,
@@ -111,9 +111,9 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 if (endpoint) {
                     this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Host], endpoint);
                 }
-                const speechEndpointHost: string = this.privProperties.getProperty(PropertyId.ConversationTranslator_SpeechHost);
+                const speechEndpointHost: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Host);
                 if (speechEndpointHost) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost);
+                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Host], speechEndpointHost);
                 }
 
                 // join the conversation
@@ -135,38 +135,15 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                         // connect to the ws
                         this.privConversation.startConversationAsync(
                             (() => {
-                                if (!!cb) {
-                                    try {
-                                        cb();
-                                    } catch (e) {
-                                        if (!!err) {
-                                            err(e);
-                                        }
-                                    }
-                                    cb = undefined;
-                                }
+                                this.handleCallback(cb, err);
                             }),
                             ((error: any) => {
-                                if (!!err) {
-                                    if (error instanceof Error) {
-                                        const typedError: Error = error as Error;
-                                        err(typedError.name + ": " + typedError.message);
-                                    } else {
-                                        err(error);
-                                    }
-                                }
+                                this.handleError(error, err);
                             }));
 
                      }),
                     ((error: any) => {
-                        if (!!err) {
-                            if (error instanceof Error) {
-                                const typedError: Error = error as Error;
-                                err(typedError.name + ": " + typedError.message);
-                            } else {
-                                err(error);
-                            }
-                        }
+                        this.handleError(error, err);
                      }));
 
             } else if (typeof conversation === "object") {
@@ -179,28 +156,11 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
                 this.privSpeechTranslationConfig = conversation.config;
 
-                if (!!cb) {
-                    try {
-                        cb();
-                    } catch (e) {
-                        if (!!err) {
-                            err(e);
-                        }
-                    }
-                    cb = undefined;
-                }
+                this.handleCallback(cb, err);
             }
 
         } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-
-                } else {
-                    err(error);
-                }
-            }
+            this.handleError(error, err);
         }
     }
 
@@ -222,40 +182,16 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             // https delete request
             this.privConversation.deleteConversationAsync(
                 (() => {
-                    if (!!cb) {
-                        try {
-                            cb();
-                        } catch (e) {
-                            if (!!err) {
-                                err(e);
-                            }
-                        }
-                        cb = undefined;
-                    }
+                    this.handleCallback(cb, err);
                 }),
                 ((error: any) => {
-                    if (!!err) {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                    }
+                    this.handleError(error, err);
                 }));
 
             this.dispose();
 
         } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-
-                } else {
-                    err(error);
-                }
-            }
+            this.handleError(error, err);
         }
     }
 
@@ -274,14 +210,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             this.privConversation?.sendTextMessageAsync(message, cb, err);
         } catch (error) {
 
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
+            this.handleError(error, err);
         }
     }
 
@@ -321,7 +250,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                         ((error: any) => {
 
                             this.privIsSpeaking = false;
-                            this.fireCancelEvent(error);
+                            // this.fireCancelEvent(error);
                             this.cancelSpeech();
                             if (!!err) {
                                 if (error instanceof Error) {
@@ -347,44 +276,20 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 this.startContinuousRecognition(
                     (() => {
                         this.privIsSpeaking = true;
-
-                        if (!!cb) {
-                            try {
-                                cb();
-                            } catch (e) {
-                                if (!!err) {
-                                    err(e);
-                                }
-                            }
-                            cb = undefined;
-                        }
+                        this.handleCallback(cb, err);
                     }),
                     ((error: any) => {
                         this.privIsSpeaking = false;
-                        this.fireCancelEvent(error);
+                        // this.fireCancelEvent(error);
                         this.cancelSpeech();
 
-                        if (!!err) {
-                            if (error instanceof Error) {
-                                const typedError: Error = error as Error;
-                                err(typedError.name + ": " + typedError.message);
-                            } else {
-                                err(error);
-                            }
-                        }
+                        this.handleError(error, err);
                     }));
             }
 
         } catch (error) {
 
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
+            this.handleError(error, err);
 
             this.cancelSpeech();
 
@@ -402,55 +307,23 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             if (!this.privIsSpeaking) {
                 // stop speech
                 this.cancelSpeech();
-                if (!!cb) {
-                    try {
-                        cb();
-                    } catch (e) {
-                        if (!!err) {
-                            err(e);
-                        }
-                    }
-                    cb = undefined;
-                }
+                this.handleCallback(cb, err);
                 return;
             }
 
             // stop the recognition but leave the websocket open
             this.privIsSpeaking = false;
             this.privTranslationRecognizer?.stopContinuousRecognitionAsync(() => {
-                if (!!cb) {
-                    try {
-                        cb();
-                    } catch (e) {
-                        if (!!err) {
-                            err(e);
-                        }
-                    }
-                    cb = undefined;
-                }
+                this.handleCallback(cb, err);
             }, (error: any) => {
 
-                if (!!err) {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                }
+                this.handleError(error, err);
                 this.cancelSpeech();
             });
 
         } catch (error) {
 
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
+            this.handleError(error, err);
 
             this.cancelSpeech();
 
@@ -502,7 +375,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             const token: string = encodeURIComponent(this.privConversation.room.token);
 
             let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
-                PropertyId[PropertyId.ConversationTranslator_SpeechHost], ConversationTranslatorConfig.speechHost);
+                PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationTranslatorConfig.speechHost);
             endpointHost = endpointHost.replace("{region}", this.privConversation.room.cognitiveSpeechRegion);
 
             const url: string = `wss://${endpointHost}${ConversationTranslatorConfig.speechPath}?${ConversationTranslatorConfig.params.token}=${token}`;
@@ -519,27 +392,11 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             this.privTranslationRecognizer.sessionStarted = this.onSpeechSessionStarted;
             this.privTranslationRecognizer.sessionStopped = this.onSpeechSessionStopped;
 
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-                cb = undefined;
-            }
+            this.handleCallback(cb, err);
 
         } catch (error) {
 
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
+            this.handleError(error, err);
 
             this.cancelSpeech();
             // this.fireCancelEvent(error); ?
@@ -568,6 +425,11 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
     private onSpeechRecognized = (r: TranslationRecognizer, e: TranslationRecognitionEventArgs) => {
         // TODO: add support for getting recognitions from here if own speech
+
+        // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
+        if (e.result?.errorDetails) {
+            this.fireCancelEvent(e.result.errorDetails);
+        }
     }
 
     private onSpeechRecognizing = (r: TranslationRecognizer, e: TranslationRecognitionEventArgs) => {
@@ -575,15 +437,13 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     }
 
     private onSpeechCanceled = (r: TranslationRecognizer, e: TranslationRecognitionCanceledEventArgs) => {
-        this.privSpeechState = SpeechState.Inactive;
-
-        try {
-            this.cancelSpeech();
-            this.fireCancelEvent(e); // ?
-        } catch (error) {
-            //
+        if (this.privSpeechState !== SpeechState.Inactive) {
+            try {
+                this.cancelSpeech();
+            } catch (error) {
+                this.privSpeechState = SpeechState.Inactive;
+            }
         }
-
     }
 
     private onSpeechSessionStarted = (r: Recognizer, e: SessionEventArgs) => {
@@ -652,4 +512,28 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         return true;
     }
 
+    private handleCallback(cb: any, err: any): void {
+        if (!!cb) {
+            try {
+                cb();
+            } catch (e) {
+                if (!!err) {
+                    err(e);
+                }
+            }
+            cb = undefined;
+        }
+     }
+
+     private handleError(error: any, err: any): void {
+        if (!!err) {
+            if (error instanceof Error) {
+                const typedError: Error = error as Error;
+                err(typedError.name + ": " + typedError.message);
+
+            } else {
+                err(error);
+            }
+        }
+    }
 }

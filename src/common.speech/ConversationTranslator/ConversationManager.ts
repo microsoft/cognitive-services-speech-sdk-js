@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { createGuid, IStringDictionary } from "../../common/Exports";
+import { IStringDictionary } from "../../common/Exports";
 import { Contracts } from "../../sdk/Contracts";
 import { PropertyCollection, PropertyId } from "../../sdk/Exports";
 import { IConversationResponseError, IInternalConversation, IRequestOptions, IResponse } from "./ConversationTranslatorInterfaces";
@@ -29,14 +29,14 @@ export class ConversationManager {
             const languageCode: string = args.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, ConversationTranslatorConfig.defaultLanguageCode);
             const nickname: string = args.getProperty(PropertyId.ConversationTranslator_Name);
             const endpointHost: string = args.getProperty(PropertyId.ConversationTranslator_Host, ConversationTranslatorConfig.host);
-            const correlationId: string = args.getProperty(PropertyId.ConversationTranslator_CorrelationId, createGuid());
+            const correlationId: string = args.getProperty(PropertyId.ConversationTranslator_CorrelationId);
             const subscriptionKey: string = args.getProperty(PropertyId.SpeechServiceConnection_Key);
             const subscriptionRegion: string = args.getProperty(PropertyId.SpeechServiceConnection_Region);
+            const authToken: string = args.getProperty(PropertyId.SpeechServiceAuthorization_Token);
 
-            Contracts.throwIfNullOrUndefined(languageCode, "languageCode");
-            Contracts.throwIfNullOrUndefined(nickname, "nickname");
-            Contracts.throwIfNullOrUndefined(endpointHost, "endpointHost");
-            Contracts.throwIfNullOrUndefined(correlationId, "correlationId");
+            Contracts.throwIfNullOrWhitespace(languageCode, "languageCode");
+            Contracts.throwIfNullOrWhitespace(nickname, "nickname");
+            Contracts.throwIfNullOrWhitespace(endpointHost, "endpointHost");
 
             const queryParams: IStringDictionary<string> = {};
             queryParams[ConversationTranslatorConfig.params.apiVersion] = ConversationTranslatorConfig.apiVersion;
@@ -44,17 +44,23 @@ export class ConversationManager {
             queryParams[ConversationTranslatorConfig.params.nickname] = nickname;
 
             const headers: IStringDictionary<string> = {};
-            headers[ConversationTranslatorConfig.params.correlationId] = args.getProperty(PropertyId.ConversationTranslator_CorrelationId, correlationId);
+            if (correlationId) {
+                headers[ConversationTranslatorConfig.params.correlationId] = correlationId;
+            }
             headers[ConversationTranslatorConfig.params.clientAppId] = ConversationTranslatorConfig.clientAppId;
 
             if (conversationCode !== undefined) {
                 queryParams[ConversationTranslatorConfig.params.roomId] = conversationCode;
             } else {
-                Contracts.throwIfNullOrUndefined(subscriptionKey, "You must specify either an authentication token to use, or a Cognitive Speech subscription key");
-                Contracts.throwIfNullOrUndefined(subscriptionRegion, "You must specify the cognitive speech region to use");
-
-                headers[ConversationTranslatorConfig.params.subscriptionKey] = subscriptionKey;
+                Contracts.throwIfNullOrUndefined(subscriptionRegion, ConversationTranslatorConfig.strings.authInvalidSubscriptionRegion);
                 headers[ConversationTranslatorConfig.params.subscriptionRegion] = subscriptionRegion;
+                if (subscriptionKey) {
+                    headers[ConversationTranslatorConfig.params.subscriptionKey] = subscriptionKey;
+                } else if (authToken) {
+                    headers[ConversationTranslatorConfig.params.authorization] = `Bearer ${authToken}`;
+                } else {
+                    Contracts.throwIfNullOrUndefined(subscriptionKey, ConversationTranslatorConfig.strings.authInvalidSubscriptionKey);
+                }
             }
 
             const config: IRequestOptions = {};
@@ -68,16 +74,18 @@ export class ConversationManager {
                 const requestId: string = extractHeaderValue(ConversationTranslatorConfig.params.requestId, response.headers);
 
                 if (!response.ok) {
-
                     if (!!err) {
                         // get the error
-                        let errorMessage: string = `Creating/Joining room failed with HTTP ${response.status}`;
+                        let errorMessage: string = ConversationTranslatorConfig.strings.invalidCreateJoinConversationResponse.replace("{status}", response.status.toString());
                         let errMessageRaw: IConversationResponseError;
                         try {
                             errMessageRaw = JSON.parse(response.data) as IConversationResponseError;
-                            errorMessage += ` [${errMessageRaw.error.code}: ${errMessageRaw.error.message} ${requestId}]`;
+                            errorMessage += ` [${errMessageRaw.error.code}: ${errMessageRaw.error.message}]`;
                         } catch (e) {
-                            // ignore
+                            errorMessage += ` [${response.data}]`;
+                        }
+                        if (requestId) {
+                            errorMessage += ` ${requestId}`;
                         }
 
                         err(errorMessage);
@@ -124,17 +132,20 @@ export class ConversationManager {
 
         try {
 
-            Contracts.throwIfNullOrUndefined(args, "args");
+            Contracts.throwIfNullOrUndefined(args, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "config"));
+            Contracts.throwIfNullOrWhitespace(sessionToken, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "token"));
 
             const endpointHost: string = args.getProperty(PropertyId.ConversationTranslator_Host, ConversationTranslatorConfig.host);
-            const correlationId: string = args.getProperty(PropertyId.ConversationTranslator_CorrelationId, createGuid());
+            const correlationId: string = args.getProperty(PropertyId.ConversationTranslator_CorrelationId);
 
             const queryParams: IStringDictionary<string> = {};
             queryParams[ConversationTranslatorConfig.params.apiVersion] = ConversationTranslatorConfig.apiVersion;
             queryParams[ConversationTranslatorConfig.params.sessionToken] = sessionToken;
 
             const headers: IStringDictionary<string> = {};
-            headers[ConversationTranslatorConfig.params.correlationId] = correlationId;
+            if (correlationId) {
+                headers[ConversationTranslatorConfig.params.correlationId] = correlationId;
+            }
 
             const config: IRequestOptions = {};
             config.headers = headers;

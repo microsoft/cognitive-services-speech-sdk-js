@@ -34,9 +34,10 @@ import {
     IConversationTranslatorRecognizer,
     IEjectParticipantCommand,
     IInstantMessageCommand,
+    IInternalConversation,
     ILockConversationCommand,
     IMuteAllCommand,
-    IMuteCommand } from "./ConversationTranslatorInterfaces";
+    IMuteCommand} from "./ConversationTranslatorInterfaces";
 
 /**
  * Sends messages to the Conversation Translator websocket and listens for incoming events containing websocket messages.
@@ -46,10 +47,11 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
 
     private privIsDisposed: boolean;
     private privSpeechRecognitionLanguage: string;
+    private privRoom: IInternalConversation;
 
     public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
         const serviceConfigImpl = speechConfig as SpeechTranslationConfigImpl;
-        Contracts.throwIfNull(speechConfig, "speechConfig");
+        Contracts.throwIfNull(serviceConfigImpl, "speechConfig");
 
         super(audioConfig, serviceConfigImpl.properties, new ConversationConnectionFactory());
 
@@ -70,6 +72,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
     public translationReceived: (sender: IConversationTranslatorRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
     public participantsListReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantsListEventArgs) => void;
     public participantsChanged: (sender: IConversationTranslatorRecognizer, event: ConversationParticipantsChangedEventArgs) => void;
+
+    public set conversation(value: IInternalConversation) {
+        this.privRoom = value;
+    }
 
     /**
      * Return the speech language used by the recognizer
@@ -95,12 +101,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      */
     public connect(token: string, cb?: () => void, err?: (e: string) => void): void {
         try {
-
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfNullOrWhitespace(token, "token");
             this.privReco.conversationTranslatorToken = token;
             this.privReco.connect();
-
             if (!!cb) {
                 try {
                     cb();
@@ -119,9 +123,6 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                     err(error);
                 }
             }
-
-            // Destroy the recognizer.
-            // this.dispose(true);
         }
     }
 
@@ -130,10 +131,9 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      */
     public disconnect(cb?: () => void, err?: (e: string) => void): void {
         try {
-
             Contracts.throwIfDisposed(this.privIsDisposed);
+            this.privRoom = undefined;
             this.privReco.disconnect();
-
             if (!!cb) {
                 try {
                     cb();
@@ -152,9 +152,8 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                     err(error);
                 }
             }
-
             // Destroy the recognizer.
-            // this.dispose(true);
+            this.dispose(true);
         }
     }
 
@@ -164,19 +163,17 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      * @param participantId
      * @param message
      */
-    public sendMessageRequest(conversationId: string, participantId: string, message: string, cb?: () => void, err?: (e: string) => void): void {
-
+    public sendMessageRequest(message: string, cb?: () => void, err?: (e: string) => void): void {
         try {
-
             Contracts.throwIfDisposed(this.privIsDisposed);
-            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
-            Contracts.throwIfNullOrWhitespace(participantId, "participantId");
+            Contracts.throwIfNullOrWhitespace(this.privRoom.roomId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(this.privRoom.participantId, "participantId");
             Contracts.throwIfNullOrWhitespace(message, "message");
 
             const command: IInstantMessageCommand = {
                 // tslint:disable-next-line: object-literal-shorthand
-                participantId: participantId,
-                roomId: conversationId,
+                participantId: this.privRoom.participantId,
+                roomId: this.privRoom.roomId,
                 text: message,
                 type: ConversationTranslatorMessageTypes.instantMessage
             };
@@ -214,20 +211,19 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      * @param participantId
      * @param isLocked
      */
-    public sendLockRequest(conversationId: string, participantId: string, isLocked: boolean, cb?: () => void, err?: (e: string) => void): void {
+    public sendLockRequest(isLocked: boolean, cb?: () => void, err?: (e: string) => void): void {
 
         try {
-
             Contracts.throwIfDisposed(this.privIsDisposed);
-            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
-            Contracts.throwIfNullOrWhitespace(participantId, "participantId");
+            Contracts.throwIfNullOrWhitespace(this.privRoom.roomId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(this.privRoom.participantId, "participantId");
             Contracts.throwIfNullOrUndefined(isLocked, "isLocked");
 
             const command: ILockConversationCommand = {
                 command: ConversationTranslatorCommandTypes.setLockState,
                 // tslint:disable-next-line: object-literal-shorthand
-                participantId: participantId,
-                roomid: conversationId,
+                participantId: this.privRoom.participantId,
+                roomid: this.privRoom.roomId,
                 type: ConversationTranslatorMessageTypes.participantCommand,
                 value: isLocked
             };
@@ -264,20 +260,19 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      * @param participantId
      * @param isMuted
      */
-    public sendMuteAllRequest(conversationId: string, participantId: string, isMuted: boolean, cb?: () => void, err?: (e: string) => void): void {
+    public sendMuteAllRequest(isMuted: boolean, cb?: () => void, err?: (e: string) => void): void {
 
         try {
-
             Contracts.throwIfDisposed(this.privIsDisposed);
-            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
-            Contracts.throwIfNullOrWhitespace(participantId, "participantId");
+            Contracts.throwIfNullOrWhitespace(this.privRoom.roomId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(this.privRoom.participantId, "participantId");
             Contracts.throwIfNullOrUndefined(isMuted, "isMuted");
 
             const command: IMuteAllCommand = {
                 command: ConversationTranslatorCommandTypes.setMuteAll,
                 // tslint:disable-next-line: object-literal-shorthand
-                participantId: participantId, // the id of the host
-                roomid: conversationId,
+                participantId: this.privRoom.participantId, // the id of the host
+                roomid: this.privRoom.roomId,
                 type: ConversationTranslatorMessageTypes.participantCommand,
                 value: isMuted
             };
@@ -314,12 +309,11 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      * @param participantId
      * @param isMuted
      */
-    public sendMuteRequest(conversationId: string, participantId: string, isMuted: boolean, cb?: () => void, err?: (e: string) => void): void {
+    public sendMuteRequest(participantId: string, isMuted: boolean, cb?: () => void, err?: (e: string) => void): void {
 
         try {
-
             Contracts.throwIfDisposed(this.privIsDisposed);
-            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(this.privRoom.roomId, "conversationId");
             Contracts.throwIfNullOrWhitespace(participantId, "participantId");
             Contracts.throwIfNullOrUndefined(isMuted, "isMuted");
 
@@ -327,7 +321,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 command: ConversationTranslatorCommandTypes.setMute,
                 // tslint:disable-next-line: object-literal-shorthand
                 participantId: participantId, // the id of the participant
-                roomid: conversationId,
+                roomid: this.privRoom.roomId,
                 type: ConversationTranslatorMessageTypes.participantCommand,
                 value: isMuted
             };
@@ -363,19 +357,18 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      * @param conversationId
      * @param participantId
      */
-    public sendEjectRequest(conversationId: string, participantId: string, cb?: () => void, err?: (e: string) => void): void {
+    public sendEjectRequest(participantId: string, cb?: () => void, err?: (e: string) => void): void {
 
         try {
-
             Contracts.throwIfDisposed(this.privIsDisposed);
-            Contracts.throwIfNullOrWhitespace(conversationId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(this.privRoom.roomId, "conversationId");
             Contracts.throwIfNullOrWhitespace(participantId, "participantId");
 
             const command: IEjectParticipantCommand = {
                 command: ConversationTranslatorCommandTypes.ejectParticipant,
                 // tslint:disable-next-line: object-literal-shorthand
                 participantId: participantId,
-                roomid: conversationId,
+                roomid: this.privRoom.roomId,
                 type: ConversationTranslatorMessageTypes.participantCommand,
             };
 
@@ -411,7 +404,6 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
      */
     public close(): void {
         Contracts.throwIfDisposed(this.privIsDisposed);
-
         this.dispose(true);
     }
 
@@ -423,9 +415,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
         if (this.privIsDisposed) {
             return;
         }
-
         if (disposing) {
-            // this.implRecognizerStop();
             this.privIsDisposed = true;
             super.dispose(disposing);
         }

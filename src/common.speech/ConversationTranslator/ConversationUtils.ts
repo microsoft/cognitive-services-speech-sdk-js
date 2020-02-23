@@ -15,21 +15,22 @@ export const ConversationTranslatorConfig = {
     clientAppId: "FC539C22-1767-4F1F-84BC-B4D811114F15",
     defaultLanguageCode: "en-US",
     defaultRequestOptions: {
-    headers: {
-        Accept: "application/json",
-    },
-    ignoreCache: false,
-    timeout: 5000,
+        headers: {
+            Accept: "application/json",
+        },
+        ignoreCache: false,
+        timeout: 5000,
     },
     host: "dev.microsofttranslator.com",
     params: {
         apiVersion: "api-version",
+        authorization: "Authorization",
         clientAppId: "X-ClientAppId",
         correlationId: "X-CorrelationId",
         languageCode: "language",
         nickname: "nickname",
         profanity: "profanity",
-        requestId: "x-requestid",
+        requestId: "X-RequestId",
         roomId: "roomid",
         sessionToken: "token",
         subscriptionKey: "Ocp-Apim-Subscription-Key",
@@ -40,7 +41,10 @@ export const ConversationTranslatorConfig = {
     speechHost: "{region}.s2s.speech.microsoft.com",
     speechPath: "/speech/translation/cognitiveservices/v1",
     strings: {
+        authInvalidSubscriptionKey: "You must specify either an authentication token to use, or a Cognitive Speech subscription key.",
+        authInvalidSubscriptionRegion: "You must specify the cognitive speech region to use.",
         invalidArgs: "Required input not found: {arg}.",
+        invalidCreateJoinConversationResponse: "Creating/Joining room failed with HTTP {status}.",
         invalidParticipantRequest: "The requested participant was not found.",
         permissionDeniedConnect: "Required credentials not found.",
         permissionDeniedConversation: "Invalid operation: only the host can {command} the conversation.",
@@ -82,7 +86,7 @@ function errorResponse(xhr: XMLHttpRequest, message: string | null = null): IRes
     return {
         data: message || xhr.statusText,
         headers: xhr.getAllResponseHeaders(),
-        json: <T>() => JSON.parse(message || xhr.statusText) as T,
+        json: <T>() => JSON.parse(message || ("\"" + xhr.statusText + "\"")) as T,
       ok: false,
       status: xhr.status,
       statusText: xhr.statusText,
@@ -103,7 +107,7 @@ export function extractHeaderValue(headerKey: string, headers: string): string {
         headerMap[header] = value;
       });
 
-      headerValue = headerMap[headerKey];
+      headerValue = headerMap[headerKey.toLowerCase()];
     } catch (e) {
       // ignore the error
     }

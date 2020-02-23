@@ -122,7 +122,7 @@ describe("conversation config tests", () => {
 
         const config = sdk.SpeechTranslationConfig.fromSubscription("abc", "def");
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         const c = sdk.Conversation.createConversationAsync(config);
         objsToClose.push(c);
@@ -131,8 +131,8 @@ describe("conversation config tests", () => {
         expect(c.config).not.toBeUndefined();
         expect(c.properties.getProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host])).toEqual(config.getProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host]));
         expect(c.config.getProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host])).toEqual(config.getProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host]));
-        expect(c.properties.getProperty(sdk.PropertyId.ConversationTranslator_SpeechHost)).toEqual(config.getProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost]));
-        expect(c.config.getProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost])).toEqual(config.getProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost]));
+        expect(c.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_Host)).toEqual(config.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host]));
+        expect(c.config.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host])).toEqual(config.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host]));
     });
 
     test("Create Conversation, config with nickname", () => {
@@ -192,7 +192,7 @@ describe("conversation service tests", () => {
         config.speechRecognitionLanguage = "en-US";
         config.addTargetLanguage("de-DE");
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         const c = sdk.Conversation.createConversationAsync(config, (() => {
             expect(c.conversationId.length).toEqual(5);
@@ -210,7 +210,7 @@ describe("conversation service tests", () => {
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         config.speechRecognitionLanguage = "abc";
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         const c = sdk.Conversation.createConversationAsync(config, undefined, ((error: any) => {
             expect(error).toContain("400003");
@@ -229,7 +229,7 @@ describe("conversation service tests", () => {
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         config.speechRecognitionLanguage = "en-US";
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
         config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Name], "Host.Testing");
 
         const c = sdk.Conversation.createConversationAsync(config, undefined, ((error: any) => {
@@ -249,7 +249,7 @@ describe("conversation service tests", () => {
         const config = sdk.SpeechTranslationConfig.fromSubscription("abc", "def");
         config.speechRecognitionLanguage = "en-US";
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         const c = sdk.Conversation.createConversationAsync(config, undefined, ((error: any) => {
             expect(error).toContain("401000");
@@ -273,12 +273,12 @@ describe("conversation service tests", () => {
         // start a room
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         const c: sdk.Conversation = sdk.Conversation.createConversationAsync(config, (() => {
             const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator();
             if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
             ct.canceled = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs) => {
                 done.fail();
@@ -318,7 +318,7 @@ describe("conversation service tests", () => {
             // join as a participant
             const ctP: sdk.ConversationTranslator = new sdk.ConversationTranslator();
             if (endpointHost !== "") { ctP.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-            if (speechEndpointHost !== "") { ctP.properties.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+            if (speechEndpointHost !== "") { ctP.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
             objsToClose.push(ctP);
             ctP.joinConversationAsync(code, "mute me", "en-US");
         }
@@ -337,14 +337,14 @@ describe("conversation service tests", () => {
         // start a room
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         const c: sdk.Conversation = sdk.Conversation.createConversationAsync(config, (() => {
             objsToClose.push(c);
 
             const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator();
             if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
             ct.canceled = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs) => {
                 done.fail();
@@ -353,8 +353,6 @@ describe("conversation service tests", () => {
                 sendMessage(`Hello ${e.participants[0].displayName}`);
             });
             ct.textMessageReceived = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
-                // tslint:disable-next-line: no-console
-                // console.log("received message: " + e.result.text);
                 textMessage = e.result.text;
             });
 
@@ -390,14 +388,14 @@ describe("conversation service tests", () => {
         // start a room
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         const c: sdk.Conversation = sdk.Conversation.createConversationAsync(config, (() => {
             objsToClose.push(c);
 
             const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator();
             if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
             ct.canceled = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs) => {
                 done.fail();
             });
@@ -436,43 +434,13 @@ describe("conversation service tests", () => {
             // join as a participant
             const ctP: sdk.ConversationTranslator = new sdk.ConversationTranslator();
             if (endpointHost !== "") { ctP.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-            if (speechEndpointHost !== "") { ctP.properties.setProperty(sdk.PropertyId.ConversationTranslator_SpeechHost, speechEndpointHost); }
+            if (speechEndpointHost !== "") { ctP.properties.setProperty(sdk.PropertyId.SpeechServiceConnection_Host, speechEndpointHost); }
             ctP.joinConversationAsync(code, "remove me", "en-US");
         }
 
         WaitForCondition(() => (ejected > 0), done);
 
     }, 30000);
-
-    // test("Start Conversation, then delete it", (done: jest.DoneCallback) => {
-
-    //     const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
-    //     config.speechRecognitionLanguage = "en-US";
-    //     config.addTargetLanguage("de-DE");
-    //     if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-    //     if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
-
-    //     const c = sdk.Conversation.createConversationAsync(config);
-    //     objsToClose.push(c);
-
-    //     c.startConversationAsync();
-
-    //     WaitForCondition(() => {
-    //         return !!c.conversationId;
-    //     }, () => {
-
-    //         expect(c.config).not.toBeUndefined();
-    //         c.endConversationAsync();
-    //         c.deleteConversationAsync();
-
-    //         WaitForCondition(() => {
-    //             return c.config === undefined;
-    //         }, () => {
-    //             done();
-    //         });
-    //     });
-
-    // }, 30000);
 
 });
 
@@ -523,7 +491,7 @@ describe("conversation translator service tests",  () => {
         const nickname: string = "Tester";
 
         if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-        if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         objsToClose.push(ct);
 
@@ -550,7 +518,7 @@ describe("conversation translator service tests",  () => {
         // start a room
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
         config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Name], "Tester");
 
         const c = sdk.Conversation.createConversationAsync(config, (() => {
@@ -559,7 +527,7 @@ describe("conversation translator service tests",  () => {
 
                 const ct = new sdk.ConversationTranslator();
                 if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-                if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+                if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
                 objsToClose.push(ct);
 
@@ -598,14 +566,14 @@ describe("conversation translator service tests",  () => {
         // start a room
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         const c = sdk.Conversation.createConversationAsync(config, (() => {
             objsToClose.push(c);
 
             const ct = new sdk.ConversationTranslator();
             if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
             objsToClose.push(ct);
 
@@ -643,14 +611,14 @@ describe("conversation translator service tests",  () => {
         // start a room
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
         const c = sdk.Conversation.createConversationAsync(config, (() => {
             expect(c.conversationId.length).toEqual(5);
 
             const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator(audioConfig);
             if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_SpeechHost], speechEndpointHost); }
+            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
             ct.canceled = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs) => {
                 done();
