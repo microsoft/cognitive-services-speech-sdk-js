@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { ConversationTranslatorConfig, IInternalConversation } from "../../common.speech/Exports";
+import { ConversationImpl, ConversationTranslatorConfig } from "../../common.speech/Exports";
 import { IDisposable } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
@@ -20,7 +20,6 @@ import {
     TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
     TranslationRecognizer} from "../Exports";
-import { ConversationImpl } from "./Conversation";
 import {
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
@@ -28,6 +27,7 @@ import {
     ConversationTranslationEventArgs,
     Participant,
  } from "./Exports";
+import { IConversation } from "./IConversation";
 import { IConversationTranslator } from "./IConversationTranslator";
 
 export enum SpeechState {
@@ -84,6 +84,8 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
+    // public joinConversationAsync(conversation: IConversation, nickname: string): void;
+    // public joinConversationAsync(conversationId: string, nickname: string, lang: string): void;
     public joinConversationAsync(conversation: any, nickname: any, lang?: any, cb?: () => void, err?: (e: string) => void): void {
 
         try {
@@ -177,18 +179,21 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             this.cancelSpeech();
 
             // stop the websocket
-            this.privConversation.endConversationAsync(cb, err);
-
-            // https delete request
-            this.privConversation.deleteConversationAsync(
+            this.privConversation.endConversationAsync(
                 (() => {
-                    this.handleCallback(cb, err);
+                    // https delete request
+                    this.privConversation.deleteConversationAsync(
+                        (() => {
+                            this.handleCallback(cb, err);
+                            this.dispose();
+                        }),
+                        ((error: any) => {
+                            this.handleError(error, err);
+                        }));
                 }),
                 ((error: any) => {
                     this.handleError(error, err);
                 }));
-
-            this.dispose();
 
         } catch (error) {
             this.handleError(error, err);
@@ -428,6 +433,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
         // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
         if (e.result?.errorDetails) {
+            this.cancelSpeech();
             this.fireCancelEvent(e.result.errorDetails);
         }
     }

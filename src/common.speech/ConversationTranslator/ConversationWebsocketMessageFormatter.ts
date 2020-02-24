@@ -28,25 +28,7 @@ export class ConversationWebsocketMessageFormatter implements IWebsocketMessageF
                 const incomingMessage: ConversationConnectionMessage = new ConversationConnectionMessage(message.messageType, message.textContent, {}, message.id);
                 deferral.resolve(incomingMessage);
             } else if (message.messageType === MessageType.Binary) {
-                const binaryMessage: ArrayBuffer = message.binaryContent;
-                let body: ArrayBuffer = null;
-
-                if (!binaryMessage || binaryMessage.byteLength < 2) {
-                    throw new Error("Invalid binary message format. Header length missing.");
-                }
-
-                const dataView = new DataView(binaryMessage);
-                const headerLength = dataView.getInt16(0);
-
-                if (binaryMessage.byteLength < headerLength + 2) {
-                    throw new Error("Invalid binary message format. Header content missing.");
-                }
-
-                if (binaryMessage.byteLength > headerLength + 2) {
-                    body = binaryMessage.slice(2 + headerLength);
-                }
-
-                deferral.resolve(new ConversationConnectionMessage(message.messageType, body, undefined, message.id));
+                deferral.resolve(new ConversationConnectionMessage(message.messageType, message.binaryContent, undefined, message.id));
             }
         } catch (e) {
             deferral.reject(`Error formatting the message. Error: ${e}`);

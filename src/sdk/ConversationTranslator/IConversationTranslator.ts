@@ -83,26 +83,26 @@ export interface IConversationTranslator {
     /**
      * Leave the current conversation. After this is called, you will no longer receive any events.
      */
-    leaveConversationAsync(): void;
+    leaveConversationAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Sends an instant message to all participants in the conversation. This instant message
      * will be translated into each participant's text language.
      * @param message
      */
-    sendTextMessageAsync(message: string): void;
+    sendTextMessageAsync(message: string, cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Starts sending audio to the conversation service for speech recognition and translation. You
      * should subscribe to the Transcribing, and Transcribed events to receive conversation
      * translation results for yourself, and other participants in the conversation.
      */
-    startTranscribingAsync(): void;
+    startTranscribingAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Stops sending audio to the conversation service. You will still receive Transcribing, and
      * and Transcribed events for other participants in the conversation.
      */
-    stopTranscribingAsync(): void;
+    stopTranscribingAsync(cb?: () => void, err?: (e: string) => void): void;
 
 }

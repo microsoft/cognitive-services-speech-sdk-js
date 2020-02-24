@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+export { ConversationImpl } from "./ConversationImpl";
 export { ConversationManager } from "./ConversationManager";
 export { ConversationTranslatorConfig } from "./ConversationUtils";
 export { ConversationTranslatorRecognizer } from "./ConversationTranslatorRecognizer";
