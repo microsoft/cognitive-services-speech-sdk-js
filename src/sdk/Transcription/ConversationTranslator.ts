@@ -86,7 +86,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      */
     public joinConversationAsync(conversation: IConversation, nickname: string, cb?: Callback, err?: Callback): void;
     public joinConversationAsync(conversationId: string, nickname: string, lang: string, cb?: Callback, err?: Callback): void;
-    public joinConversationAsync(conversation: any, nickname: string, param1: string | Callback, param2?: Callback, param3?: Callback): void {
+    public joinConversationAsync(conversation: any, nickname: string, param1?: string | Callback, param2?: Callback, param3?: Callback): void {
 
         try {
 
@@ -164,6 +164,10 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 this.privSpeechTranslationConfig = conversation.config;
 
                 this.handleCallback(param1 as Callback, param2);
+            } else {
+                this.handleError(
+                    new Error(ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "invalid conversation type")),
+                    param2);
             }
 
         } catch (error) {
