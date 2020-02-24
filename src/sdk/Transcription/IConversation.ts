@@ -5,6 +5,8 @@
 import { PropertyCollection, SpeechTranslationConfig } from "../Exports";
 import { IParticipant, IUser } from "./IParticipant";
 
+export type Callback = (result?: any) => void;
+
 /**
  * Manages conversations.
  * Added in version 1.4.0

@@ -27,7 +27,7 @@ import {
     ConversationTranslationEventArgs,
     Participant,
  } from "./Exports";
-import { IConversation } from "./IConversation";
+import { Callback, IConversation } from "./IConversation";
 import { IConversationTranslator } from "./IConversationTranslator";
 
 export enum SpeechState {
@@ -84,20 +84,22 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
-    // public joinConversationAsync(conversation: IConversation, nickname: string): void;
-    // public joinConversationAsync(conversationId: string, nickname: string, lang: string): void;
-    public joinConversationAsync(conversation: any, nickname: any, lang?: any, cb?: () => void, err?: (e: string) => void): void {
+    public joinConversationAsync(conversation: IConversation, nickname: string, cb?: Callback, err?: Callback): void;
+    public joinConversationAsync(conversationId: string, nickname: string, lang: string, cb?: Callback, err?: Callback): void;
+    public joinConversationAsync(conversation: any, nickname: string, param1: string | Callback, param2?: Callback, param3?: Callback): void {
 
         try {
-            Contracts.throwIfNullOrUndefined(conversation, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "conversation id"));
-            Contracts.throwIfNullOrWhitespace(nickname, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "nickname"));
-
-            if (!!this.privConversation) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedStart);
-            }
 
             if (typeof conversation === "string") {
 
+                Contracts.throwIfNullOrUndefined(conversation, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "conversation id"));
+                Contracts.throwIfNullOrWhitespace(nickname, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "nickname"));
+
+                if (!!this.privConversation) {
+                    this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedStart), param3);
+                }
+
+                let lang: string = param1 as string;
                 if (lang === undefined || lang === null || lang === "") { lang = ConversationTranslatorConfig.defaultLanguageCode; }
 
                 // create a placecholder config
@@ -129,7 +131,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                     ((result: string) => {
 
                         if (!result) {
-                            throw new Error(ConversationTranslatorConfig.strings.permissionDeniedConnect);
+                            this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedConnect), param3);
                         }
 
                         this.privSpeechTranslationConfig.authorizationToken = result;
@@ -137,18 +139,21 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                         // connect to the ws
                         this.privConversation.startConversationAsync(
                             (() => {
-                                this.handleCallback(cb, err);
+                                this.handleCallback(param2, param3);
                             }),
                             ((error: any) => {
-                                this.handleError(error, err);
+                                this.handleError(error, param3);
                             }));
 
                      }),
                     ((error: any) => {
-                        this.handleError(error, err);
+                        this.handleError(error, param3);
                      }));
 
             } else if (typeof conversation === "object") {
+
+                Contracts.throwIfNullOrUndefined(conversation, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "conversation id"));
+                Contracts.throwIfNullOrWhitespace(nickname, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "nickname"));
 
                 this.privConversation = conversation as ConversationImpl;
                 this.privConversation.conversationTranslator = this;
@@ -158,11 +163,11 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
                 this.privSpeechTranslationConfig = conversation.config;
 
-                this.handleCallback(cb, err);
+                this.handleCallback(param1 as Callback, param2);
             }
 
         } catch (error) {
-            this.handleError(error, err);
+            this.handleError(error, typeof param1 === "string" ? param3 : param2);
         }
     }
 
@@ -171,7 +176,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
-    public leaveConversationAsync(cb?: () => void, err?: (e: string) => void): void {
+    public leaveConversationAsync(cb?: Callback, err?: Callback): void {
 
         try {
 
@@ -206,7 +211,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
-    public sendTextMessageAsync(message: string, cb?: () => void, err?: (e: string) => void): void {
+    public sendTextMessageAsync(message: string, cb?: Callback, err?: Callback): void {
 
         try {
             Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedSend);
@@ -224,14 +229,14 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
-    public startTranscribingAsync(cb?: () => void, err?: (e: string) => void): void {
+    public startTranscribingAsync(cb?: Callback, err?: Callback): void {
 
         try {
             Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedSend);
             Contracts.throwIfNullOrUndefined(this.privConversation.room.token, ConversationTranslatorConfig.strings.permissionDeniedConnect);
 
             if (!this.canSpeak) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedSend);
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedSend), err);
             }
 
             if (this.privTranslationRecognizer === undefined) {
@@ -240,42 +245,18 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                         this.startContinuousRecognition(
                         (() => {
                             this.privIsSpeaking = true;
-
-                            if (!!cb) {
-                                try {
-                                    cb();
-                                } catch (e) {
-                                    if (!!err) {
-                                        err(e);
-                                    }
-                                }
-                                cb = undefined;
-                            }
+                            this.handleCallback(cb, err);
                         }),
                         ((error: any) => {
 
                             this.privIsSpeaking = false;
                             // this.fireCancelEvent(error);
                             this.cancelSpeech();
-                            if (!!err) {
-                                if (error instanceof Error) {
-                                    const typedError: Error = error as Error;
-                                    err(typedError.name + ": " + typedError.message);
-                                } else {
-                                    err(error);
-                                }
-                            }
+                            this.handleError(error, err);
                         }));
                     }),
                     ((error: any) => {
-                        if (!!err) {
-                            if (error instanceof Error) {
-                                const typedError: Error = error as Error;
-                                err(typedError.name + ": " + typedError.message);
-                            } else {
-                                err(error);
-                            }
-                        }
+                        this.handleError(error, err);
                     }));
             } else {
                 this.startContinuousRecognition(
@@ -306,7 +287,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
-    public stopTranscribingAsync(cb?: () => void, err?: (e: string) => void): void {
+    public stopTranscribingAsync(cb?: Callback, err?: Callback): void {
 
         try {
             if (!this.privIsSpeaking) {
@@ -362,7 +343,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
-    private connectTranslatorRecognizer(cb?: () => void, err?: (e: string) => void): void {
+    private connectTranslatorRecognizer(cb?: Callback, err?: Callback): void {
 
         try {
 
@@ -414,7 +395,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
-    private startContinuousRecognition(cb?: () => void, err?: (e: string) => void): void {
+    private startContinuousRecognition(cb?: Callback, err?: Callback): void {
         this.privTranslationRecognizer.startContinuousRecognitionAsync(cb, err);
     }
 
@@ -518,7 +499,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         return true;
     }
 
-    private handleCallback(cb: any, err: any): void {
+    private handleCallback(cb: Callback, err: Callback): void {
         if (!!cb) {
             try {
                 cb();
@@ -531,7 +512,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         }
      }
 
-     private handleError(error: any, err: any): void {
+     private handleError(error: any, err: Callback): void {
         if (!!err) {
             if (error instanceof Error) {
                 const typedError: Error = error as Error;

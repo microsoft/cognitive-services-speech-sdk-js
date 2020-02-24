@@ -5,8 +5,6 @@
 
 import { IDisposable } from "../../common/Exports";
 import { Contracts } from "../../sdk/Contracts";
-import { ConversationTranslator } from "../../sdk/ConversationTranslator/ConversationTranslator";
-import { IParticipant, IUser, Participant } from "../../sdk/ConversationTranslator/IParticipant";
 import {
     Connection,
     ConnectionEventArgs,
@@ -15,12 +13,16 @@ import {
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
+    ConversationTranslator,
+    Participant,
     ParticipantChangedReason,
     ProfanityOption,
     PropertyCollection,
     PropertyId,
     SpeechTranslationConfig} from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
+import { Callback } from "../../sdk/Transcription/IConversation";
+import { IParticipant, IUser } from "../../sdk/Transcription/IParticipant";
 import {
     ConversationManager,
     ConversationReceivedTranslationEventArgs,
@@ -168,15 +170,15 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public createConversationAsync(cb?: () => void, err?: (e: string) => void): void {
+    public createConversationAsync(cb?: Callback, err?: Callback): void {
         try {
             if (!!this.privConversationRecognizer) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedStart);
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedStart), err);
             }
             this.privManager.createOrJoin(this.privProperties, undefined,
                 ((room: IInternalConversation) => {
                     if (!room) {
-                        throw new Error(ConversationTranslatorConfig.strings.permissionDeniedConnect);
+                        this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedConnect), err);
                     }
                     this.privRoom = room;
                     this.handleCallback(cb, err);
@@ -194,11 +196,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public startConversationAsync(cb?: () => void, err?: (e: string) => void): void {
+    public startConversationAsync(cb?: Callback, err?: Callback): void {
         try {
             // check if there is already a recognizer
             if (!!this.privConversationRecognizer) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedStart);
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedStart), err);
             }
             // check if there is conversation data available
             Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedConnect);
@@ -238,7 +240,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public joinConversationAsync(conversationId: string, nickname: string, lang: string, cb?: (result: any) => void, err?: (e: string) => void): void {
+    public joinConversationAsync(conversationId: string, nickname: string, lang: string, cb?: Callback, err?: Callback): void {
         try {
             // TODO
             // if (!!this.privConversationRecognizer) {
@@ -271,7 +273,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public deleteConversationAsync(cb?: () => void, err?: (e: string) => void): void {
+    public deleteConversationAsync(cb?: Callback, err?: Callback): void {
         try {
             Contracts.throwIfNullOrUndefined(this.privProperties, ConversationTranslatorConfig.strings.permissionDeniedConnect);
             Contracts.throwIfNullOrWhitespace(this.privRoom.token, ConversationTranslatorConfig.strings.permissionDeniedConnect);
@@ -293,7 +295,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public endConversationAsync(cb?: () => void, err?: (e: string) => void): void {
+    public endConversationAsync(cb?: Callback, err?: Callback): void {
         try {
             this.close(true);
             this.handleCallback(cb, err);
@@ -307,13 +309,13 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public lockConversationAsync(cb?: () => void, err?: (e: string) => void): void {
+    public lockConversationAsync(cb?: Callback, err?: Callback): void {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
             Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedSend);
             if (!this.canSendAsHost) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedConversation.replace("{command}", "lock"));
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedConversation.replace("{command}", "lock")), err);
             }
             this.privConversationRecognizer?.sendLockRequest(true,
                 (() => {
@@ -332,7 +334,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public muteAllParticipantsAsync(cb?: () => void, err?: (e: string) => void): void {
+    public muteAllParticipantsAsync(cb?: Callback, err?: Callback): void {
 
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
@@ -341,7 +343,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
             Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedSend);
             // check the user's permissions
             if (!this.canSendAsHost) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedConversation.replace("{command}", "mute"));
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedConversation.replace("{command}", "mute")), err);
             }
             this.privConversationRecognizer?.sendMuteAllRequest(true,
                 (() => {
@@ -361,7 +363,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public muteParticipantAsync(userId: string, cb?: () => void, err?: (e: string) => void): void {
+    public muteParticipantAsync(userId: string, cb?: Callback, err?: Callback): void {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
@@ -369,16 +371,16 @@ export class ConversationImpl extends Conversation implements IDisposable {
             Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedSend);
             // check the connection is open (host + participant can perform the mute command)
             if (!this.canSend) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedSend);
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedSend), err);
             }
             // if not host, check the participant is not muting another participant
             if (!this.me.isHost && this.me.id !== userId) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedParticipant.replace("{command}", "mute"));
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedParticipant.replace("{command}", "mute")), err);
             }
             // check the user exists
             const exists: number = this.privParticipants.getParticipantIndex(userId);
             if (exists === -1) {
-                throw new Error(ConversationTranslatorConfig.strings.invalidParticipantRequest);
+                this.handleError(new Error(ConversationTranslatorConfig.strings.invalidParticipantRequest), err);
             }
             this.privConversationRecognizer?.sendMuteRequest(userId, true, (() => {
                 this.handleCallback(cb, err);
@@ -397,13 +399,13 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public removeParticipantAsync(userId: string | IParticipant | IUser, cb?: () => void, err?: (e: string) => void): void {
+    public removeParticipantAsync(userId: string | IParticipant | IUser, cb?: Callback, err?: Callback): void {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
             Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedSend);
             if (!this.canSendAsHost) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedParticipant.replace("{command}", "remove"));
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedParticipant.replace("{command}", "remove")), err);
             }
             let participantId: string = "";
             if (typeof userId === "string") {
@@ -419,7 +421,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
             // check the participant exists
             const index: number = this.participants.findIndex((p: Participant) => p.id === participantId);
             if (index === -1) {
-                throw new Error(ConversationTranslatorConfig.strings.invalidParticipantRequest);
+                this.handleError(new Error(ConversationTranslatorConfig.strings.invalidParticipantRequest), err);
             }
             this.privConversationRecognizer?.sendEjectRequest(participantId, (() => {
                 this.handleCallback(cb, err);
@@ -437,13 +439,13 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public unlockConversationAsync(cb?: () => void, err?: (e: string) => void): void {
+    public unlockConversationAsync(cb?: Callback, err?: Callback): void {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
             Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedSend);
             if (!this.canSendAsHost) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedConversation.replace("{command}", "unlock"));
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedConversation.replace("{command}", "unlock")), err);
             }
             this.privConversationRecognizer?.sendLockRequest(false, (() => {
                 this.handleCallback(cb, err);
@@ -461,13 +463,13 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public unmuteAllParticipantsAsync(cb?: () => void, err?: (e: string) => void): void {
+    public unmuteAllParticipantsAsync(cb?: Callback, err?: Callback): void {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
             Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedSend);
             if (!this.canSendAsHost) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedConversation.replace("{command}", "unmute all"));
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedConversation.replace("{command}", "unmute all")), err);
             }
             this.privConversationRecognizer?.sendMuteAllRequest(false, (() => {
                 this.handleCallback(cb, err);
@@ -486,7 +488,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public unmuteParticipantAsync(userId: string, cb?: () => void, err?: (e: string) => void): void {
+    public unmuteParticipantAsync(userId: string, cb?: Callback, err?: Callback): void {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
@@ -494,16 +496,16 @@ export class ConversationImpl extends Conversation implements IDisposable {
             Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedSend);
             // check the connection is open (host + participant can perform the mute command)
             if (!this.canSend) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedSend);
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedSend), err);
             }
             // if not host, check the participant is not muting another participant
             if (!this.me.isHost && this.me.id !== userId) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedParticipant.replace("{command}", "mute"));
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedParticipant.replace("{command}", "mute")), err);
             }
             // check the user exists
             const exists: number = this.privParticipants.getParticipantIndex(userId);
             if (exists === -1) {
-                throw new Error(ConversationTranslatorConfig.strings.invalidParticipantRequest);
+                this.handleError(new Error(ConversationTranslatorConfig.strings.invalidParticipantRequest), err);
             }
             this.privConversationRecognizer?.sendMuteRequest(userId, false, (() => {
                 this.handleCallback(cb, err);
@@ -522,18 +524,18 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param cb
      * @param err
      */
-    public sendTextMessageAsync(message: string, cb?: () => void, err?: (e: string) => void): void {
+    public sendTextMessageAsync(message: string, cb?: Callback, err?: Callback): void {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
             Contracts.throwIfNullOrWhitespace(message, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "message"));
             Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedSend);
             if (!this.canSend) {
-                throw new Error(ConversationTranslatorConfig.strings.permissionDeniedSend);
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedSend), err);
             }
             // TODO: is a max length check required?
             if (message.length > ConversationTranslatorConfig.textMessageMaxLength) {
-                throw new Error(ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "message length"));
+                this.handleError(new Error(ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "message length")), err);
             }
             this.privConversationRecognizer?.sendMessageRequest(message, (() => {
                 this.handleCallback(cb, err);

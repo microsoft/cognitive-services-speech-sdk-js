@@ -8,7 +8,7 @@ import {
   ConversationParticipantsChangedEventArgs,
   ConversationTranslationCanceledEventArgs,
   ConversationTranslationEventArgs } from "./Exports";
-import { IConversation } from "./IConversation";
+import { Callback, IConversation } from "./IConversation";
 
 /**
  * A conversation translator that enables a connected experience where participants can use their
@@ -70,7 +70,7 @@ export interface IConversationTranslator {
      * @param nickname The display name to use for the current participant.
      */
     /** Start a conversation. */
-    joinConversationAsync(conversation: IConversation, nickname: string): void;
+    joinConversationAsync(conversation: IConversation, nickname: string, cb?: Callback, err?: Callback): void;
 
     /**
      * Joins an existing conversation.
@@ -78,31 +78,31 @@ export interface IConversationTranslator {
      * @param nickname The display name to use for the current participant.
      * @param lang The speech language to use for the current participant.
      */
-    joinConversationAsync(conversationId: string, nickname: string, lang: string): void;
+    joinConversationAsync(conversationId: string, nickname: string, lang: string, cb?: Callback, err?: Callback): void;
 
     /**
      * Leave the current conversation. After this is called, you will no longer receive any events.
      */
-    leaveConversationAsync(cb?: () => void, err?: (e: string) => void): void;
+    leaveConversationAsync(cb?: Callback, err?: Callback): void;
 
     /**
      * Sends an instant message to all participants in the conversation. This instant message
      * will be translated into each participant's text language.
      * @param message
      */
-    sendTextMessageAsync(message: string, cb?: () => void, err?: (e: string) => void): void;
+    sendTextMessageAsync(message: string, cb?: Callback, err?: Callback): void;
 
     /**
      * Starts sending audio to the conversation service for speech recognition and translation. You
      * should subscribe to the Transcribing, and Transcribed events to receive conversation
      * translation results for yourself, and other participants in the conversation.
      */
-    startTranscribingAsync(cb?: () => void, err?: (e: string) => void): void;
+    startTranscribingAsync(cb?: Callback, err?: Callback): void;
 
     /**
      * Stops sending audio to the conversation service. You will still receive Transcribing, and
      * and Transcribed events for other participants in the conversation.
      */
-    stopTranscribingAsync(cb?: () => void, err?: (e: string) => void): void;
+    stopTranscribingAsync(cb?: Callback, err?: Callback): void;
 
 }

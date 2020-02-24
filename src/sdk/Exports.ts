@@ -60,4 +60,4 @@ export { Conversation,
     Participant,
     ParticipantChangedReason,
     User
-    } from "./ConversationTranslator/Exports";
+    } from "./Transcription/Exports";
