@@ -270,7 +270,7 @@ describe("conversation service tests", () => {
         let participantsCount: number = 0;
         let isMuted: boolean = true;
 
-        // start a room
+        // start a conversation
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
         if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
@@ -346,7 +346,7 @@ describe("conversation service tests", () => {
 
         let textMessage: string = "";
 
-        // start a room
+        // start a conversation
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
         if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
@@ -410,7 +410,7 @@ describe("conversation service tests", () => {
         let participantId: string = "";
         let ejected: number = 0;
 
-        // start a room
+        // start a conversation
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
         if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
@@ -552,7 +552,7 @@ describe("conversation translator service tests",  () => {
 
         let errorMessage: string = "";
 
-        // start a room
+        // start a conversation
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
         if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
@@ -595,12 +595,12 @@ describe("conversation translator service tests",  () => {
 
     }, 20000);
 
-    test("Join Conversation Translator, locked room [400044]", (done: jest.DoneCallback) => {
+    test("Join Conversation Translator, locked conversation [400044]", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
-        console.info("Join Conversation Translator, locked room [400044]");
+        console.info("Join Conversation Translator, locked conversation [400044]");
 
-        // start a room
+        // start a conversation
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
         if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
@@ -646,7 +646,7 @@ describe("conversation translator service tests",  () => {
 
     //     let counter: number = 0;
 
-    //     // start a room
+    //     // start a conversation
     //     const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     //     if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
     //     if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }

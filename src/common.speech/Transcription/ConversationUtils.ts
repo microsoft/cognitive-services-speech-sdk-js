@@ -44,9 +44,9 @@ export const ConversationTranslatorConfig = {
     speechPath: "/speech/translation/cognitiveservices/v1",
     strings: {
         authInvalidSubscriptionKey: "You must specify either an authentication token to use, or a Cognitive Speech subscription key.",
-        authInvalidSubscriptionRegion: "You must specify the cognitive speech region to use.",
+        authInvalidSubscriptionRegion: "You must specify the Cognitive Speech region to use.",
         invalidArgs: "Required input not found: {arg}.",
-        invalidCreateJoinConversationResponse: "Creating/Joining room failed with HTTP {status}.",
+        invalidCreateJoinConversationResponse: "Creating/Joining conversation failed with HTTP {status}.",
         invalidParticipantRequest: "The requested participant was not found.",
         permissionDeniedConnect: "Required credentials not found.",
         permissionDeniedConversation: "Invalid operation: only the host can {command} the conversation.",

@@ -36,7 +36,7 @@ export interface IInternalConversation {
     modalities: number;
     // ?
     isApproved: boolean;
-    // the mute flag has been set at room level and only the host can speak
+    // the mute flag has been set at conversation level and only the host can speak
     isMuted: boolean;
     // the 5 character conversation Id
     roomId: string;
@@ -222,6 +222,16 @@ export interface IMuteCommand extends ICommandMessage {
 export interface IEjectParticipantCommand extends ICommandMessage {
     roomid: string;
     participantId: string; // participant
+}
+
+/**
+ * Change nickname command
+ */
+export interface IChangeNicknameCommand extends ICommandMessage {
+    roomid: string;
+    participantId: string;
+    nickname: string;
+    value: string;
 }
 
 /**

@@ -155,7 +155,11 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 Contracts.throwIfNullOrUndefined(conversation, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "conversation id"));
                 Contracts.throwIfNullOrWhitespace(nickname, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "nickname"));
 
+                // save the nickname
+                this.privProperties.setProperty(PropertyId.ConversationTranslator_Name, nickname);
+                // ref the conversation object
                 this.privConversation = conversation as ConversationImpl;
+                // ref the conversation translator object
                 this.privConversation.conversationTranslator = this;
 
                 Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedConnect);
@@ -306,17 +310,13 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             this.privTranslationRecognizer?.stopContinuousRecognitionAsync(() => {
                 this.handleCallback(cb, err);
             }, (error: any) => {
-
                 this.handleError(error, err);
                 this.cancelSpeech();
             });
 
         } catch (error) {
-
             this.handleError(error, err);
-
             this.cancelSpeech();
-
         }
     }
 

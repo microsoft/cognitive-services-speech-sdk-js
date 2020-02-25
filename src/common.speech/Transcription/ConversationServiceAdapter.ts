@@ -58,7 +58,6 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     private privConversationServiceConnector: ConversationTranslatorRecognizer;
     private privConversationConnectionFactory: IConnectionFactory;
     private privConversationAuthFetchEventId: string;
-    private privConversationIsDisposed: boolean;
     private privConversationAuthentication: IAuthentication;
     private privConversationRequestSession: ConversationRequestSession;
     private privConnectionConfigPromise: Promise<IConnection>;
@@ -86,20 +85,6 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         this.disconnectOverride = this.privDisconnect;
         this.privConversationRequestSession = new ConversationRequestSession(createNoDashGuid());
         this.privConversationConnectionFactory = connectionFactory;
-        this.privConversationIsDisposed = false;
-    }
-
-    public isDisposed(): boolean {
-        return this.privConversationIsDisposed;
-    }
-
-    public dispose(reason?: string): void {
-        this.privConversationIsDisposed = true;
-        if (this.privConnectionConfigPromise) {
-            this.privConnectionConfigPromise.onSuccessContinueWith((connection: IConnection) => {
-                connection.dispose(reason);
-            });
-        }
     }
 
     public sendMessage(message: string): void {
