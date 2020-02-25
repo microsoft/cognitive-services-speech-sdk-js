@@ -44,9 +44,18 @@ export { Connection } from "./Connection";
 export { PhraseListGrammar } from "./PhraseListGrammar";
 export { DialogServiceConfig } from "./DialogServiceConfig";
 export { BotFrameworkConfig } from "./BotFrameworkConfig";
-export { SpeechCommandsConfig } from "./SpeechCommandsConfig";
+export { CustomCommandsConfig } from "./CustomCommandsConfig";
 export { DialogServiceConnector } from "./DialogServiceConnector";
 export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 export { ServicePropertyChannel } from "./ServicePropertyChannel";
 export { ProfanityOption } from "./ProfanityOption";
 export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";
+export { Conversation,
+    ConversationExpirationEventArgs,
+    ConversationParticipantsChangedEventArgs,
+    ConversationTranslationCanceledEventArgs,
+    ConversationTranslationEventArgs,
+    ConversationTranslationResult,
+    ConversationTranslator,
+    ParticipantChangedReason
+    } from "./ConversationTranslator/Exports";

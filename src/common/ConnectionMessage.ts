@@ -15,6 +15,7 @@ export class ConnectionMessage {
     private privMessageType: MessageType;
     private privHeaders: IStringDictionary<string>;
     private privBody: any = null;
+    private privSize: number;
 
     private privId: string;
 
@@ -36,6 +37,13 @@ export class ConnectionMessage {
         this.privBody = body;
         this.privHeaders = headers ? headers : {};
         this.privId = id ? id : createNoDashGuid();
+        switch (this.messageType) {
+            case MessageType.Binary:
+                this.privSize = this.binaryBody !== null ? this.binaryBody.byteLength : 0;
+                break;
+            case MessageType.Text:
+                this.privSize = this.textBody.length;
+        }
     }
 
     public get messageType(): MessageType {

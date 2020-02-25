@@ -293,5 +293,36 @@ export enum PropertyId {
      * The Cognitive Services Speech Service host (url). Under normal circumstances, you shouldn't have to use this property directly.
      * Instead, use [[SpeechConfig.fromHost]].
      */
-    SpeechServiceConnection_Host
+    SpeechServiceConnection_Host,
+
+    /**
+     * Set the host for service calls to the Conversation Translator REST management and websocket calls.
+     */
+    ConversationTranslator_Host,
+
+    /**
+     * Set the host for speech service calls. This host is used for the
+     * service to service call from the speech service to the Conversation Translator service for relaying
+     * recognitions.
+     */
+    ConversationTranslator_SpeechHost,
+
+    /**
+     * Optionally set the the host's display name.
+     * Used when joining a conversation.
+     */
+    ConversationTranslator_Name,
+
+    /**
+     * Optionally override the default value of the X-CorrelationId request header.
+     * Used for troubleshooting errors in the server logs. It should be a valid guid.
+     */
+    ConversationTranslator_CorrelationId,
+
+    /**
+     * Set the conversation token to be sent to the speech service. This enables the
+     * service to service call from the speech service to the Conversation Translator service for relaying
+     * recognitions. For internal use.
+     */
+    ConversationTranslator_Token
 }

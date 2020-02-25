@@ -6,14 +6,20 @@ import {
     IStreamChunk,
 } from "../src/common/Exports";
 import {
-    bufferSize,
     PullAudioInputStreamImpl,
 } from "../src/sdk/Audio/AudioInputStream";
+import {
+    AudioStreamFormat,
+    AudioStreamFormatImpl,
+} from "../src/sdk/Audio/AudioStreamFormat";
 import { Settings } from "./Settings";
+
+let bufferSize: number;
 
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
+    bufferSize = (AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl).avgBytesPerSec / 10;
 });
 
 // Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
