@@ -306,17 +306,13 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             this.privTranslationRecognizer?.stopContinuousRecognitionAsync(() => {
                 this.handleCallback(cb, err);
             }, (error: any) => {
-
                 this.handleError(error, err);
                 this.cancelSpeech();
             });
 
         } catch (error) {
-
             this.handleError(error, err);
-
             this.cancelSpeech();
-
         }
     }
 

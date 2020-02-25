@@ -68,7 +68,7 @@ export class ConversationManager {
 
             const endpoint: string = `https://${endpointHost}${ConversationTranslatorConfig.restPath}`;
 
-            // TODO: support a proxy
+            // TODO: support a proxy and certificate validation
             request("post", endpoint, queryParams, null, config, (response: IResponse) => {
 
                 const requestId: string = extractHeaderValue(ConversationTranslatorConfig.params.requestId, response.headers);
@@ -152,7 +152,7 @@ export class ConversationManager {
 
             const endpoint: string = `https://${endpointHost}${ConversationTranslatorConfig.restPath}`;
 
-            // TODO: support a proxy
+            // TODO: support a proxy and certificate validation
             request("delete", endpoint, queryParams, null, config, (response: IResponse) => {
 
                 if (!response.ok) {

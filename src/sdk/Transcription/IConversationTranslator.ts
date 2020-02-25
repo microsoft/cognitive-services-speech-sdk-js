@@ -34,7 +34,7 @@ export interface IConversationTranslator {
     conversationExpiration: (sender: IConversationTranslator, event: ConversationExpirationEventArgs) => void;
 
     /**
-     * Event that signals participants in the room have changed (e.g. a new participant joined).
+     * Event that signals participants in the conversation have changed (e.g. a new participant joined).
      */
     participantsChanged: (sender: IConversationTranslator, event: ConversationParticipantsChangedEventArgs) => void;
 
