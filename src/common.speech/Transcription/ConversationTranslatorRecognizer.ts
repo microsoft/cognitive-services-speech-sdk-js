@@ -39,6 +39,8 @@ import {
     ILockConversationCommand,
     IMuteAllCommand,
     IMuteCommand} from "./ConversationTranslatorInterfaces";
+import { PromiseToEmptyCallback } from "./ConversationUtils";
+import { Callback } from "../../sdk/Transcription/IConversation";
 
 /**
  * Sends messages to the Conversation Translator websocket and listens for incoming events containing websocket messages.
@@ -105,16 +107,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfNullOrWhitespace(token, "token");
             this.privReco.conversationTranslatorToken = token;
-            this.privReco.connect();
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-            }
+            this.privReco.connectAsync(cb, err);
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
@@ -134,16 +127,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             this.privRoom = undefined;
-            this.privReco.disconnect();
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-            }
+            this.privReco.disconnectAsync(cb, err);
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
@@ -179,17 +163,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 type: ConversationTranslatorMessageTypes.instantMessage
             };
 
-            this.privReco.sendMessage(JSON.stringify(command));
-
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-            }
+            this.sendMessage(JSON.stringify(command), cb, err);
 
         } catch (error) {
             if (!!err) {
@@ -229,17 +203,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 value: isLocked
             };
 
-            this.privReco.sendMessage(JSON.stringify(command));
-
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-            }
+            this.sendMessage(JSON.stringify(command), cb, err);
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
@@ -278,17 +242,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 value: isMuted
             };
 
-            this.privReco.sendMessage(JSON.stringify(command));
-
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-            }
+            this.sendMessage(JSON.stringify(command), cb, err);
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
@@ -327,17 +281,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 value: isMuted
             };
 
-            this.privReco.sendMessage(JSON.stringify(command));
-
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-            }
+            this.sendMessage(JSON.stringify(command), cb, err);
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
@@ -373,7 +317,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 type: ConversationTranslatorMessageTypes.participantCommand,
             };
 
-            this.privReco.sendMessage(JSON.stringify(command));
+            this.sendMessage(JSON.stringify(command), cb, err);
 
             if (!!cb) {
                 try {
@@ -496,6 +440,11 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
         const audioSource: AudioConfigImpl = audioConfig as AudioConfigImpl;
 
         return new ConversationServiceAdapter(authentication, connectionFactory, audioSource, recognizerConfig, this);
+    }
+
+    private sendMessage(msg: string, cb?: Callback, err?: Callback) {
+        const withAsync = this.privReco as ConversationServiceAdapter;
+        PromiseToEmptyCallback(withAsync.sendMessageAsync(msg), cb, err);
     }
 
 }

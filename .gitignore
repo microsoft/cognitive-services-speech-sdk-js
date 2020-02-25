@@ -1,3 +1,4 @@
+.vscode/
 # ignore the npm packages
 /**/node_modules/
 # ignore auto-generated (transpiled) js files
@@ -11,3 +12,4 @@ secrets/*
 test-javascript-junit.xml
 coverage/*
 *.tgz
+
