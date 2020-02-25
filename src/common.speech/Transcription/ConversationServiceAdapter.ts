@@ -102,7 +102,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    public sendMessage (message: string): void {
+    public sendMessage(message: string): void {
         this.fetchConversationConnection().onSuccessContinueWith((connection: IConnection) => {
             connection.send(new ConversationConnectionMessage(
                 MessageType.Text,

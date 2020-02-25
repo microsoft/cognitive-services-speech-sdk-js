@@ -19,6 +19,7 @@ import { AudioConfig,
     SessionEventArgs,
     SpeechTranslationConfig} from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
+import { Callback } from "../../sdk/Transcription/IConversation";
 import { ConversationConnectionFactory } from "./ConversationConnectionFactory";
 import { ConversationServiceAdapter } from "./ConversationServiceAdapter";
 import {
@@ -39,7 +40,6 @@ import {
     IMuteAllCommand,
     IMuteCommand} from "./ConversationTranslatorInterfaces";
 import { PromiseToEmptyCallback } from "./ConversationUtils";
-import { Callback } from "../../sdk/Transcription/IConversation";
 
 /**
  * Sends messages to the Conversation Translator websocket and listens for incoming events containing websocket messages.
@@ -392,7 +392,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
         return new ConversationServiceAdapter(authentication, connectionFactory, audioSource, recognizerConfig, this);
     }
 
-    private sendMessage(msg: string, cb?: Callback, err?: Callback) {
+    private sendMessage(msg: string, cb?: Callback, err?: Callback): void {
         const withAsync = this.privReco as ConversationServiceAdapter;
         PromiseToEmptyCallback(withAsync.sendMessageAsync(msg), cb, err);
     }
