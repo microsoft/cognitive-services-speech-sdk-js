@@ -307,6 +307,8 @@ export class WebsocketMessageAdapter {
             // add a check for the ws readystate in order to stop the red console error 'WebSocket is already in CLOSING or CLOSED state' appearing
             if (this.isWebsocketOpen) {
                 this.privWebsocketClient.send(sendItem.RawWebsocketMessage.payload);
+            } else {
+                return PromiseHelper.fromError<boolean>("websocket send error: Websocket not ready");
             }
             return PromiseHelper.fromResult(true);
 
