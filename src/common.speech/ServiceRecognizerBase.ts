@@ -34,6 +34,7 @@ import {
     SessionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
+import { Callback } from "../sdk/Transcription/IConversation";
 import {
     AgentConfig,
     DynamicGrammarBuilder,
@@ -248,6 +249,26 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.connectImpl().result();
     }
 
+    public connectAsync(cb?: Callback, err?: Callback): void {
+        this.connectImpl().continueWith((promiseResult: PromiseResult<IConnection>) => {
+            try {
+                if (promiseResult.isError) {
+                    if (!!err) {
+                        err(promiseResult.error);
+                    }
+                } else if (promiseResult.isCompleted) {
+                    if (!!cb) {
+                        cb();
+                    }
+                }
+            } catch (e) {
+                if (!!err) {
+                    err(e);
+                }
+            }
+        });
+    }
+
     protected disconnectOverride: () => any = undefined;
 
     public disconnect(): void {
@@ -269,6 +290,46 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             this.privConnectionPromise.onSuccessContinueWith((connection: IConnection) => {
                 connection.dispose();
             });
+        }
+    }
+
+    public disconnectAsync(cb?: Callback, err?: Callback): void {
+        try {
+            if (this.disconnectOverride !== undefined) {
+                this.disconnectOverride();
+                if (!!cb) {
+                    cb();
+                }
+                return;
+            }
+
+            this.cancelRecognitionLocal(CancellationReason.Error,
+                CancellationErrorCode.NoError,
+                "Disconnecting");
+
+            this.privConnectionPromise.continueWith((result: PromiseResult<IConnection>): void => {
+                try {
+                    if (result.isError) {
+                        if (!!err) {
+                            err(result.error);
+                        }
+                    } else if (result.isCompleted) {
+                        result.result.dispose();
+
+                        if (!!cb) {
+                            cb();
+                        }
+                    }
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+            });
+        } catch (e) {
+            if (!!err) {
+                err(e);
+            }
         }
     }
 

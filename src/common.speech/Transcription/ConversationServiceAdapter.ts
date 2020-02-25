@@ -15,6 +15,7 @@ import {
     PromiseHelper,
     PromiseResult
 } from "../../common/Exports";
+import { Sink } from "../../common/Promise";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -101,13 +102,41 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    public sendMessage = (message: string): Promise<boolean> => {
+    public sendMessage (message: string): void {
         this.fetchConversationConnection().onSuccessContinueWith((connection: IConnection) => {
             connection.send(new ConversationConnectionMessage(
                 MessageType.Text,
                 message));
         });
-        return PromiseHelper.fromResult<boolean>(true);
+    }
+
+    public sendMessageAsync = (message: string): Promise<boolean> => {
+        const sink: Sink<boolean> = new Sink<boolean>();
+
+        this.fetchConversationConnection().continueWith((antecedent: PromiseResult<IConnection>): void => {
+            try {
+                if (antecedent.isError) {
+                    sink.reject(antecedent.error);
+                } else {
+                    antecedent.result.send(new ConversationConnectionMessage(MessageType.Text, message))
+                        .continueWith((innerAntecedent: PromiseResult<boolean>): void => {
+                            try {
+                                if (innerAntecedent.isError) {
+                                    sink.reject(innerAntecedent.error);
+                                } else {
+                                    sink.resolve(innerAntecedent.result);
+                                }
+                            } catch (e) {
+                                sink.reject(`'Unhandled inner error: ${e}'`);
+                            }
+                        });
+                }
+            } catch (e) {
+                sink.reject(`'Unhandled error: ${e}'`);
+            }
+        });
+
+        return new Promise<boolean>(sink);
     }
 
     protected privDisconnect(): void {

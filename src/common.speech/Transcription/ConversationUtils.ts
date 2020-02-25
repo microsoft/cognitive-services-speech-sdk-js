@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { Promise, PromiseResult } from "../../common/Promise";
+import { Callback } from "../../sdk/Transcription/IConversation";
 import { IRequestOptions, IResponse } from "./ConversationTranslatorInterfaces";
 
 /**
@@ -156,5 +158,31 @@ export function request(method: "get" | "post" | "delete",
         xhr.send(JSON.stringify(body));
     } else {
         xhr.send();
+    }
+}
+
+export function PromiseToEmptyCallback<T>(promise: Promise<T>, cb?: Callback, err?: Callback): void {
+    if (!!promise) {
+        promise.continueWith((antecedent: PromiseResult<T>): void => {
+            try {
+                if (antecedent.isError) {
+                    if (!!err) {
+                        err(antecedent.error);
+                    }
+                } else {
+                    if (!!cb) {
+                        cb();
+                    }
+                }
+            } catch (e) {
+                if (!!err) {
+                    err(`'Unhandled error on promise callback: ${e}. InnerError: ${antecedent.error}'`);
+                }
+            }
+        });
+    } else {
+        if (!!err) {
+            err("Null promise");
+        }
     }
 }
