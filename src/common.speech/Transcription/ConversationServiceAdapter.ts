@@ -65,6 +65,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     private privConnectionLoop: Promise<IConnection>;
     private terminateMessageLoop: boolean;
     private privUtteranceId: string = "";
+    private privConversationIsDisposed: boolean;
 
     public constructor(
         authentication: IAuthentication,
@@ -85,14 +86,20 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         this.disconnectOverride = this.privDisconnect;
         this.privConversationRequestSession = new ConversationRequestSession(createNoDashGuid());
         this.privConversationConnectionFactory = connectionFactory;
+        this.privConversationIsDisposed = false;
     }
 
-    public sendMessage(message: string): void {
-        this.fetchConversationConnection().onSuccessContinueWith((connection: IConnection) => {
-            connection.send(new ConversationConnectionMessage(
-                MessageType.Text,
-                message));
-        });
+    public isDisposed(): boolean {
+        return this.privConversationIsDisposed;
+    }
+
+    public dispose(reason?: string): void {
+        this.privConversationIsDisposed = true;
+        if (this.privConnectionConfigPromise) {
+            this.privConnectionConfigPromise.onSuccessContinueWith((connection: IConnection) => {
+                connection.dispose(reason);
+            });
+        }
     }
 
     public sendMessageAsync = (message: string): Promise<boolean> => {
@@ -112,12 +119,12 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                     sink.resolve(innerAntecedent.result);
                                 }
                             } catch (e) {
-                                sink.reject(`'Unhandled inner error: ${e}'`);
+                                sink.reject(`Unhandled inner error: ${e}`);
                             }
                         });
                 }
             } catch (e) {
-                sink.reject(`'Unhandled error: ${e}'`);
+                sink.reject(`Unhandled error: ${e}`);
             }
         });
 
