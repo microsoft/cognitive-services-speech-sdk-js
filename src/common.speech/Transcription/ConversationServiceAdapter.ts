@@ -87,7 +87,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         this.privConversationConnectionFactory = connectionFactory;
     }
 
-    public sendMessage (message: string): void {
+    public sendMessage(message: string): void {
         this.fetchConversationConnection().onSuccessContinueWith((connection: IConnection) => {
             connection.send(new ConversationConnectionMessage(
                 MessageType.Text,
