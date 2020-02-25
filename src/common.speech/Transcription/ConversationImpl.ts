@@ -548,6 +548,32 @@ export class ConversationImpl extends Conversation implements IDisposable {
         }
     }
 
+    /**
+     * Change nickname
+     * @param message
+     * @param cb
+     * @param err
+     */
+    public changeNicknameAsync(nickname: string, cb?: Callback, err?: Callback): void {
+        try {
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
+            Contracts.throwIfNullOrWhitespace(nickname, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "nickname"));
+            Contracts.throwIfNullOrUndefined(this.privRoom, ConversationTranslatorConfig.strings.permissionDeniedSend);
+            if (!this.canSend) {
+                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedSend), err);
+            }
+            this.privConversationRecognizer?.sendChangeNicknameRequest(nickname, (() => {
+                this.handleCallback(cb, err);
+            }),
+            ((error: any) => {
+                this.handleError(error, err);
+            }));
+        } catch (error) {
+            this.handleError(error, err);
+        }
+    }
+
     public isDisposed(): boolean {
         return this.privIsDisposed;
     }
@@ -745,6 +771,14 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 this.privConversationTranslator?.participantsChanged(
                     this.privConversationTranslator,
                     new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.JoinedConversation, this.toParticipants(true), e.sessionId));
+            }
+            // if this is the host, update the nickname if needed
+            if (this.me.isHost) {
+                const nickname: string = this.privConversationTranslator.properties.getProperty(PropertyId.ConversationTranslator_Name);
+                if (nickname !== undefined && nickname.length > 0 && nickname !== this.me.displayName) {
+                    // issue a change nickname request
+                    this.changeNicknameAsync(nickname);
+                }
             }
         } catch (e) {
             //

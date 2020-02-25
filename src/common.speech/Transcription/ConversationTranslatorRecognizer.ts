@@ -31,6 +31,7 @@ import {
 import {
     ConversationTranslatorCommandTypes,
     ConversationTranslatorMessageTypes,
+    IChangeNicknameCommand,
     IConversationTranslatorRecognizer,
     IEjectParticipantCommand,
     IInstantMessageCommand,
@@ -384,6 +385,55 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 }
             }
 
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
+    }
+
+    /**
+     * Send the mute participant command to the websocket
+     * @param conversationId
+     * @param participantId
+     * @param isMuted
+     */
+    public sendChangeNicknameRequest(nickname: string, cb?: () => void, err?: (e: string) => void): void {
+
+        try {
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            Contracts.throwIfNullOrWhitespace(this.privRoom.roomId, "conversationId");
+            Contracts.throwIfNullOrWhitespace(nickname, "nickname");
+
+            const command: IChangeNicknameCommand = {
+                command: ConversationTranslatorCommandTypes.changeNickname,
+                nickname,
+                // tslint:disable-next-line: object-literal-shorthand
+                participantId: this.privRoom.participantId, // the id of the host
+                roomid: this.privRoom.roomId,
+                type: ConversationTranslatorMessageTypes.participantCommand,
+                value: nickname
+            };
+
+            this.privReco.sendMessage(JSON.stringify(command));
+
+            if (!!cb) {
+                try {
+                    cb();
+                } catch (e) {
+                    if (!!err) {
+                        err(e);
+                    }
+                }
+            }
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {

@@ -225,6 +225,16 @@ export interface IEjectParticipantCommand extends ICommandMessage {
 }
 
 /**
+ * Change nickname command
+ */
+export interface IChangeNicknameCommand extends ICommandMessage {
+    roomid: string;
+    participantId: string;
+    nickname: string;
+    value: string;
+}
+
+/**
  * List of command message types
  */
 export const ConversationTranslatorMessageTypes = {
