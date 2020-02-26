@@ -419,6 +419,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
         if (e.result?.errorDetails) {
             this.cancelSpeech();
+            // TODO: format the error message contained in 'errorDetails'
             this.fireCancelEvent(e.result.errorDetails);
         }
     }
