@@ -367,17 +367,8 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 value: nickname
             };
 
-            this.privReco.sendMessage(JSON.stringify(command));
-
-            if (!!cb) {
-                try {
-                    cb();
-                } catch (e) {
-                    if (!!err) {
-                        err(e);
-                    }
-                }
-            }
+            this.sendMessage(JSON.stringify(command), cb, err);
+            
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
