@@ -368,7 +368,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             };
 
             this.sendMessage(JSON.stringify(command), cb, err);
-            
+
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
