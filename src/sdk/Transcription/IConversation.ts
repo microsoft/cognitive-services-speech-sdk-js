@@ -5,6 +5,8 @@
 import { PropertyCollection, SpeechTranslationConfig } from "../Exports";
 import { IParticipant, IUser } from "./IParticipant";
 
+export type Callback = (result?: any) => void;
+
 /**
  * Manages conversations.
  * Added in version 1.4.0
@@ -39,39 +41,39 @@ export interface IConversation {
     deleteConversationAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /** End a conversation. */
-    endConversationAsync(): void;
+    endConversationAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /** Lock a conversation. This will prevent new participants from joining. */
-    lockConversationAsync(): void;
+    lockConversationAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Mute all other participants in the conversation. After this no other participants will
      * have their speech recognitions broadcast, nor be able to send text messages.
      */
-    muteAllParticipantsAsync(): void;
+    muteAllParticipantsAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Mute a participant.
      * @param userId A user identifier
      */
-    muteParticipantAsync(userId: string): void;
+    muteParticipantAsync(userId: string, cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Remove a participant from a conversation using the user id, Participant or User object
      * @param userId A user identifier
      */
-    removeParticipantAsync(userId: string | IParticipant | IUser): void;
+    removeParticipantAsync(userId: string | IParticipant | IUser, cb?: () => void, err?: (e: string) => void): void;
 
     /** Unlocks a conversation. */
     unlockConversationAsync(): void;
 
     /** Unmute all other participants in the conversation. */
-    unmuteAllParticipantsAsync(): void;
+    unmuteAllParticipantsAsync(cb?: () => void, err?: (e: string) => void): void;
 
     /**
      * Unmute a participant.
      * @param userId A user identifier
      */
-    unmuteParticipantAsync(userId: string): void;
+    unmuteParticipantAsync(userId: string, cb?: () => void, err?: (e: string) => void): void;
 
 }

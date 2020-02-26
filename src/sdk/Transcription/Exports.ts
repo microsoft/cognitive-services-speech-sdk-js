@@ -9,4 +9,5 @@ export { ConversationTranslationCanceledEventArgs } from "./ConversationTranslat
 export { ConversationTranslationEventArgs } from "./ConversationTranslationEventArgs";
 export { ConversationTranslationResult } from "./ConversationTranslationResult";
 export { ConversationTranslator } from "./ConversationTranslator";
+export { Participant, User } from "./IParticipant";
 export { ParticipantChangedReason } from "./ParticipantChangedReason";
