@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.10.0-alpha.0.1",
+  "version": "1.11.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
