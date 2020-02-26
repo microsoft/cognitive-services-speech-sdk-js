@@ -780,12 +780,14 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private sendAgentContext = (connection: IConnection): Promise<boolean> => {
         const guid: string = createGuid();
 
+        const speechActivityTemplate = this.privDialogServiceConnector.properties.getProperty(PropertyId.Conversation_Speech_Activity_Template);
+
         const agentContext: any = {
             channelData: "",
             context: {
                 interactionId: guid
             },
-            messagePayload: this.activityTemplate ? this.activityTemplate : undefined,
+            messagePayload: typeof speechActivityTemplate === undefined ? undefined : speechActivityTemplate,
             version: 0.5
         };
 
