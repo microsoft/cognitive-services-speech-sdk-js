@@ -45,10 +45,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         this.privSpeechRecognizer = speechRecognizer;
     }
 
-    protected processTypeSpecificMessages(
-        connectionMessage: SpeechConnectionMessage,
-        successCallback?: (e: SpeechRecognitionResult) => void,
-        errorCallBack?: (e: string) => void): boolean {
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
 
         let result: SpeechRecognitionResult;
         const resultProps: PropertyCollection = new PropertyCollection();
@@ -98,8 +95,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     this.cancelRecognitionLocal(
                         cancelReason,
                         EnumTranslation.implTranslateCancelErrorCode(simple.RecognitionStatus),
-                        undefined,
-                        successCallback);
+                        undefined);
 
                 } else {
                     if (!(this.privRequestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
@@ -139,20 +135,20 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                             }
                         }
                     }
-                    // report result to promise.
-                    if (!!successCallback) {
+
+                    if (!!this.privSuccessCallback) {
                         try {
-                            successCallback(result);
+                            this.privSuccessCallback(result);
                         } catch (e) {
-                            if (!!errorCallBack) {
-                                errorCallBack(e);
+                            if (!!this.privErrorCallback) {
+                                this.privErrorCallback(e);
                             }
                         }
                         // Only invoke the call back once.
                         // and if it's successful don't invoke the
                         // error after that.
-                        successCallback = undefined;
-                        errorCallBack = undefined;
+                        this.privSuccessCallback = undefined;
+                        this.privErrorCallback = undefined;
                     }
                 }
                 processed = true;
@@ -169,8 +165,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         requestId: string,
         cancellationReason: CancellationReason,
         errorCode: CancellationErrorCode,
-        error: string,
-        cancelRecoCallback: (e: SpeechRecognitionResult) => void): void {
+        error: string): void {
 
         const properties: PropertyCollection = new PropertyCollection();
         properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
@@ -188,7 +183,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
             } catch { }
         }
 
-        if (!!cancelRecoCallback) {
+        if (!!this.privSuccessCallback) {
             const result: SpeechRecognitionResult = new SpeechRecognitionResult(
                 requestId,
                 ResultReason.Canceled,
@@ -199,7 +194,8 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 undefined, // Json
                 properties);
             try {
-                cancelRecoCallback(result);
+                this.privSuccessCallback(result);
+                this.privSuccessCallback = undefined;
                 /* tslint:disable:no-empty */
             } catch { }
         }

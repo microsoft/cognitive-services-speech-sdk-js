@@ -57,6 +57,7 @@ export class Settings {
     public static LuisAppId: string = "b687b851-56c5-4d31-816f-35a741a3f0be";
 
     public static WaveFile: string = Settings.InputDir + "whatstheweatherlike.wav";
+    public static WaveFile44k: string = Settings.InputDir + "whatstheweatherlike.44khz.wav";
     public static VoiceSignatureWaveFile: string = Settings.InputDir + "StreamingEnrollment.wav";
     public static WaveFileLanguage: string = "en-US";
     public static WaveFileDuration: number = 12900000;
@@ -64,6 +65,9 @@ export class Settings {
     public static WaveFileText: string = "What's the weather like?";
 
     public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
+
+    public static ConversationTranslatorHost: string = "";
+    public static ConversationTranslatorSpeechHost: string = "";
 
     public static proxyServer: string;
     public static proxyPort: number;

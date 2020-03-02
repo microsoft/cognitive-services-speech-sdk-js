@@ -205,25 +205,153 @@ export abstract class Recognizer {
             recognizerConfig);
     }
 
-    // Start the recognition
-    protected implRecognizerStart(
-        recognitionMode: RecognitionMode,
-        successCallback: (e: SpeechRecognitionResult) => void,
-        errorCallback: (e: string) => void): void {
-        this.privReco.recognize(recognitionMode, successCallback, errorCallback).on(
-            /* tslint:disable:no-empty */
-            (result: boolean): void => { },
-            (error: string): void => {
-                if (!!errorCallback) {
-                    // Internal error with service communication.
-                    errorCallback("Runtime error: " + error);
+    protected recognizeOnceAsyncImpl(recognitionMode: RecognitionMode, cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
+        try {
+            Contracts.throwIfDisposed(this.privDisposed);
+
+            this.implRecognizerStop().on((_: boolean): void => {
+                try {
+                    this.privReco.recognize(recognitionMode, (e: SpeechRecognitionResult) => {
+                        this.implRecognizerStop().on((_: boolean): void => {
+                            if (!!cb) {
+                                cb(e);
+                            }
+                        }, (error: string): void => {
+                            if (!!err) {
+                                err(error);
+                            }
+                        });
+
+                    }, (e: string) => {
+                        this.implRecognizerStop(); // We're already in an error path so best effort here.
+                        if (!!err) {
+                            err(e);
+                        }
+                    /* tslint:disable:no-empty */
+                    }).on((_: boolean): void => { },
+                        (error: string) => {
+                            if (!!err) {
+                                err(error);
+                            }
+                        });
+                } catch (error) {
+                    if (!!err) {
+                        if (error instanceof Error) {
+                            const typedError: Error = error as Error;
+                            err(typedError.name + ": " + typedError.message);
+                        } else {
+                            err(error);
+                        }
+                    }
+
+                    // Destroy the recognizer.
+                    this.dispose(true);
+                }
+            }, (error: string): void => {
+                if (!!err) {
+                    err(error);
                 }
             });
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
     }
 
-    protected implRecognizerStop(): void {
-        if (this.privReco) {
-            this.privReco.stopRecognizing();
+    public startContinuousRecognitionAsyncImpl(recognitionMode: RecognitionMode, cb?: () => void, err?: (e: string) => void): void {
+        try {
+            Contracts.throwIfDisposed(this.privDisposed);
+
+            this.implRecognizerStop().on((_: boolean): void => {
+                this.privReco.recognize(recognitionMode, undefined, undefined).on((_: boolean): void => {
+                    // report result to promise.
+                    if (!!cb) {
+                        try {
+                            cb();
+                        } catch (e) {
+                            if (!!err) {
+                                err(e);
+                            }
+                        }
+                        cb = undefined;
+                    }
+                }, (error: string): void => {
+                    if (!!err) {
+                        err(error);
+                    }
+                    // Destroy the recognizer.
+                    this.dispose(true);
+                });
+            }, (error: string): void => {
+                if (!!err) {
+                    err(error);
+                }
+                // Destroy the recognizer.
+                this.dispose(true);
+            });
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
         }
+    }
+
+    protected stopContinuousRecognitionAsyncImpl(cb?: () => void, err?: (e: string) => void): void {
+        try {
+            Contracts.throwIfDisposed(this.privDisposed);
+
+            this.implRecognizerStop().on((_: boolean) => {
+                if (!!cb) {
+                    try {
+                        cb();
+                    } catch (e) {
+                        if (!!err) {
+                            err(e);
+                        }
+                    }
+                }
+            }, (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
+
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+            }
+
+            // Destroy the recognizer.
+            this.dispose(true);
+        }
+    }
+
+    protected implRecognizerStop(): Promise<boolean> {
+        if (this.privReco) {
+            return this.privReco.stopRecognizing();
+        }
+        return PromiseHelper.fromResult(true);
     }
 }

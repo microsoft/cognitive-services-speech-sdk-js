@@ -98,7 +98,7 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.Connecting;
 
         try {
-            const enableOCSP: boolean = process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0" && !this.privUri.startsWith("ws:");
+            const enableOCSP: boolean = (typeof process !== "undefined" && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") && !this.privUri.startsWith("ws:");
 
             if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 // Browser handles cert checks.
@@ -303,8 +303,15 @@ export class WebsocketMessageAdapter {
             }
 
             this.onEvent(new ConnectionMessageSentEvent(this.privConnectionId, new Date().toISOString(), sendItem.Message));
-            this.privWebsocketClient.send(sendItem.RawWebsocketMessage.payload);
+
+            // add a check for the ws readystate in order to stop the red console error 'WebSocket is already in CLOSING or CLOSED state' appearing
+            if (this.isWebsocketOpen) {
+                this.privWebsocketClient.send(sendItem.RawWebsocketMessage.payload);
+            } else {
+                return PromiseHelper.fromError<boolean>("websocket send error: Websocket not ready");
+            }
             return PromiseHelper.fromResult(true);
+
         } catch (e) {
             return PromiseHelper.fromError<boolean>(`websocket send error: ${e}`);
         }
@@ -351,4 +358,9 @@ export class WebsocketMessageAdapter {
         this.privConnectionEvents.onEvent(event);
         Events.instance.onEvent(event);
     }
+
+    private get isWebsocketOpen(): boolean {
+        return this.privWebsocketClient && this.privWebsocketClient.readyState === this.privWebsocketClient.OPEN;
+    }
+
 }
