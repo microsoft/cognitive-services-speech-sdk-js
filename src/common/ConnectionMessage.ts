@@ -42,7 +42,7 @@ export class ConnectionMessage {
         return this.privMessageType;
     }
 
-    public get headers(): any {
+    public get headers(): IStringDictionary<string> {
         return this.privHeaders;
     }
 
