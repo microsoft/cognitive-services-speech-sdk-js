@@ -19,17 +19,8 @@ import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import WaitForCondition from "./Utilities";
 
-<<<<<<< HEAD
-=======
-import {
-    DynamicGrammarBuilder,
-    IDynamicGrammar,
-    IDynamicGrammarGeneric,
-    IDynamicGrammarGroup,
-} from "../src/common.speech/Exports";
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
->>>>>>> origin/master
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
 const Recognized: string = "Recognized";

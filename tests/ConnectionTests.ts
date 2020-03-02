@@ -18,6 +18,8 @@ import {
     WaveFileAudioInput
 } from "./WaveFileAudioInputStream";
 
+import * as fs from "fs";
+
 let objsToClose: any[];
 
 beforeAll(() => {
@@ -638,14 +640,18 @@ test.only("testAudioMessagesSent", (done: jest.DoneCallback) => {
 
     expect(r.outputFormat === sdk.OutputFormat.Detailed);
 
-    const sourceAudio: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+    const sourceAudio: ArrayBuffer = fs.readFileSync(Settings.WaveFile);
 
     const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
-    con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
-        // tslint:disable-next-line:no-console
-        console.warn("Got " + args.message.path);
+    let wavFragmentCount: number = 0;
 
+    const wavFragments: { [id: number]: ArrayBuffer; } = {};
+
+    con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
+        if (args.message.path === "audio" && args.message.isBinaryMessage && args.message.binaryMessage !== null) {
+            wavFragments[wavFragmentCount++] = args.message.binaryMessage;
+        }
     };
 
     r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
@@ -663,6 +669,29 @@ test.only("testAudioMessagesSent", (done: jest.DoneCallback) => {
             expect(result.properties).not.toBeUndefined();
             expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
+            // Validate the entire wave file was sent.
+            let byteCount: number = 0;
+
+            for (let i: number = 0; i < wavFragmentCount; i++) {
+                byteCount += wavFragments[i].byteLength;
+            }
+
+            const sentAudio: Uint8Array = new Uint8Array(byteCount);
+
+            byteCount = 0;
+            for (let i: number = 0; i < wavFragmentCount; i++) {
+                sentAudio.set(new Uint8Array(wavFragments[i]), byteCount);
+                byteCount += wavFragments[i].byteLength;
+            }
+
+            const sourceArray: Uint8Array = new Uint8Array(sourceAudio);
+            expect(sourceArray.length).toEqual(sentAudio.length);
+
+            // Skip the wave header.
+            for (let i: number = 44; i < sourceArray.length; i++) {
+                expect(sourceArray[i]).toEqual(sentAudio[i]);
+            }
+
             done();
         } catch (error) {
             done.fail(error);
@@ -670,4 +699,4 @@ test.only("testAudioMessagesSent", (done: jest.DoneCallback) => {
     }, (error: string) => {
         done.fail(error);
     });
-});
+}, 10000);
