@@ -13,8 +13,12 @@ import {
     ServiceRecognizerBase,
     SpeechServiceConfig,
 } from "../common.speech/Exports";
-import { Promise, PromiseHelper } from "../common/Exports";
-import { Contracts } from "./Contracts";
+import {
+    PromiseHelper
+} from "../common/Exports";
+import {
+    Contracts
+} from "./Contracts";
 import {
     AudioConfig,
     Connection,
@@ -209,10 +213,10 @@ export abstract class Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposed);
 
-            this.implRecognizerStop().on((_: boolean): void => {
+            this.implRecognizerStop().then((_: boolean): void => {
                 try {
                     this.privReco.recognize(recognitionMode, (e: SpeechRecognitionResult) => {
-                        this.implRecognizerStop().on((_: boolean): void => {
+                        this.implRecognizerStop().then((_: boolean): void => {
                             if (!!cb) {
                                 cb(e);
                             }
@@ -227,8 +231,8 @@ export abstract class Recognizer {
                         if (!!err) {
                             err(e);
                         }
-                    /* tslint:disable:no-empty */
-                    }).on((_: boolean): void => { },
+                        /* tslint:disable:no-empty */
+                    }).then<void, void>((): void => { },
                         (error: string) => {
                             if (!!err) {
                                 err(error);
@@ -271,8 +275,8 @@ export abstract class Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposed);
 
-            this.implRecognizerStop().on((_: boolean): void => {
-                this.privReco.recognize(recognitionMode, undefined, undefined).on((_: boolean): void => {
+            this.implRecognizerStop().then<void, void>((): void => {
+                this.privReco.recognize(recognitionMode, undefined, undefined).then<void, void>((): void => {
                     // report result to promise.
                     if (!!cb) {
                         try {
@@ -317,7 +321,7 @@ export abstract class Recognizer {
         try {
             Contracts.throwIfDisposed(this.privDisposed);
 
-            this.implRecognizerStop().on((_: boolean) => {
+            this.implRecognizerStop().then((_: boolean) => {
                 if (!!cb) {
                     try {
                         cb();

@@ -20,7 +20,6 @@ import {
     IAudioSource,
     IAudioStreamNode,
     IStreamChunk,
-    Promise,
     PromiseHelper,
     Stream,
     StreamReader,
@@ -193,13 +192,13 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
         return this.turnOn()
-            .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
+            .then<StreamReader<ArrayBuffer>>((_: boolean) => {
                 // For now we support a single parallel reader of the pushed stream.
                 // So we can simiply hand the stream to the recognizer and let it recognize.
 
                 return this.privStream.getReader();
             })
-            .onSuccessContinueWith((streamReader: StreamReader<ArrayBuffer>) => {
+            .then((streamReader: StreamReader<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
 
                 return {
@@ -356,7 +355,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
         return this.turnOn()
-            .onSuccessContinueWith((result: boolean) => {
+            .then((result: boolean) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
 
                 return {

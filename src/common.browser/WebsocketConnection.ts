@@ -12,7 +12,6 @@ import {
     IConnection,
     IStringDictionary,
     IWebsocketMessageFormatter,
-    Promise,
 } from "../common/Exports";
 import { ProxyInfo } from "./ProxyInfo";
 import { WebsocketMessageAdapter } from "./WebsocketMessageAdapter";

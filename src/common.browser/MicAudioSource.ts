@@ -28,7 +28,6 @@ import {
     IAudioSource,
     IAudioStreamNode,
     IStringDictionary,
-    Promise,
     PromiseHelper,
     Stream,
     StreamReader,
@@ -80,7 +79,7 @@ export class MicAudioSource implements IAudioSource {
 
     public turnOn = (): Promise<boolean> => {
         if (this.privInitializeDeferral) {
-            return this.privInitializeDeferral.promise();
+            return this.privInitializeDeferral.promise;
         }
 
         this.privInitializeDeferral = new Deferred<boolean>();
@@ -94,7 +93,7 @@ export class MicAudioSource implements IAudioSource {
             } else {
                 this.privInitializeDeferral.reject(error);
             }
-            return this.privInitializeDeferral.promise();
+            return this.privInitializeDeferral.promise;
         }
 
         const nav = window.navigator as INavigator;
@@ -154,7 +153,7 @@ export class MicAudioSource implements IAudioSource {
             }
         }
 
-        return this.privInitializeDeferral.promise();
+        return this.privInitializeDeferral.promise;
     }
 
     public id = (): string => {
@@ -164,7 +163,7 @@ export class MicAudioSource implements IAudioSource {
     public attach = (audioNodeId: string): Promise<IAudioStreamNode> => {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
-        return this.listen(audioNodeId).onSuccessContinueWith<IAudioStreamNode>(
+        return this.listen(audioNodeId).then<IAudioStreamNode>(
             (streamReader: StreamReader<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
                 return {
@@ -215,7 +214,7 @@ export class MicAudioSource implements IAudioSource {
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
-        return this.getMicrophoneLabel().onSuccessContinueWith((label: string) => {
+        return this.getMicrophoneLabel().then((label: string) => {
             return {
                 bitspersample: MicAudioSource.AUDIOFORMAT.bitsPerSample,
                 channelcount: MicAudioSource.AUDIOFORMAT.channels,
@@ -274,12 +273,12 @@ export class MicAudioSource implements IAudioSource {
             deferred.resolve(this.privMicrophoneLabel);
         }, () => deferred.resolve(this.privMicrophoneLabel));
 
-        return deferred.promise();
+        return deferred.promise;
     }
 
     private listen = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
         return this.turnOn()
-            .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
+            .then<StreamReader<ArrayBuffer>>((_: boolean) => {
                 const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
                 this.privStreams[audioNodeId] = stream;
 

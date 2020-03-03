@@ -7,7 +7,6 @@ import {
     IStringDictionary,
     IWebsocketMessageFormatter,
     MessageType,
-    Promise,
     RawWebsocketMessage,
 } from "../common/Exports";
 
@@ -68,7 +67,7 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
             deferral.reject(`Error formatting the message. Error: ${e}`);
         }
 
-        return deferral.promise();
+        return deferral.promise;
     }
 
     public fromConnectionMessage = (message: ConnectionMessage): Promise<RawWebsocketMessage> => {
@@ -108,7 +107,7 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
             deferral.reject(`Error formatting the message. ${e}`);
         }
 
-        return deferral.promise();
+        return deferral.promise;
     }
 
     private makeHeaders = (message: ConnectionMessage): string => {

@@ -9,8 +9,7 @@ import {
     IDetachable,
     IEventSource,
     PlatformEvent,
-    Promise,
-    PromiseState
+    PromiseCompletionWrapper
 } from "../common/Exports";
 import {
     ConnectingToServiceEvent,
@@ -64,7 +63,7 @@ export class RequestSession {
     }
 
     public get turnCompletionPromise(): Promise<boolean> {
-        return this.privTurnDeferral.promise();
+        return this.privTurnDeferral.promise;
     }
 
     public get isSpeechEnded(): boolean {
@@ -156,7 +155,7 @@ export class RequestSession {
     }
 
     public onServiceTurnStartResponse = (): void => {
-        if (this.privTurnDeferral.state() === PromiseState.None) {
+        if (this.privTurnDeferral && !(new PromiseCompletionWrapper(this.privTurnDeferral.promise).isCompleted)) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
         }

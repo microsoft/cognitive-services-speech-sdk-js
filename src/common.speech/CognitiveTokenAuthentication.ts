@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ArgumentNullError, Promise } from "../common/Exports";
+import { ArgumentNullError } from "../common/Exports";
 import { AuthInfo, IAuthentication } from "./IAuthentication";
 
 const AuthHeader: string = "Authorization";
@@ -24,10 +24,10 @@ export class CognitiveTokenAuthentication implements IAuthentication {
     }
 
     public fetch = (authFetchEventId: string): Promise<AuthInfo> => {
-        return  this.privFetchCallback(authFetchEventId).onSuccessContinueWith((token: string) => new AuthInfo(AuthHeader, token));
+        return this.privFetchCallback(authFetchEventId).then((token: string) => new AuthInfo(AuthHeader, token));
     }
 
     public fetchOnExpiry = (authFetchEventId: string): Promise<AuthInfo> => {
-        return  this.privFetchOnExpiryCallback(authFetchEventId).onSuccessContinueWith((token: string) => new AuthInfo(AuthHeader, token));
+        return this.privFetchOnExpiryCallback(authFetchEventId).then((token: string) => new AuthInfo(AuthHeader, token));
     }
 }

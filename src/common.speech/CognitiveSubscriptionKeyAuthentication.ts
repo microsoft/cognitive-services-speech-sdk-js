@@ -1,8 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ArgumentNullError, Promise, PromiseHelper } from "../common/Exports";
-import { AuthInfo, IAuthentication } from "./IAuthentication";
+import {
+    ArgumentNullError,
+    PromiseHelper
+} from "../common/Exports";
+import {
+    AuthInfo,
+    IAuthentication
+} from "./IAuthentication";
 
 const AuthHeader: string = "Ocp-Apim-Subscription-Key";
 

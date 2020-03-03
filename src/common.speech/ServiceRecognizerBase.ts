@@ -19,7 +19,7 @@ import {
     IDisposable,
     IStreamChunk,
     MessageType,
-    Promise,
+    PromiseCompletionWrapper,
     PromiseHelper,
     PromiseResult,
     ServiceEvent,
@@ -147,7 +147,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public dispose(reason?: string): void {
         this.privIsDisposed = true;
         if (this.privConnectionConfigurationPromise) {
-            this.privConnectionConfigurationPromise.onSuccessContinueWith((connection: IConnection) => {
+            this.privConnectionConfigurationPromise.then((connection: IConnection) => {
                 connection.dispose(reason);
             });
         }
@@ -167,11 +167,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected recognizeOverride: (recoMode: RecognitionMode, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
 
-    public recognize(
+    public async recognize(
         recoMode: RecognitionMode,
         successCallback: (e: SpeechRecognitionResult) => void,
         errorCallBack: (e: string) => void,
-    ): Promise<boolean> {
+    ): Promise<void> {
 
         if (this.recognizeOverride !== undefined) {
             return this.recognizeOverride(recoMode, successCallback, errorCallBack);
@@ -190,51 +190,46 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         this.connectImpl();
 
-        return this.audioSource
-            .attach(this.privRequestSession.audioNodeId)
-            .onSuccessContinueWithPromise<boolean>((result: IAudioStreamNode) => {
-                let audioNode: ReplayableAudioNode;
+        const audioStreamNode: IAudioStreamNode = await this.audioSource.attach(this.privRequestSession.audioNodeId);
+        const format: AudioStreamFormatImpl = await this.audioSource.format;
+        const deviceInfo: ISpeechConfigAudioDevice = await this.audioSource.deviceInfo;
 
-                return this.audioSource.format.onSuccessContinueWithPromise((format: AudioStreamFormatImpl) => {
-                    audioNode = new ReplayableAudioNode(result, format.avgBytesPerSec);
-                    this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
+        let audioNode: ReplayableAudioNode;
+        audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
+        this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
 
-                    return this.audioSource.deviceInfo.onSuccessContinueWithPromise<boolean>((deviceInfo: ISpeechConfigAudioDevice): Promise<boolean> => {
-                        this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
+        this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
 
-                        return this.configureConnection()
-                            .continueWithPromise<boolean>((result: PromiseResult<IConnection>): Promise<boolean> => {
-                                if (result.isError) {
-                                    this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error);
-                                    return PromiseHelper.fromError(result.error);
-                                }
+        try {
+            const configuredConnection: IConnection = await this.configureConnection();
+        } catch (error) {
+            this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error);
+            return;
+        }
 
-                                const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
+        const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
 
-                                if (!!this.privRecognizer.sessionStarted) {
-                                    this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
-                                }
+        if (!!this.privRecognizer.sessionStarted) {
+            this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
+        }
 
-                                const messageRetrievalPromise = this.receiveMessage();
-                                const audioSendPromise = this.sendAudio(audioNode);
+        const messageRetrievalPromise = this.receiveMessage();
+        const audioSendPromise = this.sendAudio(audioNode);
 
-                                /* tslint:disable:no-empty */
-                                audioSendPromise.on((_: boolean) => { }, (error: string) => {
-                                    this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
-                                });
-                                return PromiseHelper.fromResult(true);
-                            });
-                    });
-                });
-            });
+        /* tslint:disable:no-empty */
+        audioSendPromise.then((_: boolean) => { }, (error: string) => {
+            this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
+        });
+
+        return;
     }
 
     public stopRecognizing(): Promise<boolean> {
         if (this.privRequestSession.isRecognizing) {
             this.audioSource.turnOff();
-            return this.sendFinalAudio().onSuccessContinueWithPromise((_: boolean) => {
+            return this.sendFinalAudio().then((_: boolean) => {
                 this.privRequestSession.onStopRecognizing();
-                return this.privRequestSession.turnCompletionPromise.onSuccessContinueWith((_: boolean) => {
+                return this.privRequestSession.turnCompletionPromise.then((_: boolean) => {
                     this.privRequestSession.onStopRecognizing();
                     this.privRequestSession.dispose();
                     return true;
@@ -245,26 +240,29 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return PromiseHelper.fromResult(true);
     }
 
+    // TODO: Return Value
     public connect(): void {
-        this.connectImpl().result();
+        const p: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.connectImpl());
     }
 
     public connectAsync(cb?: Callback, err?: Callback): void {
-        this.connectImpl().continueWith((promiseResult: PromiseResult<IConnection>) => {
+        this.connectImpl().then((connection: IConnection): void => {
             try {
-                if (promiseResult.isError) {
-                    if (!!err) {
-                        err(promiseResult.error);
-                    }
-                } else if (promiseResult.isCompleted) {
-                    if (!!cb) {
-                        cb();
-                    }
+                if (!!cb) {
+                    cb();
                 }
             } catch (e) {
                 if (!!err) {
                     err(e);
                 }
+            }
+        }, (reason: any): void => {
+            try {
+                if (!!err) {
+                    err(reason);
+                }
+                /* tslint:disable:no-empty */
+            } catch (error) {
             }
         });
     }
@@ -281,13 +279,15 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             CancellationErrorCode.NoError,
             "Disconnecting");
 
-        if (this.privConnectionPromise.result().isCompleted) {
-            if (!this.privConnectionPromise.result().isError) {
-                this.privConnectionPromise.result().result.dispose();
+        const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionPromise);
+
+        if (wrapper.isCompleted) {
+            if (!wrapper.isError) {
+                wrapper.result.dispose();
                 this.privConnectionPromise = null;
             }
         } else {
-            this.privConnectionPromise.onSuccessContinueWith((connection: IConnection) => {
+            this.privConnectionPromise.then((connection: IConnection) => {
                 connection.dispose();
             });
         }
@@ -307,23 +307,23 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 CancellationErrorCode.NoError,
                 "Disconnecting");
 
-            this.privConnectionPromise.continueWith((result: PromiseResult<IConnection>): void => {
+            this.privConnectionPromise.then((result: IConnection): void => {
                 try {
-                    if (result.isError) {
-                        if (!!err) {
-                            err(result.error);
-                        }
-                    } else if (result.isCompleted) {
-                        result.result.dispose();
-
-                        if (!!cb) {
-                            cb();
-                        }
+                    if (!!cb) {
+                        cb();
                     }
                 } catch (e) {
                     if (!!err) {
                         err(e);
                     }
+                }
+            }, (reason: any): void => {
+                try {
+                    if (!!err) {
+                        err(reason);
+                    }
+                    /* tslint:disable:no-empty */
+                } catch (error) {
                 }
             });
         } catch (e) {
@@ -363,7 +363,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             } catch { }
         }
 
-        return this.fetchConnection().onSuccessContinueWith((connection: IConnection): Promise<boolean> => {
+        return this.fetchConnection().then((connection: IConnection): Promise<boolean> => {
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Text,
                 "telemetry",
@@ -402,9 +402,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected receiveMessageOverride: () => any = undefined;
 
     protected receiveMessage = (): Promise<IConnection> => {
-        return this.fetchConnection().on((connection: IConnection): Promise<IConnection> => {
+        return this.fetchConnection().then<IConnection, IConnection>((connection: IConnection): Promise<IConnection> => {
             return connection.read()
-                .onSuccessContinueWithPromise((message: ConnectionMessage) => {
+                .then((message: ConnectionMessage) => {
 
                     if (this.receiveMessageOverride !== undefined) {
                         return this.receiveMessageOverride();
@@ -486,7 +486,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                                     return PromiseHelper.fromResult(true);
                                 } else {
-                                    this.fetchConnection().onSuccessContinueWith((connection: IConnection) => {
+                                    this.fetchConnection().then((connection: IConnection) => {
                                         this.sendSpeechContext(connection);
                                         this.sendWaveHeader(connection);
                                     });
@@ -508,6 +508,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     return this.receiveMessage();
                 });
         }, (error: string) => {
+            return null;
         });
     }
 
@@ -526,7 +527,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected sendWaveHeader(connection: IConnection): Promise<boolean> {
-        return this.audioSource.format.onSuccessContinueWithPromise((format: AudioStreamFormatImpl) => {
+        return this.audioSource.format.then((format: AudioStreamFormatImpl) => {
             // this.writeBufferToConsole(format.header);
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Binary,
@@ -548,9 +549,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         if (this.privConnectionPromise) {
-            if (this.privConnectionPromise.result().isCompleted &&
-                (this.privConnectionPromise.result().isError
-                    || this.privConnectionPromise.result().result.state() === ConnectionState.Disconnected) &&
+            const connectionWrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionPromise);
+
+            if (connectionWrapper.isCompleted &&
+                (connectionWrapper.isError
+                    || connectionWrapper.result.state() === ConnectionState.Disconnected) &&
                 this.privServiceHasSentMessage === true) {
                 this.privConnectionId = null;
                 this.privConnectionPromise = null;
@@ -569,15 +572,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
 
         this.privConnectionPromise = authPromise
-            .continueWithPromise((result: PromiseResult<AuthInfo>) => {
-                if (result.isError) {
-                    this.privRequestSession.onAuthCompleted(true, result.error);
-                    throw new Error(result.error);
-                } else {
-                    this.privRequestSession.onAuthCompleted(false);
-                }
+            .then((result: AuthInfo) => {
+                this.privRequestSession.onAuthCompleted(false);
 
-                const connection: IConnection = this.privConnectionFactory.create(this.privRecognizerConfig, result.result, this.privConnectionId);
+                const connection: IConnection = this.privConnectionFactory.create(this.privRecognizerConfig, result, this.privConnectionId);
 
                 this.privRequestSession.listenForServiceTelemetry(connection.events);
 
@@ -587,7 +585,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     this.connectionEvents.onEvent(event);
                 });
 
-                return connection.open().onSuccessContinueWithPromise((response: ConnectionOpenResponse): Promise<IConnection> => {
+                return connection.open().then((response: ConnectionOpenResponse): Promise<IConnection> => {
                     if (response.statusCode === 200) {
                         this.privRequestSession.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
                         this.privRequestSession.onConnectionEstablishCompleted(response.statusCode);
@@ -600,6 +598,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         return PromiseHelper.fromError<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
                     }
                 });
+            }, (error: string): IConnection => {
+                this.privRequestSession.onAuthCompleted(true, error);
+                throw new Error(error);
             });
 
         return this.privConnectionPromise;
@@ -638,7 +639,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected sendAudio = (
         audioStreamNode: IAudioStreamNode): Promise<boolean> => {
-        return this.audioSource.format.onSuccessContinueWithPromise((audioFormat: AudioStreamFormatImpl) => {
+        return this.audioSource.format.then((audioFormat: AudioStreamFormatImpl) => {
             // NOTE: Home-baked promises crash ios safari during the invocation
             // of the error callback chain (looks like the recursion is way too deep, and
             // it blows up the stack). The following construct is a stop-gap that does not
@@ -661,8 +662,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     !this.privRequestSession.isSpeechEnded &&
                     this.privRequestSession.isRecognizing &&
                     this.privRequestSession.recogNumber === startRecogNumber) {
-                    this.fetchConnection().on((connection: IConnection) => {
-                        audioStreamNode.read().on(
+                    this.fetchConnection().then((connection: IConnection) => {
+                        audioStreamNode.read().then(
                             (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
                                 // we have a new audio chunk to upload.
                                 if (this.privRequestSession.isSpeechEnded) {
@@ -699,11 +700,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                             MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
 
                                     if (!audioStreamChunk?.isEnd) {
-                                        uploaded.continueWith((_: PromiseResult<boolean>) => {
+                                        uploaded.then((_: boolean) => {
                                             // this.writeBufferToConsole(payload);
                                             // Regardless of success or failure, schedule the next upload.
                                             // If the underlying connection was broken, the next cycle will
                                             // get a new connection and re-transmit missing audio automatically.
+                                            readAndUploadCycle();
+                                        }, (error: string): void => {
                                             readAndUploadCycle();
                                         });
                                     } else {
@@ -734,7 +737,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
             readAndUploadCycle();
 
-            return deferred.promise();
+            return deferred.promise;
         });
     }
 
@@ -756,8 +759,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private sendFinalAudio(): Promise<boolean> {
         const deferred = new Deferred<boolean>();
 
-        this.fetchConnection().on((connection: IConnection) => {
-            connection.send(new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, null)).on((_: boolean) => {
+        this.fetchConnection().then((connection: IConnection) => {
+            connection.send(new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, null)).then((_: boolean) => {
                 deferred.resolve(true);
             }, (error: string) => {
                 deferred.reject(error);
@@ -766,7 +769,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             deferred.reject(error);
         });
 
-        return deferred.promise();
+        return deferred.promise;
     }
 
     private fetchConnection = (): Promise<IConnection> => {
@@ -784,9 +787,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         if (this.privConnectionConfigurationPromise) {
-            if (this.privConnectionConfigurationPromise.result().isCompleted &&
-                (this.privConnectionConfigurationPromise.result().isError
-                    || this.privConnectionConfigurationPromise.result().result.state() === ConnectionState.Disconnected)) {
+            const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionConfigurationPromise);
+            if (wrapper.isCompleted &&
+                (wrapper.isError
+                    || wrapper.result.state() === ConnectionState.Disconnected)) {
 
                 this.privConnectionConfigurationPromise = null;
                 return this.configureConnection();
@@ -795,11 +799,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             }
         }
 
-        this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
+        this.privConnectionConfigurationPromise = this.connectImpl().then((connection: IConnection): Promise<IConnection> => {
             return this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
-                .onSuccessContinueWithPromise((_: boolean) => {
-                    return this.sendSpeechContext(connection).onSuccessContinueWithPromise((_: boolean) => {
-                        return this.sendWaveHeader(connection).onSuccessContinueWith((_: boolean) => {
+                .then((_: boolean) => {
+                    return this.sendSpeechContext(connection).then((_: boolean) => {
+                        return this.sendWaveHeader(connection).then((_: boolean) => {
                             return connection;
                         });
                     });

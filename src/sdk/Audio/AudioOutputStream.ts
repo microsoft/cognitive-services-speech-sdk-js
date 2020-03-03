@@ -5,7 +5,6 @@ import { createNoDashGuid } from "../../../src/common/Guid";
 import {
     ChunkedArrayBufferStream,
     IStreamChunk,
-    Promise,
     PromiseHelper,
     Stream,
     StreamReader,
@@ -154,7 +153,7 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream {
      */
     public read(): Promise<ArrayBuffer> {
         return this.streamReader.read()
-            .onSuccessContinueWithPromise<ArrayBuffer>((chunk: IStreamChunk<ArrayBuffer>) => {
+            .then<ArrayBuffer>((chunk: IStreamChunk<ArrayBuffer>) => {
                 return PromiseHelper.fromResult(chunk.buffer);
             });
     }

@@ -197,7 +197,7 @@ export class DialogServiceConnector extends Recognizer {
                             err(e);
                         }
                         /* tslint:disable:no-empty */
-                    }).on((_: boolean): void => { },
+                    }).then<void, void>((): void => { },
                         (error: string): void => {
                             if (!!err) {
                                 err(error);

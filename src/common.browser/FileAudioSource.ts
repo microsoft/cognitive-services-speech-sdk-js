@@ -25,7 +25,6 @@ import {
     IAudioSource,
     IAudioStreamNode,
     IStringDictionary,
-    Promise,
     PromiseHelper,
     Stream,
     StreamReader,
@@ -79,7 +78,7 @@ export class FileAudioSource implements IAudioSource {
     public attach = (audioNodeId: string): Promise<IAudioStreamNode> => {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
-        return this.upload(audioNodeId).onSuccessContinueWith<IAudioStreamNode>(
+        return this.upload(audioNodeId).then<IAudioStreamNode>(
             (streamReader: StreamReader<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
                 return {
@@ -126,7 +125,7 @@ export class FileAudioSource implements IAudioSource {
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
-        return this.privAudioFormatPromise.onSuccessContinueWithPromise<ISpeechConfigAudioDevice>((result: AudioStreamFormatImpl) => {
+        return this.privAudioFormatPromise.then<ISpeechConfigAudioDevice>((result: AudioStreamFormatImpl) => {
             return PromiseHelper.fromResult({
                 bitspersample: result.bitsPerSample,
                 channelcount: result.channels,
@@ -181,13 +180,13 @@ export class FileAudioSource implements IAudioSource {
 
         headerReader.onload = processHeader;
         headerReader.readAsArrayBuffer(header);
-        return headerResult.promise();
+        return headerResult.promise;
     }
 
     private upload = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
         return this.turnOn()
-            .onSuccessContinueWithPromise<StreamReader<ArrayBuffer>>((_: boolean) => {
-                return this.privAudioFormatPromise.onSuccessContinueWith<StreamReader<ArrayBuffer>>((format: AudioStreamFormatImpl) => {
+            .then<StreamReader<ArrayBuffer>>((_: boolean) => {
+                return this.privAudioFormatPromise.then<StreamReader<ArrayBuffer>>((format: AudioStreamFormatImpl) => {
                     const fileStream: ChunkedArrayBufferStream = new ChunkedArrayBufferStream(3200);
 
                     const reader: FileReader = new FileReader();

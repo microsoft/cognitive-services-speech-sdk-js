@@ -4,7 +4,7 @@
 import { AudioStreamFormatImpl } from "../../../src/sdk/Audio/AudioStreamFormat";
 import { FileAudioSource, MicAudioSource, PcmRecorder } from "../../common.browser/Exports";
 import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
-import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode, Promise } from "../../common/Exports";
+import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import { AudioInputStream, PropertyCollection, PropertyId, PullAudioInputStreamCallback } from "../Exports";
 import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";

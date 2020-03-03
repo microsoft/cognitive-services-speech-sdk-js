@@ -6,7 +6,6 @@ import { ISpeechConfigAudioDevice } from "../common.speech/Exports";
 import { AudioSourceEvent } from "./AudioSourceEvents";
 import { EventSource } from "./EventSource";
 import { IDetachable } from "./IDetachable";
-import { Promise } from "./Promise";
 import { IStreamChunk } from "./Stream";
 
 export interface IAudioSource {

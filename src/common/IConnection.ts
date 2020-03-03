@@ -6,7 +6,6 @@ import { ConnectionMessage } from "./ConnectionMessage";
 import { ConnectionOpenResponse } from "./ConnectionOpenResponse";
 import { EventSource } from "./EventSource";
 import { IDisposable } from "./IDisposable";
-import { Promise } from "./Promise";
 
 export enum ConnectionState {
     None,

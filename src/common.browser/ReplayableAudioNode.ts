@@ -5,7 +5,6 @@ import { AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
 import {
     IAudioStreamNode,
     IStreamChunk,
-    Promise,
     PromiseHelper,
 } from "../common/Exports";
 
@@ -70,7 +69,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
         }
 
         return this.privAudioNode.read()
-            .onSuccessContinueWith((result: IStreamChunk<ArrayBuffer>) => {
+            .then((result: IStreamChunk<ArrayBuffer>) => {
                 if (result && result.buffer) {
                     this.privBuffers.push(new BufferEntry(result, this.privBufferSerial++, this.privBufferedBytes));
                     this.privBufferedBytes += result.buffer.byteLength;

@@ -5,8 +5,11 @@ import { InvalidOperationError, ObjectDisposedError } from "./Error";
 import { IDetachable } from "./IDetachable";
 import { IDisposable } from "./IDisposable";
 import { List } from "./List";
-import { Deferred, Promise, PromiseHelper } from "./Promise";
-
+import {
+    Deferred,
+    PromiseCompletionWrapper,
+    PromiseHelper,
+} from "./Promise";
 export interface IQueue<TItem> extends IDisposable {
     enqueue(item: TItem): void;
     enqueueFromPromise(promise: Promise<TItem>): void;
@@ -21,7 +24,7 @@ enum SubscriberType {
 }
 
 export class Queue<TItem> implements IQueue<TItem> {
-    private privPromiseStore: List<Promise<TItem>> = new List<Promise<TItem>>();
+    private privPromiseStore: List<PromiseCompletionWrapper<TItem>> = new List<PromiseCompletionWrapper<TItem>>();
     private privList: List<TItem>;
     private privDetachables: IDetachable[];
     private privSubscribers: List<{ type: SubscriberType, deferral: Deferred<TItem> }>;
@@ -38,26 +41,25 @@ export class Queue<TItem> implements IQueue<TItem> {
 
     public enqueue = (item: TItem): void => {
         this.throwIfDispose();
-        this.enqueueFromPromise(PromiseHelper.fromResult(item));
+        this.enqueueFromPromise(new Promise<TItem>((resolve: (value: TItem) => void, reject: (reason: any) => void) => { resolve(item); }));
     }
 
     public enqueueFromPromise = (promise: Promise<TItem>): void => {
         this.throwIfDispose();
-        this.privPromiseStore.add(promise);
-        promise.finally(() => {
+        this.privPromiseStore.add(new PromiseCompletionWrapper(promise, () => {
             while (this.privPromiseStore.length() > 0) {
-                if (!this.privPromiseStore.first().result().isCompleted) {
+                if (!this.privPromiseStore.first().isCompleted) {
                     break;
                 } else {
                     const p = this.privPromiseStore.removeFirst();
-                    if (!p.result().isError) {
-                        this.privList.add(p.result().result);
+                    if (!p.isError) {
+                        this.privList.add(p.result);
                     } else {
                         // TODO: Log as warning.
                     }
                 }
             }
-        });
+        }));
     }
 
     public dequeue = (): Promise<TItem> => {
@@ -69,7 +71,7 @@ export class Queue<TItem> implements IQueue<TItem> {
             this.drain();
         }
 
-        return deferredSubscriber.promise();
+        return deferredSubscriber.promise;
     }
 
     public peek = (): Promise<TItem> => {
@@ -82,7 +84,7 @@ export class Queue<TItem> implements IQueue<TItem> {
             this.drain();
         }
 
-        return deferredSubscriber.promise();
+        return deferredSubscriber.promise;
     }
 
     public length = (): number => {
@@ -94,7 +96,7 @@ export class Queue<TItem> implements IQueue<TItem> {
         return this.privSubscribers == null;
     }
 
-    public drainAndDispose = (pendingItemProcessor: (pendingItemInQueue: TItem) => void, reason?: string): Promise<boolean> => {
+    public drainAndDispose = (pendingItemProcessor: (pendingItemInQueue: TItem) => void, reason?: string): Promise<void> => {
         if (!this.isDisposed() && !this.privIsDisposing) {
             this.privDisposeReason = reason;
             this.privIsDisposing = true;
@@ -127,23 +129,26 @@ export class Queue<TItem> implements IQueue<TItem> {
             }
 
             if (this.privPromiseStore.length() > 0 && pendingItemProcessor) {
-                return PromiseHelper
-                    .whenAll(this.privPromiseStore.toArray())
-                    .continueWith(() => {
-                        this.privSubscribers = null;
-                        this.privList.forEach((item: TItem, index: number): void => {
-                            pendingItemProcessor(item);
-                        });
-                        this.privList = null;
-                        return true;
+                const promiseArray: Array<Promise<TItem>> = [];
+
+                this.privPromiseStore.toArray().forEach((wrapper: PromiseCompletionWrapper<TItem>) => {
+                    promiseArray.push(wrapper.promise);
+                });
+                return new PromiseCompletionWrapper(PromiseHelper.whenAll(promiseArray), () => {
+                    this.privSubscribers = null;
+                    this.privList.forEach((item: TItem, index: number): void => {
+                        pendingItemProcessor(item);
                     });
+                    this.privList = null;
+                    return true;
+                }).promise;
             } else {
                 this.privSubscribers = null;
                 this.privList = null;
             }
         }
 
-        return PromiseHelper.fromResult(true);
+        return PromiseHelper.fromResult(undefined);
     }
 
     public dispose = (reason?: string): void => {

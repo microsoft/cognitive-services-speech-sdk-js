@@ -7,7 +7,6 @@ import { ReplayableAudioNode } from "../src/common.browser/ReplayableAudioNode";
 import {
     IAudioStreamNode,
     IStreamChunk,
-    Promise,
     PromiseHelper,
 } from "../src/common/Exports";
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";

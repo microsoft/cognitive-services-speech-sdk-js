@@ -5,7 +5,6 @@ import {
     createNoDashGuid,
     Deferred,
     IDetachable,
-    Promise,
 } from "../../common/Exports";
 
 /**
@@ -34,7 +33,7 @@ export class ConversationRequestSession {
     }
 
     public get completionPromise(): Promise<boolean> {
-        return this.privRequestCompletionDeferral.promise();
+        return this.privRequestCompletionDeferral.promise;
     }
 
     public onPreConnectionStart = (authFetchEventId: string, connectionId: string): void => {

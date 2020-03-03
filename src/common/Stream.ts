@@ -4,7 +4,6 @@
 import { InvalidOperationError } from "./Error";
 import { createNoDashGuid } from "./Guid";
 import { IStringDictionary } from "./IDictionary";
-import { Promise } from "./Promise";
 import { Queue } from "./Queue";
 
 export interface IStreamChunk<TBuffer> {
@@ -111,7 +110,7 @@ export class StreamReader<TBuffer> {
 
         return this.privReaderQueue
             .dequeue()
-            .onSuccessContinueWith((streamChunk: IStreamChunk<TBuffer>) => {
+            .then((streamChunk: IStreamChunk<TBuffer>) => {
                 if (streamChunk === undefined || streamChunk.isEnd) {
                     this.privReaderQueue.dispose("End of stream reached");
                 }

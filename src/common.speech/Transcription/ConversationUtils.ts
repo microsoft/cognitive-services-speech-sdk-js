@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Promise, PromiseResult } from "../../common/Promise";
+import { PromiseResult } from "../../common/Promise";
 import { Callback } from "../../sdk/Transcription/IConversation";
 import { IRequestOptions, IResponse } from "./ConversationTranslatorInterfaces";
 
@@ -89,9 +89,9 @@ function errorResponse(xhr: XMLHttpRequest, message: string | null = null): IRes
         data: message || xhr.statusText,
         headers: xhr.getAllResponseHeaders(),
         json: <T>() => JSON.parse(message || ("\"" + xhr.statusText + "\"")) as T,
-      ok: false,
-      status: xhr.status,
-      statusText: xhr.statusText,
+        ok: false,
+        status: xhr.status,
+        statusText: xhr.statusText,
     };
 }
 
@@ -100,29 +100,30 @@ export function extractHeaderValue(headerKey: string, headers: string): string {
     let headerValue: string = "";
 
     try {
-      const arr = headers.trim().split(/[\r\n]+/);
-      const headerMap: any = {};
-      arr.forEach((line: any) => {
-        const parts = line.split(": ");
-        const header = parts.shift().toLowerCase();
-        const value = parts.join(": ");
-        headerMap[header] = value;
-      });
+        const arr = headers.trim().split(/[\r\n]+/);
+        const headerMap: any = {};
+        arr.forEach((line: any) => {
+            const parts = line.split(": ");
+            const header = parts.shift().toLowerCase();
+            const value = parts.join(": ");
+            headerMap[header] = value;
+        });
 
-      headerValue = headerMap[headerKey.toLowerCase()];
+        headerValue = headerMap[headerKey.toLowerCase()];
     } catch (e) {
-      // ignore the error
+        // ignore the error
     }
 
     return headerValue;
 }
 
-export function request(method: "get" | "post" | "delete",
-                        url: string,
-                        queryParams: any = {},
-                        body: any = null,
-                        options: IRequestOptions = ConversationTranslatorConfig.defaultRequestOptions,
-                        callback: any): any {
+export function request(
+    method: "get" | "post" | "delete",
+    url: string,
+    queryParams: any = {},
+    body: any = null,
+    options: IRequestOptions = ConversationTranslatorConfig.defaultRequestOptions,
+    callback: any): any {
 
     const ignoreCache = options.ignoreCache || ConversationTranslatorConfig.defaultRequestOptions.ignoreCache;
     const headers = options.headers || ConversationTranslatorConfig.defaultRequestOptions.headers;
@@ -163,21 +164,23 @@ export function request(method: "get" | "post" | "delete",
 
 export function PromiseToEmptyCallback<T>(promise: Promise<T>, cb?: Callback, err?: Callback): void {
     if (!!promise) {
-        promise.continueWith((antecedent: PromiseResult<T>): void => {
+        promise.then((result: T): void => {
             try {
-                if (antecedent.isError) {
-                    if (!!err) {
-                        err(antecedent.error);
-                    }
-                } else {
-                    if (!!cb) {
-                        cb();
-                    }
+                if (!!cb) {
+                    cb();
                 }
             } catch (e) {
                 if (!!err) {
-                    err(`'Unhandled error on promise callback: ${e}. InnerError: ${antecedent.error}'`);
+                    err(`'Unhandled error on promise callback: ${e}'`);
                 }
+            }
+        }, (reason: any) => {
+            try {
+                if (!!err) {
+                    err(reason);
+                }
+            /* tslint:disable:no-empty */
+            } catch (error) {
             }
         });
     } else {
