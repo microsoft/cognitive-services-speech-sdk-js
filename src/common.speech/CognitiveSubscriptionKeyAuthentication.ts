@@ -3,7 +3,6 @@
 
 import {
     ArgumentNullError,
-    PromiseHelper
 } from "../common/Exports";
 import {
     AuthInfo,
@@ -39,7 +38,7 @@ export class CognitiveSubscriptionKeyAuthentication implements IAuthentication {
      * @param {string} authFetchEventId - The id to fetch.
      */
     public fetch = (authFetchEventId: string): Promise<AuthInfo> => {
-        return PromiseHelper.fromResult(this.privAuthInfo);
+        return Promise.resolve(this.privAuthInfo);
     }
 
     /**
@@ -50,6 +49,6 @@ export class CognitiveSubscriptionKeyAuthentication implements IAuthentication {
      * @param {string} authFetchEventId - The id to fetch.
      */
     public fetchOnExpiry = (authFetchEventId: string): Promise<AuthInfo> => {
-        return PromiseHelper.fromResult(this.privAuthInfo);
+        return Promise.resolve(this.privAuthInfo);
     }
 }

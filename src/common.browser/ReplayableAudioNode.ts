@@ -5,7 +5,6 @@ import { AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
 import {
     IAudioStreamNode,
     IStreamChunk,
-    PromiseHelper,
 } from "../common/Exports";
 
 export class ReplayableAudioNode implements IAudioStreamNode {
@@ -61,7 +60,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
                 this.privReplay = false;
             }
 
-            return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
+            return Promise.resolve<IStreamChunk<ArrayBuffer>>({
                 buffer: retVal,
                 isEnd: false,
                 timeReceived: this.privBuffers[i].chunk.timeReceived,

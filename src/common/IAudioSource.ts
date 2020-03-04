@@ -10,10 +10,10 @@ import { IStreamChunk } from "./Stream";
 
 export interface IAudioSource {
     id(): string;
-    turnOn(): Promise<boolean>;
+    turnOn(): Promise<void>;
     attach(audioNodeId: string): Promise<IAudioStreamNode>;
     detach(audioNodeId: string): void;
-    turnOff(): Promise<boolean>;
+    turnOff(): Promise<void>;
     events: EventSource<AudioSourceEvent>;
     format: Promise<AudioStreamFormatImpl>;
     deviceInfo: Promise<ISpeechConfigAudioDevice>;

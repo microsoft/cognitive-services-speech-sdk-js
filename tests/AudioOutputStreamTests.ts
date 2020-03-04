@@ -33,7 +33,7 @@ test("PullAudioOutputStreamImpl basic test", (done: jest.DoneCallback) => {
     ps.write(abView);
 
     let bytesRead: number = 0;
-    ps.read().onSuccessContinueWith((audioBuffer: ArrayBuffer) => {
+    ps.read().then((audioBuffer: ArrayBuffer) => {
         try {
             expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(size);
             expect(audioBuffer.byteLength).toBeLessThanOrEqual(size);
@@ -66,7 +66,7 @@ test("PullAudioOutputStreamImpl multiple writes read after close", (done: jest.D
     let bytesRead: number = 0;
 
     const readLoop = () => {
-        ps.read().onSuccessContinueWith((audioBuffer: ArrayBuffer) => {
+        ps.read().then((audioBuffer: ArrayBuffer) => {
             try {
                 if (audioBuffer == null) {
                     expect(bytesRead).toBeGreaterThanOrEqual(bufferSize * 4);
@@ -112,7 +112,7 @@ test("PullAudioOutputStreamImpl multiple writes and reads", (done: jest.DoneCall
     let bytesRead: number = 0;
 
     const readLoop = () => {
-        ps.read().onSuccessContinueWith((audioBuffer: ArrayBuffer) => {
+        ps.read().then((audioBuffer: ArrayBuffer) => {
             try {
                 expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(bufferSize);
                 expect(audioBuffer.byteLength).toBeLessThanOrEqual(bufferSize);

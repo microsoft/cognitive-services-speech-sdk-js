@@ -11,8 +11,6 @@ import {
     IAudioSource,
     IConnection,
     MessageType,
-    PromiseHelper,
-    PromiseResult
 } from "../../common/Exports";
 import {
     PromiseCompletionWrapper
@@ -96,12 +94,11 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         return this.privConversationIsDisposed;
     }
 
-    public dispose(reason?: string): void {
+    public async dispose(reason?: string): Promise<void> {
         this.privConversationIsDisposed = true;
         if (this.privConnectionConfigPromise) {
-            this.privConnectionConfigPromise.then((connection: IConnection) => {
-                connection.dispose(reason);
-            });
+            const connection: IConnection = await this.privConnectionConfigPromise;
+            await connection.dispose(reason);
         }
     }
 
@@ -114,7 +111,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     }
 
     public async sendMessageAsync(message: string): Promise<void> {
-        const sink: Deferred<boolean> = new Deferred<boolean>();
+        const sink: Deferred<void> = new Deferred<void>();
 
         const connection: IConnection = await this.fetchConversationConnection();
 
@@ -233,12 +230,12 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                         if (!!this.privConversationServiceConnector.connectionOpened) {
                             this.privConversationServiceConnector.connectionOpened(this.privConversationServiceConnector, sessionStartEventArgs);
                         }
-                        return PromiseHelper.fromResult<IConnection>(connection);
+                        return Promise.resolve<IConnection>(connection);
                     } else if (response.statusCode === 403 && !isUnAuthorized) {
                         return this.conversationConnectImpl(true);
                     } else {
                         this.privConversationRequestSession.onConnectionEstablishCompleted(response.statusCode, response.reason);
-                        return PromiseHelper.fromError<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
+                        return Promise.reject<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
                     }
                 });
             }, (error: string): IConnection => {
@@ -270,7 +267,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                     if (isDisposed || terminateMessageLoop) {
                         // We're done.
                         communicationCustodian.resolve(undefined);
-                        return PromiseHelper.fromResult<IConnection>(undefined);
+                        return Promise.resolve<IConnection>(undefined);
                     }
 
                     if (!message) {
@@ -610,7 +607,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         }
 
         if (this.terminateMessageLoop) {
-            return PromiseHelper.fromResult<IConnection>(undefined);
+            return Promise.resolve<IConnection>(undefined);
         }
 
         this.privConnectionConfigPromise = this.conversationConnectImpl()

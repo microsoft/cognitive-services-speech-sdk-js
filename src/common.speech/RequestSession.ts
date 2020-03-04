@@ -38,16 +38,16 @@ export class RequestSession {
     private privBytesSent: number = 0;
     private privRecogNumber: number = 0;
     private privSessionId: string;
-    private privTurnDeferral: Deferred<boolean>;
+    private privTurnDeferral: Deferred<void>;
 
     constructor(audioSourceId: string) {
         this.privAudioSourceId = audioSourceId;
         this.privRequestId = createNoDashGuid();
         this.privAudioNodeId = createNoDashGuid();
-        this.privTurnDeferral = new Deferred<boolean>();
+        this.privTurnDeferral = new Deferred<void>();
 
         // We're not in a turn, so resolve.
-        this.privTurnDeferral.resolve(true);
+        this.privTurnDeferral.resolve();
     }
 
     public get sessionId(): string {
@@ -62,7 +62,7 @@ export class RequestSession {
         return this.privAudioNodeId;
     }
 
-    public get turnCompletionPromise(): Promise<boolean> {
+    public get turnCompletionPromise(): Promise<void> {
         return this.privTurnDeferral.promise;
     }
 
@@ -142,7 +142,7 @@ export class RequestSession {
     }
 
     public onServiceTurnEndResponse = (continuousRecognition: boolean): void => {
-        this.privTurnDeferral.resolve(true);
+        this.privTurnDeferral.resolve();
 
         if (!continuousRecognition || this.isSpeechEnded) {
             this.onComplete();
@@ -160,7 +160,7 @@ export class RequestSession {
             this.privTurnDeferral.reject("Another turn started before current completed.");
         }
 
-        this.privTurnDeferral = new Deferred<boolean>();
+        this.privTurnDeferral = new Deferred<void>();
     }
 
     public onHypothesis(offset: number): void {
@@ -194,6 +194,7 @@ export class RequestSession {
             }
 
             this.privServiceTelemetryListener.dispose();
+            this.privIsRecognizing = false;
         }
     }
 

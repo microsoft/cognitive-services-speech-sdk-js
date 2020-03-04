@@ -157,7 +157,15 @@ export class IntentRecognizer extends Recognizer {
             intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
         }
 
-        this.recognizeOnceAsyncImpl(RecognitionMode.Interactive, cb, err);
+        this.recognizeOnceAsyncImpl(RecognitionMode.Interactive).then((val: IntentRecognitionResult): void => {
+            if (!!cb) {
+                cb(val);
+            }
+        }, (error: string): void => {
+            if (!!err) {
+                err(error);
+            }
+        });
     }
 
     /**
@@ -180,7 +188,37 @@ export class IntentRecognizer extends Recognizer {
             intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
         }
 
-        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation, cb, err);
+        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation).then((): void => {
+            try {
+                if (!!cb) {
+                    cb();
+                }
+            } catch (error) {
+                if (!!err) {
+                    try {
+                        if (error instanceof Error) {
+                            const typedError: Error = error as Error;
+                            err(typedError.name + ": " + typedError.message);
+                        } else {
+                            err(error);
+                        }
+                        /* tslint:disable:no-empty */
+                    } catch (error) { }
+                }
+            }
+        }, (error: any): void => {
+            if (!!err) {
+                try {
+                    if (error instanceof Error) {
+                        const typedError: Error = error as Error;
+                        err(typedError.name + ": " + typedError.message);
+                    } else {
+                        err(error);
+                    }
+                    /* tslint:disable:no-empty */
+                } catch (error) { }
+            }
+        });
     }
 
     /**
@@ -192,7 +230,15 @@ export class IntentRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.stopContinuousRecognitionAsyncImpl(cb, err);
+        this.stopContinuousRecognitionAsyncImpl().then((): void => {
+            if (!!cb) {
+                cb();
+            }
+        }, (error: string): void => {
+            if (!!err) {
+                err(error);
+            }
+        });
     }
 
     /**
@@ -294,10 +340,10 @@ export class IntentRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public close(): void {
+    public async close(): Promise<void> {
         Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
 
-        this.dispose(true);
+        await this.dispose(true);
     }
 
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
@@ -309,14 +355,14 @@ export class IntentRecognizer extends Recognizer {
         return new IntentServiceRecognizer(authentication, connectionFactory, audioImpl, recognizerConfig, this);
     }
 
-    protected dispose(disposing: boolean): void {
+    protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposedIntentRecognizer) {
             return;
         }
 
         if (disposing) {
             this.privDisposedIntentRecognizer = true;
-            super.dispose(disposing);
+            await super.dispose(disposing);
         }
     }
 

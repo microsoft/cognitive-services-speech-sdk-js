@@ -16,8 +16,6 @@ import {
     IStreamChunk,
     MessageType,
     PromiseCompletionWrapper,
-    PromiseHelper,
-    PromiseResult,
     ServiceEvent,
 } from "../common/Exports";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
@@ -114,12 +112,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return this.privDialogIsDisposed;
     }
 
-    public dispose(reason?: string): void {
+    public async dispose(reason?: string): Promise<void> {
         this.privDialogIsDisposed = true;
         if (this.privConnectionConfigPromise) {
-            this.privConnectionConfigPromise.then((connection: IConnection) => {
-                connection.dispose(reason);
-            });
+            const connection: IConnection = await this.privConnectionConfigPromise;
+            await connection.dispose(reason);
         }
     }
 
@@ -374,7 +371,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             const audioSendPromise = this.sendAudio(audioNode);
 
             // /* tslint:disable:no-empty */
-            audioSendPromise.then((_: boolean) => { /*add? return true;*/ }, (error: string) => {
+            audioSendPromise.then(() => { /*add? return true;*/ }, (error: string) => {
                 this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
             });
 
@@ -384,14 +381,14 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    protected sendAudio = (audioStreamNode: IAudioStreamNode): Promise<boolean> => {
-        return this.privDialogAudioSource.format.then<boolean>((audioFormat: AudioStreamFormatImpl) => {
+    protected sendAudio = (audioStreamNode: IAudioStreamNode): Promise<void> => {
+        return this.privDialogAudioSource.format.then<void>((audioFormat: AudioStreamFormatImpl) => {
             // NOTE: Home-baked promises crash ios safari during the invocation
             // of the error callback chain (looks like the recursion is way too deep, and
             // it blows up the stack). The following construct is a stop-gap that does not
             // bubble the error up the callback chain and hence circumvents this problem.
             // TODO: rewrite with ES6 promises.
-            const deferred = new Deferred<boolean>();
+            const deferred = new Deferred<void>();
 
             // The time we last sent data to the service.
             let nextSendTime: number = Date.now();
@@ -414,7 +411,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 // we have a new audio chunk to upload.
                                 if (this.privDialogRequestSession.isSpeechEnded) {
                                     // If service already recognized audio end then don't send any more audio
-                                    deferred.resolve(true);
+                                    deferred.resolve();
                                     return;
                                 }
 
@@ -441,12 +438,12 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                         nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
                                     }
 
-                                    const uploaded: Promise<boolean> = connection.send(
+                                    const uploaded: Promise<void> = connection.send(
                                         new SpeechConnectionMessage(
                                             MessageType.Binary, "audio", this.privDialogRequestSession.requestId, null, payload));
 
                                     if (audioStreamChunk && !audioStreamChunk.isEnd) {
-                                        uploaded.then((_: boolean) => {
+                                        uploaded.then(() => {
 
                                             // Regardless of success or failure, schedule the next upload.
                                             // If the underlying connection was broken, the next cycle will
@@ -459,7 +456,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                         // the audio stream has been closed, no need to schedule next
                                         // read-upload cycle.
                                         this.privDialogRequestSession.onSpeechEnded();
-                                        deferred.resolve(true);
+                                        deferred.resolve();
                                     }
                                 }, sendDelay);
                             },
@@ -469,7 +466,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                     // the Queue.DrainAndDispose invoked from DetachAudioNode down below, which
                                     // means that sometimes things can be rejected in normal circumstances, without
                                     // any errors.
-                                    deferred.resolve(true); // TODO: remove the argument, it's is completely meaningless.
+                                    deferred.resolve(); // TODO: remove the argument, it's is completely meaningless.
                                 } else {
                                     // Only reject, if there was a proper error.
                                     deferred.reject(error);
@@ -487,8 +484,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         });
     }
 
-    protected sendWaveHeader(connection: IConnection): Promise<boolean> {
-        return this.audioSource.format.then<boolean>((format: AudioStreamFormatImpl) => {
+    protected sendWaveHeader(connection: IConnection): Promise<void> {
+        return this.audioSource.format.then<void>((format: AudioStreamFormatImpl) => {
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Binary,
                 "audio",
@@ -544,12 +541,12 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         this.privDialogRequestSession.onPreConnectionStart(this.privDialogAuthFetchEventId, this.privConnectionId);
                         this.privDialogRequestSession.onConnectionEstablishCompleted(response.statusCode);
 
-                        return PromiseHelper.fromResult<IConnection>(connection);
+                        return Promise.resolve<IConnection>(connection);
                     } else if (response.statusCode === 403 && !isUnAuthorized) {
                         return this.dialogConnectImpl(true);
                     } else {
                         this.privDialogRequestSession.onConnectionEstablishCompleted(response.statusCode, response.reason);
-                        return PromiseHelper.fromError<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
+                        return Promise.reject<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
                     }
                 });
             }, (error: string): IConnection => {
@@ -574,7 +571,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     if (isDisposed || terminateMessageLoop) {
                         // We're done.
                         communicationCustodian.resolve(undefined);
-                        return PromiseHelper.fromResult<IConnection>(undefined);
+                        return Promise.resolve<IConnection>(undefined);
                     }
 
                     if (!message) {
@@ -683,7 +680,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }, (error: string) => {
             this.terminateMessageLoop = true;
             communicationCustodian.resolve(undefined);
-            return PromiseHelper.fromResult<IConnection>(undefined);
+            return Promise.resolve<IConnection>(undefined);
         });
 
         return communicationCustodian.promise;
@@ -720,13 +717,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         if (this.terminateMessageLoop) {
             this.terminateMessageLoop = false;
-            return PromiseHelper.fromError(`Connection to service terminated.`);
+            return Promise.reject(`Connection to service terminated.`);
         }
 
         this.privConnectionConfigPromise = this.dialogConnectImpl().then((connection: IConnection): Promise<IConnection> => {
             return this.sendSpeechServiceConfig(connection, this.privDialogRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
-                .then((_: boolean) => {
-                    return this.sendAgentConfig(connection).then((_: boolean) => {
+                .then(() => {
+                    return this.sendAgentConfig(connection).then(() => {
                         return connection;
                     });
                 });
@@ -746,7 +743,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         });
     }
 
-    private sendAgentConfig = (connection: IConnection): Promise<boolean> => {
+    private sendAgentConfig = (connection: IConnection): Promise<void> => {
         if (this.agentConfig && !this.agentConfigSent) {
 
             if (this.privRecognizerConfig.parameters.getProperty(PropertyId.Conversation_DialogType) === "custom_commands") {
@@ -767,10 +764,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 agentConfigJson));
         }
 
-        return PromiseHelper.fromResult(true);
+        return;
     }
 
-    private sendAgentContext = (connection: IConnection): Promise<boolean> => {
+    private sendAgentContext = (connection: IConnection): Promise<void> => {
         const guid: string = createGuid();
 
         const speechActivityTemplate = this.privDialogServiceConnector.properties.getProperty(PropertyId.Conversation_Speech_Activity_Template);

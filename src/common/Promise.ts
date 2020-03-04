@@ -83,53 +83,6 @@ export class PromiseResultEventSource<T>  {
 }
 
 // tslint:disable-next-line:max-classes-per-file
-export class PromiseHelper {
-    public static whenAll = (promises: Array<Promise<any>>): Promise<void> => {
-        if (!promises || promises.length === 0) {
-            throw new ArgumentNullError("promises");
-        }
-
-        const deferred = new Deferred<void>();
-        const errors: string[] = [];
-        let completedPromises: number = 0;
-
-        const checkForCompletion = () => {
-            completedPromises++;
-            if (completedPromises === promises.length) {
-                if (errors.length === 0) {
-                    deferred.resolve(undefined);
-                } else {
-                    deferred.reject(errors.join(", "));
-                }
-            }
-        };
-
-        for (const promise of promises) {
-            promise.then((r: any) => {
-                checkForCompletion();
-            }, (e: string) => {
-                errors.push(e);
-                checkForCompletion();
-            });
-        }
-
-        return deferred.promise;
-    }
-
-    public static fromResult = <TResult>(result: TResult): Promise<TResult> => {
-        const deferred = new Deferred<TResult>();
-        deferred.resolve(result);
-        return deferred.promise;
-    }
-
-    public static fromError = <TResult>(error: string): Promise<TResult> => {
-        const deferred = new Deferred<TResult>();
-        deferred.reject(error);
-        return deferred.promise;
-    }
-}
-
-// tslint:disable-next-line:max-classes-per-file
 export class PromiseCompletionWrapper<T> {
     private privPromise: Promise<T>;
     private privIsCompleted: boolean;

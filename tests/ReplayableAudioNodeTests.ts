@@ -36,7 +36,7 @@ const testAudioNode: IAudioStreamNode = {
             writeView[i] = val;
         }
 
-        return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
+        return Promise.resolve<IStreamChunk<ArrayBuffer>>({
             buffer: retBuffer,
             isEnd: false,
             timeReceived: readCount,

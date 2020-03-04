@@ -229,21 +229,21 @@ export class DialogServiceConnector extends Recognizer {
      * @function
      * @public
      */
-    public close(): void {
+    public async close(): Promise<void> {
         Contracts.throwIfDisposed(this.privIsDisposed);
 
-        this.dispose(true);
+        await this.dispose(true);
     }
 
-    protected dispose(disposing: boolean): boolean {
+    protected async dispose(disposing: boolean): Promise<void> {
         if (this.privIsDisposed) {
             return;
         }
 
         if (disposing) {
-            this.implRecognizerStop();
+            await this.implRecognizerStop();
             this.privIsDisposed = true;
-            super.dispose(disposing);
+            await super.dispose(disposing);
         }
     }
 

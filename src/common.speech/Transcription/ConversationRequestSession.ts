@@ -15,13 +15,13 @@ export class ConversationRequestSession {
     private privIsDisposed: boolean = false;
     private privDetachables: IDetachable[] = new Array<IDetachable>();
     private privRequestId: string;
-    private privRequestCompletionDeferral: Deferred<boolean>;
+    private privRequestCompletionDeferral: Deferred<void>;
     private privSessionId: string;
 
     constructor(sessionId: string) {
         this.privSessionId = sessionId;
         this.privRequestId = createNoDashGuid();
-        this.privRequestCompletionDeferral = new Deferred<boolean>();
+        this.privRequestCompletionDeferral = new Deferred<void>();
     }
 
     public get sessionId(): string {
@@ -32,7 +32,7 @@ export class ConversationRequestSession {
         return this.privRequestId;
     }
 
-    public get completionPromise(): Promise<boolean> {
+    public get completionPromise(): Promise<void> {
         return this.privRequestCompletionDeferral.promise;
     }
 

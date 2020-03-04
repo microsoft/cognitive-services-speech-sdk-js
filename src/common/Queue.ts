@@ -8,7 +8,6 @@ import { List } from "./List";
 import {
     Deferred,
     PromiseCompletionWrapper,
-    PromiseHelper,
 } from "./Promise";
 export interface IQueue<TItem> extends IDisposable {
     enqueue(item: TItem): void;
@@ -134,21 +133,21 @@ export class Queue<TItem> implements IQueue<TItem> {
                 this.privPromiseStore.toArray().forEach((wrapper: PromiseCompletionWrapper<TItem>) => {
                     promiseArray.push(wrapper.promise);
                 });
-                return new PromiseCompletionWrapper(PromiseHelper.whenAll(promiseArray), () => {
+                return Promise.all(promiseArray).finally(() => {
                     this.privSubscribers = null;
                     this.privList.forEach((item: TItem, index: number): void => {
                         pendingItemProcessor(item);
                     });
                     this.privList = null;
-                    return true;
-                }).promise;
+                    return;
+                }).then<void>();
             } else {
                 this.privSubscribers = null;
                 this.privList = null;
             }
         }
 
-        return PromiseHelper.fromResult(undefined);
+        return Promise.resolve(undefined);
     }
 
     public dispose = (reason?: string): void => {

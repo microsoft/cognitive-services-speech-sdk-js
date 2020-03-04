@@ -28,7 +28,6 @@ import {
     IAudioSource,
     IAudioStreamNode,
     IStringDictionary,
-    PromiseHelper,
     Stream,
     StreamReader,
 } from "../common/Exports";
@@ -53,7 +52,7 @@ export class MicAudioSource implements IAudioSource {
 
     private privEvents: EventSource<AudioSourceEvent>;
 
-    private privInitializeDeferral: Deferred<boolean>;
+    private privInitializeDeferral: Deferred<void>;
 
     private privMediaStream: MediaStream;
 
@@ -74,15 +73,15 @@ export class MicAudioSource implements IAudioSource {
     }
 
     public get format(): Promise<AudioStreamFormatImpl> {
-        return PromiseHelper.fromResult(MicAudioSource.AUDIOFORMAT);
+        return Promise.resolve(MicAudioSource.AUDIOFORMAT);
     }
 
-    public turnOn = (): Promise<boolean> => {
+    public turnOn = (): Promise<void> => {
         if (this.privInitializeDeferral) {
             return this.privInitializeDeferral.promise;
         }
 
-        this.privInitializeDeferral = new Deferred<boolean>();
+        this.privInitializeDeferral = new Deferred<void>();
 
         try {
             this.createAudioContext();
@@ -126,7 +125,7 @@ export class MicAudioSource implements IAudioSource {
                     (mediaStream: MediaStream) => {
                         this.privMediaStream = mediaStream;
                         this.onEvent(new AudioSourceReadyEvent(this.privId));
-                        this.privInitializeDeferral.resolve(true);
+                        this.privInitializeDeferral.resolve();
                     }, (error: MediaStreamError) => {
                         const errorMsg = `Error occurred during microphone initialization: ${error}`;
                         const tmp = this.privInitializeDeferral;
@@ -191,7 +190,7 @@ export class MicAudioSource implements IAudioSource {
         }
     }
 
-    public turnOff = (): Promise<boolean> => {
+    public turnOff = (): Promise<void> => {
         for (const streamId in this.privStreams) {
             if (streamId) {
                 const stream = this.privStreams[streamId];
@@ -206,7 +205,7 @@ export class MicAudioSource implements IAudioSource {
 
         this.destroyAudioContext();
 
-        return PromiseHelper.fromResult(true);
+        return;
     }
 
     public get events(): EventSource<AudioSourceEvent> {
@@ -240,12 +239,12 @@ export class MicAudioSource implements IAudioSource {
 
         // If we did this already, return the value.
         if (this.privMicrophoneLabel !== undefined) {
-            return PromiseHelper.fromResult(this.privMicrophoneLabel);
+            return Promise.resolve(this.privMicrophoneLabel);
         }
 
         // If the stream isn't currently running, we can't query devices because security.
         if (this.privMediaStream === undefined || !this.privMediaStream.active) {
-            return PromiseHelper.fromResult(defaultMicrophoneName);
+            return Promise.resolve(defaultMicrophoneName);
         }
 
         // Setup a default
@@ -256,7 +255,7 @@ export class MicAudioSource implements IAudioSource {
 
         // If the browser doesn't support getting the device ID, set a default and return.
         if (undefined === microphoneDeviceId) {
-            return PromiseHelper.fromResult(this.privMicrophoneLabel);
+            return Promise.resolve(this.privMicrophoneLabel);
         }
 
         const deferred: Deferred<string> = new Deferred<string>();
@@ -278,7 +277,7 @@ export class MicAudioSource implements IAudioSource {
 
     private listen = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
         return this.turnOn()
-            .then<StreamReader<ArrayBuffer>>((_: boolean) => {
+            .then<StreamReader<ArrayBuffer>>(() => {
                 const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
                 this.privStreams[audioNodeId] = stream;
 

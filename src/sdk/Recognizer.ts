@@ -14,7 +14,7 @@ import {
     SpeechServiceConfig,
 } from "../common.speech/Exports";
 import {
-    PromiseHelper
+    Deferred
 } from "../common/Exports";
 import {
     Contracts
@@ -91,10 +91,10 @@ export abstract class Recognizer {
      * @function
      * @public
      */
-    public close(): void {
+    public async close(): Promise<void> {
         Contracts.throwIfDisposed(this.privDisposed);
 
-        this.dispose(true);
+        await this.dispose(true);
     }
 
     /**
@@ -116,15 +116,15 @@ export abstract class Recognizer {
      * @public
      * @param {boolean} disposing - Flag to request disposal.
      */
-    protected dispose(disposing: boolean): void {
+    protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposed) {
             return;
         }
 
         if (disposing) {
             if (this.privReco) {
-                this.privReco.audioSource.turnOff();
-                this.privReco.dispose();
+                await this.privReco.audioSource.turnOff();
+                await this.privReco.dispose();
             }
         }
 
@@ -195,11 +195,11 @@ export abstract class Recognizer {
             new CognitiveTokenAuthentication(
                 (authFetchEventId: string): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return PromiseHelper.fromResult(authorizationToken);
+                    return Promise.resolve(authorizationToken);
                 },
                 (authFetchEventId: string): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return PromiseHelper.fromResult(authorizationToken);
+                    return Promise.resolve(authorizationToken);
                 });
 
         this.privReco = this.createServiceRecognizer(
@@ -209,153 +209,38 @@ export abstract class Recognizer {
             recognizerConfig);
     }
 
-    protected recognizeOnceAsyncImpl(recognitionMode: RecognitionMode, cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
+    protected async recognizeOnceAsyncImpl(recognitionMode: RecognitionMode): Promise<SpeechRecognitionResult> {
         try {
             Contracts.throwIfDisposed(this.privDisposed);
+            const ret: Deferred<SpeechRecognitionResult> = new Deferred<SpeechRecognitionResult>();
 
-            this.implRecognizerStop().then((_: boolean): void => {
-                try {
-                    this.privReco.recognize(recognitionMode, (e: SpeechRecognitionResult) => {
-                        this.implRecognizerStop().then((_: boolean): void => {
-                            if (!!cb) {
-                                cb(e);
-                            }
-                        }, (error: string): void => {
-                            if (!!err) {
-                                err(error);
-                            }
-                        });
+            await this.implRecognizerStop();
+            await this.privReco.recognize(recognitionMode, ret.resolve, ret.reject);
+            await ret.promise;
+            await this.implRecognizerStop();
 
-                    }, (e: string) => {
-                        this.implRecognizerStop(); // We're already in an error path so best effort here.
-                        if (!!err) {
-                            err(e);
-                        }
-                        /* tslint:disable:no-empty */
-                    }).then<void, void>((): void => { },
-                        (error: string) => {
-                            if (!!err) {
-                                err(error);
-                            }
-                        });
-                } catch (error) {
-                    if (!!err) {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                    }
-
-                    // Destroy the recognizer.
-                    this.dispose(true);
-                }
-            }, (error: string): void => {
-                if (!!err) {
-                    err(error);
-                }
-            });
+            return ret.promise;
         } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
+            return Promise.reject(error);
         }
     }
 
-    public startContinuousRecognitionAsyncImpl(recognitionMode: RecognitionMode, cb?: () => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposed);
+    public async startContinuousRecognitionAsyncImpl(recognitionMode: RecognitionMode): Promise<void> {
+        Contracts.throwIfDisposed(this.privDisposed);
 
-            this.implRecognizerStop().then<void, void>((): void => {
-                this.privReco.recognize(recognitionMode, undefined, undefined).then<void, void>((): void => {
-                    // report result to promise.
-                    if (!!cb) {
-                        try {
-                            cb();
-                        } catch (e) {
-                            if (!!err) {
-                                err(e);
-                            }
-                        }
-                        cb = undefined;
-                    }
-                }, (error: string): void => {
-                    if (!!err) {
-                        err(error);
-                    }
-                    // Destroy the recognizer.
-                    this.dispose(true);
-                });
-            }, (error: string): void => {
-                if (!!err) {
-                    err(error);
-                }
-                // Destroy the recognizer.
-                this.dispose(true);
-            });
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
-        }
+        await this.implRecognizerStop();
+        await this.privReco.recognize(recognitionMode, undefined, undefined);
     }
 
-    protected stopContinuousRecognitionAsyncImpl(cb?: () => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privDisposed);
-
-            this.implRecognizerStop().then((_: boolean) => {
-                if (!!cb) {
-                    try {
-                        cb();
-                    } catch (e) {
-                        if (!!err) {
-                            err(e);
-                        }
-                    }
-                }
-            }, (error: string) => {
-                if (!!err) {
-                    err(error);
-                }
-            });
-
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-
-            // Destroy the recognizer.
-            this.dispose(true);
-        }
+    protected async stopContinuousRecognitionAsyncImpl(): Promise<void> {
+        Contracts.throwIfDisposed(this.privDisposed);
+        await this.implRecognizerStop();
     }
 
-    protected implRecognizerStop(): Promise<boolean> {
+    protected async implRecognizerStop(): Promise<void> {
         if (this.privReco) {
-            return this.privReco.stopRecognizing();
+            await this.privReco.stopRecognizing();
         }
-        return PromiseHelper.fromResult(true);
+        return;
     }
 }
