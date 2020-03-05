@@ -37,15 +37,25 @@ beforeEach(() => {
     console.info("Sart Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
-    console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
+    console.info("Closing Objects");
+
+    asyncCloseAll(objsToClose).then(() => {
+        // tslint:disable-next-line:no-console
+        console.info("End Time: " + new Date(Date.now()).toLocaleString());
+
+        done();
     });
 });
+
+async function asyncCloseAll(array: any[]): Promise<void> {
+    for (const current of objsToClose) {
+        if (typeof current.close === "function") {
+            await current.close();
+        }
+    }
+}
 
 const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.TranslationRecognizer = (speechConfig?: sdk.SpeechTranslationConfig): sdk.TranslationRecognizer => {
 
@@ -80,7 +90,6 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
 const Recognized: string = "Recognized";
-const Session: string = "Session";
 const Canceled: string = "Canceled";
 
 let eventIdentifier: number;
@@ -327,17 +336,23 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         r.sessionStarted = (o: sdk.Recognizer, e: sdk.SessionEventArgs) => {
             const now: number = eventIdentifier++;
-            eventsMap[Session + ":" + SessionStartedEvent + "-" + Date.now().toPrecision(4)] = now;
-            eventsMap[Session + ":" + SessionStartedEvent] = now;
+            eventsMap[SessionStartedEvent + "-" + Date.now().toPrecision(4)] = now;
+            eventsMap[SessionStartedEvent] = now;
         };
         r.sessionStopped = (o: sdk.Recognizer, e: sdk.SessionEventArgs) => {
             const now: number = eventIdentifier++;
-            eventsMap[Session + ":" + SessionStoppedEvent + "-" + Date.now().toPrecision(4)] = now;
-            eventsMap[Session + ":" + SessionStoppedEvent] = now;
+            eventsMap[SessionStoppedEvent + "-" + Date.now().toPrecision(4)] = now;
+            eventsMap[SessionStoppedEvent] = now;
         };
 
-        // TODO there is no guarantee that SessionStoppedEvent comes before the recognizeOnceAsync() call returns?!
-        //      this is why below SessionStoppedEvent checks are conditional
+        // Event order is:
+        // SessionStarted
+        // SpeechStartDetected
+        // 0 or more Recognizing
+        // SpeechEnded
+        // Recognized
+        // SessionEnded
+
         r.recognizeOnceAsync((res: sdk.TranslationRecognitionResult) => {
             try {
                 expect(res).not.toBeUndefined();
@@ -349,34 +364,42 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(res.translations.get("de", "No Translation")).toEqual("Wie ist das Wetter?");
 
                 // session events are first and last event
-                const LAST_RECORDED_EVENT_ID: number = eventIdentifier;
+                const LAST_RECORDED_EVENT_ID: number = eventIdentifier - 1;
                 expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
-                expect(FIRST_EVENT_ID).toEqual(eventsMap[Session + ":" + SessionStartedEvent]);
 
-                if (Session + ":" + SessionStoppedEvent in eventsMap) {
-                    expect(LAST_RECORDED_EVENT_ID).toEqual(eventsMap[Session + ":" + SessionStoppedEvent]);
-                }
+                // The session started and stopped.
+                expect(SessionStartedEvent in eventsMap).toEqual(true);
+                expect(SessionStoppedEvent in eventsMap).toEqual(true);
 
-                // end events come after start events.
-                if (Session + ":" + SessionStoppedEvent in eventsMap) {
-                    expect(eventsMap[Session + ":" + SessionStartedEvent]).toBeLessThan(eventsMap[Session + ":" + SessionStoppedEvent]);
-                }
+                // The session events bookended the rest.
+                expect(eventsMap[SessionStartedEvent]).toEqual(FIRST_EVENT_ID);
+                expect(eventsMap[SessionStoppedEvent]).toEqual(LAST_RECORDED_EVENT_ID);
 
+                // Start always before end.
+                expect(eventsMap[SessionStartedEvent]).toBeLessThan(eventsMap[SessionStoppedEvent]);
+                expect(eventsMap[SpeechStartDetectedEvent]).toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
+
+                // SpeechStart was the 2nd event.
                 expect((FIRST_EVENT_ID + 1)).toEqual(eventsMap[SpeechStartDetectedEvent]);
 
-                // recognition events come after session start but before session end events
-                expect(eventsMap[Session + ":" + SessionStartedEvent]).toBeLessThan(eventsMap[SpeechStartDetectedEvent]);
+                // Translation uses the continuous endpoint for all recos, so the order is
+                // recognized then speech end.
+                expect((LAST_RECORDED_EVENT_ID - 1)).toEqual(eventsMap[SpeechEndDetectedEvent]);
+                expect((LAST_RECORDED_EVENT_ID - 2)).toEqual(eventsMap[Recognized]);
 
-                if (Session + ":" + SessionStoppedEvent in eventsMap) {
-                    expect(eventsMap[SpeechEndDetectedEvent]).toBeLessThan(eventsMap[Session + ":" + SessionStoppedEvent]);
-                }
+                // Speech ends before the session stops.
+                expect(eventsMap[SpeechEndDetectedEvent]).toBeLessThan(eventsMap[SessionStoppedEvent]);
 
                 // there is no partial result reported after the final result
                 // (and check that we have intermediate and final results recorded)
-                expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
+                if (Recognizing in eventsMap) {
+                    expect(eventsMap[Recognizing]).toBeGreaterThan(eventsMap[SpeechStartDetectedEvent]);
+                    expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
+                }
 
                 // make sure events we don't expect, don't get raised
-                expect(Canceled in eventsMap).toEqual(false);
+                // The canceled event comes *after* the callback.
+                expect(Canceled in eventsMap).toBeFalsy();
                 done();
             } catch (error) {
                 done.fail(error);
