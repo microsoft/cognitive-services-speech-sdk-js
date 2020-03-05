@@ -7,7 +7,6 @@ import { ReplayableAudioNode } from "../src/common.browser/ReplayableAudioNode";
 import {
     IAudioStreamNode,
     IStreamChunk,
-    PromiseHelper,
 } from "../src/common/Exports";
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
@@ -61,7 +60,7 @@ const checkRead: (checkedCount: number, testTarget: number, testNode: IAudioStre
         if (checkedCount === testTarget) {
             done();
         } else {
-            testNode.read().onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
+            testNode.read().then((chunk: IStreamChunk<ArrayBuffer>) => {
                 // Torn page expected?
                 let expectedBufferCount: number = targetBytes;
                 let tornPageOffset: number = 0;
@@ -128,7 +127,7 @@ test("Shrink half buffer and continue. (No torn pages)", (done: jest.DoneCallbac
             testNode.shrinkBuffers((secondsInBuffer / 2) * 1e7);
             checkRead(testCount, testTarget * 2, testNode, done);
         } else {
-            testNode.read().onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
+            testNode.read().then((chunk: IStreamChunk<ArrayBuffer>) => {
                 // Not really worried about the data, just filling the replay buffer.
                 fillReadBuffer();
             });
@@ -153,7 +152,7 @@ test("Shrink half buffer and replay. (No torn pages)", (done: jest.DoneCallback)
 
             checkRead((testTarget / 2) + 1, testTarget, testNode, done);
         } else {
-            testNode.read().onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
+            testNode.read().then((chunk: IStreamChunk<ArrayBuffer>) => {
                 // Not really worried about the data, just filling the replay buffer.
                 fillReadBuffer();
             });
@@ -178,7 +177,7 @@ test("Shrink buffer and replay. (Torn pages)", (done: jest.DoneCallback) => {
 
             checkRead(1.5, testTarget, testNode, done);
         } else {
-            testNode.read().onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
+            testNode.read().then((chunk: IStreamChunk<ArrayBuffer>) => {
                 // Not really worried about the data, just filling the replay buffer.
                 fillReadBuffer();
             });
@@ -208,7 +207,7 @@ describe("Time tests", () => {
                 }
 
             } else {
-                testNode.read().onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
+                testNode.read().then((chunk: IStreamChunk<ArrayBuffer>) => {
                     // Not really worried about the data, just filling the replay buffer.
                     fillReadBuffer();
                 });
@@ -241,7 +240,7 @@ describe("Time tests", () => {
                 }
 
             } else {
-                testNode.read().onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
+                testNode.read().then((chunk: IStreamChunk<ArrayBuffer>) => {
                     // Not really worried about the data, just filling the replay buffer.
                     fillReadBuffer();
                 });
@@ -274,7 +273,7 @@ describe("Time tests", () => {
                 }
 
             } else {
-                testNode.read().onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
+                testNode.read().then((chunk: IStreamChunk<ArrayBuffer>) => {
                     // Not really worried about the data, just filling the replay buffer.
                     fillReadBuffer();
                 });

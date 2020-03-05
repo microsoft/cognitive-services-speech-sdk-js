@@ -488,15 +488,9 @@ describe("NPM proxy test", () => {
                 expect(e).not.toBeUndefined();
                 expect(e.errorDetails).not.toBeUndefined();
                 expect(e.errorDetails).toContain("1006");
+                done();
             } catch (error) {
                 done.fail(error);
-            }
-        }, (error: string): void => {
-            try {
-                expect(error).toContain("1006");
-                done();
-            } catch (error2) {
-                done.fail(error2);
             }
         });
     });

@@ -191,8 +191,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const format: AudioStreamFormatImpl = await this.audioSource.format;
         const deviceInfo: ISpeechConfigAudioDevice = await this.audioSource.deviceInfo;
 
-        let audioNode: ReplayableAudioNode;
-        audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
+        const audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
         this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
 
         this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
@@ -391,117 +390,102 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
-    protected receiveMessageOverride: () => any = undefined;
+    protected receiveMessageOverride: () => Promise<void> = undefined;
 
-    protected receiveMessage = (): Promise<IConnection> => {
-        return this.fetchConnection().then<IConnection, IConnection>((connection: IConnection): Promise<IConnection> => {
-            return connection.read()
-                .then((message: ConnectionMessage) => {
+    protected async receiveMessage(): Promise<void> {
+        try {
+            let connection = await this.fetchConnection();
+            const message = await connection.read();
 
-                    if (this.receiveMessageOverride !== undefined) {
-                        return this.receiveMessageOverride();
-                    }
-                    if (this.privIsDisposed) {
-                        // We're done.
-                        return Promise.resolve(undefined);
-                    }
+            if (this.receiveMessageOverride !== undefined) {
+                return this.receiveMessageOverride();
+            }
 
-                    // indicates we are draining the queue and it came with no message;
-                    if (!message) {
-                        if (!this.privRequestSession.isRecognizing) {
-                            return Promise.resolve(true);
-                        } else {
-                            return this.receiveMessage();
-                        }
-                    }
+            if (this.privIsDisposed) {
+                // We're done.
+                return;
+            }
 
-                    this.privServiceHasSentMessage = true;
-
-                    const connectionMessage = SpeechConnectionMessage.fromConnectionMessage(message);
-
-                    if (connectionMessage.requestId.toLowerCase() === this.privRequestSession.requestId.toLowerCase()) {
-                        switch (connectionMessage.path.toLowerCase()) {
-                            case "turn.start":
-                                this.privMustReportEndOfStream = true;
-                                this.privRequestSession.onServiceTurnStartResponse();
-                                break;
-                            case "speech.startdetected":
-                                const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
-
-                                const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
-
-                                if (!!this.privRecognizer.speechStartDetected) {
-                                    this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
-                                }
-
-                                break;
-                            case "speech.enddetected":
-
-                                let json: string;
-
-                                if (connectionMessage.textBody.length > 0) {
-                                    json = connectionMessage.textBody;
-                                } else {
-                                    // If the request was empty, the JSON returned is empty.
-                                    json = "{ Offset: 0 }";
-                                }
-
-                                const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
-
-                                // Only shrink the buffers for continuous recognition.
-                                // For single shot, the speech.phrase message will come after the speech.end and it should own buffer shrink.
-                                if (this.privRecognizerConfig.isContinuousRecognition) {
-                                    this.privRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset);
-                                }
-
-                                const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
-
-                                if (!!this.privRecognizer.speechEndDetected) {
-                                    this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
-                                }
-                                break;
-                            case "turn.end":
-                                this.sendTelemetryData();
-
-                                if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) {
-                                    this.privMustReportEndOfStream = false;
-                                    this.cancelRecognitionLocal(CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined);
-                                }
-
-                                const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
-                                this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
-
-                                if (!this.privRecognizerConfig.isContinuousRecognition || this.privRequestSession.isSpeechEnded || !this.privRequestSession.isRecognizing) {
-                                    if (!!this.privRecognizer.sessionStopped) {
-                                        this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
-                                    }
-
-                                    return Promise.resolve(true);
-                                } else {
-                                    this.fetchConnection().then((connection: IConnection) => {
-                                        this.sendSpeechContext(connection);
-                                        this.sendWaveHeader(connection);
-                                    });
-                                }
-                                break;
-
-                            default:
-
-                                if (!this.processTypeSpecificMessages(connectionMessage)) {
-                                    // here are some messages that the derived class has not processed, dispatch them to connect class
-                                    if (!!this.privServiceEvents) {
-                                        this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
-                                    }
-                                }
-
-                        }
-                    }
-
+            // indicates we are draining the queue and it came with no message;
+            if (!message) {
+                if (!this.privRequestSession.isRecognizing) {
+                    return;
+                } else {
                     return this.receiveMessage();
-                });
-        }, (error: string) => {
+                }
+            }
+
+            this.privServiceHasSentMessage = true;
+            const connectionMessage = SpeechConnectionMessage.fromConnectionMessage(message);
+
+            if (connectionMessage.requestId.toLowerCase() === this.privRequestSession.requestId.toLowerCase()) {
+                switch (connectionMessage.path.toLowerCase()) {
+                    case "turn.start":
+                        this.privMustReportEndOfStream = true;
+                        this.privRequestSession.onServiceTurnStartResponse();
+                        break;
+
+                    case "speech.startdetected":
+                        const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
+                        const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
+                        if (!!this.privRecognizer.speechStartDetected) {
+                            this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
+                        }
+                        break;
+
+                    case "speech.enddetected":
+                        let json: string;
+                        if (connectionMessage.textBody.length > 0) {
+                            json = connectionMessage.textBody;
+                        } else {
+                            // If the request was empty, the JSON returned is empty.
+                            json = "{ Offset: 0 }";
+                        }
+                        const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
+                        // Only shrink the buffers for continuous recognition.
+                        // For single shot, the speech.phrase message will come after the speech.end and it should own buffer shrink.
+                        if (this.privRecognizerConfig.isContinuousRecognition) {
+                            this.privRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset);
+                        }
+                        const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
+                        if (!!this.privRecognizer.speechEndDetected) {
+                            this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
+                        }
+                        break;
+
+                    case "turn.end":
+                        this.sendTelemetryData();
+                        if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) {
+                            this.privMustReportEndOfStream = false;
+                            this.cancelRecognitionLocal(CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined);
+                        }
+                        const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
+                        this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
+                        if (!this.privRecognizerConfig.isContinuousRecognition || this.privRequestSession.isSpeechEnded || !this.privRequestSession.isRecognizing) {
+                            if (!!this.privRecognizer.sessionStopped) {
+                                this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
+                            }
+                            return;
+                        } else {
+                            connection = await this.fetchConnection();
+                            await this.sendSpeechContext(connection);
+                            await this.sendWaveHeader(connection);
+                        }
+                        break;
+
+                    default:
+                        if (!this.processTypeSpecificMessages(connectionMessage)) {
+                            // here are some messages that the derived class has not processed, dispatch them to connect class
+                            if (!!this.privServiceEvents) {
+                                this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
+                            }
+                        }
+                }
+            }
+            return this.receiveMessage();
+        } catch (error) {
             return null;
-        });
+        }
     }
 
     protected sendSpeechContext = (connection: IConnection): Promise<void> => {

@@ -58,15 +58,25 @@ beforeEach(() => {
     console.info("---------------------------------------Starting test case-----------------------------------");
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
-    console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
+    console.info("Closing Objects");
+
+    asyncCloseAll(objsToClose).then(() => {
+        // tslint:disable-next-line:no-console
+        console.info("End Time: " + new Date(Date.now()).toLocaleString());
+
+        done();
     });
 });
+
+async function asyncCloseAll(array: any[]): Promise<void> {
+    for (const current of objsToClose) {
+        if (typeof current.close === "function") {
+            await current.close();
+        }
+    }
+}
 
 function BuildCommandsServiceConfig(): sdk.DialogServiceConfig {
     const config: sdk.CustomCommandsConfig = sdk.CustomCommandsConfig.fromSubscription(Settings.BotSecret, Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
@@ -195,7 +205,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
-    test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
+    test.only("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Create BotFrameworkConfig, invalid optional botId");
 
@@ -363,7 +373,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         // };
 
         const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-            audioStream.read().on((audioBuffer: ArrayBuffer) => {
+            audioStream.read().then((audioBuffer: ArrayBuffer) => {
                 try {
                     if (audioBuffer !== null) {
                         expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(1);
@@ -446,7 +456,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         };
 
         const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-            audioStream.read().on((audioBuffer: ArrayBuffer) => {
+            audioStream.read().then((audioBuffer: ArrayBuffer) => {
                 try {
                     if (audioBuffer !== null) {
                         expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(1);
