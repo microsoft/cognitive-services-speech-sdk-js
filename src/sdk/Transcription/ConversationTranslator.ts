@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { ConversationImpl, ConversationTranslatorConfig } from "../../common.speech/Exports";
+import { ConversationTranslatorConfig } from "../../common.speech/Exports";
 import { IDisposable } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
@@ -19,14 +19,16 @@ import {
     SpeechTranslationConfig,
     TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
-    TranslationRecognizer} from "../Exports";
+    TranslationRecognizer
+} from "../Exports";
+import { ConversationImpl } from "./Conversation";
 import {
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
     Participant,
- } from "./Exports";
+} from "./Exports";
 import { Callback, IConversation } from "./IConversation";
 import { IConversationTranslator } from "./IConversationTranslator";
 
@@ -145,10 +147,10 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                                 this.handleError(error, param3);
                             }));
 
-                     }),
+                    }),
                     ((error: any) => {
                         this.handleError(error, param3);
-                     }));
+                    }));
 
             } else if (typeof conversation === "object") {
 
@@ -251,17 +253,17 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 this.connectTranslatorRecognizer(
                     (() => {
                         this.startContinuousRecognition(
-                        (() => {
-                            this.privIsSpeaking = true;
-                            this.handleCallback(cb, err);
-                        }),
-                        ((error: any) => {
+                            (() => {
+                                this.privIsSpeaking = true;
+                                this.handleCallback(cb, err);
+                            }),
+                            ((error: any) => {
 
-                            this.privIsSpeaking = false;
-                            // this.fireCancelEvent(error);
-                            this.cancelSpeech();
-                            this.handleError(error, err);
-                        }));
+                                this.privIsSpeaking = false;
+                                // this.fireCancelEvent(error);
+                                this.cancelSpeech();
+                                this.handleError(error, err);
+                            }));
                     }),
                     ((error: any) => {
                         this.handleError(error, err);
@@ -357,7 +359,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             // clear the temp subscription key if it's a participant joining
             if (this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Key])
-                    === ConversationTranslatorConfig.auth.placeholderSubscriptionKey) {
+                === ConversationTranslatorConfig.auth.placeholderSubscriptionKey) {
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
 
@@ -515,9 +517,9 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             }
             cb = undefined;
         }
-     }
+    }
 
-     private handleError(error: any, err: Callback): void {
+    private handleError(error: any, err: Callback): void {
         if (!!err) {
             if (error instanceof Error) {
                 const typedError: Error = error as Error;
