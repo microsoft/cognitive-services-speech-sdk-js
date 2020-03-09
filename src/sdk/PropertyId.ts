@@ -265,6 +265,12 @@ export enum PropertyId {
     Conversation_ApplicationId,
 
     /**
+     * ConversationId for the session.
+     * @member PropertyId.Conversation_Conversation_Id
+     */
+    Conversation_Conversation_Id,
+    
+    /**
      * Type of dialog backend to connect to.
      * @member PropertyId.Conversation_DialogType
      */

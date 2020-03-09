@@ -270,7 +270,7 @@ export class DialogServiceConnector extends Recognizer {
                 commType: communicationType,
                 commandsCulture: undefined,
                 connectionId: this.properties.getProperty(PropertyId.Conversation_ApplicationId),
-                conversationId: undefined,
+                conversationId: this.properties.getProperty(PropertyId.Conversation_Conversation_Id, undefined),
                 fromId: this.properties.getProperty(PropertyId.Conversation_From_Id, undefined)
             },
             version: 0.2
