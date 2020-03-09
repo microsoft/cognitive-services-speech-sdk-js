@@ -57,7 +57,7 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privDialogServiceConnector: DialogServiceConnector;
-    private privDialogConnectionFactory: IConnectionFactory;
+
     private privDialogAuthFetchEventId: string;
     private privDialogIsDisposed: boolean;
     private privDialogAuthentication: IAuthentication;
@@ -65,12 +65,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privDialogRequestSession: RequestSession;
 
     // A promise for a configured connection.
-    // Do not consume directly, call fetchDialogConnection instead.
+    // Do not consume directly, call fetchConnection instead.
     private privConnectionConfigPromise: Promise<IConnection>;
-
-    // A promise for a connection, but one that has not had the speech context sent yet.
-    // Do not consume directly, call fetchDialogConnection instead.
-    private privDialogConnectionPromise: Promise<IConnection>;
 
     private privConnectionLoop: Promise<void>;
     private terminateMessageLoop: boolean;
@@ -96,13 +92,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.receiveMessageOverride = this.receiveDialogMessageOverride;
         this.privTurnStateManager = new DialogServiceTurnStateManager();
         this.recognizeOverride = this.listenOnce;
-        this.connectImplOverride = this.dialogConnectImpl;
+        this.postConnectImplOverride = this.dialogConnectImpl;
         this.configConnectionOverride = this.configConnection;
-        this.fetchConnectionOverride = this.fetchDialogConnection;
         this.disconnectOverride = this.privDisconnect;
         this.privDialogAudioSource = audioSource;
         this.privDialogRequestSession = new RequestSession(audioSource.id());
-        this.privDialogConnectionFactory = connectionFactory;
         this.privDialogIsDisposed = false;
         this.agentConfigSent = false;
         this.privLastResult = null;
@@ -133,8 +127,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         };
 
         const agentMessageJson = JSON.stringify(agentMessage);
-
-        this.fetchDialogConnection().then((connection: IConnection) => {
+        this.fetchConnection().then((connection: IConnection) => {
             connection.send(new SpeechConnectionMessage(
                 MessageType.Text,
                 "agent",
@@ -144,7 +137,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         });
     }
 
-    protected privDisconnect(): void {
+    protected async privDisconnect(): Promise<void> {
         this.cancelRecognition(this.privDialogRequestSession.sessionId,
             this.privDialogRequestSession.requestId,
             CancellationReason.Error,
@@ -153,18 +146,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.terminateMessageLoop = true;
         this.agentConfigSent = false;
-        const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privDialogConnectionPromise);
-
-        if (wrapper.isCompleted) {
-            if (!wrapper.isError) {
-                wrapper.result.dispose();
-                this.privDialogConnectionPromise = null;
-            }
-        } else {
-            this.privDialogConnectionPromise.then((connection: IConnection) => {
-                connection.dispose();
-            });
-        }
+        return;
     }
 
     protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
@@ -345,9 +327,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privDialogRequestSession.listenForServiceTelemetry(this.privDialogAudioSource.events);
 
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
-        const conPromise: Promise<IConnection> = this.dialogConnectImpl();
+        const conPromise: Promise<IConnection> = this.connectImpl();
 
-        this.sendPreAudioMessages();
+        const preAudioPromise: Promise<void> = this.sendPreAudioMessages();
 
         const node: IAudioStreamNode = await this.privDialogAudioSource.attach(this.privDialogRequestSession.audioNodeId);
         const format: AudioStreamFormatImpl = await this.privDialogAudioSource.format;
@@ -360,9 +342,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         try {
             await conPromise;
+            await preAudioPromise;
         } catch (error) {
             this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error);
-            return;
+            return Promise.resolve();
         }
 
         const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privDialogRequestSession.sessionId);
@@ -404,7 +387,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     !this.privDialogRequestSession.isSpeechEnded &&
                     this.privDialogRequestSession.isRecognizing &&
                     this.privDialogRequestSession.recogNumber === startRecogNumber) {
-                    this.fetchDialogConnection().then((connection: IConnection) => {
+                    this.fetchConnection().then((connection: IConnection) => {
                         audioStreamNode.read().then(
                             (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
                                 // we have a new audio chunk to upload.
@@ -495,66 +478,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     }
 
     // Establishes a websocket connection to the end point.
-    private dialogConnectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
-        if (this.privDialogConnectionPromise) {
-            const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privDialogConnectionPromise);
-            if (wrapper.isCompleted &&
-                (wrapper.isError
-                    || wrapper.result.state() === ConnectionState.Disconnected)) {
-                this.agentConfigSent = false;
-                this.privDialogConnectionPromise = null;
-                this.terminateMessageLoop = true;
-                return this.configConnection();
-            } else {
-                return this.privDialogConnectionPromise;
-            }
-        }
-
-        this.privDialogAuthFetchEventId = createNoDashGuid();
-
-        // keep the connectionId for reconnect events
-        if (this.privConnectionId === undefined) {
-            this.privConnectionId = createNoDashGuid();
-        }
-
-        this.privDialogRequestSession.onPreConnectionStart(this.privDialogAuthFetchEventId, this.privConnectionId);
-
-        const authPromise = isUnAuthorized ? this.privDialogAuthentication.fetchOnExpiry(this.privDialogAuthFetchEventId) : this.privDialogAuthentication.fetch(this.privDialogAuthFetchEventId);
-
-        this.privDialogConnectionPromise = authPromise
-            .then<IConnection, IConnection>((result: AuthInfo) => {
-                this.privDialogRequestSession.onAuthCompleted(false);
-
-                const connection: IConnection = this.privDialogConnectionFactory.create(this.privRecognizerConfig, result, this.privConnectionId);
-
-                this.privDialogRequestSession.listenForServiceTelemetry(connection.events);
-
-                // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
-                // it'll stop sending events.
-                connection.events.attach((event: ConnectionEvent) => {
-                    this.connectionEvents.onEvent(event);
-                });
-
-                return connection.open().then((response: ConnectionOpenResponse): Promise<IConnection> => {
-                    if (response.statusCode === 200) {
-                        this.privDialogRequestSession.onPreConnectionStart(this.privDialogAuthFetchEventId, this.privConnectionId);
-                        this.privDialogRequestSession.onConnectionEstablishCompleted(response.statusCode);
-
-                        return Promise.resolve<IConnection>(connection);
-                    } else if (response.statusCode === 403 && !isUnAuthorized) {
-                        return this.dialogConnectImpl(true);
-                    } else {
-                        this.privDialogRequestSession.onConnectionEstablishCompleted(response.statusCode, response.reason);
-                        return Promise.reject<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
-                    }
-                });
-            }, (error: string): IConnection => {
-                this.privDialogRequestSession.onAuthCompleted(true, error);
-                throw new Error(error);
-            });
-
+    private dialogConnectImpl(connection: Promise<IConnection>): Promise<IConnection> {
         this.privConnectionLoop = this.startMessageLoop();
-        return this.privDialogConnectionPromise;
+        return connection;
     }
 
     private receiveDialogMessageOverride(): Promise<void> {
@@ -564,7 +490,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         const loop = async (): Promise<void> => {
             try {
-                const connection: IConnection = await this.fetchDialogConnection();
+                const connection: IConnection = await this.fetchConnection();
                 const message: ConnectionMessage = await connection.read();
 
                 const isDisposed: boolean = this.isDisposed();
@@ -677,15 +603,19 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                             }
                         }
                 }
-
-                return loop();
+                const ret: Promise<void> = loop();
+                // tslint:disable-next-line:no-console
+                ret.catch(() => { console.warn("Inner loop"); });
+                return ret;
             } catch (error) {
                 this.terminateMessageLoop = true;
-                communicationCustodian.resolve(); // TODO: Reject?
+                communicationCustodian.resolve();
             }
         };
 
-        loop();
+        // tslint:disable-next-line:no-console
+        loop().catch(() => { console.warn("Loop catch 2"); });
+
         return communicationCustodian.promise;
     }
 
@@ -693,14 +623,14 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.terminateMessageLoop = false;
 
-        const messageRetrievalPromise = this.receiveDialogMessageOverride();
-
         try {
-            await messageRetrievalPromise;
-            return;
+            await this.receiveDialogMessageOverride();
+
         } catch (error) {
             this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
         }
+
+        return Promise.resolve();
     }
 
     // Takes an established websocket connection to the endpoint and sends speech configuration information.
@@ -709,8 +639,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionConfigPromise);
 
             if (wrapper.isCompleted &&
-                (wrapper.isError
-                    || wrapper.result.state() === ConnectionState.Disconnected)) {
+                (wrapper.isError || wrapper.result.state() === ConnectionState.Disconnected)) {
 
                 this.privConnectionConfigPromise = null;
                 return this.configConnection();
@@ -724,27 +653,21 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             return Promise.reject(`Connection to service terminated.`);
         }
 
-        this.privConnectionConfigPromise = this.dialogConnectImpl().then((connection: IConnection): Promise<IConnection> => {
-            return this.sendSpeechServiceConfig(connection, this.privDialogRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize())
-                .then(() => {
-                    return this.sendAgentConfig(connection).then(() => {
-                        return connection;
-                    });
-                });
+        this.privConnectionConfigPromise = this.connectImpl().then(async (connection: IConnection): Promise<IConnection> => {
+            await this.sendSpeechServiceConfig(connection, this.privDialogRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
+            await this.sendAgentConfig(connection);
+            return connection;
         });
 
+        // This will be awaited later, so set an empty catch.
+        this.privConnectionConfigPromise.catch(() => { });
         return this.privConnectionConfigPromise;
     }
 
-    private fetchDialogConnection = (): Promise<IConnection> => {
-        return this.configConnection();
-    }
-
-    private sendPreAudioMessages(): void {
-        this.fetchDialogConnection().then((connection: IConnection): void => {
-            this.sendAgentContext(connection);
-            this.sendWaveHeader(connection);
-        });
+    private async sendPreAudioMessages(): Promise<void> {
+        const connection: IConnection = await this.fetchConnection();
+        await this.sendAgentContext(connection);
+        await this.sendWaveHeader(connection);
     }
 
     private sendAgentConfig = (connection: IConnection): Promise<void> => {

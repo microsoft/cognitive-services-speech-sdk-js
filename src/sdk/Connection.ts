@@ -58,7 +58,7 @@ export class Connection {
             }
         });
 
-        ret.privServiceEventListener = ret.privServiceRecognizer.serviceEvents.attach((e: ServiceEvent): void =>  {
+        ret.privServiceEventListener = ret.privServiceRecognizer.serviceEvents.attach((e: ServiceEvent): void => {
             if (!!ret.receivedServiceMessage) {
                 ret.receivedServiceMessage(new ServiceEventArgs(e.jsonString, e.name));
             }
@@ -75,8 +75,8 @@ export class Connection {
      * Note: On return, the connection might not be ready yet. Please subscribe to the Connected event to
      * be notfied when the connection is established.
      */
-    public openConnection(): void {
-        this.privServiceRecognizer.connect();
+    public async openConnection(): Promise<void> {
+        await this.privServiceRecognizer.connect();
     }
 
     /**
@@ -85,8 +85,8 @@ export class Connection {
      *
      * If closeConnection() is called during recognition, recognition will fail and cancel with an error.
      */
-    public closeConnection(): void {
-        this.privServiceRecognizer.disconnect();
+    public async closeConnection(): Promise<void> {
+        await this.privServiceRecognizer.disconnect();
     }
 
     /**

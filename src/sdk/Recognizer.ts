@@ -216,10 +216,10 @@ export abstract class Recognizer {
 
             await this.implRecognizerStop();
             await this.privReco.recognize(recognitionMode, ret.resolve, ret.reject);
-            await ret.promise;
+            const result: SpeechRecognitionResult = await ret.promise;
             await this.implRecognizerStop();
 
-            return ret.promise;
+            return result;
         } catch (error) {
             return Promise.reject(error);
         }

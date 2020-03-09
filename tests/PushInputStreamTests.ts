@@ -43,12 +43,12 @@ test("Push segments into small blocks", (done: jest.DoneCallback) => {
 
     ps.write(ab.slice(j));
 
-    ps.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
+    ps.attach("id").then((audioNode: IAudioStreamNode) => {
 
         let bytesRead: number = 0;
 
         const readLoop = () => {
-            audioNode.read().onSuccessContinueWith((audioBuffer: IStreamChunk<ArrayBuffer>) => {
+            audioNode.read().then((audioBuffer: IStreamChunk<ArrayBuffer>) => {
                 try {
                     expect(audioBuffer.buffer.byteLength).toBeGreaterThanOrEqual(bufferSize);
                     expect(audioBuffer.buffer.byteLength).toBeLessThanOrEqual(bufferSize);
@@ -89,11 +89,11 @@ test("Stream returns all data when closed", (done: jest.DoneCallback) => {
     ps.write(ab.slice(j));
     ps.close();
 
-    ps.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
+    ps.attach("id").then((audioNode: IAudioStreamNode) => {
         let bytesRead: number = 0;
 
         const readLoop = () => {
-            audioNode.read().onSuccessContinueWith((audioBuffer: IStreamChunk<ArrayBuffer>) => {
+            audioNode.read().then((audioBuffer: IStreamChunk<ArrayBuffer>) => {
                 try {
                     expect(audioBuffer).not.toBeUndefined();
                     if (bytesRead === bufferSize * 4) {
@@ -139,13 +139,13 @@ test("Stream blocks when not closed", (done: jest.DoneCallback) => {
 
     ps.write(ab.slice(j));
 
-    ps.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
+    ps.attach("id").then((audioNode: IAudioStreamNode) => {
         let bytesRead: number = 0;
         let readCallCount: number = 0;
         let shouldBeEnd: boolean = false;
 
         const readLoop = () => {
-            audioNode.read().onSuccessContinueWith((audioBuffer: IStreamChunk<ArrayBuffer>) => {
+            audioNode.read().then((audioBuffer: IStreamChunk<ArrayBuffer>) => {
                 readCallCount++;
                 try {
 
@@ -204,11 +204,11 @@ test("nonAligned data is fine", (done: jest.DoneCallback) => {
     ps.write(ab);
     ps.close();
 
-    ps.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
+    ps.attach("id").then((audioNode: IAudioStreamNode) => {
         let bytesRead: number = 0;
 
         const readLoop = () => {
-            audioNode.read().onSuccessContinueWith((audioBuffer: IStreamChunk<ArrayBuffer>) => {
+            audioNode.read().then((audioBuffer: IStreamChunk<ArrayBuffer>) => {
                 try {
                     expect(audioBuffer).not.toBeUndefined();
 

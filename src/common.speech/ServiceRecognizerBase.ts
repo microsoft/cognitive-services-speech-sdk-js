@@ -232,9 +232,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return;
     }
 
-    // TODO: Return Value
-    public connect(): void {
-        const p: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.connectImpl());
+    public async connect(): Promise<void> {
+        await this.connectImpl();
     }
 
     public connectAsync(cb?: Callback, err?: Callback): void {
@@ -259,29 +258,23 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         });
     }
 
-    protected disconnectOverride: () => any = undefined;
+    protected disconnectOverride: () => Promise<void> = undefined;
 
-    public disconnect(): void {
-        if (this.disconnectOverride !== undefined) {
-            this.disconnectOverride();
-            return;
-        }
-
+    public async disconnect(): Promise<void> {
         this.cancelRecognitionLocal(CancellationReason.Error,
             CancellationErrorCode.NoError,
             "Disconnecting");
 
-        const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionPromise);
+        try {
+            (await this.privConnectionPromise).dispose();
+        } catch (error) {
 
-        if (wrapper.isCompleted) {
-            if (!wrapper.isError) {
-                wrapper.result.dispose();
-                this.privConnectionPromise = null;
-            }
-        } else {
-            this.privConnectionPromise.then((connection: IConnection) => {
-                connection.dispose();
-            });
+        }
+        this.privConnectionPromise = null;
+
+        if (this.disconnectOverride !== undefined) {
+            await this.disconnectOverride();
+            return;
         }
     }
 
@@ -515,15 +508,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         });
     }
 
-    protected connectImplOverride: (isUnAuthorized: boolean) => any = undefined;
+    protected postConnectImplOverride: (connection: Promise<IConnection>) => Promise<IConnection> = undefined;
 
     // Establishes a websocket connection to the end point.
     protected connectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
-
-        if (this.connectImplOverride !== undefined) {
-            return this.connectImplOverride(isUnAuthorized);
-        }
-
         if (this.privConnectionPromise) {
             const connectionWrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionPromise);
 
@@ -558,7 +546,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             connection.events.attach((event: ConnectionEvent) => {
                 this.connectionEvents.onEvent(event);
             });
-
             const response = await connection.open();
             if (response.statusCode === 200) {
                 this.privRequestSession.onConnectionEstablishCompleted(response.statusCode);
@@ -578,12 +565,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         // other startup events happen. It'll eventually be awaited on.
         this.privConnectionPromise.catch(() => { });
 
+        if (this.postConnectImplOverride !== undefined) {
+            return this.postConnectImplOverride(this.privConnectionPromise);
+        }
         return this.privConnectionPromise;
     }
 
     protected configConnectionOverride: () => any = undefined;
-
-    protected fetchConnectionOverride: () => any = undefined;
 
     protected sendSpeechServiceConfig = (connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<void> => {
         // filter out anything that is not required for the service to work.
@@ -609,6 +597,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         return;
+    }
+
+    protected fetchConnection(): Promise<IConnection> {
+        return this.configureConnection();
     }
 
     protected sendAudio = (
@@ -734,14 +726,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const connection: IConnection = await this.fetchConnection();
         await connection.send(new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, null));
         return;
-    }
-
-    private fetchConnection = (): Promise<IConnection> => {
-        if (this.fetchConnectionOverride !== undefined) {
-            return this.fetchConnectionOverride();
-        }
-
-        return this.configureConnection();
     }
 
     // Takes an established websocket connection to the endpoint and sends speech configuration information.

@@ -195,7 +195,7 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
 //     expect(connector instanceof sdk.DialogServiceConnector);
 // });
 
-describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean) => {
+describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
 
     beforeAll(() => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
@@ -205,7 +205,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
-    test.only("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
+    test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Create BotFrameworkConfig, invalid optional botId");
 
@@ -227,7 +227,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
                     done.fail(error);
                 }
             });
-    });
+    }, 15000);
 
     test("Connect / Disconnect", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console

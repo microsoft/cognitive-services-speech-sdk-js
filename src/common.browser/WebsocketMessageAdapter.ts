@@ -281,9 +281,7 @@ export class WebsocketMessageAdapter {
                 this.privWebsocketClient.close(1000, reason ? reason : "Normal closure by client");
             }
         } else {
-            const deferral = new Deferred<void>();
-            deferral.resolve();
-            return deferral.promise;
+            return Promise.resolve();
         }
 
         return this.privDisconnectDeferral.promise;

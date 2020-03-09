@@ -96,8 +96,8 @@ export class DialogServiceConnector extends Recognizer {
      * @function
      * @public
      */
-    public connect(): void {
-        this.privReco.connect();
+    public async connect(): Promise<void> {
+        await this.privReco.connect();
     }
 
     /**
@@ -173,36 +173,39 @@ export class DialogServiceConnector extends Recognizer {
         if (this.isTurnComplete) {
             try {
                 Contracts.throwIfDisposed(this.privIsDisposed);
+                const foo = async () => {
+                    try {
+                        await this.connect();
 
-                this.connect();
+                        await this.implRecognizerStop();
+                        this.isTurnComplete = false;
 
-                this.implRecognizerStop();
-                this.isTurnComplete = false;
+                        await this.privReco.recognize(
+                            RecognitionMode.Conversation,
+                            (e: SpeechRecognitionResult) => {
+                                this.implRecognizerStop();
 
-                this.privReco.recognize(
-                    RecognitionMode.Conversation,
-                    (e: SpeechRecognitionResult) => {
-                        this.implRecognizerStop();
+                                this.isTurnComplete = true;
 
-                        this.isTurnComplete = true;
-
-                        if (!!cb) {
-                            cb(e);
-                        }
-                    },
-                    (e: string) => {
-                        this.implRecognizerStop();
-                        this.isTurnComplete = true;
+                                if (!!cb) {
+                                    cb(e);
+                                }
+                            },
+                            (e: string) => {
+                                this.implRecognizerStop();
+                                this.isTurnComplete = true;
+                                if (!!err) {
+                                    err(e);
+                                }
+                                /* tslint:disable:no-empty */
+                            });
+                    } catch (error) {
                         if (!!err) {
-                            err(e);
+                            err(error);
                         }
-                        /* tslint:disable:no-empty */
-                    }).then<void, void>((): void => { },
-                        (error: string): void => {
-                            if (!!err) {
-                                err(error);
-                            }
-                        });
+                    }
+                };
+                foo();
             } catch (error) {
                 if (!!err) {
                     if (error instanceof Error) {
