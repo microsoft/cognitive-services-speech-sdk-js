@@ -30,6 +30,7 @@ import * as HttpsProxyAgent from "https-proxy-agent";
 import * as tls from "tls";
 import * as ws from "ws";
 import * as ocsp from "../../external/ocsp/ocsp";
+import { throws } from "assert";
 
 interface ISendItem {
     Message: ConnectionMessage;
@@ -52,6 +53,7 @@ export class WebsocketMessageAdapter {
     private privUri: string;
     private proxyInfo: ProxyInfo;
     private privHeaders: { [key: string]: string; };
+    private privLastErrorReceived: string;
 
     public static forceNpmWebSocket: boolean = false;
 
@@ -77,6 +79,7 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.None;
         this.privUri = uri;
         this.privHeaders = headers;
+        this.privLastErrorReceived = "";
     }
 
     public get state(): ConnectionState {
@@ -190,18 +193,14 @@ export class WebsocketMessageAdapter {
         };
 
         this.privWebsocketClient.onerror = (e: { error: any; message: string; type: string; target: WebSocket | ws }) => {
-            // TODO: Understand what this is error is. Will we still get onClose ?
-            if (this.privConnectionState !== ConnectionState.Connecting) {
-                // TODO: Is this required ?
-                // this.onEvent(new ConnectionErrorEvent(errorMsg, connectionId));
-            }
+            this.privLastErrorReceived = e.message;
         };
 
         this.privWebsocketClient.onclose = (e: { wasClean: boolean; code: number; reason: string; target: WebSocket | ws }) => {
             if (this.privConnectionState === ConnectionState.Connecting) {
                 this.privConnectionState = ConnectionState.Disconnected;
                 // this.onEvent(new ConnectionEstablishErrorEvent(this.connectionId, e.code, e.reason));
-                this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(e.code, e.reason));
+                this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(e.code, e.reason + " " + this.privLastErrorReceived));
             } else {
                 this.onEvent(new ConnectionClosedEvent(this.privConnectionId, e.code, e.reason));
             }
