@@ -195,7 +195,7 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
 //     expect(connector instanceof sdk.DialogServiceConnector);
 // });
 
-describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
+describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean) => {
 
     beforeAll(() => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;

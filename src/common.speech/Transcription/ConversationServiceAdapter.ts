@@ -82,7 +82,6 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         this.recognizeOverride = this.noOp;
         this.postConnectImplOverride = this.conversationConnectImpl;
         this.configConnectionOverride = this.configConnection;
-        this.fetchConnectionOverride = this.fetchConversationConnection;
         this.disconnectOverride = this.privDisconnect;
         this.privConversationRequestSession = new ConversationRequestSession(createNoDashGuid());
         this.privConversationConnectionFactory = connectionFactory;
@@ -101,18 +100,17 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    public sendMessage(message: string): void {
-        this.fetchConversationConnection().then((connection: IConnection) => {
-            connection.send(new ConversationConnectionMessage(
-                MessageType.Text,
-                message));
-        });
+    public async sendMessage(message: string): Promise<void> {
+        const connection: IConnection = await this.fetchConnection();
+        return connection.send(new ConversationConnectionMessage(
+            MessageType.Text,
+            message));
     }
 
     public async sendMessageAsync(message: string): Promise<void> {
         const sink: Deferred<void> = new Deferred<void>();
 
-        const connection: IConnection = await this.fetchConversationConnection();
+        const connection: IConnection = await this.fetchConnection();
 
         await connection.send(new ConversationConnectionMessage(MessageType.Text, message));
     }
@@ -185,7 +183,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         // we won't rely on the cascading promises of the connection since we want to continually be available to receive messages
         const communicationCustodian: Deferred<void> = new Deferred<void>();
 
-        this.fetchConversationConnection().then(async (connection: IConnection): Promise<void> => {
+        this.fetchConnection().then(async (connection: IConnection): Promise<void> => {
             const message: ConversationConnectionMessage = await connection.read() as ConversationConnectionMessage;
             const isDisposed: boolean = this.isDisposed();
             const terminateMessageLoop = (!this.isDisposed() && this.terminateMessageLoop);
@@ -444,9 +442,4 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
 
         return translations;
     }
-
-    private fetchConversationConnection = (): Promise<IConnection> => {
-        return this.configConnection();
-    }
-
 }
