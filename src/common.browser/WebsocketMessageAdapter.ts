@@ -30,7 +30,6 @@ import * as HttpsProxyAgent from "https-proxy-agent";
 import * as tls from "tls";
 import * as ws from "ws";
 import * as ocsp from "../../external/ocsp/ocsp";
-import { throws } from "assert";
 
 interface ISendItem {
     Message: ConnectionMessage;
