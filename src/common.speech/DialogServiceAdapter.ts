@@ -488,7 +488,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 communicationCustodian.resolve();
             }
         };
-
+        
+        loop();
         return communicationCustodian.promise;
     }
 

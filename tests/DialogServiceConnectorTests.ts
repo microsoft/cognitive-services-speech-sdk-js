@@ -74,7 +74,7 @@ async function asyncCloseAll(array: any[]): Promise<void> {
     for (const current of objsToClose) {
         if (typeof current.close === "function") {
             try {
-            //    await current.close();
+                await current.close();
             } catch (error) {
                 // tslint:disable-next-line:no-console
                 console.info("Closing threw: " + error);
