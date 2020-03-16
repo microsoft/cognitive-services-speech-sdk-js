@@ -93,7 +93,6 @@ export abstract class Recognizer {
      */
     public async close(): Promise<void> {
         Contracts.throwIfDisposed(this.privDisposed);
-
         await this.dispose(true);
     }
 
@@ -121,14 +120,14 @@ export abstract class Recognizer {
             return;
         }
 
+        this.privDisposed = true;
+
         if (disposing) {
             if (this.privReco) {
                 await this.privReco.audioSource.turnOff();
                 await this.privReco.dispose();
             }
         }
-
-        this.privDisposed = true;
     }
 
     /**

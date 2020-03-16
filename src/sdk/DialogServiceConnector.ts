@@ -97,7 +97,7 @@ export class DialogServiceConnector extends Recognizer {
      * @public
      */
     public async connect(): Promise<void> {
-        await this.privReco.connect();
+        return await this.privReco.connect();
     }
 
     /**
@@ -222,8 +222,8 @@ export class DialogServiceConnector extends Recognizer {
         }
     }
 
-    public sendActivityAsync(activity: string): void {
-        this.privReco.sendMessage(activity);
+    public sendActivityAsync(activity: string): Promise<void> {
+        return (this.privReco as DialogServiceAdapter).sendMessage(activity);
     }
 
     /**
@@ -244,8 +244,8 @@ export class DialogServiceConnector extends Recognizer {
         }
 
         if (disposing) {
-            await this.implRecognizerStop();
             this.privIsDisposed = true;
+            await this.implRecognizerStop();
             await super.dispose(disposing);
         }
     }

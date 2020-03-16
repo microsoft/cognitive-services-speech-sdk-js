@@ -51,6 +51,9 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
+import * as delay from "delay";
+import { promises } from "dns";
+
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
     private privConnectionFactory: IConnectionFactory;
@@ -173,7 +176,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (this.recognizeOverride !== undefined) {
             return this.recognizeOverride(recoMode, successCallback, errorCallBack);
         }
-
         // Clear the existing configuration promise to force a re-transmission of config and context.
         this.privConnectionConfigurationPromise = null;
         this.privRecognizerConfig.recognitionMode = recoMode;
@@ -198,7 +200,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         try {
             await conPromise;
-            const configuredConnection: IConnection = await this.configureConnection();
         } catch (error) {
             this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error);
             return;
@@ -234,6 +235,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public async connect(): Promise<void> {
         await this.connectImpl();
+        return Promise.resolve();
     }
 
     public connectAsync(cb?: Callback, err?: Callback): void {
@@ -322,8 +324,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     // Used for testing Telemetry capture.
     public static telemetryData: (json: string) => void;
     public static telemetryDataEnabled: boolean = true;
-
-    public sendMessage(message: string): void { }
 
     public set activityTemplate(messagePayload: string) { this.privActivityTemplate = messagePayload; }
     public get activityTemplate(): string { return this.privActivityTemplate; }
@@ -495,17 +495,16 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return;
     }
 
-    protected sendWaveHeader(connection: IConnection): Promise<void> {
-        return this.audioSource.format.then((format: AudioStreamFormatImpl) => {
-            // this.writeBufferToConsole(format.header);
-            return connection.send(new SpeechConnectionMessage(
-                MessageType.Binary,
-                "audio",
-                this.privRequestSession.requestId,
-                "audio/x-wav",
-                format.header
-            ));
-        });
+    protected async sendWaveHeader(connection: IConnection): Promise<void> {
+        const format: AudioStreamFormatImpl = await this.audioSource.format;
+        // this.writeBufferToConsole(format.header);
+        return connection.send(new SpeechConnectionMessage(
+            MessageType.Binary,
+            "audio",
+            this.privRequestSession.requestId,
+            "audio/x-wav",
+            format.header
+        ));
     }
 
     protected postConnectImplOverride: (connection: Promise<IConnection>) => Promise<IConnection> = undefined;
@@ -526,7 +525,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 return this.privConnectionPromise;
             }
         }
-
         this.privAuthFetchEventId = createNoDashGuid();
         this.privConnectionId = createNoDashGuid();
 
@@ -568,10 +566,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (this.postConnectImplOverride !== undefined) {
             return this.postConnectImplOverride(this.privConnectionPromise);
         }
+
         return this.privConnectionPromise;
     }
 
-    protected configConnectionOverride: () => any = undefined;
+    protected configConnectionOverride: (connection: IConnection) => Promise<IConnection> = undefined;
 
     protected sendSpeechServiceConfig = (connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<void> => {
         // filter out anything that is not required for the service to work.
@@ -599,112 +598,94 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return;
     }
 
-    protected fetchConnection(): Promise<IConnection> {
-        return this.configureConnection();
+    protected async fetchConnection(): Promise<IConnection> {
+        if (this.privConnectionConfigurationPromise) {
+            const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionConfigurationPromise);
+            if (wrapper.isCompleted &&
+                (wrapper.isError
+                    || wrapper.result.state() === ConnectionState.Disconnected)) {
+
+                this.privConnectionConfigurationPromise = null;
+                return await this.fetchConnection();
+            } else {
+                return await this.privConnectionConfigurationPromise;
+            }
+        }
+
+        this.privConnectionConfigurationPromise = this.configureConnection();
+        return await this.privConnectionConfigurationPromise;
     }
 
-    protected sendAudio = (
-        audioStreamNode: IAudioStreamNode): Promise<void> => {
-        return this.audioSource.format.then((audioFormat: AudioStreamFormatImpl) => {
-            // NOTE: Home-baked promises crash ios safari during the invocation
-            // of the error callback chain (looks like the recursion is way too deep, and
-            // it blows up the stack). The following construct is a stop-gap that does not
-            // bubble the error up the callback chain and hence circumvents this problem.
-            // TODO: rewrite with ES6 promises.
-            const deferred = new Deferred<void>();
+    protected async sendAudio(audioStreamNode: IAudioStreamNode): Promise<void> {
+        const audioFormat: AudioStreamFormatImpl = await this.audioSource.format;
 
-            // The time we last sent data to the service.
-            let nextSendTime: number = Date.now();
+        // The time we last sent data to the service.
+        let nextSendTime: number = Date.now();
 
-            // Max amount to send before we start to throttle
-            const fastLaneSizeMs: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-TransmitLengthBeforThrottleMs", "5000");
-            const maxSendUnthrottledBytes: number = audioFormat.avgBytesPerSec / 1000 * parseInt(fastLaneSizeMs, 10);
-            const startRecogNumber: number = this.privRequestSession.recogNumber;
+        // Max amount to send before we start to throttle
+        const fastLaneSizeMs: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-TransmitLengthBeforThrottleMs", "5000");
+        const maxSendUnthrottledBytes: number = audioFormat.avgBytesPerSec / 1000 * parseInt(fastLaneSizeMs, 10);
+        const startRecogNumber: number = this.privRequestSession.recogNumber;
 
-            const readAndUploadCycle = () => {
+        const readAndUploadCycle = async (): Promise<void> => {
+            // If speech is done, stop sending audio.
+            if (!this.privIsDisposed &&
+                !this.privRequestSession.isSpeechEnded &&
+                this.privRequestSession.isRecognizing &&
+                this.privRequestSession.recogNumber === startRecogNumber) {
 
-                // If speech is done, stop sending audio.
-                if (!this.privIsDisposed &&
-                    !this.privRequestSession.isSpeechEnded &&
-                    this.privRequestSession.isRecognizing &&
-                    this.privRequestSession.recogNumber === startRecogNumber) {
-                    this.fetchConnection().then((connection: IConnection) => {
-                        audioStreamNode.read().then(
-                            (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
-                                // we have a new audio chunk to upload.
-                                if (this.privRequestSession.isSpeechEnded) {
-                                    // If service already recognized audio end then don't send any more audio
-                                    deferred.resolve();
-                                    return;
-                                }
-
-                                let payload: ArrayBuffer;
-                                let sendDelay: number;
-
-                                if (!audioStreamChunk || audioStreamChunk.isEnd) {
-                                    payload = null;
-                                    sendDelay = 0;
-                                } else {
-                                    payload = audioStreamChunk.buffer;
-                                    this.privRequestSession.onAudioSent(payload.byteLength);
-
-                                    if (maxSendUnthrottledBytes >= this.privRequestSession.bytesSent) {
-                                        sendDelay = 0;
-                                    } else {
-                                        sendDelay = Math.max(0, nextSendTime - Date.now());
-                                    }
-                                }
-
-                                // Are we ready to send, or need we delay more?
-                                setTimeout(() => {
-                                    if (payload !== null) {
-                                        nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
-                                    }
-
-                                    const uploaded: Promise<void> = connection.send(
-                                        new SpeechConnectionMessage(
-                                            MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
-
-                                    if (!audioStreamChunk?.isEnd) {
-                                        uploaded.then(() => {
-                                            // this.writeBufferToConsole(payload);
-                                            // Regardless of success or failure, schedule the next upload.
-                                            // If the underlying connection was broken, the next cycle will
-                                            // get a new connection and re-transmit missing audio automatically.
-                                            readAndUploadCycle();
-                                        }, (error: string): void => {
-                                            readAndUploadCycle();
-                                        });
-                                    } else {
-                                        // the audio stream has been closed, no need to schedule next
-                                        // read-upload cycle.
-                                        this.privRequestSession.onSpeechEnded();
-                                        deferred.resolve();
-                                    }
-                                }, sendDelay);
-                            },
-                            (error: string) => {
-                                if (this.privRequestSession.isSpeechEnded) {
-                                    // For whatever reason, Reject is used to remove queue subscribers inside
-                                    // the Queue.DrainAndDispose invoked from DetachAudioNode down below, which
-                                    // means that sometimes things can be rejected in normal circumstances, without
-                                    // any errors.
-                                    deferred.resolve(); // TODO: remove the argument, it's is completely meaningless.
-                                } else {
-                                    // Only reject, if there was a proper error.
-                                    deferred.reject(error);
-                                }
-                            });
-                    }, (error: string) => {
-                        deferred.reject(error);
-                    });
+                const connection: IConnection = await this.fetchConnection();
+                const audioStreamChunk: IStreamChunk<ArrayBuffer> = await audioStreamNode.read();
+                // we have a new audio chunk to upload.
+                if (this.privRequestSession.isSpeechEnded) {
+                    // If service already recognized audio end then don't send any more audio
+                    return;
                 }
-            };
 
-            readAndUploadCycle();
+                let payload: ArrayBuffer;
+                let sendDelay: number;
 
-            return deferred.promise;
-        });
+                if (!audioStreamChunk || audioStreamChunk.isEnd) {
+                    payload = null;
+                    sendDelay = 0;
+                } else {
+                    payload = audioStreamChunk.buffer;
+                    this.privRequestSession.onAudioSent(payload.byteLength);
+
+                    if (maxSendUnthrottledBytes >= this.privRequestSession.bytesSent) {
+                        sendDelay = 0;
+                    } else {
+                        sendDelay = Math.max(0, nextSendTime - Date.now());
+                    }
+                }
+
+                if (0 !== sendDelay) {
+                    await delay(sendDelay);
+                }
+
+                if (payload !== null) {
+                    nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
+                }
+
+                await connection.send(
+                    new SpeechConnectionMessage(
+                        MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
+
+                if (!audioStreamChunk?.isEnd) {
+                    // this.writeBufferToConsole(payload);
+                    // Regardless of success or failure, schedule the next upload.
+                    // If the underlying connection was broken, the next cycle will
+                    // get a new connection and re-transmit missing audio automatically.
+                    return readAndUploadCycle();
+                } else {
+                    // the audio stream has been closed, no need to schedule next
+                    // read-upload cycle.
+                    this.privRequestSession.onSpeechEnded();
+                }
+            }
+        };
+
+        return readAndUploadCycle();
     }
 
     private writeBufferToConsole(buffer: ArrayBuffer): void {
@@ -729,32 +710,14 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     // Takes an established websocket connection to the endpoint and sends speech configuration information.
-    private configureConnection(): Promise<IConnection> {
+    private async configureConnection(): Promise<IConnection> {
+        const connection: IConnection = await this.connectImpl();
         if (this.configConnectionOverride !== undefined) {
-            return this.configConnectionOverride();
+            return this.configConnectionOverride(connection);
         }
-
-        if (this.privConnectionConfigurationPromise) {
-            const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionConfigurationPromise);
-            if (wrapper.isCompleted &&
-                (wrapper.isError
-                    || wrapper.result.state() === ConnectionState.Disconnected)) {
-
-                this.privConnectionConfigurationPromise = null;
-                return this.configureConnection();
-            } else {
-                return this.privConnectionConfigurationPromise;
-            }
-        }
-
-        this.privConnectionConfigurationPromise = this.connectImpl().then(async (connection: IConnection): Promise<IConnection> => {
-            //            console.warn("Connection Completed. " + this.privRequestSession.sessionId);
-            await this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
-            await this.sendSpeechContext(connection);
-            await this.sendWaveHeader(connection);
-            return connection;
-        });
-
-        return this.privConnectionConfigurationPromise;
+        await this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
+        await this.sendSpeechContext(connection);
+        await this.sendWaveHeader(connection);
+        return connection;
     }
 }

@@ -58,22 +58,28 @@ beforeEach(() => {
     console.info("---------------------------------------Starting test case-----------------------------------");
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+afterEach(async (done: jest.DoneCallback): Promise<void> => {
     // tslint:disable-next-line:no-console
     console.info("Closing Objects");
 
-    asyncCloseAll(objsToClose).then(() => {
-        // tslint:disable-next-line:no-console
-        console.info("End Time: " + new Date(Date.now()).toLocaleString());
+    await asyncCloseAll(objsToClose);
+    // tslint:disable-next-line:no-console
+    console.info("End Time: " + new Date(Date.now()).toLocaleString());
 
-        done();
-    });
+    done();
+
 });
 
 async function asyncCloseAll(array: any[]): Promise<void> {
     for (const current of objsToClose) {
         if (typeof current.close === "function") {
-            await current.close();
+            try {
+            //    await current.close();
+            } catch (error) {
+                // tslint:disable-next-line:no-console
+                console.info("Closing threw: " + error);
+            }
+
         }
     }
 }
@@ -195,7 +201,7 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
 //     expect(connector instanceof sdk.DialogServiceConnector);
 // });
 
-describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean) => {
+describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
 
     beforeAll(() => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
@@ -265,7 +271,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         WaitForCondition(() => {
             return connected;
         }, () => {
-            connection.closeConnection();
+            connection.closeConnection().catch();
         });
     });
 

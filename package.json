@@ -89,6 +89,7 @@
   "dependencies": {
     "asn1.js-rfc2560": "^5.0.0",
     "asn1.js-rfc5280": "^3.0.0",
+    "delay": "^4.3.0",
     "https-proxy-agent": "^3.0.1",
     "simple-lru-cache": "0.0.2",
     "ws": "^7.2.0"

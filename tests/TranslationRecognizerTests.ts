@@ -176,7 +176,7 @@ test("GetParameters", () => {
     expect(r.targetLanguages[0]).toEqual(r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages));
 });
 
-describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean) => {
+describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     beforeEach(() => {
         // tslint:disable-next-line:no-console

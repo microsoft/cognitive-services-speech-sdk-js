@@ -169,7 +169,7 @@ export class WebsocketMessageAdapter {
             this.privReceivingMessageQueue = new Queue<ConnectionMessage>();
             this.privDisconnectDeferral = new Deferred<void>();
             this.privSendMessageQueue = new Queue<ISendItem>();
-            this.processSendQueue();
+            this.processSendQueue().catch();
         } catch (error) {
             this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(500, error));
             return this.privConnectionEstablishDeferral.promise;
@@ -244,7 +244,7 @@ export class WebsocketMessageAdapter {
 
     public send = (message: ConnectionMessage): Promise<void> => {
         if (this.privConnectionState !== ConnectionState.Connected) {
-            return Promise.reject(`Cannot send on connection that is in ${this.privConnectionState} state`);
+            return Promise.reject(`Cannot send on connection that is in ${ConnectionState[this.privConnectionState]} state`);
         }
 
         const messageSendStatusDeferral = new Deferred<void>();
@@ -304,7 +304,7 @@ export class WebsocketMessageAdapter {
             if (this.isWebsocketOpen) {
                 this.privWebsocketClient.send(sendItem.RawWebsocketMessage.payload);
             } else {
-                return Promise.reject("websocket send error: Websocket not ready " + this.privConnectionId);
+                return Promise.reject("websocket send error: Websocket not ready " + this.privConnectionId + " " + new Error().stack);
             }
             return Promise.resolve();
 
@@ -328,25 +328,21 @@ export class WebsocketMessageAdapter {
         }, closeReason);
     }
 
-    private processSendQueue = (): void => {
+    private async processSendQueue(): Promise<void> {
         const itemToSend: Promise<ISendItem> = this.privSendMessageQueue.dequeue();
-        itemToSend.then((sendItem: ISendItem) => {
-            // indicates we are draining the queue and it came with no message;
-            if (!sendItem) {
-                return;
-            }
+        const sendItem: ISendItem = await itemToSend;
+        // indicates we are draining the queue and it came with no message;
+        if (!sendItem) {
+            return;
+        }
 
-            this.sendRawMessage(sendItem)
-                .then(() => {
-                    sendItem.sendStatusDeferral.resolve();
-                    this.processSendQueue();
-                }, (sendError: string) => {
-                    sendItem.sendStatusDeferral.reject(sendError);
-                    this.processSendQueue();
-                });
-        }, (error: string) => {
-            // do nothing
-        });
+        try {
+            await this.sendRawMessage(sendItem);
+            sendItem.sendStatusDeferral.resolve();
+        } catch (sendError) {
+            sendItem.sendStatusDeferral.reject(sendError);
+        }
+        await this.processSendQueue();
     }
 
     private onEvent = (event: ConnectionEvent): void => {

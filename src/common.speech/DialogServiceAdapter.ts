@@ -62,7 +62,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privDialogIsDisposed: boolean;
     private privDialogAuthentication: IAuthentication;
     private privDialogAudioSource: IAudioSource;
-    private privDialogRequestSession: RequestSession;
 
     // A promise for a configured connection.
     // Do not consume directly, call fetchConnection instead.
@@ -96,7 +95,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.configConnectionOverride = this.configConnection;
         this.disconnectOverride = this.privDisconnect;
         this.privDialogAudioSource = audioSource;
-        this.privDialogRequestSession = new RequestSession(audioSource.id());
+
         this.privDialogIsDisposed = false;
         this.agentConfigSent = false;
         this.privLastResult = null;
@@ -106,15 +105,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return this.privDialogIsDisposed;
     }
 
-    public async dispose(reason?: string): Promise<void> {
-        this.privDialogIsDisposed = true;
-        if (this.privConnectionConfigPromise) {
-            const connection: IConnection = await this.privConnectionConfigPromise;
-            await connection.dispose(reason);
-        }
-    }
-
-    public sendMessage = (message: string): void => {
+    public async sendMessage(message: string): Promise<void> {
         const interactionGuid: string = createGuid();
         const requestId: string = createNoDashGuid();
 
@@ -127,19 +118,19 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         };
 
         const agentMessageJson = JSON.stringify(agentMessage);
-        this.fetchConnection().then((connection: IConnection) => {
-            connection.send(new SpeechConnectionMessage(
-                MessageType.Text,
-                "agent",
-                requestId,
-                "application/json",
-                agentMessageJson));
-        });
+        const connection: IConnection = await this.fetchConnection();
+        await connection.send(new SpeechConnectionMessage(
+            MessageType.Text,
+            "agent",
+            requestId,
+            "application/json",
+            agentMessageJson));
+
     }
 
     protected async privDisconnect(): Promise<void> {
-        this.cancelRecognition(this.privDialogRequestSession.sessionId,
-            this.privDialogRequestSession.requestId,
+        this.cancelRecognition(this.privRequestSession.sessionId,
+            this.privRequestSession.requestId,
             CancellationReason.Error,
             CancellationErrorCode.NoError,
             "Disconnecting");
@@ -163,7 +154,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             case "speech.phrase":
                 const speechPhrase: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
 
-                this.privDialogRequestSession.onPhraseRecognized(this.privDialogRequestSession.currentTurnAudioOffset + speechPhrase.Offset + speechPhrase.Duration);
+                this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + speechPhrase.Offset + speechPhrase.Duration);
 
                 if (speechPhrase.RecognitionStatus === RecognitionStatus.Success) {
                     const args: SpeechRecognitionEventArgs = this.fireEventForResult(speechPhrase, resultProps);
@@ -183,10 +174,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 break;
             case "speech.hypothesis":
                 const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
-                const offset: number = hypothesis.Offset + this.privDialogRequestSession.currentTurnAudioOffset;
+                const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
 
                 result = new SpeechRecognitionResult(
-                    this.privDialogRequestSession.requestId,
+                    this.privRequestSession.requestId,
                     ResultReason.RecognizingSpeech,
                     hypothesis.Text,
                     hypothesis.Duration,
@@ -195,9 +186,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     connectionMessage.textBody,
                     resultProps);
 
-                this.privDialogRequestSession.onHypothesis(offset);
+                this.privRequestSession.onHypothesis(offset);
 
-                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privDialogRequestSession.sessionId);
+                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
 
                 if (!!this.privDialogServiceConnector.recognizing) {
                     try {
@@ -274,8 +265,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.terminateMessageLoop = true;
 
-        if (!!this.privDialogRequestSession.isRecognizing) {
-            this.privDialogRequestSession.onStopRecognizing();
+        if (!!this.privRequestSession.isRecognizing) {
+            this.privRequestSession.onStopRecognizing();
         }
 
         if (!!this.privDialogServiceConnector.canceled) {
@@ -323,20 +314,20 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallback;
 
-        this.privDialogRequestSession.startNewRecognition();
-        this.privDialogRequestSession.listenForServiceTelemetry(this.privDialogAudioSource.events);
+        this.privRequestSession.startNewRecognition();
+        this.privRequestSession.listenForServiceTelemetry(this.privDialogAudioSource.events);
 
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
 
         const preAudioPromise: Promise<void> = this.sendPreAudioMessages();
 
-        const node: IAudioStreamNode = await this.privDialogAudioSource.attach(this.privDialogRequestSession.audioNodeId);
+        const node: IAudioStreamNode = await this.privDialogAudioSource.attach(this.privRequestSession.audioNodeId);
         const format: AudioStreamFormatImpl = await this.privDialogAudioSource.format;
         const deviceInfo: ISpeechConfigAudioDevice = await this.privDialogAudioSource.deviceInfo;
 
         const audioNode = new ReplayableAudioNode(node, format.avgBytesPerSec);
-        this.privDialogRequestSession.onAudioSourceAttachCompleted(audioNode, false);
+        this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
 
         this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
 
@@ -344,11 +335,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             await conPromise;
             await preAudioPromise;
         } catch (error) {
-            this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error);
+            this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error);
             return Promise.resolve();
         }
 
-        const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privDialogRequestSession.sessionId);
+        const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
 
         if (!!this.privRecognizer.sessionStarted) {
             this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
@@ -358,123 +349,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         // /* tslint:disable:no-empty */
         audioSendPromise.then(() => { /*add? return true;*/ }, (error: string) => {
-            this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
+            this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
         });
 
-    }
-
-    protected sendAudio = (audioStreamNode: IAudioStreamNode): Promise<void> => {
-        return this.privDialogAudioSource.format.then<void>((audioFormat: AudioStreamFormatImpl) => {
-            // NOTE: Home-baked promises crash ios safari during the invocation
-            // of the error callback chain (looks like the recursion is way too deep, and
-            // it blows up the stack). The following construct is a stop-gap that does not
-            // bubble the error up the callback chain and hence circumvents this problem.
-            // TODO: rewrite with ES6 promises.
-            const deferred = new Deferred<void>();
-
-            // The time we last sent data to the service.
-            let nextSendTime: number = Date.now();
-
-            // Max amount to send before we start to throttle
-            const fastLaneSizeMs: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-TransmitLengthBeforThrottleMs", "5000");
-            const maxSendUnthrottledBytes: number = audioFormat.avgBytesPerSec / 1000 * parseInt(fastLaneSizeMs, 10);
-            const startRecogNumber: number = this.privDialogRequestSession.recogNumber;
-
-            const readAndUploadCycle = () => {
-
-                // If speech is done, stop sending audio.
-                if (!this.privDialogIsDisposed &&
-                    !this.privDialogRequestSession.isSpeechEnded &&
-                    this.privDialogRequestSession.isRecognizing &&
-                    this.privDialogRequestSession.recogNumber === startRecogNumber) {
-                    this.fetchConnection().then((connection: IConnection) => {
-                        audioStreamNode.read().then(
-                            (audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
-                                // we have a new audio chunk to upload.
-                                if (this.privDialogRequestSession.isSpeechEnded) {
-                                    // If service already recognized audio end then don't send any more audio
-                                    deferred.resolve();
-                                    return;
-                                }
-
-                                let payload: ArrayBuffer;
-                                let sendDelay: number;
-
-                                if (!audioStreamChunk || audioStreamChunk.isEnd) {
-                                    payload = null;
-                                    sendDelay = 0;
-                                } else {
-                                    payload = audioStreamChunk.buffer;
-                                    this.privDialogRequestSession.onAudioSent(payload.byteLength);
-
-                                    if (maxSendUnthrottledBytes >= this.privDialogRequestSession.bytesSent) {
-                                        sendDelay = 0;
-                                    } else {
-                                        sendDelay = Math.max(0, nextSendTime - Date.now());
-                                    }
-                                }
-
-                                // Are we ready to send, or need we delay more?
-                                setTimeout(() => {
-                                    if (payload !== null) {
-                                        nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
-                                    }
-
-                                    const uploaded: Promise<void> = connection.send(
-                                        new SpeechConnectionMessage(
-                                            MessageType.Binary, "audio", this.privDialogRequestSession.requestId, null, payload));
-
-                                    if (audioStreamChunk && !audioStreamChunk.isEnd) {
-                                        uploaded.then(() => {
-
-                                            // Regardless of success or failure, schedule the next upload.
-                                            // If the underlying connection was broken, the next cycle will
-                                            // get a new connection and re-transmit missing audio automatically.
-                                            readAndUploadCycle();
-                                        }, () => {
-                                            readAndUploadCycle();
-                                        });
-                                    } else {
-                                        // the audio stream has been closed, no need to schedule next
-                                        // read-upload cycle.
-                                        this.privDialogRequestSession.onSpeechEnded();
-                                        deferred.resolve();
-                                    }
-                                }, sendDelay);
-                            },
-                            (error: string) => {
-                                if (this.privDialogRequestSession.isSpeechEnded) {
-                                    // For whatever reason, Reject is used to remove queue subscribers inside
-                                    // the Queue.DrainAndDispose invoked from DetachAudioNode down below, which
-                                    // means that sometimes things can be rejected in normal circumstances, without
-                                    // any errors.
-                                    deferred.resolve(); // TODO: remove the argument, it's is completely meaningless.
-                                } else {
-                                    // Only reject, if there was a proper error.
-                                    deferred.reject(error);
-                                }
-                            });
-                    }, (error: string) => {
-                        deferred.reject(error);
-                    });
-                }
-            };
-
-            readAndUploadCycle();
-
-            return deferred.promise;
-        });
-    }
-
-    protected sendWaveHeader(connection: IConnection): Promise<void> {
-        return this.audioSource.format.then<void>((format: AudioStreamFormatImpl) => {
-            return connection.send(new SpeechConnectionMessage(
-                MessageType.Binary,
-                "audio",
-                this.privDialogRequestSession.requestId,
-                null,
-                format.header));
-        });
     }
 
     // Establishes a websocket connection to the end point.
@@ -511,13 +388,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     case "turn.start":
                         {
                             const turnRequestId = connectionMessage.requestId.toUpperCase();
-                            const audioSessionReqId = this.privDialogRequestSession.requestId.toUpperCase();
+                            const audioSessionReqId = this.privRequestSession.requestId.toUpperCase();
 
                             // turn started by the service
                             if (turnRequestId !== audioSessionReqId) {
                                 this.privTurnStateManager.StartTurn(turnRequestId);
                             } else {
-                                this.privDialogRequestSession.onServiceTurnStartResponse();
+                                this.privRequestSession.onServiceTurnStartResponse();
                             }
                         }
                         break;
@@ -525,7 +402,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     case "speech.startdetected":
                         const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
 
-                        const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privDialogRequestSession.sessionId);
+                        const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
 
                         if (!!this.privRecognizer.speechStartDetected) {
                             this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
@@ -546,9 +423,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                         const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
 
-                        this.privDialogRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privDialogRequestSession.currentTurnAudioOffset);
+                        this.privRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset);
 
-                        const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privDialogRequestSession.currentTurnAudioOffset, this.privDialogRequestSession.sessionId);
+                        const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
 
                         if (!!this.privRecognizer.speechEndDetected) {
                             this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
@@ -559,7 +436,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         {
                             const turnEndRequestId = connectionMessage.requestId.toUpperCase();
 
-                            const audioSessionReqId = this.privDialogRequestSession.requestId.toUpperCase();
+                            const audioSessionReqId = this.privRequestSession.requestId.toUpperCase();
 
                             // turn started by the service
                             if (turnEndRequestId !== audioSessionReqId) {
@@ -567,10 +444,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                             } else {
                                 // Audio session turn
 
-                                const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privDialogRequestSession.sessionId);
-                                this.privDialogRequestSession.onServiceTurnEndResponse(false);
+                                const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
+                                this.privRequestSession.onServiceTurnEndResponse(false);
 
-                                if (this.privDialogRequestSession.isSpeechEnded) {
+                                if (this.privRequestSession.isSpeechEnded) {
                                     if (!!this.privRecognizer.sessionStopped) {
                                         this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                                     }
@@ -604,17 +481,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         }
                 }
                 const ret: Promise<void> = loop();
-                // tslint:disable-next-line:no-console
-                ret.catch(() => { console.warn("Inner loop"); });
+
                 return ret;
             } catch (error) {
                 this.terminateMessageLoop = true;
                 communicationCustodian.resolve();
             }
         };
-
-        // tslint:disable-next-line:no-console
-        loop().catch(() => { console.warn("Loop catch 2"); });
 
         return communicationCustodian.promise;
     }
@@ -625,43 +498,23 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         try {
             await this.receiveDialogMessageOverride();
-
         } catch (error) {
-            this.cancelRecognition(this.privDialogRequestSession.sessionId, this.privDialogRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
+            this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
         }
 
         return Promise.resolve();
     }
 
     // Takes an established websocket connection to the endpoint and sends speech configuration information.
-    private configConnection(): Promise<IConnection> {
-        if (this.privConnectionConfigPromise) {
-            const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionConfigPromise);
-
-            if (wrapper.isCompleted &&
-                (wrapper.isError || wrapper.result.state() === ConnectionState.Disconnected)) {
-
-                this.privConnectionConfigPromise = null;
-                return this.configConnection();
-            } else {
-                return this.privConnectionConfigPromise;
-            }
-        }
-
+    private async configConnection(connection: IConnection): Promise<IConnection> {
         if (this.terminateMessageLoop) {
             this.terminateMessageLoop = false;
             return Promise.reject(`Connection to service terminated.`);
         }
 
-        this.privConnectionConfigPromise = this.connectImpl().then(async (connection: IConnection): Promise<IConnection> => {
-            await this.sendSpeechServiceConfig(connection, this.privDialogRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
-            await this.sendAgentConfig(connection);
-            return connection;
-        });
-
-        // This will be awaited later, so set an empty catch.
-        this.privConnectionConfigPromise.catch(() => { });
-        return this.privConnectionConfigPromise;
+        await this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
+        await this.sendAgentConfig(connection);
+        return connection;
     }
 
     private async sendPreAudioMessages(): Promise<void> {
@@ -686,7 +539,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Text,
                 "agent.config",
-                this.privDialogRequestSession.requestId,
+                this.privRequestSession.requestId,
                 "application/json",
                 agentConfigJson));
         }
@@ -713,7 +566,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return connection.send(new SpeechConnectionMessage(
             MessageType.Text,
             "speech.agent.context",
-            this.privDialogRequestSession.requestId,
+            this.privRequestSession.requestId,
             "application/json",
             agentContextJson));
     }
@@ -721,10 +574,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private fireEventForResult(serviceResult: SimpleSpeechPhrase, properties: PropertyCollection): SpeechRecognitionEventArgs {
         const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(serviceResult.RecognitionStatus);
 
-        const offset: number = serviceResult.Offset + this.privDialogRequestSession.currentTurnAudioOffset;
+        const offset: number = serviceResult.Offset + this.privRequestSession.currentTurnAudioOffset;
 
         const result = new SpeechRecognitionResult(
-            this.privDialogRequestSession.requestId,
+            this.privRequestSession.requestId,
             resultReason,
             serviceResult.DisplayText,
             serviceResult.Duration,
@@ -733,7 +586,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             JSON.stringify(serviceResult),
             properties);
 
-        const ev = new SpeechRecognitionEventArgs(result, offset, this.privDialogRequestSession.sessionId);
+        const ev = new SpeechRecognitionEventArgs(result, offset, this.privRequestSession.sessionId);
         return ev;
     }
 }
