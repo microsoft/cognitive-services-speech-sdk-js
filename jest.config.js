@@ -9,5 +9,6 @@ module.exports = {
     moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
     collectCoverage: false,
     "reporters": ["default", "jest-junit"],
-    setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"]
+    setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"],
+    testTimeout : 20000
 };

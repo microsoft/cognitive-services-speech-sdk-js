@@ -8,11 +8,17 @@ import {
 } from "../common.speech/Exports";
 import {
     ConnectionEvent,
+    ConnectionMessageReceivedEvent,
+    ConnectionMessageSentEvent,
     IDetachable,
     ServiceEvent,
 } from "../common/Exports";
 import {
+    ConnectionMessageImpl
+} from "./ConnectionMessage";
+import {
     ConnectionEventArgs,
+    ConnectionMessageEventArgs,
     Recognizer,
     ServiceEventArgs,
 } from "./Exports";
@@ -55,10 +61,18 @@ export class Connection {
                 if (!!ret.disconnected) {
                     ret.disconnected(new ConnectionEventArgs(connectionEvent.connectionId));
                 }
+            } else if (connectionEvent.name === "ConnectionMessageSentEvent") {
+                if (!!ret.messageSent) {
+                    ret.messageSent(new ConnectionMessageEventArgs(new ConnectionMessageImpl((connectionEvent as ConnectionMessageSentEvent).message)));
+                }
+            } else if (connectionEvent.name === "ConnectionMessageReceivedEvent") {
+                if (!!ret.messageReceived) {
+                    ret.messageReceived(new ConnectionMessageEventArgs(new ConnectionMessageImpl((connectionEvent as ConnectionMessageReceivedEvent).message)));
+                }
             }
         });
 
-        ret.privServiceEventListener = ret.privServiceRecognizer.serviceEvents.attach((e: ServiceEvent): void =>  {
+        ret.privServiceEventListener = ret.privServiceRecognizer.serviceEvents.attach((e: ServiceEvent): void => {
             if (!!ret.receivedServiceMessage) {
                 ret.receivedServiceMessage(new ServiceEventArgs(e.jsonString, e.name));
             }
@@ -91,8 +105,20 @@ export class Connection {
 
     /**
      * Any message from service that is not being processed by any other top level recognizers.
+     *
+     * Will be removed in 2.0.
      */
     public receivedServiceMessage: (args: ServiceEventArgs) => void;
+
+    /**
+     * Any message received from the Speech Service.
+     */
+    public messageReceived: (args: ConnectionMessageEventArgs) => void;
+
+    /**
+     * Any message sent to the Speech Service.
+     */
+    public messageSent: (args: ConnectionMessageEventArgs) => void;
 
     /**
      * The Connected event to indicate that the recognizer is connected to service.
