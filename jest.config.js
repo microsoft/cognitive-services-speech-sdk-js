@@ -10,5 +10,5 @@ module.exports = {
     collectCoverage: false,
     "reporters": ["default", "jest-junit"],
     setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"],
-    "testTimeout" : 20000
+    testTimeout : 20000
 };
