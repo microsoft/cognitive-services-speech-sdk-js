@@ -4,7 +4,11 @@
 export { AudioConfig } from "./Audio/AudioConfig";
 export { AudioStreamFormat } from "./Audio/AudioStreamFormat";
 export { AudioInputStream, PullAudioInputStream, PushAudioInputStream } from "./Audio/AudioInputStream";
+<<<<<<< HEAD
 export { AudioOutputStream, PullAudioOutputStream, PushAudioOutputStream} from "./Audio/AudioOutputStream";
+=======
+export { AudioOutputStream, PullAudioOutputStream } from "./Audio/AudioOutputStream";
+>>>>>>> 133918fcfa9818f612705117116c0a25eabff5a1
 export { CancellationReason } from "./CancellationReason";
 export { PullAudioInputStreamCallback } from "./Audio/PullAudioInputStreamCallback";
 export { PushAudioOutputStreamCallback } from "./Audio/PushAudioOutputStreamCallback";
@@ -51,6 +55,8 @@ export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 export { ServicePropertyChannel } from "./ServicePropertyChannel";
 export { ProfanityOption } from "./ProfanityOption";
 export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";
+export { ConnectionMessageEventArgs } from "./ConnectionMessageEventArgs";
+export { ConnectionMessage } from "./ConnectionMessage";
 export { Conversation,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
