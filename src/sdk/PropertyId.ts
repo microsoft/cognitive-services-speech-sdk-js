@@ -317,5 +317,11 @@ export enum PropertyId {
      * service to service call from the speech service to the Conversation Translator service for relaying
      * recognitions. For internal use.
      */
-    ConversationTranslator_Token
+    ConversationTranslator_Token,
+
+    /**
+     * The json string of pronunciation score parameters
+     * @member PropertyId.PronunciationScore_Params
+     */
+    PronunciationScore_Params
 }

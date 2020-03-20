@@ -43,6 +43,11 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         speechRecognizer: SpeechRecognizer) {
         super(authentication, connectionFactory, audioSource, recognizerConfig, speechRecognizer);
         this.privSpeechRecognizer = speechRecognizer;
+        const pronunciationParams: string =
+            this.privRecognizerConfig.parameters.getProperty(PropertyId.PronunciationScore_Params, undefined);
+        if (pronunciationParams !== undefined) {
+            this.speechContext.setSection("pronunciationScore", JSON.parse(pronunciationParams));
+        }
     }
 
     protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
