@@ -362,26 +362,14 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         //     }
         // };
 
+        const audioBuffer = new ArrayBuffer(320);
         const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-            audioStream.read().on((audioBuffer: ArrayBuffer) => {
-                try {
-                    if (audioBuffer !== null) {
-                        expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(1);
-                    } else {
-                        PostDoneTest(done, 2000);
-                    }
-
-                } catch (error) {
-                    done.fail(error);
-                }
-
-                if (audioBuffer != null) {
-                    audioReadLoop(audioStream, done);
-                }
-            },
-                (error: string) => {
-                    done.fail(error);
-                });
+            const bytesRead = audioStream.read(audioBuffer);
+            if (bytesRead > 0) {
+                audioReadLoop(audioStream, done);
+            } else {
+                PostDoneTest(done, 2000);
+            }
         };
 
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
@@ -445,26 +433,14 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             hypoCounter++;
         };
 
+        const audioBuffer = new ArrayBuffer(320);
         const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-            audioStream.read().on((audioBuffer: ArrayBuffer) => {
-                try {
-                    if (audioBuffer !== null) {
-                        expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(1);
-                    } else {
-                        PostDoneTest(done, 2000);
-                    }
-
-                } catch (error) {
-                    done.fail(error);
-                }
-
-                if (audioBuffer != null) {
-                    audioReadLoop(audioStream, done);
-                }
-            },
-                (error: string) => {
-                    done.fail(error);
-                });
+            const bytesRead = audioStream.read(audioBuffer);
+            if (bytesRead > 0) {
+                audioReadLoop(audioStream, done);
+            } else {
+                PostDoneTest(done, 2000);
+            }
         };
 
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
