@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { RecognizerConfig } from "../common.speech/Exports";
-import { PropertyId } from "../sdk/Exports";
+import { PropertyCollection, PropertyId } from "../sdk/Exports";
 
 export class ProxyInfo {
     private privProxyHostName: string;
@@ -17,11 +17,15 @@ export class ProxyInfo {
         this.privProxyPassword = proxyPassword;
     }
 
+    public static fromParameters(parameters: PropertyCollection): ProxyInfo {
+        return new ProxyInfo(parameters.getProperty(PropertyId.SpeechServiceConnection_ProxyHostName),
+            parseInt(parameters.getProperty(PropertyId.SpeechServiceConnection_ProxyPort), 10),
+            parameters.getProperty(PropertyId.SpeechServiceConnection_ProxyUserName),
+            parameters.getProperty(PropertyId.SpeechServiceConnection_ProxyPassword));
+    }
+
     public static fromRecognizerConfig(config: RecognizerConfig): ProxyInfo {
-        return new ProxyInfo(config.parameters.getProperty(PropertyId.SpeechServiceConnection_ProxyHostName),
-            parseInt(config.parameters.getProperty(PropertyId.SpeechServiceConnection_ProxyPort), 10),
-            config.parameters.getProperty(PropertyId.SpeechServiceConnection_ProxyUserName),
-            config.parameters.getProperty(PropertyId.SpeechServiceConnection_ProxyPassword));
+        return this.fromParameters(config.parameters);
     }
 
     public get HostName(): string {

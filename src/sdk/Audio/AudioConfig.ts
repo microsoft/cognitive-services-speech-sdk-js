@@ -1,13 +1,36 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioStreamFormatImpl } from "../../../src/sdk/Audio/AudioStreamFormat";
-import { FileAudioSource, MicAudioSource, PcmRecorder } from "../../common.browser/Exports";
+import {PathLike} from "fs";
+import {AudioFileWriter} from "../../common.browser/AudioFileWriter";
+import {
+    FileAudioSource,
+    MicAudioSource,
+    PcmRecorder,
+    SpeakerAudioDestination
+} from "../../common.browser/Exports";
 import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
-import { AudioSourceEvent, EventSource, IAudioSource, IAudioStreamNode, Promise } from "../../common/Exports";
+import {
+    AudioSourceEvent,
+    EventSource,
+    IAudioDestination,
+    IAudioSource,
+    IAudioStreamNode,
+    Promise
+} from "../../common/Exports";
 import { Contracts } from "../Contracts";
-import { AudioInputStream, PropertyCollection, PropertyId, PullAudioInputStreamCallback } from "../Exports";
+import {
+    AudioInputStream, AudioOutputStream,
+    AudioStreamFormat,
+    PropertyCollection,
+    PropertyId,
+    PullAudioInputStreamCallback, PullAudioOutputStream,
+    PushAudioOutputStream,
+    PushAudioOutputStreamCallback
+} from "../Exports";
 import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
+import { PullAudioOutputStreamImpl, PushAudioOutputStreamImpl } from "./AudioOutputStream";
+import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 
 /**
  * Represents audio input configuration used for specifying what type of input to use (microphone, file, stream).
@@ -70,6 +93,30 @@ export abstract class AudioConfig {
 
         if (audioStream instanceof AudioInputStream) {
             return new AudioConfigImpl(audioStream as PushAudioInputStreamImpl);
+        }
+
+        throw new Error("Not Supported Type");
+    }
+
+    public static fromDefaultSpeakerOutput(): AudioConfig {
+        return new AudioOutputConfigImpl(new SpeakerAudioDestination());
+    }
+
+    public static fromAudioFileOutput(filename: PathLike): AudioConfig {
+        return new AudioOutputConfigImpl(new AudioFileWriter(filename));
+    }
+
+    public static fromAudioOutputStream(audioStream: AudioOutputStream | PushAudioOutputStreamCallback): AudioConfig {
+        if (audioStream instanceof PushAudioOutputStreamCallback) {
+            return new AudioOutputConfigImpl(new PushAudioOutputStreamImpl(audioStream as PushAudioOutputStreamCallback));
+        }
+
+        if (audioStream instanceof  PushAudioOutputStream) {
+            return new AudioOutputConfigImpl(audioStream as PushAudioOutputStreamImpl);
+        }
+
+        if (audioStream instanceof  PullAudioOutputStream) {
+            return new AudioOutputConfigImpl(audioStream as PullAudioOutputStreamImpl);
         }
 
         throw new Error("Not Supported Type");
@@ -224,5 +271,44 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
         return this.privSource.deviceInfo;
+    }
+}
+
+// tslint:disable-next-line:max-classes-per-file
+export class AudioOutputConfigImpl extends AudioConfig implements IAudioDestination {
+    private privDestination: IAudioDestination;
+
+    /**
+     * Creates and initializes an instance of this class.
+     * @constructor
+     * @param {IAudioDestination} destination - An audio destination.
+     */
+    public constructor(destination: IAudioDestination) {
+        super();
+        this.privDestination = destination;
+    }
+
+    public set format(format: AudioStreamFormat) {
+        this.privDestination.format = format;
+    }
+
+    public write(buffer: ArrayBuffer): void {
+        this.privDestination.write(buffer);
+    }
+
+    public close(): void {
+        this.privDestination.close();
+    }
+
+    public id(): string {
+        return this.privDestination.id();
+    }
+
+    public setProperty(name: string, value: string): void {
+        throw new Error("This AudioConfig instance does not support setting properties.");
+    }
+
+    public getProperty(name: string, def?: string): string {
+        throw new Error("This AudioConfig instance does not support getting properties.");
     }
 }

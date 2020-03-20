@@ -13,3 +13,9 @@ test-javascript-junit.xml
 coverage/*
 *.tgz
 
+# ignore audio files generated in tests
+test*.wav
+
+# ignore files generated in tests
+report[\.0-9]*json
+junit.xml

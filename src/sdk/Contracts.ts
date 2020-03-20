@@ -49,4 +49,10 @@ export class Contracts {
 
         // TODO check for file existence.
     }
+
+    public static throwIfNotUndefined(param: any, name: string): void {
+        if (param !== undefined) {
+            throw new Error("throwIfNotUndefined:" + name);
+        }
+    }
 }

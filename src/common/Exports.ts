@@ -26,3 +26,4 @@ export * from "./RiffPcmEncoder";
 export * from "./Stream";
 export { TranslationStatus } from "../common.speech/TranslationStatus";
 export * from "./ChunkedArrayBufferStream";
+export * from "./IAudioDestination";
