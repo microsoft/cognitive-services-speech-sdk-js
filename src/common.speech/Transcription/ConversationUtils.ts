@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PromiseResult } from "../../common/Promise";
 import { Callback } from "../../sdk/Transcription/IConversation";
 import { IRequestOptions, IResponse } from "./ConversationTranslatorInterfaces";
 

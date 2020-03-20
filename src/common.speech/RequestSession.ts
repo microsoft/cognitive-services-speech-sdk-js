@@ -11,6 +11,7 @@ import {
     PlatformEvent,
     PromiseCompletionWrapper
 } from "../common/Exports";
+import { IAudioStreamNode } from "../common/IAudioSource";
 import {
     ConnectingToServiceEvent,
     ListeningStartedEvent,
@@ -104,8 +105,8 @@ export class RequestSession {
         this.onEvent(new RecognitionTriggeredEvent(this.requestId, this.privSessionId, this.privAudioSourceId, this.privAudioNodeId));
     }
 
-    public onAudioSourceAttachCompleted = (audioNode: ReplayableAudioNode, isError: boolean, error?: string): void => {
-        this.privAudioNode = audioNode;
+    public onAudioSourceAttachCompleted = (audioNode: IAudioStreamNode, isError: boolean, error?: string): void => {
+        this.privAudioNode = audioNode as ReplayableAudioNode;
         this.privIsAudioNodeDetached = false;
 
         if (isError) {

@@ -137,18 +137,12 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     }
 
                     if (!!this.privSuccessCallback) {
-                        try {
-                            this.privSuccessCallback(result);
-                        } catch (e) {
-                            if (!!this.privErrorCallback) {
-                                this.privErrorCallback(e);
-                            }
-                        }
+                        this.privSuccessCallback(result);
                         // Only invoke the call back once.
                         // and if it's successful don't invoke the
                         // error after that.
                         this.privSuccessCallback = undefined;
-                        this.privErrorCallback = undefined;
+
                     }
                 }
                 processed = true;

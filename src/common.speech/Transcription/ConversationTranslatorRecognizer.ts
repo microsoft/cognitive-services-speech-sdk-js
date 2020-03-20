@@ -10,14 +10,16 @@ import {
 } from "../../common.speech/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
 import { Contracts } from "../../sdk/Contracts";
-import { AudioConfig,
+import {
+    AudioConfig,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     PropertyCollection,
     Recognizer,
     SessionEventArgs,
-    SpeechTranslationConfig} from "../../sdk/Exports";
+    SpeechTranslationConfig
+} from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
 import { Callback } from "../../sdk/Transcription/IConversation";
 import { ConversationConnectionFactory } from "./ConversationConnectionFactory";
@@ -28,7 +30,8 @@ import {
     MuteAllEventArgs,
     ParticipantAttributeEventArgs,
     ParticipantEventArgs,
-    ParticipantsListEventArgs } from "./ConversationTranslatorEventArgs";
+    ParticipantsListEventArgs
+} from "./ConversationTranslatorEventArgs";
 import {
     ConversationTranslatorCommandTypes,
     ConversationTranslatorMessageTypes,
@@ -39,7 +42,8 @@ import {
     IInternalConversation,
     ILockConversationCommand,
     IMuteAllCommand,
-    IMuteCommand} from "./ConversationTranslatorInterfaces";
+    IMuteCommand
+} from "./ConversationTranslatorInterfaces";
 import { PromiseToEmptyCallback } from "./ConversationUtils";
 
 /**
@@ -123,23 +127,12 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
     /**
      * Disconnect from the recognizer
      */
-    public disconnect(cb?: () => void, err?: (e: string) => void): void {
-        try {
-            Contracts.throwIfDisposed(this.privIsDisposed);
-            this.privRoom = undefined;
-            this.privReco.disconnectAsync(cb, err);
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
-                }
-            }
-            // Destroy the recognizer.
-            this.dispose(true);
-        }
+    public async disconnect(): Promise<void> {
+        Contracts.throwIfDisposed(this.privIsDisposed);
+        this.privRoom = undefined;
+        await this.privReco.disconnect();
+        // Destroy the recognizer.
+        this.dispose(true);
     }
 
     /**

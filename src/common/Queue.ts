@@ -45,7 +45,8 @@ export class Queue<TItem> implements IQueue<TItem> {
 
     public enqueueFromPromise = (promise: Promise<TItem>): void => {
         this.throwIfDispose();
-        this.privPromiseStore.add(new PromiseCompletionWrapper(promise, () => {
+        this.privPromiseStore.add(new PromiseCompletionWrapper(promise));
+        promise.finally(() => {
             while (this.privPromiseStore.length() > 0) {
                 if (!this.privPromiseStore.first().isCompleted) {
                     break;
@@ -58,7 +59,7 @@ export class Queue<TItem> implements IQueue<TItem> {
                     }
                 }
             }
-        }));
+        });
     }
 
     public dequeue = (): Promise<TItem> => {
@@ -150,8 +151,8 @@ export class Queue<TItem> implements IQueue<TItem> {
         return Promise.resolve(undefined);
     }
 
-    public dispose = (reason?: string): void => {
-        this.drainAndDispose(null, reason);
+    public async dispose(reason?: string): Promise<void> {
+        await this.drainAndDispose(null, reason);
     }
 
     private drain = (): void => {

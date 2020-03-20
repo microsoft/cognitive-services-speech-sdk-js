@@ -12,6 +12,7 @@ import {
     ServiceRecognizerBase,
     SpeechServiceConfig,
 } from "../common.speech/Exports";
+import { Deferred } from "../common/Promise";
 import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
@@ -96,8 +97,8 @@ export class DialogServiceConnector extends Recognizer {
      * @function
      * @public
      */
-    public async connect(): Promise<void> {
-        return await this.privReco.connect();
+    public connect(): Promise<void> {
+        return this.privReco.connect();
     }
 
     /**
@@ -106,8 +107,8 @@ export class DialogServiceConnector extends Recognizer {
      *
      * If disconnect() is called during a recognition, recognition will fail and cancel with an error.
      */
-    public disconnect(): void {
-        this.privReco.disconnect();
+    public disconnect(): Promise<void> {
+        return this.privReco.disconnect();
     }
 
     /**
@@ -169,56 +170,28 @@ export class DialogServiceConnector extends Recognizer {
      * @param cb - Callback that received the result when the reco has completed.
      * @param err - Callback invoked in case of an error.
      */
-    public listenOnceAsync(cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
+    public async listenOnceAsync(): Promise<SpeechRecognitionResult> {
         if (this.isTurnComplete) {
+            const retResult: Deferred<SpeechRecognitionResult> = new Deferred<SpeechRecognitionResult>();
+
             try {
-                Contracts.throwIfDisposed(this.privIsDisposed);
-                const foo = async () => {
-                    try {
-                        await this.connect();
+                await this.connect();
+                await this.implRecognizerStop();
+                this.isTurnComplete = false;
 
-                        await this.implRecognizerStop();
-                        this.isTurnComplete = false;
+                await this.privReco.recognize(
+                    RecognitionMode.Conversation,
+                    (e: SpeechRecognitionResult) => {
+                        this.implRecognizerStop();
 
-                        await this.privReco.recognize(
-                            RecognitionMode.Conversation,
-                            (e: SpeechRecognitionResult) => {
-                                this.implRecognizerStop();
-
-                                this.isTurnComplete = true;
-
-                                if (!!cb) {
-                                    cb(e);
-                                }
-                            },
-                            (e: string) => {
-                                this.implRecognizerStop();
-                                this.isTurnComplete = true;
-                                if (!!err) {
-                                    err(e);
-                                }
-                                /* tslint:disable:no-empty */
-                            });
-                    } catch (error) {
-                        if (!!err) {
-                            err(error);
-                        }
-                    }
-                };
-                foo();
+                        this.isTurnComplete = true;
+                        retResult.resolve(e);
+                    });
             } catch (error) {
-                if (!!err) {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                }
-
-                // Destroy the recognizer.
-                this.dispose(true);
+                retResult.reject(error);
             }
+
+            return retResult.promise;
         }
     }
 

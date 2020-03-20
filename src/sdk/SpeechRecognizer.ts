@@ -165,38 +165,8 @@ export class SpeechRecognizer extends Recognizer {
      * @param cb - Callback that received the SpeechRecognitionResult.
      * @param err - Callback invoked in case of an error.
      */
-    public recognizeOnceAsync(cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
-        this.recognizeOnceAsyncImpl(RecognitionMode.Interactive).then((val: SpeechRecognitionResult): void => {
-            try {
-                if (!!cb) {
-                    cb(val);
-                }
-            } catch (error) {
-                if (!!err) {
-                    try {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                        /* tslint:disable:no-empty */
-                    } catch (error) { }
-                }
-            }
-        }, (error: any): void => {
-            if (!!err) {
-                try {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                    /* tslint:disable:no-empty */
-                } catch (error) { }
-            }
-        });
+    public recognizeOnceAsync(): Promise<SpeechRecognitionResult> {
+        return this.recognizeOnceAsyncImpl(RecognitionMode.Interactive);
     }
 
     /**
@@ -208,38 +178,8 @@ export class SpeechRecognizer extends Recognizer {
      * @param cb - Callback invoked once the recognition has started.
      * @param err - Callback invoked in case of an error.
      */
-    public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation).then((): void => {
-            try {
-                if (!!cb) {
-                    cb();
-                }
-            } catch (error) {
-                if (!!err) {
-                    try {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                        /* tslint:disable:no-empty */
-                    } catch (error) { }
-                }
-            }
-        }, (error: any): void => {
-            if (!!err) {
-                try {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                    /* tslint:disable:no-empty */
-                } catch (error) { }
-            }
-        });
+    public startContinuousRecognitionAsync(): Promise<void> {
+        return this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation);
     }
 
     /**
@@ -250,38 +190,8 @@ export class SpeechRecognizer extends Recognizer {
      * @param cb - Callback invoked once the recognition has stopped.
      * @param err - Callback invoked in case of an error.
      */
-    public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.stopContinuousRecognitionAsyncImpl().then((): void => {
-            try {
-                if (!!cb) {
-                    cb();
-                }
-            } catch (error) {
-                if (!!err) {
-                    try {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                        /* tslint:disable:no-empty */
-                    } catch (error) { }
-                }
-            }
-        }, (error: any): void => {
-            if (!!err) {
-                try {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                    /* tslint:disable:no-empty */
-                } catch (error) { }
-            }
-        });
+    public stopContinuousRecognitionAsync(): Promise<void> {
+        return this.stopContinuousRecognitionAsyncImpl();
     }
 
     /**
@@ -298,12 +208,9 @@ export class SpeechRecognizer extends Recognizer {
      * @param cb - Callback invoked once the recognition has started.
      * @param err - Callback invoked in case of an error.
      */
-    public startKeywordRecognitionAsync(model: KeywordRecognitionModel, cb?: () => void, err?: (e: string) => void): void {
+    public startKeywordRecognitionAsync(model: KeywordRecognitionModel): Promise<void> {
         Contracts.throwIfNull(model, "model");
-
-        if (!!err) {
-            err("Not yet implemented.");
-        }
+        return Promise.reject("Not yet implemented.");
     }
 
     /**
@@ -316,10 +223,8 @@ export class SpeechRecognizer extends Recognizer {
      * @param cb - Callback invoked once the recognition has stopped.
      * @param err - Callback invoked in case of an error.
      */
-    public stopKeywordRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        if (!!cb) {
-            cb();
-        }
+    public stopKeywordRecognitionAsync():Promise<void> {
+        return Promise.resolve();
     }
 
     /**

@@ -80,7 +80,6 @@ export class WebsocketConnection implements IConnection {
 
     public async dispose(): Promise<void> {
         this.privIsDisposed = true;
-
         if (this.privConnectionMessageAdapter) {
             await this.privConnectionMessageAdapter.close();
         }

@@ -317,15 +317,15 @@ export class WebsocketMessageAdapter {
         const closeReason = `Connection closed. ${code}: ${reason}`;
         this.privConnectionState = ConnectionState.Disconnected;
         this.privDisconnectDeferral.resolve();
-        this.privReceivingMessageQueue.dispose(reason);
+        this.privReceivingMessageQueue.dispose(reason).catch();
         this.privReceivingMessageQueue.drainAndDispose((pendingReceiveItem: ConnectionMessage) => {
             // TODO: Events for these ?
             // Logger.instance.onEvent(new LoggingEvent(LogType.Warning, null, `Failed to process received message. Reason: ${closeReason}, Message: ${JSON.stringify(pendingReceiveItem)}`));
-        }, closeReason);
+        }, closeReason).catch();
 
         this.privSendMessageQueue.drainAndDispose((pendingSendItem: ISendItem) => {
             pendingSendItem.sendStatusDeferral.reject(closeReason);
-        }, closeReason);
+        }, closeReason).catch();
     }
 
     private async processSendQueue(): Promise<void> {

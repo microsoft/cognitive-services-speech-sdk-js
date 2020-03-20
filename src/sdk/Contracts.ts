@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { promises } from "dns";
+
 /**
  * @class Contracts
  * @private
@@ -30,6 +32,14 @@ export class Contracts {
         if (isDisposed) {
             throw new Error("the object is already disposed");
         }
+    }
+
+    public static rejectIfDisposed(isDisposed: boolean): Promise<void> {
+        if (isDisposed) {
+            return Promise.reject("Error: the object is already disposed");
+        }
+
+        Promise.resolve();
     }
 
     public static throwIfArrayEmptyOrWhitespace(array: string[], name: string): void {
