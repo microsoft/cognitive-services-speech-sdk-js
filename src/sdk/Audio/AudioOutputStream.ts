@@ -12,7 +12,6 @@ import {Contracts} from "../Contracts";
 import {
     AudioInputStream,
     AudioStreamFormat,
-    PullAudioInputStreamCallback,
     PushAudioOutputStreamCallback
 } from "../Exports";
 import {AudioOutputFormatImpl} from "./AudioOutputFormat";
@@ -175,23 +174,21 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
 
         // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
         const readUntilFilled: () => void = (): void => {
-            if (totalBytes < dataBuffer.byteLength) {
-                this.streamReader.read()
-                    .onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
-                        if (chunk !== undefined && !chunk.isEnd) {
-                            let tmpBuffer: ArrayBuffer;
-                            if (chunk.buffer.byteLength > dataBuffer.byteLength - totalBytes) {
-                                tmpBuffer = chunk.buffer.slice(0, dataBuffer.byteLength - totalBytes);
-                                this.privLastChunkView = new Int8Array(chunk.buffer.slice(dataBuffer.byteLength - totalBytes));
-                            } else {
-                                tmpBuffer = chunk.buffer;
-                            }
-                            intView.set(new Int8Array(tmpBuffer), totalBytes);
-                            totalBytes += tmpBuffer.byteLength;
-                            readUntilFilled();
+            this.streamReader.read()
+                .onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
+                    if (chunk !== undefined && !chunk.isEnd) {
+                        let tmpBuffer: ArrayBuffer;
+                        if (chunk.buffer.byteLength > dataBuffer.byteLength - totalBytes) {
+                            tmpBuffer = chunk.buffer.slice(0, dataBuffer.byteLength - totalBytes);
+                            this.privLastChunkView = new Int8Array(chunk.buffer.slice(dataBuffer.byteLength - totalBytes));
+                        } else {
+                            tmpBuffer = chunk.buffer;
                         }
-                    });
-            }
+                        intView.set(new Int8Array(tmpBuffer), totalBytes);
+                        totalBytes += tmpBuffer.byteLength;
+                        readUntilFilled();
+                    }
+                });
         };
 
         readUntilFilled();
