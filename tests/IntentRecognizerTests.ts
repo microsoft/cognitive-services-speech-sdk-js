@@ -29,9 +29,6 @@ beforeEach(() => {
     console.info("---------------------------------------Starting test case-----------------------------------");
     // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
-    const used = process.memoryUsage().heapUsed / 1024 / 1024;
-    // tslint:disable-next-line:no-console
-    console.log(`Heap memory usage before test: ${Math.round(used * 100) / 100} MB`);
 });
 
 afterEach(() => {
@@ -42,9 +39,6 @@ afterEach(() => {
             value.close();
         }
     });
-    const used = process.memoryUsage().heapUsed / 1024 / 1024;
-    // tslint:disable-next-line:no-console
-    console.log(`Heap memory usage after test: ${Math.round(used * 100) / 100} MB`);
 });
 
 const ValidateResultMatchesWaveFile = (res: sdk.SpeechRecognitionResult): void => {

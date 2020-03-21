@@ -19,7 +19,6 @@ beforeAll(() => {
 // Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
 // report the name.
 beforeEach(() => {
-    jest.setTimeout(600000);
     objsToClose = [];
     // tslint:disable-next-line:no-console
     console.info("---------------------------------------Starting test case-----------------------------------");
@@ -118,6 +117,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizerEvent1");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, undefined);
         objsToClose.push(s);
@@ -173,6 +173,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizerSpeakTwice");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, undefined);
         objsToClose.push(s);
@@ -182,6 +183,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         s.speakTextAsync("hello world 1.", (result: sdk.SpeechSynthesisResult): void => {
             // tslint:disable-next-line:no-console
             console.info("speaking finished, turn 1");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
         }, (e: string): void => {
             done.fail(e);
         });
@@ -189,6 +191,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         s.speakTextAsync("hello world 2.", (result: sdk.SpeechSynthesisResult): void => {
             // tslint:disable-next-line:no-console
             console.info("speaking finished, turn 2");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             done();
         }, (e: string): void => {
             done.fail(e);
@@ -199,6 +202,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizerToFile");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
 
         const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromAudioFileOutput("test.wav");
         expect(audioConfig).not.toBeUndefined();
@@ -234,8 +238,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizerWordBoundary");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        objsToClose.push(s);
 
         expect(s).not.toBeUndefined();
 
