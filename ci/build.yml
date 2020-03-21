@@ -64,6 +64,11 @@ jobs:
     displayName: Publish test results
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
   - bash: |
+      set -e
+      cat report*.json
+      displayName: show report
+      condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  - bash: |
         set -e
         cd tests/packaging
         npm ci
