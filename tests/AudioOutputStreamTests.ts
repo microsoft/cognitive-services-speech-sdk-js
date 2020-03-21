@@ -9,6 +9,8 @@ import { AudioOutputFormatImpl } from "../src/sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../src/sdk/Audio/AudioOutputStream";
 import { Settings } from "./Settings";
 
+let objsToClose: any[];
+
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
@@ -16,12 +18,32 @@ beforeAll(() => {
 
 // Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
 // report the name.
-// tslint:disable-next-line:no-console
-beforeEach(() => console.info("---------------------------------------Starting test case-----------------------------------"));
+beforeEach(() => {
+    // tslint:disable-next-line:no-console
+    console.info("---------------------------------------Starting test case-----------------------------------");
+    objsToClose = [];
+    const used = process.memoryUsage().heapUsed / 1024 / 1024;
+    // tslint:disable-next-line:no-console
+    console.log(`Heap memory usage before test: ${Math.round(used * 100) / 100} MB`);
+});
+
+afterEach(() => {
+    // tslint:disable-next-line:no-console
+    console.info("End Time: " + new Date(Date.now()).toLocaleString());
+    objsToClose.forEach((value: any, index: number, array: any[]) => {
+        if (typeof value.close === "function") {
+            value.close();
+        }
+    });
+    const used = process.memoryUsage().heapUsed / 1024 / 1024;
+    // tslint:disable-next-line:no-console
+    console.log(`Heap memory usage after test: ${Math.round(used * 100) / 100} MB`);
+});
 
 test("PullAudioOutputStreamImpl basic test", (done: jest.DoneCallback) => {
     const size: number = 256;
     const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl();
+    objsToClose.push(ps);
     ps.format = AudioOutputFormatImpl.getDefaultOutputFormat();
     const ab: ArrayBuffer = new ArrayBuffer(size);
 
@@ -98,6 +120,7 @@ test("PullAudioOutputStreamImpl multiple writes read after close", (done: jest.D
 
 test("PullAudioOutputStreamImpl multiple writes and reads", (done: jest.DoneCallback) => {
     const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl();
+    objsToClose.push(ps);
     const format = AudioOutputFormatImpl.getDefaultOutputFormat();
     ps.format = format;
 
