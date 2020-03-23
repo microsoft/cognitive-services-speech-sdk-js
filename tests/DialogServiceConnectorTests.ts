@@ -377,7 +377,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
                 if (bytesRead > 0) {
                     audioReadLoop(audioStream, done);
                 }
-                },(error: string) => {
+                }, (error: string) => {
                     done.fail(error);
                 });
         };
