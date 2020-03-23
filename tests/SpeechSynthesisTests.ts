@@ -4,7 +4,7 @@
 import * as fs from "fs";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
-import { Events, EventType } from "../src/common/Exports";
+import {Events, EventType, InvalidOperationError} from "../src/common/Exports";
 import { Settings } from "./Settings";
 import WaitForCondition from "./Utilities";
 
@@ -68,6 +68,56 @@ const CheckSynthesisResult: (result: sdk.SpeechSynthesisResult, reason: sdk.Resu
             break;
     }
 };
+
+const CheckBinaryEqual: (arr1: ArrayBuffer, arr2: ArrayBuffer) => void =
+    (arr1: ArrayBuffer, arr2: ArrayBuffer): void => {
+    expect(arr1).not.toBeUndefined();
+    expect(arr2).not.toBeUndefined();
+    expect(arr1.byteLength).toEqual(arr2.byteLength);
+    const view1: Uint8Array = new Uint8Array(arr1);
+    const view2: Uint8Array = new Uint8Array(arr2);
+    for (let i: number = 0; i < arr1.byteLength; i++) {
+        expect(view1[i]).toEqual(view2[i]);
+    }
+};
+
+const ReadPullAudioOutputStream: (stream: sdk.PullAudioOutputStream, length?: number, done?: () => void) => void =
+    (stream: sdk.PullAudioOutputStream, length?: number, done?: () => void): void => {
+        const audioBuffer = new ArrayBuffer(1024);
+        stream.read(audioBuffer).onSuccessContinueWith((bytesRead: number) => {
+            if (bytesRead > 0) {
+                ReadPullAudioOutputStream(stream, length === undefined ? undefined : length - bytesRead, done);
+            } else {
+                if (length !== undefined) {
+                    expect(length).toEqual(0);
+                }
+                if (!!done) {
+                    done();
+                }
+            }
+        });
+    };
+
+class PushAudioOutputStreamTestCallback extends sdk.PushAudioOutputStreamCallback {
+    public length: number;
+    public isClosed: boolean = false;
+
+    constructor() {
+        super();
+        this.length = 0;
+    }
+
+    public write(dataBuffer: ArrayBuffer): void {
+        this.length += dataBuffer.byteLength;
+    }
+
+    public close(): void {
+        if (this.isClosed) {
+            throw new InvalidOperationError("PushAudioOutputStreamCallback already closed");
+        }
+        this.isClosed = true;
+    }
+}
 
 test("testSpeechSynthesizer1", () => {
     // tslint:disable-next-line:no-console
@@ -234,6 +284,28 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     });
 
+    test("testSpeechSynthesizer: synthesis to file in turn.", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizer synthesis to file in turn.");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        expect(s).not.toBeUndefined();
+        objsToClose.push(s);
+
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            // tslint:disable-next-line:no-console
+            console.info("speaking finished.");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            const fileLength = fs.statSync("test1.wav").size;
+            expect(fileLength).toEqual(result.audioData.byteLength);
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        }, "test1.wav");
+    });
+
     test("testSpeechSynthesizerWordBoundary", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizerWordBoundary");
@@ -259,6 +331,150 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
             expect(wordBoundaryCount).toBeGreaterThan(0);
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizer: synthesis with SSML.", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizer synthesis with SSML.");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        expect(s).not.toBeUndefined();
+        objsToClose.push(s);
+
+        let r: sdk.SpeechSynthesisResult;
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            // tslint:disable-next-line:no-console
+            console.info("speaking text finished.");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            r = result;
+        }, (e: string): void => {
+            done.fail(e);
+        });
+
+        const ssml: string =
+            `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
+<voice name='Microsoft Server Speech Text to Speech Voice (en-US, JessaRUS)'>hello world.</voice></speak>`;
+        s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
+            // tslint:disable-next-line:no-console
+            console.info("speaking ssml finished.");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            CheckBinaryEqual(r.audioData, result.audioData);
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizer: synthesis with invalid voice name.", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizer synthesis with invalid voice name.");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+        speechConfig.speechSynthesisVoiceName = "invalid";
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        expect(s).not.toBeUndefined();
+        objsToClose.push(s);
+
+        s.SynthesisCanceled = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
+            CheckSynthesisResult(e.result, sdk.ResultReason.Canceled);
+            expect(e.result.errorDetails).toContain("voice");
+            const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(e.result);
+            expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.BadRequestParameters);
+            expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
+            expect(cancellationDetail.errorDetails).toEqual(e.result.errorDetails);
+        };
+
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            CheckSynthesisResult(result, sdk.ResultReason.Canceled);
+            expect(result.errorDetails).toContain("voice");
+            const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
+            expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.BadRequestParameters);
+            expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
+            expect(cancellationDetail.errorDetails).toEqual(result.errorDetails);
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizer: synthesis to pull audio output stream.", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizer synthesis to pull audio output stream.");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+
+        const stream = sdk.AudioOutputStream.createPullStream();
+        const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamOutput(stream);
+        expect(audioConfig).not.toBeUndefined();
+
+        setTimeout(() => {
+            ReadPullAudioOutputStream(stream, undefined, done);
+        }, 0);
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+        expect(s).not.toBeUndefined();
+
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            // tslint:disable-next-line:no-console
+            console.info("speaking text finished.");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            s.close();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizer: synthesis to pull audio output stream 2.", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizer synthesis to pull audio output stream 2.");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+
+        const stream = sdk.AudioOutputStream.createPullStream();
+        const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamOutput(stream);
+        expect(audioConfig).not.toBeUndefined();
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+        expect(s).not.toBeUndefined();
+
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            // tslint:disable-next-line:no-console
+            console.info("speaking text finished.");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            s.close();
+            ReadPullAudioOutputStream(stream, result.audioData.byteLength - 44, done);
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizer: synthesis to push audio output stream.", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizer synthesis to push audio output stream.");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+
+        const stream = new PushAudioOutputStreamTestCallback();
+        const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamOutput(stream);
+        expect(audioConfig).not.toBeUndefined();
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+        expect(s).not.toBeUndefined();
+
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            // tslint:disable-next-line:no-console
+            console.info("speaking text finished.");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            s.close();
+            expect(stream.length).toEqual(result.audioData.byteLength - 44);
+            expect(stream.isClosed).toEqual(true);
             done();
         }, (e: string): void => {
             done.fail(e);

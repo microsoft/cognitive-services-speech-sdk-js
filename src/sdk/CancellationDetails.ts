@@ -2,7 +2,12 @@
 // Licensed under the MIT license.
 
 import { CancellationErrorCodePropertyName, EnumTranslation, SimpleSpeechPhrase } from "../common.speech/Exports";
-import { CancellationErrorCode, CancellationReason, RecognitionResult } from "./Exports";
+import {
+    CancellationErrorCode,
+    CancellationReason,
+    RecognitionResult,
+    SpeechSynthesisResult
+} from "./Exports";
 
 /**
  * Contains detailed information about why a result was canceled.
@@ -30,14 +35,14 @@ export class CancellationDetails {
      * @member CancellationDetails.fromResult
      * @function
      * @public
-     * @param {RecognitionResult} result - The result that was canceled.
+     * @param {RecognitionResult | SpeechSynthesisResult} result - The result that was canceled.
      * @returns {CancellationDetails} The cancellation details object being created.
      */
-    public static fromResult(result: RecognitionResult): CancellationDetails {
+    public static fromResult(result: RecognitionResult | SpeechSynthesisResult): CancellationDetails {
         let reason = CancellationReason.Error;
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
 
-        if (!!result.json) {
+        if (result instanceof RecognitionResult && !!result.json) {
             const simpleSpeech: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(result.json);
             reason = EnumTranslation.implTranslateCancelResult(simpleSpeech.RecognitionStatus);
         }

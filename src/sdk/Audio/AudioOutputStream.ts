@@ -3,8 +3,11 @@
 
 import {
     createNoDashGuid,
+    Deferred,
     IAudioDestination,
     IStreamChunk,
+    Promise,
+    PromiseHelper,
     Stream,
     StreamReader,
 } from "../../common/Exports";
@@ -74,9 +77,9 @@ export abstract class PullAudioOutputStream extends AudioOutputStream {
      * @function
      * @public
      * @param {ArrayBuffer} dataBuffer - An ArrayBuffer to store the read data.
-     * @returns {number} Audio buffer length has been read.
+     * @returns {Promise<number>} Audio buffer length has been read.
      */
-    public abstract read(dataBuffer: ArrayBuffer): number;
+    public abstract read(dataBuffer: ArrayBuffer): Promise<number>;
 
     /**
      * Closes the stream.
@@ -155,9 +158,9 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
      * @function
      * @public
      * @param {ArrayBuffer} dataBuffer - An ArrayBuffer to store the read data.
-     * @returns {number} - Audio buffer length has been read.
+     * @returns {Promise<number>} - Audio buffer length has been read.
      */
-    public read(dataBuffer: ArrayBuffer): number {
+    public read(dataBuffer: ArrayBuffer): Promise<number> {
         const intView: Int8Array = new Int8Array(dataBuffer);
         let totalBytes: number = 0;
 
@@ -165,16 +168,17 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
             if (this.privLastChunkView.length > dataBuffer.byteLength) {
                 intView.set(this.privLastChunkView.slice(0, dataBuffer.byteLength));
                 this.privLastChunkView = this.privLastChunkView.slice(dataBuffer.byteLength);
-                return dataBuffer.byteLength;
+                return PromiseHelper.fromResult(dataBuffer.byteLength);
             }
             intView.set(this.privLastChunkView);
             totalBytes = this.privLastChunkView.length;
             this.privLastChunkView = undefined;
         }
 
+        const deffer: Deferred<number> = new Deferred<number>();
         // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
         const readUntilFilled: () => void = (): void => {
-            if (totalBytes < dataBuffer.byteLength) {
+            if (totalBytes < dataBuffer.byteLength && !this.streamReader.isClosed) {
                 this.streamReader.read()
                     .onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
                         if (chunk !== undefined && !chunk.isEnd) {
@@ -188,13 +192,17 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
                             intView.set(new Int8Array(tmpBuffer), totalBytes);
                             totalBytes += tmpBuffer.byteLength;
                             readUntilFilled();
+                        } else {
+                            this.streamReader.close();
+                            deffer.resolve(totalBytes);
                         }
                     });
+            } else {
+                deffer.resolve(totalBytes);
             }
         };
-
         readUntilFilled();
-        return totalBytes;
+        return deffer.promise();
     }
 
     /**

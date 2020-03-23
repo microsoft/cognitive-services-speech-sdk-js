@@ -106,7 +106,7 @@ export abstract class AudioConfig {
         return new AudioOutputConfigImpl(new AudioFileWriter(filename));
     }
 
-    public static fromAudioOutputStream(audioStream: AudioOutputStream | PushAudioOutputStreamCallback): AudioConfig {
+    public static fromStreamOutput(audioStream: AudioOutputStream | PushAudioOutputStreamCallback): AudioConfig {
         if (audioStream instanceof PushAudioOutputStreamCallback) {
             return new AudioOutputConfigImpl(new PushAudioOutputStreamImpl(audioStream as PushAudioOutputStreamCallback));
         }

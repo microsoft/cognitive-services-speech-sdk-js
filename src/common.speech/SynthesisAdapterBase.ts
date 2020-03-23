@@ -3,12 +3,14 @@
 
 import {
     ArgumentNullError,
+    ConnectionClosedEvent,
     ConnectionEvent,
     ConnectionMessage,
     ConnectionOpenResponse,
     ConnectionState,
     createNoDashGuid,
-    EventSource, IAudioDestination,
+    EventSource,
+    IAudioDestination,
     IConnection,
     IDisposable,
     MessageType,
@@ -153,6 +155,15 @@ export class SynthesisAdapterBase implements IDisposable {
         this.privDynamicGrammar = new DynamicGrammarBuilder();
         this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
         this.privAgentConfig = new AgentConfig();
+
+        this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
+            if (connectionEvent.name === "ConnectionClosedEvent") {
+                const connectionClosedEvent = connectionEvent as ConnectionClosedEvent;
+                this.cancelSynthesisLocal(CancellationReason.Error,
+                    connectionClosedEvent.statusCode === 1007 ? CancellationErrorCode.BadRequestParameters : CancellationErrorCode.ConnectionFailure,
+                    connectionClosedEvent.reason + " websocket error code: " + connectionClosedEvent.statusCode);
+            }
+        });
     }
 
     public static addHeader(audio: ArrayBuffer, format: AudioOutputFormatImpl): ArrayBuffer {
