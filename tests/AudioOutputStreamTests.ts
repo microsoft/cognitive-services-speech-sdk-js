@@ -1,10 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {
-    IAudioStreamNode,
-    IStreamChunk,
-} from "../src/common/Exports";
 import { AudioOutputFormatImpl } from "../src/sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStream, PullAudioOutputStreamImpl } from "../src/sdk/Audio/AudioOutputStream";
 import { Settings } from "./Settings";
@@ -41,7 +37,7 @@ afterEach(() => {
 });
 
 const ReadPullAudioOutputStream: (stream: PullAudioOutputStream, length?: number, done?: () => void) => void =
-    (stream: sdk.PullAudioOutputStream, length?: number, done?: () => void): void => {
+    (stream: PullAudioOutputStream, length?: number, done?: () => void): void => {
         const audioBuffer = new ArrayBuffer(1024);
         stream.read(audioBuffer).onSuccessContinueWith((bytesRead: number) => {
             if (bytesRead > 0) {
