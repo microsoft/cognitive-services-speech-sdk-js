@@ -246,13 +246,16 @@ export class SynthesisAdapterBase implements IDisposable {
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         this.connectImpl();
 
-        return this.fetchConnection().onSuccessContinueWithPromise<boolean>((connection: IConnection) => {
-            return this.sendSynthesisContext(connection).continueWithPromise<boolean>((result: PromiseResult<boolean>): Promise<boolean> => {
+        return this.fetchConnection().continueWithPromise<boolean>((connection: PromiseResult<IConnection>) => {
+            if (connection.isError) {
+                this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, connection.error);
+            }
+            return this.sendSynthesisContext(connection.result).continueWithPromise<boolean>((result: PromiseResult<boolean>): Promise<boolean> => {
                 if (result.isError) {
                     this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error);
                     return PromiseHelper.fromError(result.error);
                 }
-                return this.sendSsmlMessage(connection, ssml, requestId).continueWithPromise<boolean>((result: PromiseResult<boolean>): Promise<boolean> => {
+                return this.sendSsmlMessage(connection.result, ssml, requestId).continueWithPromise<boolean>((result: PromiseResult<boolean>): Promise<boolean> => {
                     if (result.isError) {
                         this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error);
                         return PromiseHelper.fromError(result.error);

@@ -81,15 +81,19 @@ const CheckBinaryEqual: (arr1: ArrayBuffer, arr2: ArrayBuffer) => void =
     }
 };
 
-const ReadPullAudioOutputStream: (stream: sdk.PullAudioOutputStream, length?: number, done?: () => void) => void =
-    (stream: sdk.PullAudioOutputStream, length?: number, done?: () => void): void => {
+const ReadPullAudioOutputStream: (stream: sdk.PullAudioOutputStream, length?: number, done?: () => void, fc?: (e: string) => void) => void =
+    (stream: sdk.PullAudioOutputStream, length?: number, done?: () => void, fc?: (e: string) => void): void => {
         const audioBuffer = new ArrayBuffer(1024);
         stream.read(audioBuffer).onSuccessContinueWith((bytesRead: number) => {
             if (bytesRead > 0) {
-                ReadPullAudioOutputStream(stream, length === undefined ? undefined : length - bytesRead, done);
+                ReadPullAudioOutputStream(stream, length === undefined ? undefined : length - bytesRead, done, fc);
             } else {
                 if (length !== undefined) {
-                    expect(length).toEqual(0);
+                    try {
+                        expect(length).toEqual(0);
+                    } catch (e) {
+                        fc(e);
+                    }
                 }
                 if (!!done) {
                     done();
@@ -182,7 +186,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         s.synthesisStarted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
             // tslint:disable-next-line:no-console
             console.info("Synthesis started.");
-            CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudioStarted);
+            try {
+                CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudioStarted);
+            } catch (e) {
+                done.fail(e);
+            }
             startEventCount += 1;
         };
 
@@ -190,20 +198,32 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             // tslint:disable-next-line:no-console
             console.info("Audio received with length of " + e.result.audioData.byteLength);
             audioLength += e.result.audioData.byteLength - 44;
-            CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudio);
+            try {
+                CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudio);
+            } catch (e) {
+                done.fail(e);
+            }
             synthesisingEventCount += 1;
         };
 
         s.synthesisCompleted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
             // tslint:disable-next-line:no-console
             console.info("Audio received with length of " + e.result.audioData.byteLength);
-            CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudioCompleted);
-            expect(e.result.audioData.byteLength - 44).toEqual(audioLength);
+            try {
+                CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudioCompleted);
+                expect(e.result.audioData.byteLength - 44).toEqual(audioLength);
+            } catch (e) {
+                done.fail(e);
+            }
             completeEventCount += 1;
         };
 
         s.wordBoundary = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisWordBoundaryEventArgs): void => {
-            expect(e).not.toBeUndefined();
+            try {
+                expect(e).not.toBeUndefined();
+            } catch (e) {
+                done.fail(e);
+            }
         };
 
         s.speakTextAsync("hello world.", undefined, (e: string): void => {
@@ -320,11 +340,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         let wordBoundaryCount: number = 0;
 
         s.wordBoundary = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisWordBoundaryEventArgs): void => {
-            expect(e).not.toBeUndefined();
-            expect(e.audioOffset).not.toBeUndefined();
-            expect(e.text).not.toBeUndefined();
-            expect(e.textOffset).not.toBeUndefined();
-            expect(e.wordLength).not.toBeUndefined();
+            try {
+                expect(e).not.toBeUndefined();
+                expect(e.audioOffset).not.toBeUndefined();
+                expect(e.text).not.toBeUndefined();
+                expect(e.textOffset).not.toBeUndefined();
+                expect(e.wordLength).not.toBeUndefined();
+            } catch (e) {
+                done.fail(e);
+            }
             wordBoundaryCount += 1;
         };
 
@@ -371,6 +395,43 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     });
 
+    test("testSpeechSynthesizer: synthesis with invalid key.", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizer synthesis with invalid key.");
+        const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("invalidKey", Settings.SpeechRegion);
+        expect(speechConfig).not.toBeUndefined();
+        objsToClose.push(speechConfig);
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        expect(s).not.toBeUndefined();
+        objsToClose.push(s);
+
+        s.SynthesisCanceled = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
+            try {
+                CheckSynthesisResult(e.result, sdk.ResultReason.Canceled);
+                expect(e.result.errorDetails).toContain("401");
+                const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(e.result);
+                expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.ConnectionFailure);
+                expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
+                expect(cancellationDetail.errorDetails).toEqual(e.result.errorDetails);
+            } catch (err) {
+                done.fail(err);
+            }
+        };
+
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            CheckSynthesisResult(result, sdk.ResultReason.Canceled);
+            expect(result.errorDetails).toContain("401");
+            const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
+            expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.ConnectionFailure);
+            expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
+            expect(cancellationDetail.errorDetails).toEqual(result.errorDetails);
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
     test("testSpeechSynthesizer: synthesis with invalid voice name.", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizer synthesis with invalid voice name.");
@@ -383,12 +444,16 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         objsToClose.push(s);
 
         s.SynthesisCanceled = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
-            CheckSynthesisResult(e.result, sdk.ResultReason.Canceled);
-            expect(e.result.errorDetails).toContain("voice");
-            const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(e.result);
-            expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.BadRequestParameters);
-            expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
-            expect(cancellationDetail.errorDetails).toEqual(e.result.errorDetails);
+            try {
+                CheckSynthesisResult(e.result, sdk.ResultReason.Canceled);
+                expect(e.result.errorDetails).toContain("voice");
+                const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(e.result);
+                expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.BadRequestParameters);
+                expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
+                expect(cancellationDetail.errorDetails).toEqual(e.result.errorDetails);
+            } catch (e) {
+                done.fail(e);
+            }
         };
 
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
@@ -415,7 +480,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         expect(audioConfig).not.toBeUndefined();
 
         setTimeout(() => {
-            ReadPullAudioOutputStream(stream, undefined, done);
+            ReadPullAudioOutputStream(stream, undefined, done, done.fail);
         }, 0);
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
@@ -449,7 +514,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             console.info("speaking text finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             s.close();
-            ReadPullAudioOutputStream(stream, result.audioData.byteLength - 44, done);
+            ReadPullAudioOutputStream(stream, result.audioData.byteLength - 44, done, done.fail);
         }, (e: string): void => {
             done.fail(e);
         });

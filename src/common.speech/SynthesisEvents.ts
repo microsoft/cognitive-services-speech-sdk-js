@@ -23,7 +23,7 @@ export class SynthesisTriggeredEvent extends SpeechSynthesisEvent {
     private privTurnAudioDestinationId: string;
 
     constructor(requestId: string, sessionAudioDestinationId: string, turnAudioDestinationId: string) {
-        super("RecognitionTriggeredEvent", requestId);
+        super("SynthesisTriggeredEvent", requestId);
 
         this.privSessionAudioDestinationId = sessionAudioDestinationId;
         this.privTurnAudioDestinationId = turnAudioDestinationId;
