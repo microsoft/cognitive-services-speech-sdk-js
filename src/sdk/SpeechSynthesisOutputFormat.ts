@@ -3,7 +3,8 @@
 
 /**
  * Define speech synthesis audio output formats.
- * @class SpeechSynthesisOutputFormat
+ * @enum SpeechSynthesisOutputFormat
+ * Added in version 1.11.0
  */
 export enum SpeechSynthesisOutputFormat {
     /**

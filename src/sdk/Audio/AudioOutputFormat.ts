@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {INumberDictionary} from "../../common/Exports";
-import {SpeechSynthesisOutputFormat} from "../SpeechSynthesisOutputFormat";
-import {AudioStreamFormatImpl} from "./AudioStreamFormat";
+import { INumberDictionary } from "../../common/Exports";
+import { SpeechSynthesisOutputFormat } from "../Exports";
+import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 
 export enum AudioFormatTag {
     PCM = 1,
@@ -16,6 +16,7 @@ export enum AudioFormatTag {
 /**
  * @private
  * @class AudioOutputFormatImpl
+ * Added in version 1.11.0
  */
 // tslint:disable-next-line:max-classes-per-file
 export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
@@ -298,6 +299,12 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         return this.priHasHeader;
     }
 
+    /**
+     * Specifies the header of this format
+     * @ArrayBuffer AudioOutputFormatImpl.prototype.header
+     * @function
+     * @public
+     */
     public get header(): ArrayBuffer {
         if (this.hasHeader) {
             return this.privHeader;
@@ -305,6 +312,13 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         return undefined;
     }
 
+    /**
+     * Updates the header based on the audio length
+     * @member AudioOutputFormatImpl.updateHeader
+     * @function
+     * @public
+     * @param {number} audioLength - the audio length
+     */
     public updateHeader(audioLength: number): void {
         if (this.priHasHeader) {
             const view = new DataView(this.privHeader);
@@ -312,6 +326,12 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         }
     }
 
+    /**
+     * Specifies the audio format string to be sent to the service
+     * @string AudioOutputFormatImpl.prototype.requestAudioFormatString
+     * @function
+     * @public
+     */
     public get requestAudioFormatString(): string {
         return this.priRequestAudioFormatString;
     }

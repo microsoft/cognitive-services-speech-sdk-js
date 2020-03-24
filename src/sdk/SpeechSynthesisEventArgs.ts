@@ -6,6 +6,7 @@ import { SpeechSynthesisResult } from "./Exports";
 /**
  * Defines contents of speech synthesis events.
  * @class SpeechSynthesisEventArgs
+ * Added in version 1.11.0
  */
 export class SpeechSynthesisEventArgs {
     private readonly privResult: SpeechSynthesisResult;

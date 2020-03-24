@@ -6,6 +6,7 @@ import { PropertyCollection, ResultReason } from "./Exports";
 /**
  * Defines result of speech synthesis.
  * @class SpeechSynthesisResult
+ * Added in version 1.11.0
  */
 export class SpeechSynthesisResult {
     private privResultId: string;

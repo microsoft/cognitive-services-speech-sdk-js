@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { PathLike } from "fs";
-import {AudioFileWriter} from "../common.browser/AudioFileWriter";
+import { AudioFileWriter } from "../common.browser/AudioFileWriter";
 import {
     CognitiveSubscriptionKeyAuthentication,
     CognitiveTokenAuthentication,
@@ -15,26 +15,34 @@ import {
     SynthesisAdapterBase,
     SynthesizerConfig,
 } from "../common.speech/Exports";
-import {createNoDashGuid, IAudioDestination, Promise, PromiseHelper, Queue} from "../common/Exports";
-import {AudioOutputConfigImpl} from "./Audio/AudioConfig";
-import {PushAudioInputStreamImpl} from "./Audio/AudioInputStream";
+import {
+    createNoDashGuid,
+    IAudioDestination, IStringDictionary,
+    Promise,
+    PromiseHelper,
+    Queue
+} from "../common/Exports";
+import { AudioOutputConfigImpl } from "./Audio/AudioConfig";
 import {AudioOutputFormatImpl} from "./Audio/AudioOutputFormat";
-import {PullAudioOutputStreamImpl, PushAudioOutputStreamImpl} from "./Audio/AudioOutputStream";
-import {Contracts} from "./Contracts";
+import { PullAudioOutputStreamImpl, PushAudioOutputStreamImpl } from "./Audio/AudioOutputStream";
+import { Contracts } from "./Contracts";
 import {
     AudioConfig,
     AudioOutputStream,
     PropertyCollection,
-    PropertyId, PullAudioOutputStream, PushAudioOutputStreamCallback,
+    PropertyId,
+    PullAudioOutputStream,
+    PushAudioOutputStreamCallback,
     SpeechSynthesisEventArgs,
     SpeechSynthesisOutputFormat,
     SpeechSynthesisResult,
     SpeechSynthesisWordBoundaryEventArgs,
 } from "./Exports";
-import {SpeechConfig, SpeechConfigImpl} from "./SpeechConfig";
+import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
 
 /**
  * Defines the class SpeechSynthesizer for text to speech.
+ * Added in version 1.11.0
  * @class SpeechSynthesizer
  */
 export class SpeechSynthesizer {
@@ -143,60 +151,60 @@ export class SpeechSynthesizer {
     }
 
     public static buildSsml(text: string, properties: PropertyCollection): string {
-        const languageToDefaultVoice: Map<string, string>  =  new Map<string, string>([
-            [ "ar-EG", "Microsoft Server Speech Text to Speech Voice (ar-EG, Hoda)" ],
-            [ "ar-SA", "Microsoft Server Speech Text to Speech Voice (ar-SA, Naayf)" ],
-            [ "bg-BG", "Microsoft Server Speech Text to Speech Voice (bg-BG, Ivan)" ],
-            [ "ca-ES", "Microsoft Server Speech Text to Speech Voice (ca-ES, HerenaRUS)" ],
-            [ "cs-CZ", "Microsoft Server Speech Text to Speech Voice (cs-CZ, Jakub)" ],
-            [ "da-DK", "Microsoft Server Speech Text to Speech Voice (da-DK, HelleRUS)" ],
-            [ "de-AT", "Microsoft Server Speech Text to Speech Voice (de-AT, Michael)" ],
-            [ "de-CH", "Microsoft Server Speech Text to Speech Voice (de-CH, Karsten)" ],
-            [ "de-DE", "Microsoft Server Speech Text to Speech Voice (de-DE, HeddaRUS)" ],
-            [ "el-GR", "Microsoft Server Speech Text to Speech Voice (el-GR, Stefanos)" ],
-            [ "en-AU", "Microsoft Server Speech Text to Speech Voice (en-AU, HayleyRUS)" ],
-            [ "en-CA", "Microsoft Server Speech Text to Speech Voice (en-CA, HeatherRUS)" ],
-            [ "en-GB", "Microsoft Server Speech Text to Speech Voice (en-GB, HazelRUS)" ],
-            [ "en-IE", "Microsoft Server Speech Text to Speech Voice (en-IE, Sean)" ],
-            [ "en-IN", "Microsoft Server Speech Text to Speech Voice (en-IN, PriyaRUS)" ],
-            [ "en-US", "Microsoft Server Speech Text to Speech Voice (en-US, JessaRUS)" ],
-            [ "es-ES", "Microsoft Server Speech Text to Speech Voice (es-ES, HelenaRUS)" ],
-            [ "es-MX", "Microsoft Server Speech Text to Speech Voice (es-MX, HildaRUS)" ],
-            [ "fi-FI", "Microsoft Server Speech Text to Speech Voice (fi-FI, HeidiRUS)" ],
-            [ "fr-CA", "Microsoft Server Speech Text to Speech Voice (fr-CA, HarmonieRUS)" ],
-            [ "fr-CH", "Microsoft Server Speech Text to Speech Voice (fr-CH, Guillaume)" ],
-            [ "fr-FR", "Microsoft Server Speech Text to Speech Voice (fr-FR, HortenseRUS)" ],
-            [ "he-IL", "Microsoft Server Speech Text to Speech Voice (he-IL, Asaf)" ],
-            [ "hi-IN", "Microsoft Server Speech Text to Speech Voice (hi-IN, Kalpana)" ],
-            [ "hr-HR", "Microsoft Server Speech Text to Speech Voice (hr-HR, Matej)" ],
-            [ "hu-HU", "Microsoft Server Speech Text to Speech Voice (hu-HU, Szabolcs)" ],
-            [ "id-ID", "Microsoft Server Speech Text to Speech Voice (id-ID, Andika)" ],
-            [ "it-IT", "Microsoft Server Speech Text to Speech Voice (it-IT, LuciaRUS)" ],
-            [ "ja-JP", "Microsoft Server Speech Text to Speech Voice (ja-JP, HarukaRUS)" ],
-            [ "ko-KR", "Microsoft Server Speech Text to Speech Voice (ko-KR, HeamiRUS)" ],
-            [ "ms-MY", "Microsoft Server Speech Text to Speech Voice (ms-MY, Rizwan)" ],
-            [ "nb-NO", "Microsoft Server Speech Text to Speech Voice (nb-NO, HuldaRUS)" ],
-            [ "nl-NL", "Microsoft Server Speech Text to Speech Voice (nl-NL, HannaRUS)" ],
-            [ "pl-PL", "Microsoft Server Speech Text to Speech Voice (pl-PL, PaulinaRUS)" ],
-            [ "pt-BR", "Microsoft Server Speech Text to Speech Voice (pt-BR, HeloisaRUS)" ],
-            [ "pt-PT", "Microsoft Server Speech Text to Speech Voice (pt-PT, HeliaRUS)" ],
-            [ "ro-RO", "Microsoft Server Speech Text to Speech Voice (ro-RO, Andrei)" ],
-            [ "ru-RU", "Microsoft Server Speech Text to Speech Voice (ru-RU, EkaterinaRUS)" ],
-            [ "sk-SK", "Microsoft Server Speech Text to Speech Voice (sk-SK, Filip)" ],
-            [ "sl-SI", "Microsoft Server Speech Text to Speech Voice (sl-SI, Lado)" ],
-            [ "sv-SE", "Microsoft Server Speech Text to Speech Voice (sv-SE, HedvigRUS)" ],
-            [ "ta-IN", "Microsoft Server Speech Text to Speech Voice (ta-IN, Valluvar)" ],
-            [ "te-IN", "Microsoft Server Speech Text to Speech Voice (te-IN, Chitra)" ],
-            [ "th-TH", "Microsoft Server Speech Text to Speech Voice (th-TH, Pattara)" ],
-            [ "tr-TR", "Microsoft Server Speech Text to Speech Voice (tr-TR, SedaRUS)" ],
-            [ "vi-VN", "Microsoft Server Speech Text to Speech Voice (vi-VN, An)" ],
-            [ "zh-CN", "Microsoft Server Speech Text to Speech Voice (zh-CN, HuihuiRUS)" ],
-            [ "zh-HK", "Microsoft Server Speech Text to Speech Voice (zh-HK, TracyRUS)" ],
-            [ "zh-TW", "Microsoft Server Speech Text to Speech Voice (zh-TW, HanHanRUS)" ]
-        ]);
+        const languageToDefaultVoice: IStringDictionary<string>  = {
+            ["ar-EG"]: "Microsoft Server Speech Text to Speech Voice (ar-EG, Hoda)",
+            ["ar-SA"]: "Microsoft Server Speech Text to Speech Voice (ar-SA, Naayf)",
+            ["bg-BG"]: "Microsoft Server Speech Text to Speech Voice (bg-BG, Ivan)",
+            ["ca-ES"]: "Microsoft Server Speech Text to Speech Voice (ca-ES, HerenaRUS)",
+            ["cs-CZ"]: "Microsoft Server Speech Text to Speech Voice (cs-CZ, Jakub)",
+            ["da-DK"]: "Microsoft Server Speech Text to Speech Voice (da-DK, HelleRUS)",
+            ["de-AT"]: "Microsoft Server Speech Text to Speech Voice (de-AT, Michael)",
+            ["de-CH"]: "Microsoft Server Speech Text to Speech Voice (de-CH, Karsten)",
+            ["de-DE"]: "Microsoft Server Speech Text to Speech Voice (de-DE, HeddaRUS)",
+            ["el-GR"]: "Microsoft Server Speech Text to Speech Voice (el-GR, Stefanos)",
+            ["en-AU"]: "Microsoft Server Speech Text to Speech Voice (en-AU, HayleyRUS)",
+            ["en-CA"]: "Microsoft Server Speech Text to Speech Voice (en-CA, HeatherRUS)",
+            ["en-GB"]: "Microsoft Server Speech Text to Speech Voice (en-GB, HazelRUS)",
+            ["en-IE"]: "Microsoft Server Speech Text to Speech Voice (en-IE, Sean)",
+            ["en-IN"]: "Microsoft Server Speech Text to Speech Voice (en-IN, PriyaRUS)",
+            ["en-US"]: "Microsoft Server Speech Text to Speech Voice (en-US, JessaRUS)",
+            ["es-ES"]: "Microsoft Server Speech Text to Speech Voice (es-ES, HelenaRUS)",
+            ["es-MX"]: "Microsoft Server Speech Text to Speech Voice (es-MX, HildaRUS)",
+            ["fi-FI"]: "Microsoft Server Speech Text to Speech Voice (fi-FI, HeidiRUS)",
+            ["fr-CA"]: "Microsoft Server Speech Text to Speech Voice (fr-CA, HarmonieRUS)",
+            ["fr-CH"]: "Microsoft Server Speech Text to Speech Voice (fr-CH, Guillaume)",
+            ["fr-FR"]: "Microsoft Server Speech Text to Speech Voice (fr-FR, HortenseRUS)",
+            ["he-IL"]: "Microsoft Server Speech Text to Speech Voice (he-IL, Asaf)",
+            ["hi-IN"]: "Microsoft Server Speech Text to Speech Voice (hi-IN, Kalpana)",
+            ["hr-HR"]: "Microsoft Server Speech Text to Speech Voice (hr-HR, Matej)",
+            ["hu-HU"]: "Microsoft Server Speech Text to Speech Voice (hu-HU, Szabolcs)",
+            ["id-ID"]: "Microsoft Server Speech Text to Speech Voice (id-ID, Andika)",
+            ["it-IT"]: "Microsoft Server Speech Text to Speech Voice (it-IT, LuciaRUS)",
+            ["ja-JP"]: "Microsoft Server Speech Text to Speech Voice (ja-JP, HarukaRUS)",
+            ["ko-KR"]: "Microsoft Server Speech Text to Speech Voice (ko-KR, HeamiRUS)",
+            ["ms-MY"]: "Microsoft Server Speech Text to Speech Voice (ms-MY, Rizwan)",
+            ["nb-NO"]: "Microsoft Server Speech Text to Speech Voice (nb-NO, HuldaRUS)",
+            ["nl-NL"]: "Microsoft Server Speech Text to Speech Voice (nl-NL, HannaRUS)",
+            ["pl-PL"]: "Microsoft Server Speech Text to Speech Voice (pl-PL, PaulinaRUS)",
+            ["pt-BR"]: "Microsoft Server Speech Text to Speech Voice (pt-BR, HeloisaRUS)",
+            ["pt-PT"]: "Microsoft Server Speech Text to Speech Voice (pt-PT, HeliaRUS)",
+            ["ro-RO"]: "Microsoft Server Speech Text to Speech Voice (ro-RO, Andrei)",
+            ["ru-RU"]: "Microsoft Server Speech Text to Speech Voice (ru-RU, EkaterinaRUS)",
+            ["sk-SK"]: "Microsoft Server Speech Text to Speech Voice (sk-SK, Filip)",
+            ["sl-SI"]: "Microsoft Server Speech Text to Speech Voice (sl-SI, Lado)",
+            ["sv-SE"]: "Microsoft Server Speech Text to Speech Voice (sv-SE, HedvigRUS)",
+            ["ta-IN"]: "Microsoft Server Speech Text to Speech Voice (ta-IN, Valluvar)",
+            ["te-IN"]: "Microsoft Server Speech Text to Speech Voice (te-IN, Chitra)",
+            ["th-TH"]: "Microsoft Server Speech Text to Speech Voice (th-TH, Pattara)",
+            ["tr-TR"]: "Microsoft Server Speech Text to Speech Voice (tr-TR, SedaRUS)",
+            ["vi-VN"]: "Microsoft Server Speech Text to Speech Voice (vi-VN, An)",
+            ["zh-CN"]: "Microsoft Server Speech Text to Speech Voice (zh-CN, HuihuiRUS)",
+            ["zh-HK"]: "Microsoft Server Speech Text to Speech Voice (zh-HK, TracyRUS)",
+            ["zh-TW"]: "Microsoft Server Speech Text to Speech Voice (zh-TW, HanHanRUS)",
+        };
 
         const language = properties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage, "en-US");
-        const voice = properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, languageToDefaultVoice.get(language));
+        const voice = properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, languageToDefaultVoice[language]);
 
         return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xmlns:emo='http://www.w3.org/2009/10/emotionml' xml:lang='${language}'><voice name='${voice}'>${this.XMLEncode(text)}</voice></speak>`;
     }
@@ -241,6 +249,14 @@ export class SpeechSynthesizer {
         Contracts.throwIfDisposed(this.privDisposed);
 
         this.dispose(true);
+    }
+
+    /**
+     * @Internal
+     * Do not use externally, object returned will change without warning or notice.
+     */
+    public get internalData(): object {
+        return this.privAdapter;
     }
 
     /**

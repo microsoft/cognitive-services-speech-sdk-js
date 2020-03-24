@@ -13,15 +13,14 @@ import {
 } from "../../common/Exports";
 import {Contracts} from "../Contracts";
 import {
-    AudioInputStream,
     AudioStreamFormat,
     PushAudioOutputStreamCallback
 } from "../Exports";
-import {AudioOutputFormatImpl} from "./AudioOutputFormat";
+import { AudioOutputFormatImpl } from "./AudioOutputFormat";
 
 /**
- * Represents audio input stream used for custom audio input configurations.
- * @class AudioInputStream
+ * Represents audio output stream used for custom audio output configurations.
+ * @class AudioOutputStream
  */
 export abstract class AudioOutputStream {
 
@@ -31,14 +30,19 @@ export abstract class AudioOutputStream {
      */
     protected constructor() { }
 
+    /**
+     * Sets the format of the AudioOutputStream
+     * Note: the format is set by the synthesizer before writing. Do not set it before passing it to AudioConfig
+     * @member AudioOutputStream.prototype.format
+     */
     public abstract set format(format: AudioStreamFormat);
 
     /**
      * Creates a memory backed PullAudioOutputStream with the specified audio format.
-     * @member AudioInputStream.createPullStream
+     * @member AudioOutputStream.createPullStream
      * @function
      * @public
-     * @returns {PullAudioOutputStream} The audio input stream being created.
+     * @returns {PullAudioOutputStream} The audio output stream being created.
      */
     public static createPullStream(): PullAudioOutputStream {
         return PullAudioOutputStream.create();
@@ -46,7 +50,7 @@ export abstract class AudioOutputStream {
 
     /**
      * Explicitly frees any external resource attached to the object
-     * @member AudioInputStream.prototype.close
+     * @member AudioOutputStream.prototype.close
      * @function
      * @public
      */
@@ -54,7 +58,7 @@ export abstract class AudioOutputStream {
 }
 
 /**
- * Represents memory backed push audio input stream used for custom audio input configurations.
+ * Represents memory backed push audio output stream used for custom audio output configurations.
  * @class PullAudioOutputStream
  */
 // tslint:disable-next-line:max-classes-per-file
@@ -65,7 +69,7 @@ export abstract class PullAudioOutputStream extends AudioOutputStream {
      * @member PullAudioOutputStream.create
      * @function
      * @public
-     * @returns {PullAudioOutputStream} The push audio input stream being created.
+     * @returns {PullAudioOutputStream} The push audio output stream being created.
      */
     public static create(): PullAudioOutputStream {
         return new PullAudioOutputStreamImpl();
@@ -91,7 +95,7 @@ export abstract class PullAudioOutputStream extends AudioOutputStream {
 }
 
 /**
- * Represents memory backed push audio input stream used for custom audio input configurations.
+ * Represents memory backed push audio output stream used for custom audio output configurations.
  * @private
  * @class PullAudioOutputStreamImpl
  */
@@ -233,8 +237,8 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
 }
 
 /*
- * Represents audio input stream used for custom audio input configurations.
- * @class PullAudioInputStream
+ * Represents audio output stream used for custom audio output configurations.
+ * @class PushAudioOutputStream
  */
 // tslint:disable-next-line:max-classes-per-file
 export abstract class PushAudioOutputStream extends AudioOutputStream {
@@ -260,7 +264,7 @@ export abstract class PushAudioOutputStream extends AudioOutputStream {
 
     /**
      * Explicitly frees any external resource attached to the object
-     * @member PullAudioInputStream.prototype.close
+     * @member PushAudioOutputStream.prototype.close
      * @function
      * @public
      */

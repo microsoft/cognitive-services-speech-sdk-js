@@ -4,6 +4,7 @@
 /**
  * Defines contents of speech synthesis word boundary event.
  * @class SpeechSynthesisWordBoundaryEventArgs
+ * Added in version 1.11.0
  */
 export class SpeechSynthesisWordBoundaryEventArgs {
     private privAduioOffset: number;

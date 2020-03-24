@@ -20,11 +20,13 @@ import {
 } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
-    AudioInputStream, AudioOutputStream,
+    AudioInputStream,
+    AudioOutputStream,
     AudioStreamFormat,
     PropertyCollection,
     PropertyId,
-    PullAudioInputStreamCallback, PullAudioOutputStream,
+    PullAudioInputStreamCallback,
+    PullAudioOutputStream,
     PushAudioOutputStream,
     PushAudioOutputStreamCallback
 } from "../Exports";
@@ -35,6 +37,7 @@ import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 /**
  * Represents audio input configuration used for specifying what type of input to use (microphone, file, stream).
  * @class AudioConfig
+ * Updated in version 1.11.0
  */
 export abstract class AudioConfig {
     /**
@@ -98,14 +101,42 @@ export abstract class AudioConfig {
         throw new Error("Not Supported Type");
     }
 
+    /**
+     * Creates an AudioConfig object representing the default speaker.
+     * Note: this is just a place holder, not implemented now.
+     * @member AudioConfig.fromDefaultSpeakerOutput
+     * @function
+     * @public
+     * @returns {AudioConfig} The audio output configuration being created.
+     * Added in version 1.11.0
+     */
     public static fromDefaultSpeakerOutput(): AudioConfig {
         return new AudioOutputConfigImpl(new SpeakerAudioDestination());
     }
 
+    /**
+     * Creates an AudioConfig object representing a specified output audio file
+     * @member AudioConfig.fromAudioFileOutput
+     * @function
+     * @public
+     * @param {PathLike} filename - the filename of the output audio file
+     * @returns {AudioConfig} The audio output configuration being created.
+     * Added in version 1.11.0
+     */
     public static fromAudioFileOutput(filename: PathLike): AudioConfig {
         return new AudioOutputConfigImpl(new AudioFileWriter(filename));
     }
 
+    /**
+     * Creates an AudioConfig object representing a specified audio output stream
+     * @member AudioConfig.fromStreamOutput
+     * @function
+     * @public
+     * @param {AudioOutputStream | PushAudioOutputStreamCallback} audioStream - Specifies the custom audio output
+     *        stream.
+     * @returns {AudioConfig} The audio output configuration being created.
+     * Added in version 1.11.0
+     */
     public static fromStreamOutput(audioStream: AudioOutputStream | PushAudioOutputStreamCallback): AudioConfig {
         if (audioStream instanceof PushAudioOutputStreamCallback) {
             return new AudioOutputConfigImpl(new PushAudioOutputStreamImpl(audioStream as PushAudioOutputStreamCallback));
