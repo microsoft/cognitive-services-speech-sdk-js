@@ -21,7 +21,9 @@ export class AudioFileWriter implements IAudioDestination {
     public set format(format: AudioStreamFormat) {
         Contracts.throwIfNotUndefined(this.privAudioFormat, "format is already set");
         this.privAudioFormat = format as AudioOutputFormatImpl;
-        this.privOffset = this.privAudioFormat.header.byteLength;
+        if (this.privAudioFormat.hasHeader) {
+            this.privOffset = this.privAudioFormat.header.byteLength;
+        }
     }
 
     public write(buffer: ArrayBuffer): void {

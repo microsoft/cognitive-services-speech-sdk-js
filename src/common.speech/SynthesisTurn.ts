@@ -97,7 +97,7 @@ export class SynthesisTurn {
             this.privReceivedAudioWithHeader = SynthesisAdapterBase.addHeader(this.allReceivedAudio, this.audioOutputFormat);
             return this.allReceivedAudioWithHeader;
         } else {
-            return this.privReceivedAudio;
+            return this.allReceivedAudio;
         }
     }
     private privIsDisposed: boolean = false;

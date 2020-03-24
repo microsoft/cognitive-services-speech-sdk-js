@@ -302,7 +302,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         if (this.hasHeader) {
             return this.privHeader;
         }
-        return null;
+        return undefined;
     }
 
     public updateHeader(audioLength: number): void {

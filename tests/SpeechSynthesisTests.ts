@@ -308,6 +308,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizer synthesis to file in turn.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
         objsToClose.push(speechConfig);
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
@@ -318,12 +319,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             // tslint:disable-next-line:no-console
             console.info("speaking finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
-            const fileLength = fs.statSync("test1.wav").size;
+            const fileLength = fs.statSync("test1.mp3").size;
             expect(fileLength).toEqual(result.audioData.byteLength);
             done();
         }, (e: string): void => {
             done.fail(e);
-        }, "test1.wav");
+        }, "test1.mp3");
     });
 
     test("testSpeechSynthesizerWordBoundary", (done: jest.DoneCallback) => {
