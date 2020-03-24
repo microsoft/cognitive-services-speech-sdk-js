@@ -610,7 +610,7 @@ export class SynthesisAdapterBase implements IDisposable {
                         sentenceBoundaryEnabled: false,
                         wordBoundaryEnabled: (!!this.privSpeechSynthesizer.wordBoundary),
                     },
-                    outputFormat: "raw-16khz-16bit-mono-pcm"
+                    outputFormat: this.privAudioOutputFormat.requestAudioFormatString,
                 }
             }
         };
