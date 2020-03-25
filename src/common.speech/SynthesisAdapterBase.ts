@@ -112,7 +112,6 @@ export class SynthesisAdapterBase implements IDisposable {
     private privConnectionPromise: Promise<IConnection>;
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
-    private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privServiceEvents: EventSource<ServiceEvent>;
     private privSpeechContext: SpeechContext;
@@ -142,7 +141,6 @@ export class SynthesisAdapterBase implements IDisposable {
             throw new ArgumentNullError("synthesizerConfig");
         }
 
-        this.privMustReportEndOfStream = false;
         this.privAuthentication = authentication;
         this.privConnectionFactory = connectionFactory;
         this.privSynthesizerConfig = synthesizerConfig;
@@ -243,12 +241,10 @@ export class SynthesisAdapterBase implements IDisposable {
 
         this.privSynthesisTurn.startNewSynthesis(requestId, text, isSSML, audioDestination);
 
-        // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
-        this.connectImpl();
-
         return this.fetchConnection().continueWithPromise<boolean>((connection: PromiseResult<IConnection>) => {
             if (connection.isError) {
                 this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, connection.error);
+                return PromiseHelper.fromError(connection.error);
             }
             return this.sendSynthesisContext(connection.result).continueWithPromise<boolean>((result: PromiseResult<boolean>): Promise<boolean> => {
                 if (result.isError) {
@@ -365,7 +361,6 @@ export class SynthesisAdapterBase implements IDisposable {
                     if (connectionMessage.requestId.toLowerCase() === this.privSynthesisTurn.requestId.toLowerCase()) {
                         switch (connectionMessage.path.toLowerCase()) {
                             case "turn.start":
-                                this.privMustReportEndOfStream = true;
                                 this.privSynthesisTurn.onServiceTurnStartResponse();
                                 break;
                             case "response":
