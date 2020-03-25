@@ -10,43 +10,48 @@ import { AudioStreamFormat } from "../sdk/Exports";
 export class AudioFileWriter implements IAudioDestination {
     private privAudioFormat: AudioOutputFormatImpl;
     private privFd: number;
-    private privOffset: number = 0;
     private privId: string;
+    private privWriteStream: fs.WriteStream;
 
     public constructor(filename: fs.PathLike) {
         this.privFd = fs.openSync(filename, "w");
-        this.privOffset = 0;
     }
 
     public set format(format: AudioStreamFormat) {
         Contracts.throwIfNotUndefined(this.privAudioFormat, "format is already set");
         this.privAudioFormat = format as AudioOutputFormatImpl;
+        let headerOffset: number = 0;
         if (this.privAudioFormat.hasHeader) {
-            this.privOffset = this.privAudioFormat.header.byteLength;
+            headerOffset = this.privAudioFormat.header.byteLength;
+        }
+        if (this.privFd !== undefined) {
+            this.privWriteStream = fs.createWriteStream("", {fd: this.privFd, start: headerOffset, autoClose: false});
         }
     }
 
     public write(buffer: ArrayBuffer): void {
         Contracts.throwIfNullOrUndefined(this.privAudioFormat, "must set format before writing.");
-        if (this.privFd !== undefined) {
-            fs.writeSync(this.privFd, new Int8Array(buffer), 0, buffer.byteLength, this.privOffset);
-            this.privOffset += buffer.byteLength;
+        if (this.privWriteStream !== undefined) {
+            this.privWriteStream.write(new Uint8Array(buffer.slice(0)));
         }
     }
 
     public close(): void {
         if (this.privFd !== undefined) {
-            if (this.privAudioFormat.hasHeader) {
-                this.privAudioFormat.updateHeader(this.privOffset - this.privAudioFormat.header.byteLength);
-                fs.writeSync(this.privFd,
-                    new Int8Array(this.privAudioFormat.header),
-                    0,
-                    this.privAudioFormat.header.byteLength,
-                    0);
-            }
+            this.privWriteStream.on("finish", () => {
+                if (this.privAudioFormat.hasHeader) {
+                    this.privAudioFormat.updateHeader(this.privWriteStream.bytesWritten);
+                    fs.writeSync(this.privFd,
+                        new Int8Array(this.privAudioFormat.header),
+                        0,
+                        this.privAudioFormat.header.byteLength,
+                        0);
+                }
+                fs.closeSync(this.privFd);
+                this.privFd = undefined;
+            });
+            this.privWriteStream.end();
         }
-        fs.closeSync(this.privFd);
-        this.privFd = undefined;
     }
 
     public id = (): string => {

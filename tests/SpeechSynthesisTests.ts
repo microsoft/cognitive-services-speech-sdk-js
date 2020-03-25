@@ -296,9 +296,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             console.info("speaking finished, turn 2");
             audioLength += result.audioData.byteLength;
             s.close();
-            const fileLength = fs.statSync("test.wav").size;
-            expect(fileLength).toEqual(audioLength - 44);
-            done();
+            // wait 2 seconds before checking file size, as the async file writing might not be finished right now.
+            setTimeout( () => {
+                const fileLength = fs.statSync("test.wav").size;
+                expect(fileLength).toEqual(audioLength - 44);
+                done();
+            }, 2000);
         }, (e: string): void => {
             done.fail(e);
         });
@@ -319,9 +322,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             // tslint:disable-next-line:no-console
             console.info("speaking finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
-            const fileLength = fs.statSync("test1.mp3").size;
-            expect(fileLength).toEqual(result.audioData.byteLength);
-            done();
+            // wait 2 seconds before checking file size, as the async file writing might not be finished right now.
+            setTimeout( () => {
+                const fileLength = fs.statSync("test1.mp3").size;
+                expect(fileLength).toEqual(result.audioData.byteLength);
+                done();
+            }, 2000);
         }, (e: string): void => {
             done.fail(e);
         }, "test1.mp3");

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { INumberDictionary } from "../../common/Exports";
-import { SpeechSynthesisOutputFormat } from "../Exports";
+import { SpeechSynthesisOutputFormat } from "../SpeechSynthesisOutputFormat";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 
 export enum AudioFormatTag {
