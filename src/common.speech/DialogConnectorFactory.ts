@@ -12,7 +12,7 @@ import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
 import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
 import { QueryParameterNames } from "./QueryParameterNames";
 
-const baseUrl: string = "convai.speech.microsoft.com";
+const baseUrl: string = "convai.speech";
 
 interface IBackendValues {
     authHeader: string;
@@ -78,11 +78,12 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, "");
         if (endpoint === "") {
+            const hostSuffix = region.toLowerCase().startsWith("china") ? ".azure.cn" : ".microsoft.com";
             // ApplicationId is only required for CustomCommands, so we're using that to determine default endpoint
             if (applicationId === "") {
-                endpoint = `wss://${region}.${baseUrl}/${pathSuffix}/${version}`;
+                endpoint = `wss://${region}.${baseUrl}${hostSuffix}/${pathSuffix}/${version}`;
             } else {
-                endpoint = `wss://${region}.${baseUrl}/${resourcePath}/${pathSuffix}/${version}`;
+                endpoint = `wss://${region}.${baseUrl}${hostSuffix}/${resourcePath}/${pathSuffix}/${version}`;
             }
         }
 
