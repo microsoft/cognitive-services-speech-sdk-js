@@ -78,7 +78,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, "");
         if (endpoint === "") {
-            const hostSuffix = region.toLowerCase().startsWith("china") ? ".azure.cn" : ".microsoft.com";
+            const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
             // ApplicationId is only required for CustomCommands, so we're using that to determine default endpoint
             if (applicationId === "") {
                 endpoint = `wss://${region}.${baseUrl}${hostSuffix}/${pathSuffix}/${version}`;

@@ -43,7 +43,7 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
-        const hostSuffix: string = region.toLowerCase().startsWith("china") ? ".azure.cn" : ".microsoft.com";
+        const hostSuffix: string =  (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
         const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + ".stt.speech" + hostSuffix);
 
         const queryParams: IStringDictionary<string> = {};
