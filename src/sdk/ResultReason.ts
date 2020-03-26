@@ -70,4 +70,10 @@ export enum ResultReason {
      * @member ResultReason.SynthesizingAudioCompleted
      */
     SynthesizingAudioCompleted,
+
+    /**
+     * Indicates the speech synthesis is now started
+     * @member ResultReason.SynthesizingAudioStarted
+     */
+    SynthesizingAudioStarted,
 }

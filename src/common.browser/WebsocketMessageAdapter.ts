@@ -4,6 +4,7 @@
 import {
     ArgumentNullError,
     ConnectionClosedEvent,
+    ConnectionErrorEvent,
     ConnectionEstablishedEvent,
     ConnectionEvent,
     ConnectionMessage,
@@ -192,6 +193,7 @@ export class WebsocketMessageAdapter {
         };
 
         this.privWebsocketClient.onerror = (e: { error: any; message: string; type: string; target: WebSocket | ws }) => {
+            this.onEvent(new ConnectionErrorEvent(this.privConnectionId, e.message, e.type));
             this.privLastErrorReceived = e.message;
         };
 

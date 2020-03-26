@@ -48,7 +48,7 @@ export abstract class AudioStreamFormat {
  */
 // tslint:disable-next-line:max-classes-per-file
 export class AudioStreamFormatImpl extends AudioStreamFormat {
-    private privHeader: ArrayBuffer;
+    protected privHeader: ArrayBuffer;
 
     /**
      * Creates an instance with the given values.
@@ -168,7 +168,7 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
         return this.privHeader;
     }
 
-    private setString = (view: DataView, offset: number, str: string): void => {
+    protected setString = (view: DataView, offset: number, str: string): void => {
         for (let i = 0; i < str.length; i++) {
             view.setUint8(offset + i, str.charCodeAt(i));
         }
