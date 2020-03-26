@@ -148,8 +148,8 @@ test("TypedParametersAccessibleViaPropBag", () => {
     TestParam(() => s.authorizationToken, (val: string) => (s.authorizationToken = val), sdk.PropertyId.SpeechServiceAuthorization_Token, s);
     TestParam(() => s.endpointId, (val: string) => (s.endpointId = val), sdk.PropertyId.SpeechServiceConnection_EndpointId, s);
     TestParam(() => s.speechRecognitionLanguage, (val: string) => (s.speechRecognitionLanguage = val), sdk.PropertyId.SpeechServiceConnection_RecoLanguage, s);
-    TestParam(() => s.speechSynthesisLanguage, (val: string) => (s.speechSynthesisLanguage = val), sdk.PropertyId.SpeechServiceConnection_RecoLanguage, s);
-    TestParam(() => s.speechSynthesisVoiceName, (val: string) => (s.speechSynthesisVoiceName = val), sdk.PropertyId.SpeechServiceConnection_RecoLanguage, s);
+    TestParam(() => s.speechSynthesisLanguage, (val: string) => (s.speechSynthesisLanguage = val), sdk.PropertyId.SpeechServiceConnection_SynthLanguage, s);
+    TestParam(() => s.speechSynthesisVoiceName, (val: string) => (s.speechSynthesisVoiceName = val), sdk.PropertyId.SpeechServiceConnection_SynthVoice, s);
 });
 
 const TestParam = (getAccess: () => string, setAccess: (val: string) => void, propEnum: sdk.PropertyId, config: sdk.SpeechConfig): void => {
