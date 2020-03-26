@@ -69,14 +69,14 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         return this.privConversation?.participants;
     }
 
-    public canceled: (sender: ConversationTranslator, event: ConversationTranslationCanceledEventArgs) => void;
-    public conversationExpiration: (sender: ConversationTranslator, event: ConversationExpirationEventArgs) => void;
-    public participantsChanged: (sender: ConversationTranslator, event: ConversationParticipantsChangedEventArgs) => void;
-    public sessionStarted: (sender: ConversationTranslator, event: SessionEventArgs) => void;
-    public sessionStopped: (sender: ConversationTranslator, event: SessionEventArgs) => void;
-    public textMessageReceived: (sender: ConversationTranslator, event: ConversationTranslationEventArgs) => void;
-    public transcribed: (sender: ConversationTranslator, event: ConversationTranslationEventArgs) => void;
-    public transcribing: (sender: ConversationTranslator, event: ConversationTranslationEventArgs) => void;
+    public canceled: (sender: IConversationTranslator, event: ConversationTranslationCanceledEventArgs) => void;
+    public conversationExpiration: (sender: IConversationTranslator, event: ConversationExpirationEventArgs) => void;
+    public participantsChanged: (sender: IConversationTranslator, event: ConversationParticipantsChangedEventArgs) => void;
+    public sessionStarted: (sender: IConversationTranslator, event: SessionEventArgs) => void;
+    public sessionStopped: (sender: IConversationTranslator, event: SessionEventArgs) => void;
+    public textMessageReceived: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+    public transcribed: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+    public transcribing: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
 
     /**
      * Join a conversation. If this is the host, pass in the previously created Conversation object.
