@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import {PathLike} from "fs";
-import {AudioFileWriter} from "../../common.browser/AudioFileWriter";
 import {
     FileAudioSource,
     MicAudioSource,
@@ -30,6 +29,7 @@ import {
     PushAudioOutputStream,
     PushAudioOutputStreamCallback
 } from "../Exports";
+import { AudioFileWriter } from "./AudioFileWriter";
 import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
 import { PullAudioOutputStreamImpl, PushAudioOutputStreamImpl } from "./AudioOutputStream";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";

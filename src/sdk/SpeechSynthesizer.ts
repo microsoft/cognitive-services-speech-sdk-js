@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import { PathLike } from "fs";
-import { AudioFileWriter } from "../common.browser/AudioFileWriter";
 import {
     CognitiveSubscriptionKeyAuthentication,
     CognitiveTokenAuthentication,
@@ -23,6 +22,7 @@ import {
     Queue
 } from "../common/Exports";
 import { AudioOutputConfigImpl } from "./Audio/AudioConfig";
+import { AudioFileWriter } from "./Audio/AudioFileWriter";
 import {AudioOutputFormatImpl} from "./Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl, PushAudioOutputStreamImpl } from "./Audio/AudioOutputStream";
 import { Contracts } from "./Contracts";
