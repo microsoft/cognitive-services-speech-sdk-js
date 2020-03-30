@@ -501,7 +501,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 MessageType.Binary,
                 "audio",
                 this.privDialogRequestSession.requestId,
-                null,
+                "audio/x-wav",
                 format.header));
         });
     }
