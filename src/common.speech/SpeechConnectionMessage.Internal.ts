@@ -7,6 +7,7 @@ const PathHeaderName: string = "Path";
 const ContentTypeHeaderName: string = "Content-Type";
 const RequestIdHeaderName: string = "X-RequestId";
 const RequestTimestampHeaderName: string = "X-Timestamp";
+const RequestStreamIdHeaderName: string = "x-streamid";
 
 export class SpeechConnectionMessage extends ConnectionMessage {
 
