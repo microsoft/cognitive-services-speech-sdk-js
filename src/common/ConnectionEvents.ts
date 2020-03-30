@@ -80,6 +80,26 @@ export class ConnectionClosedEvent extends ConnectionEvent {
 }
 
 // tslint:disable-next-line:max-classes-per-file
+export class ConnectionErrorEvent extends ConnectionEvent {
+    private readonly privMessage: string;
+    private readonly privType: string;
+
+    constructor(connectionId: string, message: string, type: string) {
+        super("ConnectionErrorEvent", connectionId, EventType.Debug);
+        this.privMessage = message;
+        this.privType = type;
+    }
+
+    public get message(): string {
+        return this.privMessage;
+    }
+
+    public get type(): string {
+        return this.privType;
+    }
+}
+
+// tslint:disable-next-line:max-classes-per-file
 export class ConnectionEstablishErrorEvent extends ConnectionEvent {
     private privStatusCode: number;
     private privReason: string;

@@ -145,6 +145,24 @@ export enum PropertyId {
     Speech_SessionId,
 
     /**
+     * The spoken language to be synthesized (e.g. en-US)
+     * @member PropertyId.SpeechServiceConnection_SynthLanguage
+     */
+    SpeechServiceConnection_SynthLanguage,
+
+    /**
+     * The name of the TTS voice to be used for speech synthesis
+     * @member PropertyId.SpeechServiceConnection_SynthVoice
+     */
+    SpeechServiceConnection_SynthVoice,
+
+    /**
+     * The string to specify TTS output audio format
+     * @member PropertyId.SpeechServiceConnection_SynthOutputFormat
+     */
+    SpeechServiceConnection_SynthOutputFormat,
+
+    /**
      * The requested Cognitive Services Speech Service response output format (simple or detailed). Under normal circumstances, you shouldn't have
      * to use this property directly.
      * Instead use [[SpeechConfig.outputFormat]].

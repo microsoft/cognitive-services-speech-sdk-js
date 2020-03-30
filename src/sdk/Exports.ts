@@ -4,9 +4,10 @@
 export { AudioConfig } from "./Audio/AudioConfig";
 export { AudioStreamFormat } from "./Audio/AudioStreamFormat";
 export { AudioInputStream, PullAudioInputStream, PushAudioInputStream } from "./Audio/AudioInputStream";
-export { AudioOutputStream, PullAudioOutputStream } from "./Audio/AudioOutputStream";
+export { AudioOutputStream, PullAudioOutputStream, PushAudioOutputStream} from "./Audio/AudioOutputStream";
 export { CancellationReason } from "./CancellationReason";
 export { PullAudioInputStreamCallback } from "./Audio/PullAudioInputStreamCallback";
+export { PushAudioOutputStreamCallback } from "./Audio/PushAudioOutputStreamCallback";
 export { KeywordRecognitionModel } from "./KeywordRecognitionModel";
 export { SessionEventArgs } from "./SessionEventArgs";
 export { RecognitionEventArgs } from "./RecognitionEventArgs";
@@ -63,3 +64,8 @@ export { Conversation,
     ParticipantChangedReason,
     User
     } from "./Transcription/Exports";
+export { SpeechSynthesisOutputFormat } from "./SpeechSynthesisOutputFormat";
+export { SpeechSynthesizer } from "./SpeechSynthesizer";
+export { SpeechSynthesisResult } from "./SpeechSynthesisResult";
+export { SpeechSynthesisEventArgs } from "./SpeechSynthesisEventArgs";
+export { SpeechSynthesisWordBoundaryEventArgs} from "./SpeechSynthesisWordBoundaryEventArgs";

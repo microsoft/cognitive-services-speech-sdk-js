@@ -14,7 +14,7 @@ import {
     PropertyCollection,
     PropertyId,
     ServicePropertyChannel,
-    SpeechConfig,
+    SpeechConfig, SpeechSynthesisOutputFormat,
 } from "./Exports";
 
 /**
@@ -439,4 +439,27 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
         this.privSpeechProperties.setProperty(ForceDictationPropertyName, "true");
     }
 
+    public get speechSynthesisLanguage(): string {
+        return this.privSpeechProperties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage);
+    }
+
+    public set speechSynthesisLanguage(language: string) {
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_SynthLanguage, language);
+    }
+
+    public get speechSynthesisVoiceName(): string {
+        return this.privSpeechProperties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice);
+    }
+
+    public set speechSynthesisVoiceName(voice: string) {
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_SynthVoice, voice);
+    }
+
+    public get speechSynthesisOutputFormat(): SpeechSynthesisOutputFormat {
+        return (SpeechSynthesisOutputFormat as any)[this.privSpeechProperties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)];
+    }
+
+    public set speechSynthesisOutputFormat(format: SpeechSynthesisOutputFormat) {
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, SpeechSynthesisOutputFormat[format]);
+    }
 }

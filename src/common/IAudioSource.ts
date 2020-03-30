@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
 import { ISpeechConfigAudioDevice } from "../common.speech/Exports";
+import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 import { AudioSourceEvent } from "./AudioSourceEvents";
 import { EventSource } from "./EventSource";
 import { IDetachable } from "./IDetachable";

@@ -13,6 +13,7 @@ export class SpeechConnectionMessage extends ConnectionMessage {
     private privPath: string;
     private privRequestId: string;
     private privContentType: string;
+    private privStreamId: string;
     private privAdditionalHeaders: IStringDictionary<string>;
 
     public constructor(
@@ -21,6 +22,7 @@ export class SpeechConnectionMessage extends ConnectionMessage {
         requestId: string,
         contentType: string,
         body: any,
+        streamId?: string,
         additionalHeaders?: IStringDictionary<string>,
         id?: string) {
 
@@ -38,6 +40,10 @@ export class SpeechConnectionMessage extends ConnectionMessage {
         headers[RequestTimestampHeaderName] = new Date().toISOString();
         if (contentType) {
             headers[ContentTypeHeaderName] = contentType;
+        }
+
+        if (streamId) {
+            headers[RequestStreamIdHeaderName] = streamId;
         }
 
         if (additionalHeaders) {
@@ -58,6 +64,7 @@ export class SpeechConnectionMessage extends ConnectionMessage {
         this.privPath = path;
         this.privRequestId = requestId;
         this.privContentType = contentType;
+        this.privStreamId = streamId;
         this.privAdditionalHeaders = additionalHeaders;
     }
 
@@ -73,6 +80,10 @@ export class SpeechConnectionMessage extends ConnectionMessage {
         return this.privContentType;
     }
 
+    public get streamId(): string {
+        return this.privStreamId;
+    }
+
     public get additionalHeaders(): IStringDictionary<string> {
         return this.privAdditionalHeaders;
     }
@@ -82,6 +93,7 @@ export class SpeechConnectionMessage extends ConnectionMessage {
         let requestId = null;
         let contentType = null;
         let requestTimestamp = null;
+        let streamId = null;
         const additionalHeaders: IStringDictionary<string> = {};
 
         if (message.headers) {
@@ -95,6 +107,8 @@ export class SpeechConnectionMessage extends ConnectionMessage {
                         requestTimestamp = message.headers[headerName];
                     } else if (headerName.toLowerCase() === ContentTypeHeaderName.toLowerCase()) {
                         contentType = message.headers[headerName];
+                    } else if (headerName.toLowerCase() === RequestStreamIdHeaderName.toLowerCase()) {
+                        streamId = message.headers[headerName];
                     } else {
                         additionalHeaders[headerName] = message.headers[headerName];
                     }
@@ -108,6 +122,7 @@ export class SpeechConnectionMessage extends ConnectionMessage {
             requestId,
             contentType,
             message.body,
+            streamId,
             additionalHeaders,
             message.id);
     }

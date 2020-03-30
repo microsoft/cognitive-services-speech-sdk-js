@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { createNoDashGuid } from "../../../src/common/Guid";
 import {
     connectivity,
     ISpeechConfigAudioDevice,
@@ -25,6 +24,7 @@ import {
     Stream,
     StreamReader,
 } from "../../common/Exports";
+import { createNoDashGuid } from "../../common/Guid";
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 

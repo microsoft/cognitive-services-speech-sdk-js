@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.10.0-alpha.0.1",
+  "version": "1.11.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
@@ -16,7 +16,8 @@
     "js",
     "browser",
     "websocket",
-    "speechtotext"
+    "speechtotext",
+    "texttospeech"
   ],
   "bugs": {
     "url": "https://github.com/Microsoft/cognitive-services-speech-sdk-js/issues"
@@ -32,7 +33,8 @@
     "distrib/lib/external/ocsp/ocsp": false,
     "https-proxy-agent": false,
     "simple-lru-cache": false,
-    "ws": false
+    "ws": false,
+    "fs": false
   },
   "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
   "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
@@ -46,7 +48,7 @@
   ],
   "devDependencies": {
     "@types/jest": "^24.0.23",
-    "@types/node": "^12.12.14",
+    "@types/node": "^12.12.30",
     "@types/request": "^2.48.3",
     "@types/ws": "^6.0.4",
     "asn1.js": "^5.2.0",

@@ -1,15 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {
-    IAudioStreamNode,
-    IStreamChunk,
-} from "../src/common/Exports";
-import {
-    bufferSize,
-    PullAudioOutputStreamImpl,
-} from "../src/sdk/Audio/AudioOutputStream";
+import { AudioOutputFormatImpl } from "../src/sdk/Audio/AudioOutputFormat";
+import { PullAudioOutputStream, PullAudioOutputStreamImpl } from "../src/sdk/Audio/AudioOutputStream";
 import { Settings } from "./Settings";
+
+let objsToClose: any[];
 
 beforeAll(() => {
     // Override inputs, if necessary
@@ -18,12 +14,50 @@ beforeAll(() => {
 
 // Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
 // report the name.
-// tslint:disable-next-line:no-console
-beforeEach(() => console.info("---------------------------------------Starting test case-----------------------------------"));
+beforeEach(() => {
+    // tslint:disable-next-line:no-console
+    console.info("---------------------------------------Starting test case-----------------------------------");
+    objsToClose = [];
+    const used = process.memoryUsage().heapUsed / 1024 / 1024;
+    // tslint:disable-next-line:no-console
+    console.log(`Heap memory usage before test: ${Math.round(used * 100) / 100} MB`);
+});
+
+afterEach(() => {
+    // tslint:disable-next-line:no-console
+    console.info("End Time: " + new Date(Date.now()).toLocaleString());
+    objsToClose.forEach((value: any, index: number, array: any[]) => {
+        if (typeof value.close === "function") {
+            value.close();
+        }
+    });
+    const used = process.memoryUsage().heapUsed / 1024 / 1024;
+    // tslint:disable-next-line:no-console
+    console.log(`Heap memory usage after test: ${Math.round(used * 100) / 100} MB`);
+});
+
+const ReadPullAudioOutputStream: (stream: PullAudioOutputStream, length?: number, done?: () => void) => void =
+    (stream: PullAudioOutputStream, length?: number, done?: () => void): void => {
+        const audioBuffer = new ArrayBuffer(1024);
+        stream.read(audioBuffer).onSuccessContinueWith((bytesRead: number) => {
+            if (bytesRead > 0) {
+                ReadPullAudioOutputStream(stream, length === undefined ? undefined : length - bytesRead, done);
+            } else {
+                if (length !== undefined) {
+                    expect(length).toEqual(0);
+                }
+                if (!!done) {
+                    done();
+                }
+            }
+        });
+    };
 
 test("PullAudioOutputStreamImpl basic test", (done: jest.DoneCallback) => {
     const size: number = 256;
-    const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl(size);
+    const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl();
+    objsToClose.push(ps);
+    ps.format = AudioOutputFormatImpl.getDefaultOutputFormat();
     const ab: ArrayBuffer = new ArrayBuffer(size);
 
     const abView: Uint8Array = new Uint8Array(ab);
@@ -33,12 +67,13 @@ test("PullAudioOutputStreamImpl basic test", (done: jest.DoneCallback) => {
     ps.write(abView);
 
     let bytesRead: number = 0;
-    ps.read().onSuccessContinueWith((audioBuffer: ArrayBuffer) => {
+    const audioBuffer = new ArrayBuffer(size);
+
+    ps.read(audioBuffer).onSuccessContinueWith((readSize: number) => {
         try {
-            expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(size);
-            expect(audioBuffer.byteLength).toBeLessThanOrEqual(size);
+            expect(readSize).toEqual(size);
             const readView: Uint8Array = new Uint8Array(audioBuffer);
-            for (let i: number = 0; i < audioBuffer.byteLength; i++) {
+            for (let i: number = 0; i < readSize; i++) {
                 expect(readView[i]).toEqual(bytesRead++ % 256);
             }
         } catch (error) {
@@ -49,8 +84,11 @@ test("PullAudioOutputStreamImpl basic test", (done: jest.DoneCallback) => {
 });
 
 test("PullAudioOutputStreamImpl multiple writes read after close", (done: jest.DoneCallback) => {
-    const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl(bufferSize);
+    const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl();
+    const format = AudioOutputFormatImpl.getDefaultOutputFormat();
+    ps.format = format;
 
+    const bufferSize = format.avgBytesPerSec / 10;
     const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
     const abView: Uint8Array = new Uint8Array(ab);
     for (let i: number = 0; i < bufferSize * 4; i++) {
@@ -63,27 +101,25 @@ test("PullAudioOutputStreamImpl multiple writes read after close", (done: jest.D
     }
     ps.close();
 
-    let bytesRead: number = 0;
+    let bytesReadTotal: number = 0;
+    const audioBuffer = new ArrayBuffer(bufferSize);
 
     const readLoop = () => {
-        ps.read().onSuccessContinueWith((audioBuffer: ArrayBuffer) => {
+        ps.read(audioBuffer).onSuccessContinueWith((bytesRead: number) => {
             try {
-                if (audioBuffer == null) {
-                    expect(bytesRead).toBeGreaterThanOrEqual(bufferSize * 4);
-                    expect(bytesRead).toBeLessThanOrEqual(bufferSize * 4);
+                if (bytesRead === 0) {
+                    expect(bytesReadTotal).toEqual(bufferSize * 4);
                 } else {
-                    expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(bufferSize);
-                    expect(audioBuffer.byteLength).toBeLessThanOrEqual(bufferSize);
                     const readView: Uint8Array = new Uint8Array(audioBuffer);
-                    for (let i: number = 0; i < audioBuffer.byteLength; i++) {
-                        expect(readView[i]).toEqual(bytesRead++ % 256);
+                    for (let i: number = 0; i < bytesRead; i++) {
+                        expect(readView[i]).toEqual(bytesReadTotal++ % 256);
                     }
                 }
             } catch (error) {
                 done.fail(error);
             }
 
-            if (audioBuffer != null) {
+            if (bytesRead > 0) {
                 readLoop();
             } else {
                 done();
@@ -95,7 +131,12 @@ test("PullAudioOutputStreamImpl multiple writes read after close", (done: jest.D
 });
 
 test("PullAudioOutputStreamImpl multiple writes and reads", (done: jest.DoneCallback) => {
-    const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl(bufferSize);
+    const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl();
+    objsToClose.push(ps);
+    const format = AudioOutputFormatImpl.getDefaultOutputFormat();
+    ps.format = format;
+
+    const bufferSize = format.avgBytesPerSec / 10;
 
     const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
     const abView: Uint8Array = new Uint8Array(ab);
@@ -109,22 +150,22 @@ test("PullAudioOutputStreamImpl multiple writes and reads", (done: jest.DoneCall
     }
     ps.write(ab.slice(j));
 
-    let bytesRead: number = 0;
+    let bytesReadTotal: number = 0;
+    const audioBuffer = new ArrayBuffer(bufferSize);
 
     const readLoop = () => {
-        ps.read().onSuccessContinueWith((audioBuffer: ArrayBuffer) => {
+        ps.read(audioBuffer).onSuccessContinueWith((bytesRead: number) => {
             try {
-                expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(bufferSize);
-                expect(audioBuffer.byteLength).toBeLessThanOrEqual(bufferSize);
+                expect(bytesRead).toBeLessThanOrEqual(bufferSize);
                 const readView: Uint8Array = new Uint8Array(audioBuffer);
-                for (let i: number = 0; i < audioBuffer.byteLength; i++) {
-                    expect(readView[i]).toEqual(bytesRead++ % 256);
+                for (let i: number = 0; i < bytesRead; i++) {
+                    expect(readView[i]).toEqual(bytesReadTotal++ % 256);
                 }
             } catch (error) {
                 done.fail(error);
             }
 
-            if (bytesRead < bufferSize * 4) {
+            if (bytesReadTotal < bufferSize * 4) {
                 readLoop();
             } else {
                 done();
@@ -133,4 +174,63 @@ test("PullAudioOutputStreamImpl multiple writes and reads", (done: jest.DoneCall
     };
 
     readLoop();
+});
+
+test("PullAudioOutputStreamImpl reads before writing", (done: jest.DoneCallback) => {
+    const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl();
+    objsToClose.push(ps);
+
+    const format = AudioOutputFormatImpl.getDefaultOutputFormat();
+    ps.format = format;
+
+    const bufferSize = format.avgBytesPerSec / 10;
+
+    setTimeout(() => {
+        setTimeout(() => {
+            ReadPullAudioOutputStream(ps, bufferSize * 4, done);
+        }, 0);
+    });
+
+    const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
+    const abView: Uint8Array = new Uint8Array(ab);
+    for (let i: number = 0; i < bufferSize * 4; i++) {
+        abView[i] = i % 256;
+    }
+
+    let j: number = 0;
+    for (j = 0; j < bufferSize * 4; j += 100) {
+        ps.write(ab.slice(j, j + 100));
+    }
+    ps.write(ab.slice(j));
+
+    ps.close();
+});
+
+test("PullAudioOutputStreamImpl read all audio data in single read", (done: jest.DoneCallback) => {
+    const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl();
+    const format = AudioOutputFormatImpl.getDefaultOutputFormat();
+    ps.format = format;
+
+    const bufferSize = format.avgBytesPerSec / 10;
+    const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
+    const abView: Uint8Array = new Uint8Array(ab);
+    for (let k: number = 0; k < 1500; k ++) { // 10 minutes data
+        for (let i: number = 0; i < bufferSize * 4; i++) {
+            abView[i] = (i + k * bufferSize * 4) % 256;
+        }
+        ps.write(ab);
+    }
+
+    ps.close();
+
+    const audioBuffer = new ArrayBuffer(bufferSize * 6000);
+
+    ps.read(audioBuffer).onSuccessContinueWith((bytesRead: number) => {
+        expect(bytesRead).toEqual(bufferSize * 6000);
+        const readView: Uint8Array = new Uint8Array(audioBuffer);
+        for (let i: number = 0; i < bytesRead - 1000; i += 997) { // not check all to avoid long running.
+            expect(readView[i]).toEqual(i % 256);
+        }
+        done();
+    });
 });
