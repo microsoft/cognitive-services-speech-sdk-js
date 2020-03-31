@@ -77,7 +77,7 @@ export class ConnectionMessageImpl {
      * The message path.
      */
     public get path(): string {
-        return this.privConnectionMessage.headers.path;
+        return this.privConnectionMessage.headers[Object.keys(this.privConnectionMessage.headers).find((key: string) => key.toLowerCase() === "path".toLowerCase())];
     }
 
     /**
