@@ -372,8 +372,12 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
         try {
             const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();
-            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-            expect(res.text).toEqual("What's the weather like?");
+            if (0 === recoCount) {
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                expect(res.text).toEqual("What's the weather like?");
+            } else {
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.NoMatch]);
+            }
             expect(disconnected).toEqual(false);
             recoCount++;
         } catch (error) {
@@ -474,8 +478,12 @@ test("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCall
         try {
             const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();
-            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-            expect(res.text).toContain("the weather like?");
+            if (0 === recoCount) {
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                expect(res.text).toEqual("What's the weather like?");
+            } else {
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.NoMatch]);
+            }
             expect(disconnected).toEqual(false);
             recoCount++;
         } catch (error) {
@@ -626,7 +634,7 @@ test("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCall
     });
 }, 20000);
 
-test.only("testAudioMessagesSent", (done: jest.DoneCallback) => {
+test("testAudioMessagesSent", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: testAudioMessagesSent");
 
