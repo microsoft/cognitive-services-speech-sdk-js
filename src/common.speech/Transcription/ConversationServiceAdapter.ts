@@ -543,13 +543,14 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                         } else {
                                             // suppress unneeded final
                                         }
+
                                         if (sendFinal) {
                                             if (!!this.privConversationServiceConnector.translationReceived) {
                                                 this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector,
                                                     new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.final, speechResult, sessionId));
                                             }
                                         }
-                                    }  else if (speechResult.text !== undefined && speechResult.text.length > 0) {
+                                    }  else if (speechResult.text !== undefined) {
                                         this.privLastNonEmptyPartialUtteranceId = speechPayload.id;
                                         if (!!this.privConversationServiceConnector.translationReceived) {
                                             this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector,
