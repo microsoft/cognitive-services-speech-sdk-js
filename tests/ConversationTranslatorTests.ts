@@ -674,71 +674,58 @@ describe("conversation translator service tests",  () => {
         }));
     }, 20000);
 
-    // test("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback) => {
+    test("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback) => {
 
-    //     // tslint:disable-next-line:no-console
-    //     console.info("Start Conversation, join as host with speech language and speak");
+        // tslint:disable-next-line:no-console
+        console.info("Start Conversation, join as host with speech language and speak");
 
-    //     // audio config
-    //     const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-    //     const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+        // audio config
+        const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
+        const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+        let final: string = "";
 
-    //     let counter: number = 0;
+        // start a conversation
+        const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
-    //     // start a conversation
-    //     const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
-    //     if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
-    //     if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
+        const c = sdk.Conversation.createConversationAsync(config, (() => {
+            objsToClose.push(c);
 
-    //     const c = sdk.Conversation.createConversationAsync(config, (() => {
-    //         expect(c.conversationId.length).toEqual(5);
+            const ct = new sdk.ConversationTranslator(audioConfig);
+            objsToClose.push(ct);
 
-    //         const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator(audioConfig);
-    //         objsToClose.push(ct);
-    //         if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
-    //         if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
+            if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
+            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
-    //         ct.canceled = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs) => {
-    //             if (e.errorCode !== CancellationErrorCode.NoError) {
-    //                 done.fail();
-    //             } else {
-    //                 done();
-    //             }
-    //         });
+            const nickname: string = "Tester";
+            const lang: string = "en-US";
 
-    //         ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs) => {
-    //             startSpeaking();
-    //         });
+            c.startConversationAsync(() => {
+                ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs) => {
+                    try {
+                        ct.startTranscribingAsync();
+                    } catch (error) {
+                        done.fail(error);
+                    }
+                });
+                ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
+                    expect(e.result.text).toContain("weather");
+                    final = e.result.text;
+                    done();
+                });
+                ct.joinConversationAsync(c.conversationId, nickname, lang,
+                    (() => {
+                        // continue
+                    }),
+                    ((error: any) => {
+                        done.fail(error);
+                    }));
+            });
+        }));
 
-    //         ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
-    //             expect(e.result).toContain("weather");
-    //             counter++;
-    //             done();
-    //         });
+        WaitForCondition(() => (final !== ""), done);
 
-    //         function startSpeaking(): void {
-    //             try {
-    //                 ct.startTranscribingAsync();
-    //             } catch (error) {
-    //                 done.fail(error);
-    //             }
-    //         }
-
-    //         c.startConversationAsync(() => {
-    //             ct.joinConversationAsync(c, "Host",
-    //             (() => {
-    //                 // continue
-    //             }),
-    //             ((error: any) => {
-    //                 done.fail();
-    //             }));
-    //         });
-    //     }));
-
-    //     objsToClose.push(c);
-
-    //     WaitForCondition(() => (counter > 0), done);
-
-    // }, 30000);
+    }, 30000);
 
 });
