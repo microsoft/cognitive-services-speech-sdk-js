@@ -64,7 +64,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     private privConversationConnectionPromise: Promise<IConnection>;
     private privConnectionLoop: Promise<IConnection>;
     private terminateMessageLoop: boolean;
-    private privLastNonEmptyPartialUtteranceId: string = "";
+    private privLastPartialUtteranceId: string = "";
     private privConversationIsDisposed: boolean;
 
     public constructor(
@@ -536,7 +536,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                         // check the length, sometimes empty finals are returned
                                         if (speechResult.text !== undefined && speechResult.text.length > 0) {
                                             sendFinal = true;
-                                        } else if (speechPayload.id === this.privLastNonEmptyPartialUtteranceId) {
+                                        } else if (speechPayload.id === this.privLastPartialUtteranceId) {
                                             // send final as normal. We had a non-empty partial for this same utterance
                                             // so sending the empty final is important
                                             sendFinal = true;
@@ -551,7 +551,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                             }
                                         }
                                     }  else if (speechResult.text !== undefined) {
-                                        this.privLastNonEmptyPartialUtteranceId = speechPayload.id;
+                                        this.privLastPartialUtteranceId = speechPayload.id;
                                         if (!!this.privConversationServiceConnector.translationReceived) {
                                             this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector,
                                                 new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.partial, speechResult, sessionId));
