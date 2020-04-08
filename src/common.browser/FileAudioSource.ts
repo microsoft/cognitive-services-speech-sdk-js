@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioStreamFormat, AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
 import {
     connectivity,
     ISpeechConfigAudioDevice,
@@ -30,6 +29,7 @@ import {
     Stream,
     StreamReader,
 } from "../common/Exports";
+import { AudioStreamFormat, AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 
 export class FileAudioSource implements IAudioSource {
 

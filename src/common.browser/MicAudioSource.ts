@@ -2,10 +2,6 @@
 // Licensed under the MIT license.
 
 import {
-    AudioStreamFormat,
-    AudioStreamFormatImpl,
-} from "../../src/sdk/Audio/AudioStreamFormat";
-import {
     connectivity,
     ISpeechConfigAudioDevice,
     type
@@ -33,6 +29,10 @@ import {
     Stream,
     StreamReader,
 } from "../common/Exports";
+import {
+    AudioStreamFormat,
+    AudioStreamFormatImpl,
+} from "../sdk/Audio/AudioStreamFormat";
 import { IRecorder } from "./IRecorder";
 
 // Extending the default definition with browser specific definitions for backward compatibility

@@ -69,3 +69,4 @@ export { SpeechSynthesizer } from "./SpeechSynthesizer";
 export { SpeechSynthesisResult } from "./SpeechSynthesisResult";
 export { SpeechSynthesisEventArgs } from "./SpeechSynthesisEventArgs";
 export { SpeechSynthesisWordBoundaryEventArgs} from "./SpeechSynthesisWordBoundaryEventArgs";
+export { SpeakerAudioDestination } from "../common.browser/SpeakerAudioDestination";
