@@ -4,5 +4,6 @@
 export interface IPlayer {
     pause(): void;
     resume(): void;
+    onAudioEnd: (sender: IPlayer) => void;
     currentTime: number;
 }

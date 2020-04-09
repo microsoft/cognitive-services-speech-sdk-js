@@ -48,8 +48,6 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
-        // set forceNpmWebSocket to true as we need to pass the auth info in websocket headers.
-        WebsocketMessageAdapter.forceNpmWebSocket = true;
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromParameters(config.parameters), connectionId);
     }
 }

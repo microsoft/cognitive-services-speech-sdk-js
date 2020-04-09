@@ -114,6 +114,7 @@ export class SynthesisTurn {
     private privReceivedAudio: ArrayBuffer;
     private privReceivedAudioWithHeader: ArrayBuffer;
     private privTextOffset: number = 0;
+    private privNextSearchTextIndex: number = 0;
     private privRawText: string;
     private privIsSSML: boolean;
     private privTurnAudioDestination: IAudioDestination;
@@ -138,6 +139,8 @@ export class SynthesisTurn {
         this.privReceivedAudio = null;
         this.privReceivedAudioWithHeader = null;
         this.privBytesReceived = 0;
+        this.privTextOffset = 0;
+        this.privNextSearchTextIndex = 0;
         if (audioDestination !== undefined) {
             this.privTurnAudioDestination = audioDestination;
             this.privTurnAudioDestination.format = this.privAudioOutputFormat;
@@ -216,7 +219,10 @@ export class SynthesisTurn {
 
     private updateTextOffset(text: string): void {
         if (this.privTextOffset >= 0) {
-            this.privTextOffset = this.privRawText.indexOf(text, this.privTextOffset + this.privTextOffset > 0 ? 1 : 0);
+            this.privTextOffset = this.privRawText.indexOf(text, this.privNextSearchTextIndex);
+            if (this.privTextOffset >= 0) {
+                this.privNextSearchTextIndex = this.privTextOffset + text.length;
+            }
             if (this.privIsSSML) {
                 if (this.privRawText.indexOf("<", this.privTextOffset + 1) > this.privRawText.indexOf(">", this.privTextOffset + 1)) {
                     this.updateTextOffset(text);

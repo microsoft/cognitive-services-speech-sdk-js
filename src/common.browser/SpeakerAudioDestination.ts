@@ -112,6 +112,8 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         }
     }
 
+    public onAudioEnd: (sender: IPlayer) => void;
+
     public get internalAudio(): HTMLAudioElement {
         return this.privAudio;
     }
@@ -144,6 +146,11 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
 
     private notifyPlayback(): void {
         if (!this.privPlaybackStarted && this.privAudio !== undefined) {
+            this.privAudio.onended = (): void => {
+                if (!!this.onAudioEnd) {
+                    this.onAudioEnd(this);
+                }
+            };
             if (!this.privIsPaused) {
                 this.privAudio.play();
             }
