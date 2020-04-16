@@ -64,7 +64,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     private privConversationConnectionPromise: Promise<IConnection>;
     private privConnectionLoop: Promise<IConnection>;
     private terminateMessageLoop: boolean;
-    private privUtteranceId: string = "";
+    private privLastPartialUtteranceId: string = "";
     private privConversationIsDisposed: boolean;
 
     public constructor(
@@ -285,6 +285,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                         const isDisposed: boolean = this.isDisposed();
                         const terminateMessageLoop = (!this.isDisposed() && this.terminateMessageLoop);
                         const sessionId: string = this.privConversationRequestSession.sessionId;
+                        let sendFinal: boolean = false;
                         if (isDisposed || terminateMessageLoop) {
                             // We're done.
                             communicationCustodian.resolve(undefined);
@@ -533,22 +534,29 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
 
                                     if (speechPayload.isFinal) {
                                         // check the length, sometimes empty finals are returned
-                                        if (speechResult.text !== undefined && speechResult.text.length > 0 && speechPayload.id !== this.privUtteranceId) {
+                                        if (speechResult.text !== undefined && speechResult.text.length > 0) {
+                                            sendFinal = true;
+                                        } else if (speechPayload.id === this.privLastPartialUtteranceId) {
+                                            // send final as normal. We had a non-empty partial for this same utterance
+                                            // so sending the empty final is important
+                                            sendFinal = true;
+                                        } else {
+                                            // suppress unneeded final
+                                        }
 
+                                        if (sendFinal) {
                                             if (!!this.privConversationServiceConnector.translationReceived) {
                                                 this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector,
                                                     new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.final, speechResult, sessionId));
                                             }
                                         }
-                                    } else {
-
+                                    }  else if (speechResult.text !== undefined) {
+                                        this.privLastPartialUtteranceId = speechPayload.id;
                                         if (!!this.privConversationServiceConnector.translationReceived) {
                                             this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector,
                                                 new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.partial, speechResult, sessionId));
                                         }
                                     }
-
-                                    this.privUtteranceId = speechPayload.id;
 
                                     break;
 

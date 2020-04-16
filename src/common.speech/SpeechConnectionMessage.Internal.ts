@@ -3,10 +3,10 @@
 
 import { ArgumentNullError, ConnectionMessage, IStringDictionary, MessageType } from "../common/Exports";
 
-const PathHeaderName: string = "path";
-const ContentTypeHeaderName: string = "content-type";
-const RequestIdHeaderName: string = "x-requestid";
-const RequestTimestampHeaderName: string = "x-timestamp";
+const PathHeaderName: string = "Path";
+const ContentTypeHeaderName: string = "Content-Type";
+const RequestIdHeaderName: string = "X-RequestId";
+const RequestTimestampHeaderName: string = "X-Timestamp";
 const RequestStreamIdHeaderName: string = "x-streamid";
 
 export class SpeechConnectionMessage extends ConnectionMessage {
