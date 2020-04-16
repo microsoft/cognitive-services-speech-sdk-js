@@ -157,7 +157,7 @@ test("testSetAndGetParameters", () => {
         .toEqual(sdk.SpeechSynthesisOutputFormat[sdk.SpeechSynthesisOutputFormat.Audio16Khz128KBitRateMonoMp3]);
 });
 
-describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
+describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     beforeAll(() => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
@@ -416,7 +416,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         s.SynthesisCanceled = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
             try {
                 CheckSynthesisResult(e.result, sdk.ResultReason.Canceled);
-                expect(e.result.errorDetails).toContain("401");
+                // only node websocket will contains the status code 401
+                if (forceNodeWebSocket) {
+                    expect(e.result.errorDetails).toContain("401");
+                }
                 const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(e.result);
                 expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.ConnectionFailure);
                 expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
@@ -428,7 +431,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
             CheckSynthesisResult(result, sdk.ResultReason.Canceled);
-            expect(result.errorDetails).toContain("401");
+            // only node websocket will contains the status code 401
+            if (forceNodeWebSocket) {
+                expect(result.errorDetails).toContain("401");
+            }
             const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
             expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.ConnectionFailure);
             expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);

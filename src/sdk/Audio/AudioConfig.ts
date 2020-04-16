@@ -1,12 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {PathLike} from "fs";
+import { PathLike } from "fs";
 import {
     FileAudioSource,
     MicAudioSource,
     PcmRecorder,
-    SpeakerAudioDestination
 } from "../../common.browser/Exports";
 import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
 import {
@@ -22,12 +21,14 @@ import {
     AudioInputStream,
     AudioOutputStream,
     AudioStreamFormat,
+    IPlayer,
     PropertyCollection,
     PropertyId,
     PullAudioInputStreamCallback,
     PullAudioOutputStream,
     PushAudioOutputStream,
-    PushAudioOutputStreamCallback
+    PushAudioOutputStreamCallback,
+    SpeakerAudioDestination
 } from "../Exports";
 import { AudioFileWriter } from "./AudioFileWriter";
 import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
@@ -103,7 +104,6 @@ export abstract class AudioConfig {
 
     /**
      * Creates an AudioConfig object representing the default speaker.
-     * Note: this is just a place holder, not implemented now.
      * @member AudioConfig.fromDefaultSpeakerOutput
      * @function
      * @public
@@ -112,6 +112,27 @@ export abstract class AudioConfig {
      */
     public static fromDefaultSpeakerOutput(): AudioConfig {
         return new AudioOutputConfigImpl(new SpeakerAudioDestination());
+    }
+
+    /**
+     * Creates an AudioConfig object representing the custom IPlayer object.
+     * You can use the IPlayer object to control pause, resume, etc.
+     * @member AudioConfig.fromSpeakerOutput
+     * @function
+     * @public
+     * @param {IPlayer} player - the IPlayer object for playback.
+     * @returns {AudioConfig} The audio output configuration being created.
+     * Added in version 1.12.0
+     */
+    public static fromSpeakerOutput(player?: IPlayer): AudioConfig {
+        if (player === undefined) {
+            return AudioConfig.fromDefaultSpeakerOutput();
+        }
+        if (player instanceof SpeakerAudioDestination) {
+            return new AudioOutputConfigImpl(player as SpeakerAudioDestination);
+        }
+
+        throw new Error("Not Supported Type");
     }
 
     /**
@@ -142,11 +163,11 @@ export abstract class AudioConfig {
             return new AudioOutputConfigImpl(new PushAudioOutputStreamImpl(audioStream as PushAudioOutputStreamCallback));
         }
 
-        if (audioStream instanceof  PushAudioOutputStream) {
+        if (audioStream instanceof PushAudioOutputStream) {
             return new AudioOutputConfigImpl(audioStream as PushAudioOutputStreamImpl);
         }
 
-        if (audioStream instanceof  PullAudioOutputStream) {
+        if (audioStream instanceof PullAudioOutputStream) {
             return new AudioOutputConfigImpl(audioStream as PullAudioOutputStreamImpl);
         }
 
