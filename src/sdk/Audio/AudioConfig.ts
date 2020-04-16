@@ -4,10 +4,8 @@
 import { PathLike } from "fs";
 import {
     FileAudioSource,
-    IPlayer,
     MicAudioSource,
     PcmRecorder,
-    SpeakerAudioDestination
 } from "../../common.browser/Exports";
 import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
 import {
@@ -23,12 +21,14 @@ import {
     AudioInputStream,
     AudioOutputStream,
     AudioStreamFormat,
+    IPlayer,
     PropertyCollection,
     PropertyId,
     PullAudioInputStreamCallback,
     PullAudioOutputStream,
     PushAudioOutputStream,
-    PushAudioOutputStreamCallback
+    PushAudioOutputStreamCallback,
+    SpeakerAudioDestination
 } from "../Exports";
 import { AudioFileWriter } from "./AudioFileWriter";
 import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";

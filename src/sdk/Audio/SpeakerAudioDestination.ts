@@ -5,10 +5,9 @@ import {
     createNoDashGuid,
     IAudioDestination,
     INumberDictionary
-} from "../common/Exports";
-import { AudioFormatTag, AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
-import { AudioStreamFormat } from "../sdk/Exports";
-import { IPlayer } from "./Exports";
+} from "../../common/Exports";
+import { AudioStreamFormat, IPlayer } from "../Exports";
+import { AudioFormatTag, AudioOutputFormatImpl } from "./AudioOutputFormat";
 
 const MediaDurationPlaceholderSeconds = 60 * 30;
 
@@ -17,6 +16,12 @@ const AudioFormatToMimeType: INumberDictionary<string> = {
     [AudioFormatTag.MP3]: "audio/mpeg",
 };
 
+/**
+ * Represents the speaker playback audio destination, which only works in browser.
+ * Note: the playback is based on <a href="https://www.w3.org/TR/media-source/">Media Source Extensions</a>, on most browsers, only mp3 format is supported.
+ * @class SpeakerAudioDestination
+ * Updated in version 1.12.0
+ */
 export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     private readonly privId: string;
     private privFormat: AudioOutputFormatImpl;

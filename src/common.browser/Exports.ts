@@ -10,5 +10,3 @@ export * from "./WebsocketConnection";
 export * from "./WebsocketMessageAdapter";
 export * from "./ReplayableAudioNode";
 export * from "./ProxyInfo";
-export * from "./SpeakerAudioDestination";
-export * from "./IPlayer";
