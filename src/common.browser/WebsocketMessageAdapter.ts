@@ -101,7 +101,7 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.Connecting;
 
         try {
-            const enableOCSP: boolean = (typeof process !== "undefined" && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") && !this.privUri.startsWith("ws:");
+            const enableOCSP: boolean = (typeof process !== "undefined" && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0" && process.env.SPEECH_CONDUCT_OCSP_CHECK !== "0") && !this.privUri.startsWith("ws:");
 
             if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 // Browser handles cert checks.
