@@ -87,7 +87,6 @@ test("GetOutputVoiceName", () => {
     expect(r.voiceName).toEqual(voice);
 });
 
-
 test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: TranslateVoiceRoundTrip");
