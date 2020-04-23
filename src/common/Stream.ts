@@ -16,7 +16,7 @@ export interface IStreamChunk<TBuffer> {
 export class Stream<TBuffer> {
     private privId: string;
     private privReaderIdCounter: number = 1;
-    private privStreambuffer: Array<IStreamChunk<TBuffer>>;
+    private privStreambuffer: (IStreamChunk<TBuffer>)[];
     private privIsEnded: boolean = false;
     private privReaderQueues: IStringDictionary<Queue<IStreamChunk<TBuffer>>>;
 
