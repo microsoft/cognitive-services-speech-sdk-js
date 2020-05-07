@@ -305,15 +305,11 @@ export class MicAudioSource implements IAudioSource {
         }
 
         // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext
-        const AudioContext = ((window as any).AudioContext)
-            || ((window as any).webkitAudioContext)
-            || false;
-
-        if (!AudioContext) {
+        if (typeof (AudioContext) === "undefined") {
             throw new Error("Browser does not support Web Audio API (AudioContext is not available).");
         }
 
-        this.privContext = new AudioContext();
+        this.privContext = new AudioContext({ sampleRate: MicAudioSource.AUDIOFORMAT.samplesPerSec });
     }
 
     private destroyAudioContext = (): void => {
