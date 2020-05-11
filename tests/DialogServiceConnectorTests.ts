@@ -386,7 +386,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.activity).not.toBeNull();
                 if (e.activity.type === "message") {
-                    if ((e.activity.speak !== null) && (e.activity.speak !== undefined)) {
+                    if (e.activity.speak && (e.activity.speak !== "")) {
                         expect(e.audioStream).not.toBeNull();
                         audioReadLoop(e.audioStream, done);
                     }
@@ -466,7 +466,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.activity).not.toBeNull();
                 if (e.activity.type === "message") {
-                    if ((e.activity.speak !== null) && (e.activity.speak !== undefined)) {
+                    if (e.activity.speak && (e.activity.speak !== "")) {
                         expect(e.audioStream).not.toBeNull();
                         audioReadLoop(e.audioStream, done);
                     }
