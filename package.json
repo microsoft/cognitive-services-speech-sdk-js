@@ -47,7 +47,7 @@
     "REDIST.txt"
   ],
   "devDependencies": {
-    "@types/jest": "^24.0.23",
+    "@types/jest": "^25.2.2",
     "@types/node": "^12.12.30",
     "@types/request": "^2.48.3",
     "@types/ws": "^6.0.4",
@@ -59,12 +59,12 @@
     "gulp-terser": "^1.2.0",
     "gulp-tslint": "^8.1.4",
     "gulp-typescript": "^5.0.1",
-    "jest": "^24.9.0",
+    "jest": "^26.0.1",
     "jest-junit": "^10.0.0",
     "request": "^2.88.0",
     "semver": "^6.3.0",
     "source-map-loader": "^0.2.4",
-    "ts-jest": "^24.2.0",
+    "ts-jest": "^25.5.1",
     "tslint": "^5.20.1",
     "typescript": "^3.5.3",
     "webpack-stream": "^5.2.1"
