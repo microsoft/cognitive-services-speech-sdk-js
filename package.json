@@ -47,7 +47,7 @@
     "REDIST.txt"
   ],
   "devDependencies": {
-    "@types/jest": "^24.0.23",
+    "@types/jest": "^25.2.2",
     "@types/node": "^12.12.30",
     "@types/request": "^2.48.3",
     "@types/ws": "^6.0.4",
