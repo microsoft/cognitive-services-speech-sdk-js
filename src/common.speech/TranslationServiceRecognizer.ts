@@ -52,7 +52,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
     }
 
-    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
+    protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         const resultProps: PropertyCollection = new PropertyCollection();
         let processed: boolean = false;
@@ -131,7 +131,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                     if (reason === ResultReason.Canceled) {
                         const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(translatedPhrase.RecognitionStatus);
 
-                        this.cancelRecognitionLocal(
+                        await this.cancelRecognitionLocal(
                             cancelReason,
                             EnumTranslation.implTranslateCancelErrorCode(translatedPhrase.RecognitionStatus),
                             undefined);

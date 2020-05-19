@@ -261,10 +261,18 @@ export class TranslationRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public async close(): Promise<void> {
+    public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
 
-        await this.dispose(true);
+        this.dispose(true).then(() => {
+            if (!!cb) {
+                try { cb(); } catch (error) { }
+            }
+        }, (error: string) => {
+            if (!!errorCb) {
+                try { errorCb(error); } catch (error2) { }
+            }
+        });
     }
 
     protected async dispose(disposing: boolean): Promise<void> {

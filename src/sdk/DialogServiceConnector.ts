@@ -106,8 +106,16 @@ export class DialogServiceConnector extends Recognizer {
      *
      * If disconnect() is called during a recognition, recognition will fail and cancel with an error.
      */
-    public disconnect(): void {
-        this.privReco.disconnect();
+    public disconnect(cb?: () => void, err?: (error: string) => void): void {
+        this.privReco.disconnect().then(() => {
+            if (!!cb) {
+                cb();
+            }
+        }, (error: string) => {
+            if (!!err) {
+                err(error);
+            }
+        });
     }
 
     /**
@@ -183,16 +191,20 @@ export class DialogServiceConnector extends Recognizer {
                         await this.privReco.recognize(
                             RecognitionMode.Conversation,
                             (e: SpeechRecognitionResult) => {
-                                this.implRecognizerStop();
+                                this.implRecognizerStop().then(() => {
+                                    this.isTurnComplete = true;
 
-                                this.isTurnComplete = true;
-
-                                if (!!cb) {
-                                    cb(e);
-                                }
+                                    if (!!cb) {
+                                        cb(e);
+                                    }
+                                }, (error: string) => {
+                                    if (!!err) {
+                                        err(error);
+                                    }
+                                });
                             },
                             (e: string) => {
-                                this.implRecognizerStop();
+                                this.implRecognizerStop().catch();
                                 this.isTurnComplete = true;
                                 if (!!err) {
                                     err(e);
@@ -205,7 +217,7 @@ export class DialogServiceConnector extends Recognizer {
                         }
                     }
                 };
-                foo();
+                foo().catch();
             } catch (error) {
                 if (!!err) {
                     if (error instanceof Error) {
@@ -217,13 +229,21 @@ export class DialogServiceConnector extends Recognizer {
                 }
 
                 // Destroy the recognizer.
-                this.dispose(true);
+                this.dispose(true).catch();
             }
         }
     }
 
-    public sendActivityAsync(activity: string): Promise<void> {
-        return (this.privReco as DialogServiceAdapter).sendMessage(activity);
+    public sendActivityAsync(activity: string, cb?: () => void, errCb?: (error: string) => void): void {
+        (this.privReco as DialogServiceAdapter).sendMessage(activity).then(() => {
+            if (!!cb) {
+                try { cb(); } catch (error) { }
+            }
+        }, (error: string) => {
+            if (!!errCb) {
+                try { errCb(error); } catch (error2) { }
+            }
+        });
     }
 
     /**

@@ -129,11 +129,11 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         return Promise.resolve();
     }
 
-    protected processTypeSpecificMessages(
+    protected async processTypeSpecificMessages(
         connectionMessage: ConnectionMessage,
         successCallback?: (e: any) => void,
-        errorCallBack?: (e: string) => void): boolean {
-        return true;
+        errorCallBack?: (e: string) => void): Promise<boolean> {
+        return false;
     }
 
     // Cancels recognition.

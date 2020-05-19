@@ -10,14 +10,16 @@ import {
 } from "../../common.speech/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
 import { Contracts } from "../../sdk/Contracts";
-import { AudioConfig,
+import {
+    AudioConfig,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     PropertyCollection,
     Recognizer,
     SessionEventArgs,
-    SpeechTranslationConfig} from "../../sdk/Exports";
+    SpeechTranslationConfig
+} from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
 import { Callback } from "../../sdk/Transcription/IConversation";
 import { ConversationConnectionFactory } from "./ConversationConnectionFactory";
@@ -28,7 +30,8 @@ import {
     MuteAllEventArgs,
     ParticipantAttributeEventArgs,
     ParticipantEventArgs,
-    ParticipantsListEventArgs } from "./ConversationTranslatorEventArgs";
+    ParticipantsListEventArgs
+} from "./ConversationTranslatorEventArgs";
 import {
     ConversationTranslatorCommandTypes,
     ConversationTranslatorMessageTypes,
@@ -39,7 +42,8 @@ import {
     IInternalConversation,
     ILockConversationCommand,
     IMuteAllCommand,
-    IMuteCommand} from "./ConversationTranslatorInterfaces";
+    IMuteCommand
+} from "./ConversationTranslatorInterfaces";
 import { PromiseToEmptyCallback } from "./ConversationUtils";
 
 /**
@@ -127,7 +131,15 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             this.privRoom = undefined;
-            this.privReco.disconnectAsync(cb, err);
+            this.privReco.disconnect().then(() => {
+                if (!!cb) {
+                    cb();
+                }
+            }, (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
@@ -138,7 +150,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 }
             }
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch();
         }
     }
 
@@ -176,7 +188,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch();
         }
     }
 
@@ -215,7 +227,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch();
         }
     }
 
@@ -254,7 +266,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch();
         }
     }
 
@@ -293,7 +305,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch();
         }
     }
 
@@ -340,7 +352,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch();
         }
     }
 
@@ -380,7 +392,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch();
         }
     }
 

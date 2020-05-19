@@ -166,11 +166,11 @@ export class MicAudioSource implements IAudioSource {
             (streamReader: StreamReader<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
                 return {
-                    detach: () => {
-                        streamReader.close();
-                        this.turnOff();
+                    detach: async () => {
+                        await streamReader.close();
                         delete this.privStreams[audioNodeId];
                         this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
+                        return this.turnOff();
                     },
                     id: () => {
                         return audioNodeId;
@@ -190,7 +190,7 @@ export class MicAudioSource implements IAudioSource {
         }
     }
 
-    public turnOff = (): Promise<void> => {
+    public async turnOff(): Promise<void> {
         for (const streamId in this.privStreams) {
             if (streamId) {
                 const stream = this.privStreams[streamId];
@@ -203,7 +203,7 @@ export class MicAudioSource implements IAudioSource {
         this.onEvent(new AudioSourceOffEvent(this.privId)); // no stream now
         this.privInitializeDeferral = null;
 
-        this.destroyAudioContext();
+        await this.destroyAudioContext();
 
         return;
     }
@@ -314,7 +314,7 @@ export class MicAudioSource implements IAudioSource {
         this.privContext = new AudioContext();
     }
 
-    private destroyAudioContext = (): void => {
+    private async destroyAudioContext(): Promise<void> {
         if (!this.privContext) {
             return;
         }
@@ -330,7 +330,7 @@ export class MicAudioSource implements IAudioSource {
         }
 
         if (hasClose) {
-            this.privContext.close();
+            await this.privContext.close();
             this.privContext = null;
         } else if (null !== this.privContext && this.privContext.state === "running") {
             // Suspend actually takes a callback, but analogous to the
@@ -339,7 +339,7 @@ export class MicAudioSource implements IAudioSource {
             // the case, as TurnOff is also called, when we receive an
             // end-of-speech message from the service. So, doing a best effort
             // fire-and-forget here.
-            this.privContext.suspend();
+            await this.privContext.suspend();
         }
     }
 }

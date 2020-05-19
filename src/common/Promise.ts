@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ArgumentNullError  } from "./Error";
+import { ArgumentNullError } from "./Error";
 
 export enum PromiseState {
     None,
@@ -96,18 +96,16 @@ export class PromiseCompletionWrapper<T> {
         this.privIsError = false;
 
         this.privFinallyPromise = new Promise<PromiseCompletionWrapper<T>>((resolve: (value: PromiseCompletionWrapper<T>) => void, reject: (reason: any) => void) => {
-            promise.catch(() => {
+            promise.then((result: T) => {
                 this.privIsCompleted = true;
-                this.privIsError = true;
+                this.privResult = result;
                 if (!!after) {
                     after();
                 }
                 resolve(this);
-            });
-
-            promise.then((result: T) => {
+            }, () => {
                 this.privIsCompleted = true;
-                this.privResult = result;
+                this.privIsError = true;
                 if (!!after) {
                     after();
                 }

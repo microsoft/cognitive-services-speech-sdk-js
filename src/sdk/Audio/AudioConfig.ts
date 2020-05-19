@@ -137,8 +137,16 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      * @function
      * @public
      */
-    public close(): void {
-        this.privSource.turnOff();
+    public close(cb?: () => void, err?: (error: string) => void): void {
+        this.privSource.turnOff().then(() => {
+            if (!!cb) {
+                cb();
+            }
+        }, (error: string) => {
+            if (!!err) {
+                err(error);
+            }
+        });
     }
 
     /**

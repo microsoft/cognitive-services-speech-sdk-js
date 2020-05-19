@@ -91,9 +91,19 @@ export abstract class Recognizer {
      * @function
      * @public
      */
-    public async close(): Promise<void> {
+    public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposed);
-        await this.dispose(true);
+        this.dispose(true).then(() => {
+            if (!!cb) {
+                /* tslint:disable:no-empty */
+                try { cb(); } catch (error) { }
+            }
+        }, (error: string) => {
+            if (!!errorCb) {
+                /* tslint:disable:no-empty */
+                try { errorCb(error); } catch (error2) { }
+            }
+        });
     }
 
     /**

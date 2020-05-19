@@ -62,12 +62,12 @@ export class ConversationRequestSession {
         }
     }
 
-    public dispose = (error?: string): void => {
+    public async dispose(error?: string): Promise<void> {
         if (!this.privIsDisposed) {
             // we should have completed by now. If we did not its an unknown error.
             this.privIsDisposed = true;
             for (const detachable of this.privDetachables) {
-                detachable.detach();
+                await detachable.detach();
             }
         }
     }

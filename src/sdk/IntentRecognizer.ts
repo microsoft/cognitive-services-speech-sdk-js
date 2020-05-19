@@ -340,10 +340,14 @@ export class IntentRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public async close(): Promise<void> {
-        Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
+    public close(errorCb?: (error: string) => void): void {
+        Contracts.throwIfDisposed(this.privDisposedIntentRecognizer );
 
-        await this.dispose(true);
+        this.dispose(true).catch((error: string) => {
+            if (!!errorCb) {
+                errorCb(error);
+            }
+        });
     }
 
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {

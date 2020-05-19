@@ -19,14 +19,15 @@ import {
     SpeechTranslationConfig,
     TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
-    TranslationRecognizer} from "../Exports";
+    TranslationRecognizer
+} from "../Exports";
 import {
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
     Participant,
- } from "./Exports";
+} from "./Exports";
 import { Callback, IConversation } from "./IConversation";
 import { IConversationTranslator } from "./IConversationTranslator";
 
@@ -145,10 +146,10 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                                 this.handleError(error, param3);
                             }));
 
-                     }),
+                    }),
                     ((error: any) => {
                         this.handleError(error, param3);
-                     }));
+                    }));
 
             } else if (typeof conversation === "object") {
 
@@ -189,7 +190,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         try {
 
             // stop the speech websocket
-            this.cancelSpeech();
+            this.cancelSpeech().catch();
 
             // stop the websocket
             this.privConversation.endConversationAsync(
@@ -251,17 +252,17 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 this.connectTranslatorRecognizer(
                     (() => {
                         this.startContinuousRecognition(
-                        (() => {
-                            this.privIsSpeaking = true;
-                            this.handleCallback(cb, err);
-                        }),
-                        ((error: any) => {
+                            (() => {
+                                this.privIsSpeaking = true;
+                                this.handleCallback(cb, err);
+                            }),
+                            ((error: any) => {
 
-                            this.privIsSpeaking = false;
-                            // this.fireCancelEvent(error);
-                            this.cancelSpeech();
-                            this.handleError(error, err);
-                        }));
+                                this.privIsSpeaking = false;
+                                // this.fireCancelEvent(error);
+                                this.cancelSpeech().catch();
+                                this.handleError(error, err);
+                            }));
                     }),
                     ((error: any) => {
                         this.handleError(error, err);
@@ -275,7 +276,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                     ((error: any) => {
                         this.privIsSpeaking = false;
                         // this.fireCancelEvent(error);
-                        this.cancelSpeech();
+                        this.cancelSpeech().catch();
 
                         this.handleError(error, err);
                     }));
@@ -285,7 +286,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             this.handleError(error, err);
 
-            this.cancelSpeech();
+            this.cancelSpeech().catch();
 
         }
     }
@@ -300,7 +301,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         try {
             if (!this.privIsSpeaking) {
                 // stop speech
-                this.cancelSpeech();
+                this.cancelSpeech().catch();
                 this.handleCallback(cb, err);
                 return;
             }
@@ -311,12 +312,12 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 this.handleCallback(cb, err);
             }, (error: any) => {
                 this.handleError(error, err);
-                this.cancelSpeech();
+                this.cancelSpeech().catch();
             });
 
         } catch (error) {
             this.handleError(error, err);
-            this.cancelSpeech();
+            this.cancelSpeech().catch();
         }
     }
 
@@ -328,14 +329,14 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         if (this.isDisposed && !this.privIsSpeaking) {
             return;
         }
-        this.cancelSpeech();
+        this.cancelSpeech().catch();
         this.privIsDisposed = true;
         this.privSpeechTranslationConfig?.close();
         this.privSpeechRecognitionLanguage = undefined;
         this.privProperties = undefined;
         this.privAudioConfig = undefined;
         this.privSpeechTranslationConfig = undefined;
-        this.privConversation?.dispose();
+        this.privConversation?.dispose().catch();
         this.privConversation = undefined;
     }
 
@@ -357,7 +358,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             // clear the temp subscription key if it's a participant joining
             if (this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Key])
-                    === ConversationTranslatorConfig.auth.placeholderSubscriptionKey) {
+                === ConversationTranslatorConfig.auth.placeholderSubscriptionKey) {
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
 
@@ -388,7 +389,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             this.handleError(error, err);
 
-            this.cancelSpeech();
+            this.cancelSpeech().catch();
             // this.fireCancelEvent(error); ?
 
         }
@@ -408,17 +409,17 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         this.privSpeechState = SpeechState.Connected;
     }
 
-    private onSpeechDisconnected = (e: ConnectionEventArgs) => {
+    private async onSpeechDisconnected(e: ConnectionEventArgs): Promise<void> {
         this.privSpeechState = SpeechState.Inactive;
-        this.cancelSpeech();
+        await this.cancelSpeech();
     }
 
-    private onSpeechRecognized = (r: TranslationRecognizer, e: TranslationRecognitionEventArgs) => {
+    private async onSpeechRecognized(r: TranslationRecognizer, e: TranslationRecognitionEventArgs): Promise<void> {
         // TODO: add support for getting recognitions from here if own speech
 
         // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
         if (e.result?.errorDetails) {
-            this.cancelSpeech();
+            await this.cancelSpeech();
             // TODO: format the error message contained in 'errorDetails'
             this.fireCancelEvent(e.result.errorDetails);
         }
@@ -428,10 +429,10 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         // TODO: add support for getting recognitions from here if own speech
     }
 
-    private onSpeechCanceled = (r: TranslationRecognizer, e: TranslationRecognitionCanceledEventArgs) => {
+    private async onSpeechCanceled(r: TranslationRecognizer, e: TranslationRecognitionCanceledEventArgs): Promise<void> {
         if (this.privSpeechState !== SpeechState.Inactive) {
             try {
-                this.cancelSpeech();
+                await this.cancelSpeech();
             } catch (error) {
                 this.privSpeechState = SpeechState.Inactive;
             }
@@ -471,11 +472,11 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     /**
      * Cancel the speech websocket
      */
-    private cancelSpeech(): void {
+    private async cancelSpeech(): Promise<void> {
         try {
             this.privIsSpeaking = false;
             this.privTranslationRecognizer?.stopContinuousRecognitionAsync();
-            this.privTranslationRecognizerConnection?.closeConnection();
+            await this.privTranslationRecognizerConnection?.closeConnection();
             this.privTranslationRecognizerConnection = undefined;
             this.privTranslationRecognizer = undefined;
             this.privSpeechState = SpeechState.Inactive;
@@ -515,9 +516,9 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             }
             cb = undefined;
         }
-     }
+    }
 
-     private handleError(error: any, err: Callback): void {
+    private handleError(error: any, err: Callback): void {
         if (!!err) {
             if (error instanceof Error) {
                 const typedError: Error = error as Error;

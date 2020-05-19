@@ -46,7 +46,7 @@ afterEach(async (done: jest.DoneCallback) => {
         console.info("End Time: " + new Date(Date.now()).toLocaleString());
 
         done();
-    });
+    }, (error: string) => done.fail(error));
 });
 
 async function asyncCloseAll(array: any[]): Promise<void> {

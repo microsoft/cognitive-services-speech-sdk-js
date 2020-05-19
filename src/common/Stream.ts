@@ -103,26 +103,26 @@ export class StreamReader<TBuffer> {
         return this.privStreamId;
     }
 
-    public read = (): Promise<IStreamChunk<TBuffer>> => {
+    public async read(): Promise<IStreamChunk<TBuffer>> {
         if (this.isClosed) {
             throw new InvalidOperationError("StreamReader closed");
         }
 
         return this.privReaderQueue
             .dequeue()
-            .then((streamChunk: IStreamChunk<TBuffer>) => {
+            .then(async (streamChunk: IStreamChunk<TBuffer>) => {
                 if (streamChunk === undefined || streamChunk.isEnd) {
-                    this.privReaderQueue.dispose("End of stream reached");
+                    await this.privReaderQueue.dispose("End of stream reached");
                 }
 
                 return streamChunk;
             });
     }
 
-    public close = (): void => {
+    public async close(): Promise<void> {
         if (!this.privIsClosed) {
             this.privIsClosed = true;
-            this.privReaderQueue.dispose("StreamReader closed");
+            await this.privReaderQueue.dispose("StreamReader closed");
             this.privOnClose();
         }
     }

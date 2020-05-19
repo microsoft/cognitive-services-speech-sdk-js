@@ -77,9 +77,9 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             });
     }
 
-    public detach(): void {
-        this.privAudioNode.detach();
+    public detach(): Promise<void> {
         this.privBuffers = undefined;
+        return this.privAudioNode.detach();
     }
 
     public replay(): void {

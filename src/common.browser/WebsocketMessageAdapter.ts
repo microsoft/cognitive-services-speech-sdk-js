@@ -204,7 +204,7 @@ export class WebsocketMessageAdapter {
                 this.onEvent(new ConnectionClosedEvent(this.privConnectionId, e.code, e.reason));
             }
 
-            this.onClose(e.code, e.reason);
+            this.onClose(e.code, e.reason).catch();
         };
 
         this.privWebsocketClient.onmessage = (e: { data: ws.Data; type: string; target: WebSocket | ws }) => {
@@ -313,17 +313,17 @@ export class WebsocketMessageAdapter {
         }
     }
 
-    private onClose = (code: number, reason: string): void => {
+    private async onClose(code: number, reason: string): Promise<void> {
         const closeReason = `Connection closed. ${code}: ${reason}`;
         this.privConnectionState = ConnectionState.Disconnected;
         this.privDisconnectDeferral.resolve();
-        this.privReceivingMessageQueue.dispose(reason);
-        this.privReceivingMessageQueue.drainAndDispose((pendingReceiveItem: ConnectionMessage) => {
+        await this.privReceivingMessageQueue.dispose(reason);
+        await this.privReceivingMessageQueue.drainAndDispose((pendingReceiveItem: ConnectionMessage) => {
             // TODO: Events for these ?
             // Logger.instance.onEvent(new LoggingEvent(LogType.Warning, null, `Failed to process received message. Reason: ${closeReason}, Message: ${JSON.stringify(pendingReceiveItem)}`));
         }, closeReason);
 
-        this.privSendMessageQueue.drainAndDispose((pendingSendItem: ISendItem) => {
+        await this.privSendMessageQueue.drainAndDispose((pendingSendItem: ISendItem) => {
             pendingSendItem.sendStatusDeferral.reject(closeReason);
         }, closeReason);
     }

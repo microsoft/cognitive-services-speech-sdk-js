@@ -56,7 +56,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
         this.privIntentDataSent = true;
     }
 
-    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
+    protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         let result: IntentRecognitionResult;
         let ev: IntentRecognitionEventArgs;

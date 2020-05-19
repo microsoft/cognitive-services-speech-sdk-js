@@ -19,7 +19,8 @@ import {
     ProfanityOption,
     PropertyCollection,
     PropertyId,
-    SpeechTranslationConfig} from "../../sdk/Exports";
+    SpeechTranslationConfig
+} from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
 import { Callback } from "../../sdk/Transcription/IConversation";
 import { IParticipant, IUser } from "../../sdk/Transcription/IParticipant";
@@ -37,7 +38,8 @@ import {
     MuteAllEventArgs,
     ParticipantAttributeEventArgs,
     ParticipantEventArgs,
-    ParticipantsListEventArgs} from "./Exports";
+    ParticipantsListEventArgs
+} from "./Exports";
 
 export class ConversationImpl extends Conversation implements IDisposable {
 
@@ -141,7 +143,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         // check the profanity setting: speech and conversationTranslator should be in sync
         const profanity: string = speechConfig.getProperty(PropertyId[PropertyId.SpeechServiceResponse_ProfanityOption]);
         if (!profanity) {
-           speechConfig.setProfanity(ProfanityOption.Masked);
+            speechConfig.setProfanity(ProfanityOption.Masked);
         }
 
         // check the nickname: it should pass this regex: ^\w+([\s-][\w\(\)]+)*$"
@@ -284,7 +286,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 ((error: any) => {
                     this.handleError(error, err);
                 }));
-            this.dispose();
+            this.dispose().catch((error: string) => {
+                this.handleError(error, err);
+            });
         } catch (error) {
             this.handleError(error, err);
         }
@@ -297,8 +301,12 @@ export class ConversationImpl extends Conversation implements IDisposable {
      */
     public endConversationAsync(cb?: Callback, err?: Callback): void {
         try {
-            this.close(true);
-            this.handleCallback(cb, err);
+            this.close(true).then(() => {
+                this.handleCallback(cb, err);
+            }, (error: string) => {
+                this.handleError(error, err);
+            });
+
         } catch (error) {
             this.handleError(error, err);
         }
@@ -385,9 +393,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConversationRecognizer?.sendMuteRequest(userId, true, (() => {
                 this.handleCallback(cb, err);
             }),
-            ((error: any) => {
-                this.handleError(error, err);
-            }));
+                ((error: any) => {
+                    this.handleError(error, err);
+                }));
         } catch (error) {
             this.handleError(error, err);
         }
@@ -426,9 +434,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConversationRecognizer?.sendEjectRequest(participantId, (() => {
                 this.handleCallback(cb, err);
             }),
-            ((error: any) => {
-                this.handleError(error, err);
-            }));
+                ((error: any) => {
+                    this.handleError(error, err);
+                }));
         } catch (error) {
             this.handleError(error, err);
         }
@@ -450,9 +458,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConversationRecognizer?.sendLockRequest(false, (() => {
                 this.handleCallback(cb, err);
             }),
-            ((error: any) => {
-                this.handleError(error, err);
-            }));
+                ((error: any) => {
+                    this.handleError(error, err);
+                }));
         } catch (error) {
             this.handleError(error, err);
         }
@@ -474,9 +482,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConversationRecognizer?.sendMuteAllRequest(false, (() => {
                 this.handleCallback(cb, err);
             }),
-            ((error: any) => {
-                this.handleError(error, err);
-            }));
+                ((error: any) => {
+                    this.handleError(error, err);
+                }));
         } catch (error) {
             this.handleError(error, err);
         }
@@ -510,9 +518,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConversationRecognizer?.sendMuteRequest(userId, false, (() => {
                 this.handleCallback(cb, err);
             }),
-            ((error: any) => {
-                this.handleError(error, err);
-            }));
+                ((error: any) => {
+                    this.handleError(error, err);
+                }));
         } catch (error) {
             this.handleError(error, err);
         }
@@ -540,9 +548,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConversationRecognizer?.sendMessageRequest(message, (() => {
                 this.handleCallback(cb, err);
             }),
-            ((error: any) => {
-                this.handleError(error, err);
-            }));
+                ((error: any) => {
+                    this.handleError(error, err);
+                }));
         } catch (error) {
             this.handleError(error, err);
         }
@@ -566,9 +574,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConversationRecognizer?.sendChangeNicknameRequest(nickname, (() => {
                 this.handleCallback(cb, err);
             }),
-            ((error: any) => {
-                this.handleError(error, err);
-            }));
+                ((error: any) => {
+                    this.handleError(error, err);
+                }));
         } catch (error) {
             this.handleError(error, err);
         }
@@ -578,14 +586,14 @@ export class ConversationImpl extends Conversation implements IDisposable {
         return this.privIsDisposed;
     }
 
-    public dispose(reason?: string): void {
+    public async dispose(reason?: string): Promise<void> {
         if (this.isDisposed) {
             return;
         }
         this.privIsDisposed = true;
         this.config?.close();
         if (this.privConversationRecognizerConnection) {
-            this.privConversationRecognizerConnection.closeConnection();
+            await this.privConversationRecognizerConnection.closeConnection();
             this.privConversationRecognizerConnection.close();
             this.privConversationRecognizerConnection = undefined;
         }
@@ -612,10 +620,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-     }
+    }
 
-     private onDisconnected =  (e: ConnectionEventArgs): void => {
-        this.close(false);
+    private onDisconnected = (e: ConnectionEventArgs): void => {
+        this.close(false).catch();
         try {
             if (!!this.privConversationTranslator.sessionStopped) {
                 this.privConversationTranslator.sessionStopped(this.privConversationTranslator, e);
@@ -626,13 +634,13 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     private onCanceled = (r: ConversationTranslatorRecognizer, e: ConversationTranslationCanceledEventArgs): void => {
-        this.close(false); // ?
+        this.close(false).catch(); // ?
         try {
             if (!!this.privConversationTranslator.canceled) {
                 this.privConversationTranslator.canceled(this.privConversationTranslator, e);
             }
         } catch (e) {
-           //
+            //
         }
     }
 
@@ -664,7 +672,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                     this.privConversationTranslator?.participantsChanged(
                         this.privConversationTranslator,
                         new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.Updated,
-                        [this.toParticipant(updatedParticipant)], e.sessionId));
+                            [this.toParticipant(updatedParticipant)], e.sessionId));
                 }
             }
         } catch (e) {
@@ -683,7 +691,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 this.privConversationTranslator?.participantsChanged(
                     this.privConversationTranslator,
                     new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.Updated,
-                    this.toParticipants(false), e.sessionId));
+                        this.toParticipants(false), e.sessionId));
             }
         } catch (e) {
             //
@@ -698,7 +706,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                     this.privConversationTranslator?.participantsChanged(
                         this.privConversationTranslator,
                         new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.JoinedConversation,
-                        [this.toParticipant(newParticipant)], e.sessionId));
+                            [this.toParticipant(newParticipant)], e.sessionId));
                 }
             }
         } catch (e) {
@@ -717,7 +725,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                     this.privConversationTranslator?.participantsChanged(
                         this.privConversationTranslator,
                         new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.LeftConversation,
-                        [this.toParticipant(ejectedParticipant)], e.sessionId));
+                            [this.toParticipant(ejectedParticipant)], e.sessionId));
                 }
             }
         } catch (e) {
@@ -797,33 +805,33 @@ export class ConversationImpl extends Conversation implements IDisposable {
         }
     }
 
-    private close(dispose: boolean): void {
-         try {
-             this.privIsConnected = false;
-             this.privConversationRecognizerConnection?.closeConnection();
-             this.privConversationRecognizerConnection?.close();
-             this.privConversationRecognizer.close();
-             this.privConversationRecognizerConnection = undefined;
-             this.privConversationRecognizer = undefined;
-             this.privConversationTranslator?.dispose();
-         } catch (e) {
-             // ignore error
-         }
-         if (dispose) {
-            this.dispose();
-         }
-     }
+    private async close(dispose: boolean): Promise<void> {
+        try {
+            this.privIsConnected = false;
+            await this.privConversationRecognizerConnection?.closeConnection();
+            this.privConversationRecognizerConnection?.close();
+            await this.privConversationRecognizer.close();
+            this.privConversationRecognizerConnection = undefined;
+            this.privConversationRecognizer = undefined;
+            this.privConversationTranslator?.dispose();
+        } catch (e) {
+            // ignore error
+        }
+        if (dispose) {
+            await this.dispose();
+        }
+    }
 
-     /** Helpers */
-     private get canSend(): boolean {
-         return this.privIsConnected && !this.privParticipants.me?.isMuted;
-     }
+    /** Helpers */
+    private get canSend(): boolean {
+        return this.privIsConnected && !this.privParticipants.me?.isMuted;
+    }
 
-     private get canSendAsHost(): boolean {
-         return this.privIsConnected && this.privParticipants.me?.isHost;
-     }
+    private get canSendAsHost(): boolean {
+        return this.privIsConnected && this.privParticipants.me?.isHost;
+    }
 
-     private handleCallback(cb: any, err: any): void {
+    private handleCallback(cb: any, err: any): void {
         if (!!cb) {
             try {
                 cb();
@@ -834,9 +842,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             }
             cb = undefined;
         }
-     }
+    }
 
-     private handleError(error: any, err: any): void {
+    private handleError(error: any, err: any): void {
         if (!!err) {
             if (error instanceof Error) {
                 const typedError: Error = error as Error;
@@ -848,21 +856,21 @@ export class ConversationImpl extends Conversation implements IDisposable {
         }
     }
 
-     /** Participant Helpers */
-     private toParticipants(includeHost: boolean): Participant[] {
+    /** Participant Helpers */
+    private toParticipants(includeHost: boolean): Participant[] {
 
-         const participants: Participant[] = this.privParticipants.participants.map((p: IInternalParticipant) => {
-             return this.toParticipant(p);
-         });
-         if (!includeHost) {
-             return participants.filter((p: Participant) => p.isHost === false);
-         } else {
-             return participants;
-         }
-     }
+        const participants: Participant[] = this.privParticipants.participants.map((p: IInternalParticipant) => {
+            return this.toParticipant(p);
+        });
+        if (!includeHost) {
+            return participants.filter((p: Participant) => p.isHost === false);
+        } else {
+            return participants;
+        }
+    }
 
-     private toParticipant(p: IInternalParticipant): Participant {
-         return new Participant(p.id, p.avatar, p.displayName, p.isHost, p.isMuted, p.isUsingTts, p.preferredLanguage);
-     }
+    private toParticipant(p: IInternalParticipant): Participant {
+        return new Participant(p.id, p.avatar, p.displayName, p.isHost, p.isMuted, p.isUsingTts, p.preferredLanguage);
+    }
 
 }

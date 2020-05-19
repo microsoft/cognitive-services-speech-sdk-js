@@ -551,9 +551,9 @@ describe("Connection URL Tests", () => {
         });
     });
 
-    afterEach(() => {
+    afterEach(async () => {
         if (undefined !== detachObject) {
-            detachObject.detach();
+            await detachObject.detach();
             detachObject = undefined;
         }
 

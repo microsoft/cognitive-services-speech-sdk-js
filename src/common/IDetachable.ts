@@ -2,5 +2,5 @@
 // Licensed under the MIT license.
 
 export interface IDetachable {
-    detach(): void;
+    detach(): Promise<void>;
 }

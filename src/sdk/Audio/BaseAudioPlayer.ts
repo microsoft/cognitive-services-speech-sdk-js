@@ -43,11 +43,19 @@ export class BaseAudioPlayer {
     /**
      * stops audio and clears the buffers
      */
-    public stopAudio(): void {
+    public stopAudio(cb?: () => void, err?: (error: string) => void): void {
         if (this.audioContext !== null) {
             this.samples = new Float32Array();
             clearInterval(this.autoUpdateBufferTimer);
-            this.audioContext.close();
+            this.audioContext.close().then(() => {
+                if (!!cb) {
+                    cb();
+                }
+            }, (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
             this.audioContext = null;
         }
     }
@@ -62,8 +70,8 @@ export class BaseAudioPlayer {
             this.createAudioContext();
             const timerPeriod = 200;
             this.autoUpdateBufferTimer = setInterval(() => {
-                                            this.updateAudioBuffer();
-                                        }, timerPeriod);
+                this.updateAudioBuffer();
+            }, timerPeriod);
         }
     }
 

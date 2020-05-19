@@ -65,11 +65,11 @@ test("Push segments into small blocks", (done: jest.DoneCallback) => {
                 } else {
                     done();
                 }
-            });
+            }, (error: string) => done.fail(error));
         };
 
         readLoop();
-    });
+    }, (error: string) => done.fail(error));
 });
 
 test("Stream returns all data when closed", (done: jest.DoneCallback) => {
@@ -116,11 +116,11 @@ test("Stream returns all data when closed", (done: jest.DoneCallback) => {
                     done.fail(error);
                 }
 
-            });
+            }, (error: string) => done.fail(error));
         };
 
         readLoop();
-    });
+    }, (error: string) => done.fail(error));
 });
 
 test("Stream blocks when not closed", (done: jest.DoneCallback) => {
@@ -184,11 +184,11 @@ test("Stream blocks when not closed", (done: jest.DoneCallback) => {
                     done.fail(error);
                 }
 
-            });
+            }, (error: string) => done.fail(error));
         };
 
         readLoop();
-    });
+    }, (error: string) => done.fail(error));
 });
 
 test("nonAligned data is fine", (done: jest.DoneCallback) => {
@@ -232,9 +232,9 @@ test("nonAligned data is fine", (done: jest.DoneCallback) => {
                     done.fail(error);
                 }
 
-            });
+            }, (error: string) => done.fail(error));
         };
 
         readLoop();
-    });
+    }, (error: string) => done.fail(error));
 });

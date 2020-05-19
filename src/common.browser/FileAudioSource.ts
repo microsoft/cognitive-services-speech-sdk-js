@@ -81,11 +81,11 @@ export class FileAudioSource implements IAudioSource {
             (streamReader: StreamReader<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
                 return {
-                    detach: () => {
-                        streamReader.close();
+                    detach: async () => {
+                        await streamReader.close();
                         delete this.privStreams[audioNodeId];
                         this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
-                        this.turnOff();
+                        return this.turnOff();
                     },
                     id: () => {
                         return audioNodeId;

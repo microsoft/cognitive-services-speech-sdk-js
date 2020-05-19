@@ -45,6 +45,8 @@ test("PullAudioOutputStreamImpl basic test", (done: jest.DoneCallback) => {
             done.fail(error);
         }
         done();
+    }, (error: string) => {
+        done.fail(error);
     });
 });
 
@@ -88,6 +90,8 @@ test("PullAudioOutputStreamImpl multiple writes read after close", (done: jest.D
             } else {
                 done();
             }
+        }, (error: string) => {
+            done.fail(error);
         });
     };
 
@@ -129,6 +133,8 @@ test("PullAudioOutputStreamImpl multiple writes and reads", (done: jest.DoneCall
             } else {
                 done();
             }
+        }, (error: string) => {
+            done.fail(error);
         });
     };
 

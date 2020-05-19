@@ -328,9 +328,17 @@ export class SpeechRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public async close(): Promise<void> {
+    public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
-        await this.dispose(true);
+        this.dispose(true).then(() => {
+            if (!!cb) {
+                cb();
+            }
+        }, (error: string) => {
+            if (!!errorCb) {
+                errorCb(error);
+            }
+        });
     }
 
     /**

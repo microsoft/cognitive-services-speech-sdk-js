@@ -95,7 +95,7 @@ export class Queue<TItem> implements IQueue<TItem> {
         return this.privSubscribers == null;
     }
 
-    public drainAndDispose = (pendingItemProcessor: (pendingItemInQueue: TItem) => void, reason?: string): Promise<void> => {
+    public async drainAndDispose(pendingItemProcessor: (pendingItemInQueue: TItem) => void, reason?: string): Promise<void> {
         if (!this.isDisposed() && !this.privIsDisposing) {
             this.privDisposeReason = reason;
             this.privIsDisposing = true;
@@ -124,7 +124,7 @@ export class Queue<TItem> implements IQueue<TItem> {
             }
 
             for (const detachable of this.privDetachables) {
-                detachable.detach();
+                await detachable.detach();
             }
 
             if (this.privPromiseStore.length() > 0 && pendingItemProcessor) {
@@ -150,8 +150,8 @@ export class Queue<TItem> implements IQueue<TItem> {
         return Promise.resolve(undefined);
     }
 
-    public dispose = (reason?: string): void => {
-        this.drainAndDispose(null, reason);
+    public async dispose(reason?: string): Promise<void> {
+        await this.drainAndDispose(null, reason);
     }
 
     private drain = (): void => {

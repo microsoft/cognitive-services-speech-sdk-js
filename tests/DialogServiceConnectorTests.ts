@@ -266,7 +266,7 @@ describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
             done();
         };
 
-        connection.openConnection();
+        connection.openConnection().catch((error: string) => done.fail(error));
 
         WaitForCondition(() => {
             return connected;
@@ -963,7 +963,7 @@ describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
         for (let j = 0; j < 5; j++) {
             const message: any = { speak: "This is speech", text: `Message ${j}`, type: "message" };
             connector.sendActivityAsync(message);
-            sleep(100);
+            sleep(100).catch();
         }
 
         // TODO improve, needs a more accurate verification

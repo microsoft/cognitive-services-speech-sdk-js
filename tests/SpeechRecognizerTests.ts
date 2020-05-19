@@ -59,6 +59,8 @@ afterEach(async (done: jest.DoneCallback) => {
         console.info("End Time: " + new Date(Date.now()).toLocaleString());
 
         done();
+    }, (error: string) => {
+        done.fail(error);
     });
 });
 
@@ -1935,7 +1937,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         afterEach(() => {
             if (undefined !== detachObject) {
-                detachObject.detach();
+                detachObject.detach().catch((error: string) => {
+                    throw new Error(error);
+                });
                 detachObject = undefined;
             }
 
@@ -2294,12 +2298,12 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
         done();
     };
 
-    connection.openConnection();
+    connection.openConnection().catch((error: string) => done.fail(error));
 
     WaitForCondition(() => {
         return connected;
     }, () => {
-        connection.closeConnection();
+        connection.closeConnection().catch((error: string) => done.fail(error));
     });
 });
 
@@ -2739,7 +2743,7 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
     WaitForCondition(() => {
         return recoCount === 1;
     }, () => {
-        connection.closeConnection();
+        connection.closeConnection().catch((error: string) => done.fail(error));
     });
 
 }, 10000);
@@ -2831,7 +2835,7 @@ test("Open during reco has no effect.", (done: jest.DoneCallback) => {
     WaitForCondition(() => {
         return recoCount === 1;
     }, () => {
-        connection.openConnection();
+        connection.openConnection().catch((error: string) => done.fail(error));
         sendSilence = false;
     });
 
@@ -2927,7 +2931,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
         }
     };
 
-    connection.openConnection();
+    connection.openConnection().catch((error: string) => done.fail(error));
 
     WaitForCondition(() => {
         return connected === 1;

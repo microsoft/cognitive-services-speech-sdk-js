@@ -194,10 +194,10 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         const streamReader = this.privStream.getReader();
         this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
         return {
-            detach: () => {
-                streamReader.close();
+            detach: async () => {
+                await streamReader.close();
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
-                this.turnOff();
+                return this.turnOff();
             },
             id: () => {
                 return audioNodeId;
@@ -351,7 +351,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
             detach: () => {
                 this.privCallback.close();
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
-                this.turnOff();
+                return this.turnOff();
             },
             id: () => {
                 return audioNodeId;
