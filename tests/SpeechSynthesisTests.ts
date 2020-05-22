@@ -2,12 +2,12 @@
 // Licensed under the MIT license.
 
 import * as fs from "fs";
+import * as request from "request";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
-import {Events, EventType, InvalidOperationError} from "../src/common/Exports";
+import { Events, EventType, InvalidOperationError } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import WaitForCondition from "./Utilities";
-import * as request from "request";
 
 let objsToClose: any[];
 
@@ -595,7 +595,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
             objsToClose.push(s);
 
-            let r: sdk.SpeechSynthesisResult;
             s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
                 // tslint:disable-next-line:no-console
                 console.info("speaking text finished.");
