@@ -10,3 +10,5 @@ export * from "./WebsocketConnection";
 export * from "./WebsocketMessageAdapter";
 export * from "./ReplayableAudioNode";
 export * from "./ProxyInfo";
+export * from "./RestMessageAdapter";
+export * from "./RestConfigFactory";

@@ -268,15 +268,6 @@ export const ConversationTranslatorCommandTypes = {
 };
 
 /**
- * HTTP request helper
- */
-export interface IRequestOptions {
-    headers?: {[key: string]: string};
-    ignoreCache?: boolean;
-    timeout?: number;
-}
-
-/**
  * HTTP response helper
  */
 export interface IResponse {
