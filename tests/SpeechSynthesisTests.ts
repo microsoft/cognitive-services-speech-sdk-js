@@ -4,7 +4,11 @@
 import * as fs from "fs";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
-import {Events, EventType, InvalidOperationError} from "../src/common/Exports";
+import {
+    Events,
+    EventType,
+    InvalidOperationError
+} from "../src/common/Exports";
 import { Settings } from "./Settings";
 import WaitForCondition from "./Utilities";
 

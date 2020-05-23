@@ -101,7 +101,6 @@ export class SynthesisTurn {
         }
     }
     private privIsDisposed: boolean = false;
-    private privAudioNodeId: string;
     private privAuthFetchEventId: string;
     private privIsSynthesizing: boolean = false;
     private privIsSynthesisEnded: boolean = false;
@@ -121,7 +120,6 @@ export class SynthesisTurn {
 
     constructor() {
         this.privRequestId = createNoDashGuid();
-        this.privAudioNodeId = createNoDashGuid();
         this.privTurnDeferral = new Deferred<boolean>();
 
         // We're not in a turn, so resolve.
