@@ -1,16 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IStringDictionary, IErrorMessages } from "../../common/Exports";
-import { Contracts } from "../../sdk/Contracts";
-import { PropertyCollection, PropertyId } from "../../sdk/Exports";
-import { IConversationResponseError, IInternalConversation, IResponse } from "./ConversationTranslatorInterfaces";
-import { ConversationConnectionConfig } from "./ConversationConnectionConfig";
-import { extractHeaderValue, request } from "./ConversationUtils";
 import {
     IRequestOptions,
     IRestParams,
 } from "../../common.browser/RestConfigFactory";
+import { IErrorMessages, IStringDictionary } from "../../common/Exports";
+import { Contracts } from "../../sdk/Contracts";
+import { PropertyCollection, PropertyId } from "../../sdk/Exports";
+import { ConversationConnectionConfig } from "./ConversationConnectionConfig";
+import { IConversationResponseError, IInternalConversation, IResponse } from "./ConversationTranslatorInterfaces";
+import { extractHeaderValue, request } from "./ConversationUtils";
 
 export class ConversationManager {
 

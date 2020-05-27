@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { IRequestOptions, RestConfigFactory } from "../../common.browser/RestConfigFactory";
 import { Promise, PromiseResult } from "../../common/Promise";
 import { Callback } from "../../sdk/Transcription/IConversation";
-import { IRequestOptions, RestConfigFactory } from "../../common.browser/RestConfigFactory";
 import { IResponse } from "./ConversationTranslatorInterfaces";
 
 /**

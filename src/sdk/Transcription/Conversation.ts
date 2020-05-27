@@ -3,10 +3,10 @@
 // Multi-device Conversation is a Preview feature.
 
 import {
+    ConversationConnectionConfig,
     ConversationManager,
     ConversationReceivedTranslationEventArgs,
     ConversationTranslatorCommandTypes,
-    ConversationConnectionConfig,
     ConversationTranslatorMessageTypes,
     ConversationTranslatorRecognizer,
     IInternalConversation,

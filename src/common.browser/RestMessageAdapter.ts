@@ -23,20 +23,20 @@ export interface IRestResponse {
     headers: string;
 }
 
-//accept rest operations via request method and return abstracted objects from server response
+// accept rest operations via request method and return abstracted objects from server response
 export class RestMessageAdapter {
 
     private privConnectionId: string;
     private privUri: string;
     private privTimeout: number;
-    private privIgnoreCache: Boolean;
+    private privIgnoreCache: boolean;
     private privHeaders: { [key: string]: string; };
 
     public constructor(
         uri: string,
         connectionId: string,
         timeout: number,
-        ignoreCache: Boolean,
+        ignoreCache: boolean,
         headers: { [key: string]: string; }) {
 
         if (!uri) {
@@ -50,7 +50,8 @@ export class RestMessageAdapter {
         this.privIgnoreCache = ignoreCache;
     }
 
-    protected request(method: RestRequestType,
+    protected request(
+        method: RestRequestType,
         queryParams: any = {},
         body: any = null,
         ): Promise<IRestResponse> {

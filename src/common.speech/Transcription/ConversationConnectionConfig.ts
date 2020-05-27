@@ -3,13 +3,10 @@
 // Licensed under the MIT license.
 
 import {
-    IRequestOptions,
-    IRestParams,
     RestConfigFactory
 } from "../../common.browser/RestConfigFactory";
-import { IErrorMessages } from "../../common/Exports";
 
-export class ConversationConnectionConfig {
+export class ConversationConnectionConfig extends RestConfigFactory {
 
     private static readonly privHost: string = "dev.microsofttranslator.com";
     private static readonly privRestPath: string = "/capito/room";
@@ -19,18 +16,6 @@ export class ConversationConnectionConfig {
     private static readonly privWebSocketPath: string = "/capito/translate";
     private static readonly privSpeechHost: string = "{region}.s2s.speech.microsoft.com";
     private static readonly privSpeechPath: string = "/speech/translation/cognitiveservices/v1";
-
-    public static get requestOptions(): IRequestOptions {
-        return RestConfigFactory.requestOptions;
-    }
-
-    public static get configParams(): IRestParams {
-        return RestConfigFactory.configParams;
-    }
-
-    public static get restErrors(): IErrorMessages {
-        return RestConfigFactory.restErrors;
-    }
 
     public static get host(): string {
         return ConversationConnectionConfig.privHost;

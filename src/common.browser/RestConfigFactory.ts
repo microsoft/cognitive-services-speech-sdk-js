@@ -10,24 +10,22 @@ export interface IRequestOptions {
 }
 
 export interface IRestParams {
-    apiVersion: string,
-    authorization: string,
-    clientAppId: string,
-    correlationId: string,
-    languageCode: string,
-    nickname: string,
-    profanity: string,
-    requestId: string,
-    roomId: string,
-    sessionToken: string,
-    subscriptionKey: string,
-    subscriptionRegion: string,
-    token: string,
+    apiVersion: string;
+    authorization: string;
+    clientAppId: string;
+    correlationId: string;
+    languageCode: string;
+    nickname: string;
+    profanity: string;
+    requestId: string;
+    roomId: string;
+    sessionToken: string;
+    subscriptionKey: string;
+    subscriptionRegion: string;
+    token: string;
 }
 
-
 export class RestConfigFactory {
-    public constructor() {}
 
     public static get requestOptions(): IRequestOptions {
         return RestConfigFactory.privDefaultRequestOptions;
@@ -60,9 +58,9 @@ export class RestConfigFactory {
         permissionDeniedParticipant: "Invalid operation: only the host can {command} a participant.",
         permissionDeniedSend: "Invalid operation: the conversation is not in a connected state.",
         permissionDeniedStart: "Invalid operation: there is already an active conversation.",
-    }
+    };
 
-    private static readonly privDefaultParams: IRestParams = { 
+    private static readonly privDefaultParams: IRestParams = {
         apiVersion: "api-version",
         authorization: "Authorization",
         clientAppId: "X-ClientAppId",
@@ -78,13 +76,4 @@ export class RestConfigFactory {
         token: "X-CapitoToken",
     };
 
-    private static ConversationTranslatorConfig = {
-        apiVersion: "2.0",
-        defaultLanguageCode: "en-US",
-        defaultRequestOptions: RestConfigFactory.privDefaultRequestOptions,
-        params: RestConfigFactory.privDefaultParams,
-        host: "dev.microsofttranslator.com",
-        restPath: "/capito/room",
-        strings: RestConfigFactory.privRestErrors,
-    };
 }

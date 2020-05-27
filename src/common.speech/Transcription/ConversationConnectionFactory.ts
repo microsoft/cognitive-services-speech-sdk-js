@@ -7,8 +7,8 @@ import { Contracts } from "../../sdk/Contracts";
 import { PropertyId } from "../../sdk/Exports";
 import { ConnectionFactoryBase } from "../ConnectionFactoryBase";
 import { AuthInfo, RecognizerConfig } from "../Exports";
-import { ConversationWebsocketMessageFormatter } from "./ConversationWebsocketMessageFormatter";
 import { ConversationConnectionConfig } from "./ConversationConnectionConfig";
+import { ConversationWebsocketMessageFormatter } from "./ConversationWebsocketMessageFormatter";
 
 /**
  * Create a connection to the Conversation Translator websocket for sending instant messages and commands, and for receiving translated messages.
