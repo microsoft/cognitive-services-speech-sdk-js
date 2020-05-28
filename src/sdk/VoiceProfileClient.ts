@@ -90,7 +90,7 @@ export class VoiceProfileClient {
                 profileType,
                 lang,
                 ((result: IRestResponse) => {
-                    const response: { profileId: string } = JSON.parse(result.data);
+                    const response: { profileId: string } = result.json();
                     const profile = new VoiceProfile(response.profileId, profileType);
                     cb(profile);
                 }),
@@ -126,6 +126,16 @@ export class VoiceProfileClient {
         throw new Error("Not Yet Implemented");
     }
 
+    /**
+     * Included for compatibility
+     * @member VoiceProfileClient.prototype.close
+     * @function
+     * @public
+     */
+    public close(): void {
+        return;
+    }
+
     // Does class setup, swiped from Recognizer.
     protected implClientSetup(): void {
 
@@ -145,16 +155,6 @@ export class VoiceProfileClient {
                 this.privProperties);
 
         this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
-    }
-
-    /**
-     * Included for compatibility
-     * @member VoiceProfileClient.prototype.close
-     * @function
-     * @public
-     */
-    public close(): void {
-
     }
 
 }
