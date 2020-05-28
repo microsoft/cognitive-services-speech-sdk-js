@@ -45,7 +45,7 @@ export class SpeakerIdMessageAdapter {
      * @public
      * @returns {string} id of created profile.
      */
-    public createProfile(profileType: VoiceProfileType, lang: string, cb?: (result?: any) => void, err?: (result?: any) => void): void {
+    public createProfile(profileType: VoiceProfileType, lang: string, cb?: (result?: IRestResponse) => void, err?: (result?: string) => void): void {
         const uri = this.getOperationUri(profileType);
         this.privRestAdapter.request(RestRequestType.Post, uri, {}, { locale: lang }).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
             try {
@@ -55,7 +55,7 @@ export class SpeakerIdMessageAdapter {
                     }
                 } else if (promiseResult.isCompleted) {
                     if (!!cb) {
-                        cb();
+                        cb(promiseResult.result);
                     }
                 }
             } catch (e) {

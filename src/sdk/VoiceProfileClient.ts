@@ -90,13 +90,13 @@ export class VoiceProfileClient {
                 profileType,
                 lang,
                 ((result: IRestResponse) => {
-                    const dict: { profileId: string } = result.json<{ profileId: string }>();
-                    const profile = new VoiceProfile(dict.profileId, profileType);
+                    const response: { profileId: string } = JSON.parse(result.data);
+                    const profile = new VoiceProfile(response.profileId, profileType);
                     cb(profile);
                 }),
-                ((result: IRestResponse) => {
+                ((e: string) => {
                     if (!!err) {
-                        err(result.data);
+                        err(e);
                     }
                 })
             );
@@ -145,6 +145,16 @@ export class VoiceProfileClient {
                 this.privProperties);
 
         this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
+    }
+
+    /**
+     * Included for compatibility
+     * @member VoiceProfileClient.prototype.close
+     * @function
+     * @public
+     */
+    public close(): void {
+
     }
 
 }
