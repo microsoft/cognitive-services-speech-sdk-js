@@ -42,6 +42,8 @@ export * from "./ServiceMessages/SynthesisAudioMetadata";
 export * from "./SynthesisTurn";
 export * from "./SynthesisAdapterBase";
 export * from "./SynthesizerConfig";
+export * from "./SpeakerRecognitionConfig";
+export * from "./SpeakerIdMessageAdapter";
 
 export const OutputFormatPropertyName: string = "OutputFormat";
 export const CancellationErrorCodePropertyName: string = "CancellationErrorCode";

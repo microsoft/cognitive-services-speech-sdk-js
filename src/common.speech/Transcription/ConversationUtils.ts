@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IRequestOptions, RestConfigFactory } from "../../common.browser/RestConfigFactory";
+import { IRequestOptions, RestConfigBase } from "../../common.browser/RestConfigBase";
 import { Promise, PromiseResult } from "../../common/Promise";
 import { Callback } from "../../sdk/Transcription/IConversation";
 import { IResponse } from "./ConversationTranslatorInterfaces";
@@ -75,7 +75,7 @@ export function request(method: "get" | "post" | "delete",
                         options: IRequestOptions = {},
                         callback: any): any {
 
-    const defaultRequestOptions = RestConfigFactory.requestOptions;
+    const defaultRequestOptions = RestConfigBase.requestOptions;
 
     const ignoreCache = options.ignoreCache || defaultRequestOptions.ignoreCache;
     const headers = options.headers || defaultRequestOptions.headers;

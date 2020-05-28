@@ -13,6 +13,7 @@ export interface IRestParams {
     apiVersion: string;
     authorization: string;
     clientAppId: string;
+    contentTypeKey: string;
     correlationId: string;
     languageCode: string;
     nickname: string;
@@ -25,18 +26,18 @@ export interface IRestParams {
     token: string;
 }
 
-export class RestConfigFactory {
+export class RestConfigBase {
 
     public static get requestOptions(): IRequestOptions {
-        return RestConfigFactory.privDefaultRequestOptions;
+        return RestConfigBase.privDefaultRequestOptions;
     }
 
     public static get configParams(): IRestParams {
-        return RestConfigFactory.privDefaultParams;
+        return RestConfigBase.privDefaultParams;
     }
 
     public static get restErrors(): IErrorMessages {
-        return RestConfigFactory.privRestErrors;
+        return RestConfigBase.privRestErrors;
     }
 
     private static readonly privDefaultRequestOptions: IRequestOptions = {
@@ -64,6 +65,7 @@ export class RestConfigFactory {
         apiVersion: "api-version",
         authorization: "Authorization",
         clientAppId: "X-ClientAppId",
+        contentTypeKey: "Content-Type",
         correlationId: "X-CorrelationId",
         languageCode: "language",
         nickname: "nickname",

@@ -31,6 +31,7 @@ export { PropertyId } from "./PropertyId";
 export { Recognizer } from "./Recognizer";
 export { SpeechRecognizer } from "./SpeechRecognizer";
 export { IntentRecognizer } from "./IntentRecognizer";
+export { VoiceProfileType } from "./VoiceProfileType";
 export { TranslationRecognizer } from "./TranslationRecognizer";
 export { Translations } from "./Translations";
 export { NoMatchReason } from "./NoMatchReason";
@@ -53,6 +54,8 @@ export { ProfanityOption } from "./ProfanityOption";
 export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";
 export { ConnectionMessageEventArgs } from "./ConnectionMessageEventArgs";
 export { ConnectionMessage } from "./ConnectionMessage";
+export { VoiceProfile } from "./VoiceProfile";
+export { VoiceProfileClient } from "./VoiceProfileClient";
 export { Conversation,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,

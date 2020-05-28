@@ -3,10 +3,10 @@
 // Licensed under the MIT license.
 
 import {
-    RestConfigFactory
-} from "../../common.browser/RestConfigFactory";
+    RestConfigBase
+} from "../../common.browser/RestConfigBase";
 
-export class ConversationConnectionConfig extends RestConfigFactory {
+export class ConversationConnectionConfig extends RestConfigBase {
 
     private static readonly privHost: string = "dev.microsofttranslator.com";
     private static readonly privRestPath: string = "/capito/room";

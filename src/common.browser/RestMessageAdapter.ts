@@ -5,8 +5,8 @@ import {
     ArgumentNullError,
     Deferred,
     Promise,
-    PromiseHelper,
 } from "../common/Exports";
+import { IRequestOptions } from "./Exports";
 
 export enum RestRequestType {
     Get = "get",
@@ -26,32 +26,26 @@ export interface IRestResponse {
 // accept rest operations via request method and return abstracted objects from server response
 export class RestMessageAdapter {
 
-    private privConnectionId: string;
-    private privUri: string;
     private privTimeout: number;
     private privIgnoreCache: boolean;
     private privHeaders: { [key: string]: string; };
 
     public constructor(
-        uri: string,
-        connectionId: string,
-        timeout: number,
-        ignoreCache: boolean,
-        headers: { [key: string]: string; }) {
+        configParams: IRequestOptions,
+        ) {
 
-        if (!uri) {
-            throw new ArgumentNullError("uri");
+        if (!configParams) {
+            throw new ArgumentNullError("configParams");
         }
 
-        this.privConnectionId = connectionId;
-        this.privUri = uri;
-        this.privHeaders = headers;
-        this.privTimeout = timeout;
-        this.privIgnoreCache = ignoreCache;
+        this.privHeaders = configParams.headers;
+        this.privTimeout = configParams.timeout;
+        this.privIgnoreCache = configParams.ignoreCache;
     }
 
-    protected request(
+    public request(
         method: RestRequestType,
+        uri: string,
         queryParams: any = {},
         body: any = null,
         ): Promise<IRestResponse> {
@@ -59,7 +53,7 @@ export class RestMessageAdapter {
         const responseReceivedDeferral = new Deferred<IRestResponse>();
 
         const xhr = new XMLHttpRequest();
-        xhr.open(method, this.withQuery(this.privUri, queryParams), true);
+        xhr.open(method, this.withQuery(uri, queryParams), true);
 
         if (this.privHeaders) {
             Object.keys(this.privHeaders).forEach((key: any) => xhr.setRequestHeader(key, this.privHeaders[key]));
@@ -109,9 +103,9 @@ export class RestMessageAdapter {
             data: message || xhr.statusText,
             headers: xhr.getAllResponseHeaders(),
             json: <T>() => JSON.parse(message || ("\"" + xhr.statusText + "\"")) as T,
-          ok: false,
-          status: xhr.status,
-          statusText: xhr.statusText,
+            ok: false,
+            status: xhr.status,
+            statusText: xhr.statusText,
         };
     }
 

@@ -4,7 +4,7 @@
 import {
     IRequestOptions,
     IRestParams,
-} from "../../common.browser/RestConfigFactory";
+} from "../../common.browser/RestConfigBase";
 import { IErrorMessages, IStringDictionary } from "../../common/Exports";
 import { Contracts } from "../../sdk/Contracts";
 import { PropertyCollection, PropertyId } from "../../sdk/Exports";
