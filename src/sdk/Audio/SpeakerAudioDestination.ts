@@ -14,6 +14,7 @@ const MediaDurationPlaceholderSeconds = 60 * 30;
 const AudioFormatToMimeType: INumberDictionary<string> = {
     [AudioFormatTag.PCM]: "audio/wav",
     [AudioFormatTag.MP3]: "audio/mpeg",
+    [AudioFormatTag.Opus]: "audio/ogg",
 };
 
 /**
@@ -60,7 +61,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     }
 
     set format(format: AudioStreamFormat) {
-        if (typeof (AudioContext) !== "undefined") {
+        if (typeof (AudioContext) !== "undefined" || typeof ((window as any).webkitAudioContext) !== "undefined") {
             this.privFormat = format as AudioOutputFormatImpl;
             const mimeType: string = AudioFormatToMimeType[this.privFormat.formatTag];
             if (mimeType !== undefined && typeof(MediaSource) !== "undefined" && MediaSource.isTypeSupported(mimeType)) {
@@ -72,7 +73,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 this.privMediaSource.onsourceopen = (event: Event): void => {
                     this.privMediaSourceOpened = true;
                     this.privMediaSource.duration = MediaDurationPlaceholderSeconds;
-                    this.privSourceBuffer = this.privMediaSource.addSourceBuffer("audio/mpeg");
+                    this.privSourceBuffer = this.privMediaSource.addSourceBuffer(mimeType);
                     this.privSourceBuffer.onupdate = (_: Event) => {
                         this.updateSourceBuffer();
                     };

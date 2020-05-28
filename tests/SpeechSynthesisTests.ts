@@ -2,9 +2,10 @@
 // Licensed under the MIT license.
 
 import * as fs from "fs";
+import * as request from "request";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
-import {Events, EventType, InvalidOperationError} from "../src/common/Exports";
+import { Events, EventType, InvalidOperationError } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import WaitForCondition from "./Utilities";
 
@@ -390,7 +391,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         const ssml: string =
             `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
-<voice name='Microsoft Server Speech Text to Speech Voice (en-US, JessaRUS)'>hello world.</voice></speak>`;
+<voice name='Microsoft Server Speech Text to Speech Voice (en-US, AriaRUS)'>hello world.</voice></speak>`;
         s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
             // tslint:disable-next-line:no-console
             console.info("speaking ssml finished.");
@@ -556,6 +557,52 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             done();
         }, (e: string): void => {
             done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizer: authentication with authorization token", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizer authentication with authorization token");
+
+        const req = {
+            headers: {
+                "Content-Type": "application/json",
+                "Ocp-Apim-Subscription-Key": Settings.SpeechSubscriptionKey,
+            },
+            url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
+        };
+
+        let authToken: string;
+
+        request.post(req, (error: any, response: request.Response, body: any) => {
+            authToken = body;
+        });
+
+        WaitForCondition(() => {
+            return !!authToken;
+        }, () => {
+            const endpoint = "wss://" + Settings.SpeechRegion + ".tts.speech.microsoft.com/cognitiveservices/websocket/v1";
+
+            // note: we use an empty subscription key so that we use the authorization token later.
+            const config: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(endpoint));
+            objsToClose.push(config);
+
+            // now set the authentication token
+            config.authorizationToken = authToken;
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(config, null);
+            expect(s).not.toBeUndefined();
+
+            objsToClose.push(s);
+
+            s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+                // tslint:disable-next-line:no-console
+                console.info("speaking text finished.");
+                CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                done();
+            }, (e: string): void => {
+                done.fail(e);
+            });
         });
     });
 });
