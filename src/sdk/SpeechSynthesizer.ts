@@ -167,7 +167,7 @@ export class SpeechSynthesizer {
             ["en-GB"]: "Microsoft Server Speech Text to Speech Voice (en-GB, HazelRUS)",
             ["en-IE"]: "Microsoft Server Speech Text to Speech Voice (en-IE, Sean)",
             ["en-IN"]: "Microsoft Server Speech Text to Speech Voice (en-IN, PriyaRUS)",
-            ["en-US"]: "Microsoft Server Speech Text to Speech Voice (en-US, JessaRUS)",
+            ["en-US"]: "Microsoft Server Speech Text to Speech Voice (en-US, AriaRUS)",
             ["es-ES"]: "Microsoft Server Speech Text to Speech Voice (es-ES, HelenaRUS)",
             ["es-MX"]: "Microsoft Server Speech Text to Speech Voice (es-MX, HildaRUS)",
             ["fi-FI"]: "Microsoft Server Speech Text to Speech Voice (fi-FI, HeidiRUS)",
