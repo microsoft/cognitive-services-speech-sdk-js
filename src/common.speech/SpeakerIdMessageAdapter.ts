@@ -7,7 +7,7 @@ import {
 } from "../common.browser/Exports";
 import {
     createNoDashGuid,
-    PromiseResult
+    Promise,
 } from "../common/Exports";
 import { PropertyId, VoiceProfileType } from "../sdk/Exports";
 import { SpeakerRecognitionConfig } from "./Exports";
@@ -45,25 +45,10 @@ export class SpeakerIdMessageAdapter {
      * @public
      * @returns {string} id of created profile.
      */
-    public createProfile(profileType: VoiceProfileType, lang: string, cb?: (result?: IRestResponse) => void, err?: (result?: string) => void): void {
+    public createProfile(profileType: VoiceProfileType, lang: string):
+        Promise<IRestResponse> {
         const uri = this.getOperationUri(profileType);
-        this.privRestAdapter.request(RestRequestType.Post, uri, {}, { locale: lang }).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
-            try {
-                if (promiseResult.isError) {
-                    if (!!err) {
-                        err(promiseResult.error);
-                    }
-                } else if (promiseResult.isCompleted) {
-                    if (!!cb) {
-                        cb(promiseResult.result);
-                    }
-                }
-            } catch (e) {
-                if (!!err) {
-                    err(e);
-                }
-            }
-        });
+        return this.privRestAdapter.request(RestRequestType.Post, uri, {}, { locale: lang });
     }
 
     /**

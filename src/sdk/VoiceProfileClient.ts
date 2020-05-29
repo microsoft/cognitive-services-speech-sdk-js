@@ -8,6 +8,7 @@ import {
     SpeakerIdMessageAdapter,
     SpeakerRecognitionConfig,
 } from "../common.speech/Exports";
+import { PromiseResult } from "../common/Exports";
 import { Contracts } from "./Contracts";
 import {
     PropertyCollection,
@@ -85,32 +86,25 @@ export class VoiceProfileClient {
      * @param err - Callback invoked in case of an error.
      */
     public createProfile(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
-        try {
-            this.privAdapter.createProfile(
-                profileType,
-                lang,
-                ((result: IRestResponse) => {
-                    const response: { profileId: string } = result.json();
-                    const profile = new VoiceProfile(response.profileId, profileType);
-                    cb(profile);
-                }),
-                ((e: string) => {
+        this.privAdapter.createProfile(profileType, lang).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
+            try {
+                if (promiseResult.isError) {
                     if (!!err) {
-                        err(e);
+                        err(promiseResult.error);
                     }
-                })
-            );
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error);
+                } else if (promiseResult.isCompleted) {
+                    if (!!cb) {
+                        const response: { profileId: string } = promiseResult.result.json();
+                        const profile = new VoiceProfile(response.profileId, profileType);
+                        cb(profile);
+                    }
+                }
+            } catch (e) {
+                if (!!err) {
+                    err(e);
                 }
             }
-
-        }
+        });
     }
 
     /**
