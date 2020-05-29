@@ -4,7 +4,8 @@
 //
 
 import {
-    ServiceRecognizerBase, SynthesisAdapterBase,
+    ServiceRecognizerBase,
+    SynthesisAdapterBase,
 } from "../common.speech/Exports";
 import {
     ConnectionEvent,
@@ -16,11 +17,13 @@ import {
 import {
     ConnectionMessageImpl
 } from "./ConnectionMessage";
+import { Contracts } from "./Contracts";
 import {
     ConnectionEventArgs,
     ConnectionMessageEventArgs,
     Recognizer,
-    ServiceEventArgs, SpeechSynthesizer,
+    ServiceEventArgs,
+    SpeechSynthesizer,
 } from "./Exports";
 
 /**
@@ -34,38 +37,9 @@ import {
  * If the Recognizer needs to connect or disconnect to service, it will
  * setup or shutdown the connection independently. In this case the Connection will be notified by change of connection
  * status via Connected/Disconnected events.
- * Added in version 1.2.0.
+ * Added in version 1.2.1.
  */
 export class Connection {
-
-    /**
-     * Any message from service that is not being processed by any other top level recognizers.
-     *
-     * Will be removed in 2.0.
-     */
-    public receivedServiceMessage: (args: ServiceEventArgs) => void;
-
-    /**
-     * Any message received from the Speech Service.
-     */
-    public messageReceived: (args: ConnectionMessageEventArgs) => void;
-
-    /**
-     * Any message sent to the Speech Service.
-     */
-    public messageSent: (args: ConnectionMessageEventArgs) => void;
-
-    /**
-     * The Connected event to indicate that the recognizer is connected to service.
-     */
-    public connected: (args: ConnectionEventArgs) => void;
-
-    /**
-     * The Diconnected event to indicate that the recognizer is disconnected from service.
-     */
-    public disconnected: (args: ConnectionEventArgs) => void;
-    private privServiceRecognizer: ServiceRecognizerBase;
-    private privSynthesisAdapter: SynthesisAdapterBase;
     private privInternalData: ServiceRecognizerBase | SynthesisAdapterBase;
     private privEventListener: IDetachable;
     private privServiceEventListener: IDetachable;
@@ -80,7 +54,6 @@ export class Connection {
 
         const ret: Connection = new Connection();
 
-        ret.privServiceRecognizer = recoBase;
         ret.privInternalData = recoBase;
         ret.setupEvents();
         return ret;
@@ -96,7 +69,6 @@ export class Connection {
 
         const ret: Connection = new Connection();
 
-        ret.privSynthesisAdapter = synthBase;
         ret.privInternalData = synthBase;
         ret.setupEvents();
         return ret;
@@ -121,12 +93,64 @@ export class Connection {
      * If closeConnection() is called during recognition, recognition will fail and cancel with an error.
      */
     public closeConnection(): void {
-        if (this.privServiceRecognizer !== undefined) {
-            this.privServiceRecognizer.disconnect();
-        } else if (this.privSynthesisAdapter !== undefined) {
+        if (this.privInternalData instanceof SynthesisAdapterBase) {
             throw new Error("Disconnecting a synthesizer's connection is currently not supported");
+        } else {
+            (this.privInternalData as ServiceRecognizerBase).disconnect();
         }
     }
+
+    /**
+     * Appends a parameter in a message to service.
+     * Added in version 1.12.1.
+     * @param="path" The path of the network message.
+     * @param="propertyName" Name of the property
+     * @param="propertyValue" Value of the property. This is a json string.
+     */
+    public setMessageProperty(path: string, propertyName: string, propertyValue: string): void {
+        Contracts.throwIfNullOrWhitespace(propertyName, "propertyName");
+
+        if (this.privInternalData instanceof ServiceRecognizerBase) {
+            if (path.toLowerCase() !== "speech.context") {
+                throw new Error("Only speech.context message property sets are currently supported for recognizer");
+            } else {
+                (this.privInternalData as ServiceRecognizerBase).speechContext.setSection(propertyName, propertyValue);
+            }
+        } else if (this.privInternalData instanceof SynthesisAdapterBase) {
+            if (path.toLowerCase() !== "synthesis.context") {
+                throw new Error("Only synthesis.context message property sets are currently supported for synthesizer");
+            } else {
+                (this.privInternalData as SynthesisAdapterBase).synthesisContext.setSection(propertyName, propertyValue);
+            }
+        }
+    }
+
+    /**
+     * Any message from service that is not being processed by any other top level recognizers.
+     *
+     * Will be removed in 2.0.
+     */
+    public receivedServiceMessage: (args: ServiceEventArgs) => void;
+
+    /**
+     * Any message received from the Speech Service.
+     */
+    public messageReceived: (args: ConnectionMessageEventArgs) => void;
+
+    /**
+     * Any message sent to the Speech Service.
+     */
+    public messageSent: (args: ConnectionMessageEventArgs) => void;
+
+    /**
+     * The Connected event to indicate that the recognizer is connected to service.
+     */
+    public connected: (args: ConnectionEventArgs) => void;
+
+    /**
+     * The Disconnected event to indicate that the recognizer is disconnected from service.
+     */
+    public disconnected: (args: ConnectionEventArgs) => void;
 
     /**
      * Dispose of associated resources.
