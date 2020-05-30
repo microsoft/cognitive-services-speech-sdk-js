@@ -378,6 +378,7 @@ export abstract class SpeechConfig {
      * @member SpeechConfig.prototype.speechSynthesisOutputFormat
      * @function
      * @public
+     * The default format is Audio16Khz64KBitRateMonoMp3 for browser and Riff16Khz16BitMonoPcm for Node.JS
      * Added in version 1.11.0.
      */
     public abstract set speechSynthesisOutputFormat(format: SpeechSynthesisOutputFormat);
