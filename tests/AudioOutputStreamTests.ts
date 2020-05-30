@@ -88,7 +88,7 @@ test("PullAudioOutputStreamImpl multiple writes read after close", (done: jest.D
     const format = AudioOutputFormatImpl.getDefaultOutputFormat();
     ps.format = format;
 
-    const bufferSize = format.avgBytesPerSec / 10;
+    const bufferSize = Math.floor(format.avgBytesPerSec / 10);
     const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
     const abView: Uint8Array = new Uint8Array(ab);
     for (let i: number = 0; i < bufferSize * 4; i++) {
@@ -136,7 +136,7 @@ test("PullAudioOutputStreamImpl multiple writes and reads", (done: jest.DoneCall
     const format = AudioOutputFormatImpl.getDefaultOutputFormat();
     ps.format = format;
 
-    const bufferSize = format.avgBytesPerSec / 10;
+    const bufferSize = Math.floor(format.avgBytesPerSec / 10);
 
     const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
     const abView: Uint8Array = new Uint8Array(ab);
@@ -183,7 +183,7 @@ test("PullAudioOutputStreamImpl reads before writing", (done: jest.DoneCallback)
     const format = AudioOutputFormatImpl.getDefaultOutputFormat();
     ps.format = format;
 
-    const bufferSize = format.avgBytesPerSec / 10;
+    const bufferSize = Math.floor(format.avgBytesPerSec / 10);
 
     setTimeout(() => {
         setTimeout(() => {
@@ -208,10 +208,10 @@ test("PullAudioOutputStreamImpl reads before writing", (done: jest.DoneCallback)
 
 test("PullAudioOutputStreamImpl read all audio data in single read", (done: jest.DoneCallback) => {
     const ps: PullAudioOutputStreamImpl = new PullAudioOutputStreamImpl();
-    const format = AudioOutputFormatImpl.getDefaultOutputFormat();
+    const format = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString("raw-24khz-16bit-mono-pcm");
     ps.format = format;
 
-    const bufferSize = format.avgBytesPerSec / 10;
+    const bufferSize = Math.floor(format.avgBytesPerSec / 10);
     const ab: ArrayBuffer = new ArrayBuffer(bufferSize * 4);
     const abView: Uint8Array = new Uint8Array(ab);
     for (let k: number = 0; k < 1500; k ++) { // 10 minutes data
@@ -226,10 +226,14 @@ test("PullAudioOutputStreamImpl read all audio data in single read", (done: jest
     const audioBuffer = new ArrayBuffer(bufferSize * 6000);
 
     ps.read(audioBuffer).onSuccessContinueWith((bytesRead: number) => {
-        expect(bytesRead).toEqual(bufferSize * 6000);
-        const readView: Uint8Array = new Uint8Array(audioBuffer);
-        for (let i: number = 0; i < bytesRead - 1000; i += 997) { // not check all to avoid long running.
-            expect(readView[i]).toEqual(i % 256);
+        try {
+            expect(bytesRead).toEqual(bufferSize * 6000);
+            const readView: Uint8Array = new Uint8Array(audioBuffer);
+            for (let i: number = 0; i < bytesRead - 1000; i += 997) { // not check all to avoid long running.
+                expect(readView[i]).toEqual(i % 256);
+            }
+        } catch (error) {
+            done.fail(error);
         }
         done();
     });
