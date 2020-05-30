@@ -147,7 +147,7 @@ export class SpeechSynthesizer {
         this.privSynthesizing = false;
         this.privConnectionFactory = new SpeechSynthesisConnectionFactory();
         this.synthesisRequestQueue = new Queue<SynthesisRequest>();
-        this.implCommonRSynthesizeSetup();
+        this.implCommonSynthesizeSetup();
     }
 
     public static buildSsml(text: string, properties: PropertyCollection): string {
@@ -305,7 +305,7 @@ export class SpeechSynthesizer {
                 synthesizerConfig, this, this.audioConfig as AudioOutputConfigImpl);
         }
 
-    protected implCommonRSynthesizeSetup(): void {
+    protected implCommonSynthesizeSetup(): void {
 
         let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
         let osName = "unknown";
