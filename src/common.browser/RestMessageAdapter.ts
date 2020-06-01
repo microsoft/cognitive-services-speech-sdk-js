@@ -12,6 +12,7 @@ export enum RestRequestType {
     Get = "get",
     Post = "post",
     Delete = "delete",
+    File = "file",
 }
 
 export interface IRestResponse {
@@ -43,6 +44,10 @@ export class RestMessageAdapter {
         this.privIgnoreCache = configParams.ignoreCache;
     }
 
+    public setHeaders(key: string, value: string ): void {
+        this.privHeaders[key] = value;
+    }
+
     public request(
         method: RestRequestType,
         uri: string,
@@ -53,7 +58,8 @@ export class RestMessageAdapter {
         const responseReceivedDeferral = new Deferred<IRestResponse>();
 
         const xhr = new XMLHttpRequest();
-        xhr.open(method, this.withQuery(uri, queryParams), true);
+        const requestCommand = method === RestRequestType.File ? "post" : method;
+        xhr.open(requestCommand, this.withQuery(uri, queryParams), true);
 
         if (this.privHeaders) {
             Object.keys(this.privHeaders).forEach((key: any) => xhr.setRequestHeader(key, this.privHeaders[key]));
@@ -77,7 +83,10 @@ export class RestMessageAdapter {
             responseReceivedDeferral.resolve(this.errorResponse(xhr, "Request took longer than expected."));
         };
 
-        if (method === "post" && body) {
+        if (method === RestRequestType.File && body) {
+            xhr.setRequestHeader("Content-Type", "multipart/form-data");
+            xhr.send(body);
+        } else if (method === RestRequestType.Post && body) {
             xhr.setRequestHeader("Content-Type", "application/json");
             xhr.send(JSON.stringify(body));
         } else {

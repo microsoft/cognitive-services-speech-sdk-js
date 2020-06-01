@@ -55,6 +55,7 @@ export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";
 export { ConnectionMessageEventArgs } from "./ConnectionMessageEventArgs";
 export { ConnectionMessage } from "./ConnectionMessage";
 export { VoiceProfile } from "./VoiceProfile";
+export { VoiceProfileEnrollmentResult } from "./VoiceProfileEnrollmentResult";
 export { VoiceProfileClient } from "./VoiceProfileClient";
 export { Conversation,
     ConversationExpirationEventArgs,

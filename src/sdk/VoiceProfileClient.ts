@@ -1,19 +1,25 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IRestResponse } from "../common.browser/Exports";
+import {
+    FileAudioSource,
+    IRestResponse,
+} from "../common.browser/Exports";
 import {
     Context,
     OS,
     SpeakerIdMessageAdapter,
     SpeakerRecognitionConfig,
 } from "../common.speech/Exports";
-import { PromiseResult } from "../common/Exports";
+import { IAudioSource, PromiseResult } from "../common/Exports";
+import { AudioConfig, AudioConfigImpl } from "./audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
     PropertyCollection,
     PropertyId,
+    ResultReason,
     VoiceProfile,
+    VoiceProfileEnrollmentResult,
     VoiceProfileType,
 } from "./Exports";
 import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
@@ -107,6 +113,38 @@ export class VoiceProfileClient {
         });
     }
 
+    /**
+     * Create a speaker recognition voice profile
+     * @member VoiceProfileClient.prototype.createEnrollment
+     * @function
+     * @public
+     * @param {VoiceProfile} profile Voice Profile to create enrollment for
+     * @param {AudioConfig} audioConfig source info from which to create enrollment
+     * @param cb - Callback invoked once Enrollment request has been submitted.
+     * @param err - Callback invoked in case of an error.
+     */
+    public createEnrollment(profile: VoiceProfile, audioConfig: AudioConfig, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
+        const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
+        Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
+        this.privAdapter.createEnrollment(profile, configImpl).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
+            try {
+                if (promiseResult.isError) {
+                    if (!!err) {
+                        err(promiseResult.error);
+                    }
+                } else if (promiseResult.isCompleted) {
+                    if (!!cb) {
+                        const response: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(ResultReason.EnrolledVoiceProfile, promiseResult.result.data);
+                        cb(response);
+                    }
+                }
+            } catch (e) {
+                if (!!err) {
+                    err(e);
+                }
+            }
+        });
+    }
     /**
      * Delete a speaker recognition voice profile
      * @member VoiceProfileClient.prototype.deleteProfile

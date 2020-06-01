@@ -183,6 +183,10 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         return this.privId;
     }
 
+    public get file(): File {
+        return undefined;
+    }
+
     public turnOn(): Promise<boolean> {
         this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
         this.onEvent(new AudioSourceReadyEvent(this.privId));
@@ -344,6 +348,10 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
 
     public id(): string {
         return this.privId;
+    }
+
+    public get file(): File {
+        return undefined;
     }
 
     public turnOn(): Promise<boolean> {

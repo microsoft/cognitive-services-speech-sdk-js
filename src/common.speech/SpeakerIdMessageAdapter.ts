@@ -7,9 +7,10 @@ import {
 } from "../common.browser/Exports";
 import {
     createNoDashGuid,
+    IAudioSource,
     Promise,
 } from "../common/Exports";
-import { PropertyId, VoiceProfileType } from "../sdk/Exports";
+import { PropertyId, VoiceProfile, VoiceProfileType } from "../sdk/Exports";
 import { SpeakerRecognitionConfig } from "./Exports";
 
 /**
@@ -37,6 +38,7 @@ export class SpeakerIdMessageAdapter {
 
         this.privRestAdapter = new RestMessageAdapter(options);
     }
+
     /**
      * Sends create profile request to endpoint.
      * @function
@@ -49,6 +51,21 @@ export class SpeakerIdMessageAdapter {
         Promise<IRestResponse> {
         const uri = this.getOperationUri(profileType);
         return this.privRestAdapter.request(RestRequestType.Post, uri, {}, { locale: lang });
+    }
+    /**
+     * Sends create enrollment request to endpoint.
+     * @function
+     * @param {VoiceProfile} profileType - voice profile for which to create new enrollment.
+     * @param {IAudioSource} audioSource - audioSource from which to pull data to send
+     * @public
+     * @returns {VoiceProfileEnrollmentResult} result of enrollment request.
+     */
+    public createEnrollment(profile: VoiceProfile, audioSource: IAudioSource):
+        Promise<IRestResponse> {
+        this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
+
+        const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/enrollments";
+        return this.privRestAdapter.request(RestRequestType.File, uri, {shortAudio: "true"}, audioSource.file);
     }
 
     /**
@@ -67,4 +84,5 @@ export class SpeakerIdMessageAdapter {
         const dependency = profileType === VoiceProfileType.TextDependentVerification ? "text-dependent" : "text-independent";
         return this.privUri.replace("{mode}", mode).replace("{dependency}", dependency);
     }
+
 }

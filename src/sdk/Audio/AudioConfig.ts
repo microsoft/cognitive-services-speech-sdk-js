@@ -248,6 +248,15 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
     }
 
     /**
+     * @member AudioConfigImpl.prototype.file
+     * @function
+     * @public
+     */
+    public get file(): File {
+        return this.privSource.file;
+    }
+
+    /**
      * @member AudioConfigImpl.prototype.turnOn
      * @function
      * @public
