@@ -56,8 +56,10 @@ export class FileAudioSource implements IAudioSource {
         return this.privAudioFormatPromise;
     }
 
-    public get file(): File {
-        return this.privFile;
+    public get blob(): Promise<Blob> {
+        const blobDeferral: Deferred<Blob> = new Deferred<Blob>();
+        blobDeferral.resolve(this.privFile);
+        return blobDeferral.promise();
     }
 
     public turnOn = (): Promise<boolean> => {

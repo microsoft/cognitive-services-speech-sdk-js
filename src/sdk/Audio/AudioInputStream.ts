@@ -183,7 +183,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         return this.privId;
     }
 
-    public get file(): File {
+    public get blob(): Promise<Blob> {
         return undefined;
     }
 
@@ -350,7 +350,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
         return this.privId;
     }
 
-    public get file(): File {
+    public get blob(): Promise<Blob> {
         return undefined;
     }
 

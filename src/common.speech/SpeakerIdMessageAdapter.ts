@@ -7,8 +7,10 @@ import {
 } from "../common.browser/Exports";
 import {
     createNoDashGuid,
+    Deferred,
     IAudioSource,
     Promise,
+    PromiseResult,
 } from "../common/Exports";
 import { PropertyId, VoiceProfile, VoiceProfileType } from "../sdk/Exports";
 import { SpeakerRecognitionConfig } from "./Exports";
@@ -68,7 +70,14 @@ export class SpeakerIdMessageAdapter {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
         const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/enrollments";
-        return this.privRestAdapter.request(RestRequestType.File, uri, {shortAudio: "true"}, audioSource.file);
+        return audioSource.blob.continueWithPromise<IRestResponse>((result: PromiseResult<Blob>): Promise<IRestResponse> => {
+            if (result.isError) {
+                const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
+                response.resolve({ data: result.error } as IRestResponse);
+                return response.promise();
+            }
+            return this.privRestAdapter.request(RestRequestType.File, uri, { shortAudio: "true" }, result.result);
+        });
     }
 
     /**

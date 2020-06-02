@@ -78,8 +78,8 @@ export class MicAudioSource implements IAudioSource {
         return PromiseHelper.fromResult(MicAudioSource.AUDIOFORMAT);
     }
 
-    public get file(): File {
-        throw new Error("Mic input has no file attached");
+    public get blob(): Promise<Blob> {
+        throw new Error("Mic input has no blob attached");
     }
 
     public turnOn = (): Promise<boolean> => {
