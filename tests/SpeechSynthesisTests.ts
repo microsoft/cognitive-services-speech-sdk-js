@@ -177,6 +177,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         console.info("Name: testSpeechSynthesizerEvent1");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
+        speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, undefined);
         objsToClose.push(s);
@@ -278,6 +279,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         console.info("Name: testSpeechSynthesizerToFile");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
+        speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
 
         const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromAudioFileOutput("test.wav");
         expect(audioConfig).not.toBeUndefined();
@@ -519,6 +521,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         console.info("Name: testSpeechSynthesizer synthesis to pull audio output stream 2.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
+        speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
 
         const stream = sdk.AudioOutputStream.createPullStream();
         const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamOutput(stream);
@@ -556,7 +559,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             console.info("speaking text finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             s.close();
-            expect(stream.length).toEqual(result.audioData.byteLength - 44);
+            expect(stream.length).toEqual(result.audioData.byteLength);
             expect(stream.isClosed).toEqual(true);
             done();
         }, (e: string): void => {
