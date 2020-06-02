@@ -103,9 +103,9 @@ export class Connection {
     /**
      * Appends a parameter in a message to service.
      * Added in version 1.12.1.
-     * @param="path" The path of the network message.
-     * @param="propertyName" Name of the property
-     * @param="propertyValue" Value of the property. This is a json string.
+     * @param path The path of the network message.
+     * @param propertyName Name of the property
+     * @param propertyValue Value of the property. This is a json string.
      */
     public setMessageProperty(path: string, propertyName: string, propertyValue: string): void {
         Contracts.throwIfNullOrWhitespace(propertyName, "propertyName");
@@ -123,22 +123,6 @@ export class Connection {
                 (this.privInternalData as SynthesisAdapterBase).synthesisContext.setSection(propertyName, propertyValue);
             }
         }
-    }
-
-    /**
-     * Appends a parameter in a message to service.
-     * Added in version 1.12.1.
-     * @param path The path of the network message.
-     * @param propertyName Name of the property
-     * @param propertyValue Value of the property. This is a json string.
-     */
-    public setMessageProperty(path: string, propertyName: string, propertyValue: string): void {
-        if (path.toLowerCase() !== "speech.context") {
-            throw new Error("Only speech.context message property sets are currently supported");
-        }
-        Contracts.throwIfNullOrWhitespace(propertyName, "propertyName");
-
-        this.privServiceRecognizer.speechContext.setSection(propertyName, propertyValue);
     }
 
     /**
