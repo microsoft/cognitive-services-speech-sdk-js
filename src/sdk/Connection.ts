@@ -107,9 +107,9 @@ export class Connection {
     /**
      * Appends a parameter in a message to service.
      * Added in version 1.12.1.
-     * @param="path" The path of the network message.
-     * @param="propertyName" Name of the property
-     * @param = "propertyValue" Value of the property. This is a json string.
+     * @param path The path of the network message.
+     * @param propertyName Name of the property
+     * @param propertyValue Value of the property. This is a json string.
      */
     public setMessageProperty(path: string, propertyName: string, propertyValue: string): void {
         if (path.toLowerCase() !== "speech.context") {
