@@ -3,8 +3,20 @@
 
 import {
     ArgumentNullError,
+    ConnectionErrorEvent,
+    ConnectionEvent,
+    ConnectionMessage,
+    ConnectionMessageReceivedEvent,
+    ConnectionMessageSentEvent,
+    ConnectionOpenResponse,
+    createNoDashGuid,
     Deferred,
+    Events,
+    EventSource,
+    MessageType,
     Promise,
+    PromiseHelper,
+    Queue,
 } from "../common/Exports";
 import { IRequestOptions } from "./Exports";
 
@@ -24,15 +36,26 @@ export interface IRestResponse {
     headers: string;
 }
 
+interface ISendItem {
+    Message: ConnectionMessage;
+    RawMessage: XMLHttpRequest;
+    sendStatusDeferral: Deferred<boolean>;
+}
+
 // accept rest operations via request method and return abstracted objects from server response
 export class RestMessageAdapter {
 
     private privTimeout: number;
     private privIgnoreCache: boolean;
     private privHeaders: { [key: string]: string; };
+    private privConnectionEvents: EventSource<ConnectionEvent>;
+    private privConnectionId: string;
+    private privReceivedQueue: Queue<ConnectionMessage>;
+    private privSendQueue: Queue<ISendItem>;
 
     public constructor(
         configParams: IRequestOptions,
+        connectionId?: string
         ) {
 
         if (!configParams) {
@@ -42,10 +65,66 @@ export class RestMessageAdapter {
         this.privHeaders = configParams.headers;
         this.privTimeout = configParams.timeout;
         this.privIgnoreCache = configParams.ignoreCache;
+        this.privConnectionEvents = new EventSource<ConnectionEvent>();
+        this.privConnectionId = connectionId ? connectionId : createNoDashGuid();
     }
 
     public setHeaders(key: string, value: string ): void {
         this.privHeaders[key] = value;
+    }
+
+    public open(): Promise<ConnectionOpenResponse> {
+        const responseReceivedDeferral = new Deferred<ConnectionOpenResponse>();
+        const ontimeout = () => {
+            responseReceivedDeferral.resolve(new ConnectionOpenResponse(200, ""));
+        };
+        this.privSendQueue = new Queue<ISendItem>();
+        setTimeout(ontimeout, 20);
+        this.processSendQueue();
+        return responseReceivedDeferral.promise();
+    }
+
+    public send(message: ConnectionMessage): Promise<boolean> {
+        const messageSendStatusDeferral = new Deferred<boolean>();
+
+        const xhr = new XMLHttpRequest();
+        const requestCommand = message.headers.method === RestRequestType.File ? "post" : message.headers.method;
+        xhr.open(requestCommand, this.withQuery(message.headers.uri, message.headers.queryParams), true);
+
+        if (this.privHeaders) {
+            Object.keys(this.privHeaders).forEach((key: any) => xhr.setRequestHeader(key, this.privHeaders[key]));
+        }
+
+        if (this.privIgnoreCache) {
+            xhr.setRequestHeader("Cache-Control", "no-cache");
+        }
+
+        xhr.timeout = this.privTimeout;
+
+        xhr.onload = () => {
+            const received = this.xhrResultToMessage(xhr);
+            this.privReceivedQueue.enqueue(received);
+            this.onEvent(new ConnectionMessageReceivedEvent(this.privConnectionId, new Date().toISOString(), received));
+        };
+
+        xhr.onerror = () => {
+            this.onEvent(new ConnectionErrorEvent(this.privConnectionId, new Date().toISOString(), "Failed to make request"));
+        };
+
+        xhr.ontimeout = () => {
+            this.onEvent(new ConnectionErrorEvent(this.privConnectionId, new Date().toISOString(), "Request took longer than expected"));
+        };
+
+        this.privSendQueue.enqueue({
+            Message: message,
+            RawMessage: xhr,
+            sendStatusDeferral: messageSendStatusDeferral
+        });
+        return messageSendStatusDeferral.promise();
+    }
+
+    public read = (): Promise<ConnectionMessage> => {
+        return this.privReceivedQueue.dequeue();
     }
 
     public request(
@@ -96,6 +175,10 @@ export class RestMessageAdapter {
         return responseReceivedDeferral.promise();
     }
 
+    public get events(): EventSource<ConnectionEvent> {
+        return this.privConnectionEvents;
+    }
+
     private parseXHRResult(xhr: XMLHttpRequest): IRestResponse {
         return {
             data: xhr.responseText,
@@ -105,6 +188,10 @@ export class RestMessageAdapter {
             status: xhr.status,
             statusText: xhr.statusText,
         };
+    }
+
+    private xhrResultToMessage(xhr: XMLHttpRequest): ConnectionMessage {
+        return new ConnectionMessage(MessageType.Text, xhr.responseText);
     }
 
     private errorResponse(xhr: XMLHttpRequest, message: string | null = null): IRestResponse {
@@ -128,4 +215,57 @@ export class RestMessageAdapter {
             .map((k: any) => encodeURIComponent(k) + "=" + encodeURIComponent(params[k]))
             .join("&");
     }
+
+    private onEvent = (event: ConnectionEvent): void => {
+        this.privConnectionEvents.onEvent(event);
+        Events.instance.onEvent(event);
+    }
+
+    private processSendQueue = (): void => {
+        this.privSendQueue
+            .dequeue()
+            .on((sendItem: ISendItem) => {
+                // indicates we are draining the queue and it came with no message;
+                if (!sendItem) {
+                    return;
+                }
+
+                this.sendXHR(sendItem)
+                    .on((result: boolean) => {
+                        sendItem.sendStatusDeferral.resolve(result);
+                        this.processSendQueue();
+                    }, (sendError: string) => {
+                        sendItem.sendStatusDeferral.reject(sendError);
+                        this.processSendQueue();
+                    });
+            }, (error: string) => {
+                // do nothing
+            });
+    }
+
+    private sendXHR = (sendItem: ISendItem): Promise<boolean> => {
+        try {
+            // indicates we are draining the queue and it came with no message;
+            if (!sendItem) {
+                return PromiseHelper.fromResult(true);
+            }
+            if (sendItem.Message.headers.method === RestRequestType.File && sendItem.Message.body) {
+                sendItem.RawMessage.setRequestHeader("Content-Type", "multipart/form-data");
+                sendItem.RawMessage.send(sendItem.Message.body);
+            } else if (sendItem.Message.headers.method === RestRequestType.Post && sendItem.Message.body) {
+                sendItem.RawMessage.setRequestHeader("Content-Type", "application/json");
+                sendItem.RawMessage.send(JSON.stringify(sendItem.Message.body));
+            } else {
+                sendItem.RawMessage.send();
+            }
+
+            this.onEvent(new ConnectionMessageSentEvent(this.privConnectionId, new Date().toISOString(), sendItem.Message));
+
+            return PromiseHelper.fromResult(true);
+
+        } catch (e) {
+            return PromiseHelper.fromError<boolean>(`websocket send error: ${e}`);
+        }
+    }
+
 }

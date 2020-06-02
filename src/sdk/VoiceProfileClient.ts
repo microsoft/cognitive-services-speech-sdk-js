@@ -20,6 +20,7 @@ import {
     ResultReason,
     VoiceProfile,
     VoiceProfileEnrollmentResult,
+    VoiceProfileResult,
     VoiceProfileType,
 } from "./Exports";
 import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
@@ -145,17 +146,35 @@ export class VoiceProfileClient {
             }
         });
     }
+
     /**
      * Delete a speaker recognition voice profile
      * @member VoiceProfileClient.prototype.deleteProfile
      * @function
      * @public
-     * @param {string} profileId Id of Voice Profile to be deleted
+     * @param {VoiceProfile} profile Voice Profile to be deleted
      * @param cb - Callback invoked once Voice Profile has been deleted.
      * @param err - Callback invoked in case of an error.
      */
-    public deleteProfile(profileId: string, cb?: () => void, err?: (e: string) => void): void {
-        throw new Error("Not Yet Implemented");
+    public deleteProfile(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
+        this.privAdapter.deleteProfile(profile).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
+            try {
+                if (promiseResult.isError) {
+                    if (!!err) {
+                        err(promiseResult.error);
+                    }
+                } else if (promiseResult.isCompleted) {
+                    if (!!cb) {
+                        const response: VoiceProfileResult = new VoiceProfileResult(ResultReason.DeletedVoiceProfile);
+                        cb(response);
+                    }
+                }
+            } catch (e) {
+                if (!!err) {
+                    err(e);
+                }
+            }
+        });
     }
 
     /**
