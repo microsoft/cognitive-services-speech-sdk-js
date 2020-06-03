@@ -93,6 +93,19 @@ export class SpeakerIdMessageAdapter {
         return this.privRestAdapter.request(RestRequestType.Delete, uri, {});
     }
 
+    /**
+     * Sends reset profile request to endpoint.
+     * @function
+     * @param {VoiceProfile} profile - voice profile to reset enrollments for.
+     * @public
+     * @returns {Promise<IRestResponse>} rest response to reset request
+     */
+    public resetProfile(profile: VoiceProfile): Promise<IRestResponse> {
+
+        const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/reset";
+        return this.privRestAdapter.request(RestRequestType.Post, uri, {});
+    }
+
     private getOperationUri(profileType: VoiceProfileType): string {
 
         const mode = profileType === VoiceProfileType.TextIndependentIdentification ? "identification" : "verification";

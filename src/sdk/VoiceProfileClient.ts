@@ -158,22 +158,22 @@ export class VoiceProfileClient {
      */
     public deleteProfile(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
         this.privAdapter.deleteProfile(profile).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
-            try {
-                if (promiseResult.isError) {
-                    if (!!err) {
-                        err(promiseResult.error);
-                    }
-                } else if (promiseResult.isCompleted) {
-                    if (!!cb) {
-                        const response: VoiceProfileResult = new VoiceProfileResult(ResultReason.DeletedVoiceProfile);
-                        cb(response);
-                    }
-                }
-            } catch (e) {
-                if (!!err) {
-                    err(e);
-                }
-            }
+            this.handleResultCallbacks(promiseResult, cb, err);
+        });
+    }
+
+    /**
+     * Remove all enrollments for a speaker recognition voice profile
+     * @member VoiceProfileClient.prototype.resetProfile
+     * @function
+     * @public
+     * @param {VoiceProfile} profile Voice Profile to be reset
+     * @param cb - Callback invoked once Voice Profile has been reset.
+     * @param err - Callback invoked in case of an error.
+     */
+    public resetProfile(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
+        this.privAdapter.resetProfile(profile).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
+            this.handleResultCallbacks(promiseResult, cb, err);
         });
     }
 
@@ -208,4 +208,22 @@ export class VoiceProfileClient {
         this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
     }
 
+    private handleResultCallbacks(promiseResult: PromiseResult<IRestResponse>, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
+        try {
+            if (promiseResult.isError) {
+                if (!!err) {
+                    err(promiseResult.error);
+                }
+            } else if (promiseResult.isCompleted) {
+                if (!!cb) {
+                    const response: VoiceProfileResult = new VoiceProfileResult(ResultReason.DeletedVoiceProfile);
+                    cb(response);
+                }
+            }
+        } catch (e) {
+            if (!!err) {
+                err(e);
+            }
+        }
+    }
 }
