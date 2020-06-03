@@ -204,6 +204,10 @@ export class SpeechSynthesizer {
         };
 
         const language = properties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage, "en-US");
+        if (language.toLowerCase().startsWith("auto")) {
+            //return `<!--<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xmlns:emo='http://www.w3.org/2009/10/emotionml' xml:lang='en-US'>${this.XMLEncode(text)}</speak>-->`;
+            return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xmlns:emo='http://www.w3.org/2009/10/emotionml' xml:lang='en-US'><voice name='en-US-AriaRUS'>${this.XMLEncode(text)}</voice></speak>`;
+        }
         const voice = properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, languageToDefaultVoice[language]);
 
         return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xmlns:emo='http://www.w3.org/2009/10/emotionml' xml:lang='${language}'><voice name='${voice}'>${this.XMLEncode(text)}</voice></speak>`;
