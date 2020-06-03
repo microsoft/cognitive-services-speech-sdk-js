@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { SynthesisAdapterBase } from "../../common.speech/Exports";
 import {
     createNoDashGuid,
     IAudioDestination,
@@ -8,19 +9,22 @@ import {
 } from "../../common/Exports";
 import { AudioStreamFormat, IPlayer } from "../Exports";
 import { AudioFormatTag, AudioOutputFormatImpl } from "./AudioOutputFormat";
+import { PullAudioOutputStreamImpl } from "./AudioOutputStream";
 
 const MediaDurationPlaceholderSeconds = 60 * 30;
 
 const AudioFormatToMimeType: INumberDictionary<string> = {
     [AudioFormatTag.PCM]: "audio/wav",
     [AudioFormatTag.MP3]: "audio/mpeg",
+    [AudioFormatTag.Opus]: "audio/ogg",
 };
 
 /**
  * Represents the speaker playback audio destination, which only works in browser.
- * Note: the playback is based on <a href="https://www.w3.org/TR/media-source/">Media Source Extensions</a>, on most browsers, only mp3 format is supported.
+ * Note: the SDK will try to use <a href="https://www.w3.org/TR/media-source/">Media Source Extensions</a> to play audio.
+ * Mp3 format has better supports on Microsoft Edge, Chrome and Safari (desktop), so, it's better to specify mp3 format for playback.
  * @class SpeakerAudioDestination
- * Updated in version 1.12.0
+ * Updated in version 1.12.1
  */
 export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     private readonly privId: string;
@@ -34,6 +38,8 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     private privMediaSourceOpened: boolean = false;
     private privIsClosed: boolean;
     private privIsPaused: boolean;
+    private privAudioOutputStream: PullAudioOutputStreamImpl;
+    private privBytesReceived: number = 0;
 
     public constructor(audioDestinationId?: string) {
         this.privId = audioDestinationId ? audioDestinationId : createNoDashGuid();
@@ -49,6 +55,9 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         if (this.privAudioBuffer !== undefined) {
             this.privAudioBuffer.push(buffer);
             this.updateSourceBuffer();
+        } else if (this.privAudioOutputStream !== undefined) {
+            this.privAudioOutputStream.write(buffer);
+            this.privBytesReceived += buffer.byteLength;
         }
     }
 
@@ -56,14 +65,28 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         this.privIsClosed = true;
         if (this.privSourceBuffer !== undefined) {
             this.handleSourceBufferUpdateEnd();
+        } else if (this.privAudioOutputStream !== undefined) {
+            let receivedAudio = new ArrayBuffer(this.privBytesReceived);
+            this.privAudioOutputStream.read(receivedAudio);
+            if (this.privFormat.hasHeader) {
+                receivedAudio = SynthesisAdapterBase.addHeader(receivedAudio, this.privFormat);
+            }
+            const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.formatTag] });
+            this.privAudio.src = window.URL.createObjectURL(audioBlob);
+            this.notifyPlayback();
         }
     }
 
     set format(format: AudioStreamFormat) {
-        if (typeof (AudioContext) !== "undefined") {
+        if (typeof (AudioContext) !== "undefined" || typeof ((window as any).webkitAudioContext) !== "undefined") {
             this.privFormat = format as AudioOutputFormatImpl;
             const mimeType: string = AudioFormatToMimeType[this.privFormat.formatTag];
-            if (mimeType !== undefined && typeof(MediaSource) !== "undefined" && MediaSource.isTypeSupported(mimeType)) {
+            if (mimeType === undefined) {
+                // tslint:disable-next-line:no-console
+                console.warn(
+                    `Unknown mimeType for format ${AudioFormatTag[this.privFormat.formatTag]}.`);
+
+            } else if (typeof(MediaSource) !== "undefined" && MediaSource.isTypeSupported(mimeType)) {
                 this.privAudio = new Audio();
                 this.privAudioBuffer = [];
                 this.privMediaSource = new MediaSource();
@@ -72,7 +95,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 this.privMediaSource.onsourceopen = (event: Event): void => {
                     this.privMediaSourceOpened = true;
                     this.privMediaSource.duration = MediaDurationPlaceholderSeconds;
-                    this.privSourceBuffer = this.privMediaSource.addSourceBuffer("audio/mpeg");
+                    this.privSourceBuffer = this.privMediaSource.addSourceBuffer(mimeType);
                     this.privSourceBuffer.onupdate = (_: Event) => {
                         this.updateSourceBuffer();
                     };
@@ -87,7 +110,10 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
             } else {
                 // tslint:disable-next-line:no-console
                 console.warn(
-                    `Format ${AudioFormatTag[this.privFormat.formatTag]} is not supported for playback.`);
+                    `Format ${AudioFormatTag[this.privFormat.formatTag]} could not be played by MSE, streaming playback is not enabled.`);
+                this.privAudioOutputStream = new PullAudioOutputStreamImpl();
+                this.privAudioOutputStream.format = this.privFormat;
+                this.privAudio = new Audio();
             }
         }
     }

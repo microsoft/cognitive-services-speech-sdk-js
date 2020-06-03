@@ -10,7 +10,8 @@ export enum AudioFormatTag {
     MuLaw,
     Siren,
     MP3,
-    SILKSkype
+    SILKSkype,
+    Opus,
 }
 
 /**
@@ -38,6 +39,8 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         [SpeechSynthesisOutputFormat.Raw16Khz16BitMonoPcm]: "raw-16khz-16bit-mono-pcm",
         [SpeechSynthesisOutputFormat.Raw24Khz16BitMonoPcm]: "raw-24khz-16bit-mono-pcm",
         [SpeechSynthesisOutputFormat.Raw8Khz16BitMonoPcm]: "raw-8khz-16bit-mono-pcm",
+        [SpeechSynthesisOutputFormat.Ogg16Khz16BitMonoOpus]: "ogg-16khz-16bit-mono-opus",
+        [SpeechSynthesisOutputFormat.Ogg24Khz16BitMonoOpus]: "ogg-24khz-16bit-mono-opus",
     };
     private priAudioFormatString: string;
     /**
@@ -78,7 +81,10 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         this.priHasHeader = hasHeader;
     }
 
-    public static fromSpeechSynthesisOutputFormat(speechSynthesisOutputFormat: SpeechSynthesisOutputFormat): AudioOutputFormatImpl {
+    public static fromSpeechSynthesisOutputFormat(speechSynthesisOutputFormat?: SpeechSynthesisOutputFormat): AudioOutputFormatImpl {
+        if (speechSynthesisOutputFormat === undefined) {
+            return AudioOutputFormatImpl.getDefaultOutputFormat();
+        }
         return AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString(
             AudioOutputFormatImpl.SpeechSynthesisOutputFormatToString[speechSynthesisOutputFormat]);
     }
@@ -262,6 +268,28 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     speechSynthesisOutputFormatString,
                     "raw-8khz-16bit-mono-pcm",
                     false);
+            case "ogg-16khz-16bit-mono-opus":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.Opus,
+                    1,
+                    16000,
+                    8192,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    "ogg-16khz-16bit-mono-opus",
+                    false);
+            case "ogg-24khz-16bit-mono-opus":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.Opus,
+                    1,
+                    24000,
+                    8192,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    "ogg-24khz-16bit-mono-opus",
+                    false);
             case "riff-16khz-16bit-mono-pcm":
             default:
                 return new AudioOutputFormatImpl(
@@ -278,7 +306,8 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
     }
 
     public static getDefaultOutputFormat(): AudioOutputFormatImpl {
-        return AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString("");
+        return AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString(
+            (typeof window !== "undefined") ? "audio-16khz-64kbitrate-mono-mp3" : "riff-16khz-16bit-mono-pcm");
     }
 
     /**

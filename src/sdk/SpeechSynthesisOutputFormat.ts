@@ -108,4 +108,16 @@ export enum SpeechSynthesisOutputFormat {
      * @member SpeechSynthesisOutputFormat.Raw8Khz16BitMonoPcm
      */
     Raw8Khz16BitMonoPcm,
+
+    /**
+     * ogg-16khz-16bit-mono-opus
+     * @member SpeechSynthesisOutputFormat.Ogg16Khz16BitMonoOpus
+     */
+    Ogg16Khz16BitMonoOpus,
+
+    /**
+     * ogg-24khz-16bit-mono-opus
+     * @member SpeechSynthesisOutputFormat.Ogg24Khz16BitMonoOpus
+     */
+    Ogg24Khz16BitMonoOpus,
 }

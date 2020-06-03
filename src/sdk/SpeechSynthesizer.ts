@@ -147,7 +147,7 @@ export class SpeechSynthesizer {
         this.privSynthesizing = false;
         this.privConnectionFactory = new SpeechSynthesisConnectionFactory();
         this.synthesisRequestQueue = new Queue<SynthesisRequest>();
-        this.implCommonRSynthesizeSetup();
+        this.implCommonSynthesizeSetup();
     }
 
     public static buildSsml(text: string, properties: PropertyCollection): string {
@@ -167,7 +167,7 @@ export class SpeechSynthesizer {
             ["en-GB"]: "Microsoft Server Speech Text to Speech Voice (en-GB, HazelRUS)",
             ["en-IE"]: "Microsoft Server Speech Text to Speech Voice (en-IE, Sean)",
             ["en-IN"]: "Microsoft Server Speech Text to Speech Voice (en-IN, PriyaRUS)",
-            ["en-US"]: "Microsoft Server Speech Text to Speech Voice (en-US, JessaRUS)",
+            ["en-US"]: "Microsoft Server Speech Text to Speech Voice (en-US, AriaRUS)",
             ["es-ES"]: "Microsoft Server Speech Text to Speech Voice (es-ES, HelenaRUS)",
             ["es-MX"]: "Microsoft Server Speech Text to Speech Voice (es-MX, HildaRUS)",
             ["fi-FI"]: "Microsoft Server Speech Text to Speech Voice (fi-FI, HeidiRUS)",
@@ -305,7 +305,7 @@ export class SpeechSynthesizer {
                 synthesizerConfig, this, this.audioConfig as AudioOutputConfigImpl);
         }
 
-    protected implCommonRSynthesizeSetup(): void {
+    protected implCommonSynthesizeSetup(): void {
 
         let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
         let osName = "unknown";
