@@ -58,6 +58,10 @@ export { VoiceProfile } from "./VoiceProfile";
 export { VoiceProfileEnrollmentResult } from "./VoiceProfileEnrollmentResult";
 export { VoiceProfileResult } from "./VoiceProfileResult";
 export { VoiceProfileClient } from "./VoiceProfileClient";
+export { SpeakerRecognizer } from "./SpeakerRecognizer";
+export { SpeakerIdentificationModel } from "./SpeakerIdentificationModel";
+export { SpeakerVerificationModel } from "./SpeakerVerificationModel";
+export { SpeakerRecognitionResult, SpeakerRecognitionResultType  } from "./SpeakerRecognitionResult";
 export { Conversation,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,

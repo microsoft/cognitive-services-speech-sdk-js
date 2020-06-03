@@ -158,7 +158,7 @@ export class VoiceProfileClient {
      */
     public deleteProfile(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
         this.privAdapter.deleteProfile(profile).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
-            this.handleResultCallbacks(promiseResult, cb, err);
+            this.handleResultCallbacks(promiseResult, ResultReason.DeletedVoiceProfile, cb, err);
         });
     }
 
@@ -173,7 +173,7 @@ export class VoiceProfileClient {
      */
     public resetProfile(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
         this.privAdapter.resetProfile(profile).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
-            this.handleResultCallbacks(promiseResult, cb, err);
+            this.handleResultCallbacks(promiseResult, ResultReason.ResetVoiceProfile, cb, err);
         });
     }
 
@@ -208,7 +208,7 @@ export class VoiceProfileClient {
         this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
     }
 
-    private handleResultCallbacks(promiseResult: PromiseResult<IRestResponse>, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
+    private handleResultCallbacks(promiseResult: PromiseResult<IRestResponse>, successReason: ResultReason, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
         try {
             if (promiseResult.isError) {
                 if (!!err) {
@@ -216,7 +216,7 @@ export class VoiceProfileClient {
                 }
             } else if (promiseResult.isCompleted) {
                 if (!!cb) {
-                    const response: VoiceProfileResult = new VoiceProfileResult(ResultReason.DeletedVoiceProfile);
+                    const response: VoiceProfileResult = new VoiceProfileResult(successReason);
                     cb(response);
                 }
             }

@@ -12,7 +12,13 @@ import {
     Promise,
     PromiseResult,
 } from "../common/Exports";
-import { PropertyId, VoiceProfile, VoiceProfileType } from "../sdk/Exports";
+import {
+    PropertyId,
+    SpeakerIdentificationModel,
+    SpeakerVerificationModel,
+    VoiceProfile,
+    VoiceProfileType,
+} from "../sdk/Exports";
 import { SpeakerRecognitionConfig } from "./Exports";
 
 /**
@@ -80,6 +86,51 @@ export class SpeakerIdMessageAdapter {
         });
     }
 
+    /**
+     * Sends verification request to endpoint.
+     * @function
+     * @param {SpeakerVerificationModel} model - voice model to verify against.
+     * @param {IAudioSource} audioSource - audioSource from which to pull data to send
+     * @public
+     * @returns {Promise<IRestResponse>} rest response to enrollment request.
+     */
+    public verifySpeaker(model: SpeakerVerificationModel, audioSource: IAudioSource):
+        Promise<IRestResponse> {
+
+        this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
+        const uri = this.getOperationUri(model.voiceProfile.profileType) + "/" + model.voiceProfile.profileId + "/enrollments";
+        return audioSource.blob.continueWithPromise<IRestResponse>((result: PromiseResult<Blob>): Promise<IRestResponse> => {
+            if (result.isError) {
+                const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
+                response.resolve({ data: result.error } as IRestResponse);
+                return response.promise();
+            }
+            return this.privRestAdapter.request(RestRequestType.File, uri, { shortAudio: "true" }, result.result);
+        });
+    }
+
+    /**
+     * Sends identification request to endpoint.
+     * @function
+     * @param {SpeakerIdentificationModel} model - voice profiles against which to identify.
+     * @param {IAudioSource} audioSource - audioSource from which to pull data to send
+     * @public
+     * @returns {Promise<IRestResponse>} rest response to enrollment request.
+     */
+    public identifySpeaker(model: SpeakerIdentificationModel, audioSource: IAudioSource):
+        Promise<IRestResponse> {
+
+        this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
+        const uri = this.getOperationUri(VoiceProfileType.TextIndependentIdentification) + "/identify";
+        return audioSource.blob.continueWithPromise<IRestResponse>((result: PromiseResult<Blob>): Promise<IRestResponse> => {
+            if (result.isError) {
+                const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
+                response.resolve({ data: result.error } as IRestResponse);
+                return response.promise();
+            }
+            return this.privRestAdapter.request(RestRequestType.File, uri, { identificationProfileIds: model.voiceProfileIds, shortAudio: "true" }, result.result);
+        });
+    }
     /**
      * Sends delete profile request to endpoint.
      * @function
