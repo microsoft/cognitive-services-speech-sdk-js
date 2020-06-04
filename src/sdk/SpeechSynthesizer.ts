@@ -204,11 +204,14 @@ export class SpeechSynthesizer {
         };
 
         let language = properties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage, "en-US");
+        let voice = properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, "");
         let ssml: string = this.XMLEncode(text);
         if (language.toLowerCase().startsWith("auto")) {
             language = "en-US";
         } else {
-            const voice = properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, languageToDefaultVoice[language]);
+            voice = voice || languageToDefaultVoice[language];
+        }
+        if (voice) {
             ssml = `<voice name='${voice}'>${ssml}</voice>`;
         }
         ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xmlns:emo='http://www.w3.org/2009/10/emotionml' xml:lang='${language}'>${ssml}</speak>`;
