@@ -5,6 +5,7 @@
 
 import {
     ServiceRecognizerBase,
+    SynthesisAdapterBase,
 } from "../common.speech/Exports";
 import {
     ConnectionEvent,
@@ -22,6 +23,7 @@ import {
     ConnectionMessageEventArgs,
     Recognizer,
     ServiceEventArgs,
+    SpeechSynthesizer,
 } from "./Exports";
 
 /**
@@ -35,10 +37,10 @@ import {
  * If the Recognizer needs to connect or disconnect to service, it will
  * setup or shutdown the connection independently. In this case the Connection will be notified by change of connection
  * status via Connected/Disconnected events.
- * Added in version 1.2.0.
+ * Added in version 1.2.1.
  */
 export class Connection {
-    private privServiceRecognizer: ServiceRecognizerBase;
+    private privInternalData: ServiceRecognizerBase | SynthesisAdapterBase;
     private privEventListener: IDetachable;
     private privServiceEventListener: IDetachable;
 
@@ -52,33 +54,23 @@ export class Connection {
 
         const ret: Connection = new Connection();
 
-        ret.privServiceRecognizer = recoBase;
-        ret.privEventListener = ret.privServiceRecognizer.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
-            if (connectionEvent.name === "ConnectionEstablishedEvent") {
-                if (!!ret.connected) {
-                    ret.connected(new ConnectionEventArgs(connectionEvent.connectionId));
-                }
-            } else if (connectionEvent.name === "ConnectionClosedEvent") {
-                if (!!ret.disconnected) {
-                    ret.disconnected(new ConnectionEventArgs(connectionEvent.connectionId));
-                }
-            } else if (connectionEvent.name === "ConnectionMessageSentEvent") {
-                if (!!ret.messageSent) {
-                    ret.messageSent(new ConnectionMessageEventArgs(new ConnectionMessageImpl((connectionEvent as ConnectionMessageSentEvent).message)));
-                }
-            } else if (connectionEvent.name === "ConnectionMessageReceivedEvent") {
-                if (!!ret.messageReceived) {
-                    ret.messageReceived(new ConnectionMessageEventArgs(new ConnectionMessageImpl((connectionEvent as ConnectionMessageReceivedEvent).message)));
-                }
-            }
-        });
+        ret.privInternalData = recoBase;
+        ret.setupEvents();
+        return ret;
+    }
 
-        ret.privServiceEventListener = ret.privServiceRecognizer.serviceEvents.attach((e: ServiceEvent): void => {
-            if (!!ret.receivedServiceMessage) {
-                ret.receivedServiceMessage(new ServiceEventArgs(e.jsonString, e.name));
-            }
-        });
+    /**
+     * Gets the Connection instance from the specified synthesizer.
+     * @param synthesizer The synthesizer associated with the connection.
+     * @return The Connection instance of the synthesizer.
+     */
+    public static fromSynthesizer(synthesizer: SpeechSynthesizer): Connection {
+        const synthBase: SynthesisAdapterBase = synthesizer.internalData as SynthesisAdapterBase;
 
+        const ret: Connection = new Connection();
+
+        ret.privInternalData = synthBase;
+        ret.setupEvents();
         return ret;
     }
 
@@ -88,10 +80,10 @@ export class Connection {
      * Recognizer associated with this Connection. After starting recognition, calling Open() will have no effect
      *
      * Note: On return, the connection might not be ready yet. Please subscribe to the Connected event to
-     * be notfied when the connection is established.
+     * be notified when the connection is established.
      */
     public openConnection(): void {
-        this.privServiceRecognizer.connect();
+        this.privInternalData.connect();
     }
 
     /**
@@ -101,7 +93,11 @@ export class Connection {
      * If closeConnection() is called during recognition, recognition will fail and cancel with an error.
      */
     public closeConnection(): void {
-        this.privServiceRecognizer.disconnect();
+        if (this.privInternalData instanceof SynthesisAdapterBase) {
+            throw new Error("Disconnecting a synthesizer's connection is currently not supported");
+        } else {
+            (this.privInternalData as ServiceRecognizerBase).disconnect();
+        }
     }
 
     /**
@@ -112,12 +108,21 @@ export class Connection {
      * @param propertyValue Value of the property. This is a json string.
      */
     public setMessageProperty(path: string, propertyName: string, propertyValue: string): void {
-        if (path.toLowerCase() !== "speech.context") {
-            throw new Error("Only speech.context message property sets are currently supported");
-        }
         Contracts.throwIfNullOrWhitespace(propertyName, "propertyName");
 
-        this.privServiceRecognizer.speechContext.setSection(propertyName, propertyValue);
+        if (this.privInternalData instanceof ServiceRecognizerBase) {
+            if (path.toLowerCase() !== "speech.context") {
+                throw new Error("Only speech.context message property sets are currently supported for recognizer");
+            } else {
+                (this.privInternalData as ServiceRecognizerBase).speechContext.setSection(propertyName, propertyValue);
+            }
+        } else if (this.privInternalData instanceof SynthesisAdapterBase) {
+            if (path.toLowerCase() !== "synthesis.context") {
+                throw new Error("Only synthesis.context message property sets are currently supported for synthesizer");
+            } else {
+                (this.privInternalData as SynthesisAdapterBase).synthesisContext.setSection(propertyName, propertyValue);
+            }
+        }
     }
 
     /**
@@ -143,7 +148,7 @@ export class Connection {
     public connected: (args: ConnectionEventArgs) => void;
 
     /**
-     * The Diconnected event to indicate that the recognizer is disconnected from service.
+     * The Disconnected event to indicate that the recognizer is disconnected from service.
      */
     public disconnected: (args: ConnectionEventArgs) => void;
 
@@ -152,5 +157,33 @@ export class Connection {
      */
     public close(): void {
         /* tslint:disable:no-empty */
+    }
+
+    private setupEvents(): void {
+        this.privEventListener = this.privInternalData.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
+            if (connectionEvent.name === "ConnectionEstablishedEvent") {
+                if (!!this.connected) {
+                    this.connected(new ConnectionEventArgs(connectionEvent.connectionId));
+                }
+            } else if (connectionEvent.name === "ConnectionClosedEvent") {
+                if (!!this.disconnected) {
+                    this.disconnected(new ConnectionEventArgs(connectionEvent.connectionId));
+                }
+            } else if (connectionEvent.name === "ConnectionMessageSentEvent") {
+                if (!!this.messageSent) {
+                    this.messageSent(new ConnectionMessageEventArgs(new ConnectionMessageImpl((connectionEvent as ConnectionMessageSentEvent).message)));
+                }
+            } else if (connectionEvent.name === "ConnectionMessageReceivedEvent") {
+                if (!!this.messageReceived) {
+                    this.messageReceived(new ConnectionMessageEventArgs(new ConnectionMessageImpl((connectionEvent as ConnectionMessageReceivedEvent).message)));
+                }
+            }
+        });
+
+        this.privServiceEventListener = this.privInternalData.serviceEvents.attach((e: ServiceEvent): void => {
+            if (!!this.receivedServiceMessage) {
+                this.receivedServiceMessage(new ServiceEventArgs(e.jsonString, e.name));
+            }
+        });
     }
 }

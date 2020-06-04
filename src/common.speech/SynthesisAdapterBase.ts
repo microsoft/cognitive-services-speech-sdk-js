@@ -19,7 +19,7 @@ import {
     PromiseResult,
     ServiceEvent,
 } from "../common/Exports";
-import {AudioOutputFormatImpl} from "../sdk/Audio/AudioOutputFormat";
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -31,23 +31,20 @@ import {
     SpeechSynthesisWordBoundaryEventArgs,
     SpeechSynthesizer,
 } from "../sdk/Exports";
-import {Callback} from "../sdk/Transcription/IConversation";
+import { Callback } from "../sdk/Transcription/IConversation";
 import {
     AgentConfig,
     CancellationErrorCodePropertyName,
-    DynamicGrammarBuilder,
-    RequestSession,
-    SpeechContext,
+    ISynthesisConnectionFactory,
     SynthesisAudioMetadata,
+    SynthesisContext,
     SynthesisTurn,
+    SynthesizerConfig
 } from "./Exports";
-import {AuthInfo, IAuthentication} from "./IAuthentication";
-import {ISynthesisConnectionFactory} from "./ISynthesisConnectionFactory";
-import {SpeechConnectionMessage} from "./SpeechConnectionMessage.Internal";
-import {SynthesizerConfig} from "./SynthesizerConfig";
+import { AuthInfo, IAuthentication } from "./IAuthentication";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 export class SynthesisAdapterBase implements IDisposable {
-    protected privRequestSession: RequestSession;
     protected privSynthesisTurn: SynthesisTurn;
     protected privConnectionId: string;
     protected privSynthesizerConfig: SynthesizerConfig;
@@ -55,12 +52,8 @@ export class SynthesisAdapterBase implements IDisposable {
     protected privSuccessCallback: (e: SpeechSynthesisResult) => void;
     protected privErrorCallback: (e: string) => void;
 
-    public get synthesisContext(): SpeechContext {
-        return this.privSpeechContext;
-    }
-
-    public get dynamicGrammar(): DynamicGrammarBuilder {
-        return this.privDynamicGrammar;
+    public get synthesisContext(): SynthesisContext {
+        return this.privSynthesisContext;
     }
 
     public get agentConfig(): AgentConfig {
@@ -99,6 +92,9 @@ export class SynthesisAdapterBase implements IDisposable {
         if (this.privSessionAudioDestination !== undefined) {
             this.privSessionAudioDestination.format = format;
         }
+        if (this.synthesisContext !== undefined) {
+            this.synthesisContext.audioOutputFormat = format;
+        }
     }
     private privAuthentication: IAuthentication;
     private privConnectionFactory: ISynthesisConnectionFactory;
@@ -114,8 +110,7 @@ export class SynthesisAdapterBase implements IDisposable {
     private privIsDisposed: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privServiceEvents: EventSource<ServiceEvent>;
-    private privSpeechContext: SpeechContext;
-    private privDynamicGrammar: DynamicGrammarBuilder;
+    private privSynthesisContext: SynthesisContext;
     private privAgentConfig: AgentConfig;
     private privServiceHasSentMessage: boolean;
     private privActivityTemplate: string;
@@ -150,8 +145,7 @@ export class SynthesisAdapterBase implements IDisposable {
         this.privSynthesisTurn = new SynthesisTurn();
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
         this.privServiceEvents = new EventSource<ServiceEvent>();
-        this.privDynamicGrammar = new DynamicGrammarBuilder();
-        this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
+        this.privSynthesisContext = new SynthesisContext(this.privSpeechSynthesizer);
         this.privAgentConfig = new AgentConfig();
 
         this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
@@ -462,7 +456,7 @@ export class SynthesisAdapterBase implements IDisposable {
     }
 
     protected sendSynthesisContext = (connection: IConnection): Promise<boolean> => {
-        const synthesisContextJson = JSON.stringify(this.buildSynthesisContext());
+        const synthesisContextJson = this.synthesisContext.toJSON();
 
         if (synthesisContextJson) {
             return connection.send(new SpeechConnectionMessage(
@@ -506,10 +500,10 @@ export class SynthesisAdapterBase implements IDisposable {
         this.privConnectionPromise = authPromise
             .continueWithPromise((result: PromiseResult<AuthInfo>) => {
                 if (result.isError) {
-                    // this.privRequestSession.onAuthCompleted(true, result.error);
+                    this.privSynthesisTurn.onAuthCompleted(true, result.error);
                     throw new Error(result.error);
                 } else {
-                    // this.privRequestSession.onAuthCompleted(false);
+                    this.privSynthesisTurn.onAuthCompleted(false);
                 }
 
                 const connection: IConnection = this.privConnectionFactory.create(this.privSynthesizerConfig, result.result, this.privConnectionId);
@@ -596,30 +590,4 @@ export class SynthesisAdapterBase implements IDisposable {
 
         return this.privConnectionConfigurationPromise;
     }
-
-    private buildSynthesisContext(): ISynthesisContext {
-        return {
-            synthesis: {
-                audio: {
-                    metadataOptions: {
-                        sentenceBoundaryEnabled: false,
-                        wordBoundaryEnabled: (!!this.privSpeechSynthesizer.wordBoundary),
-                    },
-                    outputFormat: this.privAudioOutputFormat.requestAudioFormatString,
-                }
-            }
-        };
-    }
-}
-
-interface ISynthesisContext {
-    synthesis: {
-        audio: {
-            outputFormat: string,
-            metadataOptions: {
-                wordBoundaryEnabled: boolean,
-                sentenceBoundaryEnabled: boolean,
-            }
-        }
-    };
 }

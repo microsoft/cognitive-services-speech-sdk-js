@@ -761,3 +761,45 @@ test("testModifySpeechContext", (done: jest.DoneCallback) => {
         done.fail(error);
     });
 }, 10000);
+
+test("testModifySynthesisContext", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: testModifySynthesisContext");
+
+    const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(speechConfig);
+
+    const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, undefined);
+    objsToClose.push(s);
+
+    expect(s).not.toBeUndefined();
+
+    const con: sdk.Connection = sdk.Connection.fromSynthesizer(s);
+    con.setMessageProperty("synthesis.context", "RandomName", "RandomValue");
+
+    con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
+        if (args.message.path === "synthesis.context" && args.message.isTextMessage) {
+            const message = JSON.parse(args.message.TextMessage);
+            try {
+                expect(message.RandomName).toEqual("RandomValue");
+                expect(args.message.TextMessage).toContain("wordBoundaryEnabled"); // make sure it's not overwritten...
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
+        }
+    };
+
+    s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+        try {
+            expect(result).not.toBeUndefined();
+            expect(result.reason).toEqual(sdk.ResultReason.SynthesizingAudioCompleted);
+            expect(result.audioData).not.toBeUndefined();
+            expect(result.audioData.byteLength).toBeGreaterThan(0);
+        } catch (error) {
+            done.fail(error);
+        }
+    }, (e: string): void => {
+        done.fail(e);
+    });
+}, 10000);
