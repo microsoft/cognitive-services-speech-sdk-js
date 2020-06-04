@@ -23,6 +23,7 @@ export class SpeakerRecognitionResult {
     private privScore: number;
 
     public constructor(resultType: SpeakerRecognitionResultType, data: string, profileId?: string, cancellation?: boolean) {
+        this.privProperties = new PropertyCollection();
         if (cancellation === undefined || !cancellation) {
             this.privReason = ResultReason.RecognizedSpeaker;
             if (resultType === SpeakerRecognitionResultType.Identify) {

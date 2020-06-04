@@ -121,14 +121,14 @@ export class SpeakerIdMessageAdapter {
         Promise<IRestResponse> {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
-        const uri = this.getOperationUri(VoiceProfileType.TextIndependentIdentification) + "/identify";
+        const uri = this.getOperationUri(VoiceProfileType.TextIndependentIdentification) + "/identifySingleSpeaker";
         return audioSource.blob.continueWithPromise<IRestResponse>((result: PromiseResult<Blob>): Promise<IRestResponse> => {
             if (result.isError) {
                 const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
                 response.resolve({ data: result.error } as IRestResponse);
                 return response.promise();
             }
-            return this.privRestAdapter.request(RestRequestType.File, uri, { identificationProfileIds: model.voiceProfileIds, shortAudio: "true" }, result.result);
+            return this.privRestAdapter.request(RestRequestType.File, uri, { profileIds: model.voiceProfileIds, ignoreMinLength: "true" }, result.result);
         });
     }
     /**
