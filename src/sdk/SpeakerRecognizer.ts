@@ -146,7 +146,11 @@ export class SpeakerRecognizer {
                     err(promiseResult.error);
                 }
             } else if (promiseResult.isCompleted) {
-                if (!!cb) {
+                if (!promiseResult.result.ok) {
+                    if (!!err) {
+                        err(promiseResult.result.statusText);
+                    }
+                } else if (!!cb) {
                     const response: SpeakerRecognitionResult = new SpeakerRecognitionResult(resultType, promiseResult.result.data, profileId);
                     cb(response);
                 }

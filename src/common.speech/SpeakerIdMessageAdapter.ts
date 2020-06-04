@@ -82,7 +82,7 @@ export class SpeakerIdMessageAdapter {
                 response.resolve({ data: result.error } as IRestResponse);
                 return response.promise();
             }
-            return this.privRestAdapter.request(RestRequestType.File, uri, { shortAudio: "true" }, result.result);
+            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, result.result);
         });
     }
 
@@ -98,14 +98,14 @@ export class SpeakerIdMessageAdapter {
         Promise<IRestResponse> {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
-        const uri = this.getOperationUri(model.voiceProfile.profileType) + "/" + model.voiceProfile.profileId + "/enrollments";
+        const uri = this.getOperationUri(model.voiceProfile.profileType) + "/" + model.voiceProfile.profileId + "/verify";
         return audioSource.blob.continueWithPromise<IRestResponse>((result: PromiseResult<Blob>): Promise<IRestResponse> => {
             if (result.isError) {
                 const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
                 response.resolve({ data: result.error } as IRestResponse);
                 return response.promise();
             }
-            return this.privRestAdapter.request(RestRequestType.File, uri, { shortAudio: "true" }, result.result);
+            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, result.result);
         });
     }
 
