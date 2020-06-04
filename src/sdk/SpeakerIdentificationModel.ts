@@ -8,7 +8,7 @@ import {
 } from "./Exports";
 
 export class SpeakerIdentificationModel {
-    private privVoiceProfiles: VoiceProfile[];
+    private privVoiceProfiles: VoiceProfile[] = [];
 
     private constructor(profiles: VoiceProfile[]) {
         Contracts.throwIfNullOrUndefined(profiles, "VoiceProfiles");

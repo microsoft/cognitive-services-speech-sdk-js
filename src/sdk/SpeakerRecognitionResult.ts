@@ -22,7 +22,7 @@ export class SpeakerRecognitionResult {
     private privProfileId: string;
     private privScore: number;
 
-    public constructor(resultType: SpeakerRecognitionResultType, data: string, cancellation?: boolean) {
+    public constructor(resultType: SpeakerRecognitionResultType, data: string, profileId?: string, cancellation?: boolean) {
         if (cancellation === undefined || !cancellation) {
             this.privReason = ResultReason.RecognizedSpeaker;
             if (resultType === SpeakerRecognitionResultType.Identify) {
@@ -36,6 +36,9 @@ export class SpeakerRecognitionResult {
                 this.privScore = json.score;
                 if (json.recognitionResult.toLowerCase() !== "accept") {
                     this.privReason = ResultReason.NoMatch;
+                }
+                if (profileId !== undefined && profileId !== "") {
+                    this.privProfileId = profileId;
                 }
             }
         }
@@ -52,10 +55,6 @@ export class SpeakerRecognitionResult {
 
     public get profileId(): string {
         return this.privProfileId;
-    }
-
-    public set profileId(id: string) {
-        this.privProfileId = id;
     }
 
     public get score(): number {

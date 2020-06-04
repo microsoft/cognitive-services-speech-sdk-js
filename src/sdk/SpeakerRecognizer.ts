@@ -87,14 +87,14 @@ export class SpeakerRecognizer {
 
     /**
      * Get recognition result for model using given audio
-     * @member SpeakerRecognizer.prototype.recognizeOnce
+     * @member SpeakerRecognizer.prototype.recognizeOnceAsync
      * @function
      * @public
      * @param {SpeakerIdentificationModel} model Model containing Voice Profiles to be identified
      * @param cb - Callback invoked once result is returned.
      * @param err - Callback invoked in case of an error.
      */
-    public recognizeOnce(model: SpeakerIdentificationModel | SpeakerVerificationModel, cb?: (e: SpeakerRecognitionResult) => void, err?: (e: string) => void): void {
+    public recognizeOnceAsync(model: SpeakerIdentificationModel | SpeakerVerificationModel, cb?: (e: SpeakerRecognitionResult) => void, err?: (e: string) => void): void {
         if (model instanceof SpeakerIdentificationModel) {
             this.privAdapter.identifySpeaker(model, this.privAudioConfigImpl).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
                 this.handleResultCallbacks(promiseResult, SpeakerRecognitionResultType.Identify, undefined, cb, err);
@@ -119,7 +119,7 @@ export class SpeakerRecognizer {
     }
 
     // Does class setup, swiped from Recognizer.
-    protected implSRSetup(): void {
+    private implSRSetup(): void {
 
         let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
         let osName = "unknown";
@@ -147,10 +147,7 @@ export class SpeakerRecognizer {
                 }
             } else if (promiseResult.isCompleted) {
                 if (!!cb) {
-                    const response: SpeakerRecognitionResult = new SpeakerRecognitionResult(resultType, promiseResult.result.data);
-                    if (resultType === SpeakerRecognitionResultType.Verify && profileId !== undefined) {
-                        response.profileId = profileId;
-                    }
+                    const response: SpeakerRecognitionResult = new SpeakerRecognitionResult(resultType, promiseResult.result.data, profileId);
                     cb(response);
                 }
             }

@@ -83,7 +83,7 @@ export class VoiceProfileClient {
 
     /**
      * Create a speaker recognition voice profile
-     * @member VoiceProfileClient.prototype.createProfile
+     * @member VoiceProfileClient.prototype.createProfileAsync
      * @function
      * @public
      * @param {VoiceProfileType} profileType Type of Voice Profile to be created
@@ -92,7 +92,7 @@ export class VoiceProfileClient {
      * @param cb - Callback invoked once Voice Profile has been created.
      * @param err - Callback invoked in case of an error.
      */
-    public createProfile(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
+    public createProfileAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
         this.privAdapter.createProfile(profileType, lang).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
             try {
                 if (promiseResult.isError) {
@@ -116,7 +116,7 @@ export class VoiceProfileClient {
 
     /**
      * Create a speaker recognition voice profile
-     * @member VoiceProfileClient.prototype.createEnrollment
+     * @member VoiceProfileClient.prototype.enrollProfileAsync
      * @function
      * @public
      * @param {VoiceProfile} profile Voice Profile to create enrollment for
@@ -124,7 +124,7 @@ export class VoiceProfileClient {
      * @param cb - Callback invoked once Enrollment request has been submitted.
      * @param err - Callback invoked in case of an error.
      */
-    public createEnrollment(profile: VoiceProfile, audioConfig: AudioConfig, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
+    public enrollProfileAsync(profile: VoiceProfile, audioConfig: AudioConfig, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
         this.privAdapter.createEnrollment(profile, configImpl).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
@@ -149,14 +149,14 @@ export class VoiceProfileClient {
 
     /**
      * Delete a speaker recognition voice profile
-     * @member VoiceProfileClient.prototype.deleteProfile
+     * @member VoiceProfileClient.prototype.deleteProfileAsync
      * @function
      * @public
      * @param {VoiceProfile} profile Voice Profile to be deleted
      * @param cb - Callback invoked once Voice Profile has been deleted.
      * @param err - Callback invoked in case of an error.
      */
-    public deleteProfile(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
+    public deleteProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
         this.privAdapter.deleteProfile(profile).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
             this.handleResultCallbacks(promiseResult, ResultReason.DeletedVoiceProfile, cb, err);
         });
@@ -164,14 +164,14 @@ export class VoiceProfileClient {
 
     /**
      * Remove all enrollments for a speaker recognition voice profile
-     * @member VoiceProfileClient.prototype.resetProfile
+     * @member VoiceProfileClient.prototype.resetProfileAsync
      * @function
      * @public
      * @param {VoiceProfile} profile Voice Profile to be reset
      * @param cb - Callback invoked once Voice Profile has been reset.
      * @param err - Callback invoked in case of an error.
      */
-    public resetProfile(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
+    public resetProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
         this.privAdapter.resetProfile(profile).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
             this.handleResultCallbacks(promiseResult, ResultReason.ResetVoiceProfile, cb, err);
         });
