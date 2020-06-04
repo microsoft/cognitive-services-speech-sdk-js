@@ -635,6 +635,18 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         objsToClose.push(s);
         expect(s).not.toBeUndefined();
 
+        const con: sdk.Connection = sdk.Connection.fromSynthesizer(s);
+
+        con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
+            if (args.message.path === "synthesis.context" && args.message.isTextMessage) {
+                try {
+                    expect(args.message.TextMessage).toContain(`\"autoDetection\":true`);
+                } catch (error) {
+                    done.fail(error);
+                }
+            }
+        };
+
         s.SynthesisCanceled = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
             done.fail();
         };
