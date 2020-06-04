@@ -296,7 +296,6 @@ export class SynthesisAdapterBase implements IDisposable {
         if (!!this.privSuccessCallback) {
             try {
                 this.privSuccessCallback(result);
-                this.privSuccessCallback = undefined;
                 /* tslint:disable:no-empty */
             } catch { }
         }
