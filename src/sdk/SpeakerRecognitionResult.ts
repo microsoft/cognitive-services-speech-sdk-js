@@ -1,8 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { CancellationErrorCodePropertyName } from "../common.speech/Exports";
 import { Contracts } from "./Contracts";
 import {
+    CancellationDetailsBase,
+    CancellationErrorCode,
+    CancellationReason,
     PropertyCollection,
     PropertyId,
     ResultReason,
@@ -21,6 +25,7 @@ export class SpeakerRecognitionResult {
     private privProperties: PropertyCollection;
     private privProfileId: string;
     private privScore: number;
+    private privErrorDetails: string;
 
     public constructor(resultType: SpeakerRecognitionResultType, data: string, profileId?: string, cancellation?: boolean) {
         this.privProperties = new PropertyCollection();
@@ -58,6 +63,10 @@ export class SpeakerRecognitionResult {
         return this.privProfileId;
     }
 
+    public get errorDetails(): string {
+        return this.privErrorDetails;
+    }
+
     public get score(): number {
         return this.privScore;
     }
@@ -68,10 +77,20 @@ export class SpeakerRecognitionResult {
  * @class SpeakerRecognitionCancellationDetails
  */
 // tslint:disable-next-line:max-classes-per-file
-export class SpeakerRecognitionCancellationDetails {
+export class SpeakerRecognitionCancellationDetails extends CancellationDetailsBase {
+
+    private constructor(reason: CancellationReason, errorDetails: string, errorCode: CancellationErrorCode) {
+        super(reason, errorDetails, errorCode);
+    }
 
     public fromResult(result: SpeakerRecognitionResult): SpeakerRecognitionCancellationDetails {
-        const details = new SpeakerRecognitionCancellationDetails();
-        return details;
+        const reason = CancellationReason.Error;
+        let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
+
+        if (!!result.properties) {
+            errorCode = (CancellationErrorCode as any)[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError])];
+        }
+
+        return new SpeakerRecognitionCancellationDetails(reason, result.errorDetails, errorCode);
     }
 }

@@ -1,7 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ResultReason } from "./Exports";
+import { CancellationErrorCodePropertyName } from "../common.speech/Exports";
+import { Contracts } from "./Contracts";
+import {
+    CancellationDetailsBase,
+    CancellationErrorCode,
+    CancellationReason,
+    PropertyCollection,
+    PropertyId,
+    ResultReason,
+} from "./Exports";
 
 export interface IEnrollmentResultDetails {
     enrollmentCount: number;
@@ -20,6 +29,8 @@ export interface IEnrollmentResultDetails {
 export class VoiceProfileEnrollmentResult {
     private privReason: ResultReason;
     private privDetails: IEnrollmentResultDetails;
+    private privProperties: PropertyCollection;
+    private privErrorDetails: string;
 
     public constructor(reason: ResultReason, json: string) {
         this.privReason = reason;
@@ -37,6 +48,14 @@ export class VoiceProfileEnrollmentResult {
     public get enrollmentLength(): number {
         return this.privDetails.enrollmentLength;
     }
+
+    public get properties(): PropertyCollection {
+        return this.privProperties;
+    }
+
+    public get errorDetails(): string {
+        return this.errorDetails;
+    }
 }
 
 /**
@@ -44,10 +63,20 @@ export class VoiceProfileEnrollmentResult {
  * @class VoiceProfileEnrollmentCancellationDetails
  */
 // tslint:disable-next-line:max-classes-per-file
-export class VoiceProfileEnrollmentCancellationDetails {
+export class VoiceProfileEnrollmentCancellationDetails extends CancellationDetailsBase {
+
+    private constructor(reason: CancellationReason, errorDetails: string, errorCode: CancellationErrorCode) {
+        super(reason, errorDetails, errorCode);
+    }
 
     public fromResult(result: VoiceProfileEnrollmentResult): VoiceProfileEnrollmentCancellationDetails {
-        const details = new VoiceProfileEnrollmentCancellationDetails();
-        return details;
+        const reason = CancellationReason.Error;
+        let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
+
+        if (!!result.properties) {
+            errorCode = (CancellationErrorCode as any)[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError])];
+        }
+
+        return new VoiceProfileEnrollmentCancellationDetails(reason, result.errorDetails, errorCode);
     }
 }

@@ -38,6 +38,7 @@ export { NoMatchReason } from "./NoMatchReason";
 export { NoMatchDetails } from "./NoMatchDetails";
 export { TranslationRecognitionCanceledEventArgs } from "./TranslationRecognitionCanceledEventArgs";
 export { IntentRecognitionCanceledEventArgs } from "./IntentRecognitionCanceledEventArgs";
+export { CancellationDetailsBase } from "./CancellationDetailsBase";
 export { CancellationDetails } from "./CancellationDetails";
 export { CancellationErrorCode } from "./CancellationErrorCodes";
 export { ConnectionEventArgs } from "./ConnectionEventArgs";
