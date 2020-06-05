@@ -34,7 +34,17 @@ export class VoiceProfileEnrollmentResult {
 
     public constructor(reason: ResultReason, json: string) {
         this.privReason = reason;
-        this.privDetails = JSON.parse(json);
+        if (this.privReason !== ResultReason.Canceled) {
+            this.privDetails = JSON.parse(json);
+            if (this.privDetails.remainingEnrollmentCount > 0) {
+                this.privReason = ResultReason.EnrollingVoiceProfile;
+            }
+        } else {
+            const errorResponse: { statusText: string } = JSON.parse(json);
+            Contracts.throwIfNullOrUndefined(json, "JSON");
+            this.privErrorDetails = errorResponse.statusText;
+            this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
+        }
     }
 
     public get resultReason(): ResultReason {
@@ -54,7 +64,7 @@ export class VoiceProfileEnrollmentResult {
     }
 
     public get errorDetails(): string {
-        return this.errorDetails;
+        return this.privErrorDetails;
     }
 }
 
@@ -69,7 +79,7 @@ export class VoiceProfileEnrollmentCancellationDetails extends CancellationDetai
         super(reason, errorDetails, errorCode);
     }
 
-    public fromResult(result: VoiceProfileEnrollmentResult): VoiceProfileEnrollmentCancellationDetails {
+    public static fromResult(result: VoiceProfileEnrollmentResult): VoiceProfileEnrollmentCancellationDetails {
         const reason = CancellationReason.Error;
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
 

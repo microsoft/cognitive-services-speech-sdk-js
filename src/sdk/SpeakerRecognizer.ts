@@ -145,15 +145,15 @@ export class SpeakerRecognizer {
                 if (!!err) {
                     err(promiseResult.error);
                 }
-            } else if (promiseResult.isCompleted) {
-                if (!promiseResult.result.ok) {
-                    if (!!err) {
-                        err(promiseResult.result.statusText);
-                    }
-                } else if (!!cb) {
-                    const response: SpeakerRecognitionResult = new SpeakerRecognitionResult(resultType, promiseResult.result.data, profileId);
-                    cb(response);
-                }
+            } else if (promiseResult.isCompleted && !!cb) {
+                cb(
+                    new SpeakerRecognitionResult(
+                        resultType,
+                        promiseResult.result.data,
+                        profileId,
+                        promiseResult.result.ok ? ResultReason.RecognizedSpeaker : ResultReason.Canceled,
+                    )
+                );
             }
         } catch (e) {
             if (!!err) {

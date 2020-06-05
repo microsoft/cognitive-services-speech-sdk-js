@@ -133,11 +133,13 @@ export class VoiceProfileClient {
                     if (!!err) {
                         err(promiseResult.error);
                     }
-                } else if (promiseResult.isCompleted) {
-                    if (!!cb) {
-                        const response: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(ResultReason.EnrolledVoiceProfile, promiseResult.result.data);
-                        cb(response);
-                    }
+                } else if (promiseResult.isCompleted && !!cb) {
+                    cb(
+                        new VoiceProfileEnrollmentResult(
+                            promiseResult.result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
+                            promiseResult.result.data,
+                        )
+                    );
                 }
             } catch (e) {
                 if (!!err) {

@@ -27,10 +27,10 @@ export class SpeakerRecognitionResult {
     private privScore: number;
     private privErrorDetails: string;
 
-    public constructor(resultType: SpeakerRecognitionResultType, data: string, profileId?: string, cancellation?: boolean) {
+    public constructor(resultType: SpeakerRecognitionResultType, data: string, profileId: string, resultReason: ResultReason = ResultReason.RecognizedSpeaker) {
         this.privProperties = new PropertyCollection();
-        if (cancellation === undefined || !cancellation) {
-            this.privReason = ResultReason.RecognizedSpeaker;
+        this.privReason = resultReason;
+        if (this.privReason !== ResultReason.Canceled) {
             if (resultType === SpeakerRecognitionResultType.Identify) {
                 const json: { identifiedProfile: { profileId: string, score: number } } = JSON.parse(data);
                 Contracts.throwIfNullOrUndefined(json, "JSON");
@@ -47,6 +47,11 @@ export class SpeakerRecognitionResult {
                     this.privProfileId = profileId;
                 }
             }
+        } else {
+            const json: { statusText: string } = JSON.parse(data);
+            Contracts.throwIfNullOrUndefined(json, "JSON");
+            this.privErrorDetails = json.statusText;
+            this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
         }
         this.privProperties.setProperty(PropertyId.SpeechServiceResponse_JsonResult, data);
     }
@@ -83,7 +88,7 @@ export class SpeakerRecognitionCancellationDetails extends CancellationDetailsBa
         super(reason, errorDetails, errorCode);
     }
 
-    public fromResult(result: SpeakerRecognitionResult): SpeakerRecognitionCancellationDetails {
+    public static fromResult(result: SpeakerRecognitionResult): SpeakerRecognitionCancellationDetails {
         const reason = CancellationReason.Error;
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
 
