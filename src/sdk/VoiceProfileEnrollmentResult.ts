@@ -13,13 +13,14 @@ import {
 } from "./Exports";
 
 export interface IEnrollmentResultDetails {
-    enrollmentCount: number;
-    enrollmentLength: number;
-    enrollmentSpeechLength: number;
-    remainingEnrollmentCount: number;
-    remainingEnrollmentSpeechLength: number;
+    enrollmentsCount: number;
+    enrollmentsLength: number;
+    enrollmentsSpeechLength: number;
+    remainingEnrollmentsCount: number;
+    remainingEnrollmentsSpeechLength: number;
     audioLength: number;
     audioSpeechLength: number;
+    enrollmentStatus: string;
 }
 
 /**
@@ -37,7 +38,7 @@ export class VoiceProfileEnrollmentResult {
         this.privProperties = new PropertyCollection();
         if (this.privReason !== ResultReason.Canceled) {
             this.privDetails = JSON.parse(json);
-            if (this.privDetails.remainingEnrollmentCount > 0) {
+            if (this.privDetails.enrollmentStatus.toLowerCase() === "enrolling") {
                 this.privReason = ResultReason.EnrollingVoiceProfile;
             }
         } else {
@@ -52,12 +53,12 @@ export class VoiceProfileEnrollmentResult {
         return this.privReason;
     }
 
-    public get enrollmentCount(): number {
-        return this.privDetails.enrollmentCount;
+    public get enrollmentsCount(): number {
+        return this.privDetails.enrollmentsCount;
     }
 
-    public get enrollmentLength(): number {
-        return this.privDetails.enrollmentLength;
+    public get enrollmentsLength(): number {
+        return this.privDetails.enrollmentsLength;
     }
 
     public get properties(): PropertyCollection {
