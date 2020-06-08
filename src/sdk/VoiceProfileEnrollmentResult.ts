@@ -33,18 +33,17 @@ export class VoiceProfileEnrollmentResult {
     private privProperties: PropertyCollection;
     private privErrorDetails: string;
 
-    public constructor(reason: ResultReason, json: string) {
+    public constructor(reason: ResultReason, json: string, statusText: string) {
         this.privReason = reason;
         this.privProperties = new PropertyCollection();
         if (this.privReason !== ResultReason.Canceled) {
             this.privDetails = JSON.parse(json);
+            Contracts.throwIfNullOrUndefined(json, "JSON");
             if (this.privDetails.enrollmentStatus.toLowerCase() === "enrolling") {
                 this.privReason = ResultReason.EnrollingVoiceProfile;
             }
         } else {
-            const errorResponse: { statusText: string } = JSON.parse(json);
-            Contracts.throwIfNullOrUndefined(json, "JSON");
-            this.privErrorDetails = errorResponse.statusText;
+            this.privErrorDetails = statusText;
             this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
         }
     }

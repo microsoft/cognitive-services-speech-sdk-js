@@ -140,6 +140,7 @@ export class VoiceProfileClient {
                         new VoiceProfileEnrollmentResult(
                             promiseResult.result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
                             promiseResult.result.data,
+                            promiseResult.result.statusText,
                         )
                     );
                 }
