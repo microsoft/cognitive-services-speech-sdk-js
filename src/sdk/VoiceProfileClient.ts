@@ -100,10 +100,12 @@ export class VoiceProfileClient {
                         err(promiseResult.error);
                     }
                 } else if (promiseResult.isCompleted) {
-                    if (!!cb) {
+                    if (!!cb && promiseResult.result.ok ) {
                         const response: { profileId: string } = promiseResult.result.json();
                         const profile = new VoiceProfile(response.profileId, profileType);
                         cb(profile);
+                    } else if (!!err) {
+                        err(promiseResult.result.statusText);
                     }
                 }
             } catch (e) {
@@ -218,7 +220,11 @@ export class VoiceProfileClient {
                 }
             } else if (promiseResult.isCompleted) {
                 if (!!cb) {
-                    const response: VoiceProfileResult = new VoiceProfileResult(successReason);
+                    const response: VoiceProfileResult =
+                        new VoiceProfileResult(
+                            promiseResult.result.ok ? successReason : ResultReason.Canceled,
+                            promiseResult.result.data,
+                        );
                     cb(response);
                 }
             }

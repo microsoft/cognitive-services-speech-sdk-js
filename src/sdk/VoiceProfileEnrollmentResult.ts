@@ -34,6 +34,7 @@ export class VoiceProfileEnrollmentResult {
 
     public constructor(reason: ResultReason, json: string) {
         this.privReason = reason;
+        this.privProperties = new PropertyCollection();
         if (this.privReason !== ResultReason.Canceled) {
             this.privDetails = JSON.parse(json);
             if (this.privDetails.remainingEnrollmentCount > 0) {
