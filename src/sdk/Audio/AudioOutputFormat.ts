@@ -81,7 +81,10 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         this.priHasHeader = hasHeader;
     }
 
-    public static fromSpeechSynthesisOutputFormat(speechSynthesisOutputFormat: SpeechSynthesisOutputFormat): AudioOutputFormatImpl {
+    public static fromSpeechSynthesisOutputFormat(speechSynthesisOutputFormat?: SpeechSynthesisOutputFormat): AudioOutputFormatImpl {
+        if (speechSynthesisOutputFormat === undefined) {
+            return AudioOutputFormatImpl.getDefaultOutputFormat();
+        }
         return AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString(
             AudioOutputFormatImpl.SpeechSynthesisOutputFormatToString[speechSynthesisOutputFormat]);
     }
@@ -303,7 +306,8 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
     }
 
     public static getDefaultOutputFormat(): AudioOutputFormatImpl {
-        return AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString("");
+        return AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString(
+            (typeof window !== "undefined") ? "audio-16khz-64kbitrate-mono-mp3" : "riff-16khz-16bit-mono-pcm");
     }
 
     /**
