@@ -66,6 +66,14 @@ export class Settings {
 
     public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
 
+    public static IndependentIdentificationWaveFile: string = Settings.InputDir + "aboutSpeechSdk.wav";
+    public static DependentVerificationWaveFile: string = Settings.InputDir + "myVoiceIsMyPassportVerifyMe04.wav";
+    public static VerificationWaveFiles: string[] = [
+        Settings.InputDir + "myVoiceIsMyPassportVerifyMe01.wav",
+        Settings.InputDir + "myVoiceIsMyPassportVerifyMe02.wav",
+        Settings.InputDir + "myVoiceIsMyPassportVerifyMe03.wav",
+    ];
+
     public static ConversationTranslatorHost: string = "";
     public static ConversationTranslatorSpeechHost: string = "";
 
