@@ -20,13 +20,12 @@ export class VoiceProfileResult {
     private privProperties: PropertyCollection;
     private privErrorDetails: string;
 
-    public constructor(reason: ResultReason, json: string) {
+    public constructor(reason: ResultReason, statusText: string) {
         this.privReason = reason;
         this.privProperties = new PropertyCollection();
         if (reason === ResultReason.Canceled) {
-            const errorResponse: { statusText: string } = JSON.parse(json);
-            Contracts.throwIfNullOrUndefined(json, "JSON");
-            this.privErrorDetails = errorResponse.statusText;
+            Contracts.throwIfNullOrUndefined(statusText, "statusText");
+            this.privErrorDetails = statusText;
             this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
         }
     }

@@ -224,7 +224,7 @@ export class VoiceProfileClient {
                     const response: VoiceProfileResult =
                         new VoiceProfileResult(
                             promiseResult.result.ok ? successReason : ResultReason.Canceled,
-                            promiseResult.result.data,
+                            promiseResult.result.statusText
                         );
                     cb(response);
                 }
