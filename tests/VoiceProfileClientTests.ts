@@ -128,21 +128,21 @@ describe.each([true, false])("Service based tests", () => {
                     config,
                     (enrollResult: sdk.VoiceProfileEnrollmentResult) => {
                         expect(enrollResult).not.toBeUndefined();
-                        expect(enrollResult.resultReason).not.toBeUndefined();
-                        expect(enrollResult.resultReason).toEqual(sdk.ResultReason.EnrolledVoiceProfile);
+                        expect(enrollResult.reason).not.toBeUndefined();
+                        expect(enrollResult.reason).toEqual(sdk.ResultReason.EnrolledVoiceProfile);
                         expect(enrollResult.enrollmentsCount).toEqual(1);
                         expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
                         r.resetProfileAsync(
                             res,
                             (resetResult: sdk.VoiceProfileResult) => {
                                 expect(resetResult).not.toBeUndefined();
-                                expect(resetResult.resultReason).not.toBeUndefined();
-                                expect(resetResult.resultReason).toEqual(sdk.ResultReason.ResetVoiceProfile);
+                                expect(resetResult.reason).not.toBeUndefined();
+                                expect(resetResult.reason).toEqual(sdk.ResultReason.ResetVoiceProfile);
                                 r.deleteProfileAsync(
                                     res,
                                     (result: sdk.VoiceProfileResult) => {
                                         expect(result).not.toBeUndefined();
-                                        expect(result.resultReason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
+                                        expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
                                         done();
                                     },
                                     (error: string) => {
@@ -186,7 +186,7 @@ describe.each([true, false])("Service based tests", () => {
                     res,
                     (result: sdk.VoiceProfileResult) => {
                         expect(result).not.toBeUndefined();
-                        expect(result.resultReason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
+                        expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
                         done();
                     },
                     (error: string) => {
@@ -225,24 +225,24 @@ describe.each([true, false])("Service based tests", () => {
                     configs[0],
                     (enrollResult1: sdk.VoiceProfileEnrollmentResult) => {
                         expect(enrollResult1).not.toBeUndefined();
-                        expect(enrollResult1.resultReason).not.toBeUndefined();
-                        expect(enrollResult1.resultReason).toEqual(sdk.ResultReason.EnrollingVoiceProfile);
+                        expect(enrollResult1.reason).not.toBeUndefined();
+                        expect(enrollResult1.reason).toEqual(sdk.ResultReason.EnrollingVoiceProfile);
                         expect(enrollResult1.enrollmentsCount).toEqual(1);
                         r.enrollProfileAsync(
                             res,
                             configs[1],
                             (enrollResult2: sdk.VoiceProfileEnrollmentResult) => {
                                 expect(enrollResult2).not.toBeUndefined();
-                                expect(enrollResult2.resultReason).not.toBeUndefined();
-                                expect(enrollResult2.resultReason).toEqual(sdk.ResultReason.EnrollingVoiceProfile);
+                                expect(enrollResult2.reason).not.toBeUndefined();
+                                expect(enrollResult2.reason).toEqual(sdk.ResultReason.EnrollingVoiceProfile);
                                 expect(enrollResult2.enrollmentsCount).toEqual(2);
                                 r.enrollProfileAsync(
                                     res,
                                     configs[2],
                                     (enrollResult3: sdk.VoiceProfileEnrollmentResult) => {
                                         expect(enrollResult3).not.toBeUndefined();
-                                        expect(enrollResult3.resultReason).not.toBeUndefined();
-                                        expect(enrollResult3.resultReason).toEqual(sdk.ResultReason.EnrolledVoiceProfile);
+                                        expect(enrollResult3.reason).not.toBeUndefined();
+                                        expect(enrollResult3.reason).toEqual(sdk.ResultReason.EnrolledVoiceProfile);
                                         expect(enrollResult3.enrollmentsCount).toEqual(3);
                                         const reco: sdk.SpeakerRecognizer = BuildRecognizer();
                                         const m: sdk.SpeakerVerificationModel = sdk.SpeakerVerificationModel.fromProfile(res);
@@ -257,7 +257,7 @@ describe.each([true, false])("Service based tests", () => {
                                                     res,
                                                     (result: sdk.VoiceProfileResult) => {
                                                         expect(result).not.toBeUndefined();
-                                                        expect(result.resultReason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
+                                                        expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
                                                         done();
                                                     },
                                                     (error: string) => {

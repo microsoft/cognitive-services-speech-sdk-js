@@ -30,7 +30,7 @@ export class VoiceProfileResult {
         }
     }
 
-    public get resultReason(): ResultReason {
+    public get reason(): ResultReason {
         return this.privReason;
     }
 

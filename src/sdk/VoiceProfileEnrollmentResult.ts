@@ -48,7 +48,7 @@ export class VoiceProfileEnrollmentResult {
         }
     }
 
-    public get resultReason(): ResultReason {
+    public get reason(): ResultReason {
         return this.privReason;
     }
 
