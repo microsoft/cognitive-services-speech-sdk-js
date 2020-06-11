@@ -3,20 +3,8 @@
 
 import {
     ArgumentNullError,
-    ConnectionErrorEvent,
-    ConnectionEvent,
-    ConnectionMessage,
-    ConnectionMessageReceivedEvent,
-    ConnectionMessageSentEvent,
-    ConnectionOpenResponse,
-    createNoDashGuid,
     Deferred,
-    Events,
-    EventSource,
-    MessageType,
     Promise,
-    PromiseHelper,
-    Queue,
 } from "../common/Exports";
 import { IRequestOptions } from "./Exports";
 
