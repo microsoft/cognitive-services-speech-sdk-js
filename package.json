@@ -34,7 +34,8 @@
     "https-proxy-agent": false,
     "simple-lru-cache": false,
     "ws": false,
-    "fs": false
+    "fs": false,
+    "xmlhttprequest-ts": false
   },
   "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
   "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
@@ -94,7 +95,7 @@
     "https-proxy-agent": "^3.0.1",
     "simple-lru-cache": "0.0.2",
     "ws": "^7.2.0",
-    "xmlhttprequest": "^1.8.0"
+    "xmlhttprequest-ts": "^1.0.1"
   },
   "resolutions": {
     "extend": "3.0.2"

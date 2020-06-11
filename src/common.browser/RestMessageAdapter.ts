@@ -20,6 +20,9 @@ import {
 } from "../common/Exports";
 import { IRequestOptions } from "./Exports";
 
+// Node.JS specific xmlhttprequest / browser support.
+import * as XHR from "xmlhttprequest-ts";
+
 export enum RestRequestType {
     Get = "get",
     Post = "post",
@@ -38,7 +41,7 @@ export interface IRestResponse {
 
 interface ISendItem {
     Message: ConnectionMessage;
-    RawMessage: XMLHttpRequest;
+    RawMessage: XMLHttpRequest | XHR.XMLHttpRequest;
     sendStatusDeferral: Deferred<boolean>;
 }
 
@@ -136,7 +139,12 @@ export class RestMessageAdapter {
 
         const responseReceivedDeferral = new Deferred<IRestResponse>();
 
-        const xhr = new XMLHttpRequest();
+        let xhr: XMLHttpRequest | XHR.XMLHttpRequest;
+        if (typeof (XMLHttpRequest) === "undefined") {
+            xhr = new XHR.XMLHttpRequest();
+        } else {
+            xhr = new XMLHttpRequest();
+        }
         const requestCommand = method === RestRequestType.File ? "post" : method;
         xhr.open(requestCommand, this.withQuery(uri, queryParams), true);
 
@@ -179,7 +187,7 @@ export class RestMessageAdapter {
         return this.privConnectionEvents;
     }
 
-    private parseXHRResult(xhr: XMLHttpRequest): IRestResponse {
+    private parseXHRResult(xhr: XMLHttpRequest | XHR.XMLHttpRequest): IRestResponse {
         return {
             data: xhr.responseText,
             headers: xhr.getAllResponseHeaders(),
@@ -190,11 +198,11 @@ export class RestMessageAdapter {
         };
     }
 
-    private xhrResultToMessage(xhr: XMLHttpRequest): ConnectionMessage {
+    private xhrResultToMessage(xhr: XMLHttpRequest | XHR.XMLHttpRequest): ConnectionMessage {
         return new ConnectionMessage(MessageType.Text, xhr.responseText);
     }
 
-    private errorResponse(xhr: XMLHttpRequest, message: string | null = null): IRestResponse {
+    private errorResponse(xhr: XMLHttpRequest | XHR.XMLHttpRequest, message: string | null = null): IRestResponse {
         return {
             data: message || xhr.statusText,
             headers: xhr.getAllResponseHeaders(),
