@@ -1,16 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as fs from "fs";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
-import {
-    ConsoleLoggingListener,
-} from "../src/common.browser/Exports";
+import { ConsoleLoggingListener } from "../src/common.browser/Exports";
 import {
     Events,
     EventType
 } from "../src/common/Exports";
 
-import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
@@ -102,6 +100,74 @@ test("GetParameters", () => {
 });
 
 describe.each([true, false])("Service based tests", () => {
+
+    test("Create and Delete Voice Profile using push stream - Independent Identification", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: Create and Delete Voice Profile using push stream - Independent Identification");
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+
+        const r: sdk.VoiceProfileClient = BuildClient(s);
+        objsToClose.push(r);
+
+        const type: sdk.VoiceProfileType = sdk.VoiceProfileType.TextIndependentIdentification;
+        r.createProfileAsync(
+            type,
+            "en-us",
+            (res: sdk.VoiceProfile) => {
+                expect(res).not.toBeUndefined();
+                expect(res.profileId).not.toBeUndefined();
+                expect(res.profileType).not.toBeUndefined();
+                expect(res.profileType).toEqual(type);
+                // Create the push stream we need for the speech sdk.
+                const pushStream: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+
+                // Open the file and push it to the push stream.
+                fs.createReadStream(Settings.IndependentIdentificationWaveFile).on("data", (arrayBuffer: { buffer: ArrayBuffer }) => {
+                    pushStream.write(arrayBuffer.buffer);
+                }).on("end", () => {
+                    pushStream.close();
+                });
+                const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
+                r.enrollProfileAsync(
+                    res,
+                    config,
+                    (enrollResult: sdk.VoiceProfileEnrollmentResult) => {
+                        expect(enrollResult).not.toBeUndefined();
+                        expect(enrollResult.reason).not.toBeUndefined();
+                        expect(enrollResult.reason).toEqual(sdk.ResultReason.EnrolledVoiceProfile);
+                        expect(enrollResult.enrollmentsCount).toEqual(1);
+                        expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
+                        r.resetProfileAsync(
+                            res,
+                            (resetResult: sdk.VoiceProfileResult) => {
+                                expect(resetResult).not.toBeUndefined();
+                                expect(resetResult.reason).not.toBeUndefined();
+                                expect(resetResult.reason).toEqual(sdk.ResultReason.ResetVoiceProfile);
+                                r.deleteProfileAsync(
+                                    res,
+                                    (result: sdk.VoiceProfileResult) => {
+                                        expect(result).not.toBeUndefined();
+                                        expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
+                                        done();
+                                    },
+                                    (error: string) => {
+                                        done.fail(error);
+                                    });
+                            },
+                            (error: string) => {
+                                done.fail(error);
+                            });
+                    },
+                    (error: string) => {
+                        done.fail(error);
+                    });
+
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+    });
 
     test("Create and Delete Voice Profile - Independent Identification", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console

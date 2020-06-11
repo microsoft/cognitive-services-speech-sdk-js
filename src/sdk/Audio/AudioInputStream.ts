@@ -14,6 +14,7 @@ import {
     AudioStreamNodeAttachingEvent,
     AudioStreamNodeDetachedEvent,
     ChunkedArrayBufferStream,
+    Deferred,
     Events,
     EventSource,
     IAudioSource,
@@ -184,7 +185,22 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     }
 
     public get blob(): Promise<Blob> {
-        return undefined;
+        const deferral: Deferred<Blob> = new Deferred<Blob>();
+        this.attach(this.privId).onSuccessContinueWith((audioNode: IAudioStreamNode) => {
+            const data: ArrayBuffer[] = [];
+            const readCycle = () => {
+                audioNode.read().onSuccessContinueWith((audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
+                    if (!audioStreamChunk || audioStreamChunk.isEnd) {
+                        deferral.resolve(new Blob(data));
+                    } else {
+                        data.push(audioStreamChunk.buffer);
+                        readCycle();
+                    }
+                });
+            };
+            readCycle();
+        });
+        return deferral.promise();
     }
 
     public turnOn(): Promise<boolean> {
