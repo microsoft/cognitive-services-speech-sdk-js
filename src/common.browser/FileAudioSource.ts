@@ -57,9 +57,7 @@ export class FileAudioSource implements IAudioSource {
     }
 
     public get blob(): Promise<Blob> {
-        const blobDeferral: Deferred<Blob> = new Deferred<Blob>();
-        blobDeferral.resolve(this.privFile);
-        return blobDeferral.promise();
+        return PromiseHelper.fromResult(this.privFile);
     }
 
     public turnOn = (): Promise<boolean> => {
