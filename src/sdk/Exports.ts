@@ -56,13 +56,13 @@ export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";
 export { ConnectionMessageEventArgs } from "./ConnectionMessageEventArgs";
 export { ConnectionMessage } from "./ConnectionMessage";
 export { VoiceProfile } from "./VoiceProfile";
-export { VoiceProfileEnrollmentResult } from "./VoiceProfileEnrollmentResult";
-export { VoiceProfileResult } from "./VoiceProfileResult";
+export { VoiceProfileEnrollmentResult, VoiceProfileEnrollmentCancellationDetails } from "./VoiceProfileEnrollmentResult";
+export { VoiceProfileResult, VoiceProfileCancellationDetails } from "./VoiceProfileResult";
 export { VoiceProfileClient } from "./VoiceProfileClient";
 export { SpeakerRecognizer } from "./SpeakerRecognizer";
 export { SpeakerIdentificationModel } from "./SpeakerIdentificationModel";
 export { SpeakerVerificationModel } from "./SpeakerVerificationModel";
-export { SpeakerRecognitionResult, SpeakerRecognitionResultType  } from "./SpeakerRecognitionResult";
+export { SpeakerRecognitionResult, SpeakerRecognitionResultType, SpeakerRecognitionCancellationDetails } from "./SpeakerRecognitionResult";
 export { Conversation,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
