@@ -70,7 +70,6 @@ export class VoiceProfileEnrollmentResult {
 }
 
 /**
- * Output format
  * @class VoiceProfileEnrollmentCancellationDetails
  */
 // tslint:disable-next-line:max-classes-per-file
@@ -80,6 +79,14 @@ export class VoiceProfileEnrollmentCancellationDetails extends CancellationDetai
         super(reason, errorDetails, errorCode);
     }
 
+    /**
+     * Creates an instance of VoiceProfileEnrollmentCancellationDetails object for the canceled VoiceProfileEnrollmentResult.
+     * @member VoiceProfileEnrollmentCancellationDetails.fromResult
+     * @function
+     * @public
+     * @param {VoiceProfileEnrollmentResult} result - The result that was canceled.
+     * @returns {VoiceProfileEnrollmentCancellationDetails} The cancellation details object being created.
+     */
     public static fromResult(result: VoiceProfileEnrollmentResult): VoiceProfileEnrollmentCancellationDetails {
         const reason = CancellationReason.Error;
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;

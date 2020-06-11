@@ -78,7 +78,6 @@ export class SpeakerRecognitionResult {
 }
 
 /**
- * Output format
  * @class SpeakerRecognitionCancellationDetails
  */
 // tslint:disable-next-line:max-classes-per-file
@@ -88,6 +87,14 @@ export class SpeakerRecognitionCancellationDetails extends CancellationDetailsBa
         super(reason, errorDetails, errorCode);
     }
 
+    /**
+     * Creates an instance of SpeakerRecognitionCancellationDetails object for the canceled SpeakerRecognitionResult
+     * @member SpeakerRecognitionCancellationDetails.fromResult
+     * @function
+     * @public
+     * @param {SpeakerRecognitionResult} result - The result that was canceled.
+     * @returns {SpeakerRecognitionCancellationDetails} The cancellation details object being created.
+     */
     public static fromResult(result: SpeakerRecognitionResult): SpeakerRecognitionCancellationDetails {
         const reason = CancellationReason.Error;
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;

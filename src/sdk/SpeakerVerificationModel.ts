@@ -7,6 +7,11 @@ import {
     VoiceProfileType,
 } from "./Exports";
 
+/**
+ * Defines SpeakerVerificationModel class for Speaker Recognition
+ * Model contains a profile against which to verify a speaker
+ * @class SpeakerVerificationModel
+ */
 export class SpeakerVerificationModel {
     private privVoiceProfile: VoiceProfile;
 

@@ -72,7 +72,7 @@ export class SpeakerRecognizer {
     /**
      * SpeakerRecognizer constructor.
      * @constructor
-     * @param {SpeechConfig} speechConfig - An set of initial properties for this synthesizer (authentication key, region, &c)
+     * @param {SpeechConfig} speechConfig - An set of initial properties for this recognizer (authentication key, region, &c)
      */
     public constructor(speechConfig: SpeechConfig, audioConfig: AudioConfig) {
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;

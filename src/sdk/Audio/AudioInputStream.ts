@@ -22,6 +22,7 @@ import {
     IStreamChunk,
     Promise,
     PromiseHelper,
+    PromiseResult,
     Stream,
     StreamReader,
 } from "../../common/Exports";
@@ -367,7 +368,9 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
     }
 
     public get blob(): Promise<Blob> {
-        return undefined;
+        const deferred = new Deferred<Blob>();
+        deferred.reject("Not implemented");
+        return deferred.promise();
     }
 
     public turnOn(): Promise<boolean> {

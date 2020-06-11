@@ -7,6 +7,11 @@ import {
     VoiceProfileType,
 } from "./Exports";
 
+/**
+ * Defines SpeakerIdentificationModel class for Speaker Recognition
+ * Model contains a set of profiles against which to identify speaker(s)
+ * @class SpeakerIdentificationModel
+ */
 export class SpeakerIdentificationModel {
     private privVoiceProfiles: VoiceProfile[] = [];
 
@@ -17,7 +22,7 @@ export class SpeakerIdentificationModel {
         }
         profiles.forEach((profile: VoiceProfile) => {
             if (profile.profileType !== VoiceProfileType.TextIndependentIdentification) {
-                throw new Error("Identification model cannot be created from Verification profile: " + profile.profileId);
+                throw new Error("Identification model can only be created from Identification profile: " + profile.profileId);
             }
             this.privVoiceProfiles.push(profile);
         });

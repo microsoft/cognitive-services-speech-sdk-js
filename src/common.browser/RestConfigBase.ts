@@ -45,7 +45,7 @@ export class RestConfigBase {
             Accept: "application/json",
         },
         ignoreCache: false,
-        timeout: 5000,
+        timeout: 10000,
     };
 
     private static readonly privRestErrors: IErrorMessages = {
