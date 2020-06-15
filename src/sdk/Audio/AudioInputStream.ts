@@ -186,22 +186,23 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     }
 
     public get blob(): Promise<Blob> {
-        const deferral: Deferred<Blob> = new Deferred<Blob>();
-        this.attach(this.privId).onSuccessContinueWith((audioNode: IAudioStreamNode) => {
+        return this.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
             const data: ArrayBuffer[] = [];
-            const readCycle = () => {
-                audioNode.read().onSuccessContinueWith((audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
+            const readCycle = (): any => {
+                audioNode.read().on((audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
                     if (!audioStreamChunk || audioStreamChunk.isEnd) {
-                        deferral.resolve(new Blob(data));
+                        return new Blob(data);
                     } else {
                         data.push(audioStreamChunk.buffer);
-                        readCycle();
+                        return readCycle();
                     }
+                },
+                (e: string) => {
+                    return PromiseHelper.fromError(e);
                 });
             };
-            readCycle();
+            return readCycle();
         });
-        return deferral.promise();
     }
 
     public turnOn(): Promise<boolean> {

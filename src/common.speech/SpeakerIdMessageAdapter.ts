@@ -76,13 +76,8 @@ export class SpeakerIdMessageAdapter {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
         const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/enrollments";
-        return audioSource.blob.continueWithPromise<IRestResponse>((result: PromiseResult<Blob>): Promise<IRestResponse> => {
-            if (result.isError) {
-                const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
-                response.resolve({ data: result.error } as IRestResponse);
-                return response.promise();
-            }
-            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, result.result);
+        return audioSource.blob.onSuccessContinueWithPromise<IRestResponse>((result: Blob): Promise<IRestResponse> => {
+            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, result);
         });
     }
 

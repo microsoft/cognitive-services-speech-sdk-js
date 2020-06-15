@@ -93,25 +93,16 @@ export class VoiceProfileClient {
      * @param err - Callback invoked in case of an error.
      */
     public createProfileAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
-        this.privAdapter.createProfile(profileType, lang).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
-            try {
-                if (promiseResult.isError) {
-                    if (!!err) {
-                        err(promiseResult.error);
-                    }
-                } else if (promiseResult.isCompleted) {
-                    if (!!cb && promiseResult.result.ok ) {
-                        const response: { profileId: string } = promiseResult.result.json();
-                        const profile = new VoiceProfile(response.profileId, profileType);
-                        cb(profile);
-                    } else if (!!err) {
-                        err(promiseResult.result.statusText);
-                    }
-                }
-            } catch (e) {
-                if (!!err) {
-                    err(e);
-                }
+        this.privAdapter.createProfile(profileType, lang).on((result: IRestResponse) => {
+            if (!!cb) {
+                const response: { profileId: string } = result.json();
+                const profile = new VoiceProfile(response.profileId, profileType);
+                cb(profile);
+            }
+        },
+        (error: string) => {
+            if (!!err) {
+                err(error);
             }
         });
     }
