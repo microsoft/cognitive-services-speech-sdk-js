@@ -56,7 +56,7 @@ export class FileAudioSource implements IAudioSource {
         return this.privAudioFormatPromise;
     }
 
-    public get blob(): Promise<Blob> {
+    public get blob(): Promise<Blob | Buffer> {
         return PromiseHelper.fromResult(this.privFile);
     }
 

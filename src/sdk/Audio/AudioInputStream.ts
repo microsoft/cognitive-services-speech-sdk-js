@@ -185,15 +185,25 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         return this.privId;
     }
 
-    public get blob(): Promise<Blob> {
-        return this.attach("id").onSuccessContinueWithPromise<Blob>((audioNode: IAudioStreamNode) => {
+    public get blob(): Promise<Blob | Buffer> {
+        return this.attach("id").onSuccessContinueWithPromise<Blob | Buffer>((audioNode: IAudioStreamNode) => {
             const data: ArrayBuffer[] = [];
-            const readCycle = (): Promise<Blob> => {
-                return audioNode.read().onSuccessContinueWithPromise<Blob>((audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
+            let bufferData = new Buffer("");
+            const readCycle = (): Promise<Blob | Buffer> => {
+                return audioNode.read().onSuccessContinueWithPromise<Blob | Buffer >((audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
                     if (!audioStreamChunk || audioStreamChunk.isEnd) {
-                        return PromiseHelper.fromResult(new Blob(data));
+                        if (typeof (XMLHttpRequest) !== "undefined") {
+                            return PromiseHelper.fromResult(new Blob(data));
+                        } else {
+                            return PromiseHelper.fromResult(new Buffer(bufferData));
+
+                        }
                     } else {
-                        data.push(audioStreamChunk.buffer);
+                        if (typeof (Blob) !== "undefined") {
+                            data.push(audioStreamChunk.buffer);
+                        } else {
+                            bufferData = Buffer.concat([bufferData, this.toBuffer(audioStreamChunk.buffer)]);
+                        }
                         return readCycle();
                     }
                 });
@@ -264,6 +274,15 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     private onEvent = (event: AudioSourceEvent): void => {
         this.privEvents.onEvent(event);
         Events.instance.onEvent(event);
+    }
+
+    private toBuffer(arrayBuffer: ArrayBuffer): Buffer {
+        const buf: Buffer = Buffer.alloc(arrayBuffer.byteLength);
+        const view: Uint8Array = new Uint8Array(arrayBuffer);
+        for (let i = 0; i < buf.length; ++i) {
+            buf[i] = view[i];
+        }
+        return buf;
     }
 }
 
@@ -365,7 +384,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
         return this.privId;
     }
 
-    public get blob(): Promise<Blob> {
+    public get blob(): Promise<Blob | Buffer> {
         const deferred = new Deferred<Blob>();
         deferred.reject("Not implemented");
         return deferred.promise();

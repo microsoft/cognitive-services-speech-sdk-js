@@ -18,7 +18,7 @@ export interface IAudioSource {
     events: EventSource<AudioSourceEvent>;
     format: Promise<AudioStreamFormatImpl>;
     deviceInfo: Promise<ISpeechConfigAudioDevice>;
-    blob: Promise<Blob>;
+    blob: Promise<Blob | Buffer>;
     setProperty?(name: string, value: string): void;
     getProperty?(name: string, def?: string): string;
 }

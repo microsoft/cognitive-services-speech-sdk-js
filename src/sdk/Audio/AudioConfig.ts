@@ -253,7 +253,7 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      * @function
      * @public
      */
-    public get blob(): Promise<Blob> {
+    public get blob(): Promise<Blob | Buffer> {
         return this.privSource.blob;
     }
 

@@ -57,6 +57,7 @@ export class RestMessageAdapter {
         uri: string,
         queryParams: any = {},
         body: any = null,
+        binaryBody: Blob | Buffer = null,
         ): Promise<IRestResponse> {
 
         const responseReceivedDeferral = new Deferred<IRestResponse>();
@@ -92,9 +93,9 @@ export class RestMessageAdapter {
             responseReceivedDeferral.resolve(this.errorResponse(xhr, "Request took longer than expected."));
         };
 
-        if (method === RestRequestType.File && body) {
+        if (method === RestRequestType.File && binaryBody) {
             xhr.setRequestHeader("Content-Type", "multipart/form-data");
-            xhr.send(body);
+            xhr.send(binaryBody);
         } else if (method === RestRequestType.Post && body) {
             xhr.setRequestHeader("Content-Type", "application/json");
             xhr.send(JSON.stringify(body));
