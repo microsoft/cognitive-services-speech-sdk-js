@@ -32,11 +32,11 @@ export class SpeakerIdMessageAdapter {
 
     public constructor(config: SpeakerRecognitionConfig) {
 
-        const connectionId: string = createNoDashGuid();
         let endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "westus");
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "https://" + region + ".api.cognitive.microsoft.com/speaker/{mode}/v2.0/{dependency}");
+            const hostSuffix: string = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "https://" + region + ".api.cognitive" + hostSuffix + "/speaker/{mode}/v2.0/{dependency}");
             endpoint = host + "/profiles";
         }
         this.privUri = endpoint;
