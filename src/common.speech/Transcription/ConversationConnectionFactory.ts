@@ -7,7 +7,7 @@ import { Contracts } from "../../sdk/Contracts";
 import { PropertyId } from "../../sdk/Exports";
 import { ConnectionFactoryBase } from "../ConnectionFactoryBase";
 import { AuthInfo, RecognizerConfig } from "../Exports";
-import { ConversationTranslatorConfig } from "./ConversationUtils";
+import { ConversationConnectionConfig } from "./ConversationConnectionConfig";
 import { ConversationWebsocketMessageFormatter } from "./ConversationWebsocketMessageFormatter";
 
 /**
@@ -18,19 +18,18 @@ export class ConversationConnectionFactory extends ConnectionFactoryBase  {
 
     public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
 
-        const endpointHost: string = config.parameters.getProperty(PropertyId.ConversationTranslator_Host, ConversationTranslatorConfig.host);
+        const endpointHost: string = config.parameters.getProperty(PropertyId.ConversationTranslator_Host, ConversationConnectionConfig.host);
         const correlationId: string = config.parameters.getProperty(PropertyId.ConversationTranslator_CorrelationId, createGuid());
 
-        const endpoint: string = `wss://${endpointHost}${ConversationTranslatorConfig.webSocketPath}`;
+        const endpoint: string = `wss://${endpointHost}${ConversationConnectionConfig.webSocketPath}`;
         const token: string = config.parameters.getProperty(PropertyId.ConversationTranslator_Token, undefined);
         Contracts.throwIfNullOrUndefined(token, "token");
 
         const queryParams: IStringDictionary<string> = {};
-        queryParams[ConversationTranslatorConfig.params.apiVersion] = ConversationTranslatorConfig.apiVersion;
-        queryParams[ConversationTranslatorConfig.params.token] = token;
-        queryParams[ConversationTranslatorConfig.params.correlationId] = correlationId;
+        queryParams[ConversationConnectionConfig.configParams.apiVersion] = ConversationConnectionConfig.apiVersion;
+        queryParams[ConversationConnectionConfig.configParams.token] = token;
+        queryParams[ConversationConnectionConfig.configParams.correlationId] = correlationId;
         return new WebsocketConnection(endpoint, queryParams, {}, new ConversationWebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
-
     }
 
 }

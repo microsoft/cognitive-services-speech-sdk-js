@@ -78,6 +78,10 @@ export class MicAudioSource implements IAudioSource {
         return PromiseHelper.fromResult(MicAudioSource.AUDIOFORMAT);
     }
 
+    public get blob(): Promise<Blob> {
+        return PromiseHelper.fromError("Not implemented for Mic input");
+    }
+
     public turnOn = (): Promise<boolean> => {
         if (this.privInitializeDeferral) {
             return this.privInitializeDeferral.promise();

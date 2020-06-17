@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { ConversationTranslatorConfig } from "../../common.speech/Exports";
-import { IDisposable } from "../../common/Exports";
+import { ConversationConnectionConfig } from "../../common.speech/Exports";
+import { IDisposable, IErrorMessages } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
     AudioConfig,
@@ -51,6 +51,9 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     private privIsSpeaking: boolean = false;
     private privConversation: ConversationImpl;
     private privSpeechState: SpeechState = SpeechState.Inactive;
+    private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
+    private privPlaceholderKey: string = "abcdefghijklmnopqrstuvwxyz012345";
+    private privPlaceholderRegion: string = "westus";
 
     public constructor(audioConfig?: AudioConfig) {
         this.privProperties = new PropertyCollection();
@@ -94,20 +97,20 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             if (typeof conversation === "string") {
 
-                Contracts.throwIfNullOrUndefined(conversation, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "conversation id"));
-                Contracts.throwIfNullOrWhitespace(nickname, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "nickname"));
+                Contracts.throwIfNullOrUndefined(conversation, this.privErrors.invalidArgs.replace("{arg}", "conversation id"));
+                Contracts.throwIfNullOrWhitespace(nickname, this.privErrors.invalidArgs.replace("{arg}", "nickname"));
 
                 if (!!this.privConversation) {
-                    this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedStart), param3);
+                    this.handleError(new Error(this.privErrors.permissionDeniedStart), param3);
                 }
 
                 let lang: string = param1 as string;
-                if (lang === undefined || lang === null || lang === "") { lang = ConversationTranslatorConfig.defaultLanguageCode; }
+                if (lang === undefined || lang === null || lang === "") { lang = ConversationConnectionConfig.defaultLanguageCode; }
 
                 // create a placecholder config
                 this.privSpeechTranslationConfig = SpeechTranslationConfig.fromSubscription(
-                    ConversationTranslatorConfig.auth.placeholderSubscriptionKey,
-                    ConversationTranslatorConfig.auth.placeholderRegion);
+                    this.privPlaceholderKey,
+                    this.privPlaceholderRegion);
                 this.privSpeechTranslationConfig.setProfanity(ProfanityOption.Masked);
                 this.privSpeechTranslationConfig.addTargetLanguage(lang);
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage], lang);
@@ -133,7 +136,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                     ((result: string) => {
 
                         if (!result) {
-                            this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedConnect), param3);
+                            this.handleError(new Error(this.privErrors.permissionDeniedConnect), param3);
                         }
 
                         this.privSpeechTranslationConfig.authorizationToken = result;
@@ -154,8 +157,8 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             } else if (typeof conversation === "object") {
 
-                Contracts.throwIfNullOrUndefined(conversation, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "conversation id"));
-                Contracts.throwIfNullOrWhitespace(nickname, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "nickname"));
+                Contracts.throwIfNullOrUndefined(conversation, this.privErrors.invalidArgs.replace("{arg}", "conversation id"));
+                Contracts.throwIfNullOrWhitespace(nickname, this.privErrors.invalidArgs.replace("{arg}", "nickname"));
 
                 // save the nickname
                 this.privProperties.setProperty(PropertyId.ConversationTranslator_Name, nickname);
@@ -164,15 +167,15 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 // ref the conversation translator object
                 this.privConversation.conversationTranslator = this;
 
-                Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedConnect);
-                Contracts.throwIfNullOrUndefined(this.privConversation.room.token, ConversationTranslatorConfig.strings.permissionDeniedConnect);
+                Contracts.throwIfNullOrUndefined(this.privConversation, this.privErrors.permissionDeniedConnect);
+                Contracts.throwIfNullOrUndefined(this.privConversation.room.token, this.privErrors.permissionDeniedConnect);
 
                 this.privSpeechTranslationConfig = conversation.config;
 
                 this.handleCallback(param1 as Callback, param2);
             } else {
                 this.handleError(
-                    new Error(ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "invalid conversation type")),
+                    new Error(this.privErrors.invalidArgs.replace("{arg}", "invalid conversation type")),
                     param2);
             }
 
@@ -224,8 +227,8 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     public sendTextMessageAsync(message: string, cb?: Callback, err?: Callback): void {
 
         try {
-            Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedSend);
-            Contracts.throwIfNullOrWhitespace(message, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", message));
+            Contracts.throwIfNullOrUndefined(this.privConversation, this.privErrors.permissionDeniedSend);
+            Contracts.throwIfNullOrWhitespace(message, this.privErrors.invalidArgs.replace("{arg}", message));
 
             this.privConversation?.sendTextMessageAsync(message, cb, err);
         } catch (error) {
@@ -242,11 +245,11 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     public startTranscribingAsync(cb?: Callback, err?: Callback): void {
 
         try {
-            Contracts.throwIfNullOrUndefined(this.privConversation, ConversationTranslatorConfig.strings.permissionDeniedSend);
-            Contracts.throwIfNullOrUndefined(this.privConversation.room.token, ConversationTranslatorConfig.strings.permissionDeniedConnect);
+            Contracts.throwIfNullOrUndefined(this.privConversation, this.privErrors.permissionDeniedSend);
+            Contracts.throwIfNullOrUndefined(this.privConversation.room.token, this.privErrors.permissionDeniedConnect);
 
             if (!this.canSpeak) {
-                this.handleError(new Error(ConversationTranslatorConfig.strings.permissionDeniedSend), err);
+                this.handleError(new Error(this.privErrors.permissionDeniedSend), err);
             }
 
             if (this.privTranslationRecognizer === undefined) {
@@ -359,7 +362,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
 
             // clear the temp subscription key if it's a participant joining
             if (this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Key])
-                === ConversationTranslatorConfig.auth.placeholderSubscriptionKey) {
+                === this.privPlaceholderKey) {
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
 
@@ -367,10 +370,10 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             const token: string = encodeURIComponent(this.privConversation.room.token);
 
             let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
-                PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationTranslatorConfig.speechHost);
+                PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationConnectionConfig.speechHost);
             endpointHost = endpointHost.replace("{region}", this.privConversation.room.cognitiveSpeechRegion);
 
-            const url: string = `wss://${endpointHost}${ConversationTranslatorConfig.speechPath}?${ConversationTranslatorConfig.params.token}=${token}`;
+            const url: string = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}?${ConversationConnectionConfig.configParams.token}=${token}`;
 
             this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], url);
 

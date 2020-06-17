@@ -31,12 +31,14 @@ export { PropertyId } from "./PropertyId";
 export { Recognizer } from "./Recognizer";
 export { SpeechRecognizer } from "./SpeechRecognizer";
 export { IntentRecognizer } from "./IntentRecognizer";
+export { VoiceProfileType } from "./VoiceProfileType";
 export { TranslationRecognizer } from "./TranslationRecognizer";
 export { Translations } from "./Translations";
 export { NoMatchReason } from "./NoMatchReason";
 export { NoMatchDetails } from "./NoMatchDetails";
 export { TranslationRecognitionCanceledEventArgs } from "./TranslationRecognitionCanceledEventArgs";
 export { IntentRecognitionCanceledEventArgs } from "./IntentRecognitionCanceledEventArgs";
+export { CancellationDetailsBase } from "./CancellationDetailsBase";
 export { CancellationDetails } from "./CancellationDetails";
 export { CancellationErrorCode } from "./CancellationErrorCodes";
 export { ConnectionEventArgs } from "./ConnectionEventArgs";
@@ -53,6 +55,14 @@ export { ProfanityOption } from "./ProfanityOption";
 export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";
 export { ConnectionMessageEventArgs } from "./ConnectionMessageEventArgs";
 export { ConnectionMessage } from "./ConnectionMessage";
+export { VoiceProfile } from "./VoiceProfile";
+export { VoiceProfileEnrollmentResult, VoiceProfileEnrollmentCancellationDetails } from "./VoiceProfileEnrollmentResult";
+export { VoiceProfileResult, VoiceProfileCancellationDetails } from "./VoiceProfileResult";
+export { VoiceProfileClient } from "./VoiceProfileClient";
+export { SpeakerRecognizer } from "./SpeakerRecognizer";
+export { SpeakerIdentificationModel } from "./SpeakerIdentificationModel";
+export { SpeakerVerificationModel } from "./SpeakerVerificationModel";
+export { SpeakerRecognitionResult, SpeakerRecognitionResultType, SpeakerRecognitionCancellationDetails } from "./SpeakerRecognitionResult";
 export { Conversation,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,

@@ -36,8 +36,8 @@ export enum PropertyId {
     /**
      * The Cognitive Services Speech Service authorization token (aka access token). Under normal circumstances,
      * you shouldn't have to use this property directly.
-     * Instead, use [[SpeechConfig.fromAuthorizationToken]],
-     * [[SpeechRecognizer.authorizationToken]], [[IntentRecognizer.authorizationToken]], [[TranslationRecognizer.authorizationToken]].
+     * Instead, use [[SpeechConfig.fromAuthorizationToken]], [[SpeechRecognizer.authorizationToken]],
+     * [[IntentRecognizer.authorizationToken]], [[TranslationRecognizer.authorizationToken]], [[SpeakerRecognizer.authorizationToken]].
      * @member PropertyId.SpeechServiceAuthorization_Token
      */
     SpeechServiceAuthorization_Token,

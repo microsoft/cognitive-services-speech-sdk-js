@@ -29,6 +29,9 @@ export class Settings {
     public static BotSubscription: string = "<<YOUR_BOT_SUBSCRIPTION>>";
     public static BotRegion: string = "<<YOUR_BOT_REGION>>";
 
+    public static SpeakerIDSubscriptionKey: string = "<<YOUR_SPEAKER_ID_SUBSCRIPTION_KEY>>";
+    public static SpeakerIDRegion: string = "<<YOUR_SPEAKER_ID_REGION>>";
+
     public static InputDir: string = "tests/input/audio/";
 
     public static ExecuteLongRunningTests: string = "false";
@@ -65,6 +68,14 @@ export class Settings {
     public static WaveFileText: string = "What's the weather like?";
 
     public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
+
+    public static IndependentIdentificationWaveFile: string = Settings.InputDir + "aboutSpeechSdk.wav";
+    public static DependentVerificationWaveFile: string = Settings.InputDir + "myVoiceIsMyPassportVerifyMe04.wav";
+    public static VerificationWaveFiles: string[] = [
+        Settings.InputDir + "myVoiceIsMyPassportVerifyMe01.wav",
+        Settings.InputDir + "myVoiceIsMyPassportVerifyMe02.wav",
+        Settings.InputDir + "myVoiceIsMyPassportVerifyMe03.wav",
+    ];
 
     public static ConversationTranslatorHost: string = "";
     public static ConversationTranslatorSpeechHost: string = "";
