@@ -79,9 +79,7 @@ export class MicAudioSource implements IAudioSource {
     }
 
     public get blob(): Promise<Blob> {
-        const deferred = new Deferred<Blob>();
-        deferred.reject("Not implemented for Mic input");
-        return deferred.promise();
+        return PromiseHelper.fromError("Not implemented for Mic input");
     }
 
     public turnOn = (): Promise<boolean> => {

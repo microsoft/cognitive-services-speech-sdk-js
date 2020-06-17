@@ -384,9 +384,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
     }
 
     public get blob(): Promise<Blob | Buffer> {
-        const deferred = new Deferred<Blob>();
-        deferred.reject("Not implemented");
-        return deferred.promise();
+        return PromiseHelper.fromError("Not implemented");
     }
 
     public turnOn(): Promise<boolean> {
