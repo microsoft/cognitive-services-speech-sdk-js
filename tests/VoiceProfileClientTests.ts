@@ -48,11 +48,6 @@ const BuildClient: (speechConfig?: sdk.SpeechConfig) => sdk.VoiceProfileClient =
         objsToClose.push(s);
     }
 
-    const language: string = Settings.WaveFileLanguage;
-    if (s.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_RecoLanguage]) === undefined) {
-        s.speechRecognitionLanguage = language;
-    }
-
     const r: sdk.VoiceProfileClient = new sdk.VoiceProfileClient(s);
     expect(r).not.toBeUndefined();
 
@@ -60,7 +55,7 @@ const BuildClient: (speechConfig?: sdk.SpeechConfig) => sdk.VoiceProfileClient =
 };
 
 const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
-    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeakerIDSubscriptionKey, Settings.SpeakerIDRegion);
     expect(s).not.toBeUndefined();
     return s;
 };

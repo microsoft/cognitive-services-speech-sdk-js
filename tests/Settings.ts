@@ -29,6 +29,9 @@ export class Settings {
     public static BotSubscription: string = "<<YOUR_BOT_SUBSCRIPTION>>";
     public static BotRegion: string = "<<YOUR_BOT_REGION>>";
 
+    public static SpeakerIDSubscriptionKey: string = "<<YOUR_SPEAKER_ID_SUBSCRIPTION_KEY>>";
+    public static SpeakerIDRegion: string = "<<YOUR_SPEAKER_ID_REGION>>";
+
     public static InputDir: string = "tests/input/audio/";
 
     public static ExecuteLongRunningTests: string = "false";

@@ -55,7 +55,9 @@ jobs:
         LuisRegion:westus ^
         SpeechTestEndpointId:ec3432b2-8584-4736-865a-556213b9f6fd ^
         BotSubscription:$(BotSubscriptionKeyJS) ^
-        BotRegion:$(BotRegionJS)
+        BotRegion:$(BotRegionJS) ^
+        SpeakerIDSubscriptionKey:$(SpeakerRecognition-WestUS-Key) ^
+        SpeakerIDRegion:westus
 
 
     displayName: Run tests
