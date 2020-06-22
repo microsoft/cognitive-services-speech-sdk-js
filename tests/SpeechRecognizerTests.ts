@@ -78,6 +78,30 @@ export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, file
     return r;
 };
 
+export const BuildRecognizerFromAutoConfig: (speechConfig?: sdk.SpeechConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig, fileName?: string): sdk.SpeechRecognizer => {
+
+    let s: sdk.SpeechConfig = speechConfig;
+    if (s === undefined) {
+        s = BuildSpeechConfig();
+        // Since we're not going to return it, mark it for closure.
+        objsToClose.push(s);
+    }
+    let a: sdk.AutoDetectSourceLanguageConfig = autoConfig;
+    if (a === undefined) {
+        a = BuildAutoConfig();
+        // Since we're not going to return it, mark it for closure.
+        objsToClose.push(a);
+    }
+
+    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+
+    const r: sdk.SpeechRecognizer = sdk.SpeechRecognizer.FromConfig(s, a, config);
+    expect(r).not.toBeUndefined();
+
+    return r;
+};
+
 const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 
     let s: sdk.SpeechConfig;
@@ -94,6 +118,16 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     expect(s).not.toBeUndefined();
     return s;
 };
+
+const BuildAutoConfig: () => sdk.AutoDetectSourceLanguageConfig = (): sdk.AutoDetectSourceLanguageConfig => {
+    let a: sdk.AutoDetectSourceLanguageConfig;
+    const languages: string[] = ["en-US", "de-DE", "fr-FR"];
+    a = sdk.AutoDetectSourceLanguageConfig.fromLanguages(languages);
+
+    expect(a).not.toBeUndefined();
+    return a;
+};
+
 /*
 test("speech.event from service", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
@@ -355,6 +389,42 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         });
     });
 
+    test("testGetAutoDetectSourceLanguage", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testGetAutoDetectSourceLanguage");
+
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+
+        const r: sdk.SpeechRecognizer = BuildRecognizerFromAutoConfig(s);
+        objsToClose.push(r);
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            try {
+                expect(result).not.toBeUndefined();
+                expect(result.errorDetails).toBeUndefined();
+                expect(result.text).toEqual(Settings.WaveFileText);
+                expect(result.properties).not.toBeUndefined();
+                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                expect(result.language).not.toBeUndefined();
+                expect(result.languageDetectionConfidence).not.toBeUndefined();
+
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
+        }, (error: string) => {
+            done.fail(error);
+        });
+    });
     test("testGetOutputFormatDetailed with authorization token", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testGetOutputFormatDetailed");

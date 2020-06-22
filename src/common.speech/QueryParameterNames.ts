@@ -44,4 +44,7 @@ export class QueryParameterNames {
     public static get StableTranslation(): string {
         return "stableTranslation";
     }
+    public static get EnableLanguageID(): string {
+        return "lidEnabled";
+    }
 }

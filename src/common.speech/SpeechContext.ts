@@ -14,8 +14,13 @@ export class SpeechContext {
     private privContext: { [section: string]: any } = {};
     private privDynamicGrammar: DynamicGrammarBuilder;
 
-    constructor(dynamicGrammar: DynamicGrammarBuilder) {
+    constructor(dynamicGrammar: DynamicGrammarBuilder, autoDetectLanguages?: string) {
         this.privDynamicGrammar = dynamicGrammar;
+        if (autoDetectLanguages !== undefined) {
+            const languages: { [languages: string]: string[] } = {};
+            languages.languages = autoDetectLanguages.split(",");
+            this.setSection("languageId", languages);
+        }
     }
 
     /**

@@ -9,6 +9,12 @@ export interface ISimpleSpeechPhrase {
     DisplayText: string;
     Offset?: number;
     Duration?: number;
+    PrimaryLanguage?: IPrimaryLanguage;
+}
+
+export interface IPrimaryLanguage {
+    Language: string;
+    Confidence: string;
 }
 
 export class SimpleSpeechPhrase implements ISimpleSpeechPhrase {
@@ -37,5 +43,13 @@ export class SimpleSpeechPhrase implements ISimpleSpeechPhrase {
 
     public get Duration(): number {
         return this.privSimpleSpeechPhrase.Duration;
+    }
+
+    public get Language(): string {
+        return this.privSimpleSpeechPhrase.PrimaryLanguage === undefined ? undefined : this.privSimpleSpeechPhrase.PrimaryLanguage.Language;
+    }
+
+    public get LanguageDetectionConfidence(): string {
+        return this.privSimpleSpeechPhrase.PrimaryLanguage === undefined ? undefined : this.privSimpleSpeechPhrase.PrimaryLanguage.Confidence;
     }
 }

@@ -116,7 +116,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
         this.privServiceEvents = new EventSource<ServiceEvent>();
         this.privDynamicGrammar = new DynamicGrammarBuilder();
-        this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
+        this.privSpeechContext = new SpeechContext(this.privDynamicGrammar, this.privRecognizerConfig.autoDetectSourceLanguages);
         this.privAgentConfig = new AgentConfig();
     }
 

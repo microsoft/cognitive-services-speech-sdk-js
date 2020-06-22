@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyCollection } from "../sdk/Exports";
+import { PropertyCollection, PropertyId } from "../sdk/Exports";
 
 export enum RecognitionMode {
     Interactive,
@@ -51,6 +51,10 @@ export class RecognizerConfig {
 
     public get isContinuousRecognition(): boolean {
         return this.privRecognitionMode !== RecognitionMode.Interactive;
+    }
+
+    public get autoDetectSourceLanguages(): string {
+        return this.parameters.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, undefined);
     }
 }
 

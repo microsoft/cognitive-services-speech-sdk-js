@@ -64,6 +64,8 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     hypothesis.Text,
                     hypothesis.Duration,
                     offset,
+                    hypothesis.Language,
+                    hypothesis.LanguageDetectionConfidence,
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
@@ -106,6 +108,8 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                                 simple.DisplayText,
                                 simple.Duration,
                                 simple.Offset + this.privRequestSession.currentTurnAudioOffset,
+                                simple.Language,
+                                simple.LanguageDetectionConfidence,
                                 undefined,
                                 connectionMessage.textBody,
                                 resultProps);
@@ -118,6 +122,8 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                                 detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : undefined,
                                 detailed.Duration,
                                 detailed.Offset + this.privRequestSession.currentTurnAudioOffset,
+                                detailed.Language,
+                                detailed.LanguageDetectionConfidence,
                                 undefined,
                                 connectionMessage.textBody,
                                 resultProps);
@@ -188,8 +194,10 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 requestId,
                 ResultReason.Canceled,
                 undefined, // Text
-                undefined, // Druation
+                undefined, // Duration
                 undefined, // Offset
+                undefined, // Language
+                undefined, // Language Detection Confidence
                 error,
                 undefined, // Json
                 properties);

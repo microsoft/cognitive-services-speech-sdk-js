@@ -159,7 +159,7 @@ export abstract class Recognizer {
     // Move to independent class
     // ################################################################################################################
     //
-    protected abstract createRecognizerConfig(speecgConfig: SpeechServiceConfig): RecognizerConfig;
+    protected abstract createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig;
 
     // Creates the correct service recognizer for the type
     protected abstract createServiceRecognizer(

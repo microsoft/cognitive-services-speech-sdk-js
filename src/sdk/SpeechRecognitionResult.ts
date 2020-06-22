@@ -17,13 +17,16 @@ export class SpeechRecognitionResult extends RecognitionResult {
      * @param {string} text - The recognized text.
      * @param {number} duration - The duration.
      * @param {number} offset - The offset into the stream.
+     * @param {string} language - Primary Language detected, if provided.
+     * @param {string} languageDetectionConfidence - Primary Language confidence ("Unknown," "Low," "Medium," "High"...), if provided.
      * @param {string} errorDetails - Error details, if provided.
      * @param {string} json - Additional Json, if provided.
      * @param {PropertyCollection} properties - Additional properties, if provided.
      */
     public constructor(resultId?: string, reason?: ResultReason, text?: string,
-                       duration?: number, offset?: number, errorDetails?: string,
+                       duration?: number, offset?: number, language?: string,
+                       languageDetectionConfidence?: string, errorDetails?: string,
                        json?: string, properties?: PropertyCollection) {
-        super(resultId, reason, text, duration, offset, errorDetails, json, properties);
+        super(resultId, reason, text, duration, offset, language, languageDetectionConfidence, errorDetails, json, properties);
     }
 }

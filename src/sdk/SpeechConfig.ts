@@ -432,6 +432,14 @@ export class SpeechConfigImpl extends SpeechConfig {
         this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, value);
     }
 
+    public get autoDetectSourceLanguages(): string {
+        return this.privProperties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages);
+    }
+
+    public set autoDetectSourceLanguages(value: string) {
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, value);
+    }
+
     public get outputFormat(): OutputFormat {
         return (OutputFormat as any)[this.privProperties.getProperty(OutputFormatPropertyName, undefined)];
     }

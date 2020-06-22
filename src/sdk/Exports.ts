@@ -62,6 +62,7 @@ export { VoiceProfileClient } from "./VoiceProfileClient";
 export { SpeakerRecognizer } from "./SpeakerRecognizer";
 export { SpeakerIdentificationModel } from "./SpeakerIdentificationModel";
 export { SpeakerVerificationModel } from "./SpeakerVerificationModel";
+export { AutoDetectSourceLanguageConfig } from "./AutoDetectSourceLanguageConfig";
 export { SpeakerRecognitionResult, SpeakerRecognitionResultType, SpeakerRecognitionCancellationDetails } from "./SpeakerRecognitionResult";
 export { Conversation,
     ConversationExpirationEventArgs,

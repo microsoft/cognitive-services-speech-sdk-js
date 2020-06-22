@@ -163,6 +163,13 @@ export enum PropertyId {
     SpeechServiceConnection_SynthOutputFormat,
 
     /**
+     * The list of comma separated languages used as possible source languages
+     * Added in version 1.7.0
+     * @member PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages
+     */
+    SpeechServiceConnection_AutoDetectSourceLanguages,
+
+    /**
      * The requested Cognitive Services Speech Service response output format (simple or detailed). Under normal circumstances, you shouldn't have
      * to use this property directly.
      * Instead use [[SpeechConfig.outputFormat]].
