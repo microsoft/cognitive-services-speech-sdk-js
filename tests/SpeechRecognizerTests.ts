@@ -17,7 +17,7 @@ import * as request from "request";
 
 import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
-import WaitForCondition from "./Utilities";
+import { WaitForCondition } from "./Utilities";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 

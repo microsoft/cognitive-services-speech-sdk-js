@@ -11,7 +11,7 @@ import {
     InvalidOperationError
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
-import WaitForCondition from "./Utilities";
+import { WaitForCondition } from "./Utilities";
 
 let objsToClose: any[];
 

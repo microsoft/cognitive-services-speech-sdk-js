@@ -26,11 +26,8 @@ import {
 import { ProxyInfo } from "./ProxyInfo";
 
 // Node.JS specific web socket / browser support.
-import * as http from "http";
-import * as HttpsProxyAgent from "https-proxy-agent";
-import * as tls from "tls";
-import * as ws from "ws";
-import * as ocsp from "../../external/ocsp/ocsp";
+import ws from "ws";
+import { CertCheckAgent } from "./CertChecks";
 
 interface ISendItem {
     Message: ConnectionMessage;
@@ -101,7 +98,6 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.Connecting;
 
         try {
-            const enableOCSP: boolean = (typeof process !== "undefined" && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0" && process.env.SPEECH_CONDUCT_OCSP_CHECK !== "0") && !this.privUri.startsWith("ws:");
 
             if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 // Browser handles cert checks.
@@ -109,65 +105,13 @@ export class WebsocketMessageAdapter {
 
                 this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
-                if (this.proxyInfo !== undefined &&
-                    this.proxyInfo.HostName !== undefined &&
-                    this.proxyInfo.Port > 0) {
-                    const httpProxyOptions: HttpsProxyAgent.HttpsProxyAgentOptions = {
-                        host: this.proxyInfo.HostName,
-                        port: this.proxyInfo.Port,
-                    };
+                const options: ws.ClientOptions = { headers: this.privHeaders };
+                // The ocsp library will handle validation for us and fail the connection if needed.
+                this.privCertificateValidatedDeferral.resolve(true);
+                const checkAgent: CertCheckAgent = new CertCheckAgent(this.proxyInfo);
 
-                    if (undefined !== this.proxyInfo.UserName) {
-                        httpProxyOptions.headers = {
-                            "Proxy-Authentication": "Basic " + new Buffer(this.proxyInfo.UserName + ":" + (this.proxyInfo.Password === undefined) ? "" : this.proxyInfo.Password).toString("base64"),
-                        };
-                        if (enableOCSP) {
-                            httpProxyOptions.headers.requestOCSP = "true";
-                        }
-                    }
-
-                    const httpProxyAgent: HttpsProxyAgent = new HttpsProxyAgent(httpProxyOptions);
-                    const httpsOptions: http.RequestOptions = { agent: httpProxyAgent, headers: this.privHeaders };
-
-                    this.privWebsocketClient = new ws(this.privUri, httpsOptions as ws.ClientOptions);
-
-                    // Register to be notified when WebSocket upgrade happens so we can check the validity of the
-                    // Certificate.
-                    if (enableOCSP) {
-                        this.privWebsocketClient.addListener("upgrade", (e: http.IncomingMessage): void => {
-                            const tlsSocket: tls.TLSSocket = e.socket as tls.TLSSocket;
-                            const peer: tls.DetailedPeerCertificate = tlsSocket.getPeerCertificate(true);
-
-                            // Cork the socket until we know if the cert is good.
-                            tlsSocket.cork();
-
-                            ocsp.check({
-                                cert: peer.raw,
-                                httpOptions: httpsOptions,
-                                issuer: peer.issuerCertificate.raw,
-                            }, (error: Error, res: any): void => {
-                                if (error) {
-                                    this.privCertificateValidatedDeferral.reject(error.message);
-                                    tlsSocket.destroy(error);
-                                } else {
-                                    this.privCertificateValidatedDeferral.resolve(true);
-                                    tlsSocket.uncork();
-                                }
-                            });
-                        });
-                    } else {
-                        this.privCertificateValidatedDeferral.resolve(true);
-                    }
-
-                } else {
-                    const options: ws.ClientOptions = { headers: this.privHeaders };
-                    // The ocsp library will handle validation for us and fail the connection if needed.
-                    this.privCertificateValidatedDeferral.resolve(true);
-                    if (enableOCSP) {
-                        options.agent = new ocsp.Agent({});
-                    }
-                    this.privWebsocketClient = new ws(this.privUri, options);
-                }
+                options.agent = checkAgent.GetAgent();
+                this.privWebsocketClient = new ws(this.privUri, options);
             }
 
             this.privWebsocketClient.binaryType = "arraybuffer";
