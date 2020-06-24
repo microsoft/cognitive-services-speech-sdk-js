@@ -61,9 +61,8 @@ export class SpeechRecognizer extends Recognizer {
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
     public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): SpeechRecognizer {
-        const autoDetectLanguages = autoDetectSourceLanguageConfig.properties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, undefined);
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
-        speechConfigImpl.autoDetectSourceLanguages = autoDetectLanguages;
+        autoDetectSourceLanguageConfig.properties.mergeTo(speechConfigImpl.properties);
         const recognizer = new SpeechRecognizer(speechConfig, audioConfig);
         return recognizer;
     }

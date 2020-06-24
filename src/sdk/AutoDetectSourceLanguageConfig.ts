@@ -5,6 +5,7 @@ import {Contracts} from "./Contracts";
 import {
     PropertyCollection,
     PropertyId,
+    SourceLanguageConfig,
 } from "./Exports";
 
 /**
@@ -21,8 +22,26 @@ export class AutoDetectSourceLanguageConfig {
     public static fromLanguages(languages: string[]): AutoDetectSourceLanguageConfig {
         Contracts.throwIfArrayEmptyOrWhitespace(languages, "languages");
         const config = new AutoDetectSourceLanguageConfig();
-        config.privProperties.setProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, languages.join());
+        config.properties.setProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, languages.join());
         return config;
+    }
+
+    public static fromSourceLanguageConfigs(configs: SourceLanguageConfig[]): AutoDetectSourceLanguageConfig {
+        if (configs.length < 1) {
+            throw new Error("Expected non-empty SourceLanguageConfig array.");
+        }
+        const autoConfig = new AutoDetectSourceLanguageConfig();
+        const langs: string[] = [];
+        configs.forEach((config: SourceLanguageConfig) => {
+            langs.push(config.language);
+            if (config.endpointId !== undefined && config.endpointId !== "") {
+                const customProperty = config.language + PropertyId.SpeechServiceConnection_EndpointId.toString();
+                autoConfig.properties.setProperty(customProperty, config.endpointId);
+            }
+        });
+        autoConfig.properties.setProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, langs.join());
+
+        return autoConfig;
     }
 
     public get properties(): PropertyCollection {
