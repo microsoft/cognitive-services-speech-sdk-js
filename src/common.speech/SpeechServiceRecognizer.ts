@@ -43,6 +43,18 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         speechRecognizer: SpeechRecognizer) {
         super(authentication, connectionFactory, audioSource, recognizerConfig, speechRecognizer);
         this.privSpeechRecognizer = speechRecognizer;
+        if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
+            const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
+            this.privSpeechContext.setSection("languageId", { languages: sourceLanguages });
+            this.privSpeechContext.setSection("phraseOutput", {
+                interimResults: {
+                    resultType: "Auto"
+                },
+                phraseResults: {
+                    resultType: "Always"
+                }
+            });
+        }
     }
 
     protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {

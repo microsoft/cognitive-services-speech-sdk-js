@@ -70,11 +70,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privServiceEvents: EventSource<ServiceEvent>;
-    private privSpeechContext: SpeechContext;
     private privDynamicGrammar: DynamicGrammarBuilder;
     private privAgentConfig: AgentConfig;
     private privServiceHasSentMessage: boolean;
     private privActivityTemplate: string;
+    protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
     protected privRecognizerConfig: RecognizerConfig;
@@ -116,7 +116,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
         this.privServiceEvents = new EventSource<ServiceEvent>();
         this.privDynamicGrammar = new DynamicGrammarBuilder();
-        this.privSpeechContext = new SpeechContext(this.privDynamicGrammar, this.privRecognizerConfig.autoDetectSourceLanguages);
+        this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
         this.privAgentConfig = new AgentConfig();
     }
 
