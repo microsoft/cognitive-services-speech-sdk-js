@@ -119,13 +119,25 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     return s;
 };
 
-const BuildAutoConfig: () => sdk.AutoDetectSourceLanguageConfig = (): sdk.AutoDetectSourceLanguageConfig => {
+const BuildAutoConfig: (s?: sdk.SourceLanguageConfig[]) => sdk.AutoDetectSourceLanguageConfig = (s?: sdk.SourceLanguageConfig[]): sdk.AutoDetectSourceLanguageConfig => {
     let a: sdk.AutoDetectSourceLanguageConfig;
-    const languages: string[] = ["en-US", "de-DE", "fr-FR"];
-    a = sdk.AutoDetectSourceLanguageConfig.fromLanguages(languages);
+    if ((s === undefined) || (s.length < 1)) {
+        const languages: string[] = ["en-US", "de-DE", "fr-FR"];
+        a = sdk.AutoDetectSourceLanguageConfig.fromLanguages(languages);
+    } else {
+        a = sdk.AutoDetectSourceLanguageConfig.fromSourceLanguageConfigs(s);
+    }
 
     expect(a).not.toBeUndefined();
     return a;
+};
+
+const BuildSourceLanguageConfigs: () => sdk.SourceLanguageConfig[] = (): sdk.SourceLanguageConfig[] => {
+    const s1: sdk.SourceLanguageConfig = sdk.SourceLanguageConfig.fromLanguage("en-US");
+    expect(s1).not.toBeUndefined();
+    const s2: sdk.SourceLanguageConfig = sdk.SourceLanguageConfig.fromLanguage("de-DE", "otherEndpointId");
+    expect(s2).not.toBeUndefined();
+    return [s1, s2];
 };
 
 /*
@@ -397,6 +409,48 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         objsToClose.push(s);
 
         const r: sdk.SpeechRecognizer = BuildRecognizerFromAutoConfig(s);
+        objsToClose.push(r);
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            try {
+                expect(result).not.toBeUndefined();
+                expect(result.errorDetails).toBeUndefined();
+                expect(result.text).toEqual(Settings.WaveFileText);
+                expect(result.properties).not.toBeUndefined();
+                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                expect(result.language).not.toBeUndefined();
+                expect(result.languageDetectionConfidence).not.toBeUndefined();
+
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
+        }, (error: string) => {
+            done.fail(error);
+        });
+    });
+    test("testRecognizeFromSourceLanguageConfig", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testRecognizeFromSourceLanguageConfig");
+
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+
+        const configs: sdk.SourceLanguageConfig[] = BuildSourceLanguageConfigs();
+        configs.forEach((c: sdk.SourceLanguageConfig) => { objsToClose.push(c); });
+
+        const a: sdk.AutoDetectSourceLanguageConfig = BuildAutoConfig(configs);
+        objsToClose.push(a);
+
+        const r: sdk.SpeechRecognizer = BuildRecognizerFromAutoConfig(s, a);
         objsToClose.push(r);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
