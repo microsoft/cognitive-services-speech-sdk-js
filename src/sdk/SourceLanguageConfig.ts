@@ -3,6 +3,10 @@
 
 import { Contracts } from "./Contracts";
 
+/**
+ * Source Language configuration.
+ * @class SourceLanguageConfig
+ */
 export class SourceLanguageConfig {
     private privLanguage: string;
     private privEndpointId: string;
@@ -13,6 +17,16 @@ export class SourceLanguageConfig {
         this.privEndpointId = endpointId;
     }
 
+    /**
+     * @member SourceLanguageConfig.fromLanguage
+     * @function
+     * @public
+     * @param {string} language language (eg. "en-US") value of config.
+     * @param {string?} endpointId endpointId of model bound to given language of config.
+     * @return {SourceLanguageConfig} Instance of SourceLanguageConfig
+     * @summary Creates an instance of the SourceLanguageConfig with the given language and optional endpointId.
+     * Added in version 1.13.0.
+     */
     public static fromLanguage(language: string, endpointId?: string): SourceLanguageConfig {
         return new SourceLanguageConfig(language, endpointId);
     }
@@ -24,5 +38,4 @@ export class SourceLanguageConfig {
     public get endpointId(): string {
         return this.privEndpointId;
     }
-
 }

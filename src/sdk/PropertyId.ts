@@ -164,7 +164,7 @@ export enum PropertyId {
 
     /**
      * The list of comma separated languages used as possible source languages
-     * Added in version 1.7.0
+     * Added in version 1.13.0
      * @member PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages
      */
     SpeechServiceConnection_AutoDetectSourceLanguages,
