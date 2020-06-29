@@ -151,8 +151,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(result.text).toEqual(Settings.WaveFileText);
                 expect(result.properties).not.toBeUndefined();
                 expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
-                expect(result.language).not.toBeUndefined();
-                expect(result.languageDetectionConfidence).not.toBeUndefined();
+                const autoDetectResult: sdk.AutoDetectSourceLanguageResult = sdk.AutoDetectSourceLanguageResult.fromResult(result);
+                expect(autoDetectResult).not.toBeUndefined();
+                expect(autoDetectResult.language).not.toBeUndefined();
+                expect(autoDetectResult.languageDetectionConfidence).not.toBeUndefined();
 
                 done();
             } catch (error) {
@@ -196,6 +198,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
                 expect(result.language).not.toBeUndefined();
                 expect(result.languageDetectionConfidence).not.toBeUndefined();
+                const autoDetectResult: sdk.AutoDetectSourceLanguageResult = sdk.AutoDetectSourceLanguageResult.fromResult(result);
+                expect(autoDetectResult).not.toBeUndefined();
+                expect(autoDetectResult.language).not.toBeUndefined();
+                expect(autoDetectResult.languageDetectionConfidence).not.toBeUndefined();
 
                 done();
             } catch (error) {
@@ -241,6 +247,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
                     expect(e.result.language).not.toBeUndefined();
                     expect(e.result.languageDetectionConfidence).not.toBeUndefined();
+                    const autoDetectResult: sdk.AutoDetectSourceLanguageResult = sdk.AutoDetectSourceLanguageResult.fromResult(e.result);
+                    expect(autoDetectResult).not.toBeUndefined();
+                    expect(autoDetectResult.language).not.toBeUndefined();
+                    expect(autoDetectResult.languageDetectionConfidence).not.toBeUndefined();
                 } else if (e.result.reason === sdk.ResultReason.NoMatch) {
                     expect(speechRecognized).toEqual(true);
                     noMatchCount++;
