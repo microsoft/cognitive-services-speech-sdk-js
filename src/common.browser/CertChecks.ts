@@ -102,6 +102,7 @@ export class CertCheckAgent {
     private static async OCSPCheck(socketPromise: Promise<net.Socket>, proxyInfo: ProxyInfo): Promise<net.Socket> {
         let ocspRequest: ocsp.Request;
         let stapling: Buffer;
+        let resolved: boolean = false;
 
         const socket: net.Socket = await socketPromise;
         socket.cork();
@@ -113,6 +114,14 @@ export class CertCheckAgent {
                 if (!!data) {
                     this.onEvent(new OCSPStapleReceivedEvent());
                     stapling = data;
+                }
+            });
+
+            socket.on("error", (error: Error) => {
+                if (!resolved) {
+                    resolved = true;
+                    socket.destroy();
+                    reject(error);
                 }
             });
 
@@ -136,9 +145,11 @@ export class CertCheckAgent {
                     await this.VerifyOCSPResponse(stapling, ocspRequest, proxyInfo);
 
                     socket.uncork();
+                    resolved = true;
                     resolve(socket);
                 } catch (e) {
                     socket.destroy();
+                    resolved = true;
                     reject(e);
                 }
             });
