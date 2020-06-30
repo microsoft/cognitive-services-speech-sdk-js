@@ -110,8 +110,10 @@ export class CertCheckAgent {
 
         return new Promise<net.Socket>((resolve: (value: net.Socket) => void, reject: (error: string | Error) => void) => {
             socket.on("OCSPResponse", (data: Buffer): void => {
-                this.onEvent(new OCSPStapleReceivedEvent());
-                stapling = data;
+                if (!!data) {
+                    this.onEvent(new OCSPStapleReceivedEvent());
+                    stapling = data;
+                }
             });
 
             tlsSocket.on("secure", async () => {
