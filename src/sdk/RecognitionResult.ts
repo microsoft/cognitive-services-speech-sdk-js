@@ -13,6 +13,8 @@ export class RecognitionResult {
     private privText: string;
     private privDuration: number;
     private privOffset: number;
+    private privLanguage: string;
+    private privLanguageDetectionConfidence: string;
     private privErrorDetails: string;
     private privJson: string;
     private privProperties: PropertyCollection;
@@ -25,17 +27,21 @@ export class RecognitionResult {
      * @param {string} text - The recognized text.
      * @param {number} duration - The duration.
      * @param {number} offset - The offset into the stream.
+     * @param {string} language - Primary Language detected, if provided.
+     * @param {string} languageDetectionConfidence - Primary Language confidence ("Unknown," "Low," "Medium," "High"...), if provided.
      * @param {string} errorDetails - Error details, if provided.
      * @param {string} json - Additional Json, if provided.
      * @param {PropertyCollection} properties - Additional properties, if provided.
      */
     constructor(resultId?: string, reason?: ResultReason, text?: string, duration?: number,
-                offset?: number, errorDetails?: string, json?: string, properties?: PropertyCollection) {
+                offset?: number, language?: string, languageDetectionConfidence?: string, errorDetails?: string, json?: string, properties?: PropertyCollection) {
         this.privResultId = resultId;
         this.privReason = reason;
         this.privText = text;
         this.privDuration = duration;
         this.privOffset = offset;
+        this.privLanguage = language;
+        this.privLanguageDetectionConfidence = languageDetectionConfidence;
         this.privErrorDetails = errorDetails;
         this.privJson = json;
         this.privProperties = properties;
@@ -94,6 +100,28 @@ export class RecognitionResult {
      */
     public get offset(): number {
         return this.privOffset;
+    }
+
+    /**
+     * Primary Language detected.
+     * @member RecognitionResult.prototype.language
+     * @function
+     * @public
+     * @returns {string} language detected.
+     */
+    public get language(): string {
+        return this.privLanguage;
+    }
+
+    /**
+     * Primary Language detection confidence (Unknown, Low, Medium, High).
+     * @member RecognitionResult.prototype.languageDetectionConfidence
+     * @function
+     * @public
+     * @returns {string} detection confidence strength.
+     */
+    public get languageDetectionConfidence(): string {
+        return this.privLanguageDetectionConfidence;
     }
 
     /**

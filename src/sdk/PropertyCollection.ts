@@ -86,4 +86,20 @@ export class PropertyCollection {
 
         return clonedMap;
     }
+
+    /**
+     * Merges this set of properties into another, no overwrites.
+     * @member PropertyCollection.prototype.mergeTo
+     * @function
+     * @public
+     * @param {PropertyCollection} The collection to merge into.
+     */
+    public mergeTo(destinationCollection: PropertyCollection): void {
+        this.privKeys.forEach((key: string | PropertyId) => {
+            if (destinationCollection.getProperty(key, undefined) === undefined) {
+                const value = this.getProperty(key);
+                destinationCollection.setProperty(key, value);
+            }
+        });
+    }
 }
