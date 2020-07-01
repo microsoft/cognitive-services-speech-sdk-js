@@ -92,6 +92,16 @@ const BuildTranslationRecognizerFromWaveFile: (speechConfig: sdk.SpeechTranslati
     return r;
 };
 
+const BuildSpeechSynthesizerToFileOutput: (speechConfig: sdk.SpeechConfig, fileName?: string) => sdk.SpeechSynthesizer =
+    (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechSynthesizer => {
+    const config: sdk.AudioConfig = fileName === undefined ? null : sdk.AudioConfig.fromAudioFileOutput(fileName);
+
+    const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, config);
+    expect(s).not.toBeUndefined();
+
+    return s;
+};
+
 test("Null Param Check, both.", () => {
     expect(() => sdk.SpeechConfig.fromSubscription(null, null)).toThrowError();
 });
@@ -127,17 +137,19 @@ test.skip("From endpoint, invalid key format.", () => {
 });
 
 // TODO use an endpoint that we control so the subscription key is not leaked!
-test("From endpoing, valid Params", () => {
+test("From endpoint, valid Params", () => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL("http://www.example.com"), "Settings.SpeechSubscriptionKey");
     expect(s).not.toBeUndefined();
     s.close();
 });
 
-test("TypedParametersAccessableViaPropBag", () => {
+test("TypedParametersAccessibleViaPropBag", () => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     TestParam(() => s.authorizationToken, (val: string) => (s.authorizationToken = val), sdk.PropertyId.SpeechServiceAuthorization_Token, s);
     TestParam(() => s.endpointId, (val: string) => (s.endpointId = val), sdk.PropertyId.SpeechServiceConnection_EndpointId, s);
     TestParam(() => s.speechRecognitionLanguage, (val: string) => (s.speechRecognitionLanguage = val), sdk.PropertyId.SpeechServiceConnection_RecoLanguage, s);
+    TestParam(() => s.speechSynthesisLanguage, (val: string) => (s.speechSynthesisLanguage = val), sdk.PropertyId.SpeechServiceConnection_SynthLanguage, s);
+    TestParam(() => s.speechSynthesisVoiceName, (val: string) => (s.speechSynthesisVoiceName = val), sdk.PropertyId.SpeechServiceConnection_SynthVoice, s);
 });
 
 const TestParam = (getAccess: () => string, setAccess: (val: string) => void, propEnum: sdk.PropertyId, config: sdk.SpeechConfig): void => {
@@ -177,7 +189,7 @@ test("Create Recognizer", () => {
     s.close();
 });
 
-test("Proeprties are passed to recognizer", () => {
+test("Properties are passed to recognizer", () => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = createNoDashGuid();
     s.authorizationToken = createNoDashGuid();
@@ -330,7 +342,7 @@ test("Translation Recognizer Null target languages throws", () => {
     s.close();
 });
 
-test("Test Translation Recognizer emty target list throws", () => {
+test("Test Translation Recognizer empty target list throws", () => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-EN";
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], "");
@@ -350,7 +362,7 @@ test("Translation Null voice value throws", () => {
     s.close();
 });
 
-test("Translition Recognizer success.", () => {
+test("Translation Recognizer success.", () => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], "en-US");
     s.speechRecognitionLanguage = "en-EN";
@@ -564,17 +576,28 @@ describe("Connection URL Tests", () => {
         createMethod: (url: URL, key: string) => sdk.SpeechConfig | sdk.SpeechTranslationConfig,
         hostName: string,
         expectedHostName: string,
-        recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer,
+        recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer,
         done: jest.DoneCallback
     ): void {
 
         const s: sdk.SpeechConfig | sdk.SpeechTranslationConfig = createMethod(new URL(hostName), "fakekey");
         objsToClose.push(s);
 
-        const r: { recognizeOnceAsync: (cb?: (e: sdk.RecognitionResult) => void, err?: (e: string) => void) => void } = recognizerCreateMethod(s);
+        const r = recognizerCreateMethod(s);
         objsToClose.push(r);
 
-        r.recognizeOnceAsync(
+        let recognizeOrSynthesizeOnceAsync: (cb: (p2: any) => void) => void;
+
+        if (r instanceof sdk.Recognizer) {
+            recognizeOrSynthesizeOnceAsync = (cb: (p2: any) => void): void => {
+                r.recognizeOnceAsync(cb);
+            };
+        } else if (r instanceof sdk.SpeechSynthesizer) {
+            recognizeOrSynthesizeOnceAsync = (cb: (p2: any) => void): void => {
+                r.speakTextAsync("", cb);
+            };
+        }
+        recognizeOrSynthesizeOnceAsync(
             (p2: any): void => {
                 try {
                     expect(uri).not.toBeUndefined();
@@ -599,9 +622,11 @@ describe("Connection URL Tests", () => {
     describe.each([
         [sdk.SpeechConfig.fromHost, BuildSpeechRecognizerFromWaveFile],
         [sdk.SpeechTranslationConfig.fromHost, BuildTranslationRecognizerFromWaveFile],
-        [sdk.SpeechConfig.fromHost, BuildIntentRecognizerFromWaveFile]])("FromHost Tests",
+        [sdk.SpeechConfig.fromHost, BuildIntentRecognizerFromWaveFile],
+        [sdk.SpeechConfig.fromHost, BuildSpeechSynthesizerToFileOutput]])("FromHost Tests",
             (createMethod: any,
-             recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer) => {
+             recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) =>
+                 sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
 
                 test("Simple Host and protocol", (done: jest.DoneCallback) => {
                     // tslint:disable-next-line:no-console
@@ -629,7 +654,7 @@ describe("Connection URL Tests", () => {
     function testUrlParameter(
         createMethod: (url: URL, key: string) => sdk.SpeechConfig | sdk.SpeechTranslationConfig,
         setMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => void,
-        recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer,
+        recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer,
         done: jest.DoneCallback,
         ...urlSubStrings: string[]
     ): void {
@@ -639,10 +664,22 @@ describe("Connection URL Tests", () => {
 
         setMethod(s);
 
-        const r: { recognizeOnceAsync: (cb?: (e: sdk.RecognitionResult) => void, err?: (e: string) => void) => void } = recognizerCreateMethod(s);
+        const r = recognizerCreateMethod(s);
         objsToClose.push(r);
 
-        r.recognizeOnceAsync(
+        let recognizeOrSynthesizeOnceAsync: (cb: (p2: any) => void) => void;
+
+        if (r instanceof sdk.Recognizer) {
+            recognizeOrSynthesizeOnceAsync = (cb: (p2: any) => void): void => {
+                r.recognizeOnceAsync(cb);
+            };
+        } else if (r instanceof sdk.SpeechSynthesizer) {
+            recognizeOrSynthesizeOnceAsync = (cb: (p2: any) => void): void => {
+                r.speakTextAsync("", cb);
+            };
+        }
+
+        recognizeOrSynthesizeOnceAsync(
             (p2: any): void => {
                 try {
                     expect(uri).not.toBeUndefined();
@@ -669,7 +706,7 @@ describe("Connection URL Tests", () => {
         [sdk.SpeechTranslationConfig.fromEndpoint, BuildTranslationRecognizerFromWaveFile],
         [sdk.SpeechConfig.fromEndpoint, BuildIntentRecognizerFromWaveFile]])("Common URL Tests",
             (createMethod: any,
-             recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer) => {
+             recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
                 test("setServiceProperty (single)", (done: jest.DoneCallback) => {
                     // tslint:disable-next-line:no-console
                     console.info("Name: setServiceProperty");

@@ -16,6 +16,7 @@ import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
+    AutoDetectSourceLanguageConfig,
     KeywordRecognitionModel,
     OutputFormat,
     PropertyCollection,
@@ -37,7 +38,7 @@ export class SpeechRecognizer extends Recognizer {
     /**
      * SpeechRecognizer constructor.
      * @constructor
-     * @param {SpeechConfig} speechConfig - An set of initial properties for this recognizer
+     * @param {SpeechConfig} speechConfig - an set of initial properties for this recognizer
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
     public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
@@ -50,6 +51,20 @@ export class SpeechRecognizer extends Recognizer {
 
         super(audioConfig, speechConfigImpl.properties, new SpeechConnectionFactory());
         this.privDisposedSpeechRecognizer = false;
+    }
+
+    /**
+     * SpeechRecognizer constructor.
+     * @constructor
+     * @param {SpeechConfig} speechConfig - an set of initial properties for this recognizer
+     * @param {AutoDetectSourceLanguageConfig} autoDetectSourceLanguageConfig - An source language detection configuration associated with the recognizer
+     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
+     */
+    public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): SpeechRecognizer {
+        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
+        autoDetectSourceLanguageConfig.properties.mergeTo(speechConfigImpl.properties);
+        const recognizer = new SpeechRecognizer(speechConfig, audioConfig);
+        return recognizer;
     }
 
     /**

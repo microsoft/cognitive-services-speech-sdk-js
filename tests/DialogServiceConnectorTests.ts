@@ -378,12 +378,11 @@ describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
         //     }
         // };
 
+        const audioBuffer = new ArrayBuffer(320);
         const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-            audioStream.read().then((audioBuffer: ArrayBuffer) => {
+            audioStream.read(audioBuffer).then((bytesRead: number) => {
                 try {
-                    if (audioBuffer !== null) {
-                        expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(1);
-                    } else {
+                    if (bytesRead === 0) {
                         PostDoneTest(done, 2000);
                     }
 
@@ -391,11 +390,10 @@ describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
                     done.fail(error);
                 }
 
-                if (audioBuffer != null) {
+                if (bytesRead > 0) {
                     audioReadLoop(audioStream, done);
                 }
-            },
-                (error: string) => {
+                }, (error: string) => {
                     done.fail(error);
                 });
         };
@@ -404,7 +402,7 @@ describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.activity).not.toBeNull();
                 if (e.activity.type === "message") {
-                    if ((e.activity.speak !== null) && (e.activity.speak !== undefined)) {
+                    if (e.activity.speak && (e.activity.speak !== "")) {
                         expect(e.audioStream).not.toBeNull();
                         audioReadLoop(e.audioStream, done);
                     }
@@ -461,33 +459,30 @@ describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
             hypoCounter++;
         };
 
+        const audioBuffer = new ArrayBuffer(320);
         const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-            audioStream.read().then((audioBuffer: ArrayBuffer) => {
+            audioStream.read(audioBuffer).then((bytesRead: number) => {
                 try {
-                    if (audioBuffer !== null) {
-                        expect(audioBuffer.byteLength).toBeGreaterThanOrEqual(1);
-                    } else {
+                    if (bytesRead === 0) {
                         PostDoneTest(done, 2000);
                     }
-
                 } catch (error) {
                     done.fail(error);
                 }
 
-                if (audioBuffer != null) {
+                if (bytesRead > 0) {
                     audioReadLoop(audioStream, done);
                 }
-            },
-                (error: string) => {
-                    done.fail(error);
-                });
+                }, (error: string) => {
+                done.fail(error);
+            });
         };
 
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
             try {
                 expect(e.activity).not.toBeNull();
                 if (e.activity.type === "message") {
-                    if ((e.activity.speak !== null) && (e.activity.speak !== undefined)) {
+                    if (e.activity.speak && (e.activity.speak !== "")) {
                         expect(e.audioStream).not.toBeNull();
                         audioReadLoop(e.audioStream, done);
                     }

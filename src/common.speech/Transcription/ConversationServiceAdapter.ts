@@ -64,7 +64,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     private privConnectionConfigPromise: Promise<IConnection>;
     private privConnectionLoop: Promise<void>;
     private terminateMessageLoop: boolean;
-    private privUtteranceId: string = "";
+    private privLastPartialUtteranceId: string = "";
     private privConversationIsDisposed: boolean;
 
     public constructor(
@@ -188,14 +188,17 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
             const isDisposed: boolean = this.isDisposed();
             const terminateMessageLoop = (!this.isDisposed() && this.terminateMessageLoop);
             const sessionId: string = this.privConversationRequestSession.sessionId;
+            let sendFinal: boolean = false;
             if (isDisposed || terminateMessageLoop) {
                 // We're done.
                 communicationCustodian.resolve();
                 return Promise.resolve();
             }
+
             if (!message) {
                 return this.receiveConversationMessageOverride();
             }
+
             try {
                 switch (message.conversationMessageType.toLowerCase()) {
                     case "info":
@@ -203,13 +206,16 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                     case "command":
                         const commandPayload: CommandResponsePayload = CommandResponsePayload.fromJSON(message.textBody);
                         switch (commandPayload.command.toLowerCase()) {
+
                             /**
                              * 'ParticpantList' is the first message sent to the user after the websocket connection has opened.
                              * The consuming client must wait for this message to arrive
                              * before starting to send their own data.
                              */
                             case "participantlist":
+
                                 const participantsPayload: IParticipantsListPayloadResponse = ParticipantsListPayloadResponse.fromJSON(message.textBody);
+
                                 const participantsResult: IInternalParticipant[] = participantsPayload.participants.map((p: IParticipantPayloadResponse) => {
                                     const participant: IInternalParticipant = {
                                         avatar: p.avatar,
@@ -222,19 +228,31 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                     };
                                     return participant;
                                 });
+
                                 if (!!this.privConversationServiceConnector.participantsListReceived) {
-                                    this.privConversationServiceConnector.participantsListReceived(this.privConversationServiceConnector, new ParticipantsListEventArgs(participantsPayload.roomid, participantsPayload.token, participantsPayload.translateTo, participantsPayload.profanityFilter, participantsPayload.roomProfanityFilter, participantsPayload.roomLocked, participantsPayload.muteAll, participantsResult, sessionId));
+                                    this.privConversationServiceConnector.participantsListReceived(this.privConversationServiceConnector,
+                                        new ParticipantsListEventArgs(participantsPayload.roomid, participantsPayload.token,
+                                            participantsPayload.translateTo, participantsPayload.profanityFilter,
+                                            participantsPayload.roomProfanityFilter, participantsPayload.roomLocked,
+                                            participantsPayload.muteAll, participantsResult, sessionId));
                                 }
                                 break;
+
                             /**
                              * 'SetTranslateToLanguages' represents the list of languages being used in the Conversation by all users(?).
                              * This is sent at the start of the Conversation
                              */
                             case "settranslatetolanguages":
+
                                 if (!!this.privConversationServiceConnector.participantUpdateCommandReceived) {
-                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector, new ParticipantAttributeEventArgs(commandPayload.participantId, ConversationTranslatorCommandTypes.setTranslateToLanguages, commandPayload.value, sessionId));
+                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector,
+                                        new ParticipantAttributeEventArgs(commandPayload.participantId,
+                                            ConversationTranslatorCommandTypes.setTranslateToLanguages,
+                                            commandPayload.value, sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'SetProfanityFiltering' lets the client set the level of profanity filtering.
                              * If sent by the participant the setting will effect only their own profanity level.
@@ -242,65 +260,103 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                              * Note: the profanity filters differ from Speech Service (?): 'marked', 'raw', 'removed', 'tagged'
                              */
                             case "setprofanityfiltering":
+
                                 if (!!this.privConversationServiceConnector.participantUpdateCommandReceived) {
-                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector, new ParticipantAttributeEventArgs(commandPayload.participantId, ConversationTranslatorCommandTypes.setProfanityFiltering, commandPayload.value, sessionId));
+                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector,
+                                        new ParticipantAttributeEventArgs(commandPayload.participantId,
+                                            ConversationTranslatorCommandTypes.setProfanityFiltering,
+                                            commandPayload.value, sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'SetMute' is sent if the participant has been muted by the host.
                              * Check the 'participantId' to determine if the current user has been muted.
                              */
                             case "setmute":
+
                                 if (!!this.privConversationServiceConnector.participantUpdateCommandReceived) {
-                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector, new ParticipantAttributeEventArgs(commandPayload.participantId, ConversationTranslatorCommandTypes.setMute, commandPayload.value, sessionId));
+                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector,
+                                        new ParticipantAttributeEventArgs(commandPayload.participantId,
+                                            ConversationTranslatorCommandTypes.setMute,
+                                            commandPayload.value, sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'SetMuteAll' is sent if the Conversation has been muted by the host.
                              */
                             case "setmuteall":
+
                                 if (!!this.privConversationServiceConnector.muteAllCommandReceived) {
-                                    this.privConversationServiceConnector.muteAllCommandReceived(this.privConversationServiceConnector, new MuteAllEventArgs((commandPayload.value as boolean), sessionId));
+                                    this.privConversationServiceConnector.muteAllCommandReceived(this.privConversationServiceConnector,
+                                        new MuteAllEventArgs(commandPayload.value as boolean, sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'RoomExpirationWarning' is sent towards the end of the Conversation session to give a timeout warning.
                              */
                             case "roomexpirationwarning":
+
                                 if (!!this.privConversationServiceConnector.conversationExpiration) {
-                                    this.privConversationServiceConnector.conversationExpiration(this.privConversationServiceConnector, new ConversationExpirationEventArgs((commandPayload.value as number), this.privConversationRequestSession.sessionId));
+                                    this.privConversationServiceConnector.conversationExpiration(this.privConversationServiceConnector,
+                                        new ConversationExpirationEventArgs(commandPayload.value as number, this.privConversationRequestSession.sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'SetUseTts' is sent as a confirmation if the user requests TTS to be turned on or off.
                              */
                             case "setusetts":
+
                                 if (!!this.privConversationServiceConnector.participantUpdateCommandReceived) {
-                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector, new ParticipantAttributeEventArgs(commandPayload.participantId, ConversationTranslatorCommandTypes.setUseTTS, commandPayload.value, sessionId));
+                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector,
+                                        new ParticipantAttributeEventArgs(commandPayload.participantId,
+                                            ConversationTranslatorCommandTypes.setUseTTS,
+                                            commandPayload.value, sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'SetLockState' is set if the host has locked or unlocked the Conversation.
                              */
                             case "setlockstate":
+
                                 if (!!this.privConversationServiceConnector.lockRoomCommandReceived) {
-                                    this.privConversationServiceConnector.lockRoomCommandReceived(this.privConversationServiceConnector, new LockRoomEventArgs((commandPayload.value as boolean), sessionId));
+                                    this.privConversationServiceConnector.lockRoomCommandReceived(this.privConversationServiceConnector,
+                                        new LockRoomEventArgs(commandPayload.value as boolean, sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'ChangeNickname' is received if a user changes their display name.
                              * Any cached particpiants list should be updated to reflect the display name.
                              */
                             case "changenickname":
+
                                 if (!!this.privConversationServiceConnector.participantUpdateCommandReceived) {
-                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector, new ParticipantAttributeEventArgs(commandPayload.participantId, ConversationTranslatorCommandTypes.changeNickname, commandPayload.nickname, sessionId));
+                                    this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector,
+                                        new ParticipantAttributeEventArgs(commandPayload.participantId,
+                                            ConversationTranslatorCommandTypes.changeNickname,
+                                            commandPayload.nickname, sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'JoinSession' is sent when a user joins the Conversation.
                              */
                             case "joinsession":
+
                                 const joinParticipantPayload: ParticipantPayloadResponse = ParticipantPayloadResponse.fromJSON(message.textBody);
+
                                 const joiningParticipant: IInternalParticipant = {
                                     avatar: joinParticipantPayload.avatar,
                                     displayName: joinParticipantPayload.nickname,
@@ -310,30 +366,44 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                     isUsingTts: joinParticipantPayload.usetts,
                                     preferredLanguage: joinParticipantPayload.locale,
                                 };
+
                                 if (!!this.privConversationServiceConnector.participantJoinCommandReceived) {
-                                    this.privConversationServiceConnector.participantJoinCommandReceived(this.privConversationServiceConnector, new ParticipantEventArgs(joiningParticipant, sessionId));
+                                    this.privConversationServiceConnector.participantJoinCommandReceived(this.privConversationServiceConnector,
+                                        new ParticipantEventArgs(
+                                            joiningParticipant,
+                                            sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'LeaveSession' is sent when a user leaves the Conversation'.
                              */
                             case "leavesession":
+
                                 const leavingParticipant: IInternalParticipant = {
                                     id: commandPayload.participantId
                                 };
+
                                 if (!!this.privConversationServiceConnector.participantLeaveCommandReceived) {
-                                    this.privConversationServiceConnector.participantLeaveCommandReceived(this.privConversationServiceConnector, new ParticipantEventArgs(leavingParticipant, sessionId));
+                                    this.privConversationServiceConnector.participantLeaveCommandReceived(this.privConversationServiceConnector,
+                                        new ParticipantEventArgs(leavingParticipant, sessionId));
                                 }
+
                                 break;
+
                             /**
                              * 'DisconnectSession' is sent when a user is disconnected from the session (e.g. network problem).
                              * Check the 'ParticipantId' to check whether the message is for the current user.
                              */
                             case "disconnectsession":
+
                                 const disconnectParticipant: IInternalParticipant = {
                                     id: commandPayload.participantId
                                 };
+
                                 break;
+
                             /**
                              * Message not recognized.
                              */
@@ -341,40 +411,83 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                 break;
                         }
                         break;
+
                     /**
                      * 'partial' (or 'hypothesis') represents a unfinalized speech message.
                      */
                     case "partial":
+
                     /**
                      * 'final' (or 'phrase') represents a finalized speech message.
                      */
                     case "final":
+
                         const speechPayload: SpeechResponsePayload = SpeechResponsePayload.fromJSON(message.textBody);
-                        const speechResult: ConversationTranslationResult = new ConversationTranslationResult(speechPayload.participantId, this.getTranslations(speechPayload.translations), speechPayload.language, undefined, undefined, speechPayload.recognition, undefined, undefined, message.textBody, undefined);
+
+                        const speechResult: ConversationTranslationResult = new ConversationTranslationResult(speechPayload.participantId,
+                            this.getTranslations(speechPayload.translations),
+                            speechPayload.language,
+                            undefined,
+                            undefined,
+                            speechPayload.recognition,
+                            undefined,
+                            undefined,
+                            message.textBody,
+                            undefined);
+
                         if (speechPayload.isFinal) {
                             // check the length, sometimes empty finals are returned
-                            if (speechResult.text !== undefined && speechResult.text.length > 0 && speechPayload.id !== this.privUtteranceId) {
+                            if (speechResult.text !== undefined && speechResult.text.length > 0) {
+                                sendFinal = true;
+                            } else if (speechPayload.id === this.privLastPartialUtteranceId) {
+                                // send final as normal. We had a non-empty partial for this same utterance
+                                // so sending the empty final is important
+                                sendFinal = true;
+                            } else {
+                                // suppress unneeded final
+                            }
+
+                            if (sendFinal) {
                                 if (!!this.privConversationServiceConnector.translationReceived) {
-                                    this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector, new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.final, speechResult, sessionId));
+                                    this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector,
+                                        new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.final, speechResult, sessionId));
                                 }
                             }
-                        } else {
+                        } else if (speechResult.text !== undefined) {
+                            this.privLastPartialUtteranceId = speechPayload.id;
                             if (!!this.privConversationServiceConnector.translationReceived) {
-                                this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector, new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.partial, speechResult, sessionId));
+                                this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector,
+                                    new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.partial, speechResult, sessionId));
                             }
                         }
-                        this.privUtteranceId = speechPayload.id;
+
                         break;
+
                     /**
                      * "translated_message" is a text message or instant message (IM).
                      */
                     case "translated_message":
+
                         const textPayload: TextResponsePayload = TextResponsePayload.fromJSON(message.textBody);
-                        const textResult: ConversationTranslationResult = new ConversationTranslationResult(textPayload.participantId, this.getTranslations(textPayload.translations), textPayload.language, undefined, undefined, textPayload.originalText, undefined, undefined, undefined, message.textBody, undefined);
+
+                        const textResult: ConversationTranslationResult = new ConversationTranslationResult(textPayload.participantId,
+                            this.getTranslations(textPayload.translations),
+                            textPayload.language,
+                            undefined,
+                            undefined,
+                            textPayload.originalText,
+                            undefined,
+                            undefined,
+                            undefined,
+                            message.textBody,
+                            undefined);
+
                         if (!!this.privConversationServiceConnector.translationReceived) {
-                            this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector, new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.instantMessage, textResult, sessionId));
+                            this.privConversationServiceConnector.translationReceived(this.privConversationServiceConnector,
+                                new ConversationReceivedTranslationEventArgs(ConversationTranslatorMessageTypes.instantMessage, textResult, sessionId));
                         }
                         break;
+
                     default:
                         // ignore any unsupported message types
                         break;

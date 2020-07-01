@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioStreamFormat, AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
 import {
     connectivity,
     ISpeechConfigAudioDevice,
@@ -28,6 +27,7 @@ import {
     Stream,
     StreamReader,
 } from "../common/Exports";
+import { AudioStreamFormat, AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 
 export class FileAudioSource implements IAudioSource {
 
@@ -52,6 +52,10 @@ export class FileAudioSource implements IAudioSource {
 
     public get format(): Promise<AudioStreamFormatImpl> {
         return this.privAudioFormatPromise;
+    }
+
+    public get blob(): Promise<Blob | Buffer> {
+        return Promise.resolve(this.privFile);
     }
 
     public turnOn = (): Promise<void> => {

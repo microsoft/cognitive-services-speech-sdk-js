@@ -181,6 +181,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     hypothesis.Text,
                     hypothesis.Duration,
                     offset,
+                    hypothesis.Language,
+                    hypothesis.LanguageDetectionConfidence,
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
@@ -291,6 +293,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     undefined, // Text
                     undefined, // Druation
                     undefined, // Offset
+                    undefined, // Language
+                    undefined, // Language Detection Confidence
                     error,
                     undefined, // Json
                     properties);
@@ -350,7 +354,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         audioSendPromise.then(() => { /*add? return true;*/ }, async (error: string) => {
             await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
         });
-
     }
 
     // Establishes a websocket connection to the end point.
@@ -582,6 +585,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             serviceResult.DisplayText,
             serviceResult.Duration,
             offset,
+            serviceResult.Language,
+            serviceResult.LanguageDetectionConfidence,
             undefined,
             JSON.stringify(serviceResult),
             properties);

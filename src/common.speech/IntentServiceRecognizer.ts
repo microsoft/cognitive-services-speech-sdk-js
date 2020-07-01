@@ -78,6 +78,8 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     speechHypothesis.Text,
                     speechHypothesis.Duration,
                     speechHypothesis.Offset + this.privRequestSession.currentTurnAudioOffset,
+                    speechHypothesis.Language,
+                    speechHypothesis.LanguageDetectionConfidence,
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
@@ -106,6 +108,8 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     simple.DisplayText,
                     simple.Duration,
                     simple.Offset + this.privRequestSession.currentTurnAudioOffset,
+                    simple.Language,
+                    simple.LanguageDetectionConfidence,
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
@@ -202,6 +206,8 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                             ev.result.text,
                             ev.result.duration,
                             ev.result.offset,
+                            undefined,
+                            undefined,
                             ev.result.errorDetails,
                             ev.result.json,
                             properties),
@@ -275,8 +281,10 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 requestId,
                 ResultReason.Canceled,
                 undefined, // Text
-                undefined, // Druation
+                undefined, // Duration
                 undefined, // Offset
+                undefined, // Language
+                undefined, // LanguageDetectionConfidence
                 error,
                 undefined, // Json
                 properties);

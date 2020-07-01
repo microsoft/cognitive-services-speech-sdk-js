@@ -28,7 +28,7 @@ beforeEach(() => {
     // tslint:disable-next-line:no-console
     console.info("---------------------------------------Starting test case-----------------------------------");
     // tslint:disable-next-line:no-console
-    console.info("Sart Time: " + new Date(Date.now()).toLocaleString());
+    console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(() => {

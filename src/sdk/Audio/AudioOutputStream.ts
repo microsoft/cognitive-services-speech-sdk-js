@@ -1,21 +1,24 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { createNoDashGuid } from "../../../src/common/Guid";
 import {
-    ChunkedArrayBufferStream,
+    createNoDashGuid,
+    Deferred,
+    IAudioDestination,
     IStreamChunk,
     Stream,
     StreamReader,
 } from "../../common/Exports";
-import { AudioStreamFormat } from "../Exports";
-import { AudioStreamFormatImpl } from "./AudioStreamFormat";
-
-export const bufferSize: number = 4096;
+import {Contracts} from "../Contracts";
+import {
+    AudioStreamFormat,
+    PushAudioOutputStreamCallback
+} from "../Exports";
+import { AudioOutputFormatImpl } from "./AudioOutputFormat";
 
 /**
- * Represents audio input stream used for custom audio input configurations.
- * @class AudioInputStream
+ * Represents audio output stream used for custom audio output configurations.
+ * @class AudioOutputStream
  */
 export abstract class AudioOutputStream {
 
@@ -26,21 +29,26 @@ export abstract class AudioOutputStream {
     protected constructor() { }
 
     /**
+     * Sets the format of the AudioOutputStream
+     * Note: the format is set by the synthesizer before writing. Do not set it before passing it to AudioConfig
+     * @member AudioOutputStream.prototype.format
+     */
+    public abstract set format(format: AudioStreamFormat);
+
+    /**
      * Creates a memory backed PullAudioOutputStream with the specified audio format.
-     * @member AudioInputStream.createPullStream
+     * @member AudioOutputStream.createPullStream
      * @function
      * @public
-     * @param {AudioStreamFormat} format - The audio data format in which audio will be
-     *        written to the push audio stream's write() method (currently only support 16 kHz 16bit mono PCM).
-     * @returns {PullAudioOutputStream} The audio input stream being created.
+     * @returns {PullAudioOutputStream} The audio output stream being created.
      */
-    public static createPullStream(format?: AudioStreamFormat): PullAudioOutputStream {
-        return PullAudioOutputStream.create(format);
+    public static createPullStream(): PullAudioOutputStream {
+        return PullAudioOutputStream.create();
     }
 
     /**
      * Explicitly frees any external resource attached to the object
-     * @member AudioInputStream.prototype.close
+     * @member AudioOutputStream.prototype.close
      * @function
      * @public
      */
@@ -48,7 +56,7 @@ export abstract class AudioOutputStream {
 }
 
 /**
- * Represents memory backed push audio input stream used for custom audio input configurations.
+ * Represents memory backed push audio output stream used for custom audio output configurations.
  * @class PullAudioOutputStream
  */
 // tslint:disable-next-line:max-classes-per-file
@@ -59,12 +67,10 @@ export abstract class PullAudioOutputStream extends AudioOutputStream {
      * @member PullAudioOutputStream.create
      * @function
      * @public
-     * @param {AudioStreamFormat} format - The audio data format in which audio will be written to the
-     *        push audio stream's write() method (currently only support 16 kHz 16bit mono PCM).
-     * @returns {PullAudioOutputStream} The push audio input stream being created.
+     * @returns {PullAudioOutputStream} The push audio output stream being created.
      */
-    public static create(format?: AudioStreamFormat): PullAudioOutputStream {
-        return new PullAudioOutputStreamImpl(bufferSize, format);
+    public static create(): PullAudioOutputStream {
+        return new PullAudioOutputStreamImpl();
     }
 
     /**
@@ -72,9 +78,10 @@ export abstract class PullAudioOutputStream extends AudioOutputStream {
      * @member PullAudioOutputStream.prototype.read
      * @function
      * @public
-     * @returns {Promise<ArrayBuffer>} Audio buffer data.
+     * @param {ArrayBuffer} dataBuffer - An ArrayBuffer to store the read data.
+     * @returns {Promise<number>} Audio buffer length has been read.
      */
-    public abstract read(): Promise<ArrayBuffer>;
+    public abstract read(dataBuffer: ArrayBuffer): Promise<number>;
 
     /**
      * Closes the stream.
@@ -86,34 +93,38 @@ export abstract class PullAudioOutputStream extends AudioOutputStream {
 }
 
 /**
- * Represents memory backed push audio input stream used for custom audio input configurations.
+ * Represents memory backed push audio output stream used for custom audio output configurations.
  * @private
  * @class PullAudioOutputStreamImpl
  */
 // tslint:disable-next-line:max-classes-per-file
-export class PullAudioOutputStreamImpl extends PullAudioOutputStream {
-
-    private privFormat: AudioStreamFormatImpl;
+export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements IAudioDestination {
+    private privFormat: AudioOutputFormatImpl;
     private privId: string;
     private privStream: Stream<ArrayBuffer>;
     private streamReader: StreamReader<ArrayBuffer>;
+    private privLastChunkView: Int8Array;
 
     /**
-     * Creates and initalizes an instance with the given values.
+     * Creates and initializes an instance with the given values.
      * @constructor
-     * @param {AudioStreamFormat} format - The audio stream format.
      */
-    public constructor(chunkSize: number, format?: AudioStreamFormat) {
+    public constructor() {
         super();
-        if (format === undefined) {
-            this.privFormat = AudioStreamFormatImpl.getDefaultInputFormat();
-        } else {
-            this.privFormat = format as AudioStreamFormatImpl;
-        }
-
         this.privId = createNoDashGuid();
-        this.privStream = new ChunkedArrayBufferStream(chunkSize);
+        this.privStream = new Stream<ArrayBuffer>();
         this.streamReader = this.privStream.getReader();
+    }
+
+    /**
+     * Sets the format information to the stream. For internal use only.
+     * @param {AudioStreamFormat} format - the format to be set.
+     */
+    public set format(format: AudioStreamFormat) {
+        if (format === undefined || format === null) {
+            this.privFormat = AudioOutputFormatImpl.getDefaultOutputFormat();
+        }
+        this.privFormat = format as AudioOutputFormatImpl;
     }
 
     /**
@@ -139,22 +150,61 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream {
      * @property
      * @public
      */
-    public get id(): string {
+    public id(): string {
         return this.privId;
     }
 
     /**
-     * Reads data from the buffer
+     * Reads audio data from the internal buffer.
      * @member PullAudioOutputStreamImpl.prototype.read
      * @function
      * @public
-     * @param {ArrayBuffer} dataBuffer - The audio buffer of which this function will make a copy.
+     * @param {ArrayBuffer} dataBuffer - An ArrayBuffer to store the read data.
+     * @returns {Promise<number>} - Audio buffer length has been read.
      */
-    public read(): Promise<ArrayBuffer> {
-        return this.streamReader.read()
-            .then<ArrayBuffer>((chunk: IStreamChunk<ArrayBuffer>) => {
-                return Promise.resolve(chunk.buffer);
-            });
+    public read(dataBuffer: ArrayBuffer): Promise<number> {
+        const intView: Int8Array = new Int8Array(dataBuffer);
+        let totalBytes: number = 0;
+
+        if (this.privLastChunkView !== undefined) {
+            if (this.privLastChunkView.length > dataBuffer.byteLength) {
+                intView.set(this.privLastChunkView.slice(0, dataBuffer.byteLength));
+                this.privLastChunkView = this.privLastChunkView.slice(dataBuffer.byteLength);
+                return Promise.resolve(dataBuffer.byteLength);
+            }
+            intView.set(this.privLastChunkView);
+            totalBytes = this.privLastChunkView.length;
+            this.privLastChunkView = undefined;
+        }
+
+        const deffer: Deferred<number> = new Deferred<number>();
+        // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
+        const readUntilFilled: () => void = (): void => {
+            if (totalBytes < dataBuffer.byteLength && !this.streamReader.isClosed) {
+                this.streamReader.read()
+                    .then((chunk: IStreamChunk<ArrayBuffer>) => {
+                        if (chunk !== undefined && !chunk.isEnd) {
+                            let tmpBuffer: ArrayBuffer;
+                            if (chunk.buffer.byteLength > dataBuffer.byteLength - totalBytes) {
+                                tmpBuffer = chunk.buffer.slice(0, dataBuffer.byteLength - totalBytes);
+                                this.privLastChunkView = new Int8Array(chunk.buffer.slice(dataBuffer.byteLength - totalBytes));
+                            } else {
+                                tmpBuffer = chunk.buffer;
+                            }
+                            intView.set(new Int8Array(tmpBuffer), totalBytes);
+                            totalBytes += tmpBuffer.byteLength;
+                            readUntilFilled();
+                        } else {
+                            this.streamReader.close();
+                            deffer.resolve(totalBytes);
+                        }
+                    });
+            } else {
+                deffer.resolve(totalBytes);
+            }
+        };
+        readUntilFilled();
+        return deffer.promise;
     }
 
     /**
@@ -165,6 +215,7 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream {
      * @param {ArrayBuffer} dataBuffer - The audio buffer of which this function will make a copy.
      */
     public write(dataBuffer: ArrayBuffer): void {
+        Contracts.throwIfNullOrUndefined(this.privStream, "must set format before writing");
         this.privStream.writeStreamChunk({
             buffer: dataBuffer,
             isEnd: false,
@@ -180,5 +231,84 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream {
      */
     public close(): void {
         this.privStream.close();
+    }
+}
+
+/*
+ * Represents audio output stream used for custom audio output configurations.
+ * @class PushAudioOutputStream
+ */
+// tslint:disable-next-line:max-classes-per-file
+export abstract class PushAudioOutputStream extends AudioOutputStream {
+    /**
+     * Creates and initializes and instance.
+     * @constructor
+     */
+    protected constructor() { super(); }
+
+    /**
+     * Creates a PushAudioOutputStream that delegates to the specified callback interface for
+     * write() and close() methods.
+     * @member PushAudioOutputStream.create
+     * @function
+     * @public
+     * @param {PushAudioOutputStreamCallback} callback - The custom audio output object,
+     *        derived from PushAudioOutputStreamCallback
+     * @returns {PushAudioOutputStream} The push audio output stream being created.
+     */
+    public static create(callback: PushAudioOutputStreamCallback): PushAudioOutputStream {
+        return new PushAudioOutputStreamImpl(callback);
+    }
+
+    /**
+     * Explicitly frees any external resource attached to the object
+     * @member PushAudioOutputStream.prototype.close
+     * @function
+     * @public
+     */
+    public abstract close(): void;
+
+}
+
+/**
+ * Represents audio output stream used for custom audio output configurations.
+ * @private
+ * @class PushAudioOutputStreamImpl
+ */
+// tslint:disable-next-line:max-classes-per-file
+export class PushAudioOutputStreamImpl extends PushAudioOutputStream implements IAudioDestination {
+    private readonly privId: string;
+    private privCallback: PushAudioOutputStreamCallback;
+
+    /**
+     * Creates a PushAudioOutputStream that delegates to the specified callback interface for
+     * read() and close() methods.
+     * @constructor
+     * @param {PushAudioOutputStreamCallback} callback - The custom audio output object,
+     *        derived from PushAudioOutputStreamCallback
+     */
+    public constructor(callback: PushAudioOutputStreamCallback) {
+        super();
+        this.privId = createNoDashGuid();
+        this.privCallback = callback;
+    }
+
+    // tslint:disable-next-line:no-empty
+    public set format(format: AudioStreamFormat) {}
+
+    public write(buffer: ArrayBuffer): void {
+        if (!!this.privCallback.write) {
+            this.privCallback.write(buffer);
+        }
+    }
+
+    public close(): void {
+        if (!!this.privCallback.close) {
+            this.privCallback.close();
+        }
+    }
+
+    public id(): string {
+        return this.privId;
     }
 }

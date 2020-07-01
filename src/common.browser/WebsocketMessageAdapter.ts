@@ -4,6 +4,7 @@
 import {
     ArgumentNullError,
     ConnectionClosedEvent,
+    ConnectionErrorEvent,
     ConnectionEstablishedEvent,
     ConnectionEvent,
     ConnectionMessage,
@@ -50,6 +51,7 @@ export class WebsocketMessageAdapter {
     private privUri: string;
     private proxyInfo: ProxyInfo;
     private privHeaders: { [key: string]: string; };
+    private privLastErrorReceived: string;
 
     public static forceNpmWebSocket: boolean = false;
 
@@ -75,6 +77,7 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.None;
         this.privUri = uri;
         this.privHeaders = headers;
+        this.privLastErrorReceived = "";
     }
 
     public get state(): ConnectionState {
@@ -96,7 +99,7 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.Connecting;
 
         try {
-            const enableOCSP: boolean = (typeof process !== "undefined" && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") && !this.privUri.startsWith("ws:");
+            const enableOCSP: boolean = (typeof process !== "undefined" && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0" && process.env.SPEECH_CONDUCT_OCSP_CHECK !== "0") && !this.privUri.startsWith("ws:");
 
             if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 // Browser handles cert checks.
@@ -188,18 +191,15 @@ export class WebsocketMessageAdapter {
         };
 
         this.privWebsocketClient.onerror = (e: { error: any; message: string; type: string; target: WebSocket | ws }) => {
-            // TODO: Understand what this is error is. Will we still get onClose ?
-            if (this.privConnectionState !== ConnectionState.Connecting) {
-                // TODO: Is this required ?
-                // this.onEvent(new ConnectionErrorEvent(errorMsg, connectionId));
-            }
+            this.onEvent(new ConnectionErrorEvent(this.privConnectionId, e.message, e.type));
+            this.privLastErrorReceived = e.message;
         };
 
         this.privWebsocketClient.onclose = (e: { wasClean: boolean; code: number; reason: string; target: WebSocket | ws }) => {
             if (this.privConnectionState === ConnectionState.Connecting) {
                 this.privConnectionState = ConnectionState.Disconnected;
                 // this.onEvent(new ConnectionEstablishErrorEvent(this.connectionId, e.code, e.reason));
-                this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(e.code, e.reason));
+                this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(e.code, e.reason + " " + this.privLastErrorReceived));
             } else {
                 this.onEvent(new ConnectionClosedEvent(this.privConnectionId, e.code, e.reason));
             }

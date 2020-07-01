@@ -2,10 +2,6 @@
 // Licensed under the MIT license.
 
 import {
-    AudioStreamFormat,
-    AudioStreamFormatImpl,
-} from "../../src/sdk/Audio/AudioStreamFormat";
-import {
     connectivity,
     ISpeechConfigAudioDevice,
     type
@@ -31,6 +27,10 @@ import {
     Stream,
     StreamReader,
 } from "../common/Exports";
+import {
+    AudioStreamFormat,
+    AudioStreamFormatImpl,
+} from "../sdk/Audio/AudioStreamFormat";
 import { IRecorder } from "./IRecorder";
 
 // Extending the default definition with browser specific definitions for backward compatibility
@@ -74,6 +74,10 @@ export class MicAudioSource implements IAudioSource {
 
     public get format(): Promise<AudioStreamFormatImpl> {
         return Promise.resolve(MicAudioSource.AUDIOFORMAT);
+    }
+
+    public get blob(): Promise<Blob> {
+        return Promise.reject("Not implemented for Mic input");
     }
 
     public turnOn = (): Promise<void> => {
@@ -303,15 +307,16 @@ export class MicAudioSource implements IAudioSource {
         }
 
         // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext
-        const AudioContext = ((window as any).AudioContext)
-            || ((window as any).webkitAudioContext)
-            || false;
-
-        if (!AudioContext) {
+        if (typeof (AudioContext) === "undefined") {
             throw new Error("Browser does not support Web Audio API (AudioContext is not available).");
         }
 
-        this.privContext = new AudioContext();
+        // Browsers without sampleRate constraint support can't connect nodes with different sample rates
+        if (navigator.mediaDevices.getSupportedConstraints().sampleRate) {
+            this.privContext = new AudioContext({ sampleRate: MicAudioSource.AUDIOFORMAT.samplesPerSec });
+        } else {
+            this.privContext = new AudioContext();
+        }
     }
 
     private async destroyAudioContext(): Promise<void> {

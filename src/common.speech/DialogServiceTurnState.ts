@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { AudioOutputStream, PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
 import { DialogServiceTurnStateManager } from "./DialogServiceTurnStateManager";
 import { ActivityPayloadResponse, MessageDataStreamType } from "./ServiceMessages/ActivityResponsePayload";
@@ -31,6 +32,7 @@ export class DialogServiceTurnState {
     public processActivityPayload(payload: ActivityPayloadResponse): PullAudioOutputStreamImpl {
         if (payload.messageDataStreamType === MessageDataStreamType.TextToSpeechAudio) {
             this.privAudioStream = AudioOutputStream.createPullStream() as PullAudioOutputStreamImpl;
+            this.privAudioStream.format = AudioOutputFormatImpl.getDefaultOutputFormat();
             // tslint:disable-next-line:no-console
             // console.info("Audio start debugturn:" + this.privRequestId);
         }

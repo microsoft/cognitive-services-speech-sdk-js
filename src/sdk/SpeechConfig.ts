@@ -6,14 +6,15 @@ import {
     OutputFormatPropertyName,
     ServicePropertiesPropertyName
 } from "../common.speech/Exports";
-import { IStringDictionary } from "../common/Exports";
-import { Contracts } from "./Contracts";
+import {IStringDictionary} from "../common/Exports";
+import {Contracts} from "./Contracts";
 import {
     OutputFormat,
     ProfanityOption,
     PropertyCollection,
     PropertyId,
-    ServicePropertyChannel
+    ServicePropertyChannel,
+    SpeechSynthesisOutputFormat,
 } from "./Exports";
 
 /**
@@ -212,7 +213,9 @@ export abstract class SpeechConfig {
     public abstract getProperty(name: string, def?: string): string;
 
     /**
-     * Gets output format.
+     * Gets speech recognition output format (simple or detailed).
+     * Note: This output format is for speech recognition result, use [SpeechConfig.speechSynthesisOutputFormat] to
+     * get synthesized audio output format.
      * @member SpeechConfig.prototype.outputFormat
      * @function
      * @public
@@ -221,7 +224,9 @@ export abstract class SpeechConfig {
     public abstract get outputFormat(): OutputFormat;
 
     /**
-     * Gets/Sets the output format.
+     * Gets/Sets speech recognition output format (simple or detailed).
+     * Note: This output format is for speech recognition result, use [SpeechConfig.speechSynthesisOutputFormat] to
+     * set synthesized audio output format.
      * @member SpeechConfig.prototype.outputFormat
      * @function
      * @public
@@ -259,7 +264,7 @@ export abstract class SpeechConfig {
      * @member SpeechConfig.prototype.subscriptionKey
      * @function
      * @public
-     * @return {SubscriptionKey} The subscription key set on the config.
+     * @return {string} The subscription key set on the config.
      */
     public abstract get subscriptionKey(): string;
 
@@ -319,6 +324,64 @@ export abstract class SpeechConfig {
      * Added in version 1.7.0.
      */
     public abstract enableDictation(): void;
+
+    /**
+     * Gets the language of the speech synthesizer.
+     * @member SpeechConfig.prototype.speechSynthesisLanguage
+     * @function
+     * @public
+     * @returns {string} Returns the speech synthesis language.
+     * Added in version 1.11.0.
+     */
+    public abstract get speechSynthesisLanguage(): string;
+
+    /**
+     * Sets the language of the speech synthesizer.
+     * @member SpeechConfig.prototype.speechSynthesisLanguage
+     * @function
+     * @public
+     * Added in version 1.11.0.
+     */
+    public abstract set speechSynthesisLanguage(language: string);
+
+    /**
+     * Gets the voice of the speech synthesizer.
+     * @member SpeechConfig.prototype.speechSynthesisVoiceName
+     * @function
+     * @public
+     * @returns {string} Returns the speech synthesis voice.
+     * Added in version 1.11.0.
+     */
+    public abstract get speechSynthesisVoiceName(): string;
+
+    /**
+     * Sets the voice of the speech synthesizer. (see <a href="https://aka.ms/speech/tts-languages">available voices</a>).
+     * @member SpeechConfig.prototype.speechSynthesisVoiceName
+     * @function
+     * @public
+     * Added in version 1.11.0.
+     */
+    public abstract set speechSynthesisVoiceName(voice: string);
+
+    /**
+     * Gets the speech synthesis output format.
+     * @member SpeechConfig.prototype.speechSynthesisOutputFormat
+     * @function
+     * @public
+     * @returns {SpeechSynthesisOutputFormat} Returns the speech synthesis output format
+     * Added in version 1.11.0.
+     */
+    public abstract get speechSynthesisOutputFormat(): SpeechSynthesisOutputFormat;
+
+    /**
+     * Sets the speech synthesis output format (e.g. Riff16Khz16BitMonoPcm).
+     * @member SpeechConfig.prototype.speechSynthesisOutputFormat
+     * @function
+     * @public
+     * The default format is Audio16Khz64KBitRateMonoMp3 for browser and Riff16Khz16BitMonoPcm for Node.JS
+     * Added in version 1.11.0.
+     */
+    public abstract set speechSynthesisOutputFormat(format: SpeechSynthesisOutputFormat);
 }
 
 /**
@@ -367,6 +430,14 @@ export class SpeechConfigImpl extends SpeechConfig {
 
     public set speechRecognitionLanguage(value: string) {
         this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, value);
+    }
+
+    public get autoDetectSourceLanguages(): string {
+        return this.privProperties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages);
+    }
+
+    public set autoDetectSourceLanguages(value: string) {
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, value);
     }
 
     public get outputFormat(): OutputFormat {
@@ -431,5 +502,29 @@ export class SpeechConfigImpl extends SpeechConfig {
         const ret: SpeechConfigImpl = new SpeechConfigImpl();
         ret.privProperties = this.privProperties.clone();
         return ret;
+    }
+
+    public get speechSynthesisLanguage(): string {
+        return this.privProperties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage);
+    }
+
+    public set speechSynthesisLanguage(language: string) {
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SynthLanguage, language);
+    }
+
+    public get speechSynthesisVoiceName(): string {
+        return this.privProperties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice);
+    }
+
+    public set speechSynthesisVoiceName(voice: string) {
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SynthVoice, voice);
+    }
+
+    public get speechSynthesisOutputFormat(): SpeechSynthesisOutputFormat {
+        return (SpeechSynthesisOutputFormat as any)[this.privProperties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)];
+    }
+
+    public set speechSynthesisOutputFormat(format: SpeechSynthesisOutputFormat) {
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, SpeechSynthesisOutputFormat[format]);
     }
 }

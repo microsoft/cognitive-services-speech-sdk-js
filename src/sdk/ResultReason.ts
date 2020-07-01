@@ -70,4 +70,46 @@ export enum ResultReason {
      * @member ResultReason.SynthesizingAudioCompleted
      */
     SynthesizingAudioCompleted,
+
+    /**
+     * Indicates the speech synthesis is now started
+     * @member ResultReason.SynthesizingAudioStarted
+     */
+    SynthesizingAudioStarted,
+
+    /**
+     * Indicates the voice profile is being enrolled and customers need to send more audio to create a voice profile.
+     * @member ResultReason.EnrollingVoiceProfile
+     */
+    EnrollingVoiceProfile,
+
+    /**
+     * Indicates the voice profile has been enrolled.
+     * @member ResultReason.EnrolledVoiceProfile
+     */
+    EnrolledVoiceProfile,
+
+    /**
+     * Indicates successful identification of some speakers.
+     * @member ResultReason.RecognizedSpeakers
+     */
+    RecognizedSpeakers,
+
+    /**
+     * Indicates successfully verified one speaker.
+     * @member ResultReason.RecognizedSpeaker
+     */
+    RecognizedSpeaker,
+
+    /**
+     * Indicates a voice profile has been reset successfully.
+     * @member ResultReason.ResetVoiceProfile
+     */
+    ResetVoiceProfile,
+
+    /**
+     * Indicates a voice profile has been deleted successfully.
+     * @member ResultReason.DeletedVoiceProfile
+     */
+    DeletedVoiceProfile,
 }
