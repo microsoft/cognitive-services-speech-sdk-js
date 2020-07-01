@@ -67,7 +67,7 @@ export class CertCheckAgent {
     }
 
     public GetAgent(disableStapling?: boolean): http.Agent {
-        const agent: any = new Agent.Agent(this.CreaetConnectionReturn);
+        const agent: any = new Agent.Agent(this.CreateConnection);
 
         if (this.privProxyInfo !== undefined &&
             this.privProxyInfo.HostName !== undefined &&
@@ -203,7 +203,7 @@ export class CertCheckAgent {
             const cachedOcspResponse: ocsp.Response = ocsp.utils.parseResponse(cachedResponse);
             const tbsData = cachedOcspResponse.value.tbsResponseData;
             if (tbsData.responses.length < 1) {
-                this.onEvent(new OCSPCacheFetchErrorEvent(signature, "Not enought data in cached response"));
+                this.onEvent(new OCSPCacheFetchErrorEvent(signature, "Not enough data in cached response"));
                 return;
             }
 
@@ -312,8 +312,8 @@ export class CertCheckAgent {
                     return;
                 }
 
-                const prasedUri = url.parse(uri);
-                options = { ...options, ...prasedUri };
+                const parsedUri = url.parse(uri);
+                options = { ...options, ...parsedUri };
 
                 ocsp.utils.getResponse(options, req.data, (error: string, raw: Buffer): void => {
                     if (error) {
@@ -332,7 +332,7 @@ export class CertCheckAgent {
         Events.instance.onEvent(event);
     }
 
-    private CreaetConnectionReturn(request: Agent.ClientRequest, options: Agent.RequestOptions): Promise<net.Socket> {
+    private CreateConnection(request: Agent.ClientRequest, options: Agent.RequestOptions): Promise<net.Socket> {
         const enableOCSP: boolean = (typeof process !== "undefined" && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0" && process.env.SPEECH_CONDUCT_OCSP_CHECK !== "0") && options.secureEndpoint;
         let socketPromise: Promise<net.Socket>;
 
