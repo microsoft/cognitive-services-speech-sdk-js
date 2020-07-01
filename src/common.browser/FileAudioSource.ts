@@ -56,6 +56,10 @@ export class FileAudioSource implements IAudioSource {
         return this.privAudioFormatPromise;
     }
 
+    public get blob(): Promise<Blob | Buffer> {
+        return PromiseHelper.fromResult(this.privFile);
+    }
+
     public turnOn = (): Promise<boolean> => {
         if (typeof FileReader === "undefined") {
             const errorMsg = "Browser does not support FileReader.";

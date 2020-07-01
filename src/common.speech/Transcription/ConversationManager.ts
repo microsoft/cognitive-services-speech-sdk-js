@@ -1,16 +1,32 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IStringDictionary } from "../../common/Exports";
+import {
+    IRequestOptions,
+    IRestParams,
+} from "../../common.browser/RestConfigBase";
+import { IErrorMessages, IStringDictionary } from "../../common/Exports";
 import { Contracts } from "../../sdk/Contracts";
 import { PropertyCollection, PropertyId } from "../../sdk/Exports";
-import { IConversationResponseError, IInternalConversation, IRequestOptions, IResponse } from "./ConversationTranslatorInterfaces";
-import { ConversationTranslatorConfig, extractHeaderValue, request } from "./ConversationUtils";
+import { ConversationConnectionConfig } from "./ConversationConnectionConfig";
+import { IConversationResponseError, IInternalConversation, IResponse } from "./ConversationTranslatorInterfaces";
+import { extractHeaderValue, request } from "./ConversationUtils";
 
 export class ConversationManager {
 
-    constructor() {
+    private privRequestParams: IRestParams;
+    private privErrors: IErrorMessages;
+    private privHost: string;
+    private privApiVersion: string;
+    private privRestPath: string;
+
+    public constructor() {
         //
+        this.privRequestParams = ConversationConnectionConfig.configParams;
+        this.privErrors = ConversationConnectionConfig.restErrors;
+        this.privHost = ConversationConnectionConfig.host;
+        this.privApiVersion = ConversationConnectionConfig.apiVersion;
+        this.privRestPath = ConversationConnectionConfig.restPath;
     }
 
     /**
@@ -26,9 +42,9 @@ export class ConversationManager {
 
             Contracts.throwIfNullOrUndefined(args, "args");
 
-            const languageCode: string = args.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, ConversationTranslatorConfig.defaultLanguageCode);
+            const languageCode: string = args.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, ConversationConnectionConfig.defaultLanguageCode);
             const nickname: string = args.getProperty(PropertyId.ConversationTranslator_Name);
-            const endpointHost: string = args.getProperty(PropertyId.ConversationTranslator_Host, ConversationTranslatorConfig.host);
+            const endpointHost: string = args.getProperty(PropertyId.ConversationTranslator_Host, this.privHost);
             const correlationId: string = args.getProperty(PropertyId.ConversationTranslator_CorrelationId);
             const subscriptionKey: string = args.getProperty(PropertyId.SpeechServiceConnection_Key);
             const subscriptionRegion: string = args.getProperty(PropertyId.SpeechServiceConnection_Region);
@@ -39,44 +55,44 @@ export class ConversationManager {
             Contracts.throwIfNullOrWhitespace(endpointHost, "endpointHost");
 
             const queryParams: IStringDictionary<string> = {};
-            queryParams[ConversationTranslatorConfig.params.apiVersion] = ConversationTranslatorConfig.apiVersion;
-            queryParams[ConversationTranslatorConfig.params.languageCode] = languageCode;
-            queryParams[ConversationTranslatorConfig.params.nickname] = nickname;
+            queryParams[this.privRequestParams.apiVersion] = this.privApiVersion;
+            queryParams[this.privRequestParams.languageCode] = languageCode;
+            queryParams[this.privRequestParams.nickname] = nickname;
 
             const headers: IStringDictionary<string> = {};
             if (correlationId) {
-                headers[ConversationTranslatorConfig.params.correlationId] = correlationId;
+                headers[this.privRequestParams.correlationId] = correlationId;
             }
-            headers[ConversationTranslatorConfig.params.clientAppId] = ConversationTranslatorConfig.clientAppId;
+            headers[this.privRequestParams.clientAppId] = ConversationConnectionConfig.clientAppId;
 
             if (conversationCode !== undefined) {
-                queryParams[ConversationTranslatorConfig.params.roomId] = conversationCode;
+                queryParams[this.privRequestParams.roomId] = conversationCode;
             } else {
-                Contracts.throwIfNullOrUndefined(subscriptionRegion, ConversationTranslatorConfig.strings.authInvalidSubscriptionRegion);
-                headers[ConversationTranslatorConfig.params.subscriptionRegion] = subscriptionRegion;
+                Contracts.throwIfNullOrUndefined(subscriptionRegion, this.privErrors.authInvalidSubscriptionRegion);
+                headers[this.privRequestParams.subscriptionRegion] = subscriptionRegion;
                 if (subscriptionKey) {
-                    headers[ConversationTranslatorConfig.params.subscriptionKey] = subscriptionKey;
+                    headers[this.privRequestParams.subscriptionKey] = subscriptionKey;
                 } else if (authToken) {
-                    headers[ConversationTranslatorConfig.params.authorization] = `Bearer ${authToken}`;
+                    headers[this.privRequestParams.authorization] = `Bearer ${authToken}`;
                 } else {
-                    Contracts.throwIfNullOrUndefined(subscriptionKey, ConversationTranslatorConfig.strings.authInvalidSubscriptionKey);
+                    Contracts.throwIfNullOrUndefined(subscriptionKey, this.privErrors.authInvalidSubscriptionKey);
                 }
             }
 
             const config: IRequestOptions = {};
             config.headers = headers;
 
-            const endpoint: string = `https://${endpointHost}${ConversationTranslatorConfig.restPath}`;
+            const endpoint: string = `https://${endpointHost}${this.privRestPath}`;
 
             // TODO: support a proxy and certificate validation
             request("post", endpoint, queryParams, null, config, (response: IResponse) => {
 
-                const requestId: string = extractHeaderValue(ConversationTranslatorConfig.params.requestId, response.headers);
+                const requestId: string = extractHeaderValue(this.privRequestParams.requestId, response.headers);
 
                 if (!response.ok) {
                     if (!!err) {
                         // get the error
-                        let errorMessage: string = ConversationTranslatorConfig.strings.invalidCreateJoinConversationResponse.replace("{status}", response.status.toString());
+                        let errorMessage: string = this.privErrors.invalidCreateJoinConversationResponse.replace("{status}", response.status.toString());
                         let errMessageRaw: IConversationResponseError;
                         try {
                             errMessageRaw = JSON.parse(response.data) as IConversationResponseError;
@@ -132,25 +148,25 @@ export class ConversationManager {
 
         try {
 
-            Contracts.throwIfNullOrUndefined(args, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "config"));
-            Contracts.throwIfNullOrWhitespace(sessionToken, ConversationTranslatorConfig.strings.invalidArgs.replace("{arg}", "token"));
+            Contracts.throwIfNullOrUndefined(args, this.privErrors.invalidArgs.replace("{arg}", "config"));
+            Contracts.throwIfNullOrWhitespace(sessionToken, this.privErrors.invalidArgs.replace("{arg}", "token"));
 
-            const endpointHost: string = args.getProperty(PropertyId.ConversationTranslator_Host, ConversationTranslatorConfig.host);
+            const endpointHost: string = args.getProperty(PropertyId.ConversationTranslator_Host, this.privHost);
             const correlationId: string = args.getProperty(PropertyId.ConversationTranslator_CorrelationId);
 
             const queryParams: IStringDictionary<string> = {};
-            queryParams[ConversationTranslatorConfig.params.apiVersion] = ConversationTranslatorConfig.apiVersion;
-            queryParams[ConversationTranslatorConfig.params.sessionToken] = sessionToken;
+            queryParams[this.privRequestParams.apiVersion] = this.privApiVersion;
+            queryParams[this.privRequestParams.sessionToken] = sessionToken;
 
             const headers: IStringDictionary<string> = {};
             if (correlationId) {
-                headers[ConversationTranslatorConfig.params.correlationId] = correlationId;
+                headers[this.privRequestParams.correlationId] = correlationId;
             }
 
             const config: IRequestOptions = {};
             config.headers = headers;
 
-            const endpoint: string = `https://${endpointHost}${ConversationTranslatorConfig.restPath}`;
+            const endpoint: string = `https://${endpointHost}${this.privRestPath}`;
 
             // TODO: support a proxy and certificate validation
             request("delete", endpoint, queryParams, null, config, (response: IResponse) => {

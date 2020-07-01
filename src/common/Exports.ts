@@ -15,6 +15,7 @@ export * from "./IDetachable";
 export * from "./IDictionary";
 export * from "./IDisposable";
 export * from "./IEventSource";
+export * from "./IErrorMessages";
 export * from "./ITimer";
 export * from "./IWebsocketMessageFormatter";
 export * from "./List";

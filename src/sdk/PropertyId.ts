@@ -36,8 +36,8 @@ export enum PropertyId {
     /**
      * The Cognitive Services Speech Service authorization token (aka access token). Under normal circumstances,
      * you shouldn't have to use this property directly.
-     * Instead, use [[SpeechConfig.fromAuthorizationToken]],
-     * [[SpeechRecognizer.authorizationToken]], [[IntentRecognizer.authorizationToken]], [[TranslationRecognizer.authorizationToken]].
+     * Instead, use [[SpeechConfig.fromAuthorizationToken]], [[SpeechRecognizer.authorizationToken]],
+     * [[IntentRecognizer.authorizationToken]], [[TranslationRecognizer.authorizationToken]], [[SpeakerRecognizer.authorizationToken]].
      * @member PropertyId.SpeechServiceAuthorization_Token
      */
     SpeechServiceAuthorization_Token,
@@ -161,6 +161,13 @@ export enum PropertyId {
      * @member PropertyId.SpeechServiceConnection_SynthOutputFormat
      */
     SpeechServiceConnection_SynthOutputFormat,
+
+    /**
+     * The list of comma separated languages used as possible source languages
+     * Added in version 1.13.0
+     * @member PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages
+     */
+    SpeechServiceConnection_AutoDetectSourceLanguages,
 
     /**
      * The requested Cognitive Services Speech Service response output format (simple or detailed). Under normal circumstances, you shouldn't have

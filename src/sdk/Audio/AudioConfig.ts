@@ -10,6 +10,7 @@ import {
 import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
 import {
     AudioSourceEvent,
+    Deferred,
     EventSource,
     IAudioDestination,
     IAudioSource,
@@ -245,6 +246,15 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      */
     public id(): string {
         return this.privSource.id();
+    }
+
+    /**
+     * @member AudioConfigImpl.prototype.blob
+     * @function
+     * @public
+     */
+    public get blob(): Promise<Blob | Buffer> {
+        return this.privSource.blob;
     }
 
     /**

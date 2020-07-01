@@ -19,14 +19,16 @@ export class IntentRecognitionResult extends SpeechRecognitionResult {
      * @param text - The recognized text.
      * @param duration - The duration.
      * @param offset - The offset into the stream.
+     * @param language - Primary Language detected, if provided.
+     * @param languageDetectionConfidence - Primary Language confidence ("Unknown," "Low," "Medium," "High"...), if provided.
      * @param errorDetails - Error details, if provided.
      * @param json - Additional Json, if provided.
      * @param properties - Additional properties, if provided.
      */
     constructor(intentId?: string, resultId?: string, reason?: ResultReason, text?: string,
-                duration?: number, offset?: number, errorDetails?: string, json?: string,
-                properties?: PropertyCollection) {
-        super(resultId, reason, text, duration, offset, errorDetails, json, properties);
+                duration?: number, offset?: number, language?: string, languageDetectionConfidence?: string,
+                errorDetails?: string, json?: string, properties?: PropertyCollection) {
+        super(resultId, reason, text, duration, offset, language, languageDetectionConfidence, errorDetails, json, properties);
 
         this.privIntentId = intentId;
     }

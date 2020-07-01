@@ -94,6 +94,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     expect(s).not.toBeUndefined();
     return s;
 };
+
 /*
 test("speech.event from service", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console

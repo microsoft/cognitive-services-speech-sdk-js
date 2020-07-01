@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RecognitionStatus } from "../Exports";
+import { IPrimaryLanguage, RecognitionStatus } from "../Exports";
 
 // speech.phrase for detailed
 export interface IDetailedSpeechPhrase {
@@ -9,6 +9,7 @@ export interface IDetailedSpeechPhrase {
     NBest: IPhrase[];
     Duration?: number;
     Offset?: number;
+    PrimaryLanguage?: IPrimaryLanguage;
 }
 
 export interface IPhrase {
@@ -42,5 +43,11 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
     }
     public get Offset(): number {
         return this.privDetailedSpeechPhrase.Offset;
+    }
+    public get Language(): string {
+        return this.privDetailedSpeechPhrase.PrimaryLanguage === undefined ? undefined : this.privDetailedSpeechPhrase.PrimaryLanguage.Language;
+    }
+    public get LanguageDetectionConfidence(): string {
+        return this.privDetailedSpeechPhrase.PrimaryLanguage === undefined ? undefined : this.privDetailedSpeechPhrase.PrimaryLanguage.Confidence;
     }
 }

@@ -307,7 +307,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
 
     public static getDefaultOutputFormat(): AudioOutputFormatImpl {
         return AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString(
-            (typeof window !== "undefined") ? "audio-16khz-64kbitrate-mono-mp3" : "riff-16khz-16bit-mono-pcm");
+            (typeof window !== "undefined") ? "audio-24khz-48kbitrate-mono-mp3" : "riff-16khz-16bit-mono-pcm");
     }
 
     /**
