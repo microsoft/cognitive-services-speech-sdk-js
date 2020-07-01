@@ -21,7 +21,7 @@ export class SpeechContext {
     /**
      * Adds a section to the speech.context object.
      * @param sectionName Name of the section to add.
-     * @param value JSON serializeable object that represents the value.
+     * @param value JSON serializable object that represents the value.
      */
     public setSection(sectionName: string, value: any): void {
         this.privContext[sectionName] = value;

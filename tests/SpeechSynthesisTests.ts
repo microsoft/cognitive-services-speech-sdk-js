@@ -629,9 +629,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         console.info("Name: test Speech Synthesiser, Language Auto Detection");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
-        speechConfig.speechSynthesisLanguage = "autoDetect";
+        const autoDetectSourceLanguageConfig: sdk.AutoDetectSourceLanguageConfig = sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
+        objsToClose.push(autoDetectSourceLanguageConfig);
 
-        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        const s: sdk.SpeechSynthesizer = sdk.SpeechSynthesizer.FromConfig(speechConfig, autoDetectSourceLanguageConfig, null);
         objsToClose.push(s);
         expect(s).not.toBeUndefined();
 
@@ -651,7 +652,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             done.fail();
         };
 
-        // we will get very short audio as the en-US voice is not mix-lingual.
+        // we will get very short audio as the en-US voices are not mix-lingual.
         s.speakTextAsync("你好世界。", (result: sdk.SpeechSynthesisResult): void => {
             // tslint:disable-next-line:no-console
             console.info("speaking finished, turn 1");

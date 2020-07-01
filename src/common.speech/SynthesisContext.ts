@@ -3,6 +3,7 @@
 
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PropertyId, SpeechSynthesizer } from "../sdk/Exports";
+import { AutoDetectSourceLanguagesOpenRangeOptionName } from "./Exports";
 
 /**
  * Represents the JSON used in the synthesis.context message sent to the speech service.
@@ -52,7 +53,7 @@ export class SynthesisContext {
                 outputFormat: this.privAudioOutputFormat.requestAudioFormatString,
             },
             language: {
-                autoDetection: this.privSpeechSynthesizer.properties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage, "").toLowerCase().startsWith("auto")
+                autoDetection: this.privSpeechSynthesizer.properties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages) === AutoDetectSourceLanguagesOpenRangeOptionName
             }
         };
     }

@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PathLike } from "fs";
+import {PathLike} from "fs";
 import {
+    AutoDetectSourceLanguagesOpenRangeOptionName,
     CognitiveSubscriptionKeyAuthentication,
     CognitiveTokenAuthentication,
     Context,
@@ -16,29 +17,35 @@ import {
 } from "../common.speech/Exports";
 import {
     createNoDashGuid,
-    IAudioDestination, IStringDictionary,
+    IAudioDestination,
+    IStringDictionary,
     Promise,
     PromiseHelper,
     Queue
 } from "../common/Exports";
 import { AudioOutputConfigImpl } from "./Audio/AudioConfig";
 import { AudioFileWriter } from "./Audio/AudioFileWriter";
-import {AudioOutputFormatImpl} from "./Audio/AudioOutputFormat";
-import { PullAudioOutputStreamImpl, PushAudioOutputStreamImpl } from "./Audio/AudioOutputStream";
+import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat";
+import {
+    PullAudioOutputStreamImpl,
+    PushAudioOutputStreamImpl
+} from "./Audio/AudioOutputStream";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
     AudioOutputStream,
+    AutoDetectSourceLanguageConfig,
     PropertyCollection,
     PropertyId,
     PullAudioOutputStream,
     PushAudioOutputStreamCallback,
+    SpeechConfig,
     SpeechSynthesisEventArgs,
     SpeechSynthesisOutputFormat,
     SpeechSynthesisResult,
     SpeechSynthesisWordBoundaryEventArgs,
 } from "./Exports";
-import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
+import { SpeechConfigImpl } from "./SpeechConfig";
 
 /**
  * Defines the class SpeechSynthesizer for text to speech.
@@ -150,6 +157,20 @@ export class SpeechSynthesizer {
         this.implCommonSynthesizeSetup();
     }
 
+    /**
+     * SpeechSynthesizer constructor.
+     * @constructor
+     * @param {SpeechConfig} speechConfig - an set of initial properties for this synthesizer
+     * @param {AutoDetectSourceLanguageConfig} autoDetectSourceLanguageConfig - An source language detection configuration associated with the synthesizer
+     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the synthesizer
+     */
+    public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): SpeechSynthesizer {
+        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
+        autoDetectSourceLanguageConfig.properties.mergeTo(speechConfigImpl.properties);
+        const synthesizer = new SpeechSynthesizer(speechConfig, audioConfig);
+        return synthesizer;
+    }
+
     public static buildSsml(text: string, properties: PropertyCollection): string {
         const languageToDefaultVoice: IStringDictionary<string>  = {
             ["ar-EG"]: "Microsoft Server Speech Text to Speech Voice (ar-EG, Hoda)",
@@ -206,7 +227,7 @@ export class SpeechSynthesizer {
         let language = properties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage, "en-US");
         let voice = properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, "");
         let ssml: string = this.XMLEncode(text);
-        if (language.toLowerCase().startsWith("auto")) {
+        if (properties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages) === AutoDetectSourceLanguagesOpenRangeOptionName) {
             language = "en-US";
         } else {
             voice = voice || languageToDefaultVoice[language];

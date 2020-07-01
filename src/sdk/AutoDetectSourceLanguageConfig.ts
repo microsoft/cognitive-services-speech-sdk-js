@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { AutoDetectSourceLanguagesOpenRangeOptionName } from "../common.speech/Exports";
 import {Contracts} from "./Contracts";
 import {
     PropertyCollection,
@@ -17,6 +18,22 @@ export class AutoDetectSourceLanguageConfig {
 
     private constructor() {
         this.privProperties = new PropertyCollection();
+    }
+
+    /**
+     * @member AutoDetectSourceLanguageConfig.fromOpenRange
+     * @function
+     * @public
+     * Only [[SpeechSynthesizer]] supports source language auto detection from open range,
+     * for [[Recognizer]], please use AutoDetectSourceLanguageConfig with specific source languages.
+     * @return {AutoDetectSourceLanguageConfig} Instance of AutoDetectSourceLanguageConfig
+     * @summary Creates an instance of the AutoDetectSourceLanguageConfig with open range.
+     * Added in version 1.13.0.
+     */
+    public static fromOpenRange(): AutoDetectSourceLanguageConfig {
+        const config = new AutoDetectSourceLanguageConfig();
+        config.properties.setProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, AutoDetectSourceLanguagesOpenRangeOptionName);
+        return config;
     }
 
     /**
