@@ -12,6 +12,7 @@ import {
 /**
  * Language auto detect configuration.
  * @class AutoDetectSourceLanguageConfig
+ * Added in version 1.13.0.
  */
 export class AutoDetectSourceLanguageConfig {
     private privProperties: PropertyCollection;
@@ -28,7 +29,6 @@ export class AutoDetectSourceLanguageConfig {
      * for [[Recognizer]], please use AutoDetectSourceLanguageConfig with specific source languages.
      * @return {AutoDetectSourceLanguageConfig} Instance of AutoDetectSourceLanguageConfig
      * @summary Creates an instance of the AutoDetectSourceLanguageConfig with open range.
-     * Added in version 1.13.0.
      */
     public static fromOpenRange(): AutoDetectSourceLanguageConfig {
         const config = new AutoDetectSourceLanguageConfig();
@@ -43,7 +43,6 @@ export class AutoDetectSourceLanguageConfig {
      * @param {string[]} languages Comma-separated string of languages (eg. "en-US,fr-FR") to populate properties of config.
      * @return {AutoDetectSourceLanguageConfig} Instance of AutoDetectSourceLanguageConfig
      * @summary Creates an instance of the AutoDetectSourceLanguageConfig with given languages.
-     * Added in version 1.13.0.
      */
     public static fromLanguages(languages: string[]): AutoDetectSourceLanguageConfig {
         Contracts.throwIfArrayEmptyOrWhitespace(languages, "languages");
@@ -59,7 +58,6 @@ export class AutoDetectSourceLanguageConfig {
      * @param {SourceLanguageConfig[]} configs SourceLanguageConfigs to populate properties of config.
      * @return {AutoDetectSourceLanguageConfig} Instance of AutoDetectSourceLanguageConfig
      * @summary Creates an instance of the AutoDetectSourceLanguageConfig with given SourceLanguageConfigs.
-     * Added in version 1.13.0.
      */
     public static fromSourceLanguageConfigs(configs: SourceLanguageConfig[]): AutoDetectSourceLanguageConfig {
         if (configs.length < 1) {
@@ -85,7 +83,6 @@ export class AutoDetectSourceLanguageConfig {
      * @public
      * @return {PropertyCollection} Properties of the config.
      * @summary Gets a auto detected language config properties
-     * Added in version 1.13.0.
      */
     public get properties(): PropertyCollection {
         return this.privProperties;
