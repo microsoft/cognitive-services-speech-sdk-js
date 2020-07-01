@@ -17,13 +17,11 @@ import {
 import {
     createNoDashGuid,
     IAudioDestination, IStringDictionary,
-    Promise,
-    PromiseHelper,
     Queue
 } from "../common/Exports";
 import { AudioOutputConfigImpl } from "./Audio/AudioConfig";
 import { AudioFileWriter } from "./Audio/AudioFileWriter";
-import {AudioOutputFormatImpl} from "./Audio/AudioOutputFormat";
+import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl, PushAudioOutputStreamImpl } from "./Audio/AudioOutputStream";
 import { Contracts } from "./Contracts";
 import {
@@ -127,7 +125,7 @@ export class SpeechSynthesizer {
 
     private privDisposed: boolean;
     private privConnectionFactory: ISynthesisConnectionFactory;
-    private  privSynthesizing: boolean;
+    private privSynthesizing: boolean;
 
     /**
      * SpeechSynthesizer constructor.
@@ -151,7 +149,7 @@ export class SpeechSynthesizer {
     }
 
     public static buildSsml(text: string, properties: PropertyCollection): string {
-        const languageToDefaultVoice: IStringDictionary<string>  = {
+        const languageToDefaultVoice: IStringDictionary<string> = {
             ["ar-EG"]: "Microsoft Server Speech Text to Speech Voice (ar-EG, Hoda)",
             ["ar-SA"]: "Microsoft Server Speech Text to Speech Voice (ar-SA, Naayf)",
             ["bg-BG"]: "Microsoft Server Speech Text to Speech Voice (bg-BG, Ivan)",
@@ -301,9 +299,9 @@ export class SpeechSynthesizer {
         connectionFactory: ISynthesisConnectionFactory,
         audioConfig: AudioConfig,
         synthesizerConfig: SynthesizerConfig): SynthesisAdapterBase {
-            return new SynthesisAdapterBase(authentication, connectionFactory,
-                synthesizerConfig, this, this.audioConfig as AudioOutputConfigImpl);
-        }
+        return new SynthesisAdapterBase(authentication, connectionFactory,
+            synthesizerConfig, this, this.audioConfig as AudioOutputConfigImpl);
+    }
 
     protected implCommonSynthesizeSetup(): void {
 
@@ -327,11 +325,11 @@ export class SpeechSynthesizer {
             new CognitiveTokenAuthentication(
                 (authFetchEventId: string): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return PromiseHelper.fromResult(authorizationToken);
+                    return Promise.resolve(authorizationToken);
                 },
                 (authFetchEventId: string): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return PromiseHelper.fromResult(authorizationToken);
+                    return Promise.resolve(authorizationToken);
                 });
 
         this.privAdapter = this.createSynthesisAdapter(
@@ -395,15 +393,12 @@ export class SpeechSynthesizer {
         }
     }
 
-    protected adapterSpeak(): Promise<boolean> {
+    protected async adapterSpeak(): Promise<void> {
         if (!this.privDisposed && !this.privSynthesizing) {
             this.privSynthesizing = true;
-            return this.synthesisRequestQueue.dequeue().
-                onSuccessContinueWithPromise((request: SynthesisRequest): Promise<boolean> => {
-                    return this.privAdapter.Speak(request.text, request.isSSML, request.requestId, request.cb, request.err, request.dataStream);
-            });
+            const request: SynthesisRequest = await this.synthesisRequestQueue.dequeue();
+            return this.privAdapter.Speak(request.text, request.isSSML, request.requestId, request.cb, request.err, request.dataStream);
         }
-        return PromiseHelper.fromResult(true);
     }
 
     private static XMLEncode(text: string): string {

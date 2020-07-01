@@ -95,14 +95,13 @@ export class SpeakerRecognizer {
      * @param err - Callback invoked in case of an error.
      */
     public recognizeOnceAsync(model: SpeakerIdentificationModel | SpeakerVerificationModel, cb?: (e: SpeakerRecognitionResult) => void, err?: (e: string) => void): void {
+
         if (model instanceof SpeakerIdentificationModel) {
-            this.privAdapter.identifySpeaker(model, this.privAudioConfigImpl).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
-                this.handleResultCallbacks(promiseResult, SpeakerRecognitionResultType.Identify, undefined, cb, err);
-            });
+            const responsePromise: Promise<IRestResponse> = this.privAdapter.identifySpeaker(model, this.privAudioConfigImpl);
+            this.handleResultCallbacks(responsePromise, SpeakerRecognitionResultType.Identify, undefined, cb, err);
         } else if (model instanceof SpeakerVerificationModel) {
-            this.privAdapter.verifySpeaker(model, this.privAudioConfigImpl).continueWith((promiseResult: PromiseResult<IRestResponse>) => {
-                this.handleResultCallbacks(promiseResult, SpeakerRecognitionResultType.Verify, model.voiceProfile.profileId, cb, err);
-            });
+            const responsePromise: Promise<IRestResponse> = this.privAdapter.verifySpeaker(model, this.privAudioConfigImpl);
+            this.handleResultCallbacks(responsePromise, SpeakerRecognitionResultType.Verify, model.voiceProfile.profileId, cb, err);
         } else {
             throw new Error("SpeakerRecognizer.recognizeOnce: Unexpected model type");
         }
@@ -139,27 +138,29 @@ export class SpeakerRecognizer {
         this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
     }
 
-    private handleResultCallbacks(promiseResult: PromiseResult<IRestResponse>, resultType: SpeakerRecognitionResultType, profileId?: string, cb?: (response: SpeakerRecognitionResult) => void, err?: (e: string) => void): void {
-        try {
-            if (promiseResult.isError) {
-                if (!!err) {
-                    err(promiseResult.error);
+    private handleResultCallbacks(responsePromise: Promise<IRestResponse>, resultType: SpeakerRecognitionResultType, profileId?: string, cb?: (response: SpeakerRecognitionResult) => void, err?: (e: string) => void): void {
+        responsePromise.then((response: IRestResponse): void => {
+            try {
+                if (!!cb) {
+                    cb(
+                        new SpeakerRecognitionResult(
+                            resultType,
+                            response.data,
+                            profileId,
+                            response.ok ? ResultReason.RecognizedSpeaker : ResultReason.Canceled,
+                        )
+                    );
                 }
-            } else if (promiseResult.isCompleted && !!cb) {
-                cb(
-                    new SpeakerRecognitionResult(
-                        resultType,
-                        promiseResult.result.data,
-                        profileId,
-                        promiseResult.result.ok ? ResultReason.RecognizedSpeaker : ResultReason.Canceled,
-                    )
-                );
+            } catch (e) {
+                if (!!err) {
+                    err(e);
+                }
             }
-        } catch (e) {
+        }, (error: any): void => {
             if (!!err) {
-                err(e);
+                err(error);
             }
-        }
+        });
     }
 
 }

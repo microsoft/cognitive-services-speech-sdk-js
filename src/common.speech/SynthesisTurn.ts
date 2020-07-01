@@ -5,8 +5,7 @@ import {
     createNoDashGuid,
     Deferred,
     Events, IAudioDestination,
-    Promise,
-    PromiseState
+    PromiseCompletionWrapper
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
@@ -55,7 +54,7 @@ export class SynthesisTurn {
     }
 
     public get turnCompletionPromise(): Promise<boolean> {
-        return this.privTurnDeferral.promise();
+        return this.privTurnDeferral.promise;
     }
 
     public get isSynthesisEnded(): boolean {
@@ -178,7 +177,7 @@ export class SynthesisTurn {
     }
 
     public onServiceTurnStartResponse = (): void => {
-        if (this.privTurnDeferral.state() === PromiseState.None) {
+        if (this.privTurnDeferral && !(new PromiseCompletionWrapper(this.privTurnDeferral.promise).isCompleted)) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
         }

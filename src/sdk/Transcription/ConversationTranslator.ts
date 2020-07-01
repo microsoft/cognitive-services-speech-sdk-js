@@ -340,7 +340,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         this.privProperties = undefined;
         this.privAudioConfig = undefined;
         this.privSpeechTranslationConfig = undefined;
-        this.privConversation?.dispose().catch();
+        this.privConversation?.dispose(); // .catch();
         this.privConversation = undefined;
     }
 

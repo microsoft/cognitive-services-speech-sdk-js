@@ -11,7 +11,7 @@ import {
     SpeakerIdMessageAdapter,
     SpeakerRecognitionConfig,
 } from "../common.speech/Exports";
-import { IAudioSource, PromiseResult } from "../common/Exports";
+import { IAudioSource } from "../common/Exports";
 import { AudioConfig, AudioConfigImpl } from "./audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -93,18 +93,18 @@ export class VoiceProfileClient {
      * @param err - Callback invoked in case of an error.
      */
     public createProfileAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
-        this.privAdapter.createProfile(profileType, lang).on((result: IRestResponse) => {
+        this.privAdapter.createProfile(profileType, lang).then((result: IRestResponse) => {
             if (!!cb) {
                 const response: { profileId: string } = result.json();
                 const profile = new VoiceProfile(response.profileId, profileType);
                 cb(profile);
             }
         },
-        (error: string) => {
-            if (!!err) {
-                err(error);
-            }
-        });
+            (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
     }
 
     /**
@@ -120,7 +120,7 @@ export class VoiceProfileClient {
     public enrollProfileAsync(profile: VoiceProfile, audioConfig: AudioConfig, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
-        this.privAdapter.createEnrollment(profile, configImpl).on((result: IRestResponse) => {
+        this.privAdapter.createEnrollment(profile, configImpl).then((result: IRestResponse) => {
             if (!!cb) {
                 cb(
                     new VoiceProfileEnrollmentResult(
@@ -131,11 +131,11 @@ export class VoiceProfileClient {
                 );
             }
         },
-        (error: string) => {
-            if (!!err) {
-                err(error);
-            }
-        });
+            (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
     }
 
     /**
@@ -148,14 +148,14 @@ export class VoiceProfileClient {
      * @param err - Callback invoked in case of an error.
      */
     public deleteProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
-        this.privAdapter.deleteProfile(profile).on((result: IRestResponse) => {
+        this.privAdapter.deleteProfile(profile).then((result: IRestResponse) => {
             this.handleResultCallbacks(result, ResultReason.DeletedVoiceProfile, cb);
         },
-        (error: string) => {
-            if (!!err) {
-                err(error);
-            }
-        });
+            (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
     }
 
     /**
@@ -168,14 +168,14 @@ export class VoiceProfileClient {
      * @param err - Callback invoked in case of an error.
      */
     public resetProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
-        this.privAdapter.resetProfile(profile).on((result: IRestResponse) => {
+        this.privAdapter.resetProfile(profile).then((result: IRestResponse) => {
             this.handleResultCallbacks(result, ResultReason.ResetVoiceProfile, cb);
         },
-        (error: string) => {
-            if (!!err) {
-                err(error);
-            }
-        });
+            (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
     }
 
     /**
