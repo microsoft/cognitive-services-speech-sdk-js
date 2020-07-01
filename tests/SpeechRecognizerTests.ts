@@ -67,7 +67,10 @@ afterEach(async (done: jest.DoneCallback) => {
 async function asyncCloseAll(array: any[]): Promise<void> {
     for (const current of objsToClose) {
         if (typeof current.close === "function") {
-            await current.close();
+            await new Promise<void>((resolve:()=>void, reject:(reason:string)=>void)=>{
+                current.close(resolve, reject);
+            });
+    
         }
     }
 }
@@ -284,7 +287,7 @@ test("BadWavFileProducesError", (done: jest.DoneCallback) => {
     });
 });
 
-describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean) => {
+describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     beforeAll(() => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
@@ -1272,7 +1275,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (error: string) => {
                 done.fail(error);
             });
-    });
+    }, 120000);
     test("PullStreamHalfFill", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: PullStreamHalfFill");
@@ -1835,7 +1838,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         expect(r instanceof sdk.Recognizer).toEqual(true);
 
         let success: number = 0;
-        await r.close();
+        
+        await new Promise<void>((resolve:()=>void, reject:(reason:string)=>void)=>{
+            r.close(resolve, reject);
+        });
 
         r.recognizeOnceAsync(() => fail("RecognizeOnceAsync on closed recognizer called success callback"),
             (error: string): void => {

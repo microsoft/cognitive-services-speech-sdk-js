@@ -219,19 +219,16 @@ export abstract class Recognizer {
     }
 
     protected async recognizeOnceAsyncImpl(recognitionMode: RecognitionMode): Promise<SpeechRecognitionResult> {
-        try {
-            Contracts.throwIfDisposed(this.privDisposed);
-            const ret: Deferred<SpeechRecognitionResult> = new Deferred<SpeechRecognitionResult>();
+        Contracts.throwIfDisposed(this.privDisposed);
+        const ret: Deferred<SpeechRecognitionResult> = new Deferred<SpeechRecognitionResult>();
 
-            await this.implRecognizerStop();
-            await this.privReco.recognize(recognitionMode, ret.resolve, ret.reject);
-            const result: SpeechRecognitionResult = await ret.promise;
-            await this.implRecognizerStop();
+        await this.implRecognizerStop();
+        await this.privReco.recognize(recognitionMode, ret.resolve, ret.reject);
+        const result: SpeechRecognitionResult = await ret.promise;
+        await this.implRecognizerStop();
 
-            return result;
-        } catch (error) {
-            return Promise.reject(error);
-        }
+        return result;
+
     }
 
     public async startContinuousRecognitionAsyncImpl(recognitionMode: RecognitionMode): Promise<void> {
