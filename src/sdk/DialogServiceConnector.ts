@@ -181,7 +181,7 @@ export class DialogServiceConnector extends Recognizer {
         if (this.isTurnComplete) {
             try {
                 Contracts.throwIfDisposed(this.privIsDisposed);
-                const foo = async () => {
+                const callbackHolder = async () => {
                     try {
                         await this.connect();
 
@@ -217,7 +217,7 @@ export class DialogServiceConnector extends Recognizer {
                         }
                     }
                 };
-                foo().catch();
+                callbackHolder().catch(() => { });
             } catch (error) {
                 if (!!err) {
                     if (error instanceof Error) {
@@ -229,7 +229,7 @@ export class DialogServiceConnector extends Recognizer {
                 }
 
                 // Destroy the recognizer.
-                this.dispose(true).catch();
+                this.dispose(true).catch(() => { });
             }
         }
     }
@@ -252,10 +252,18 @@ export class DialogServiceConnector extends Recognizer {
      * @function
      * @public
      */
-    public async close(): Promise<void> {
+    public close(cb?: () => void, err?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privIsDisposed);
 
-        await this.dispose(true);
+        this.dispose(true).then(() => {
+            if (!!cb) {
+                cb();
+            }
+        }, (error: string) => {
+            if (!!err) {
+                err(error);
+            }
+        });
     }
 
     protected async dispose(disposing: boolean): Promise<void> {

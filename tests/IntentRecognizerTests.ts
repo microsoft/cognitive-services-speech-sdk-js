@@ -8,7 +8,10 @@ import { Events, EventType } from "../src/common/Exports";
 
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { Settings } from "./Settings";
-import { WaitForCondition } from "./Utilities";
+import {
+    closeAsyncObjects,
+    WaitForCondition
+} from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
@@ -31,14 +34,11 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
-    });
+    await closeAsyncObjects(objsToClose);
+    done();
 });
 
 const ValidateResultMatchesWaveFile = (res: sdk.SpeechRecognitionResult): void => {

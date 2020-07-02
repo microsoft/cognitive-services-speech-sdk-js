@@ -59,7 +59,7 @@ afterEach(() => {
         // tslint:disable-next-line:no-console
         console.info("Error " + Error.toString() + " cleaning up.");
     });
-    currentListener.detach();
+    currentListener.detach().catch();
     currentListener = null;
 });
 

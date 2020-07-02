@@ -10,6 +10,7 @@ import {
 } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
+import { closeAsyncObjects } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
@@ -29,14 +30,11 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
-    });
+    await closeAsyncObjects(objsToClose);
+    done();
 });
 
 const BuildClient: (speechConfig?: sdk.SpeechConfig) => sdk.VoiceProfileClient = (speechConfig?: sdk.SpeechConfig): sdk.VoiceProfileClient => {
@@ -324,7 +322,7 @@ describe.each([true, false])("Service based tests", () => {
                                                     (error: string) => {
                                                         done.fail(error);
                                                     });
-                                                },
+                                            },
                                             (error: string) => {
                                                 done.fail(error);
                                             });

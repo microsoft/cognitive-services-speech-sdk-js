@@ -15,6 +15,7 @@ import {
 } from "../src/common/Exports";
 import { createNoDashGuid } from "../src/common/Guid";
 import { Settings } from "./Settings";
+import { closeAsyncObjects } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
@@ -33,14 +34,11 @@ beforeEach(() => {
     console.info("---------------------------------------Starting test case-----------------------------------");
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
-    });
+    await closeAsyncObjects(objsToClose);
+    done();
 });
 
 const BuildSpeechRecognizerFromWaveFile: (speechConfig: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
@@ -94,13 +92,13 @@ const BuildTranslationRecognizerFromWaveFile: (speechConfig: sdk.SpeechTranslati
 
 const BuildSpeechSynthesizerToFileOutput: (speechConfig: sdk.SpeechConfig, fileName?: string) => sdk.SpeechSynthesizer =
     (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechSynthesizer => {
-    const config: sdk.AudioConfig = fileName === undefined ? null : sdk.AudioConfig.fromAudioFileOutput(fileName);
+        const config: sdk.AudioConfig = fileName === undefined ? null : sdk.AudioConfig.fromAudioFileOutput(fileName);
 
-    const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, config);
-    expect(s).not.toBeUndefined();
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, config);
+        expect(s).not.toBeUndefined();
 
-    return s;
-};
+        return s;
+    };
 
 test("Null Param Check, both.", () => {
     expect(() => sdk.SpeechConfig.fromSubscription(null, null)).toThrowError();
@@ -603,9 +601,9 @@ describe("Connection URL Tests", () => {
                     expect(uri).not.toBeUndefined();
                     // Make sure there's only a single ? in the URL.
                     expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
-
+                    expect(uri).toContain(expectedHostName);
                     expect(uri.startsWith(expectedHostName)).toBe(true);
-
+                    expect(uri).toContain(expectedHostName);
                     expect(p2.errorDetails).not.toBeUndefined();
                     expect(sdk.ResultReason[p2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
 
@@ -623,33 +621,33 @@ describe("Connection URL Tests", () => {
         [sdk.SpeechConfig.fromHost, BuildSpeechRecognizerFromWaveFile],
         [sdk.SpeechTranslationConfig.fromHost, BuildTranslationRecognizerFromWaveFile],
         [sdk.SpeechConfig.fromHost, BuildIntentRecognizerFromWaveFile],
-        [sdk.SpeechConfig.fromHost, BuildSpeechSynthesizerToFileOutput]])("FromHost Tests",
-            (createMethod: any,
-             recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) =>
-                 sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
+        [sdk.SpeechConfig.fromHost, BuildSpeechSynthesizerToFileOutput]
+    ])("FromHost Tests", (createMethod: any, recognizerCreateMethod: (
+        config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) =>
+        sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
 
-                test("Simple Host and protocol", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
-                    console.info("Name: Simple Host and protocol");
+        test("Simple Host and protocol", (done: jest.DoneCallback) => {
+            // tslint:disable-next-line:no-console
+            console.info("Name: Simple Host and protocol");
 
-                    testHostConnection(createMethod,
-                        "ws://fakehost",
-                        "ws://fakehost/",
-                        recognizerCreateMethod,
-                        done);
-                });
+            testHostConnection(createMethod,
+                "ws://fakehost",
+                "ws://fakehost/",
+                recognizerCreateMethod,
+                done);
+        });
 
-                test("Simple Host, protocol, and port", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
-                    console.info("Name: Simple Host and protocol");
+        test("Simple Host, protocol, and port", (done: jest.DoneCallback) => {
+            // tslint:disable-next-line:no-console
+            console.info("Name: Simple Host, protocol, and port");
 
-                    testHostConnection(createMethod,
-                        "ws://fakehost:8080",
-                        "ws://fakehost:8080/",
-                        recognizerCreateMethod,
-                        done);
-                });
-            });
+            testHostConnection(createMethod,
+                "ws://fakehost:8080",
+                "ws://fakehost:8080/",
+                recognizerCreateMethod,
+                done);
+        });
+    });
 
     function testUrlParameter(
         createMethod: (url: URL, key: string) => sdk.SpeechConfig | sdk.SpeechTranslationConfig,
@@ -705,11 +703,11 @@ describe("Connection URL Tests", () => {
         [sdk.SpeechConfig.fromEndpoint, BuildSpeechRecognizerFromWaveFile],
         [sdk.SpeechTranslationConfig.fromEndpoint, BuildTranslationRecognizerFromWaveFile],
         [sdk.SpeechConfig.fromEndpoint, BuildIntentRecognizerFromWaveFile]])("Common URL Tests",
-            (createMethod: any,
-             recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
+            (createMethod: any, recognizerCreateMethod: (
+                config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
                 test("setServiceProperty (single)", (done: jest.DoneCallback) => {
                     // tslint:disable-next-line:no-console
-                    console.info("Name: setServiceProperty");
+                    console.info("Name: setServiceProperty (single)");
 
                     const propName: string = "someProperty";
                     const val: string = "someValue";
@@ -725,7 +723,7 @@ describe("Connection URL Tests", () => {
 
                 test("setServiceProperty (change)", (done: jest.DoneCallback) => {
                     // tslint:disable-next-line:no-console
-                    console.info("Name: setServiceProperty");
+                    console.info("Name: setServiceProperty (change)");
 
                     const propName: string = "someProperty";
                     const val: string = "someValue";
@@ -742,7 +740,7 @@ describe("Connection URL Tests", () => {
 
                 test("setServiceProperty (multiple)", (done: jest.DoneCallback) => {
                     // tslint:disable-next-line:no-console
-                    console.info("Name: setServiceProperty");
+                    console.info("Name: setServiceProperty (multiple)");
 
                     const propName: string = "someProperty";
                     const val: string = "someValue";

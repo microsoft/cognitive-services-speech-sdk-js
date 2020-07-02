@@ -12,7 +12,10 @@ import {
 } from "../src/common/Exports";
 import { PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
-import { WaitForCondition } from "./Utilities";
+import {
+    closeAsyncObjects,
+    WaitForCondition
+} from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 // tslint:disable-next-line:no-console
@@ -58,31 +61,12 @@ beforeEach(() => {
     console.info("---------------------------------------Starting test case-----------------------------------");
 });
 
-afterEach(async (done: jest.DoneCallback): Promise<void> => {
-    // tslint:disable-next-line:no-console
-    console.info("Closing Objects");
-
-    await asyncCloseAll(objsToClose);
+afterEach(async (done: jest.DoneCallback) => {
+    await closeAsyncObjects(objsToClose);
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-
     done();
-
 });
-
-async function asyncCloseAll(array: any[]): Promise<void> {
-    for (const current of objsToClose) {
-        if (typeof current.close === "function") {
-            try {
-                await current.close();
-            } catch (error) {
-                // tslint:disable-next-line:no-console
-                console.info("Closing threw: " + error);
-            }
-
-        }
-    }
-}
 
 function BuildCommandsServiceConfig(): sdk.DialogServiceConfig {
     const config: sdk.CustomCommandsConfig = sdk.CustomCommandsConfig.fromSubscription(Settings.BotSecret, Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
@@ -201,7 +185,7 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
 //     expect(connector instanceof sdk.DialogServiceConnector);
 // });
 
-describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
+describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean) => {
 
     beforeAll(() => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
@@ -266,12 +250,14 @@ describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
             done();
         };
 
-        connection.openConnection().catch((error: string) => done.fail(error));
+        connection.openConnection(undefined, (error: string): void => {
+            done.fail(error);
+        });
 
         WaitForCondition(() => {
             return connected;
         }, () => {
-            connection.closeConnection().catch();
+            connection.closeConnection();
         });
     });
 
@@ -393,9 +379,9 @@ describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
                 if (bytesRead > 0) {
                     audioReadLoop(audioStream, done);
                 }
-                }, (error: string) => {
-                    done.fail(error);
-                });
+            }, (error: string) => {
+                done.fail(error);
+            });
         };
 
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
@@ -473,7 +459,7 @@ describe.each([false])("Service-based tests", (forceNodeWebSocket: boolean) => {
                 if (bytesRead > 0) {
                     audioReadLoop(audioStream, done);
                 }
-                }, (error: string) => {
+            }, (error: string) => {
                 done.fail(error);
             });
         };

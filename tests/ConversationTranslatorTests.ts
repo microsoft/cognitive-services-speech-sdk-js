@@ -14,7 +14,10 @@ import {
     EventType,
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
-import { WaitForCondition } from "./Utilities";
+import {
+    closeAsyncObjects,
+    WaitForCondition
+} from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 // tslint:disable-next-line:no-console
@@ -34,15 +37,15 @@ console.info = (...args: any[]): void => {
         const milliseconds = date.getMilliseconds();
 
         return "[" +
-               ((hour < 10) ? "0" + hour : hour) +
-               ":" +
-               ((minutes < 10) ? "0" + minutes : minutes) +
-               ":" +
-               ((seconds < 10) ? "0" + seconds : seconds) +
-               "." +
-               ("00" + milliseconds).slice(-3) +
-               "] ";
-            };
+            ((hour < 10) ? "0" + hour : hour) +
+            ":" +
+            ((minutes < 10) ? "0" + minutes : minutes) +
+            ":" +
+            ((seconds < 10) ? "0" + seconds : seconds) +
+            "." +
+            ("00" + milliseconds).slice(-3) +
+            "] ";
+    };
     const timestamp = formatConsoleDate(); //  `[${new Date().toTimeString()}]`;
     consoleInfo.apply(this, [timestamp, args]);
 };
@@ -64,14 +67,11 @@ beforeEach(() => {
     console.info("---------------------------------------Starting test case-----------------------------------");
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
-    });
+    await closeAsyncObjects(objsToClose);
+    done();
 });
 
 // Conversation tests: begin
@@ -338,9 +338,9 @@ describe("conversation service tests", () => {
                     }));
             });
         }),
-        ((error: any) => {
-            done.fail();
-        }));
+            ((error: any) => {
+                done.fail();
+            }));
         objsToClose.push(c);
 
         function joinParticipant(code: string): void {
@@ -350,12 +350,12 @@ describe("conversation service tests", () => {
             if (speechEndpointHost !== "") { ctP.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
             objsToClose.push(ctP);
             ctP.joinConversationAsync(code, "mute me", "en-US",
-                    (() => {
-                        // continue
-                    }),
-                    ((error: any) => {
-                        done.fail();
-                    }));
+                (() => {
+                    // continue
+                }),
+                ((error: any) => {
+                    done.fail();
+                }));
         }
 
     }, 20000);
@@ -414,9 +414,9 @@ describe("conversation service tests", () => {
                     done.fail();
                 }));
         }),
-        ((error: any) => {
-            done.fail();
-        }));
+            ((error: any) => {
+                done.fail();
+            }));
 
         WaitForCondition(() => (textMessage.includes("Hello")), done);
 
@@ -473,7 +473,7 @@ describe("conversation service tests", () => {
             });
 
             function eject(id: string): void {
-                c.removeParticipantAsync(participantId);
+                c.removeParticipantAsync(participantId, undefined, done.fail);
             }
 
             c.startConversationAsync(() => {
@@ -486,9 +486,9 @@ describe("conversation service tests", () => {
                     }));
             });
         }),
-        ((error: any) => {
-            done.fail();
-        }));
+            ((error: any) => {
+                done.fail();
+            }));
 
         function joinParticipant(code: string): void {
             // join as a participant
@@ -534,7 +534,7 @@ describe("conversation translator config tests", () => {
 
     test("Create Conversation Translator, audio config", () => {
 
-        const audioConfig  = sdk.AudioConfig.fromDefaultMicrophoneInput();
+        const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
         const ct = new sdk.ConversationTranslator(audioConfig);
         objsToClose.push(ct);
 
@@ -543,14 +543,14 @@ describe("conversation translator config tests", () => {
 
 });
 
-describe("conversation translator service tests",  () => {
+describe("conversation translator service tests", () => {
 
     test("Join Conversation Translator, invalid conversation code [400027]", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Join Conversation Translator, invalid conversation code [400027]");
 
-        const audioConfig  = sdk.AudioConfig.fromDefaultMicrophoneInput();
+        const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
         const ct = new sdk.ConversationTranslator(audioConfig);
         objsToClose.push(ct);
         const code: string = "abcde";
@@ -616,14 +616,14 @@ describe("conversation translator service tests",  () => {
                         errorMessage = error;
                     }));
             }),
+                ((error: any) => {
+                    done.fail();
+                }));
+
+        }),
             ((error: any) => {
                 done.fail();
             }));
-
-        }),
-        ((error: any) => {
-            done.fail();
-        }));
 
         objsToClose.push(c);
 

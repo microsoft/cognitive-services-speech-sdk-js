@@ -184,16 +184,18 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         const communicationCustodian: Deferred<void> = new Deferred<void>();
 
         this.fetchConnection().then(async (connection: IConnection): Promise<void> => {
-            const message: ConversationConnectionMessage = await connection.read() as ConversationConnectionMessage;
             const isDisposed: boolean = this.isDisposed();
             const terminateMessageLoop = (!this.isDisposed() && this.terminateMessageLoop);
-            const sessionId: string = this.privConversationRequestSession.sessionId;
-            let sendFinal: boolean = false;
+
             if (isDisposed || terminateMessageLoop) {
                 // We're done.
                 communicationCustodian.resolve();
                 return Promise.resolve();
             }
+
+            const message: ConversationConnectionMessage = await connection.read() as ConversationConnectionMessage;
+            const sessionId: string = this.privConversationRequestSession.sessionId;
+            let sendFinal: boolean = false;
 
             if (!message) {
                 return this.receiveConversationMessageOverride();

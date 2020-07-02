@@ -15,7 +15,10 @@ import {
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { Settings } from "./Settings";
 import { validateTelemetry } from "./TelemetryUtil";
-import { WaitForCondition } from "./Utilities";
+import {
+    closeAsyncObjects,
+    WaitForCondition
+} from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
@@ -39,23 +42,10 @@ beforeEach(() => {
 
 afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
-    console.info("Closing Objects");
-
-    asyncCloseAll(objsToClose).then(() => {
-        // tslint:disable-next-line:no-console
-        console.info("End Time: " + new Date(Date.now()).toLocaleString());
-
-        done();
-    }, (error: string) => done.fail(error));
+    console.info("End Time: " + new Date(Date.now()).toLocaleString());
+    await closeAsyncObjects(objsToClose);
+    done();
 });
-
-async function asyncCloseAll(array: any[]): Promise<void> {
-    for (const current of objsToClose) {
-        if (typeof current.close === "function") {
-            await current.close();
-        }
-    }
-}
 
 const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.TranslationRecognizer = (speechConfig?: sdk.SpeechTranslationConfig): sdk.TranslationRecognizer => {
 

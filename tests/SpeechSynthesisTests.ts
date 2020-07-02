@@ -11,7 +11,10 @@ import {
     InvalidOperationError
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
-import { WaitForCondition } from "./Utilities";
+import {
+    closeAsyncObjects,
+    WaitForCondition
+} from "./Utilities";
 
 let objsToClose: any[];
 
@@ -31,14 +34,11 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
-    });
+    await closeAsyncObjects(objsToClose);
+    done();
 });
 
 const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
@@ -59,52 +59,52 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 };
 
 const CheckSynthesisResult: (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason) =>
-    void = (result: sdk.SpeechSynthesisResult,  reason: sdk.ResultReason): void => {
-    expect(result).not.toBeUndefined();
-    expect(result.reason).toEqual(reason);
-    switch (reason) {
-        case sdk.ResultReason.SynthesizingAudio:
-        case sdk.ResultReason.SynthesizingAudioCompleted:
-            expect(result.audioData).not.toBeUndefined();
-            expect(result.audioData.byteLength).toBeGreaterThan(0);
-            break;
-        case sdk.ResultReason.SynthesizingAudioStarted:
-            expect(result.audioData).toBeUndefined();
-            break;
-    }
-};
+    void = (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason): void => {
+        expect(result).not.toBeUndefined();
+        expect(result.reason).toEqual(reason);
+        switch (reason) {
+            case sdk.ResultReason.SynthesizingAudio:
+            case sdk.ResultReason.SynthesizingAudioCompleted:
+                expect(result.audioData).not.toBeUndefined();
+                expect(result.audioData.byteLength).toBeGreaterThan(0);
+                break;
+            case sdk.ResultReason.SynthesizingAudioStarted:
+                expect(result.audioData).toBeUndefined();
+                break;
+        }
+    };
 
 const CheckBinaryEqual: (arr1: ArrayBuffer, arr2: ArrayBuffer) => void =
     (arr1: ArrayBuffer, arr2: ArrayBuffer): void => {
-    expect(arr1).not.toBeUndefined();
-    expect(arr2).not.toBeUndefined();
-    expect(arr1.byteLength).toEqual(arr2.byteLength);
-    const view1: Uint8Array = new Uint8Array(arr1);
-    const view2: Uint8Array = new Uint8Array(arr2);
-    for (let i: number = 0; i < arr1.byteLength; i++) {
-        expect(view1[i]).toEqual(view2[i]);
-    }
-};
+        expect(arr1).not.toBeUndefined();
+        expect(arr2).not.toBeUndefined();
+        expect(arr1.byteLength).toEqual(arr2.byteLength);
+        const view1: Uint8Array = new Uint8Array(arr1);
+        const view2: Uint8Array = new Uint8Array(arr2);
+        for (let i: number = 0; i < arr1.byteLength; i++) {
+            expect(view1[i]).toEqual(view2[i]);
+        }
+    };
 
-const ReadPullAudioOutputStream: (stream: sdk.PullAudioOutputStream, length?: number, done?: () => void, fc?: (e: string) => void) => void =
-    (stream: sdk.PullAudioOutputStream, length?: number, done?: () => void, fc?: (e: string) => void): void => {
+const ReadPullAudioOutputStream: (stream: sdk.PullAudioOutputStream, length?: number, done?: jest.DoneCallback) => void =
+    (stream: sdk.PullAudioOutputStream, length?: number, done?: jest.DoneCallback): void => {
         const audioBuffer = new ArrayBuffer(1024);
-        stream.read(audioBuffer).onSuccessContinueWith((bytesRead: number) => {
+        stream.read(audioBuffer).then((bytesRead: number) => {
             if (bytesRead > 0) {
-                ReadPullAudioOutputStream(stream, length === undefined ? undefined : length - bytesRead, done, fc);
+                ReadPullAudioOutputStream(stream, length === undefined ? undefined : length - bytesRead, done);
             } else {
                 if (length !== undefined) {
                     try {
                         expect(length).toEqual(0);
                     } catch (e) {
-                        fc(e);
+                        done.fail(e);
                     }
                 }
                 if (!!done) {
                     done();
                 }
             }
-        });
+        }, done.fail);
     };
 
 class PushAudioOutputStreamTestCallback extends sdk.PushAudioOutputStreamCallback {
@@ -236,7 +236,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             done.fail(e);
         });
 
-        WaitForCondition( (): boolean => {
+        WaitForCondition((): boolean => {
             return completeEventCount !== 0;
         }, (): void => {
             expect(startEventCount).toEqual(1);
@@ -304,7 +304,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             audioLength += result.audioData.byteLength;
             s.close();
             // wait 2 seconds before checking file size, as the async file writing might not be finished right now.
-            setTimeout( () => {
+            setTimeout(() => {
                 const fileLength = fs.statSync("test.wav").size;
                 expect(fileLength).toEqual(audioLength - 44);
                 done();
@@ -330,7 +330,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             console.info("speaking finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             // wait 2 seconds before checking file size, as the async file writing might not be finished right now.
-            setTimeout( () => {
+            setTimeout(() => {
                 const fileLength = fs.statSync("test1.mp3").size;
                 expect(fileLength).toEqual(result.audioData.byteLength);
                 done();
@@ -500,7 +500,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         expect(audioConfig).not.toBeUndefined();
 
         setTimeout(() => {
-            ReadPullAudioOutputStream(stream, undefined, done, done.fail);
+            ReadPullAudioOutputStream(stream, undefined, done);
         }, 0);
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
@@ -535,7 +535,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             console.info("speaking text finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             s.close();
-            ReadPullAudioOutputStream(stream, result.audioData.byteLength - 44, done, done.fail);
+            ReadPullAudioOutputStream(stream, result.audioData.byteLength - 44, done);
         }, (e: string): void => {
             done.fail(e);
         });

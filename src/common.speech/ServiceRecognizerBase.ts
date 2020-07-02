@@ -51,8 +51,7 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
-import * as delay from "delay";
-import { promises } from "dns";
+import delay from "delay";
 
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
@@ -148,8 +147,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public async dispose(reason?: string): Promise<void> {
         this.privIsDisposed = true;
         if (this.privConnectionConfigurationPromise) {
-            const connection: IConnection = await this.privConnectionConfigurationPromise;
-            await connection.dispose(reason);
+            try {
+                const connection: IConnection = await this.privConnectionConfigurationPromise;
+                await connection.dispose(reason);
+            } catch (error) {
+                // The connection is in a bad state. But we're trying to kill it, so...
+                return;
+            }
         }
     }
 
@@ -346,16 +350,16 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected async receiveMessage(): Promise<void> {
         try {
+            if (this.privIsDisposed) {
+                // We're done.
+                return;
+            }
+
             let connection = await this.fetchConnection();
             const message = await connection.read();
 
             if (this.receiveMessageOverride !== undefined) {
                 return this.receiveMessageOverride();
-            }
-
-            if (this.privIsDisposed) {
-                // We're done.
-                return;
             }
 
             // indicates we are draining the queue and it came with no message;

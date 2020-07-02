@@ -377,14 +377,17 @@ export class SpeechSynthesizer {
                     }
                 }
                 cb = undefined;
-                this.adapterSpeak().catch();
+                /* tslint:disable:no-empty */
+                this.adapterSpeak().catch(() => { });
+
             }, (e: string): void => {
                 if (!!err) {
                     err(e);
                 }
             }, audioDestination));
 
-            this.adapterSpeak().catch();
+            /* tslint:disable:no-empty */
+            this.adapterSpeak().catch(() => { });
 
         } catch (error) {
             if (!!err) {
@@ -397,7 +400,8 @@ export class SpeechSynthesizer {
             }
 
             // Destroy the synthesizer.
-            this.dispose(true).catch();
+            /* tslint:disable:no-empty */
+            this.dispose(true).catch(() => { });
         }
     }
 
