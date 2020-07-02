@@ -139,7 +139,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         expect(() => r.addIntent(null, "ID")).toThrow();
     });
 
-    test.only("RoundTripWithGoodIntent", (done: jest.DoneCallback) => {
+    test("RoundTripWithGoodIntent", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: RoundTripWithGoodIntent");
 
