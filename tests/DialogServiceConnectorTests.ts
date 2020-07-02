@@ -12,7 +12,7 @@ import {
 } from "../src/common/Exports";
 import { PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
-import WaitForCondition from "./Utilities";
+import { WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 // tslint:disable-next-line:no-console

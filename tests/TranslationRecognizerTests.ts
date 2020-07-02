@@ -15,7 +15,7 @@ import {
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { Settings } from "./Settings";
 import { validateTelemetry } from "./TelemetryUtil";
-import { default as WaitForCondition } from "./Utilities";
+import { WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
