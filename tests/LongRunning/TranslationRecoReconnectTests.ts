@@ -9,7 +9,7 @@ import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
 
 import * as request from "request";
 
-import WaitForCondition from "../Utilities";
+import { WaitForCondition } from "../Utilities";
 
 let objsToClose: any[];
 
