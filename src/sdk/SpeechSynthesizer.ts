@@ -132,9 +132,20 @@ export class SpeechSynthesizer {
         return this.privProperties;
     }
 
+    /**
+     * Indicates if auto detect source language is enabled
+     * @member SpeechSynthesizer.prototype.properties
+     * @function
+     * @public
+     * @returns {boolean} if auto detect source language is enabled
+     */
+    public get autoDetectSourceLanguage(): boolean {
+        return this.properties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages) === AutoDetectSourceLanguagesOpenRangeOptionName;
+    }
+
     private privDisposed: boolean;
     private privConnectionFactory: ISynthesisConnectionFactory;
-    private  privSynthesizing: boolean;
+    private privSynthesizing: boolean;
 
     /**
      * SpeechSynthesizer constructor.
@@ -167,11 +178,10 @@ export class SpeechSynthesizer {
     public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): SpeechSynthesizer {
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         autoDetectSourceLanguageConfig.properties.mergeTo(speechConfigImpl.properties);
-        const synthesizer = new SpeechSynthesizer(speechConfig, audioConfig);
-        return synthesizer;
+        return new SpeechSynthesizer(speechConfig, audioConfig);
     }
 
-    public static buildSsml(text: string, properties: PropertyCollection): string {
+    public buildSsml(text: string): string {
         const languageToDefaultVoice: IStringDictionary<string>  = {
             ["ar-EG"]: "Microsoft Server Speech Text to Speech Voice (ar-EG, Hoda)",
             ["ar-SA"]: "Microsoft Server Speech Text to Speech Voice (ar-SA, Naayf)",
@@ -224,10 +234,10 @@ export class SpeechSynthesizer {
             ["zh-TW"]: "Microsoft Server Speech Text to Speech Voice (zh-TW, HanHanRUS)",
         };
 
-        let language = properties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage, "en-US");
-        let voice = properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, "");
-        let ssml: string = this.XMLEncode(text);
-        if (properties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages) === AutoDetectSourceLanguagesOpenRangeOptionName) {
+        let language = this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage, "en-US");
+        let voice = this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, "");
+        let ssml: string = SpeechSynthesizer.XMLEncode(text);
+        if (this.autoDetectSourceLanguage) {
             language = "en-US";
         } else {
             voice = voice || languageToDefaultVoice[language];

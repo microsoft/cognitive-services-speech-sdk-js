@@ -223,7 +223,7 @@ export class SynthesisAdapterBase implements IDisposable {
         if (isSSML) {
             ssml = text;
         } else {
-            ssml = SpeechSynthesizer.buildSsml(text, this.privSynthesizerConfig.parameters);
+            ssml = this.privSpeechSynthesizer.buildSsml(text);
         }
 
         if (this.speakOverride !== undefined) {
