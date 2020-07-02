@@ -82,8 +82,16 @@ export class Connection {
      * Note: On return, the connection might not be ready yet. Please subscribe to the Connected event to
      * be notified when the connection is established.
      */
-    public openConnection(): void {
-        this.privInternalData.connect();
+    public openConnection(cb?: () => void, err?: (error: string) => void): void {
+        this.privInternalData.connect().then(() => {
+            if (!!cb) {
+                cb();
+            }
+        }, (error: string): void => {
+            if (!!err) {
+                err(error);
+            }
+        });
     }
 
     /**
@@ -92,11 +100,19 @@ export class Connection {
      *
      * If closeConnection() is called during recognition, recognition will fail and cancel with an error.
      */
-    public closeConnection(): void {
+    public closeConnection(cb?: () => void, err?: (error: string) => void): void {
         if (this.privInternalData instanceof SynthesisAdapterBase) {
             throw new Error("Disconnecting a synthesizer's connection is currently not supported");
         } else {
-            (this.privInternalData as ServiceRecognizerBase).disconnect();
+            (this.privInternalData as ServiceRecognizerBase).disconnect().then(() => {
+                if (!!cb) {
+                    cb();
+                }
+            }, (error: string): void => {
+                if (!!err) {
+                    err(error);
+                }
+            });
         }
     }
 

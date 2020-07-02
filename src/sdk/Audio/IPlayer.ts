@@ -21,7 +21,7 @@ export interface IPlayer {
      * @function
      * @public
      */
-    resume(): void;
+    resume(cb?: () => void, err?: (error: string) => void): void;
 
     /**
      * Defines event handler audio playback end event.

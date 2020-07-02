@@ -243,10 +243,18 @@ export class SpeechSynthesizer {
      * @function
      * @public
      */
-    public close(): void {
+    public close(cb?: () => void, err?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposed);
 
-        this.dispose(true);
+        this.dispose(true).then(() => {
+            if (!!cb) {
+                cb();
+            }
+        }, (error: string): void => {
+            if (!!err) {
+                err(error);
+            }
+        });
     }
 
     /**
@@ -267,14 +275,14 @@ export class SpeechSynthesizer {
      * @public
      * @param {boolean} disposing - Flag to request disposal.
      */
-    protected dispose(disposing: boolean): void {
+    protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposed) {
             return;
         }
 
         if (disposing) {
             if (this.privAdapter) {
-                this.privAdapter.dispose();
+                await this.privAdapter.dispose();
             }
         }
 
@@ -369,14 +377,14 @@ export class SpeechSynthesizer {
                     }
                 }
                 cb = undefined;
-                this.adapterSpeak();
+                this.adapterSpeak().catch();
             }, (e: string): void => {
                 if (!!err) {
                     err(e);
                 }
             }, audioDestination));
 
-            this.adapterSpeak();
+            this.adapterSpeak().catch();
 
         } catch (error) {
             if (!!err) {
@@ -389,7 +397,7 @@ export class SpeechSynthesizer {
             }
 
             // Destroy the synthesizer.
-            this.dispose(true);
+            this.dispose(true).catch();
         }
     }
 

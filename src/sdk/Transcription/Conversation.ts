@@ -386,8 +386,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
      */
     public endConversationAsync(cb?: Callback, err?: Callback): void {
         try {
-            this.close(true);
-            this.handleCallback(cb, err);
+            this.close(true).then(() => {
+                this.handleCallback(cb, err);
+            }, (error: string): void => {
+                this.handleError(error, err);
+            });
         } catch (error) {
             this.handleError(error, err);
         }
@@ -703,8 +706,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
         }
     }
 
-    private onDisconnected = (e: ConnectionEventArgs): void => {
-        this.close(false);
+    private onDisconnected = async (e: ConnectionEventArgs): Promise<void> => {
+        await this.close(false);
         try {
             if (!!this.privConversationTranslator.sessionStopped) {
                 this.privConversationTranslator.sessionStopped(this.privConversationTranslator, e);
@@ -714,8 +717,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
         }
     }
 
-    private onCanceled = (r: ConversationTranslatorRecognizer, e: ConversationTranslationCanceledEventArgs): void => {
-        this.close(false); // ?
+    private onCanceled = async (r: ConversationTranslatorRecognizer, e: ConversationTranslationCanceledEventArgs): Promise<void> => {
+        await this.close(false); // ?
         try {
             if (!!this.privConversationTranslator.canceled) {
                 this.privConversationTranslator.canceled(this.privConversationTranslator, e);
@@ -886,12 +889,12 @@ export class ConversationImpl extends Conversation implements IDisposable {
         }
     }
 
-    private close(dispose: boolean): void {
+    private async close(dispose: boolean): Promise<void> {
         try {
             this.privIsConnected = false;
             this.privConversationRecognizerConnection?.closeConnection();
             this.privConversationRecognizerConnection?.close();
-            this.privConversationRecognizer.close();
+            await this.privConversationRecognizer.close();
             this.privConversationRecognizerConnection = undefined;
             this.privConversationRecognizer = undefined;
             this.privConversationTranslator?.dispose();

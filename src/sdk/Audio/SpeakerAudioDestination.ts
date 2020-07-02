@@ -51,29 +51,58 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         return this.privId;
     }
 
-    public write(buffer: ArrayBuffer): void {
+    public write(buffer: ArrayBuffer, cb?: () => void, err?: (error: string) => void): void {
         if (this.privAudioBuffer !== undefined) {
             this.privAudioBuffer.push(buffer);
-            this.updateSourceBuffer();
+            this.updateSourceBuffer().then(() => {
+                if (!!cb) {
+                    cb();
+                }
+            }, (error: string): void => {
+                if (!!err) {
+                    err(error);
+                }
+            });
         } else if (this.privAudioOutputStream !== undefined) {
             this.privAudioOutputStream.write(buffer);
             this.privBytesReceived += buffer.byteLength;
         }
     }
 
-    public close(): void {
+    public close(cb?: () => void, err?: (error: string) => void): void {
         this.privIsClosed = true;
         if (this.privSourceBuffer !== undefined) {
-            this.handleSourceBufferUpdateEnd();
+            this.handleSourceBufferUpdateEnd().then(() => {
+                if (!!cb) {
+                    cb();
+                }
+            }, (error: string): void => {
+                if (!!err) {
+                    err(error);
+                }
+            });
         } else if (this.privAudioOutputStream !== undefined) {
             let receivedAudio = new ArrayBuffer(this.privBytesReceived);
-            this.privAudioOutputStream.read(receivedAudio);
-            if (this.privFormat.hasHeader) {
-                receivedAudio = SynthesisAdapterBase.addHeader(receivedAudio, this.privFormat);
-            }
-            const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.formatTag] });
-            this.privAudio.src = window.URL.createObjectURL(audioBlob);
-            this.notifyPlayback();
+            this.privAudioOutputStream.read(receivedAudio).then((_: number): void => {
+                if (this.privFormat.hasHeader) {
+                    receivedAudio = SynthesisAdapterBase.addHeader(receivedAudio, this.privFormat);
+                }
+                const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.formatTag] });
+                this.privAudio.src = window.URL.createObjectURL(audioBlob);
+                this.notifyPlayback().then(() => {
+                    if (!!cb) {
+                        cb();
+                    }
+                }, (error: string): void => {
+                    if (!!err) {
+                        err(error);
+                    }
+                });
+            }, (error: string): void => {
+                if (!!err) {
+                    err(error);
+                }
+            });
         }
     }
 
@@ -86,7 +115,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 console.warn(
                     `Unknown mimeType for format ${AudioFormatTag[this.privFormat.formatTag]}.`);
 
-            } else if (typeof(MediaSource) !== "undefined" && MediaSource.isTypeSupported(mimeType)) {
+            } else if (typeof (MediaSource) !== "undefined" && MediaSource.isTypeSupported(mimeType)) {
                 this.privAudio = new Audio();
                 this.privAudioBuffer = [];
                 this.privMediaSource = new MediaSource();
@@ -97,16 +126,16 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                     this.privMediaSource.duration = MediaDurationPlaceholderSeconds;
                     this.privSourceBuffer = this.privMediaSource.addSourceBuffer(mimeType);
                     this.privSourceBuffer.onupdate = (_: Event) => {
-                        this.updateSourceBuffer();
+                        this.updateSourceBuffer().catch();
                     };
                     this.privSourceBuffer.onupdateend = (_: Event) => {
-                        this.handleSourceBufferUpdateEnd();
+                        this.handleSourceBufferUpdateEnd().catch();
                     };
                     this.privSourceBuffer.onupdatestart = (_: Event) => {
                         this.privAppendingToBuffer = false;
                     };
                 };
-                this.updateSourceBuffer();
+                this.updateSourceBuffer().catch();
             } else {
                 // tslint:disable-next-line:no-console
                 console.warn(
@@ -136,9 +165,17 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         }
     }
 
-    public resume(): void {
+    public resume(cb?: () => void, err?: (error: string) => void): void {
         if (this.privIsPaused && this.privAudio !== undefined) {
-            this.privAudio.play();
+            this.privAudio.play().then(() => {
+                if (!!cb) {
+                    cb();
+                }
+            }, (error: string): void => {
+                if (!!err) {
+                    err(error);
+                }
+            });
             this.privIsPaused = false;
         }
     }
@@ -149,7 +186,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         return this.privAudio;
     }
 
-    private updateSourceBuffer(): void {
+    private async updateSourceBuffer(): Promise<void> {
         if (this.privAudioBuffer !== undefined && (this.privAudioBuffer.length > 0) && this.sourceBufferAvailable()) {
             this.privAppendingToBuffer = true;
             const binary = this.privAudioBuffer.shift();
@@ -162,20 +199,20 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                     "buffer filled, pausing addition of binaries until space is made");
                 return;
             }
-            this.notifyPlayback();
+            await this.notifyPlayback();
         } else if (this.canEndStream()) {
-            this.handleSourceBufferUpdateEnd();
+            await this.handleSourceBufferUpdateEnd();
         }
     }
 
-    private handleSourceBufferUpdateEnd(): void {
+    private async handleSourceBufferUpdateEnd(): Promise<void> {
         if (this.canEndStream() && this.sourceBufferAvailable()) {
             this.privMediaSource.endOfStream();
-            this.notifyPlayback();
+            await this.notifyPlayback();
         }
     }
 
-    private notifyPlayback(): void {
+    private async notifyPlayback(): Promise<void> {
         if (!this.privPlaybackStarted && this.privAudio !== undefined) {
             this.privAudio.onended = (): void => {
                 if (!!this.onAudioEnd) {
@@ -183,7 +220,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 }
             };
             if (!this.privIsPaused) {
-                this.privAudio.play();
+                await this.privAudio.play();
             }
             this.privPlaybackStarted = true;
         }

@@ -9,7 +9,7 @@ import {
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
-import {SynthesisAdapterBase} from "./SynthesisAdapterBase";
+import { SynthesisAdapterBase } from "./SynthesisAdapterBase";
 import {
     ConnectingToSynthesisServiceEvent,
     SpeechSynthesisEvent,
@@ -74,31 +74,6 @@ export class SynthesisTurn {
         return this.privBytesReceived;
     }
 
-    public get allReceivedAudio(): ArrayBuffer {
-        if (!!this.privReceivedAudio) {
-            return this.privReceivedAudio;
-        }
-        if (!this.privIsSynthesisEnded) {
-            return null;
-        }
-        this.readAllAudioFromStream();
-        return this.allReceivedAudio;
-    }
-
-    public get allReceivedAudioWithHeader(): ArrayBuffer {
-        if (!!this.privReceivedAudioWithHeader) {
-            return this.privReceivedAudioWithHeader;
-        }
-        if (!this.privIsSynthesisEnded) {
-            return null;
-        }
-        if (this.audioOutputFormat.hasHeader) {
-            this.privReceivedAudioWithHeader = SynthesisAdapterBase.addHeader(this.allReceivedAudio, this.audioOutputFormat);
-            return this.allReceivedAudioWithHeader;
-        } else {
-            return this.allReceivedAudio;
-        }
-    }
     private privIsDisposed: boolean = false;
     private privAuthFetchEventId: string;
     private privIsSynthesizing: boolean = false;
@@ -123,6 +98,33 @@ export class SynthesisTurn {
 
         // We're not in a turn, so resolve.
         this.privTurnDeferral.resolve(true);
+    }
+
+    public async getAllReceivedAudio(): Promise<ArrayBuffer> {
+        if (!!this.privReceivedAudio) {
+            return Promise.resolve(this.privReceivedAudio);
+        }
+        if (!this.privIsSynthesisEnded) {
+            return null;
+        }
+        await this.readAllAudioFromStream();
+        return Promise.resolve(this.privReceivedAudio);
+    }
+
+    public async getAllReceivedAudioWithHeader(): Promise<ArrayBuffer> {
+        if (!!this.privReceivedAudioWithHeader) {
+            return this.privReceivedAudioWithHeader;
+        }
+        if (!this.privIsSynthesisEnded) {
+            return null;
+        }
+        if (this.audioOutputFormat.hasHeader) {
+            const audio: ArrayBuffer = await this.getAllReceivedAudio();
+            this.privReceivedAudioWithHeader = SynthesisAdapterBase.addHeader(audio, this.audioOutputFormat);
+            return this.privReceivedAudioWithHeader;
+        } else {
+            return this.getAllReceivedAudio();
+        }
     }
 
     public startNewSynthesis(requestId: string, rawText: string, isSSML: boolean, audioDestination?: IAudioDestination): void {
@@ -240,11 +242,11 @@ export class SynthesisTurn {
         }
     }
 
-    private readAllAudioFromStream(): void {
+    private async readAllAudioFromStream(): Promise<void> {
         if (this.privIsSynthesisEnded) {
             this.privReceivedAudio = new ArrayBuffer(this.bytesReceived);
             try {
-                this.privAudioOutputStream.read(this.privReceivedAudio);
+                await this.privAudioOutputStream.read(this.privReceivedAudio);
             } catch (e) {
                 this.privReceivedAudio = new ArrayBuffer(0);
             }

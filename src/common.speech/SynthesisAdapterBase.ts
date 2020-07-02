@@ -171,15 +171,14 @@ export class SynthesisAdapterBase implements IDisposable {
         return this.privIsDisposed;
     }
 
-    public dispose(reason?: string): void {
+    public async dispose(reason?: string): Promise<void> {
         this.privIsDisposed = true;
         if (this.privSessionAudioDestination !== undefined) {
             this.privSessionAudioDestination.close();
         }
         if (this.privConnectionConfigurationPromise) {
-            this.privConnectionConfigurationPromise.then((connection: IConnection) => {
-                connection.dispose(reason);
-            });
+            const connection: IConnection = await this.privConnectionConfigurationPromise;
+            await connection.dispose(reason);
         }
     }
 
@@ -376,10 +375,11 @@ export class SynthesisAdapterBase implements IDisposable {
                         this.privSynthesisTurn.onServiceTurnEndResponse();
                         let result: SpeechSynthesisResult;
                         try {
+                            const audioBuffer: ArrayBuffer = await this.privSynthesisTurn.getAllReceivedAudioWithHeader();
                             result = new SpeechSynthesisResult(
                                 this.privSynthesisTurn.requestId,
                                 ResultReason.SynthesizingAudioCompleted,
-                                this.privSynthesisTurn.allReceivedAudioWithHeader
+                                audioBuffer
                             );
                             if (!!this.privSuccessCallback) {
                                 this.privSuccessCallback(result);

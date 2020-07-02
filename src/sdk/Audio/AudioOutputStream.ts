@@ -9,7 +9,7 @@ import {
     Stream,
     StreamReader,
 } from "../../common/Exports";
-import {Contracts} from "../Contracts";
+import { Contracts } from "../Contracts";
 import {
     AudioStreamFormat,
     PushAudioOutputStreamCallback
@@ -162,7 +162,7 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
      * @param {ArrayBuffer} dataBuffer - An ArrayBuffer to store the read data.
      * @returns {Promise<number>} - Audio buffer length has been read.
      */
-    public read(dataBuffer: ArrayBuffer): Promise<number> {
+    public async read(dataBuffer: ArrayBuffer): Promise<number> {
         const intView: Int8Array = new Int8Array(dataBuffer);
         let totalBytes: number = 0;
 
@@ -177,34 +177,25 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
             this.privLastChunkView = undefined;
         }
 
-        const deffer: Deferred<number> = new Deferred<number>();
         // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
-        const readUntilFilled: () => void = (): void => {
-            if (totalBytes < dataBuffer.byteLength && !this.streamReader.isClosed) {
-                this.streamReader.read()
-                    .then((chunk: IStreamChunk<ArrayBuffer>) => {
-                        if (chunk !== undefined && !chunk.isEnd) {
-                            let tmpBuffer: ArrayBuffer;
-                            if (chunk.buffer.byteLength > dataBuffer.byteLength - totalBytes) {
-                                tmpBuffer = chunk.buffer.slice(0, dataBuffer.byteLength - totalBytes);
-                                this.privLastChunkView = new Int8Array(chunk.buffer.slice(dataBuffer.byteLength - totalBytes));
-                            } else {
-                                tmpBuffer = chunk.buffer;
-                            }
-                            intView.set(new Int8Array(tmpBuffer), totalBytes);
-                            totalBytes += tmpBuffer.byteLength;
-                            readUntilFilled();
-                        } else {
-                            this.streamReader.close();
-                            deffer.resolve(totalBytes);
-                        }
-                    });
+
+        while (totalBytes < dataBuffer.byteLength && !this.streamReader.isClosed) {
+            const chunk: IStreamChunk<ArrayBuffer> = await this.streamReader.read();
+            if (chunk !== undefined && !chunk.isEnd) {
+                let tmpBuffer: ArrayBuffer;
+                if (chunk.buffer.byteLength > dataBuffer.byteLength - totalBytes) {
+                    tmpBuffer = chunk.buffer.slice(0, dataBuffer.byteLength - totalBytes);
+                    this.privLastChunkView = new Int8Array(chunk.buffer.slice(dataBuffer.byteLength - totalBytes));
+                } else {
+                    tmpBuffer = chunk.buffer;
+                }
+                intView.set(new Int8Array(tmpBuffer), totalBytes);
+                totalBytes += tmpBuffer.byteLength;
             } else {
-                deffer.resolve(totalBytes);
+                await this.streamReader.close();
             }
-        };
-        readUntilFilled();
-        return deffer.promise;
+        }
+        return totalBytes;
     }
 
     /**
@@ -294,7 +285,7 @@ export class PushAudioOutputStreamImpl extends PushAudioOutputStream implements 
     }
 
     // tslint:disable-next-line:no-empty
-    public set format(format: AudioStreamFormat) {}
+    public set format(format: AudioStreamFormat) { }
 
     public write(buffer: ArrayBuffer): void {
         if (!!this.privCallback.write) {
