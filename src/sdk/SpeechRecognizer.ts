@@ -8,10 +8,11 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechConnectionFactory,
     SpeechServiceConfig,
     SpeechServiceRecognizer,
 } from "../common.speech/Exports";
-import { SpeechConnectionFactory } from "../common.speech/SpeechConnectionFactory";
+import { marshalProimseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -181,37 +182,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public recognizeOnceAsync(cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
-        this.recognizeOnceAsyncImpl(RecognitionMode.Interactive).then((val: SpeechRecognitionResult): void => {
-            try {
-                if (!!cb) {
-                    cb(val);
-                }
-            } catch (error) {
-                if (!!err) {
-                    try {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                        /* tslint:disable:no-empty */
-                    } catch (error) { }
-                }
-            }
-        }, (error: any): void => {
-            if (!!err) {
-                try {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                    /* tslint:disable:no-empty */
-                } catch (error) { }
-            }
-        });
+        marshalProimseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Interactive), cb, err);
     }
 
     /**
@@ -224,37 +195,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation).then((): void => {
-            try {
-                if (!!cb) {
-                    cb();
-                }
-            } catch (error) {
-                if (!!err) {
-                    try {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                        /* tslint:disable:no-empty */
-                    } catch (error) { }
-                }
-            }
-        }, (error: any): void => {
-            if (!!err) {
-                try {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                    /* tslint:disable:no-empty */
-                } catch (error) { }
-            }
-        });
+        marshalProimseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -266,37 +207,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.stopContinuousRecognitionAsyncImpl().then((): void => {
-            try {
-                if (!!cb) {
-                    cb();
-                }
-            } catch (error) {
-                if (!!err) {
-                    try {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                        /* tslint:disable:no-empty */
-                    } catch (error) { }
-                }
-            }
-        }, (error: any): void => {
-            if (!!err) {
-                try {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                    /* tslint:disable:no-empty */
-                } catch (error) { }
-            }
-        });
+        marshalProimseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
     }
 
     /**
@@ -345,15 +256,7 @@ export class SpeechRecognizer extends Recognizer {
      */
     public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
-        this.dispose(true).then(() => {
-            if (!!cb) {
-                cb();
-            }
-        }, (error: string) => {
-            if (!!errorCb) {
-                errorCb(error);
-            }
-        });
+        marshalProimseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
     /**

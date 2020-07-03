@@ -11,6 +11,7 @@ import {
     TranslationConnectionFactory,
     TranslationServiceRecognizer,
 } from "../common.speech/Exports";
+import { marshalProimseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -181,15 +182,7 @@ export class TranslationRecognizer extends Recognizer {
      */
     public recognizeOnceAsync(cb?: (e: TranslationRecognitionResult) => void, err?: (e: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-        this.recognizeOnceAsyncImpl(RecognitionMode.Conversation).then((val: TranslationRecognitionResult): void => {
-            if (!!cb) {
-                cb(val);
-            }
-        }, (error: string): void => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        marshalProimseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -202,37 +195,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation).then((): void => {
-            try {
-                if (!!cb) {
-                    cb();
-                }
-            } catch (error) {
-                if (!!err) {
-                    try {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                        /* tslint:disable:no-empty */
-                    } catch (error) { }
-                }
-            }
-        }, (error: any): void => {
-            if (!!err) {
-                try {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                    /* tslint:disable:no-empty */
-                } catch (error) { }
-            }
-        });
+        marshalProimseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -244,15 +207,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.stopContinuousRecognitionAsyncImpl().then((): void => {
-            if (!!cb) {
-                cb();
-            }
-        }, (error: string): void => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        marshalProimseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
     }
 
     /**
@@ -263,16 +218,7 @@ export class TranslationRecognizer extends Recognizer {
      */
     public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-
-        this.dispose(true).then(() => {
-            if (!!cb) {
-                try { cb(); } catch (error) { }
-            }
-        }, (error: string) => {
-            if (!!errorCb) {
-                try { errorCb(error); } catch (error2) { }
-            }
-        });
+        marshalProimseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
     protected async dispose(disposing: boolean): Promise<void> {

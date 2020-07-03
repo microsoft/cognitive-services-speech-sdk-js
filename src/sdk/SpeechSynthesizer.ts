@@ -16,7 +16,9 @@ import {
 } from "../common.speech/Exports";
 import {
     createNoDashGuid,
-    IAudioDestination, IStringDictionary,
+    IAudioDestination,
+    IStringDictionary,
+    marshalProimseToCallbacks,
     Queue
 } from "../common/Exports";
 import { AudioOutputConfigImpl } from "./Audio/AudioConfig";
@@ -246,15 +248,7 @@ export class SpeechSynthesizer {
     public close(cb?: () => void, err?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposed);
 
-        this.dispose(true).then(() => {
-            if (!!cb) {
-                cb();
-            }
-        }, (error: string): void => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        marshalProimseToCallbacks(this.dispose(true), cb, err);
     }
 
     /**

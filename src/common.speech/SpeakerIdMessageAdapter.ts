@@ -97,9 +97,7 @@ export class SpeakerIdMessageAdapter {
             const result: Blob | Buffer = await audioSource.blob;
             return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, null, result);
         } catch (e) {
-            const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
-            response.resolve({ data: e } as IRestResponse);
-            return response.promise;
+            return Promise.resolve({ data: e } as IRestResponse);
         }
     }
 
@@ -120,9 +118,7 @@ export class SpeakerIdMessageAdapter {
             const result: Blob | Buffer = await audioSource.blob;
             return this.privRestAdapter.request(RestRequestType.File, uri, { profileIds: model.voiceProfileIds, ignoreMinLength: "true" }, null, result);
         } catch (e) {
-            const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
-            response.resolve({ data: e } as IRestResponse);
-            return response.promise;
+            return Promise.resolve({ data: e } as IRestResponse);
         }
     }
 

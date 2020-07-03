@@ -203,7 +203,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(botConfig);
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(botConfig);
-        objsToClose.push(connector);
 
         // the service should return an error if an invalid botId was specified, even though the subscription is valid
         connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {

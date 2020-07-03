@@ -18,7 +18,11 @@ import {
     ParticipantEventArgs,
     ParticipantsListEventArgs
 } from "../../common.speech/Exports";
-import { IDisposable, IErrorMessages } from "../../common/Exports";
+import {
+    IDisposable,
+    IErrorMessages,
+    marshalProimseToCallbacks
+} from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
     Connection,
@@ -385,15 +389,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param err
      */
     public endConversationAsync(cb?: Callback, err?: Callback): void {
-        try {
-            this.close(true).then(() => {
-                this.handleCallback(cb, err);
-            }, (error: string): void => {
-                this.handleError(error, err);
-            });
-        } catch (error) {
-            this.handleError(error, err);
-        }
+        marshalProimseToCallbacks(this.close(true), cb, err);
     }
 
     /**

@@ -12,6 +12,7 @@ import {
     ServiceRecognizerBase,
     SpeechServiceConfig,
 } from "../common.speech/Exports";
+import { marshalProimseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -157,15 +158,7 @@ export class IntentRecognizer extends Recognizer {
             intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
         }
 
-        this.recognizeOnceAsyncImpl(RecognitionMode.Interactive).then((val: IntentRecognitionResult): void => {
-            if (!!cb) {
-                cb(val);
-            }
-        }, (error: string): void => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        marshalProimseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Interactive), cb, err);
     }
 
     /**
@@ -188,37 +181,7 @@ export class IntentRecognizer extends Recognizer {
             intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
         }
 
-        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation).then((): void => {
-            try {
-                if (!!cb) {
-                    cb();
-                }
-            } catch (error) {
-                if (!!err) {
-                    try {
-                        if (error instanceof Error) {
-                            const typedError: Error = error as Error;
-                            err(typedError.name + ": " + typedError.message);
-                        } else {
-                            err(error);
-                        }
-                        /* tslint:disable:no-empty */
-                    } catch (error) { }
-                }
-            }
-        }, (error: any): void => {
-            if (!!err) {
-                try {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                    /* tslint:disable:no-empty */
-                } catch (error) { }
-            }
-        });
+        marshalProimseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -230,15 +193,7 @@ export class IntentRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.stopContinuousRecognitionAsyncImpl().then((): void => {
-            if (!!cb) {
-                cb();
-            }
-        }, (error: string): void => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        marshalProimseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
     }
 
     /**
@@ -340,14 +295,10 @@ export class IntentRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public close(errorCb?: (error: string) => void): void {
-        Contracts.throwIfDisposed(this.privDisposedIntentRecognizer );
+    public close(cb?: () => void, errorCb?: (error: string) => void): void {
+        Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
 
-        this.dispose(true).catch((error: string) => {
-            if (!!errorCb) {
-                errorCb(error);
-            }
-        });
+        marshalProimseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {

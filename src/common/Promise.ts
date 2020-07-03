@@ -262,3 +262,40 @@ export class Sink<T> {
         this.privSuccessHandlers = [];
     }
 }
+
+export function marshalProimseToCallbacks<T>(
+    promise: Promise<T>,
+    cb?: (value: T) => void,
+    err?: (error: string) => void): void {
+    promise.then((val: T): void => {
+        try {
+            if (!!cb) {
+                cb(val);
+            }
+        } catch (error) {
+            if (!!err) {
+                try {
+                    if (error instanceof Error) {
+                        const typedError: Error = error as Error;
+                        err(typedError.name + ": " + typedError.message);
+                    } else {
+                        err(error);
+                    }
+                    /* tslint:disable:no-empty */
+                } catch (error) { }
+            }
+        }
+    }, (error: any): void => {
+        if (!!err) {
+            try {
+                if (error instanceof Error) {
+                    const typedError: Error = error as Error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error);
+                }
+                /* tslint:disable:no-empty */
+            } catch (error) { }
+        }
+    });
+}

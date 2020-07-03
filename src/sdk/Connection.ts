@@ -12,6 +12,7 @@ import {
     ConnectionMessageReceivedEvent,
     ConnectionMessageSentEvent,
     IDetachable,
+    marshalProimseToCallbacks,
     ServiceEvent,
 } from "../common/Exports";
 import {
@@ -83,15 +84,7 @@ export class Connection {
      * be notified when the connection is established.
      */
     public openConnection(cb?: () => void, err?: (error: string) => void): void {
-        this.privInternalData.connect().then(() => {
-            if (!!cb) {
-                cb();
-            }
-        }, (error: string): void => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        marshalProimseToCallbacks( this.privInternalData.connect(), cb, err);
     }
 
     /**
@@ -104,15 +97,7 @@ export class Connection {
         if (this.privInternalData instanceof SynthesisAdapterBase) {
             throw new Error("Disconnecting a synthesizer's connection is currently not supported");
         } else {
-            (this.privInternalData as ServiceRecognizerBase).disconnect().then(() => {
-                if (!!cb) {
-                    cb();
-                }
-            }, (error: string): void => {
-                if (!!err) {
-                    err(error);
-                }
-            });
+           marshalProimseToCallbacks((this.privInternalData as ServiceRecognizerBase).disconnect(), cb, err);
         }
     }
 

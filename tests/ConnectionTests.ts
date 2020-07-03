@@ -417,7 +417,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
 
 }, 10000);
 
-test("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCallback) => {
+test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Switch RecoModes during a connection (cont->single)");
 
