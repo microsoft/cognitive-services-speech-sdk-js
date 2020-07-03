@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
-import { SpeechSynthesizer } from "../sdk/Exports";
+import { PropertyId, SpeechSynthesizer } from "../sdk/Exports";
 
 /**
  * Represents the JSON used in the synthesis.context message sent to the speech service.
@@ -20,7 +20,7 @@ export class SynthesisContext {
     /**
      * Adds a section to the synthesis.context object.
      * @param sectionName Name of the section to add.
-     * @param value JSON serializeable object that represents the value.
+     * @param value JSON serializable object that represents the value.
      */
     public setSection(sectionName: string, value: any): void {
         this.privContext[sectionName] = value;
@@ -50,6 +50,9 @@ export class SynthesisContext {
                     wordBoundaryEnabled: (!!this.privSpeechSynthesizer.wordBoundary),
                 },
                 outputFormat: this.privAudioOutputFormat.requestAudioFormatString,
+            },
+            language: {
+                autoDetection: this.privSpeechSynthesizer.autoDetectSourceLanguage
             }
         };
     }
@@ -62,5 +65,8 @@ interface ISynthesisSection {
             wordBoundaryEnabled: boolean,
             sentenceBoundaryEnabled: boolean,
         }
+    };
+    language: {
+        autoDetection: boolean
     };
 }

@@ -483,6 +483,17 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.BadRequestParameters);
             expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
             expect(cancellationDetail.errorDetails).toEqual(result.errorDetails);
+        }, (e: string): void => {
+            done.fail(e);
+        });
+
+        s.speakTextAsync("today is a nice day.", (result: sdk.SpeechSynthesisResult): void => {
+            CheckSynthesisResult(result, sdk.ResultReason.Canceled);
+            expect(result.errorDetails).toContain("voice");
+            const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
+            expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.BadRequestParameters);
+            expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
+            expect(cancellationDetail.errorDetails).toEqual(result.errorDetails);
             done();
         }, (e: string): void => {
             done.fail(e);
@@ -610,6 +621,55 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             }, (e: string): void => {
                 done.fail(e);
             });
+        });
+    });
+
+    test("test Speech Synthesiser: Language Auto Detection", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: test Speech Synthesiser, Language Auto Detection");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+        const autoDetectSourceLanguageConfig: sdk.AutoDetectSourceLanguageConfig = sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
+        objsToClose.push(autoDetectSourceLanguageConfig);
+
+        const s: sdk.SpeechSynthesizer = sdk.SpeechSynthesizer.FromConfig(speechConfig, autoDetectSourceLanguageConfig, null);
+        objsToClose.push(s);
+        expect(s).not.toBeUndefined();
+
+        const con: sdk.Connection = sdk.Connection.fromSynthesizer(s);
+
+        con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
+            if (args.message.path === "synthesis.context" && args.message.isTextMessage) {
+                try {
+                    expect(args.message.TextMessage).toContain(`\"autoDetection\":true`);
+                } catch (error) {
+                    done.fail(error);
+                }
+            }
+        };
+
+        s.SynthesisCanceled = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
+            done.fail();
+        };
+
+        // we will get very short audio as the en-US voices are not mix-lingual.
+        s.speakTextAsync("你好世界。", (result: sdk.SpeechSynthesisResult): void => {
+            // tslint:disable-next-line:no-console
+            console.info("speaking finished, turn 1");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            expect(result.audioData.byteLength).toBeGreaterThan(64 << 7); // longer than 1s
+        }, (e: string): void => {
+            done.fail(e);
+        });
+
+        s.speakTextAsync("今天天气很好。", (result: sdk.SpeechSynthesisResult): void => {
+            // tslint:disable-next-line:no-console
+            console.info("speaking finished, turn 2");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            expect(result.audioData.byteLength).toBeGreaterThan(64 << 7); // longer than 1s
+            done();
+        }, (e: string): void => {
+            done.fail(e);
         });
     });
 });

@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PathLike } from "fs";
+import {PathLike} from "fs";
 import {
+    AutoDetectSourceLanguagesOpenRangeOptionName,
     CognitiveSubscriptionKeyAuthentication,
     CognitiveTokenAuthentication,
     Context,
@@ -24,21 +25,26 @@ import {
 import { AudioOutputConfigImpl } from "./Audio/AudioConfig";
 import { AudioFileWriter } from "./Audio/AudioFileWriter";
 import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat";
-import { PullAudioOutputStreamImpl, PushAudioOutputStreamImpl } from "./Audio/AudioOutputStream";
+import {
+    PullAudioOutputStreamImpl,
+    PushAudioOutputStreamImpl
+} from "./Audio/AudioOutputStream";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
     AudioOutputStream,
+    AutoDetectSourceLanguageConfig,
     PropertyCollection,
     PropertyId,
     PullAudioOutputStream,
     PushAudioOutputStreamCallback,
+    SpeechConfig,
     SpeechSynthesisEventArgs,
     SpeechSynthesisOutputFormat,
     SpeechSynthesisResult,
     SpeechSynthesisWordBoundaryEventArgs,
 } from "./Exports";
-import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
+import { SpeechConfigImpl } from "./SpeechConfig";
 
 /**
  * Defines the class SpeechSynthesizer for text to speech.
@@ -125,6 +131,17 @@ export class SpeechSynthesizer {
         return this.privProperties;
     }
 
+    /**
+     * Indicates if auto detect source language is enabled
+     * @member SpeechSynthesizer.prototype.properties
+     * @function
+     * @public
+     * @returns {boolean} if auto detect source language is enabled
+     */
+    public get autoDetectSourceLanguage(): boolean {
+        return this.properties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages) === AutoDetectSourceLanguagesOpenRangeOptionName;
+    }
+
     private privDisposed: boolean;
     private privConnectionFactory: ISynthesisConnectionFactory;
     private privSynthesizing: boolean;
@@ -150,8 +167,21 @@ export class SpeechSynthesizer {
         this.implCommonSynthesizeSetup();
     }
 
-    public static buildSsml(text: string, properties: PropertyCollection): string {
-        const languageToDefaultVoice: IStringDictionary<string> = {
+    /**
+     * SpeechSynthesizer constructor.
+     * @constructor
+     * @param {SpeechConfig} speechConfig - an set of initial properties for this synthesizer
+     * @param {AutoDetectSourceLanguageConfig} autoDetectSourceLanguageConfig - An source language detection configuration associated with the synthesizer
+     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the synthesizer
+     */
+    public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): SpeechSynthesizer {
+        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
+        autoDetectSourceLanguageConfig.properties.mergeTo(speechConfigImpl.properties);
+        return new SpeechSynthesizer(speechConfig, audioConfig);
+    }
+
+    public buildSsml(text: string): string {
+        const languageToDefaultVoice: IStringDictionary<string>  = {
             ["ar-EG"]: "Microsoft Server Speech Text to Speech Voice (ar-EG, Hoda)",
             ["ar-SA"]: "Microsoft Server Speech Text to Speech Voice (ar-SA, Naayf)",
             ["bg-BG"]: "Microsoft Server Speech Text to Speech Voice (bg-BG, Ivan)",
@@ -203,10 +233,19 @@ export class SpeechSynthesizer {
             ["zh-TW"]: "Microsoft Server Speech Text to Speech Voice (zh-TW, HanHanRUS)",
         };
 
-        const language = properties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage, "en-US");
-        const voice = properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, languageToDefaultVoice[language]);
-
-        return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xmlns:emo='http://www.w3.org/2009/10/emotionml' xml:lang='${language}'><voice name='${voice}'>${this.XMLEncode(text)}</voice></speak>`;
+        let language = this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthLanguage, "en-US");
+        let voice = this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthVoice, "");
+        let ssml: string = SpeechSynthesizer.XMLEncode(text);
+        if (this.autoDetectSourceLanguage) {
+            language = "en-US";
+        } else {
+            voice = voice || languageToDefaultVoice[language];
+        }
+        if (voice) {
+            ssml = `<voice name='${voice}'>${ssml}</voice>`;
+        }
+        ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xmlns:emo='http://www.w3.org/2009/10/emotionml' xml:lang='${language}'>${ssml}</speak>`;
+        return ssml;
     }
 
     /**
