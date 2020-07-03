@@ -140,3 +140,13 @@ export class OCSPResponseRetrievedEvent extends OCSPEvent {
         super("OCSPResponseRetrievedEvent", EventType.Debug, serialNumber);
     }
 }
+
+// tslint:disable-next-line:max-classes-per-file
+export class OCSPCacheUpdateErrorEvent extends OCSPEvent {
+    private privError: string;
+
+    constructor(serialNumber: string, error: string) {
+        super("OCSPCacheUpdateErrorEvent", EventType.Debug, serialNumber);
+        this.privError = error;
+    }
+}

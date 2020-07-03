@@ -33,6 +33,7 @@ import Agent from "agent-base";
 import Cache from "async-disk-cache";
 import HttpsProxyAgent from "https-proxy-agent";
 import * as net from "net";
+import { OCSPCacheUpdateErrorEvent } from "../common/OCSPEvents";
 
 export class CertCheckAgent {
 
@@ -223,7 +224,10 @@ export class CertCheckAgent {
 
                 if ((cachedNextTime - (Date.now() + this.testTimeOffset)) < minUpdate) {
                     this.onEvent(new OCSPCacheEntryNeedsRefreshEvent(signature, cachedStartTime, cachedNextTime));
-                    this.UpdateCache(ocspRequest, proxyInfo).catch();
+                    this.UpdateCache(ocspRequest, proxyInfo).catch((error: string) => {
+                        // Well, not much we can do here.
+                        this.onEvent(new OCSPCacheUpdateErrorEvent(signature, error.toString()));
+                    });
                 } else {
                     this.onEvent(new OCSPCacheHitEvent(signature, cachedStartTime, cachedNextTime));
                 }
