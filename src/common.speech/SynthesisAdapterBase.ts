@@ -223,7 +223,7 @@ export class SynthesisAdapterBase implements IDisposable {
         if (isSSML) {
             ssml = text;
         } else {
-            ssml = SpeechSynthesizer.buildSsml(text, this.privSynthesizerConfig.parameters);
+            ssml = this.privSpeechSynthesizer.buildSsml(text);
         }
 
         if (this.speakOverride !== undefined) {
@@ -296,7 +296,6 @@ export class SynthesisAdapterBase implements IDisposable {
         if (!!this.privSuccessCallback) {
             try {
                 this.privSuccessCallback(result);
-                this.privSuccessCallback = undefined;
                 /* tslint:disable:no-empty */
             } catch { }
         }

@@ -147,6 +147,7 @@ export class WebsocketMessageAdapter {
                 // this.onEvent(new ConnectionEstablishErrorEvent(this.connectionId, e.code, e.reason));
                 this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(e.code, e.reason + " " + this.privLastErrorReceived));
             } else {
+                this.privConnectionState = ConnectionState.Disconnected;
                 this.onEvent(new ConnectionClosedEvent(this.privConnectionId, e.code, e.reason));
             }
 
