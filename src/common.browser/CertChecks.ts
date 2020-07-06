@@ -263,9 +263,9 @@ export class CertCheckAgent {
                         }, (error: Error) => {
                             reject(error);
                         });
+                    } else {
+                        reject(error);
                     }
-
-                    reject(error);
                 } else {
                     if (!cacheValue) {
                         CertCheckAgent.StoreCacheEntry(ocspRequest.id.toString("hex"), ocspResponse);
