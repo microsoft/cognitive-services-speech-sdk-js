@@ -11,7 +11,7 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import * as fs from "fs";
 
 import { setTimeout } from "timers";
-import WaitForCondition from "./Utilities";
+import { WaitForCondition } from "./Utilities";
 
 let objsToClose: any[];
 

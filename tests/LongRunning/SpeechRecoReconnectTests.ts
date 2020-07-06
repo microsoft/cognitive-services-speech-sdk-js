@@ -7,7 +7,7 @@ import { Events, EventType, PlatformEvent } from "../../src/common/Exports";
 import { Settings } from "../Settings";
 import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
 
-import WaitForCondition from "../Utilities";
+import { WaitForCondition } from "../Utilities";
 
 let objsToClose: any[];
 

@@ -149,7 +149,7 @@ export abstract class SpeechConfig {
      * Only relevant in Node.js environments.
      * Added in version 1.4.0.
      * @param proxyHostName The host name of the proxy server, without the protocol scheme (http://)
-     * @param porxyPort The port number of the proxy server.
+     * @param proxyPort The port number of the proxy server.
      * @param proxyUserName The user name of the proxy server.
      * @param proxyPassword The password of the proxy server.
      */

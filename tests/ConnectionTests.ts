@@ -13,7 +13,7 @@ import {
 import {
     Settings
 } from "./Settings";
-import WaitForCondition from "./Utilities";
+import { WaitForCondition } from "./Utilities";
 import {
     WaveFileAudioInput
 } from "./WaveFileAudioInputStream";
