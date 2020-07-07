@@ -23,6 +23,7 @@ import {
     PromiseHelper,
     PromiseResult,
     ServiceEvent,
+    Timeout
 } from "../common/Exports";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 import {
@@ -74,6 +75,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privAgentConfig: AgentConfig;
     private privServiceHasSentMessage: boolean;
     private privActivityTemplate: string;
+    private privSetTimeout: (cb: () => void, delay: number) => number = setTimeout;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
@@ -118,6 +120,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privDynamicGrammar = new DynamicGrammarBuilder();
         this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
         this.privAgentConfig = new AgentConfig();
+        if (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {
+            this.privSetTimeout = Timeout.setTimeout;
+        }
     }
 
     public get audioSource(): IAudioSource {
@@ -689,7 +694,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                                 }
 
                                 // Are we ready to send, or need we delay more?
-                                setTimeout(() => {
+                                this.privSetTimeout(() => {
                                     if (payload !== null) {
                                         nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
                                     }
