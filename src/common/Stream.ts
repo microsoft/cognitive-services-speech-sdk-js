@@ -60,11 +60,15 @@ export class Stream<TBuffer> {
             });
             this.privIsEnded = true;
         }
-        this.privStreambuffer = null;
+        this.privStreambuffer = [];
     }
 
     public writeStreamChunk(streamChunk: IStreamChunk<TBuffer>): void {
         this.throwIfClosed();
+        const maxBufferLength = 1000;
+        if (this.privStreambuffer.length > maxBufferLength) {
+            this.privStreambuffer = this.privStreambuffer.slice(maxBufferLength / 2);
+        }
         this.privStreambuffer.push(streamChunk);
         for (const readerId in this.privReaderQueues) {
             if (!this.privReaderQueues[readerId].isDisposed()) {
