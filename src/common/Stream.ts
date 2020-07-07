@@ -60,6 +60,7 @@ export class Stream<TBuffer> {
             });
             this.privIsEnded = true;
         }
+        this.privStreambuffer = null;
     }
 
     public writeStreamChunk(streamChunk: IStreamChunk<TBuffer>): void {
