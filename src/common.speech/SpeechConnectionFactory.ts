@@ -65,6 +65,10 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
             queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
         }
 
+        if (config.autoDetectSourceLanguages !== undefined) {
+            queryParams[QueryParameterNames.EnableLanguageID] = "true";
+        }
+
         this.setCommonUrlParams(config, queryParams, endpoint);
 
         if (!endpoint) {

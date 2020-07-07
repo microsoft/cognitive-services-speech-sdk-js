@@ -99,6 +99,22 @@ export class OCSPCacheEntryNeedsRefreshEvent extends OCSPEvent {
 }
 
 // tslint:disable-next-line:max-classes-per-file
+export class OCSPCacheHitEvent extends OCSPEvent {
+    private privExpireTime: number;
+    private privStartTime: number;
+    private privExpireTimeString: string;
+    private privStartTimeString: string;
+
+    constructor(serialNumber: string, startTime: number, expireTime: number) {
+        super("OCSPCacheHitEvent", EventType.Debug, serialNumber);
+        this.privExpireTime = expireTime;
+        this.privExpireTimeString = new Date(expireTime).toLocaleDateString();
+        this.privStartTime = startTime;
+        this.privStartTimeString = new Date(startTime).toLocaleTimeString();
+    }
+}
+
+// tslint:disable-next-line:max-classes-per-file
 export class OCSPVerificationFailedEvent extends OCSPEvent {
     private privError: string;
 
@@ -122,5 +138,15 @@ export class OCSPCacheFetchErrorEvent extends OCSPEvent {
 export class OCSPResponseRetrievedEvent extends OCSPEvent {
     constructor(serialNumber: string) {
         super("OCSPResponseRetrievedEvent", EventType.Debug, serialNumber);
+    }
+}
+
+// tslint:disable-next-line:max-classes-per-file
+export class OCSPCacheUpdateErrorEvent extends OCSPEvent {
+    private privError: string;
+
+    constructor(serialNumber: string, error: string) {
+        super("OCSPCacheUpdateErrorEvent", EventType.Debug, serialNumber);
+        this.privError = error;
     }
 }
