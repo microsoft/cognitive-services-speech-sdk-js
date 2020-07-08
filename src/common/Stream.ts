@@ -48,6 +48,7 @@ export class Stream<TBuffer> {
             readerQueue,
             () => {
                 delete this.privReaderQueues[readerId];
+                this.privStreambuffer = [];
             });
     }
 
@@ -60,7 +61,6 @@ export class Stream<TBuffer> {
             });
             this.privIsEnded = true;
         }
-        this.privStreambuffer = [];
     }
 
     public writeStreamChunk(streamChunk: IStreamChunk<TBuffer>): void {
