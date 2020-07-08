@@ -28,4 +28,5 @@ export * from "./Stream";
 export { TranslationStatus } from "../common.speech/TranslationStatus";
 export * from "./ChunkedArrayBufferStream";
 export * from "./IAudioDestination";
+export * from "./Timeout";
 export * from "./OCSPEvents";

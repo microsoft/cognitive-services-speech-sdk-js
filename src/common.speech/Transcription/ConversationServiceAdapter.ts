@@ -133,7 +133,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         connectionMessage: ConnectionMessage,
         successCallback?: (e: any) => void,
         errorCallBack?: (e: string) => void): Promise<boolean> {
-        return false;
+        return true;
     }
 
     // Cancels recognition.
@@ -542,6 +542,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         this.privConnectionConfigPromise = this.connectImpl().then((connection: IConnection): any => {
             return connection;
         });
+
         return this.privConnectionConfigPromise;
     }
 
