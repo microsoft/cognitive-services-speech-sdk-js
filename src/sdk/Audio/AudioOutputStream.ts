@@ -9,7 +9,6 @@ import {
     Promise,
     PromiseHelper,
     Stream,
-    StreamReader,
 } from "../../common/Exports";
 import {Contracts} from "../Contracts";
 import {
@@ -104,7 +103,6 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
     private privFormat: AudioOutputFormatImpl;
     private privId: string;
     private privStream: Stream<ArrayBuffer>;
-    private streamReader: StreamReader<ArrayBuffer>;
     private privLastChunkView: Int8Array;
 
     /**
@@ -115,7 +113,6 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
         super();
         this.privId = createNoDashGuid();
         this.privStream = new Stream<ArrayBuffer>();
-        this.streamReader = this.privStream.getReader();
     }
 
     /**
@@ -182,8 +179,8 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
         const deffer: Deferred<number> = new Deferred<number>();
         // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
         const readUntilFilled: () => void = (): void => {
-            if (totalBytes < dataBuffer.byteLength && !this.streamReader.isClosed) {
-                this.streamReader.read()
+            if (totalBytes < dataBuffer.byteLength && !this.privStream.isReadEnded) {
+                this.privStream.read()
                     .onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
                         if (chunk !== undefined && !chunk.isEnd) {
                             let tmpBuffer: ArrayBuffer;
@@ -197,7 +194,7 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
                             totalBytes += tmpBuffer.byteLength;
                             readUntilFilled();
                         } else {
-                            this.streamReader.close();
+                            this.privStream.readEnded();
                             deffer.resolve(totalBytes);
                         }
                     });

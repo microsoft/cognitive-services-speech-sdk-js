@@ -24,7 +24,6 @@ import {
     PromiseHelper,
     PromiseResult,
     Stream,
-    StreamReader,
 } from "../../common/Exports";
 import { createNoDashGuid } from "../../common/Guid";
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
@@ -221,18 +220,18 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
         return this.turnOn()
-            .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
+            .onSuccessContinueWith<Stream<ArrayBuffer>>((_: boolean) => {
                 // For now we support a single parallel reader of the pushed stream.
                 // So we can simiply hand the stream to the recognizer and let it recognize.
 
-                return this.privStream.getReader();
+                return this.privStream;
             })
-            .onSuccessContinueWith((streamReader: StreamReader<ArrayBuffer>) => {
+            .onSuccessContinueWith((stream: Stream<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
 
                 return {
                     detach: () => {
-                        streamReader.close();
+                        stream.readEnded();
                         this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                         this.turnOff();
                     },
@@ -240,7 +239,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
                         return audioNodeId;
                     },
                     read: () => {
-                        return streamReader.read();
+                        return stream.read();
                     },
                 };
             });
