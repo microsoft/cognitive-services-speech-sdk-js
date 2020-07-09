@@ -15,15 +15,12 @@ export interface IStreamChunk<TBuffer> {
 
 export class Stream<TBuffer> {
     private privId: string;
-    private privReaderIdCounter: number = 1;
-    private privStreambuffer: Array<IStreamChunk<TBuffer>>;
     private privIsEnded: boolean = false;
-    private privReaderQueues: IStringDictionary<Queue<IStreamChunk<TBuffer>>>;
+    private privReaderQueue: Queue<IStreamChunk<TBuffer>>;
 
     public constructor(streamId?: string) {
         this.privId = streamId ? streamId : createNoDashGuid();
-        this.privStreambuffer = [];
-        this.privReaderQueues = {};
+        this.privReaderQueue = new Queue<IStreamChunk<TBuffer>>();
     }
 
     public get isClosed(): boolean {
@@ -35,19 +32,11 @@ export class Stream<TBuffer> {
     }
 
     public getReader = (): StreamReader<TBuffer> => {
-        const readerId = this.privReaderIdCounter;
-        this.privReaderIdCounter++;
-        const readerQueue = new Queue<IStreamChunk<TBuffer>>();
-        const currentLength = this.privStreambuffer.length;
-        this.privReaderQueues[readerId] = readerQueue;
-        for (let i = 0; i < currentLength; i++) {
-            readerQueue.enqueue(this.privStreambuffer[i]);
-        }
         return new StreamReader(
             this.privId,
-            readerQueue,
+            this.privReaderQueue,
             () => {
-                delete this.privReaderQueues[readerId];
+                this.privReaderQueue = new Queue<IStreamChunk<TBuffer>>();
             });
     }
 
@@ -64,14 +53,11 @@ export class Stream<TBuffer> {
 
     public writeStreamChunk(streamChunk: IStreamChunk<TBuffer>): void {
         this.throwIfClosed();
-        this.privStreambuffer.push(streamChunk);
-        for (const readerId in this.privReaderQueues) {
-            if (!this.privReaderQueues[readerId].isDisposed()) {
-                try {
-                    this.privReaderQueues[readerId].enqueue(streamChunk);
-                } catch (e) {
-                    // Do nothing
-                }
+        if (!this.privReaderQueue.isDisposed()) {
+            try {
+                this.privReaderQueue.enqueue(streamChunk);
+            } catch (e) {
+                // Do nothing
             }
         }
     }
