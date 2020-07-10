@@ -131,7 +131,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             context: {
                 interactionId: interactionGuid
             },
-            messagePayload: message,
+            messagePayload: JSON.parse(message),
             version: 0.5
         };
 
