@@ -29,10 +29,10 @@ export class DialogServiceTurnState {
         return this.privAudioStream;
     }
 
-    public processActivityPayload(payload: ActivityPayloadResponse): PullAudioOutputStreamImpl {
+    public processActivityPayload(payload: ActivityPayloadResponse, audioFormat?: AudioOutputFormatImpl): PullAudioOutputStreamImpl {
         if (payload.messageDataStreamType === MessageDataStreamType.TextToSpeechAudio) {
             this.privAudioStream = AudioOutputStream.createPullStream() as PullAudioOutputStreamImpl;
-            this.privAudioStream.format = AudioOutputFormatImpl.getDefaultOutputFormat();
+            this.privAudioStream.format = (audioFormat !== undefined) ? audioFormat : AudioOutputFormatImpl.getDefaultOutputFormat();
             // tslint:disable-next-line:no-console
             // console.info("Audio start debugturn:" + this.privRequestId);
         }
