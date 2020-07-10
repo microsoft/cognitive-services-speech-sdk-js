@@ -1000,7 +1000,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(connector);
 
         try {
-            const malformedJSON: string = '{speak: "This is speech", "text" : "This is JSON is malformed", "type": "message" };'
+            const malformedJSON: string = '{speak: "This is speech", "text" : "This is JSON is malformed", "type": "message" };';
             connector.sendActivityAsync(malformedJSON);
         } catch (e) {
             expect(e.message).toContain("Unexpected token");
