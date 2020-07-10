@@ -19,6 +19,7 @@ import {
 } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
+import { allowedNodeEnvironmentFlags } from "process";
 
 let objsToClose: any[];
 
@@ -803,3 +804,112 @@ test("testModifySynthesisContext", (done: jest.DoneCallback) => {
         done.fail(e);
     });
 }, 10000);
+
+test("Test SendMessage Basic", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Test SendMessage Basic");
+
+    const r = BuildRecognizerFromWaveFile();
+    objsToClose.push(r);
+
+    const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    con.messageSent = (message: sdk.ConnectionMessageEventArgs): void => {
+        if (message.message.path === "speech.testmessage") {
+            try {
+                expect(message.message.isTextMessage).toBeTruthy();
+                expect(message.message.isBinaryMessage).toBeFalsy();
+                expect(message.message.TextMessage).toEqual("{}");
+                done();
+            } catch (err) {
+                done.fail(err);
+            }
+        }
+    };
+
+    con.sendMessageAsync("speech.testmessage", "{}", undefined, done.fail);
+
+});
+
+test("Test SendMessage Binary", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Test SendMessage Binary");
+
+    const r = BuildRecognizerFromWaveFile();
+    objsToClose.push(r);
+
+    const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    con.messageSent = (message: sdk.ConnectionMessageEventArgs): void => {
+        if (message.message.path === "speech.testmessage") {
+            try {
+                expect(message.message.isTextMessage).toBeFalsy();
+                expect(message.message.isBinaryMessage).toBeTruthy();
+                done();
+            } catch (err) {
+                done.fail(err);
+            }
+        }
+    };
+
+    con.sendMessageAsync("speech.testmessage", new ArrayBuffer(50), undefined, done.fail);
+});
+
+test("Test InjectMessage", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Test InjectMessage");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+
+    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
+    objsToClose.push(r);
+
+    const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+    let audioSeen: number = 0;
+    let messageSeen: boolean = false;
+    let turnStarted: boolean = true;
+
+    con.messageSent = (message: sdk.ConnectionMessageEventArgs): void => {
+        if (message.message.path === "speech.testmessage") {
+            try {
+                expect(audioSeen).toEqual(1);
+                expect(message.message.isTextMessage).toBeFalsy();
+                expect(message.message.isBinaryMessage).toBeTruthy();
+                messageSeen = true;
+            } catch (err) {
+                done.fail(err);
+            }
+        } else if (message.message.path === "audio") {
+            try {
+                expect(messageSeen || audioSeen === 0).toBeTruthy();
+                audioSeen++;
+            } catch (err) {
+                done.fail(err);
+            }
+        }
+    };
+
+    con.messageReceived = (message: sdk.ConnectionMessageEventArgs): void => {
+        if (message.message.path === "turn.start") {
+            turnStarted = true;
+        }
+    };
+
+    r.canceled = (s: sdk.SpeechRecognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+        done();
+    };
+
+    r.startContinuousRecognitionAsync(() => {
+        con.sendMessageAsync("speech.testmessage", new ArrayBuffer(50), () => {
+            WaitForCondition(() => turnStarted, () => {
+                const data: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+                ps.write(data);
+                ps.close();
+            });
+        }, done.fail);
+    }, done.fail);
+});
