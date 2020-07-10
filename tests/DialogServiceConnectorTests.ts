@@ -226,9 +226,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        // For Debug
-        // dialogConfig.setProxy("localhost", 8888);
-
         const connector: sdk.DialogServiceConnector = new sdk.DialogServiceConnector(dialogConfig);
         objsToClose.push(connector);
 
@@ -265,9 +262,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -329,9 +323,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatherinthemountain.wav");
         objsToClose.push(connector);
@@ -425,9 +416,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
-
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatherinthemountain.wav");
         objsToClose.push(connector);
 
@@ -518,9 +506,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -858,9 +843,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
-
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
 
@@ -904,9 +886,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -955,9 +934,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -1013,6 +989,22 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         WaitForCondition(() => (activityCount > 1 && recoDone), done);
     });
 
-    // multiple send/receive & multiple listenOnce
-    // Connect after Reco call has no effect
+    test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: SendActivity fails with invalid JSON object");
+
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
+        objsToClose.push(dialogConfig);
+
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
+        objsToClose.push(connector);
+
+        try {
+            const malformedJSON: string = '{speak: "This is speech", "text" : "This is JSON is malformed", "type": "message" };'
+            expect(connector.sendActivityAsync(malformedJSON)).rejects.toThrowError("Unexpected token");
+        } catch (e) {
+            expect(e.message).toContain("Unexpected token");
+            done();
+        }
+    });
 });
