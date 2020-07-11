@@ -27,7 +27,6 @@ import {
     Promise,
     PromiseHelper,
     Stream,
-    StreamReader,
 } from "../common/Exports";
 import {
     AudioStreamFormat,
@@ -169,11 +168,11 @@ export class MicAudioSource implements IAudioSource {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
         return this.listen(audioNodeId).onSuccessContinueWith<IAudioStreamNode>(
-            (streamReader: StreamReader<ArrayBuffer>) => {
+            (stream: Stream<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
                 return {
                     detach: () => {
-                        streamReader.close();
+                        stream.readEnded();
                         this.turnOff();
                         delete this.privStreams[audioNodeId];
                         this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
@@ -182,7 +181,7 @@ export class MicAudioSource implements IAudioSource {
                         return audioNodeId;
                     },
                     read: () => {
-                        return streamReader.read();
+                        return stream.read();
                     },
                 };
             });
@@ -281,9 +280,9 @@ export class MicAudioSource implements IAudioSource {
         return deferred.promise();
     }
 
-    private listen = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
+    private listen = (audioNodeId: string): Promise<Stream<ArrayBuffer>> => {
         return this.turnOn()
-            .onSuccessContinueWith<StreamReader<ArrayBuffer>>((_: boolean) => {
+            .onSuccessContinueWith<Stream<ArrayBuffer>>((_: boolean) => {
                 const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
                 this.privStreams[audioNodeId] = stream;
 
@@ -294,7 +293,7 @@ export class MicAudioSource implements IAudioSource {
                     throw error;
                 }
 
-                return stream.getReader();
+                return stream;
             });
     }
 

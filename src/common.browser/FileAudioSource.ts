@@ -27,7 +27,6 @@ import {
     Promise,
     PromiseHelper,
     Stream,
-    StreamReader,
 } from "../common/Exports";
 import { AudioStreamFormat, AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 
@@ -84,11 +83,11 @@ export class FileAudioSource implements IAudioSource {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
         return this.upload(audioNodeId).onSuccessContinueWith<IAudioStreamNode>(
-            (streamReader: StreamReader<ArrayBuffer>) => {
+            (stream: Stream<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
                 return {
                     detach: () => {
-                        streamReader.close();
+                        stream.readEnded();
                         delete this.privStreams[audioNodeId];
                         this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                         this.turnOff();
@@ -97,7 +96,7 @@ export class FileAudioSource implements IAudioSource {
                         return audioNodeId;
                     },
                     read: () => {
-                        return streamReader.read();
+                        return stream.read();
                     },
                 };
             });
@@ -188,10 +187,10 @@ export class FileAudioSource implements IAudioSource {
         return headerResult.promise();
     }
 
-    private upload = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
+    private upload = (audioNodeId: string): Promise<Stream<ArrayBuffer>> => {
         return this.turnOn()
-            .onSuccessContinueWithPromise<StreamReader<ArrayBuffer>>((_: boolean) => {
-                return this.privAudioFormatPromise.onSuccessContinueWith<StreamReader<ArrayBuffer>>((format: AudioStreamFormatImpl) => {
+            .onSuccessContinueWithPromise<Stream<ArrayBuffer>>((_: boolean) => {
+                return this.privAudioFormatPromise.onSuccessContinueWith<Stream<ArrayBuffer>>((format: AudioStreamFormatImpl) => {
                     const fileStream: ChunkedArrayBufferStream = new ChunkedArrayBufferStream(3200);
 
                     const reader: FileReader = new FileReader();
@@ -224,7 +223,7 @@ export class FileAudioSource implements IAudioSource {
                     const chunk = this.privFile.slice(44);
                     reader.readAsArrayBuffer(chunk);
 
-                    return stream.getReader();
+                    return stream;
                 });
             });
 
