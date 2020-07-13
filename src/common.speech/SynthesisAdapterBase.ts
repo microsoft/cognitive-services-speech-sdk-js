@@ -209,6 +209,27 @@ export class SynthesisAdapterBase implements IDisposable {
         });
     }
 
+    public sendNetworkMessage(path: string, payload: string | ArrayBuffer, success?: () => void, err?: (error: string) => void): void {
+        const type: MessageType = typeof payload === "string" ? MessageType.Text : MessageType.Binary;
+        const contentType: string = typeof payload === "string" ? "application/json" : "";
+
+        this.fetchConnection().on((connection: IConnection) => {
+            connection.send(new SpeechConnectionMessage(type, path, this.privSynthesisTurn.requestId, contentType, payload)).on(() => {
+                if (!!success) {
+                    success();
+                }
+            }, (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
+        }, (error: string) => {
+            if (!!err) {
+                err(error);
+            }
+        });
+    }
+
     public Speak(
         text: string,
         isSSML: boolean,
@@ -361,7 +382,7 @@ export class SynthesisAdapterBase implements IDisposable {
                                 break;
                             case "audio":
                                 if (this.privSynthesisTurn.streamId.toLowerCase() === connectionMessage.streamId.toLowerCase()
-                                && !!connectionMessage.binaryBody) {
+                                    && !!connectionMessage.binaryBody) {
                                     this.privSynthesisTurn.onAudioChunkReceived(connectionMessage.binaryBody);
                                     if (!!this.privSpeechSynthesizer.synthesizing) {
                                         try {

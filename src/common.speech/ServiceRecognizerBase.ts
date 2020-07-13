@@ -345,6 +345,27 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public sendMessage(message: string): void { }
 
+    public sendNetworkMessage(path: string, payload: string | ArrayBuffer, success?: () => void, err?: (error: string) => void): void {
+        const type: MessageType = typeof payload === "string" ? MessageType.Text : MessageType.Binary;
+        const contentType: string = typeof payload === "string" ? "application/json" : "";
+
+        this.fetchConnection().on((connection: IConnection) => {
+            connection.send(new SpeechConnectionMessage(type, path, this.privRequestSession.requestId, contentType, payload)).on(() => {
+                if (!!success) {
+                    success();
+                }
+            }, (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
+        }, (error: string) => {
+            if (!!err) {
+                err(error);
+            }
+        });
+    }
+
     public set activityTemplate(messagePayload: string) { this.privActivityTemplate = messagePayload; }
     public get activityTemplate(): string { return this.privActivityTemplate; }
 
