@@ -20,6 +20,7 @@ import {
 
 import * as fs from "fs";
 import { allowedNodeEnvironmentFlags } from "process";
+import { PropertyId } from "../src/sdk/Exports";
 
 let objsToClose: any[];
 
@@ -778,13 +779,15 @@ test("testModifySynthesisContext", (done: jest.DoneCallback) => {
     const con: sdk.Connection = sdk.Connection.fromSynthesizer(s);
     con.setMessageProperty("synthesis.context", "RandomName", "RandomValue");
 
+    let doneCount: number = 0;
+
     con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
         if (args.message.path === "synthesis.context" && args.message.isTextMessage) {
             const message = JSON.parse(args.message.TextMessage);
             try {
                 expect(message.RandomName).toEqual("RandomValue");
                 expect(args.message.TextMessage).toContain("wordBoundaryEnabled"); // make sure it's not overwritten...
-                done();
+                doneCount++;
             } catch (error) {
                 done.fail(error);
             }
@@ -794,15 +797,19 @@ test("testModifySynthesisContext", (done: jest.DoneCallback) => {
     s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
         try {
             expect(result).not.toBeUndefined();
-            expect(result.reason).toEqual(sdk.ResultReason.SynthesizingAudioCompleted);
+            expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.SynthesizingAudioCompleted]);
             expect(result.audioData).not.toBeUndefined();
             expect(result.audioData.byteLength).toBeGreaterThan(0);
+            doneCount++;
         } catch (error) {
             done.fail(error);
         }
     }, (e: string): void => {
         done.fail(e);
     });
+
+    WaitForCondition(() => doneCount === 2, done);
+
 }, 10000);
 
 test("Test SendMessage Basic", (done: jest.DoneCallback) => {
@@ -871,7 +878,7 @@ test("Test InjectMessage", (done: jest.DoneCallback) => {
 
     let audioSeen: number = 0;
     let messageSeen: boolean = false;
-    let turnStarted: boolean = true;
+    let turnStarted: boolean = false;
 
     con.messageSent = (message: sdk.ConnectionMessageEventArgs): void => {
         if (message.message.path === "speech.testmessage") {

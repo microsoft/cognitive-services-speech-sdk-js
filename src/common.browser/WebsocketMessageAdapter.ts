@@ -76,6 +76,10 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.None;
         this.privUri = uri;
         this.privHeaders = headers;
+
+        // Add the connection ID to the headers
+        this.privHeaders["X-ConnectionId"] = this.privConnectionId;
+
         this.privLastErrorReceived = "";
     }
 
