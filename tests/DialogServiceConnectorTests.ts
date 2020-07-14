@@ -874,7 +874,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             expect(e.sessionId).toEqual(sessionId);
         };
 
-        const message: any = { "speak" : "This is speech", "text": "This is text", "type" : "message" };
+        const message: string = '{ "speak" : "This is speech", "text": "This is text", "type" : "message" }';
         connector.sendActivityAsync(message);
 
         WaitForCondition(() => (activityCount >= 1), done);
@@ -919,7 +919,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         };
 
         for (let j = 0; j < 5; j++) {
-            const message: any = { "speak" : "This is speech", "text": `Message ${j}`, "type": "message" };
+            const message: string = '{ "speak" : "This is speech", "text": `Message ${j}`, "type": "message" }';
             connector.sendActivityAsync(message);
             sleep(100);
         }
