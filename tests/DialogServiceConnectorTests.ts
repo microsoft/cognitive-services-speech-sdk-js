@@ -17,6 +17,7 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 // tslint:disable-next-line:no-console
 const consoleInfo = console.info;
+const simpleMessageObj = { speak : "This is speech", text: "This is text", type : "message" };
 
 // tslint:disable-next-line:no-console
 console.info = (...args: any[]): void => {
@@ -226,9 +227,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        // For Debug
-        // dialogConfig.setProxy("localhost", 8888);
-
         const connector: sdk.DialogServiceConnector = new sdk.DialogServiceConnector(dialogConfig);
         objsToClose.push(connector);
 
@@ -265,9 +263,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -329,9 +324,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatherinthemountain.wav");
         objsToClose.push(connector);
@@ -425,9 +417,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
-
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "weatherinthemountain.wav");
         objsToClose.push(connector);
 
@@ -518,9 +507,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -858,9 +844,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
 
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
-
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
 
@@ -892,7 +875,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             expect(e.sessionId).toEqual(sessionId);
         };
 
-        const message: any = { speak: "This is speech", text: "This is text", type: "message" };
+        const message: string = JSON.stringify(simpleMessageObj);
         connector.sendActivityAsync(message);
 
         WaitForCondition(() => (activityCount >= 1), done);
@@ -904,9 +887,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -940,7 +920,8 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         };
 
         for (let j = 0; j < 5; j++) {
-            const message: any = { speak: "This is speech", text: `Message ${j}`, type: "message" };
+            const numberedMessage: any = { speak : "This is speech", text: `"Message ${j}`, type: "message" };
+            const message: string = JSON.stringify(numberedMessage);
             connector.sendActivityAsync(message);
             sleep(100);
         }
@@ -955,9 +936,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         objsToClose.push(dialogConfig);
-
-        // dialogConfig.setProxy("localhost", 8888);
-        // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
@@ -981,7 +959,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         connector.speechStartDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
             try {
-                const message: any = { speak: "This is speech", text: "This is text", type: "message" };
+                const message: string = JSON.stringify(simpleMessageObj);
                 connector.sendActivityAsync(message);
             } catch (error) {
                 done.fail(error);
@@ -1013,6 +991,22 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         WaitForCondition(() => (activityCount > 1 && recoDone), done);
     });
 
-    // multiple send/receive & multiple listenOnce
-    // Connect after Reco call has no effect
+    test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: SendActivity fails with invalid JSON object");
+
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
+        objsToClose.push(dialogConfig);
+
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
+        objsToClose.push(connector);
+
+        try {
+            const malformedJSON: string = '{speak: "This is speech", "text" : "This is JSON is malformed", "type": "message" };';
+            connector.sendActivityAsync(malformedJSON);
+        } catch (e) {
+            expect(e.message).toContain("Unexpected token");
+            done();
+        }
+    });
 });
