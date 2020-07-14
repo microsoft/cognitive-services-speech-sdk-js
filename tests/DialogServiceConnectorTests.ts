@@ -957,7 +957,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         connector.speechStartDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
             try {
-                const message: any = { speak: "This is speech", text: "This is text", type: "message" };
+                const message: string = '{ "speak" : "This is speech", "text": "This is text", "type" : "message" }';
                 connector.sendActivityAsync(message);
             } catch (error) {
                 done.fail(error);
