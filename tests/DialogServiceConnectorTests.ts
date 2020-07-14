@@ -919,7 +919,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         };
 
         for (let j = 0; j < 5; j++) {
-            const message: string = '{ "speak" : "This is speech", "text": "Message ' + j + ', "type": "message" }';
+            const message: string = '{ "speak" : "This is speech", "text": "Message ' + j + '", "type": "message" }';
             connector.sendActivityAsync(message);
             sleep(100);
         }
