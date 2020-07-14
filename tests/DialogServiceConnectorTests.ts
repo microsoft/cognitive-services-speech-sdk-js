@@ -17,6 +17,7 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 // tslint:disable-next-line:no-console
 const consoleInfo = console.info;
+const simpleMessageObj = { speak : "This is speech", text: "This is text", type : "message" };
 
 // tslint:disable-next-line:no-console
 console.info = (...args: any[]): void => {
@@ -874,7 +875,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             expect(e.sessionId).toEqual(sessionId);
         };
 
-        const message: string = '{ "speak" : "This is speech", "text": "This is text", "type" : "message" }';
+        const message: string = JSON.stringify(simpleMessageObj);
         connector.sendActivityAsync(message);
 
         WaitForCondition(() => (activityCount >= 1), done);
@@ -919,7 +920,8 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         };
 
         for (let j = 0; j < 5; j++) {
-            const message: string = '{ "speak" : "This is speech", "text": "Message ' + j + '", "type": "message" }';
+            const numberedMessage: any = { speak : "This is speech", text: `"Message ${j}`, type: "message" };
+            const message: string = JSON.stringify(numberedMessage);
             connector.sendActivityAsync(message);
             sleep(100);
         }
@@ -957,7 +959,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         connector.speechStartDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
             try {
-                const message: string = '{ "speak" : "This is speech", "text": "This is text", "type" : "message" }';
+                const message: string = JSON.stringify(simpleMessageObj);
                 connector.sendActivityAsync(message);
             } catch (error) {
                 done.fail(error);
