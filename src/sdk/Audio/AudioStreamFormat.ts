@@ -19,6 +19,31 @@ export abstract class AudioStreamFormat {
     }
 
     /**
+     * Creates an audio context appropriate to current browser
+     * @member AudioStreamFormat.getAudioContext
+     * @function
+     * @public
+     * @returns {AudioContext} An audio context instance
+     */
+    public static getAudioContext(sampleRate?: number): AudioContext {
+        // Workaround for Speech SDK bug in Safari.
+        const AudioContext = (window as any).AudioContext // our preferred impl
+            || (window as any).webkitAudioContext // fallback, mostly when on Safari
+            || false; // could not find.
+
+        // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext
+        if (!!AudioContext) {
+            if (sampleRate !== undefined && navigator.mediaDevices.getSupportedConstraints().sampleRate) {
+                return new AudioContext({ sampleRate });
+            } else {
+                return new AudioContext();
+            }
+        } else {
+            throw new Error("Browser does not support Web Audio API (AudioContext is not available).");
+        }
+    }
+
+    /**
      * Creates an audio stream format object with the specified pcm waveformat characteristics.
      * @member AudioStreamFormat.getWaveFormatPCM
      * @function

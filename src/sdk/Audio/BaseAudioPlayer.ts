@@ -23,9 +23,33 @@ export class BaseAudioPlayer {
     /**
      * Creates and initializes an instance of this class.
      * @constructor
+     * @param {AudioStreamFormat} audioFormat audio stream format recognized by the player.
      */
-    public constructor(audioFormat: AudioStreamFormat) {
+    public constructor(audioFormat?: AudioStreamFormat) {
+        if (audioFormat === undefined) {
+            audioFormat = AudioStreamFormat.getDefaultInputFormat();
+        }
         this.init(audioFormat);
+    }
+
+    /**
+     * play Audio from result using safari-friendly audioContext methods
+     * @member BaseAudioPlayer.prototype.playResultAudio
+     * @function
+     * @public
+     * @param {ArrayBuffer} audioData audio data to be played.
+     */
+    public playResultAudio(audioData: ArrayBuffer): void {
+        if (this.audioContext === null) {
+            this.createAudioContext();
+        }
+        const source: AudioBufferSourceNode = this.audioContext.createBufferSource();
+        const destination: AudioDestinationNode = this.audioContext.destination;
+        this.audioContext.decodeAudioData(audioData, (newBuffer: AudioBuffer): void => {
+            source.buffer = newBuffer;
+            source.connect(destination);
+            source.start(0);
+        });
     }
 
     /**
@@ -69,7 +93,7 @@ export class BaseAudioPlayer {
 
     private createAudioContext(): void {
         // new ((window as any).AudioContext || (window as any).webkitAudioContext)();
-        this.audioContext = new AudioContext();
+        this.audioContext = AudioStreamFormat.getAudioContext();
 
         // TODO: Various examples shows this gain node, it does not seem to be needed unless we plan
         // to control the volume, not likely
