@@ -307,7 +307,7 @@ export class MicAudioSource implements IAudioSource {
             return;
         }
 
-        this.privContext = AudioStreamFormat.getAudioContext(MicAudioSource.AUDIOFORMAT.samplesPerSec);
+        this.privContext = AudioStreamFormatImpl.getAudioContext(MicAudioSource.AUDIOFORMAT.samplesPerSec);
     }
 
     private destroyAudioContext = (): void => {
