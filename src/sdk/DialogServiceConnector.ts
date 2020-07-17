@@ -14,8 +14,7 @@ import {
 } from "../common.speech/Exports";
 import {
     Deferred,
-    marshalProimseToCallbacks,
-    PromiseCompletionWrapper
+    marshalProimseToCallbacks
 } from "../common/Exports";
 import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
@@ -190,6 +189,7 @@ export class DialogServiceConnector extends Recognizer {
 
                 return e;
             };
+
             const retPromise: Promise<SpeechRecognitionResult> = callbackHolder();
 
             retPromise.catch(() => {
@@ -198,11 +198,9 @@ export class DialogServiceConnector extends Recognizer {
                 this.dispose(true).catch(() => { });
             });
 
-            const wrapper: PromiseCompletionWrapper<SpeechRecognitionResult> = new PromiseCompletionWrapper(retPromise, () => { this.isTurnComplete = true; });
-            wrapper.finally.then((): void => {
-                marshalProimseToCallbacks(retPromise, cb, err);
-                /* tslint:disable:no-empty */ // The finally has no reject path.
-            }, (error: string): void => { });
+            marshalProimseToCallbacks(retPromise.finally((): void => {
+                this.isTurnComplete = true;
+            }), cb, err);
         }
     }
 
@@ -219,7 +217,7 @@ export class DialogServiceConnector extends Recognizer {
     public close(cb?: () => void, err?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privIsDisposed);
 
-        marshalProimseToCallbacks( this.dispose(true), cb, err);
+        marshalProimseToCallbacks(this.dispose(true), cb, err);
     }
 
     protected async dispose(disposing: boolean): Promise<void> {

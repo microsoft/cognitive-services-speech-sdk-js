@@ -2,9 +2,7 @@
 // Licensed under the MIT license.
 
 import {
-    ConnectionEvent,
     ConnectionMessage,
-    ConnectionOpenResponse,
     ConnectionState,
     createNoDashGuid,
     Deferred,
@@ -13,21 +11,18 @@ import {
     MessageType,
 } from "../../common/Exports";
 import {
-    PromiseCompletionWrapper
-} from "../../common/Promise";
-import {
     CancellationErrorCode,
     CancellationReason,
     ConversationExpirationEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationResult,
-    PropertyId,
-    SessionEventArgs,
-    SpeechRecognitionResult,
     Translations
 } from "../../sdk/Exports";
 import {
-    AuthInfo, IAuthentication, IConnectionFactory, RecognizerConfig, ServiceRecognizerBase
+    IAuthentication,
+    IConnectionFactory,
+    RecognizerConfig,
+    ServiceRecognizerBase
 } from "../Exports";
 import { ConversationConnectionMessage } from "./ConversationConnectionMessage";
 import { ConversationRequestSession } from "./ConversationRequestSession";
@@ -39,7 +34,11 @@ import {
     ParticipantEventArgs,
     ParticipantsListEventArgs
 } from "./ConversationTranslatorEventArgs";
-import { ConversationTranslatorCommandTypes, ConversationTranslatorMessageTypes, IInternalParticipant } from "./ConversationTranslatorInterfaces";
+import {
+    ConversationTranslatorCommandTypes,
+    ConversationTranslatorMessageTypes,
+    IInternalParticipant
+} from "./ConversationTranslatorInterfaces";
 import { ConversationTranslatorRecognizer } from "./ConversationTranslatorRecognizer";
 import {
     CommandResponsePayload,
@@ -523,18 +522,19 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     // Takes an established websocket connection to the endpoint
     private configConnection(): Promise<IConnection> {
         if (this.privConnectionConfigPromise) {
-            const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionConfigPromise);
-            if (wrapper.isCompleted &&
-                (wrapper.isError
-                    || wrapper.result.state() === ConnectionState.Disconnected)) {
-
+            return this.privConnectionConfigPromise.then((connection: IConnection): Promise<IConnection> => {
+                if (connection.state() === ConnectionState.Disconnected) {
+                    this.privConnectionId = null;
+                    this.privConnectionConfigPromise = null;
+                    return this.configConnection();
+                }
+                return this.privConnectionConfigPromise;
+            }, (error: string): Promise<IConnection> => {
+                this.privConnectionId = null;
                 this.privConnectionConfigPromise = null;
                 return this.configConnection();
-            } else {
-                return this.privConnectionConfigPromise;
-            }
+            });
         }
-
         if (this.terminateMessageLoop) {
             return Promise.resolve<IConnection>(undefined);
         }

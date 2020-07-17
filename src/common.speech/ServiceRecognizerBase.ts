@@ -4,14 +4,9 @@
 import { ReplayableAudioNode } from "../common.browser/Exports";
 import {
     ArgumentNullError,
-    ConnectionClosedEvent,
     ConnectionEvent,
-    ConnectionMessage,
-    ConnectionOpenResponse,
     ConnectionState,
-    createGuid,
     createNoDashGuid,
-    Deferred,
     EventSource,
     IAudioSource,
     IAudioStreamNode,
@@ -19,7 +14,6 @@ import {
     IDisposable,
     IStreamChunk,
     MessageType,
-    PromiseCompletionWrapper,
     ServiceEvent,
     Timeout
 } from "../common/Exports";
@@ -37,7 +31,6 @@ import { Callback } from "../sdk/Transcription/IConversation";
 import {
     AgentConfig,
     DynamicGrammarBuilder,
-    ISpeechConfigAudio,
     ISpeechConfigAudioDevice,
     RecognitionMode,
     RequestSession,
@@ -480,19 +473,22 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     // Establishes a websocket connection to the end point.
     protected connectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
         if (this.privConnectionPromise) {
-            const connectionWrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionPromise);
-
-            if (connectionWrapper.isCompleted &&
-                (connectionWrapper.isError || connectionWrapper.result.state() === ConnectionState.Disconnected) &&
-                this.privServiceHasSentMessage === true) {
+            return this.privConnectionPromise.then((connection: IConnection): Promise<IConnection> => {
+                if (connection.state() === ConnectionState.Disconnected) {
+                    this.privConnectionId = null;
+                    this.privConnectionPromise = null;
+                    this.privServiceHasSentMessage = false;
+                    return this.connectImpl();
+                }
+                return this.privConnectionPromise;
+            }, (error: string): Promise<IConnection> => {
                 this.privConnectionId = null;
                 this.privConnectionPromise = null;
                 this.privServiceHasSentMessage = false;
                 return this.connectImpl();
-            } else {
-                return this.privConnectionPromise;
-            }
+            });
         }
+
         this.privAuthFetchEventId = createNoDashGuid();
         this.privConnectionId = createNoDashGuid();
 
@@ -568,18 +564,21 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected async fetchConnection(): Promise<IConnection> {
         if (this.privConnectionConfigurationPromise) {
-            const wrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionConfigurationPromise);
-            if (wrapper.isCompleted &&
-                (wrapper.isError
-                    || wrapper.result.state() === ConnectionState.Disconnected)) {
-
+            return this.privConnectionConfigurationPromise.then((connection: IConnection): Promise<IConnection> => {
+                if (connection.state() === ConnectionState.Disconnected) {
+                    this.privConnectionId = null;
+                    this.privConnectionConfigurationPromise = null;
+                    this.privServiceHasSentMessage = false;
+                    return this.fetchConnection();
+                }
+                return this.privConnectionConfigurationPromise;
+            }, (error: string): Promise<IConnection> => {
+                this.privConnectionId = null;
                 this.privConnectionConfigurationPromise = null;
-                return await this.fetchConnection();
-            } else {
-                return await this.privConnectionConfigurationPromise;
-            }
+                this.privServiceHasSentMessage = false;
+                return this.fetchConnection();
+            });
         }
-
         this.privConnectionConfigurationPromise = this.configureConnection();
         return await this.privConnectionConfigurationPromise;
     }

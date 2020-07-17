@@ -3,32 +3,25 @@
 
 import { ReplayableAudioNode } from "../common.browser/Exports";
 import {
-    ConnectionEvent,
     ConnectionMessage,
-    ConnectionOpenResponse,
-    ConnectionState,
     createGuid,
     createNoDashGuid,
     Deferred,
     IAudioSource,
     IAudioStreamNode,
     IConnection,
-    IStreamChunk,
     MessageType,
-    PromiseCompletionWrapper,
     ServiceEvent,
 } from "../common/Exports";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 import {
     ActivityReceivedEventArgs,
-    AudioOutputStream,
     CancellationErrorCode,
     CancellationReason,
     DialogServiceConnector,
     PropertyCollection,
     PropertyId,
-    PullAudioOutputStream,
     RecognitionEventArgs,
     ResultReason,
     SessionEventArgs,
@@ -38,18 +31,16 @@ import {
 } from "../sdk/Exports";
 import { DialogServiceTurnStateManager } from "./DialogServiceTurnStateManager";
 import {
-    AgentConfig,
     CancellationErrorCodePropertyName,
     EnumTranslation,
     ISpeechConfigAudioDevice,
     RecognitionStatus,
-    RequestSession,
     ServiceRecognizerBase,
     SimpleSpeechPhrase,
     SpeechDetected,
     SpeechHypothesis,
 } from "./Exports";
-import { AuthInfo, IAuthentication } from "./IAuthentication";
+import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig";
 import { ActivityPayloadResponse } from "./ServiceMessages/ActivityResponsePayload";

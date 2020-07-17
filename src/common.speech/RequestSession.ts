@@ -8,8 +8,7 @@ import {
     Events,
     IDetachable,
     IEventSource,
-    PlatformEvent,
-    PromiseCompletionWrapper
+    PlatformEvent
 } from "../common/Exports";
 import {
     ConnectingToServiceEvent,
@@ -39,6 +38,7 @@ export class RequestSession {
     private privRecogNumber: number = 0;
     private privSessionId: string;
     private privTurnDeferral: Deferred<void>;
+    private privInTurn: boolean = false;
 
     constructor(audioSourceId: string) {
         this.privAudioSourceId = audioSourceId;
@@ -146,6 +146,7 @@ export class RequestSession {
 
         if (!continuousRecognition || this.isSpeechEnded) {
             await this.onComplete();
+            this.privInTurn = false;
         } else {
             // Start a new request set.
             this.privTurnStartAudioOffset = this.privLastRecoOffset;
@@ -155,11 +156,12 @@ export class RequestSession {
     }
 
     public onServiceTurnStartResponse = (): void => {
-        if (this.privTurnDeferral && !(new PromiseCompletionWrapper(this.privTurnDeferral.promise).isCompleted)) {
+        if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
         }
 
+        this.privInTurn = true;
         this.privTurnDeferral = new Deferred<void>();
     }
 

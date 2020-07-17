@@ -1000,7 +1000,7 @@ test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
         });
 });
 
-test("Phraselist Clear works.", (done: jest.DoneCallback) => {
+test.only("Phraselist Clear works.", (done: jest.DoneCallback) => {
 
     // tslint:disable-next-line:no-console
     console.info("Name: Phraselist Clear works.");
@@ -1087,7 +1087,6 @@ test("Phraselist Clear works.", (done: jest.DoneCallback) => {
         dynamicPhrase.clear();
         phraseAdded = false;
         sendSilence = false;
-
         r.startContinuousRecognitionAsync(
             undefined,
             (error: string) => {

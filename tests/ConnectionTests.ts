@@ -790,7 +790,7 @@ test("testModifySynthesisContext", (done: jest.DoneCallback) => {
     s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
         try {
             expect(result).not.toBeUndefined();
-            expect(result.reason).toEqual(sdk.ResultReason.SynthesizingAudioCompleted);
+            expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.SynthesizingAudioCompleted]);
             expect(result.audioData).not.toBeUndefined();
             expect(result.audioData.byteLength).toBeGreaterThan(0);
         } catch (error) {

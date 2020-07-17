@@ -4,8 +4,7 @@
 import {
     createNoDashGuid,
     Deferred,
-    Events, IAudioDestination,
-    PromiseCompletionWrapper
+    Events, IAudioDestination
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
@@ -53,7 +52,7 @@ export class SynthesisTurn {
         this.privAudioOutputFormat = format;
     }
 
-    public get turnCompletionPromise(): Promise<boolean> {
+    public get turnCompletionPromise(): Promise<void> {
         return this.privTurnDeferral.promise;
     }
 
@@ -81,7 +80,8 @@ export class SynthesisTurn {
     private privBytesReceived: number = 0;
     private privRequestId: string;
     private privStreamId: string;
-    private privTurnDeferral: Deferred<boolean>;
+    private privTurnDeferral: Deferred<void>;
+    private privInTurn: boolean = false;
     private privAudioOutputFormat: AudioOutputFormatImpl;
     private privAudioOutputStream: PullAudioOutputStreamImpl;
     private privReceivedAudio: ArrayBuffer;
@@ -94,10 +94,10 @@ export class SynthesisTurn {
 
     constructor() {
         this.privRequestId = createNoDashGuid();
-        this.privTurnDeferral = new Deferred<boolean>();
+        this.privTurnDeferral = new Deferred<void>();
 
         // We're not in a turn, so resolve.
-        this.privTurnDeferral.resolve(true);
+        this.privTurnDeferral.resolve();
     }
 
     public async getAllReceivedAudio(): Promise<ArrayBuffer> {
@@ -174,17 +174,18 @@ export class SynthesisTurn {
     }
 
     public onServiceTurnEndResponse = (): void => {
-        this.privTurnDeferral.resolve(true);
+        this.privInTurn = false;
+        this.privTurnDeferral.resolve();
         this.onComplete();
     }
 
     public onServiceTurnStartResponse = (): void => {
-        if (this.privTurnDeferral && !(new PromiseCompletionWrapper(this.privTurnDeferral.promise).isCompleted)) {
+        if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
         }
-
-        this.privTurnDeferral = new Deferred<boolean>();
+        this.privInTurn = true;
+        this.privTurnDeferral = new Deferred<void>();
     }
 
     public onAudioChunkReceived(data: ArrayBuffer): void {

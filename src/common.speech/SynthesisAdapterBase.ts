@@ -14,7 +14,6 @@ import {
     IConnection,
     IDisposable,
     MessageType,
-    PromiseCompletionWrapper,
     ServiceEvent,
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
@@ -29,7 +28,6 @@ import {
     SpeechSynthesisWordBoundaryEventArgs,
     SpeechSynthesizer,
 } from "../sdk/Exports";
-import { Callback } from "../sdk/Transcription/IConversation";
 import {
     AgentConfig,
     CancellationErrorCodePropertyName,
@@ -436,18 +434,20 @@ export class SynthesisAdapterBase implements IDisposable {
 
     protected connectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
         if (this.privConnectionPromise) {
-            const connectionWrapper: PromiseCompletionWrapper<IConnection> = new PromiseCompletionWrapper<IConnection>(this.privConnectionPromise);
-
-            if (connectionWrapper.isCompleted &&
-                (connectionWrapper.isError || connectionWrapper.result.state() === ConnectionState.Disconnected) &&
-                this.privServiceHasSentMessage === true) {
+            return this.privConnectionPromise.then((connection: IConnection): Promise<IConnection> => {
+                if (connection.state() === ConnectionState.Disconnected) {
+                    this.privConnectionId = null;
+                    this.privConnectionPromise = null;
+                    this.privServiceHasSentMessage = false;
+                    return this.connectImpl();
+                }
+                return this.privConnectionPromise;
+            }, (error: string): Promise<IConnection> => {
                 this.privConnectionId = null;
                 this.privConnectionPromise = null;
                 this.privServiceHasSentMessage = false;
                 return this.connectImpl();
-            } else {
-                return this.privConnectionPromise;
-            }
+            });
         }
         this.privAuthFetchEventId = createNoDashGuid();
         this.privConnectionId = createNoDashGuid();
