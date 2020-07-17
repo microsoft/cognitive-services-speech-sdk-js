@@ -634,20 +634,26 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     nextSendTime = Date.now() + (payload.byteLength * 1000 / (audioFormat.avgBytesPerSec * 2));
                 }
 
-                await connection.send(
-                    new SpeechConnectionMessage(
-                        MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
+                // Are we still alive?
+                if (!this.privIsDisposed &&
+                    !this.privRequestSession.isSpeechEnded &&
+                    this.privRequestSession.isRecognizing &&
+                    this.privRequestSession.recogNumber === startRecogNumber) {
+                    await connection.send(
+                        new SpeechConnectionMessage(
+                            MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
 
-                if (!audioStreamChunk?.isEnd) {
-                    // this.writeBufferToConsole(payload);
-                    // Regardless of success or failure, schedule the next upload.
-                    // If the underlying connection was broken, the next cycle will
-                    // get a new connection and re-transmit missing audio automatically.
-                    return readAndUploadCycle();
-                } else {
-                    // the audio stream has been closed, no need to schedule next
-                    // read-upload cycle.
-                    this.privRequestSession.onSpeechEnded();
+                    if (!audioStreamChunk?.isEnd) {
+                        // this.writeBufferToConsole(payload);
+                        // Regardless of success or failure, schedule the next upload.
+                        // If the underlying connection was broken, the next cycle will
+                        // get a new connection and re-transmit missing audio automatically.
+                        return readAndUploadCycle();
+                    } else {
+                        // the audio stream has been closed, no need to schedule next
+                        // read-upload cycle.
+                        this.privRequestSession.onSpeechEnded();
+                    }
                 }
             }
         };

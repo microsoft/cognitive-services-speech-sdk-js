@@ -7,7 +7,6 @@ import { IDisposable } from "./IDisposable";
 import { List } from "./List";
 import {
     Deferred,
-    PromiseCompletionWrapper,
 } from "./Promise";
 export interface IQueue<TItem> extends IDisposable {
     enqueue(item: TItem): void;
@@ -23,7 +22,7 @@ enum SubscriberType {
 }
 
 export class Queue<TItem> implements IQueue<TItem> {
-    private privPromiseStore: List<PromiseCompletionWrapper<TItem>> = new List<PromiseCompletionWrapper<TItem>>();
+    private privPromiseStore: List<Promise<TItem>> = new List<Promise<TItem>>();
     private privList: List<TItem>;
     private privDetachables: IDetachable[];
     private privSubscribers: List<{ type: SubscriberType, deferral: Deferred<TItem> }>;
@@ -45,20 +44,10 @@ export class Queue<TItem> implements IQueue<TItem> {
 
     public enqueueFromPromise = (promise: Promise<TItem>): void => {
         this.throwIfDispose();
-        this.privPromiseStore.add(new PromiseCompletionWrapper(promise, () => {
-            while (this.privPromiseStore.length() > 0) {
-                if (!this.privPromiseStore.first().isCompleted) {
-                    break;
-                } else {
-                    const p = this.privPromiseStore.removeFirst();
-                    if (!p.isError) {
-                        this.privList.add(p.result);
-                    } else {
-                        // TODO: Log as warning.
-                    }
-                }
-            }
-        }));
+        promise.then((val: TItem): void => {
+            this.privList.add(val);
+             /* tslint:disable:no-empty */
+        }, (error: string): void => { });
     }
 
     public dequeue = (): Promise<TItem> => {
@@ -130,8 +119,8 @@ export class Queue<TItem> implements IQueue<TItem> {
             if (this.privPromiseStore.length() > 0 && pendingItemProcessor) {
                 const promiseArray: Array<Promise<TItem>> = [];
 
-                this.privPromiseStore.toArray().forEach((wrapper: PromiseCompletionWrapper<TItem>) => {
-                    promiseArray.push(wrapper.promise);
+                this.privPromiseStore.toArray().forEach((wrapper: Promise<TItem>) => {
+                    promiseArray.push(wrapper);
                 });
                 return Promise.all(promiseArray).finally(() => {
                     this.privSubscribers = null;

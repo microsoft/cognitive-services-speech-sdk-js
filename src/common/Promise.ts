@@ -83,59 +83,6 @@ export class PromiseResultEventSource<T>  {
 }
 
 // tslint:disable-next-line:max-classes-per-file
-export class PromiseCompletionWrapper<T> {
-    private privPromise: Promise<T>;
-    private privIsCompleted: boolean;
-    private privResult: T;
-    private privIsError: boolean;
-    private privFinallyPromise: Promise<PromiseCompletionWrapper<T>>;
-
-    constructor(promise: Promise<T>, after?: () => void) {
-        this.privPromise = promise;
-        this.privIsCompleted = false;
-        this.privIsError = false;
-
-        this.privFinallyPromise = new Promise<PromiseCompletionWrapper<T>>((resolve: (value: PromiseCompletionWrapper<T>) => void, reject: (reason: any) => void) => {
-            promise.then((result: T) => {
-                this.privIsCompleted = true;
-                this.privResult = result;
-                if (!!after) {
-                    after();
-                }
-                resolve(this);
-            }, () => {
-                this.privIsCompleted = true;
-                this.privIsError = true;
-                if (!!after) {
-                    after();
-                }
-                resolve(this);
-            });
-        });
-    }
-
-    public get isCompleted(): boolean {
-        return this.privIsCompleted;
-    }
-
-    public get isError(): boolean {
-        return this.privIsError;
-    }
-
-    public get result(): T {
-        return this.privResult;
-    }
-
-    public get promise(): Promise<T> {
-        return this.privPromise;
-    }
-
-    public get finally(): Promise<PromiseCompletionWrapper<T>> {
-        return this.privFinallyPromise;
-    }
-}
-
-// tslint:disable-next-line:max-classes-per-file
 export class Deferred<T> implements IDeferred<T> {
     private privPromise: Promise<T>;
     private privResolve: (value?: T | PromiseLike<T>) => void;
