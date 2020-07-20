@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { PlatformEmitter } from "./Emitter";
 import { ObjectDisposedError } from "./Error";
 import { createNoDashGuid } from "./Guid";
 import { IDetachable } from "./IDetachable";
@@ -9,12 +10,14 @@ import { IEventListener, IEventSource } from "./IEventSource";
 import { PlatformEvent } from "./PlatformEvent";
 
 export class EventSource<TEvent extends PlatformEvent> implements IEventSource<TEvent> {
-    private privEventListeners: IStringDictionary<(event: TEvent) => void> = {};
+    private privEventIds: Record<string, boolean> = {};
     private privMetadata: IStringDictionary<string>;
+    private privEmitter: PlatformEmitter<Record<string, PlatformEvent>>;
     private privIsDisposed: boolean = false;
 
     constructor(metadata?: IStringDictionary<string>) {
         this.privMetadata = metadata;
+        this.privEmitter = new PlatformEmitter<Record<string, PlatformEvent>>();
     }
 
     public onEvent = (event: TEvent): void => {
@@ -34,19 +37,21 @@ export class EventSource<TEvent extends PlatformEvent> implements IEventSource<T
             }
         }
 
-        for (const eventId in this.privEventListeners) {
-            if (eventId && this.privEventListeners[eventId]) {
-                this.privEventListeners[eventId](event);
+        for (const eventId in this.privEventIds) {
+            if (eventId && this.privEventIds[eventId]) {
+                this.privEmitter.emit(eventId, event);
             }
         }
     }
 
     public attach = (onEventCallback: (event: TEvent) => void): IDetachable => {
         const id = createNoDashGuid();
-        this.privEventListeners[id] = onEventCallback;
+        this.privEmitter.on(id, onEventCallback);
+        this.privEventIds[id] = true;
         return {
             detach: () => {
-                delete this.privEventListeners[id];
+                this.privEmitter.off(id, onEventCallback);
+                delete this.privEventIds[id];
             },
         };
     }
@@ -60,7 +65,6 @@ export class EventSource<TEvent extends PlatformEvent> implements IEventSource<T
     }
 
     public dispose = (): void => {
-        this.privEventListeners = null;
         this.privIsDisposed = true;
     }
 
