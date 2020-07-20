@@ -13,6 +13,7 @@ import {
     MessageType,
     ServiceEvent,
 } from "../common/Exports";
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 import {
@@ -28,6 +29,7 @@ import {
     SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
+    SpeechSynthesisOutputFormat,
 } from "../sdk/Exports";
 import { DialogServiceTurnStateManager } from "./DialogServiceTurnStateManager";
 import {
@@ -103,7 +105,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             context: {
                 interactionId: interactionGuid
             },
-            messagePayload: message,
+            messagePayload: JSON.parse(message),
             version: 0.5
         };
 
@@ -226,7 +228,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         this.agentConfig.set(updateAgentConfig);
                     }
 
-                    const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload);
+                    const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload, (SpeechSynthesisOutputFormat as any)[this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]);
                     const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
                     if (!!this.privDialogServiceConnector.activityReceived) {
                         try {

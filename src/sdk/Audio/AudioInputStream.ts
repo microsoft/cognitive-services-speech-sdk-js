@@ -21,7 +21,6 @@ import {
     IAudioStreamNode,
     IStreamChunk,
     Stream,
-    StreamReader,
 } from "../../common/Exports";
 import { createNoDashGuid } from "../../common/Guid";
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
@@ -218,11 +217,11 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
         await this.turnOn();
-        const streamReader = this.privStream.getReader();
+        const stream = this.privStream;
         this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
         return {
             detach: async () => {
-                await streamReader.close();
+                stream.readEnded();
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                 return this.turnOff();
             },
@@ -230,7 +229,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
                 return audioNodeId;
             },
             read: () => {
-                return streamReader.read();
+                return stream.read();
             },
         };
     }

@@ -23,9 +23,9 @@ import {
     EventSource,
     IAudioSource,
     IAudioStreamNode,
+    IStreamChunk,
     IStringDictionary,
     Stream,
-    StreamReader,
 } from "../common/Exports";
 import { AudioStreamFormat, AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 
@@ -78,27 +78,26 @@ export class FileAudioSource implements IAudioSource {
         return this.privId;
     }
 
-    public attach = (audioNodeId: string): Promise<IAudioStreamNode> => {
+    public async attach = (audioNodeId: string): Promise<IAudioStreamNode> => {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
-        return this.upload(audioNodeId).then<IAudioStreamNode>(
-            (streamReader: StreamReader<ArrayBuffer>) => {
-                this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
-                return {
-                    detach: async () => {
-                        await streamReader.close();
-                        delete this.privStreams[audioNodeId];
-                        this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
-                        return this.turnOff();
-                    },
-                    id: () => {
-                        return audioNodeId;
-                    },
-                    read: () => {
-                        return streamReader.read();
-                    },
-                };
-            });
+        const stream: Stream<ArrayBuffer> = await this.upload(audioNodeId);
+
+        this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
+        return Promise.resolve({
+            detach: async (): Promise<void> => {
+                stream.readEnded();
+                delete this.privStreams[audioNodeId];
+                this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
+                await this.turnOff();
+            },
+            id: () => {
+                return audioNodeId;
+            },
+            read: (): Promise<IStreamChunk<ArrayBuffer>> => {
+                return stream.read();
+            },
+        });
     }
 
     public detach = (audioNodeId: string): void => {
@@ -186,8 +185,8 @@ export class FileAudioSource implements IAudioSource {
         return headerResult.promise;
     }
 
-    private async upload(audioNodeId: string): Promise<StreamReader<ArrayBuffer>> {
 
+    private async upload(audioNodeId: string): Promise<Stream<ArrayBuffer>> {
         await this.turnOn();
 
         const format: AudioStreamFormatImpl = await this.privAudioFormatPromise;
@@ -217,12 +216,9 @@ export class FileAudioSource implements IAudioSource {
             throw new Error(errorMsg);
         };
 
-        const chunk = this.privFile.slice(44);
-        reader.readAsArrayBuffer(chunk);
-
-        return stream.getReader();
+        return stream;
     }
-
+    
     private onEvent = (event: AudioSourceEvent): void => {
         this.privEvents.onEvent(event);
         Events.instance.onEvent(event);

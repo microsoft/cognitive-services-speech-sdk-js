@@ -10,6 +10,7 @@ import {
 import {
     PropertyCollection
 } from "./PropertyCollection";
+import { PropertyId } from "./PropertyId";
 
 /**
  * ConnectionMessage represents implementation specific messages sent to and received from
@@ -70,7 +71,13 @@ export class ConnectionMessageImpl {
     constructor(message: IntConnectionMessage) {
         this.privConnectionMessage = message;
         this.privProperties = new PropertyCollection();
+        if (!!this.privConnectionMessage.headers["X-ConnectionId"]) {
+            this.privProperties.setProperty(PropertyId.Speech_SessionId, this.privConnectionMessage.headers["X-ConnectionId"]);
+        }
 
+        Object.keys(this.privConnectionMessage.headers).forEach((header: string, index: number, array: string[]): void => {
+            this.privProperties.setProperty(header, this.privConnectionMessage.headers[header]);
+        });
     }
 
     /**

@@ -30,7 +30,8 @@ export interface IAgentConfig {
         connectionId: string,
         conversationId: string,
         fromId: string
-        commandsCulture: string
+        commandsCulture: string,
+        ttsAudioFormat: string
     };
     version: number;
 }

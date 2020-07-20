@@ -29,6 +29,7 @@ import {
     SpeechRecognitionResult
 } from "./Exports";
 import { PropertyId } from "./PropertyId";
+import { SpeechSynthesisOutputFormat } from "./SpeechSynthesisOutputFormat";
 
 /**
  * Dialog Service Connector
@@ -256,7 +257,8 @@ export class DialogServiceConnector extends Recognizer {
                 commandsCulture: undefined,
                 connectionId: this.properties.getProperty(PropertyId.Conversation_ApplicationId),
                 conversationId: undefined,
-                fromId: this.properties.getProperty(PropertyId.Conversation_From_Id, undefined)
+                fromId: this.properties.getProperty(PropertyId.Conversation_From_Id, undefined),
+                ttsAudioFormat: (SpeechSynthesisOutputFormat as any)[this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]
             },
             version: 0.2
         };

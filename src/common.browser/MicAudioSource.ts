@@ -25,7 +25,6 @@ import {
     IAudioStreamNode,
     IStringDictionary,
     Stream,
-    StreamReader,
 } from "../common/Exports";
 import {
     AudioStreamFormat,
@@ -167,11 +166,11 @@ export class MicAudioSource implements IAudioSource {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
         return this.listen(audioNodeId).then<IAudioStreamNode>(
-            (streamReader: StreamReader<ArrayBuffer>) => {
+            (stream: Stream<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
                 return {
                     detach: async () => {
-                        await streamReader.close();
+                        stream.readEnded();
                         delete this.privStreams[audioNodeId];
                         this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                         return this.turnOff();
@@ -180,7 +179,7 @@ export class MicAudioSource implements IAudioSource {
                         return audioNodeId;
                     },
                     read: () => {
-                        return streamReader.read();
+                        return stream.read();
                     },
                 };
             });
@@ -279,21 +278,19 @@ export class MicAudioSource implements IAudioSource {
         return deferred.promise;
     }
 
-    private listen = (audioNodeId: string): Promise<StreamReader<ArrayBuffer>> => {
-        return this.turnOn()
-            .then<StreamReader<ArrayBuffer>>(() => {
-                const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
-                this.privStreams[audioNodeId] = stream;
-
-                try {
-                    this.privRecorder.record(this.privContext, this.privMediaStream, stream);
-                } catch (error) {
-                    this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, error));
-                    throw error;
-                }
-
-                return stream.getReader();
-            });
+    private listen = async (audioNodeId: string): Promise<Stream<ArrayBuffer>> => {
+        await this.turnOn();
+        const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
+        this.privStreams[audioNodeId] = stream;
+        try {
+            this.privRecorder.record(this.privContext, this.privMediaStream, stream);
+        }
+        catch (error) {
+            this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, error));
+            throw error;
+        }
+        const result: Stream<ArrayBuffer> = stream;
+        return result;
     }
 
     private onEvent = (event: AudioSourceEvent): void => {

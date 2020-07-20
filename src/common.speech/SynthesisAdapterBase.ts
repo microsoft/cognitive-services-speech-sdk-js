@@ -184,6 +184,14 @@ export class SynthesisAdapterBase implements IDisposable {
         await this.connectImpl();
     }
 
+    public async sendNetworkMessage(path: string, payload: string | ArrayBuffer): Promise<void> {
+        const type: MessageType = typeof payload === "string" ? MessageType.Text : MessageType.Binary;
+        const contentType: string = typeof payload === "string" ? "application/json" : "";
+
+        const connection: IConnection = await this.fetchConnection();
+        return connection.send(new SpeechConnectionMessage(type, path, this.privSynthesisTurn.requestId, contentType, payload));
+    }
+
     public async Speak(
         text: string,
         isSSML: boolean,

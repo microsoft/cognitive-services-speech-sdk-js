@@ -286,6 +286,16 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public static telemetryData: (json: string) => void;
     public static telemetryDataEnabled: boolean = true;
 
+    public sendMessage(message: string): void { }
+
+    public async sendNetworkMessage(path: string, payload: string | ArrayBuffer): Promise<void> {
+        const type: MessageType = typeof payload === "string" ? MessageType.Text : MessageType.Binary;
+        const contentType: string = typeof payload === "string" ? "application/json" : "";
+
+        const connection: IConnection = await this.fetchConnection();
+        return connection.send(new SpeechConnectionMessage(type, path, this.privRequestSession.requestId, contentType, payload))
+    }
+
     public set activityTemplate(messagePayload: string) { this.privActivityTemplate = messagePayload; }
     public get activityTemplate(): string { return this.privActivityTemplate; }
 

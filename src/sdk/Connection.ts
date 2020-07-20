@@ -127,6 +127,18 @@ export class Connection {
     }
 
     /**
+     * Sends a message to the speech service.
+     * Added in version 1.13.0.
+     * @param path The WebSocket path of the message
+     * @param payload The payload of the message. This is a json string or a ArrayBuffer.
+     * @param success A callback to indicate success.
+     * @param error A callback to indicate an error.
+     */
+    public sendMessageAsync(path: string, payload: string | ArrayBuffer, success?: () => void, error?: (error: string) => void): void {
+        this.privInternalData.sendNetworkMessage(path, payload, success, error);
+    }
+
+    /**
      * Any message from service that is not being processed by any other top level recognizers.
      *
      * Will be removed in 2.0.

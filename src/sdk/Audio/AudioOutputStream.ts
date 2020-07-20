@@ -7,7 +7,6 @@ import {
     IAudioDestination,
     IStreamChunk,
     Stream,
-    StreamReader,
 } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
@@ -102,7 +101,6 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
     private privFormat: AudioOutputFormatImpl;
     private privId: string;
     private privStream: Stream<ArrayBuffer>;
-    private streamReader: StreamReader<ArrayBuffer>;
     private privLastChunkView: Int8Array;
 
     /**
@@ -113,7 +111,6 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
         super();
         this.privId = createNoDashGuid();
         this.privStream = new Stream<ArrayBuffer>();
-        this.streamReader = this.privStream.getReader();
     }
 
     /**
@@ -178,9 +175,8 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
         }
 
         // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
-
-        while (totalBytes < dataBuffer.byteLength && !this.streamReader.isClosed) {
-            const chunk: IStreamChunk<ArrayBuffer> = await this.streamReader.read();
+        while (totalBytes < dataBuffer.byteLength && !this.privStream.isReadEnded) {
+            const chunk: IStreamChunk<ArrayBuffer> = await this.privStream.read();
             if (chunk !== undefined && !chunk.isEnd) {
                 let tmpBuffer: ArrayBuffer;
                 if (chunk.buffer.byteLength > dataBuffer.byteLength - totalBytes) {
@@ -192,7 +188,7 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
                 intView.set(new Int8Array(tmpBuffer), totalBytes);
                 totalBytes += tmpBuffer.byteLength;
             } else {
-                await this.streamReader.close();
+                await this.privStream.close();
             }
         }
         return totalBytes;

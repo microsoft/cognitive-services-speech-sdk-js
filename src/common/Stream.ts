@@ -3,7 +3,6 @@
 
 import { InvalidOperationError } from "./Error";
 import { createNoDashGuid } from "./Guid";
-import { IStringDictionary } from "./IDictionary";
 import { Queue } from "./Queue";
 
 export interface IStreamChunk<TBuffer> {
@@ -14,98 +13,52 @@ export interface IStreamChunk<TBuffer> {
 
 export class Stream<TBuffer> {
     private privId: string;
-    private privReaderIdCounter: number = 1;
-    private privStreambuffer: Array<IStreamChunk<TBuffer>>;
-    private privIsEnded: boolean = false;
-    private privReaderQueues: IStringDictionary<Queue<IStreamChunk<TBuffer>>>;
+    private privIsWriteEnded: boolean = false;
+    private privIsReadEnded: boolean = false;
+    private privReaderQueue: Queue<IStreamChunk<TBuffer>>;
 
     public constructor(streamId?: string) {
         this.privId = streamId ? streamId : createNoDashGuid();
-        this.privStreambuffer = [];
-        this.privReaderQueues = {};
+        this.privReaderQueue = new Queue<IStreamChunk<TBuffer>>();
     }
 
     public get isClosed(): boolean {
-        return this.privIsEnded;
+        return this.privIsWriteEnded;
+    }
+
+    public get isReadEnded(): boolean {
+        return this.privIsReadEnded;
     }
 
     public get id(): string {
         return this.privId;
     }
 
-    public getReader = (): StreamReader<TBuffer> => {
-        const readerId = this.privReaderIdCounter;
-        this.privReaderIdCounter++;
-        const readerQueue = new Queue<IStreamChunk<TBuffer>>();
-        const currentLength = this.privStreambuffer.length;
-        this.privReaderQueues[readerId] = readerQueue;
-        for (let i = 0; i < currentLength; i++) {
-            readerQueue.enqueue(this.privStreambuffer[i]);
-        }
-        return new StreamReader(
-            this.privId,
-            readerQueue,
-            () => {
-                delete this.privReaderQueues[readerId];
-            });
-    }
-
     public close(): void {
-        if (!this.privIsEnded) {
+        if (!this.privIsWriteEnded) {
             this.writeStreamChunk({
                 buffer: null,
                 isEnd: true,
                 timeReceived: Date.now(),
             });
-            this.privIsEnded = true;
+            this.privIsWriteEnded = true;
         }
     }
 
     public writeStreamChunk(streamChunk: IStreamChunk<TBuffer>): void {
         this.throwIfClosed();
-        this.privStreambuffer.push(streamChunk);
-        for (const readerId in this.privReaderQueues) {
-            if (!this.privReaderQueues[readerId].isDisposed()) {
-                try {
-                    this.privReaderQueues[readerId].enqueue(streamChunk);
-                } catch (e) {
-                    // Do nothing
-                }
+        if (!this.privReaderQueue.isDisposed()) {
+            try {
+                this.privReaderQueue.enqueue(streamChunk);
+            } catch (e) {
+                // Do nothing
             }
         }
     }
 
-    private throwIfClosed = (): void => {
-        if (this.privIsEnded) {
-            throw new InvalidOperationError("Stream closed");
-        }
-    }
-}
-
-// tslint:disable-next-line:max-classes-per-file
-export class StreamReader<TBuffer> {
-    private privReaderQueue: Queue<IStreamChunk<TBuffer>>;
-    private privOnClose: () => void;
-    private privIsClosed: boolean = false;
-    private privStreamId: string;
-
-    public constructor(streamId: string, readerQueue: Queue<IStreamChunk<TBuffer>>, onClose: () => void) {
-        this.privReaderQueue = readerQueue;
-        this.privOnClose = onClose;
-        this.privStreamId = streamId;
-    }
-
-    public get isClosed(): boolean {
-        return this.privIsClosed;
-    }
-
-    public get streamId(): string {
-        return this.privStreamId;
-    }
-
-    public async read(): Promise<IStreamChunk<TBuffer>> {
-        if (this.isClosed) {
-            throw new InvalidOperationError("StreamReader closed");
+    public read = (): Promise<IStreamChunk<TBuffer>> => {
+        if (this.privIsReadEnded) {
+            throw new InvalidOperationError("Stream read has already finished");
         }
 
         return this.privReaderQueue
@@ -118,12 +71,16 @@ export class StreamReader<TBuffer> {
                 return streamChunk;
             });
     }
+    public readEnded = (): void => {
+        if (!this.privIsReadEnded) {
+            this.privIsReadEnded = true;
+            this.privReaderQueue = new Queue<IStreamChunk<TBuffer>>();
+        }
+    }
 
-    public async close(): Promise<void> {
-        if (!this.privIsClosed) {
-            this.privIsClosed = true;
-            await this.privReaderQueue.dispose("StreamReader closed");
-            this.privOnClose();
+    private throwIfClosed = (): void => {
+        if (this.privIsWriteEnded) {
+            throw new InvalidOperationError("Stream closed");
         }
     }
 }
