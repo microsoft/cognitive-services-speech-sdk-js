@@ -15,14 +15,11 @@ export interface Emitter<T extends EventMap> {
 
 // tslint:disable-next-line:max-classes-per-file
 class CustomEmitter {
-    private target: EventTarget;
-    constructor() {
-        this.target = new EventTarget();
-    }
-    public on(eventName: string, listener: (params: any) => void): void {
+    private target: EventTarget = new EventTarget();
+    public on(eventName: string, listener: EventReceiver<Event | PlatformEvent>): void {
         return this.target.addEventListener(eventName, listener);
     }
-    public off(eventName: string, listener: (params: any) => void): void {
+    public off(eventName: string, listener: EventReceiver<Event | PlatformEvent>): void {
         return this.target.removeEventListener(eventName, listener);
     }
     public emit(eventName: string, detail: PlatformEvent): void {
