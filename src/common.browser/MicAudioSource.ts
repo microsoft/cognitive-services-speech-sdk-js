@@ -284,8 +284,7 @@ export class MicAudioSource implements IAudioSource {
         this.privStreams[audioNodeId] = stream;
         try {
             this.privRecorder.record(this.privContext, this.privMediaStream, stream);
-        }
-        catch (error) {
+        } catch (error) {
             this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, error));
             throw error;
         }

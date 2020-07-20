@@ -293,7 +293,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const contentType: string = typeof payload === "string" ? "application/json" : "";
 
         const connection: IConnection = await this.fetchConnection();
-        return connection.send(new SpeechConnectionMessage(type, path, this.privRequestSession.requestId, contentType, payload))
+        return connection.send(new SpeechConnectionMessage(type, path, this.privRequestSession.requestId, contentType, payload));
     }
 
     public set activityTemplate(messagePayload: string) { this.privActivityTemplate = messagePayload; }

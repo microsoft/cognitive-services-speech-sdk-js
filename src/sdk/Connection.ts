@@ -84,7 +84,7 @@ export class Connection {
      * be notified when the connection is established.
      */
     public openConnection(cb?: () => void, err?: (error: string) => void): void {
-        marshalProimseToCallbacks( this.privInternalData.connect(), cb, err);
+        marshalProimseToCallbacks(this.privInternalData.connect(), cb, err);
     }
 
     /**
@@ -97,7 +97,7 @@ export class Connection {
         if (this.privInternalData instanceof SynthesisAdapterBase) {
             throw new Error("Disconnecting a synthesizer's connection is currently not supported");
         } else {
-           marshalProimseToCallbacks((this.privInternalData as ServiceRecognizerBase).disconnect(), cb, err);
+            marshalProimseToCallbacks((this.privInternalData as ServiceRecognizerBase).disconnect(), cb, err);
         }
     }
 
@@ -135,7 +135,7 @@ export class Connection {
      * @param error A callback to indicate an error.
      */
     public sendMessageAsync(path: string, payload: string | ArrayBuffer, success?: () => void, error?: (error: string) => void): void {
-        this.privInternalData.sendNetworkMessage(path, payload, success, error);
+        marshalProimseToCallbacks(this.privInternalData.sendNetworkMessage(path, payload), success, error);
     }
 
     /**

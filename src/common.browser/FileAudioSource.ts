@@ -78,7 +78,7 @@ export class FileAudioSource implements IAudioSource {
         return this.privId;
     }
 
-    public async attach = (audioNodeId: string): Promise<IAudioStreamNode> => {
+    public attach = async (audioNodeId: string): Promise<IAudioStreamNode> => {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
         const stream: Stream<ArrayBuffer> = await this.upload(audioNodeId);
@@ -185,7 +185,6 @@ export class FileAudioSource implements IAudioSource {
         return headerResult.promise;
     }
 
-
     private async upload(audioNodeId: string): Promise<Stream<ArrayBuffer>> {
         await this.turnOn();
 
@@ -218,7 +217,7 @@ export class FileAudioSource implements IAudioSource {
 
         return stream;
     }
-    
+
     private onEvent = (event: AudioSourceEvent): void => {
         this.privEvents.onEvent(event);
         Events.instance.onEvent(event);
