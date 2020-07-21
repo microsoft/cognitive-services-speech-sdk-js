@@ -178,7 +178,7 @@ export class DialogServiceConnector extends Recognizer {
         if (this.isTurnComplete) {
             Contracts.throwIfDisposed(this.privIsDisposed);
             const callbackHolder = async (): Promise<SpeechRecognitionResult> => {
-                await this.connect();
+                await this.privReco.connect();
                 await this.implRecognizerStop();
                 this.isTurnComplete = false;
 

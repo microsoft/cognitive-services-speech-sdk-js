@@ -219,7 +219,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             });
     }, 15000);
 
-    test.only("Connect / Disconnect", (done: jest.DoneCallback) => {
+    test("Connect / Disconnect", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: Connect / Disconnect");
 
@@ -317,13 +317,13 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             expect(result.text).not.toBeUndefined();
             expect(hypoCounter).toBeGreaterThanOrEqual(1);
             expect(recoCounter).toEqual(1);
-            done();
+            recoCounter++;
         },
             (error: string) => {
                 done.fail(error);
             });
 
-        WaitForCondition(() => (recoCounter === 1), done);
+        WaitForCondition(() => (recoCounter === 2), done);
     });
 
     test("ListenOnceAsync with audio response", (done: jest.DoneCallback) => {

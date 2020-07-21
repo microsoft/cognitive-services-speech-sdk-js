@@ -53,13 +53,7 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privDialogServiceConnector: DialogServiceConnector;
 
-    private privDialogIsDisposed: boolean;
-    private privDialogAuthentication: IAuthentication;
     private privDialogAudioSource: IAudioSource;
-
-    // A promise for a configured connection.
-    // Do not consume directly, call fetchConnection instead.
-    private privConnectionConfigPromise: Promise<IConnection>;
 
     private privConnectionLoop: Promise<void>;
     private terminateMessageLoop: boolean;
@@ -81,7 +75,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         super(authentication, connectionFactory, audioSource, recognizerConfig, dialogServiceConnector);
 
         this.privDialogServiceConnector = dialogServiceConnector;
-        this.privDialogAuthentication = authentication;
         this.receiveMessageOverride = this.receiveDialogMessageOverride;
         this.privTurnStateManager = new DialogServiceTurnStateManager();
         this.recognizeOverride = this.listenOnce;
@@ -90,13 +83,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.disconnectOverride = this.privDisconnect;
         this.privDialogAudioSource = audioSource;
 
-        this.privDialogIsDisposed = false;
         this.agentConfigSent = false;
         this.privLastResult = null;
-    }
-
-    public isDisposed(): boolean {
-        return this.privDialogIsDisposed;
     }
 
     public async sendMessage(message: string): Promise<void> {
