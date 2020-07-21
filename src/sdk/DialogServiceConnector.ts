@@ -101,8 +101,8 @@ export class DialogServiceConnector extends Recognizer {
      * @function
      * @public
      */
-    public async connect(): Promise<void> {
-        return await this.privReco.connect();
+    public connect(cb?: () => void, err?: (error: string) => void): void {
+        marshalPromiseToCallbacks(this.privReco.connect(), cb, err);
     }
 
     /**

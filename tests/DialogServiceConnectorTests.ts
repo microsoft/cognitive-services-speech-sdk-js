@@ -20,7 +20,7 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 // tslint:disable-next-line:no-console
 const consoleInfo = console.info;
-const simpleMessageObj = { speak : "This is speech", text: "This is text", type : "message" };
+const simpleMessageObj = { speak: "This is speech", text: "This is text", type: "message" };
 
 // tslint:disable-next-line:no-console
 console.info = (...args: any[]): void => {
@@ -921,7 +921,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         };
 
         for (let j = 0; j < 5; j++) {
-            const numberedMessage: any = { speak : "This is speech", text: `"Message ${j}`, type: "message" };
+            const numberedMessage: any = { speak: "This is speech", text: `"Message ${j}`, type: "message" };
             const message: string = JSON.stringify(numberedMessage);
             connector.sendActivityAsync(message);
             sleep(100).catch();
@@ -1002,12 +1002,10 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
 
-        try {
-            const malformedJSON: string = '{speak: "This is speech", "text" : "This is JSON is malformed", "type": "message" };';
-            connector.sendActivityAsync(malformedJSON);
-        } catch (e) {
-            expect(e.message).toContain("Unexpected token");
+        const malformedJSON: string = '{speak: "This is speech", "text" : "This is JSON is malformed", "type": "message" };';
+        connector.sendActivityAsync(malformedJSON, () => { done.fail("Should have failed"); }, (error: string) => {
+            expect(error).toContain("Unexpected token");
             done();
-        }
+        });
     });
 });

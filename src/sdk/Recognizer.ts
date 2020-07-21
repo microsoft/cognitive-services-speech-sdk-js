@@ -222,7 +222,7 @@ export abstract class Recognizer {
 
     }
 
-    public async startContinuousRecognitionAsyncImpl(recognitionMode: RecognitionMode): Promise<void> {
+    protected async startContinuousRecognitionAsyncImpl(recognitionMode: RecognitionMode): Promise<void> {
         Contracts.throwIfDisposed(this.privDisposed);
 
         await this.implRecognizerStop();
