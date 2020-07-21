@@ -11,7 +11,7 @@ import {
     TranslationConnectionFactory,
     TranslationServiceRecognizer,
 } from "../common.speech/Exports";
-import { marshalProimseToCallbacks } from "../common/Exports";
+import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -182,7 +182,7 @@ export class TranslationRecognizer extends Recognizer {
      */
     public recognizeOnceAsync(cb?: (e: TranslationRecognitionResult) => void, err?: (e: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-        marshalProimseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Conversation), cb, err);
+        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -195,7 +195,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        marshalProimseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
+        marshalPromiseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -207,7 +207,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        marshalProimseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
+        marshalPromiseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
     }
 
     /**
@@ -218,7 +218,7 @@ export class TranslationRecognizer extends Recognizer {
      */
     public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-        marshalProimseToCallbacks(this.dispose(true), cb, errorCb);
+        marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
     protected async dispose(disposing: boolean): Promise<void> {

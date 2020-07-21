@@ -3,7 +3,13 @@
 // Multi-device Conversation is a Preview feature.
 
 import { ConversationConnectionConfig } from "../../common.speech/Exports";
-import { IDisposable, IErrorMessages } from "../../common/Exports";
+import {
+    BackgroundEvent,
+    Events,
+    IDisposable,
+    IErrorMessages,
+    marshalPromiseToCallbacks
+} from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
     AudioConfig,
@@ -191,31 +197,17 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      */
     public leaveConversationAsync(cb?: Callback, err?: Callback): void {
 
-        try {
+        marshalPromiseToCallbacks((async (): Promise<void> => {
 
             // stop the speech websocket
-            this.cancelSpeech().catch();
-
+            await this.cancelSpeech();
             // stop the websocket
-            this.privConversation.endConversationAsync(
-                (() => {
-                    // https delete request
-                    this.privConversation.deleteConversationAsync(
-                        (() => {
-                            this.handleCallback(cb, err);
-                            this.dispose();
-                        }),
-                        ((error: any) => {
-                            this.handleError(error, err);
-                        }));
-                }),
-                ((error: any) => {
-                    this.handleError(error, err);
-                }));
+            await this.privConversation.endConversationImplAsync();
+            // https delete request
+            await this.privConversation.deleteConversationImplAsync();
+            this.dispose();
 
-        } catch (error) {
-            this.handleError(error, err);
-        }
+        })(), cb, err);
     }
 
     /**
@@ -243,56 +235,28 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param err
      */
     public startTranscribingAsync(cb?: Callback, err?: Callback): void {
+        marshalPromiseToCallbacks((async (): Promise<void> => {
+            try {
+                Contracts.throwIfNullOrUndefined(this.privConversation, this.privErrors.permissionDeniedSend);
+                Contracts.throwIfNullOrUndefined(this.privConversation.room.token, this.privErrors.permissionDeniedConnect);
 
-        try {
-            Contracts.throwIfNullOrUndefined(this.privConversation, this.privErrors.permissionDeniedSend);
-            Contracts.throwIfNullOrUndefined(this.privConversation.room.token, this.privErrors.permissionDeniedConnect);
+                if (!this.canSpeak) {
+                    this.handleError(new Error(this.privErrors.permissionDeniedSend), err);
+                }
 
-            if (!this.canSpeak) {
-                this.handleError(new Error(this.privErrors.permissionDeniedSend), err);
+                if (this.privTranslationRecognizer === undefined) {
+                    await this.connectTranslatorRecognizer();
+                }
+                await this.startContinuousRecognition();
+
+                this.privIsSpeaking = true;
+            } catch (error) {
+                this.privIsSpeaking = false;
+                // this.fireCancelEvent(error);
+                await this.cancelSpeech();
+                throw error;
             }
-
-            if (this.privTranslationRecognizer === undefined) {
-                this.connectTranslatorRecognizer(
-                    (() => {
-                        this.startContinuousRecognition(
-                            (() => {
-                                this.privIsSpeaking = true;
-                                this.handleCallback(cb, err);
-                            }),
-                            ((error: any) => {
-
-                                this.privIsSpeaking = false;
-                                // this.fireCancelEvent(error);
-                                this.cancelSpeech().catch();
-                                this.handleError(error, err);
-                            }));
-                    }),
-                    ((error: any) => {
-                        this.handleError(error, err);
-                    }));
-            } else {
-                this.startContinuousRecognition(
-                    (() => {
-                        this.privIsSpeaking = true;
-                        this.handleCallback(cb, err);
-                    }),
-                    ((error: any) => {
-                        this.privIsSpeaking = false;
-                        // this.fireCancelEvent(error);
-                        this.cancelSpeech().catch();
-
-                        this.handleError(error, err);
-                    }));
-            }
-
-        } catch (error) {
-
-            this.handleError(error, err);
-
-            this.cancelSpeech().catch();
-
-        }
+        })(), cb, err);
     }
 
     /**
@@ -301,47 +265,45 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param err
      */
     public stopTranscribingAsync(cb?: Callback, err?: Callback): void {
+        marshalPromiseToCallbacks((async (): Promise<void> => {
+            try {
+                if (!this.privIsSpeaking) {
+                    // stop speech
+                    await this.cancelSpeech();
+                    return;
+                }
 
-        try {
-            if (!this.privIsSpeaking) {
-                // stop speech
-                this.cancelSpeech().catch();
-                this.handleCallback(cb, err);
-                return;
+                // stop the recognition but leave the websocket open
+                this.privIsSpeaking = false;
+                await new Promise((resolve: () => void, reject: (error: string) => void): void => {
+                    this.privTranslationRecognizer?.stopContinuousRecognitionAsync(resolve, reject);
+                });
+
+            } catch (error) {
+                await this.cancelSpeech();
             }
-
-            // stop the recognition but leave the websocket open
-            this.privIsSpeaking = false;
-            this.privTranslationRecognizer?.stopContinuousRecognitionAsync(() => {
-                this.handleCallback(cb, err);
-            }, (error: any) => {
-                this.handleError(error, err);
-                this.cancelSpeech().catch();
-            });
-
-        } catch (error) {
-            this.handleError(error, err);
-            this.cancelSpeech().catch();
-        }
+        })(), cb, err);
     }
 
     public isDisposed(): boolean {
         return this.privIsDisposed;
     }
 
-    public dispose(reason?: string): void {
-        if (this.isDisposed && !this.privIsSpeaking) {
-            return;
-        }
-        this.cancelSpeech().catch();
-        this.privIsDisposed = true;
-        this.privSpeechTranslationConfig?.close();
-        this.privSpeechRecognitionLanguage = undefined;
-        this.privProperties = undefined;
-        this.privAudioConfig = undefined;
-        this.privSpeechTranslationConfig = undefined;
-        this.privConversation?.dispose(); // .catch();
-        this.privConversation = undefined;
+    public dispose(reason?: string, success?: () => void, err?: (error: string) => void): void {
+        marshalPromiseToCallbacks((async (): Promise<void> => {
+            if (this.isDisposed && !this.privIsSpeaking) {
+                return;
+            }
+            await this.cancelSpeech();
+            this.privIsDisposed = true;
+            this.privSpeechTranslationConfig?.close();
+            this.privSpeechRecognitionLanguage = undefined;
+            this.privProperties = undefined;
+            this.privAudioConfig = undefined;
+            this.privSpeechTranslationConfig = undefined;
+            this.privConversation?.dispose();
+            this.privConversation = undefined;
+        })(), success, err);
     }
 
     /**
@@ -352,8 +314,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
-    private connectTranslatorRecognizer(cb?: Callback, err?: Callback): void {
-
+    private async connectTranslatorRecognizer(): Promise<void> {
         try {
 
             if (this.privAudioConfig === undefined) {
@@ -386,16 +347,9 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
             this.privTranslationRecognizer.canceled = this.onSpeechCanceled;
             this.privTranslationRecognizer.sessionStarted = this.onSpeechSessionStarted;
             this.privTranslationRecognizer.sessionStopped = this.onSpeechSessionStopped;
-
-            this.handleCallback(cb, err);
-
         } catch (error) {
-
-            this.handleError(error, err);
-
-            this.cancelSpeech().catch();
-            // this.fireCancelEvent(error); ?
-
+            await this.cancelSpeech();
+            throw error;
         }
     }
 
@@ -404,8 +358,10 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
      * @param cb
      * @param err
      */
-    private startContinuousRecognition(cb?: Callback, err?: Callback): void {
-        this.privTranslationRecognizer.startContinuousRecognitionAsync(cb, err);
+    private startContinuousRecognition(): Promise<void> {
+        return new Promise((resolve: () => void, reject: (error: string) => void): void => {
+            this.privTranslationRecognizer.startContinuousRecognitionAsync(resolve, reject);
+        });
     }
 
     /** Recognizer callbacks */

@@ -12,7 +12,7 @@ import {
     ServiceRecognizerBase,
     SpeechServiceConfig,
 } from "../common.speech/Exports";
-import { marshalProimseToCallbacks } from "../common/Exports";
+import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -158,7 +158,7 @@ export class IntentRecognizer extends Recognizer {
             intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
         }
 
-        marshalProimseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Interactive), cb, err);
+        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Interactive), cb, err);
     }
 
     /**
@@ -181,7 +181,7 @@ export class IntentRecognizer extends Recognizer {
             intentReco.setIntents(this.privAddedLmIntents, this.privUmbrellaIntent);
         }
 
-        marshalProimseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
+        marshalPromiseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -193,7 +193,7 @@ export class IntentRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        marshalProimseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
+        marshalPromiseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
     }
 
     /**
@@ -298,7 +298,7 @@ export class IntentRecognizer extends Recognizer {
     public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
 
-        marshalProimseToCallbacks(this.dispose(true), cb, errorCb);
+        marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {

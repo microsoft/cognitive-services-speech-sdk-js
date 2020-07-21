@@ -3,10 +3,12 @@
 
 import { ReplayableAudioNode } from "../common.browser/Exports";
 import {
+    BackgroundEvent,
     ConnectionMessage,
     createGuid,
     createNoDashGuid,
     Deferred,
+    Events,
     IAudioSource,
     IAudioStreamNode,
     IConnection,
@@ -484,7 +486,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             }
         };
 
-        loop().catch();
+        loop().catch((reason: string): void => {
+            Events.instance.onEvent(new BackgroundEvent(reason));
+        });
+
         return communicationCustodian.promise;
     }
 

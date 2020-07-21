@@ -188,7 +188,7 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
                 intView.set(new Int8Array(tmpBuffer), totalBytes);
                 totalBytes += tmpBuffer.byteLength;
             } else {
-                await this.privStream.close();
+                await this.privStream.readEnded();
             }
         }
         return totalBytes;

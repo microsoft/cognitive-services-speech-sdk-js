@@ -14,7 +14,7 @@ import {
 } from "../common.speech/Exports";
 import {
     Deferred,
-    marshalProimseToCallbacks
+    marshalPromiseToCallbacks
 } from "../common/Exports";
 import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
@@ -112,7 +112,7 @@ export class DialogServiceConnector extends Recognizer {
      * If disconnect() is called during a recognition, recognition will fail and cancel with an error.
      */
     public disconnect(cb?: () => void, err?: (error: string) => void): void {
-        marshalProimseToCallbacks(this.privReco.disconnect(), cb, err);
+        marshalPromiseToCallbacks(this.privReco.disconnect(), cb, err);
     }
 
     /**
@@ -199,14 +199,14 @@ export class DialogServiceConnector extends Recognizer {
                 this.dispose(true).catch(() => { });
             });
 
-            marshalProimseToCallbacks(retPromise.finally((): void => {
+            marshalPromiseToCallbacks(retPromise.finally((): void => {
                 this.isTurnComplete = true;
             }), cb, err);
         }
     }
 
     public sendActivityAsync(activity: string, cb?: () => void, errCb?: (error: string) => void): void {
-        marshalProimseToCallbacks((this.privReco as DialogServiceAdapter).sendMessage(activity), cb, errCb);
+        marshalPromiseToCallbacks((this.privReco as DialogServiceAdapter).sendMessage(activity), cb, errCb);
     }
 
     /**
@@ -218,7 +218,7 @@ export class DialogServiceConnector extends Recognizer {
     public close(cb?: () => void, err?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privIsDisposed);
 
-        marshalProimseToCallbacks(this.dispose(true), cb, err);
+        marshalPromiseToCallbacks(this.dispose(true), cb, err);
     }
 
     protected async dispose(disposing: boolean): Promise<void> {

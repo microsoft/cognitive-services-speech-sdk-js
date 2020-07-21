@@ -10,7 +10,7 @@ import {
     SpeakerIdMessageAdapter,
     SpeakerRecognitionConfig,
 } from "../common.speech/Exports";
-import { marshalProimseToCallbacks } from "../common/Exports";
+import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfig, AudioConfigImpl } from "./audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -98,10 +98,10 @@ export class SpeakerRecognizer {
 
         if (model instanceof SpeakerIdentificationModel) {
             const responsePromise: Promise<IRestResponse> = this.privAdapter.identifySpeaker(model, this.privAudioConfigImpl);
-            marshalProimseToCallbacks(this.getResult(responsePromise, SpeakerRecognitionResultType.Identify, undefined), cb, err);
+            marshalPromiseToCallbacks(this.getResult(responsePromise, SpeakerRecognitionResultType.Identify, undefined), cb, err);
         } else if (model instanceof SpeakerVerificationModel) {
             const responsePromise: Promise<IRestResponse> = this.privAdapter.verifySpeaker(model, this.privAudioConfigImpl);
-            marshalProimseToCallbacks(this.getResult(responsePromise, SpeakerRecognitionResultType.Verify, model.voiceProfile.profileId), cb, err);
+            marshalPromiseToCallbacks(this.getResult(responsePromise, SpeakerRecognitionResultType.Verify, model.voiceProfile.profileId), cb, err);
         } else {
             throw new Error("SpeakerRecognizer.recognizeOnce: Unexpected model type");
         }

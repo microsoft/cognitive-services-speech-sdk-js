@@ -8,6 +8,10 @@ import {
     ServiceRecognizerBase,
     SpeechServiceConfig
 } from "../../common.speech/Exports";
+import {
+    BackgroundEvent,
+    Events
+} from "../../common/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
 import { Contracts } from "../../sdk/Contracts";
 import {
@@ -150,7 +154,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 }
             }
             // Destroy the recognizer.
-            this.dispose(true).catch();
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -188,7 +195,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true).catch();
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -227,7 +237,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true).catch();
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -266,7 +279,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true).catch();
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -305,7 +321,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true).catch();
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -352,7 +371,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true).catch();
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -392,7 +414,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true).catch();
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 

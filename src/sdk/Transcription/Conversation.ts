@@ -21,7 +21,7 @@ import {
 import {
     IDisposable,
     IErrorMessages,
-    marshalProimseToCallbacks
+    marshalPromiseToCallbacks
 } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
@@ -367,20 +367,15 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param err
      */
     public deleteConversationAsync(cb?: Callback, err?: Callback): void {
-        try {
+        marshalPromiseToCallbacks(this.deleteConversationImplAsync(), cb, err);
+    }
+
+    public async deleteConversationImplAsync(): Promise<void> {
             Contracts.throwIfNullOrUndefined(this.privProperties, this.privErrors.permissionDeniedConnect);
             Contracts.throwIfNullOrWhitespace(this.privRoom.token, this.privErrors.permissionDeniedConnect);
-            this.privManager.leave(this.privProperties, this.privRoom.token,
-                (() => {
-                    this.handleCallback(cb, err);
-                }),
-                ((error: any) => {
-                    this.handleError(error, err);
-                }));
+            await this.privManager.leave(this.privProperties, this.privRoom.token);
+
             this.dispose();
-        } catch (error) {
-            this.handleError(error, err);
-        }
     }
 
     /**
@@ -389,7 +384,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param err
      */
     public endConversationAsync(cb?: Callback, err?: Callback): void {
-        marshalProimseToCallbacks(this.close(true), cb, err);
+        marshalPromiseToCallbacks(this.endConversationImplAsync(), cb, err);
+    }
+
+    public endConversationImplAsync(): Promise<void> {
+        return this.close(true);
     }
 
     /**

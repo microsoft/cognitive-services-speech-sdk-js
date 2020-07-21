@@ -215,6 +215,9 @@ export class FileAudioSource implements IAudioSource {
             throw new Error(errorMsg);
         };
 
+        const chunk = this.privFile.slice(44);
+        reader.readAsArrayBuffer(chunk);
+
         return stream;
     }
 

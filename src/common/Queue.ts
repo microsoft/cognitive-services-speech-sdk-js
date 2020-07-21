@@ -135,8 +135,6 @@ export class Queue<TItem> implements IQueue<TItem> {
                 this.privList = null;
             }
         }
-
-        return Promise.resolve(undefined);
     }
 
     public async dispose(reason?: string): Promise<void> {

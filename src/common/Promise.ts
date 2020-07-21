@@ -210,7 +210,7 @@ export class Sink<T> {
     }
 }
 
-export function marshalProimseToCallbacks<T>(
+export function marshalPromiseToCallbacks<T>(
     promise: Promise<T>,
     cb?: (value: T) => void,
     err?: (error: string) => void): void {

@@ -3,6 +3,7 @@
 
 import {
     ArgumentNullError,
+    BackgroundEvent,
     ConnectionClosedEvent,
     ConnectionErrorEvent,
     ConnectionEstablishedEvent,
@@ -120,7 +121,9 @@ export class WebsocketMessageAdapter {
             this.privReceivingMessageQueue = new Queue<ConnectionMessage>();
             this.privDisconnectDeferral = new Deferred<void>();
             this.privSendMessageQueue = new Queue<ISendItem>();
-            this.processSendQueue().catch();
+            this.processSendQueue().catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
         } catch (error) {
             this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(500, error));
             return this.privConnectionEstablishDeferral.promise;
@@ -153,7 +156,9 @@ export class WebsocketMessageAdapter {
                 this.onEvent(new ConnectionClosedEvent(this.privConnectionId, e.code, e.reason));
             }
 
-            this.onClose(e.code, e.reason).catch();
+            this.onClose(e.code, e.reason).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
         };
 
         this.privWebsocketClient.onmessage = (e: { data: ws.Data; type: string; target: WebSocket | ws }) => {
@@ -266,7 +271,6 @@ export class WebsocketMessageAdapter {
         const closeReason = `Connection closed. ${code}: ${reason}`;
         this.privConnectionState = ConnectionState.Disconnected;
         this.privDisconnectDeferral.resolve();
-        await this.privReceivingMessageQueue.dispose(reason);
         await this.privReceivingMessageQueue.drainAndDispose((pendingReceiveItem: ConnectionMessage) => {
             // TODO: Events for these ?
             // Logger.instance.onEvent(new LoggingEvent(LogType.Warning, null, `Failed to process received message. Reason: ${closeReason}, Message: ${JSON.stringify(pendingReceiveItem)}`));

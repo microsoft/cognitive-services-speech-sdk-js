@@ -15,7 +15,7 @@ import {
 } from "../common.speech/Exports";
 import {
     Deferred,
-    marshalProimseToCallbacks
+    marshalPromiseToCallbacks
 } from "../common/Exports";
 import {
     Contracts
@@ -94,7 +94,7 @@ export abstract class Recognizer {
      */
     public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposed);
-        marshalProimseToCallbacks(this.dispose(true), cb, errorCb);
+        marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
     /**

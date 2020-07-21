@@ -3,7 +3,9 @@
 
 import { SynthesisAdapterBase } from "../../common.speech/Exports";
 import {
+    BackgroundEvent,
     createNoDashGuid,
+    Events,
     IAudioDestination,
     INumberDictionary
 } from "../../common/Exports";
@@ -126,16 +128,23 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                     this.privMediaSource.duration = MediaDurationPlaceholderSeconds;
                     this.privSourceBuffer = this.privMediaSource.addSourceBuffer(mimeType);
                     this.privSourceBuffer.onupdate = (_: Event) => {
-                        this.updateSourceBuffer().catch();
+                        this.updateSourceBuffer().catch((reason: string): void => {
+                            Events.instance.onEvent(new BackgroundEvent(reason));
+                        });
                     };
                     this.privSourceBuffer.onupdateend = (_: Event) => {
-                        this.handleSourceBufferUpdateEnd().catch();
+                        this.handleSourceBufferUpdateEnd().catch((reason: string): void => {
+                            Events.instance.onEvent(new BackgroundEvent(reason));
+                        });
                     };
                     this.privSourceBuffer.onupdatestart = (_: Event) => {
                         this.privAppendingToBuffer = false;
                     };
                 };
-                this.updateSourceBuffer().catch();
+                this.updateSourceBuffer().catch((reason: string): void => {
+                    Events.instance.onEvent(new BackgroundEvent(reason));
+                });
+
             } else {
                 // tslint:disable-next-line:no-console
                 console.warn(
