@@ -45,8 +45,6 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
-import delay from "delay";
-
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
     private privConnectionFactory: IConnectionFactory;
@@ -637,7 +635,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 }
 
                 if (0 !== sendDelay) {
-                    await delay(sendDelay);
+                    await this.delay(sendDelay);
                 }
 
                 if (payload !== null) {
@@ -669,6 +667,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         };
 
         return readAndUploadCycle();
+    }
+
+    private delay(delayMs: number): Promise<void> {
+        return new Promise((resolve: () => void, reject: (error: string) => void) => {
+            this.privSetTimeout(resolve, delayMs);
+        });
     }
 
     private writeBufferToConsole(buffer: ArrayBuffer): void {
