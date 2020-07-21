@@ -219,7 +219,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             });
     }, 15000);
 
-    test("Connect / Disconnect", (done: jest.DoneCallback) => {
+    test.only("Connect / Disconnect", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: Connect / Disconnect");
 
@@ -230,6 +230,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(connector);
 
         let connected: boolean = false;
+        let disconnected: boolean = false;
         const connection: sdk.Connection = sdk.Connection.fromRecognizer(connector);
 
         expect(connector).not.toBeUndefined();
@@ -244,7 +245,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         };
 
         connection.disconnected = (args: sdk.ConnectionEventArgs) => {
-            done();
+            disconnected = true;
         };
 
         connection.openConnection(undefined, (error: string): void => {
@@ -254,7 +255,13 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         WaitForCondition(() => {
             return connected;
         }, () => {
-            connection.closeConnection();
+            connection.closeConnection(() => {
+                if (!!disconnected) {
+                    done();
+                } else {
+                    done.fail("Did not disconnect before returning");
+                }
+            });
         });
     });
 

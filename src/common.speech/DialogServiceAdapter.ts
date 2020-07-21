@@ -364,9 +364,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         const loop = async (): Promise<void> => {
             try {
-                const connection: IConnection = await this.fetchConnection();
-                const message: ConnectionMessage = await connection.read();
-
                 const isDisposed: boolean = this.isDisposed();
                 const terminateMessageLoop = (!this.isDisposed() && this.terminateMessageLoop);
                 if (isDisposed || terminateMessageLoop) {
@@ -374,6 +371,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     communicationCustodian.resolve(undefined);
                     return;
                 }
+
+                const connection: IConnection = await this.fetchConnection();
+                const message: ConnectionMessage = await connection.read();
 
                 if (!message) {
                     return loop();

@@ -268,17 +268,17 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             CancellationErrorCode.NoError,
             "Disconnecting");
 
+        if (this.disconnectOverride !== undefined) {
+            await this.disconnectOverride();
+        }
+
         try {
             await (await this.privConnectionPromise).dispose();
         } catch (error) {
 
         }
-        this.privConnectionPromise = null;
 
-        if (this.disconnectOverride !== undefined) {
-            await this.disconnectOverride();
-            return;
-        }
+        this.privConnectionPromise = null;
     }
 
     // Called when telemetry data is sent to the service.
