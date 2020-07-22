@@ -8,9 +8,7 @@ import {
     Events,
     IDetachable,
     IEventSource,
-    PlatformEvent,
-    Promise,
-    PromiseState
+    PlatformEvent
 } from "../common/Exports";
 import {
     ConnectingToServiceEvent,
@@ -39,16 +37,17 @@ export class RequestSession {
     private privBytesSent: number = 0;
     private privRecogNumber: number = 0;
     private privSessionId: string;
-    private privTurnDeferral: Deferred<boolean>;
+    private privTurnDeferral: Deferred<void>;
+    private privInTurn: boolean = false;
 
     constructor(audioSourceId: string) {
         this.privAudioSourceId = audioSourceId;
         this.privRequestId = createNoDashGuid();
         this.privAudioNodeId = createNoDashGuid();
-        this.privTurnDeferral = new Deferred<boolean>();
+        this.privTurnDeferral = new Deferred<void>();
 
         // We're not in a turn, so resolve.
-        this.privTurnDeferral.resolve(true);
+        this.privTurnDeferral.resolve();
     }
 
     public get sessionId(): string {
@@ -63,8 +62,8 @@ export class RequestSession {
         return this.privAudioNodeId;
     }
 
-    public get turnCompletionPromise(): Promise<boolean> {
-        return this.privTurnDeferral.promise();
+    public get turnCompletionPromise(): Promise<void> {
+        return this.privTurnDeferral.promise;
     }
 
     public get isSpeechEnded(): boolean {
@@ -105,12 +104,12 @@ export class RequestSession {
         this.onEvent(new RecognitionTriggeredEvent(this.requestId, this.privSessionId, this.privAudioSourceId, this.privAudioNodeId));
     }
 
-    public onAudioSourceAttachCompleted = (audioNode: ReplayableAudioNode, isError: boolean, error?: string): void => {
+    public async onAudioSourceAttachCompleted(audioNode: ReplayableAudioNode, isError: boolean, error?: string): Promise<void> {
         this.privAudioNode = audioNode;
         this.privIsAudioNodeDetached = false;
 
         if (isError) {
-            this.onComplete();
+            await this.onComplete();
         } else {
             this.onEvent(new ListeningStartedEvent(this.privRequestId, this.privSessionId, this.privAudioSourceId, this.privAudioNodeId));
         }
@@ -122,13 +121,13 @@ export class RequestSession {
         this.onEvent(new ConnectingToServiceEvent(this.privRequestId, this.privAuthFetchEventId, this.privSessionId));
     }
 
-    public onAuthCompleted = (isError: boolean, error?: string): void => {
+    public async onAuthCompleted(isError: boolean, error?: string): Promise<void> {
         if (isError) {
-            this.onComplete();
+            await this.onComplete();
         }
     }
 
-    public onConnectionEstablishCompleted = (statusCode: number, reason?: string): void => {
+    public async onConnectionEstablishCompleted(statusCode: number, reason?: string): Promise<void> {
         if (statusCode === 200) {
             this.onEvent(new RecognitionStartedEvent(this.requestId, this.privAudioSourceId, this.privAudioNodeId, this.privAuthFetchEventId, this.privSessionId));
             if (!!this.privAudioNode) {
@@ -138,15 +137,16 @@ export class RequestSession {
             this.privBytesSent = 0;
             return;
         } else if (statusCode === 403) {
-            this.onComplete();
+            await this.onComplete();
         }
     }
 
-    public onServiceTurnEndResponse = (continuousRecognition: boolean): void => {
-        this.privTurnDeferral.resolve(true);
+    public async onServiceTurnEndResponse(continuousRecognition: boolean): Promise<void> {
+        this.privTurnDeferral.resolve();
 
         if (!continuousRecognition || this.isSpeechEnded) {
-            this.onComplete();
+            await this.onComplete();
+            this.privInTurn = false;
         } else {
             // Start a new request set.
             this.privTurnStartAudioOffset = this.privLastRecoOffset;
@@ -156,12 +156,13 @@ export class RequestSession {
     }
 
     public onServiceTurnStartResponse = (): void => {
-        if (this.privTurnDeferral.state() === PromiseState.None) {
+        if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
         }
 
-        this.privTurnDeferral = new Deferred<boolean>();
+        this.privInTurn = true;
+        this.privTurnDeferral = new Deferred<void>();
     }
 
     public onHypothesis(offset: number): void {
@@ -186,15 +187,16 @@ export class RequestSession {
         this.privBytesSent += bytesSent;
     }
 
-    public dispose = (error?: string): void => {
+    public async dispose(error?: string): Promise<void> {
         if (!this.privIsDisposed) {
             // we should have completed by now. If we did not its an unknown error.
             this.privIsDisposed = true;
             for (const detachable of this.privDetachables) {
-                detachable.detach();
+                await detachable.detach();
             }
 
             this.privServiceTelemetryListener.dispose();
+            this.privIsRecognizing = false;
         }
     }
 
@@ -206,8 +208,8 @@ export class RequestSession {
         }
     }
 
-    public onStopRecognizing(): void {
-        this.onComplete();
+    public async onStopRecognizing(): Promise<void> {
+        await this.onComplete();
     }
 
     // Should be called with the audioNode for this session has indicated that it is out of speech.
@@ -222,18 +224,18 @@ export class RequestSession {
         Events.instance.onEvent(event);
     }
 
-    private onComplete = (): void => {
+    private async onComplete(): Promise<void> {
         if (!!this.privIsRecognizing) {
             this.privIsRecognizing = false;
-            this.detachAudioNode();
+            await this.detachAudioNode();
         }
     }
 
-    private detachAudioNode = (): void => {
+    private async detachAudioNode(): Promise<void> {
         if (!this.privIsAudioNodeDetached) {
             this.privIsAudioNodeDetached = true;
             if (this.privAudioNode) {
-                this.privAudioNode.detach();
+                await this.privAudioNode.detach();
             }
         }
     }

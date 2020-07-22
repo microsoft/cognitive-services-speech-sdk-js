@@ -3,7 +3,6 @@
 
 import { InvalidOperationError } from "./Error";
 import { createNoDashGuid } from "./Guid";
-import { Promise } from "./Promise";
 import { Queue } from "./Queue";
 
 export interface IStreamChunk<TBuffer> {
@@ -64,15 +63,14 @@ export class Stream<TBuffer> {
 
         return this.privReaderQueue
             .dequeue()
-            .onSuccessContinueWith((streamChunk: IStreamChunk<TBuffer>) => {
+            .then(async (streamChunk: IStreamChunk<TBuffer>) => {
                 if (streamChunk === undefined || streamChunk.isEnd) {
-                    this.privReaderQueue.dispose("End of stream reached");
+                    await this.privReaderQueue.dispose("End of stream reached");
                 }
 
                 return streamChunk;
             });
     }
-
     public readEnded = (): void => {
         if (!this.privIsReadEnded) {
             this.privIsReadEnded = true;

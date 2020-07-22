@@ -6,12 +6,8 @@ import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.b
 import { Events, EventType, PlatformEvent } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
+import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
-
-import * as fs from "fs";
-
-import { setTimeout } from "timers";
-import { WaitForCondition } from "./Utilities";
 
 let objsToClose: any[];
 
@@ -31,14 +27,11 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
-    });
+    await closeAsyncObjects(objsToClose);
+    done();
 });
 
 export const BuildRecognizer: (speechConfig?: sdk.SpeechConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig, fileName?: string): sdk.SpeechRecognizer => {

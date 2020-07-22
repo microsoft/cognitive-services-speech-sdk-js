@@ -3,8 +3,7 @@
 
 import {
     ArgumentNullError,
-    Deferred,
-    Promise,
+    Deferred
 } from "../common/Exports";
 import { IRequestOptions } from "./Exports";
 
@@ -103,7 +102,7 @@ export class RestMessageAdapter {
             xhr.send();
         }
 
-        return responseReceivedDeferral.promise();
+        return responseReceivedDeferral.promise;
     }
 
     private parseXHRResult(xhr: XMLHttpRequest | XHR.XMLHttpRequest): IRestResponse {

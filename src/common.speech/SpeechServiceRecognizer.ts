@@ -61,7 +61,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         }
     }
 
-    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
+    protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         let result: SpeechRecognitionResult;
         const resultProps: PropertyCollection = new PropertyCollection();
@@ -110,7 +110,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 if (ResultReason.Canceled === resultReason) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
 
-                    this.cancelRecognitionLocal(
+                    await this.cancelRecognitionLocal(
                         cancelReason,
                         EnumTranslation.implTranslateCancelErrorCode(simple.RecognitionStatus),
                         undefined);

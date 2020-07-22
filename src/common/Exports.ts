@@ -30,3 +30,4 @@ export * from "./ChunkedArrayBufferStream";
 export * from "./IAudioDestination";
 export * from "./Timeout";
 export * from "./OCSPEvents";
+export * from "./BackgroundError";

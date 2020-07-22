@@ -144,60 +144,49 @@ export class ConversationManager {
      * @param sessionToken
      * @param callback
      */
-    public leave(args: PropertyCollection, sessionToken: string, cb?: any, err?: any): void {
+    public leave(args: PropertyCollection, sessionToken: string): Promise<void> {
+        return new Promise<void>((resolve: () => void, reject: (reason: string) => void): void => {
+            try {
 
-        try {
+                Contracts.throwIfNullOrUndefined(args, this.privErrors.invalidArgs.replace("{arg}", "config"));
+                Contracts.throwIfNullOrWhitespace(sessionToken, this.privErrors.invalidArgs.replace("{arg}", "token"));
 
-            Contracts.throwIfNullOrUndefined(args, this.privErrors.invalidArgs.replace("{arg}", "config"));
-            Contracts.throwIfNullOrWhitespace(sessionToken, this.privErrors.invalidArgs.replace("{arg}", "token"));
+                const endpointHost: string = args.getProperty(PropertyId.ConversationTranslator_Host, this.privHost);
+                const correlationId: string = args.getProperty(PropertyId.ConversationTranslator_CorrelationId);
 
-            const endpointHost: string = args.getProperty(PropertyId.ConversationTranslator_Host, this.privHost);
-            const correlationId: string = args.getProperty(PropertyId.ConversationTranslator_CorrelationId);
+                const queryParams: IStringDictionary<string> = {};
+                queryParams[this.privRequestParams.apiVersion] = this.privApiVersion;
+                queryParams[this.privRequestParams.sessionToken] = sessionToken;
 
-            const queryParams: IStringDictionary<string> = {};
-            queryParams[this.privRequestParams.apiVersion] = this.privApiVersion;
-            queryParams[this.privRequestParams.sessionToken] = sessionToken;
-
-            const headers: IStringDictionary<string> = {};
-            if (correlationId) {
-                headers[this.privRequestParams.correlationId] = correlationId;
-            }
-
-            const config: IRequestOptions = {};
-            config.headers = headers;
-
-            const endpoint: string = `https://${endpointHost}${this.privRestPath}`;
-
-            // TODO: support a proxy and certificate validation
-            request("delete", endpoint, queryParams, null, config, (response: IResponse) => {
-
-                if (!response.ok) {
-                    // ignore errors on delete
+                const headers: IStringDictionary<string> = {};
+                if (correlationId) {
+                    headers[this.privRequestParams.correlationId] = correlationId;
                 }
 
-                if (!!cb) {
-                    try {
-                        cb();
-                    } catch (e) {
-                        if (!!err) {
-                            err(e);
-                        }
+                const config: IRequestOptions = {};
+                config.headers = headers;
+
+                const endpoint: string = `https://${endpointHost}${this.privRestPath}`;
+
+                // TODO: support a proxy and certificate validation
+                request("delete", endpoint, queryParams, null, config, (response: IResponse) => {
+
+                    if (!response.ok) {
+                        // ignore errors on delete
                     }
-                    cb = undefined;
-                }
-            });
 
-        } catch (error) {
-            if (!!err) {
+                    resolve();
+                });
+
+            } catch (error) {
                 if (error instanceof Error) {
                     const typedError: Error = error as Error;
-                    err(typedError.name + ": " + typedError.message);
+                    reject(typedError.name + ": " + typedError.message);
 
                 } else {
-                    err(error);
+                    reject(error);
                 }
             }
-        }
+        });
     }
-
 }

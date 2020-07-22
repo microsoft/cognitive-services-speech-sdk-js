@@ -6,7 +6,6 @@ import { ConnectionMessage } from "./ConnectionMessage";
 import { ConnectionOpenResponse } from "./ConnectionOpenResponse";
 import { EventSource } from "./EventSource";
 import { IDisposable } from "./IDisposable";
-import { Promise } from "./Promise";
 
 export enum ConnectionState {
     None,
@@ -15,11 +14,12 @@ export enum ConnectionState {
     Disconnected,
 }
 
-export interface IConnection extends IDisposable {
+export interface IConnection {
     id: string;
     state(): ConnectionState;
     open(): Promise<ConnectionOpenResponse>;
-    send(message: ConnectionMessage): Promise<boolean>;
+    send(message: ConnectionMessage): Promise<void>;
     read(): Promise<ConnectionMessage>;
     events: EventSource<ConnectionEvent>;
+    dispose(disposing?: string): Promise<void>;
 }

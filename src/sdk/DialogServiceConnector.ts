@@ -12,6 +12,10 @@ import {
     ServiceRecognizerBase,
     SpeechServiceConfig,
 } from "../common.speech/Exports";
+import {
+    Deferred,
+    marshalPromiseToCallbacks
+} from "../common/Exports";
 import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
@@ -97,8 +101,8 @@ export class DialogServiceConnector extends Recognizer {
      * @function
      * @public
      */
-    public connect(): void {
-        this.privReco.connect();
+    public connect(cb?: () => void, err?: (error: string) => void): void {
+        marshalPromiseToCallbacks(this.privReco.connect(), cb, err);
     }
 
     /**
@@ -107,8 +111,8 @@ export class DialogServiceConnector extends Recognizer {
      *
      * If disconnect() is called during a recognition, recognition will fail and cancel with an error.
      */
-    public disconnect(): void {
-        this.privReco.disconnect();
+    public disconnect(cb?: () => void, err?: (error: string) => void): void {
+        marshalPromiseToCallbacks(this.privReco.disconnect(), cb, err);
     }
 
     /**
@@ -172,56 +176,37 @@ export class DialogServiceConnector extends Recognizer {
      */
     public listenOnceAsync(cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
         if (this.isTurnComplete) {
-            try {
-                Contracts.throwIfDisposed(this.privIsDisposed);
-
-                this.connect();
-
-                this.implRecognizerStop();
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            const callbackHolder = async (): Promise<SpeechRecognitionResult> => {
+                await this.privReco.connect();
+                await this.implRecognizerStop();
                 this.isTurnComplete = false;
 
-                this.privReco.recognize(
-                    RecognitionMode.Conversation,
-                    (e: SpeechRecognitionResult) => {
-                        this.implRecognizerStop();
+                const ret: Deferred<SpeechRecognitionResult> = new Deferred<SpeechRecognitionResult>();
+                await this.privReco.recognize(RecognitionMode.Conversation, ret.resolve, ret.reject);
 
-                        this.isTurnComplete = true;
+                const e: SpeechRecognitionResult = await ret.promise;
+                await this.implRecognizerStop();
 
-                        if (!!cb) {
-                            cb(e);
-                        }
-                    },
-                    (e: string) => {
-                        this.implRecognizerStop();
-                        this.isTurnComplete = true;
-                        if (!!err) {
-                            err(e);
-                        }
-                        /* tslint:disable:no-empty */
-                    }).on((_: boolean): void => { },
-                        (error: string): void => {
-                            if (!!err) {
-                                err(error);
-                            }
-                        });
-            } catch (error) {
-                if (!!err) {
-                    if (error instanceof Error) {
-                        const typedError: Error = error as Error;
-                        err(typedError.name + ": " + typedError.message);
-                    } else {
-                        err(error);
-                    }
-                }
+                return e;
+            };
 
+            const retPromise: Promise<SpeechRecognitionResult> = callbackHolder();
+
+            retPromise.catch(() => {
                 // Destroy the recognizer.
-                this.dispose(true);
-            }
+                /* tslint:disable:no-empty */ // We've done all we can here.
+                this.dispose(true).catch(() => { });
+            });
+
+            marshalPromiseToCallbacks(retPromise.finally((): void => {
+                this.isTurnComplete = true;
+            }), cb, err);
         }
     }
 
-    public sendActivityAsync(activity: string): void {
-        this.privReco.sendMessage(activity);
+    public sendActivityAsync(activity: string, cb?: () => void, errCb?: (error: string) => void): void {
+        marshalPromiseToCallbacks((this.privReco as DialogServiceAdapter).sendMessage(activity), cb, errCb);
     }
 
     /**
@@ -230,21 +215,21 @@ export class DialogServiceConnector extends Recognizer {
      * @function
      * @public
      */
-    public close(): void {
+    public close(cb?: () => void, err?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privIsDisposed);
 
-        this.dispose(true);
+        marshalPromiseToCallbacks(this.dispose(true), cb, err);
     }
 
-    protected dispose(disposing: boolean): boolean {
+    protected async dispose(disposing: boolean): Promise<void> {
         if (this.privIsDisposed) {
             return;
         }
 
         if (disposing) {
-            this.implRecognizerStop();
             this.privIsDisposed = true;
-            super.dispose(disposing);
+            await this.implRecognizerStop();
+            await super.dispose(disposing);
         }
     }
 

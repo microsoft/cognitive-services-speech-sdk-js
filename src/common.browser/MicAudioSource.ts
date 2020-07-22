@@ -24,8 +24,6 @@ import {
     IAudioSource,
     IAudioStreamNode,
     IStringDictionary,
-    Promise,
-    PromiseHelper,
     Stream,
 } from "../common/Exports";
 import {
@@ -53,7 +51,7 @@ export class MicAudioSource implements IAudioSource {
 
     private privEvents: EventSource<AudioSourceEvent>;
 
-    private privInitializeDeferral: Deferred<boolean>;
+    private privInitializeDeferral: Deferred<void>;
 
     private privMediaStream: MediaStream;
 
@@ -74,19 +72,19 @@ export class MicAudioSource implements IAudioSource {
     }
 
     public get format(): Promise<AudioStreamFormatImpl> {
-        return PromiseHelper.fromResult(MicAudioSource.AUDIOFORMAT);
+        return Promise.resolve(MicAudioSource.AUDIOFORMAT);
     }
 
     public get blob(): Promise<Blob> {
-        return PromiseHelper.fromError("Not implemented for Mic input");
+        return Promise.reject("Not implemented for Mic input");
     }
 
-    public turnOn = (): Promise<boolean> => {
+    public turnOn = (): Promise<void> => {
         if (this.privInitializeDeferral) {
-            return this.privInitializeDeferral.promise();
+            return this.privInitializeDeferral.promise;
         }
 
-        this.privInitializeDeferral = new Deferred<boolean>();
+        this.privInitializeDeferral = new Deferred<void>();
 
         try {
             this.createAudioContext();
@@ -97,7 +95,7 @@ export class MicAudioSource implements IAudioSource {
             } else {
                 this.privInitializeDeferral.reject(error);
             }
-            return this.privInitializeDeferral.promise();
+            return this.privInitializeDeferral.promise;
         }
 
         const nav = window.navigator as INavigator;
@@ -130,7 +128,7 @@ export class MicAudioSource implements IAudioSource {
                     (mediaStream: MediaStream) => {
                         this.privMediaStream = mediaStream;
                         this.onEvent(new AudioSourceReadyEvent(this.privId));
-                        this.privInitializeDeferral.resolve(true);
+                        this.privInitializeDeferral.resolve();
                     }, (error: MediaStreamError) => {
                         const errorMsg = `Error occurred during microphone initialization: ${error}`;
                         const tmp = this.privInitializeDeferral;
@@ -157,7 +155,7 @@ export class MicAudioSource implements IAudioSource {
             }
         }
 
-        return this.privInitializeDeferral.promise();
+        return this.privInitializeDeferral.promise;
     }
 
     public id = (): string => {
@@ -167,15 +165,15 @@ export class MicAudioSource implements IAudioSource {
     public attach = (audioNodeId: string): Promise<IAudioStreamNode> => {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
-        return this.listen(audioNodeId).onSuccessContinueWith<IAudioStreamNode>(
+        return this.listen(audioNodeId).then<IAudioStreamNode>(
             (stream: Stream<ArrayBuffer>) => {
                 this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
                 return {
-                    detach: () => {
+                    detach: async () => {
                         stream.readEnded();
-                        this.turnOff();
                         delete this.privStreams[audioNodeId];
                         this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
+                        return this.turnOff();
                     },
                     id: () => {
                         return audioNodeId;
@@ -195,7 +193,7 @@ export class MicAudioSource implements IAudioSource {
         }
     }
 
-    public turnOff = (): Promise<boolean> => {
+    public async turnOff(): Promise<void> {
         for (const streamId in this.privStreams) {
             if (streamId) {
                 const stream = this.privStreams[streamId];
@@ -208,9 +206,9 @@ export class MicAudioSource implements IAudioSource {
         this.onEvent(new AudioSourceOffEvent(this.privId)); // no stream now
         this.privInitializeDeferral = null;
 
-        this.destroyAudioContext();
+        await this.destroyAudioContext();
 
-        return PromiseHelper.fromResult(true);
+        return;
     }
 
     public get events(): EventSource<AudioSourceEvent> {
@@ -218,7 +216,7 @@ export class MicAudioSource implements IAudioSource {
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
-        return this.getMicrophoneLabel().onSuccessContinueWith((label: string) => {
+        return this.getMicrophoneLabel().then((label: string) => {
             return {
                 bitspersample: MicAudioSource.AUDIOFORMAT.bitsPerSample,
                 channelcount: MicAudioSource.AUDIOFORMAT.channels,
@@ -244,12 +242,12 @@ export class MicAudioSource implements IAudioSource {
 
         // If we did this already, return the value.
         if (this.privMicrophoneLabel !== undefined) {
-            return PromiseHelper.fromResult(this.privMicrophoneLabel);
+            return Promise.resolve(this.privMicrophoneLabel);
         }
 
         // If the stream isn't currently running, we can't query devices because security.
         if (this.privMediaStream === undefined || !this.privMediaStream.active) {
-            return PromiseHelper.fromResult(defaultMicrophoneName);
+            return Promise.resolve(defaultMicrophoneName);
         }
 
         // Setup a default
@@ -260,7 +258,7 @@ export class MicAudioSource implements IAudioSource {
 
         // If the browser doesn't support getting the device ID, set a default and return.
         if (undefined === microphoneDeviceId) {
-            return PromiseHelper.fromResult(this.privMicrophoneLabel);
+            return Promise.resolve(this.privMicrophoneLabel);
         }
 
         const deferred: Deferred<string> = new Deferred<string>();
@@ -277,24 +275,21 @@ export class MicAudioSource implements IAudioSource {
             deferred.resolve(this.privMicrophoneLabel);
         }, () => deferred.resolve(this.privMicrophoneLabel));
 
-        return deferred.promise();
+        return deferred.promise;
     }
 
-    private listen = (audioNodeId: string): Promise<Stream<ArrayBuffer>> => {
-        return this.turnOn()
-            .onSuccessContinueWith<Stream<ArrayBuffer>>((_: boolean) => {
-                const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
-                this.privStreams[audioNodeId] = stream;
-
-                try {
-                    this.privRecorder.record(this.privContext, this.privMediaStream, stream);
-                } catch (error) {
-                    this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, error));
-                    throw error;
-                }
-
-                return stream;
-            });
+    private listen = async (audioNodeId: string): Promise<Stream<ArrayBuffer>> => {
+        await this.turnOn();
+        const stream = new ChunkedArrayBufferStream(this.privOutputChunkSize, audioNodeId);
+        this.privStreams[audioNodeId] = stream;
+        try {
+            this.privRecorder.record(this.privContext, this.privMediaStream, stream);
+        } catch (error) {
+            this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, error));
+            throw error;
+        }
+        const result: Stream<ArrayBuffer> = stream;
+        return result;
     }
 
     private onEvent = (event: AudioSourceEvent): void => {
@@ -320,7 +315,7 @@ export class MicAudioSource implements IAudioSource {
         }
     }
 
-    private destroyAudioContext = (): void => {
+    private async destroyAudioContext(): Promise<void> {
         if (!this.privContext) {
             return;
         }
@@ -336,7 +331,7 @@ export class MicAudioSource implements IAudioSource {
         }
 
         if (hasClose) {
-            this.privContext.close();
+            await this.privContext.close();
             this.privContext = null;
         } else if (null !== this.privContext && this.privContext.state === "running") {
             // Suspend actually takes a callback, but analogous to the
@@ -345,7 +340,7 @@ export class MicAudioSource implements IAudioSource {
             // the case, as TurnOff is also called, when we receive an
             // end-of-speech message from the service. So, doing a best effort
             // fire-and-forget here.
-            this.privContext.suspend();
+            await this.privContext.suspend();
         }
     }
 }

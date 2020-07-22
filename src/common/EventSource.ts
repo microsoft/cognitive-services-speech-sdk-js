@@ -47,6 +47,7 @@ export class EventSource<TEvent extends PlatformEvent> implements IEventSource<T
         return {
             detach: () => {
                 delete this.privEventListeners[id];
+                return Promise.resolve();
             },
         };
     }

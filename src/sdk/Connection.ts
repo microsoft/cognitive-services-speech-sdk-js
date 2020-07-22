@@ -12,6 +12,7 @@ import {
     ConnectionMessageReceivedEvent,
     ConnectionMessageSentEvent,
     IDetachable,
+    marshalPromiseToCallbacks,
     ServiceEvent,
 } from "../common/Exports";
 import {
@@ -82,8 +83,8 @@ export class Connection {
      * Note: On return, the connection might not be ready yet. Please subscribe to the Connected event to
      * be notified when the connection is established.
      */
-    public openConnection(): void {
-        this.privInternalData.connect();
+    public openConnection(cb?: () => void, err?: (error: string) => void): void {
+        marshalPromiseToCallbacks(this.privInternalData.connect(), cb, err);
     }
 
     /**
@@ -92,11 +93,11 @@ export class Connection {
      *
      * If closeConnection() is called during recognition, recognition will fail and cancel with an error.
      */
-    public closeConnection(): void {
+    public closeConnection(cb?: () => void, err?: (error: string) => void): void {
         if (this.privInternalData instanceof SynthesisAdapterBase) {
             throw new Error("Disconnecting a synthesizer's connection is currently not supported");
         } else {
-            (this.privInternalData as ServiceRecognizerBase).disconnect();
+            marshalPromiseToCallbacks((this.privInternalData as ServiceRecognizerBase).disconnect(), cb, err);
         }
     }
 
@@ -134,7 +135,7 @@ export class Connection {
      * @param error A callback to indicate an error.
      */
     public sendMessageAsync(path: string, payload: string | ArrayBuffer, success?: () => void, error?: (error: string) => void): void {
-        this.privInternalData.sendNetworkMessage(path, payload, success, error);
+        marshalPromiseToCallbacks(this.privInternalData.sendNetworkMessage(path, payload), success, error);
     }
 
     /**

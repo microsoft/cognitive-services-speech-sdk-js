@@ -28,7 +28,7 @@
     "no-namespace": true,
     "no-bitwise": false,
     "no-shadowed-variable": false,
-
+    "no-floating-promises": true,
     "only-arrow-functions": [
       true
     ],

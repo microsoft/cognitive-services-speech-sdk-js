@@ -7,5 +7,5 @@ export interface IAudioDestination {
     id(): string;
     write(buffer: ArrayBuffer): void;
     format: AudioStreamFormat;
-    close(): void;
+    close(cb?: () => void, err?: (error: string) => void): void;
 }

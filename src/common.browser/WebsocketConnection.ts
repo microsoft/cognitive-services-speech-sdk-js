@@ -12,7 +12,6 @@ import {
     IConnection,
     IStringDictionary,
     IWebsocketMessageFormatter,
-    Promise,
 } from "../common/Exports";
 import { ProxyInfo } from "./ProxyInfo";
 import { WebsocketMessageAdapter } from "./WebsocketMessageAdapter";
@@ -79,11 +78,11 @@ export class WebsocketConnection implements IConnection {
             headers);
     }
 
-    public dispose = (): void => {
+    public async dispose(): Promise<void> {
         this.privIsDisposed = true;
 
         if (this.privConnectionMessageAdapter) {
-            this.privConnectionMessageAdapter.close();
+            await this.privConnectionMessageAdapter.close();
         }
     }
 
@@ -103,7 +102,7 @@ export class WebsocketConnection implements IConnection {
         return this.privConnectionMessageAdapter.open();
     }
 
-    public send = (message: ConnectionMessage): Promise<boolean> => {
+    public send = (message: ConnectionMessage): Promise<void> => {
         return this.privConnectionMessageAdapter.send(message);
     }
 

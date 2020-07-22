@@ -8,7 +8,10 @@ import { Events, EventType } from "../src/common/Exports";
 
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { Settings } from "./Settings";
-import { WaitForCondition } from "./Utilities";
+import {
+    closeAsyncObjects,
+    WaitForCondition
+} from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
@@ -31,14 +34,11 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
-    });
+    await closeAsyncObjects(objsToClose);
+    done();
 });
 
 const ValidateResultMatchesWaveFile = (res: sdk.SpeechRecognitionResult): void => {
@@ -78,7 +78,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     return s;
 };
 
-describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean) => {
+describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     beforeEach(() => {
         // tslint:disable-next-line:no-console
@@ -173,7 +173,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (error: string) => {
                 done.fail(error);
             });
-    });
+    }, 20000);
 
     class BadLangModel extends sdk.LanguageUnderstandingModel {
         public constructor() {
@@ -222,7 +222,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             const expectedBytesSent: number = (5 * 16000 * 2) + (2 * elapsed * 32000 / 1000);
             expect(bytesSent).toBeLessThanOrEqual(expectedBytesSent);
         });
-    });
+    }, 20000);
 
     test("InitialSilenceTimeout (push)", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -236,7 +236,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         p.close();
 
         testInitialSilenceTimeout(config, done);
-    });
+    }, 20000);
 
     test("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -249,7 +249,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(bigFile);
 
         testInitialSilenceTimeout(config, done);
-    });
+    }, 20000);
 
     const testInitialSilenceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, addedChecks?: () => void): void => {
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -367,7 +367,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (error: string) => {
                 done.fail(error);
             });
-    });
+    }, 20000);
 
     test("RoundTripWithGoodModelWrongIntent", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -404,7 +404,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (error: string) => {
                 done.fail(error);
             });
-    });
+    }, 20000);
 
     test("MultiPhrase Intent", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -508,7 +508,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (error: string) => {
                 done.fail(error);
             });
-    }, 15000);
+    }, 20000);
 
     test("IntentAlias", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -546,7 +546,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (error: string) => {
                 done.fail(error);
             });
-    });
+    }, 20000);
 
     test("Add All Intents", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -584,7 +584,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (error: string) => {
                 done.fail(error);
             });
-    });
+    }, 20000);
 
     test("Add All Intents with alias", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -621,7 +621,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             (error: string) => {
                 done.fail(error);
             });
-    });
+    }, 20000);
 
     test("Audio Config is optional", () => {
         // tslint:disable-next-line:no-console
@@ -1087,7 +1087,6 @@ test("Phraselist Clear works.", (done: jest.DoneCallback) => {
         dynamicPhrase.clear();
         phraseAdded = false;
         sendSilence = false;
-
         r.startContinuousRecognitionAsync(
             undefined,
             (error: string) => {

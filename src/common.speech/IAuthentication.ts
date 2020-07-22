@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Promise } from "../common/Exports";
-
 export interface IAuthentication {
     fetch(authFetchEventId: string): Promise<AuthInfo>;
     fetchOnExpiry(authFetchEventId: string): Promise<AuthInfo>;

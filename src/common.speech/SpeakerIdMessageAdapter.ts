@@ -9,7 +9,6 @@ import {
     createNoDashGuid,
     Deferred,
     IAudioSource,
-    Promise,
     PromiseResult,
 } from "../common/Exports";
 import {
@@ -76,7 +75,7 @@ export class SpeakerIdMessageAdapter {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
         const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/enrollments";
-        return audioSource.blob.onSuccessContinueWithPromise<IRestResponse>((result: Blob | Buffer): Promise<IRestResponse> => {
+        return audioSource.blob.then<IRestResponse>((result: Blob | Buffer): Promise<IRestResponse> => {
             return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, null, result);
         });
     }
@@ -89,19 +88,17 @@ export class SpeakerIdMessageAdapter {
      * @public
      * @returns {Promise<IRestResponse>} rest response to enrollment request.
      */
-    public verifySpeaker(model: SpeakerVerificationModel, audioSource: IAudioSource):
+    public async verifySpeaker(model: SpeakerVerificationModel, audioSource: IAudioSource):
         Promise<IRestResponse> {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
         const uri = this.getOperationUri(model.voiceProfile.profileType) + "/" + model.voiceProfile.profileId + "/verify";
-        return audioSource.blob.continueWithPromise<IRestResponse>((result: PromiseResult<Blob | Buffer>): Promise<IRestResponse> => {
-            if (result.isError) {
-                const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
-                response.resolve({ data: result.error } as IRestResponse);
-                return response.promise();
-            }
-            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, null, result.result);
-        });
+        try {
+            const result: Blob | Buffer = await audioSource.blob;
+            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, null, result);
+        } catch (e) {
+            return Promise.resolve({ data: e } as IRestResponse);
+        }
     }
 
     /**
@@ -112,20 +109,19 @@ export class SpeakerIdMessageAdapter {
      * @public
      * @returns {Promise<IRestResponse>} rest response to enrollment request.
      */
-    public identifySpeaker(model: SpeakerIdentificationModel, audioSource: IAudioSource):
+    public async identifySpeaker(model: SpeakerIdentificationModel, audioSource: IAudioSource):
         Promise<IRestResponse> {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
         const uri = this.getOperationUri(VoiceProfileType.TextIndependentIdentification) + "/identifySingleSpeaker";
-        return audioSource.blob.continueWithPromise<IRestResponse>((result: PromiseResult<Blob | Buffer>): Promise<IRestResponse> => {
-            if (result.isError) {
-                const response: Deferred<IRestResponse> = new Deferred<IRestResponse>();
-                response.resolve({ data: result.error } as IRestResponse);
-                return response.promise();
-            }
-            return this.privRestAdapter.request(RestRequestType.File, uri, { profileIds: model.voiceProfileIds, ignoreMinLength: "true" }, null, result.result);
-        });
+        try {
+            const result: Blob | Buffer = await audioSource.blob;
+            return this.privRestAdapter.request(RestRequestType.File, uri, { profileIds: model.voiceProfileIds, ignoreMinLength: "true" }, null, result);
+        } catch (e) {
+            return Promise.resolve({ data: e } as IRestResponse);
+        }
     }
+
     /**
      * Sends delete profile request to endpoint.
      * @function

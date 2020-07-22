@@ -14,9 +14,6 @@ import {
     IConnection,
     IDisposable,
     MessageType,
-    Promise,
-    PromiseHelper,
-    PromiseResult,
     ServiceEvent,
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
@@ -31,7 +28,6 @@ import {
     SpeechSynthesisWordBoundaryEventArgs,
     SpeechSynthesizer,
 } from "../sdk/Exports";
-import { Callback } from "../sdk/Transcription/IConversation";
 import {
     AgentConfig,
     CancellationErrorCodePropertyName,
@@ -82,7 +78,7 @@ export class SynthesisAdapterBase implements IDisposable {
 
     protected connectImplOverride: (isUnAuthorized: boolean) => any = undefined;
 
-    protected configConnectionOverride: () => any = undefined;
+    protected configConnectionOverride: (connection: IConnection) => any = undefined;
 
     protected fetchConnectionOverride: () => any = undefined;
 
@@ -173,71 +169,37 @@ export class SynthesisAdapterBase implements IDisposable {
         return this.privIsDisposed;
     }
 
-    public dispose(reason?: string): void {
+    public async dispose(reason?: string): Promise<void> {
         this.privIsDisposed = true;
         if (this.privSessionAudioDestination !== undefined) {
             this.privSessionAudioDestination.close();
         }
         if (this.privConnectionConfigurationPromise) {
-            this.privConnectionConfigurationPromise.onSuccessContinueWith((connection: IConnection) => {
-                connection.dispose(reason);
-            });
+            const connection: IConnection = await this.privConnectionConfigurationPromise;
+            await connection.dispose(reason);
         }
     }
 
-    public connect(): void {
-        this.connectImpl().result();
+    public async connect(): Promise<void> {
+        await this.connectImpl();
     }
 
-    public connectAsync(cb?: Callback, err?: Callback): void {
-        this.connectImpl().continueWith((promiseResult: PromiseResult<IConnection>) => {
-            try {
-                if (promiseResult.isError) {
-                    if (!!err) {
-                        err(promiseResult.error);
-                    }
-                } else if (promiseResult.isCompleted) {
-                    if (!!cb) {
-                        cb();
-                    }
-                }
-            } catch (e) {
-                if (!!err) {
-                    err(e);
-                }
-            }
-        });
-    }
-
-    public sendNetworkMessage(path: string, payload: string | ArrayBuffer, success?: () => void, err?: (error: string) => void): void {
+    public async sendNetworkMessage(path: string, payload: string | ArrayBuffer): Promise<void> {
         const type: MessageType = typeof payload === "string" ? MessageType.Text : MessageType.Binary;
         const contentType: string = typeof payload === "string" ? "application/json" : "";
 
-        this.fetchConnection().on((connection: IConnection) => {
-            connection.send(new SpeechConnectionMessage(type, path, this.privSynthesisTurn.requestId, contentType, payload)).on(() => {
-                if (!!success) {
-                    success();
-                }
-            }, (error: string) => {
-                if (!!err) {
-                    err(error);
-                }
-            });
-        }, (error: string) => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        const connection: IConnection = await this.fetchConnection();
+        return connection.send(new SpeechConnectionMessage(type, path, this.privSynthesisTurn.requestId, contentType, payload));
     }
 
-    public Speak(
+    public async Speak(
         text: string,
         isSSML: boolean,
         requestId: string,
         successCallback: (e: SpeechSynthesisResult) => void,
         errorCallBack: (e: string) => void,
         audioDestination: IAudioDestination,
-    ): Promise<boolean> {
+    ): Promise<void> {
 
         let ssml: string;
 
@@ -255,39 +217,26 @@ export class SynthesisAdapterBase implements IDisposable {
         this.privErrorCallback = errorCallBack;
 
         this.privSynthesisTurn.startNewSynthesis(requestId, text, isSSML, audioDestination);
+        try {
+            const connection: IConnection = await this.fetchConnection();
+            await this.sendSynthesisContext(connection);
+            await this.sendSsmlMessage(connection, ssml, requestId);
+            const synthesisStartEventArgs: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(
+                new SpeechSynthesisResult(
+                    requestId,
+                    ResultReason.SynthesizingAudioStarted,
+                )
+            );
 
-        return this.fetchConnection().continueWithPromise<boolean>((connection: PromiseResult<IConnection>) => {
-            if (connection.isError) {
-                this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, connection.error);
-                return PromiseHelper.fromError(connection.error);
+            if (!!this.privSpeechSynthesizer.synthesisStarted) {
+                this.privSpeechSynthesizer.synthesisStarted(this.privSpeechSynthesizer, synthesisStartEventArgs);
             }
-            return this.sendSynthesisContext(connection.result).continueWithPromise<boolean>((result: PromiseResult<boolean>): Promise<boolean> => {
-                if (result.isError) {
-                    this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error);
-                    return PromiseHelper.fromError(result.error);
-                }
-                return this.sendSsmlMessage(connection.result, ssml, requestId).continueWithPromise<boolean>((result: PromiseResult<boolean>): Promise<boolean> => {
-                    if (result.isError) {
-                        this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, result.error);
-                        return PromiseHelper.fromError(result.error);
-                    }
 
-                    const synthesisStartEventArgs: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(
-                        new SpeechSynthesisResult(
-                            requestId,
-                            ResultReason.SynthesizingAudioStarted,
-                        )
-                    );
-
-                    if (!!this.privSpeechSynthesizer.synthesisStarted) {
-                        this.privSpeechSynthesizer.synthesisStarted(this.privSpeechSynthesizer, synthesisStartEventArgs);
-                    }
-
-                    const messageRetrievalPromise = this.receiveMessage();
-                    return PromiseHelper.fromResult(true);
-                });
-            });
-        });
+            const messageRetrievalPromise = this.receiveMessage();
+        } catch (e) {
+            this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, e);
+            return Promise.reject(e);
+        }
     }
 
     // Cancels synthesis.
@@ -346,136 +295,138 @@ export class SynthesisAdapterBase implements IDisposable {
         return true;
     }
 
-    protected receiveMessage = (): Promise<IConnection> => {
-        return this.fetchConnection().on((connection: IConnection): Promise<IConnection> => {
-            return connection.read()
-                .onSuccessContinueWithPromise((message: ConnectionMessage) => {
+    protected async receiveMessage(): Promise<void> {
+        try {
+            const connection: IConnection = await this.fetchConnection();
+            const message: ConnectionMessage = await connection.read();
 
-                    if (this.receiveMessageOverride !== undefined) {
-                        return this.receiveMessageOverride();
-                    }
-                    if (this.privIsDisposed) {
-                        // We're done.
-                        return PromiseHelper.fromResult(undefined);
-                    }
+            if (this.receiveMessageOverride !== undefined) {
+                return this.receiveMessageOverride();
+            }
+            if (this.privIsDisposed) {
+                // We're done.
+                return;
+            }
 
-                    // indicates we are draining the queue and it came with no message;
-                    if (!message) {
-                        if (!this.privSynthesisTurn.isSynthesizing) {
-                            return PromiseHelper.fromResult(true);
-                        } else {
-                            return this.receiveMessage();
-                        }
-                    }
+            // indicates we are draining the queue and it came with no message;
+            if (!message) {
+                if (!this.privSynthesisTurn.isSynthesizing) {
+                    return;
+                } else {
+                    return this.receiveMessage();
+                }
+            }
 
-                    this.privServiceHasSentMessage = true;
+            this.privServiceHasSentMessage = true;
 
-                    const connectionMessage = SpeechConnectionMessage.fromConnectionMessage(message);
+            const connectionMessage = SpeechConnectionMessage.fromConnectionMessage(message);
 
-                    if (connectionMessage.requestId.toLowerCase() === this.privSynthesisTurn.requestId.toLowerCase()) {
-                        switch (connectionMessage.path.toLowerCase()) {
-                            case "turn.start":
-                                this.privSynthesisTurn.onServiceTurnStartResponse();
-                                break;
-                            case "response":
-                                this.privSynthesisTurn.onServiceResponseMessage(connectionMessage.textBody);
-                                break;
-                            case "audio":
-                                if (this.privSynthesisTurn.streamId.toLowerCase() === connectionMessage.streamId.toLowerCase()
-                                    && !!connectionMessage.binaryBody) {
-                                    this.privSynthesisTurn.onAudioChunkReceived(connectionMessage.binaryBody);
-                                    if (!!this.privSpeechSynthesizer.synthesizing) {
-                                        try {
-                                            const audioWithHeader = SynthesisAdapterBase.addHeader(connectionMessage.binaryBody, this.privSynthesisTurn.audioOutputFormat);
-                                            const ev: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(
-                                                new SpeechSynthesisResult(
-                                                    this.privSynthesisTurn.requestId,
-                                                    ResultReason.SynthesizingAudio,
-                                                    audioWithHeader));
-                                            this.privSpeechSynthesizer.synthesizing(this.privSpeechSynthesizer, ev);
-                                        } catch (error) {
-                                            // Not going to let errors in the event handler
-                                            // trip things up.
-                                        }
-                                    }
-                                    if (this.privSessionAudioDestination !== undefined) {
-                                        this.privSessionAudioDestination.write(connectionMessage.binaryBody);
-                                    }
-                                }
-                                break;
-                            case "audio.metadata":
-                                const metadataList = SynthesisAudioMetadata.fromJSON(connectionMessage.textBody).Metadata;
-                                for (const metadata of metadataList) {
-                                    if (metadata.Type.toLowerCase() === "WordBoundary".toLowerCase()) {
-
-                                        this.privSynthesisTurn.onWordBoundaryEvent(metadata.Data.text.Text);
-
-                                        const ev: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
-                                            metadata.Data.Offset,
-                                            metadata.Data.text.Text,
-                                            metadata.Data.text.Length,
-                                            this.privSynthesisTurn.currentTextOffset);
-
-                                        if (!!this.privSpeechSynthesizer.wordBoundary) {
-                                            try {
-                                                this.privSpeechSynthesizer.wordBoundary(this.privSpeechSynthesizer, ev);
-                                            } catch (error) {
-                                                // Not going to let errors in the event handler
-                                                // trip things up.
-                                            }
-                                        }
-                                    }
-                                }
-                                break;
-                            case "turn.end":
-                                this.privSynthesisTurn.onServiceTurnEndResponse();
-                                let result: SpeechSynthesisResult;
+            if (connectionMessage.requestId.toLowerCase() === this.privSynthesisTurn.requestId.toLowerCase()) {
+                switch (connectionMessage.path.toLowerCase()) {
+                    case "turn.start":
+                        this.privSynthesisTurn.onServiceTurnStartResponse();
+                        break;
+                    case "response":
+                        this.privSynthesisTurn.onServiceResponseMessage(connectionMessage.textBody);
+                        break;
+                    case "audio":
+                        if (this.privSynthesisTurn.streamId.toLowerCase() === connectionMessage.streamId.toLowerCase()
+                            && !!connectionMessage.binaryBody) {
+                            this.privSynthesisTurn.onAudioChunkReceived(connectionMessage.binaryBody);
+                            if (!!this.privSpeechSynthesizer.synthesizing) {
                                 try {
-                                    result = new SpeechSynthesisResult(
-                                        this.privSynthesisTurn.requestId,
-                                        ResultReason.SynthesizingAudioCompleted,
-                                        this.privSynthesisTurn.allReceivedAudioWithHeader
-                                    );
-                                    if (!!this.privSuccessCallback) {
-                                        this.privSuccessCallback(result);
-                                    }
+                                    const audioWithHeader = SynthesisAdapterBase.addHeader(connectionMessage.binaryBody, this.privSynthesisTurn.audioOutputFormat);
+                                    const ev: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(
+                                        new SpeechSynthesisResult(
+                                            this.privSynthesisTurn.requestId,
+                                            ResultReason.SynthesizingAudio,
+                                            audioWithHeader));
+                                    this.privSpeechSynthesizer.synthesizing(this.privSpeechSynthesizer, ev);
                                 } catch (error) {
-                                    if (!!this.privErrorCallback) {
-                                        this.privErrorCallback(error);
-                                    }
+                                    // Not going to let errors in the event handler
+                                    // trip things up.
                                 }
-                                if (this.privSpeechSynthesizer.synthesisCompleted) {
+                            }
+                            if (this.privSessionAudioDestination !== undefined) {
+                                this.privSessionAudioDestination.write(connectionMessage.binaryBody);
+                            }
+                        }
+                        break;
+                    case "audio.metadata":
+                        const metadataList = SynthesisAudioMetadata.fromJSON(connectionMessage.textBody).Metadata;
+                        for (const metadata of metadataList) {
+                            if (metadata.Type.toLowerCase() === "WordBoundary".toLowerCase()) {
+
+                                this.privSynthesisTurn.onWordBoundaryEvent(metadata.Data.text.Text);
+
+                                const ev: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
+                                    metadata.Data.Offset,
+                                    metadata.Data.text.Text,
+                                    metadata.Data.text.Length,
+                                    this.privSynthesisTurn.currentTextOffset);
+
+                                if (!!this.privSpeechSynthesizer.wordBoundary) {
                                     try {
-                                        this.privSpeechSynthesizer.synthesisCompleted(
-                                            this.privSpeechSynthesizer,
-                                            new SpeechSynthesisEventArgs(result)
-                                        );
-                                    } catch (e) {
+                                        this.privSpeechSynthesizer.wordBoundary(this.privSpeechSynthesizer, ev);
+                                    } catch (error) {
                                         // Not going to let errors in the event handler
                                         // trip things up.
                                     }
                                 }
-                                break;
-
-                            default:
-
-                                if (!this.processTypeSpecificMessages(connectionMessage)) {
-                                    // here are some messages that the derived class has not processed, dispatch them to connect class
-                                    if (!!this.privServiceEvents) {
-                                        this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
-                                    }
-                                }
-
+                            }
                         }
-                    }
+                        break;
+                    case "turn.end":
+                        this.privSynthesisTurn.onServiceTurnEndResponse();
+                        let result: SpeechSynthesisResult;
+                        try {
+                            const audioBuffer: ArrayBuffer = await this.privSynthesisTurn.getAllReceivedAudioWithHeader();
+                            result = new SpeechSynthesisResult(
+                                this.privSynthesisTurn.requestId,
+                                ResultReason.SynthesizingAudioCompleted,
+                                audioBuffer
+                            );
+                            if (!!this.privSuccessCallback) {
+                                this.privSuccessCallback(result);
+                            }
+                        } catch (error) {
+                            if (!!this.privErrorCallback) {
+                                this.privErrorCallback(error);
+                            }
+                        }
+                        if (this.privSpeechSynthesizer.synthesisCompleted) {
+                            try {
+                                this.privSpeechSynthesizer.synthesisCompleted(
+                                    this.privSpeechSynthesizer,
+                                    new SpeechSynthesisEventArgs(result)
+                                );
+                            } catch (e) {
+                                // Not going to let errors in the event handler
+                                // trip things up.
+                            }
+                        }
+                        break;
 
-                    return this.receiveMessage();
-                });
-        }, (error: string) => {
-        });
+                    default:
+
+                        if (!this.processTypeSpecificMessages(connectionMessage)) {
+                            // here are some messages that the derived class has not processed, dispatch them to connect class
+                            if (!!this.privServiceEvents) {
+                                this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
+                            }
+                        }
+
+                }
+            }
+
+            return this.receiveMessage();
+
+        } catch (e) {
+            // TODO: What goes here?
+        }
     }
 
-    protected sendSynthesisContext = (connection: IConnection): Promise<boolean> => {
+    protected sendSynthesisContext = (connection: IConnection): Promise<void> => {
         const synthesisContextJson = this.synthesisContext.toJSON();
 
         if (synthesisContextJson) {
@@ -486,30 +437,26 @@ export class SynthesisAdapterBase implements IDisposable {
                 "application/json",
                 synthesisContextJson));
         }
-        return PromiseHelper.fromResult(true);
+        return;
     }
 
-    // Establishes a websocket connection to the end point.
     protected connectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
-
-        if (this.connectImplOverride !== undefined) {
-            return this.connectImplOverride(isUnAuthorized);
-        }
-
         if (this.privConnectionPromise) {
-            if (this.privConnectionPromise.result().isCompleted &&
-                (this.privConnectionPromise.result().isError
-                    || this.privConnectionPromise.result().result.state() === ConnectionState.Disconnected) &&
-                this.privServiceHasSentMessage === true) {
+            return this.privConnectionPromise.then((connection: IConnection): Promise<IConnection> => {
+                if (connection.state() === ConnectionState.Disconnected) {
+                    this.privConnectionId = null;
+                    this.privConnectionPromise = null;
+                    this.privServiceHasSentMessage = false;
+                    return this.connectImpl();
+                }
+                return this.privConnectionPromise;
+            }, (error: string): Promise<IConnection> => {
                 this.privConnectionId = null;
                 this.privConnectionPromise = null;
                 this.privServiceHasSentMessage = false;
                 return this.connectImpl();
-            } else {
-                return this.privConnectionPromise;
-            }
+            });
         }
-
         this.privAuthFetchEventId = createNoDashGuid();
         this.privConnectionId = createNoDashGuid();
 
@@ -517,43 +464,38 @@ export class SynthesisAdapterBase implements IDisposable {
 
         const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
 
-        this.privConnectionPromise = authPromise
-            .continueWithPromise((result: PromiseResult<AuthInfo>) => {
-                if (result.isError) {
-                    this.privSynthesisTurn.onAuthCompleted(true, result.error);
-                    throw new Error(result.error);
-                } else {
-                    this.privSynthesisTurn.onAuthCompleted(false);
-                }
+        this.privConnectionPromise = authPromise.then(async (result: AuthInfo) => {
+            await this.privSynthesisTurn.onAuthCompleted(false);
 
-                const connection: IConnection = this.privConnectionFactory.create(this.privSynthesizerConfig, result.result, this.privConnectionId);
+            const connection: IConnection = this.privConnectionFactory.create(this.privSynthesizerConfig, result, this.privConnectionId);
 
-                // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
-                // it'll stop sending events.
-                connection.events.attach((event: ConnectionEvent) => {
-                    this.connectionEvents.onEvent(event);
-                });
-
-                return connection.open().onSuccessContinueWithPromise((response: ConnectionOpenResponse): Promise<IConnection> => {
-                    if (response.statusCode === 200) {
-                        this.privSynthesisTurn.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
-                        this.privSynthesisTurn.onConnectionEstablishCompleted(response.statusCode);
-
-                        return PromiseHelper.fromResult<IConnection>(connection);
-                    } else if (response.statusCode === 403 && !isUnAuthorized) {
-                        return this.connectImpl(true);
-                    } else {
-                        this.privSynthesisTurn.onConnectionEstablishCompleted(response.statusCode, response.reason);
-                        return PromiseHelper.fromError<IConnection>(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privSynthesizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
-                    }
-                });
+            // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
+            // it'll stop sending events.
+            connection.events.attach((event: ConnectionEvent) => {
+                this.connectionEvents.onEvent(event);
             });
+            const response = await connection.open();
+            if (response.statusCode === 200) {
+                await this.privSynthesisTurn.onConnectionEstablishCompleted(response.statusCode);
+                return Promise.resolve(connection);
+            } else if (response.statusCode === 403 && !isUnAuthorized) {
+                return this.connectImpl(true);
+            } else {
+                await this.privSynthesisTurn.onConnectionEstablishCompleted(response.statusCode, response.reason);
+                return Promise.reject(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privSynthesizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
+            }
+        }, async (error: string): Promise<IConnection> => {
+            await this.privSynthesisTurn.onAuthCompleted(true, error);
+            throw new Error(error);
+        });
+
+        // Attach an empty handler to allow the promise to run in the background while
+        // other startup events happen. It'll eventually be awaited on.
+        this.privConnectionPromise.catch(() => { });
 
         return this.privConnectionPromise;
     }
-
-    protected sendSpeechServiceConfig = (connection: IConnection, SpeechServiceConfigJson: string): Promise<boolean> => {
-
+    protected sendSpeechServiceConfig = (connection: IConnection, SpeechServiceConfigJson: string): Promise<void> => {
         if (SpeechServiceConfigJson) {
             return connection.send(new SpeechConnectionMessage(
                 MessageType.Text,
@@ -562,11 +504,9 @@ export class SynthesisAdapterBase implements IDisposable {
                 "application/json",
                 SpeechServiceConfigJson));
         }
-
-        return PromiseHelper.fromResult(true);
     }
 
-    protected sendSsmlMessage = (connection: IConnection, ssml: string, requestId: string): Promise<boolean> => {
+    protected sendSsmlMessage = (connection: IConnection, ssml: string, requestId: string): Promise<void> => {
         return connection.send(new SpeechConnectionMessage(
             MessageType.Text,
             "ssml",
@@ -584,30 +524,12 @@ export class SynthesisAdapterBase implements IDisposable {
     }
 
     // Takes an established websocket connection to the endpoint and sends speech configuration information.
-    private configureConnection(): Promise<IConnection> {
+    private async configureConnection(): Promise<IConnection> {
+        const connection: IConnection = await this.connectImpl();
         if (this.configConnectionOverride !== undefined) {
-            return this.configConnectionOverride();
+            return this.configConnectionOverride(connection);
         }
-
-        if (this.privConnectionConfigurationPromise) {
-            if (this.privConnectionConfigurationPromise.result().isCompleted &&
-                (this.privConnectionConfigurationPromise.result().isError
-                    || this.privConnectionConfigurationPromise.result().result.state() === ConnectionState.Disconnected)) {
-
-                this.privConnectionConfigurationPromise = null;
-                return this.configureConnection();
-            } else {
-                return this.privConnectionConfigurationPromise;
-            }
-        }
-
-        this.privConnectionConfigurationPromise = this.connectImpl().onSuccessContinueWithPromise((connection: IConnection): Promise<IConnection> => {
-            return this.sendSpeechServiceConfig(connection, this.privSynthesizerConfig.SpeechServiceConfig.serialize())
-                .onSuccessContinueWith((_: boolean) => {
-                    return connection;
-                });
-        });
-
-        return this.privConnectionConfigurationPromise;
+        await this.sendSpeechServiceConfig(connection, this.privSynthesizerConfig.SpeechServiceConfig.serialize());
+        return connection;
     }
 }
