@@ -27,5 +27,18 @@ export const WaitForPromise = (condition: () => boolean, rejectMessage: string, 
             reject("Condition timeout: " + rejectMessage);
         }
     });
-
 };
+
+export async function closeAsyncObjects(objsToClose: any[]): Promise<void> {
+    for (const current of objsToClose) {
+        if (typeof current.close === "function") {
+            if (current.close.length === 2) {
+                await new Promise<void>((resolve: () => void, reject: (reason: string) => void) => {
+                    current.close(resolve, reject);
+                });
+            } else {
+                current.close();
+            }
+        }
+    }
+}

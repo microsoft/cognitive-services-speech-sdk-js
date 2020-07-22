@@ -7,7 +7,6 @@ import {
     IStringDictionary,
     IWebsocketMessageFormatter,
     MessageType,
-    Promise,
     RawWebsocketMessage,
 } from "../../common/Exports";
 import { ConversationConnectionMessage } from "./ConversationConnectionMessage";
@@ -34,7 +33,7 @@ export class ConversationWebsocketMessageFormatter implements IWebsocketMessageF
             deferral.reject(`Error formatting the message. Error: ${e}`);
         }
 
-        return deferral.promise();
+        return deferral.promise;
     }
 
     /**
@@ -53,6 +52,6 @@ export class ConversationWebsocketMessageFormatter implements IWebsocketMessageF
             deferral.reject(`Error formatting the message. ${e}`);
         }
 
-        return deferral.promise();
+        return deferral.promise;
     }
 }

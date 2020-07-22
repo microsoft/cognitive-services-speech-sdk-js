@@ -13,7 +13,7 @@ import {
 import {
     Settings
 } from "./Settings";
-import { WaitForCondition } from "./Utilities";
+import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import {
     WaveFileAudioInput
 } from "./WaveFileAudioInputStream";
@@ -40,14 +40,11 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
-    });
+    await closeAsyncObjects(objsToClose);
+    done();
 });
 
 export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
@@ -422,7 +419,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
 
 }, 10000);
 
-test("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCallback) => {
+test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Switch RecoModes during a connection (cont->single)");
 
@@ -529,7 +526,7 @@ test("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCall
     });
 }, 20000);
 
-test("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCallback) => {
+test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Switch RecoModes during a connection (single->cont)");
 

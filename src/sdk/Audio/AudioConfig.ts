@@ -14,8 +14,7 @@ import {
     EventSource,
     IAudioDestination,
     IAudioSource,
-    IAudioStreamNode,
-    Promise
+    IAudioStreamNode
 } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
@@ -235,8 +234,16 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      * @function
      * @public
      */
-    public close(): void {
-        this.privSource.turnOff();
+    public close(cb?: () => void, err?: (error: string) => void): void {
+        this.privSource.turnOff().then(() => {
+            if (!!cb) {
+                cb();
+            }
+        }, (error: string) => {
+            if (!!err) {
+                err(error);
+            }
+        });
     }
 
     /**
@@ -261,9 +268,9 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      * @member AudioConfigImpl.prototype.turnOn
      * @function
      * @public
-     * @returns {Promise<boolean>} A promise.
+     * @returns {Promise<void>} A promise.
      */
-    public turnOn(): Promise<boolean> {
+    public turnOn(): Promise<void> {
         return this.privSource.turnOn();
     }
 
@@ -292,9 +299,9 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      * @member AudioConfigImpl.prototype.turnOff
      * @function
      * @public
-     * @returns {Promise<boolean>} A promise.
+     * @returns {Promise<void>} A promise.
      */
-    public turnOff(): Promise<boolean> {
+    public turnOff(): Promise<void> {
         return this.privSource.turnOff();
     }
 

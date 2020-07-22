@@ -8,16 +8,22 @@ import {
     ServiceRecognizerBase,
     SpeechServiceConfig
 } from "../../common.speech/Exports";
+import {
+    BackgroundEvent,
+    Events
+} from "../../common/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
 import { Contracts } from "../../sdk/Contracts";
-import { AudioConfig,
+import {
+    AudioConfig,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     PropertyCollection,
     Recognizer,
     SessionEventArgs,
-    SpeechTranslationConfig} from "../../sdk/Exports";
+    SpeechTranslationConfig
+} from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
 import { Callback } from "../../sdk/Transcription/IConversation";
 import { ConversationConnectionFactory } from "./ConversationConnectionFactory";
@@ -28,7 +34,8 @@ import {
     MuteAllEventArgs,
     ParticipantAttributeEventArgs,
     ParticipantEventArgs,
-    ParticipantsListEventArgs } from "./ConversationTranslatorEventArgs";
+    ParticipantsListEventArgs
+} from "./ConversationTranslatorEventArgs";
 import {
     ConversationTranslatorCommandTypes,
     ConversationTranslatorMessageTypes,
@@ -39,7 +46,8 @@ import {
     IInternalConversation,
     ILockConversationCommand,
     IMuteAllCommand,
-    IMuteCommand} from "./ConversationTranslatorInterfaces";
+    IMuteCommand
+} from "./ConversationTranslatorInterfaces";
 import { PromiseToEmptyCallback } from "./ConversationUtils";
 
 /**
@@ -127,7 +135,15 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             this.privRoom = undefined;
-            this.privReco.disconnectAsync(cb, err);
+            this.privReco.disconnect().then(() => {
+                if (!!cb) {
+                    cb();
+                }
+            }, (error: string) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
@@ -138,7 +154,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
                 }
             }
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -176,7 +195,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -215,7 +237,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -254,7 +279,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -293,7 +321,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -340,7 +371,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
@@ -380,29 +414,32 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
             }
 
             // Destroy the recognizer.
-            this.dispose(true);
+            this.dispose(true).catch((reason: string): void => {
+                Events.instance.onEvent(new BackgroundEvent(reason));
+            });
+
         }
     }
 
     /**
      * Close and dispose the recognizer
      */
-    public close(): void {
+    public async close(): Promise<void> {
         Contracts.throwIfDisposed(this.privIsDisposed);
-        this.dispose(true);
+        await this.dispose(true);
     }
 
     /**
      * Dispose the recognizer
      * @param disposing
      */
-    protected dispose(disposing: boolean): boolean {
+    protected async dispose(disposing: boolean): Promise<void> {
         if (this.privIsDisposed) {
             return;
         }
         if (disposing) {
             this.privIsDisposed = true;
-            super.dispose(disposing);
+            await super.dispose(disposing);
         }
     }
 

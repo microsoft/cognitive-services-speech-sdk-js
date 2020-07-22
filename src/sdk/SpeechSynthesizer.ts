@@ -19,8 +19,7 @@ import {
     createNoDashGuid,
     IAudioDestination,
     IStringDictionary,
-    Promise,
-    PromiseHelper,
+    marshalPromiseToCallbacks,
     Queue
 } from "../common/Exports";
 import { AudioOutputConfigImpl } from "./Audio/AudioConfig";
@@ -285,10 +284,10 @@ export class SpeechSynthesizer {
      * @function
      * @public
      */
-    public close(): void {
+    public close(cb?: () => void, err?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposed);
 
-        this.dispose(true);
+        marshalPromiseToCallbacks(this.dispose(true), cb, err);
     }
 
     /**
@@ -309,14 +308,14 @@ export class SpeechSynthesizer {
      * @public
      * @param {boolean} disposing - Flag to request disposal.
      */
-    protected dispose(disposing: boolean): void {
+    protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposed) {
             return;
         }
 
         if (disposing) {
             if (this.privAdapter) {
-                this.privAdapter.dispose();
+                await this.privAdapter.dispose();
             }
         }
 
@@ -341,9 +340,9 @@ export class SpeechSynthesizer {
         connectionFactory: ISynthesisConnectionFactory,
         audioConfig: AudioConfig,
         synthesizerConfig: SynthesizerConfig): SynthesisAdapterBase {
-            return new SynthesisAdapterBase(authentication, connectionFactory,
-                synthesizerConfig, this, this.audioConfig as AudioOutputConfigImpl);
-        }
+        return new SynthesisAdapterBase(authentication, connectionFactory,
+            synthesizerConfig, this, this.audioConfig as AudioOutputConfigImpl);
+    }
 
     protected implCommonSynthesizeSetup(): void {
 
@@ -367,11 +366,11 @@ export class SpeechSynthesizer {
             new CognitiveTokenAuthentication(
                 (authFetchEventId: string): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return PromiseHelper.fromResult(authorizationToken);
+                    return Promise.resolve(authorizationToken);
                 },
                 (authFetchEventId: string): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return PromiseHelper.fromResult(authorizationToken);
+                    return Promise.resolve(authorizationToken);
                 });
 
         this.privAdapter = this.createSynthesisAdapter(
@@ -411,14 +410,17 @@ export class SpeechSynthesizer {
                     }
                 }
                 cb = undefined;
-                this.adapterSpeak();
+                /* tslint:disable:no-empty */
+                this.adapterSpeak().catch(() => { });
+
             }, (e: string): void => {
                 if (!!err) {
                     err(e);
                 }
             }, audioDestination));
 
-            this.adapterSpeak();
+            /* tslint:disable:no-empty */
+            this.adapterSpeak().catch(() => { });
 
         } catch (error) {
             if (!!err) {
@@ -431,19 +433,17 @@ export class SpeechSynthesizer {
             }
 
             // Destroy the synthesizer.
-            this.dispose(true);
+            /* tslint:disable:no-empty */
+            this.dispose(true).catch(() => { });
         }
     }
 
-    protected adapterSpeak(): Promise<boolean> {
+    protected async adapterSpeak(): Promise<void> {
         if (!this.privDisposed && !this.privSynthesizing) {
             this.privSynthesizing = true;
-            return this.synthesisRequestQueue.dequeue().
-                onSuccessContinueWithPromise((request: SynthesisRequest): Promise<boolean> => {
-                    return this.privAdapter.Speak(request.text, request.isSSML, request.requestId, request.cb, request.err, request.dataStream);
-            });
+            const request: SynthesisRequest = await this.synthesisRequestQueue.dequeue();
+            return this.privAdapter.Speak(request.text, request.isSSML, request.requestId, request.cb, request.err, request.dataStream);
         }
-        return PromiseHelper.fromResult(true);
     }
 
     private static XMLEncode(text: string): string {

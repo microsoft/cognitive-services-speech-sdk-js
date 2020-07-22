@@ -6,11 +6,9 @@ import {
     Deferred,
     IAudioDestination,
     IStreamChunk,
-    Promise,
-    PromiseHelper,
     Stream,
 } from "../../common/Exports";
-import {Contracts} from "../Contracts";
+import { Contracts } from "../Contracts";
 import {
     AudioStreamFormat,
     PushAudioOutputStreamCallback
@@ -161,7 +159,7 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
      * @param {ArrayBuffer} dataBuffer - An ArrayBuffer to store the read data.
      * @returns {Promise<number>} - Audio buffer length has been read.
      */
-    public read(dataBuffer: ArrayBuffer): Promise<number> {
+    public async read(dataBuffer: ArrayBuffer): Promise<number> {
         const intView: Int8Array = new Int8Array(dataBuffer);
         let totalBytes: number = 0;
 
@@ -169,41 +167,31 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
             if (this.privLastChunkView.length > dataBuffer.byteLength) {
                 intView.set(this.privLastChunkView.slice(0, dataBuffer.byteLength));
                 this.privLastChunkView = this.privLastChunkView.slice(dataBuffer.byteLength);
-                return PromiseHelper.fromResult(dataBuffer.byteLength);
+                return Promise.resolve(dataBuffer.byteLength);
             }
             intView.set(this.privLastChunkView);
             totalBytes = this.privLastChunkView.length;
             this.privLastChunkView = undefined;
         }
 
-        const deffer: Deferred<number> = new Deferred<number>();
         // Until we have the minimum number of bytes to send in a transmission, keep asking for more.
-        const readUntilFilled: () => void = (): void => {
-            if (totalBytes < dataBuffer.byteLength && !this.privStream.isReadEnded) {
-                this.privStream.read()
-                    .onSuccessContinueWith((chunk: IStreamChunk<ArrayBuffer>) => {
-                        if (chunk !== undefined && !chunk.isEnd) {
-                            let tmpBuffer: ArrayBuffer;
-                            if (chunk.buffer.byteLength > dataBuffer.byteLength - totalBytes) {
-                                tmpBuffer = chunk.buffer.slice(0, dataBuffer.byteLength - totalBytes);
-                                this.privLastChunkView = new Int8Array(chunk.buffer.slice(dataBuffer.byteLength - totalBytes));
-                            } else {
-                                tmpBuffer = chunk.buffer;
-                            }
-                            intView.set(new Int8Array(tmpBuffer), totalBytes);
-                            totalBytes += tmpBuffer.byteLength;
-                            readUntilFilled();
-                        } else {
-                            this.privStream.readEnded();
-                            deffer.resolve(totalBytes);
-                        }
-                    });
+        while (totalBytes < dataBuffer.byteLength && !this.privStream.isReadEnded) {
+            const chunk: IStreamChunk<ArrayBuffer> = await this.privStream.read();
+            if (chunk !== undefined && !chunk.isEnd) {
+                let tmpBuffer: ArrayBuffer;
+                if (chunk.buffer.byteLength > dataBuffer.byteLength - totalBytes) {
+                    tmpBuffer = chunk.buffer.slice(0, dataBuffer.byteLength - totalBytes);
+                    this.privLastChunkView = new Int8Array(chunk.buffer.slice(dataBuffer.byteLength - totalBytes));
+                } else {
+                    tmpBuffer = chunk.buffer;
+                }
+                intView.set(new Int8Array(tmpBuffer), totalBytes);
+                totalBytes += tmpBuffer.byteLength;
             } else {
-                deffer.resolve(totalBytes);
+                await this.privStream.readEnded();
             }
-        };
-        readUntilFilled();
-        return deffer.promise();
+        }
+        return totalBytes;
     }
 
     /**
@@ -293,7 +281,7 @@ export class PushAudioOutputStreamImpl extends PushAudioOutputStream implements 
     }
 
     // tslint:disable-next-line:no-empty
-    public set format(format: AudioStreamFormat) {}
+    public set format(format: AudioStreamFormat) { }
 
     public write(buffer: ArrayBuffer): void {
         if (!!this.privCallback.write) {

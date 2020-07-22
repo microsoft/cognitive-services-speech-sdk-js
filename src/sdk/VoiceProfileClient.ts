@@ -11,7 +11,7 @@ import {
     SpeakerIdMessageAdapter,
     SpeakerRecognitionConfig,
 } from "../common.speech/Exports";
-import { IAudioSource, PromiseResult } from "../common/Exports";
+import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfig, AudioConfigImpl } from "./audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -93,18 +93,13 @@ export class VoiceProfileClient {
      * @param err - Callback invoked in case of an error.
      */
     public createProfileAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
-        this.privAdapter.createProfile(profileType, lang).on((result: IRestResponse) => {
-            if (!!cb) {
-                const response: { profileId: string } = result.json();
-                const profile = new VoiceProfile(response.profileId, profileType);
-                cb(profile);
-            }
-        },
-        (error: string) => {
-            if (!!err) {
-                err(error);
-            }
-        });
+
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfile> => {
+            const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
+            const response: { profileId: string } = result.json();
+            const profile = new VoiceProfile(response.profileId, profileType);
+            return profile;
+        })(), cb, err);
     }
 
     /**
@@ -120,22 +115,15 @@ export class VoiceProfileClient {
     public enrollProfileAsync(profile: VoiceProfile, audioConfig: AudioConfig, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
-        this.privAdapter.createEnrollment(profile, configImpl).on((result: IRestResponse) => {
-            if (!!cb) {
-                cb(
-                    new VoiceProfileEnrollmentResult(
-                        result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
-                        result.data,
-                        result.statusText,
-                    )
-                );
-            }
-        },
-        (error: string) => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
+            const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
+            const ret: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
+                result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
+                result.data,
+                result.statusText,
+            );
+            return ret;
+        })(), cb, err);
     }
 
     /**
@@ -148,14 +136,10 @@ export class VoiceProfileClient {
      * @param err - Callback invoked in case of an error.
      */
     public deleteProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
-        this.privAdapter.deleteProfile(profile).on((result: IRestResponse) => {
-            this.handleResultCallbacks(result, ResultReason.DeletedVoiceProfile, cb);
-        },
-        (error: string) => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfileResult> => {
+            const result: IRestResponse = await this.privAdapter.deleteProfile(profile);
+            return this.getResult(result, ResultReason.DeletedVoiceProfile);
+        })(), cb, err);
     }
 
     /**
@@ -168,14 +152,10 @@ export class VoiceProfileClient {
      * @param err - Callback invoked in case of an error.
      */
     public resetProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
-        this.privAdapter.resetProfile(profile).on((result: IRestResponse) => {
-            this.handleResultCallbacks(result, ResultReason.ResetVoiceProfile, cb);
-        },
-        (error: string) => {
-            if (!!err) {
-                err(error);
-            }
-        });
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfileResult> => {
+            const result: IRestResponse = await this.privAdapter.resetProfile(profile);
+            return this.getResult(result, ResultReason.ResetVoiceProfile);
+        })(), cb, err);
     }
 
     /**
@@ -209,14 +189,12 @@ export class VoiceProfileClient {
         this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
     }
 
-    private handleResultCallbacks(result: IRestResponse, successReason: ResultReason, cb?: (response: VoiceProfileResult) => void): void {
-        if (!!cb) {
-            const response: VoiceProfileResult =
-                new VoiceProfileResult(
-                    result.ok ? successReason : ResultReason.Canceled,
-                    result.statusText
-                );
-            cb(response);
-        }
+    private getResult(result: IRestResponse, successReason: ResultReason, cb?: (response: VoiceProfileResult) => void): VoiceProfileResult {
+        const response: VoiceProfileResult =
+            new VoiceProfileResult(
+                result.ok ? successReason : ResultReason.Canceled,
+                result.statusText
+            );
+        return (response);
     }
 }

@@ -4,13 +4,11 @@
 import {
     createNoDashGuid,
     Deferred,
-    Events, IAudioDestination,
-    Promise,
-    PromiseState
+    Events, IAudioDestination
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
-import {SynthesisAdapterBase} from "./SynthesisAdapterBase";
+import { SynthesisAdapterBase } from "./SynthesisAdapterBase";
 import {
     ConnectingToSynthesisServiceEvent,
     SpeechSynthesisEvent,
@@ -54,8 +52,8 @@ export class SynthesisTurn {
         this.privAudioOutputFormat = format;
     }
 
-    public get turnCompletionPromise(): Promise<boolean> {
-        return this.privTurnDeferral.promise();
+    public get turnCompletionPromise(): Promise<void> {
+        return this.privTurnDeferral.promise;
     }
 
     public get isSynthesisEnded(): boolean {
@@ -75,31 +73,6 @@ export class SynthesisTurn {
         return this.privBytesReceived;
     }
 
-    public get allReceivedAudio(): ArrayBuffer {
-        if (!!this.privReceivedAudio) {
-            return this.privReceivedAudio;
-        }
-        if (!this.privIsSynthesisEnded) {
-            return null;
-        }
-        this.readAllAudioFromStream();
-        return this.allReceivedAudio;
-    }
-
-    public get allReceivedAudioWithHeader(): ArrayBuffer {
-        if (!!this.privReceivedAudioWithHeader) {
-            return this.privReceivedAudioWithHeader;
-        }
-        if (!this.privIsSynthesisEnded) {
-            return null;
-        }
-        if (this.audioOutputFormat.hasHeader) {
-            this.privReceivedAudioWithHeader = SynthesisAdapterBase.addHeader(this.allReceivedAudio, this.audioOutputFormat);
-            return this.allReceivedAudioWithHeader;
-        } else {
-            return this.allReceivedAudio;
-        }
-    }
     private privIsDisposed: boolean = false;
     private privAuthFetchEventId: string;
     private privIsSynthesizing: boolean = false;
@@ -107,7 +80,8 @@ export class SynthesisTurn {
     private privBytesReceived: number = 0;
     private privRequestId: string;
     private privStreamId: string;
-    private privTurnDeferral: Deferred<boolean>;
+    private privTurnDeferral: Deferred<void>;
+    private privInTurn: boolean = false;
     private privAudioOutputFormat: AudioOutputFormatImpl;
     private privAudioOutputStream: PullAudioOutputStreamImpl;
     private privReceivedAudio: ArrayBuffer;
@@ -120,10 +94,37 @@ export class SynthesisTurn {
 
     constructor() {
         this.privRequestId = createNoDashGuid();
-        this.privTurnDeferral = new Deferred<boolean>();
+        this.privTurnDeferral = new Deferred<void>();
 
         // We're not in a turn, so resolve.
-        this.privTurnDeferral.resolve(true);
+        this.privTurnDeferral.resolve();
+    }
+
+    public async getAllReceivedAudio(): Promise<ArrayBuffer> {
+        if (!!this.privReceivedAudio) {
+            return Promise.resolve(this.privReceivedAudio);
+        }
+        if (!this.privIsSynthesisEnded) {
+            return null;
+        }
+        await this.readAllAudioFromStream();
+        return Promise.resolve(this.privReceivedAudio);
+    }
+
+    public async getAllReceivedAudioWithHeader(): Promise<ArrayBuffer> {
+        if (!!this.privReceivedAudioWithHeader) {
+            return this.privReceivedAudioWithHeader;
+        }
+        if (!this.privIsSynthesisEnded) {
+            return null;
+        }
+        if (this.audioOutputFormat.hasHeader) {
+            const audio: ArrayBuffer = await this.getAllReceivedAudio();
+            this.privReceivedAudioWithHeader = SynthesisAdapterBase.addHeader(audio, this.audioOutputFormat);
+            return this.privReceivedAudioWithHeader;
+        } else {
+            return this.getAllReceivedAudio();
+        }
     }
 
     public startNewSynthesis(requestId: string, rawText: string, isSSML: boolean, audioDestination?: IAudioDestination): void {
@@ -173,17 +174,18 @@ export class SynthesisTurn {
     }
 
     public onServiceTurnEndResponse = (): void => {
-        this.privTurnDeferral.resolve(true);
+        this.privInTurn = false;
+        this.privTurnDeferral.resolve();
         this.onComplete();
     }
 
     public onServiceTurnStartResponse = (): void => {
-        if (this.privTurnDeferral.state() === PromiseState.None) {
+        if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
         }
-
-        this.privTurnDeferral = new Deferred<boolean>();
+        this.privInTurn = true;
+        this.privTurnDeferral = new Deferred<void>();
     }
 
     public onAudioChunkReceived(data: ArrayBuffer): void {
@@ -241,11 +243,11 @@ export class SynthesisTurn {
         }
     }
 
-    private readAllAudioFromStream(): void {
+    private async readAllAudioFromStream(): Promise<void> {
         if (this.privIsSynthesisEnded) {
             this.privReceivedAudio = new ArrayBuffer(this.bytesReceived);
             try {
-                this.privAudioOutputStream.read(this.privReceivedAudio);
+                await this.privAudioOutputStream.read(this.privReceivedAudio);
             } catch (e) {
                 this.privReceivedAudio = new ArrayBuffer(0);
             }

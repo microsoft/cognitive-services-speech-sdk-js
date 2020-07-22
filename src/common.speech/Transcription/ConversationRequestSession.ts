@@ -5,7 +5,6 @@ import {
     createNoDashGuid,
     Deferred,
     IDetachable,
-    Promise,
 } from "../../common/Exports";
 
 /**
@@ -16,13 +15,13 @@ export class ConversationRequestSession {
     private privIsDisposed: boolean = false;
     private privDetachables: IDetachable[] = new Array<IDetachable>();
     private privRequestId: string;
-    private privRequestCompletionDeferral: Deferred<boolean>;
+    private privRequestCompletionDeferral: Deferred<void>;
     private privSessionId: string;
 
     constructor(sessionId: string) {
         this.privSessionId = sessionId;
         this.privRequestId = createNoDashGuid();
-        this.privRequestCompletionDeferral = new Deferred<boolean>();
+        this.privRequestCompletionDeferral = new Deferred<void>();
     }
 
     public get sessionId(): string {
@@ -33,8 +32,8 @@ export class ConversationRequestSession {
         return this.privRequestId;
     }
 
-    public get completionPromise(): Promise<boolean> {
-        return this.privRequestCompletionDeferral.promise();
+    public get completionPromise(): Promise<void> {
+        return this.privRequestCompletionDeferral.promise;
     }
 
     public onPreConnectionStart = (authFetchEventId: string, connectionId: string): void => {
@@ -63,12 +62,12 @@ export class ConversationRequestSession {
         }
     }
 
-    public dispose = (error?: string): void => {
+    public async dispose(error?: string): Promise<void> {
         if (!this.privIsDisposed) {
             // we should have completed by now. If we did not its an unknown error.
             this.privIsDisposed = true;
             for (const detachable of this.privDetachables) {
-                detachable.detach();
+                await detachable.detach();
             }
         }
     }

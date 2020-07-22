@@ -131,6 +131,7 @@ export class List<TItem> implements IList<TItem>  {
         return {
             detach: () => {
                 delete this.privAddSubscriptions[subscriptionId];
+                return Promise.resolve();
             },
         };
     }
@@ -144,6 +145,7 @@ export class List<TItem> implements IList<TItem>  {
         return {
             detach: () => {
                 delete this.privRemoveSubscriptions[subscriptionId];
+                return Promise.resolve();
             },
         };
     }
@@ -157,6 +159,7 @@ export class List<TItem> implements IList<TItem>  {
         return {
             detach: () => {
                 delete this.privDisposedSubscriptions[subscriptionId];
+                return Promise.resolve();
             },
         };
     }

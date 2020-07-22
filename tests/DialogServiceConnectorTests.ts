@@ -12,12 +12,15 @@ import {
 } from "../src/common/Exports";
 import { PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
-import { WaitForCondition } from "./Utilities";
+import {
+    closeAsyncObjects,
+    WaitForCondition
+} from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 // tslint:disable-next-line:no-console
 const consoleInfo = console.info;
-const simpleMessageObj = { speak : "This is speech", text: "This is text", type : "message" };
+const simpleMessageObj = { speak: "This is speech", text: "This is text", type: "message" };
 
 // tslint:disable-next-line:no-console
 console.info = (...args: any[]): void => {
@@ -59,14 +62,11 @@ beforeEach(() => {
     console.info("---------------------------------------Starting test case-----------------------------------");
 });
 
-afterEach(() => {
+afterEach(async (done: jest.DoneCallback) => {
+    await closeAsyncObjects(objsToClose);
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
-        if (typeof value.close === "function") {
-            value.close();
-        }
-    });
+    done();
 });
 
 function BuildCommandsServiceConfig(): sdk.DialogServiceConfig {
@@ -204,7 +204,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(botConfig);
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(botConfig);
-        objsToClose.push(connector);
 
         // the service should return an error if an invalid botId was specified, even though the subscription is valid
         connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
@@ -218,7 +217,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
                     done.fail(error);
                 }
             });
-    });
+    }, 15000);
 
     test("Connect / Disconnect", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -231,6 +230,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         objsToClose.push(connector);
 
         let connected: boolean = false;
+        let disconnected: boolean = false;
         const connection: sdk.Connection = sdk.Connection.fromRecognizer(connector);
 
         expect(connector).not.toBeUndefined();
@@ -245,15 +245,23 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         };
 
         connection.disconnected = (args: sdk.ConnectionEventArgs) => {
-            done();
+            disconnected = true;
         };
 
-        connection.openConnection();
+        connection.openConnection(undefined, (error: string): void => {
+            done.fail(error);
+        });
 
         WaitForCondition(() => {
             return connected;
         }, () => {
-            connection.closeConnection();
+            connection.closeConnection(() => {
+                if (!!disconnected) {
+                    done();
+                } else {
+                    done.fail("Did not disconnect before returning");
+                }
+            });
         });
     });
 
@@ -309,13 +317,13 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
             expect(result.text).not.toBeUndefined();
             expect(hypoCounter).toBeGreaterThanOrEqual(1);
             expect(recoCounter).toEqual(1);
-            done();
+            recoCounter++;
         },
             (error: string) => {
                 done.fail(error);
             });
 
-        WaitForCondition(() => (recoCounter === 1), done);
+        WaitForCondition(() => (recoCounter === 2), done);
     });
 
     test("ListenOnceAsync with audio response", (done: jest.DoneCallback) => {
@@ -356,7 +364,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const audioBuffer = new ArrayBuffer(320);
         const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-            audioStream.read(audioBuffer).on((bytesRead: number) => {
+            audioStream.read(audioBuffer).then((bytesRead: number) => {
                 try {
                     if (bytesRead === 0) {
                         PostDoneTest(done, 2000);
@@ -369,9 +377,9 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
                 if (bytesRead > 0) {
                     audioReadLoop(audioStream, done);
                 }
-                }, (error: string) => {
-                    done.fail(error);
-                });
+            }, (error: string) => {
+                done.fail(error);
+            });
         };
 
         connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
@@ -434,7 +442,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const audioBuffer = new ArrayBuffer(320);
         const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-            audioStream.read(audioBuffer).on((bytesRead: number) => {
+            audioStream.read(audioBuffer).then((bytesRead: number) => {
                 try {
                     if (bytesRead === 0) {
                         PostDoneTest(done, 2000);
@@ -446,7 +454,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
                 if (bytesRead > 0) {
                     audioReadLoop(audioStream, done);
                 }
-                }, (error: string) => {
+            }, (error: string) => {
                 done.fail(error);
             });
         };
@@ -920,10 +928,10 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         };
 
         for (let j = 0; j < 5; j++) {
-            const numberedMessage: any = { speak : "This is speech", text: `"Message ${j}`, type: "message" };
+            const numberedMessage: any = { speak: "This is speech", text: `"Message ${j}`, type: "message" };
             const message: string = JSON.stringify(numberedMessage);
             connector.sendActivityAsync(message);
-            sleep(100);
+            sleep(100).catch();
         }
 
         // TODO improve, needs a more accurate verification
@@ -1001,12 +1009,10 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
 
-        try {
-            const malformedJSON: string = '{speak: "This is speech", "text" : "This is JSON is malformed", "type": "message" };';
-            connector.sendActivityAsync(malformedJSON);
-        } catch (e) {
-            expect(e.message).toContain("Unexpected token");
+        const malformedJSON: string = '{speak: "This is speech", "text" : "This is JSON is malformed", "type": "message" };';
+        connector.sendActivityAsync(malformedJSON, () => { done.fail("Should have failed"); }, (error: string) => {
+            expect(error).toContain("Unexpected token");
             done();
-        }
+        });
     });
 });

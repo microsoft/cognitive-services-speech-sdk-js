@@ -27,7 +27,7 @@ beforeAll(() => {
 // tslint:disable-next-line:no-console
 beforeEach(() => console.info("---------------------------------------Starting test case-----------------------------------"));
 
-test("PullStream correctly reports bytes read", (done: jest.DoneCallback) => {
+test("PullStream correctly reports bytes read", async (done: jest.DoneCallback) => {
 
     let readReturnVal: number = bufferSize;
 
@@ -40,46 +40,38 @@ test("PullStream correctly reports bytes read", (done: jest.DoneCallback) => {
         },
     });
 
-    stream.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
-        audioNode.read().onSuccessContinueWith((readArray: IStreamChunk<ArrayBuffer>) => {
-            try {
-                expect(readArray.buffer.byteLength).toEqual(readReturnVal);
-                expect(readArray.isEnd).toEqual(false);
-                done();
-            } catch (error) {
-                done.fail(error);
-            }
-        });
-    });
+    let audioNode: IAudioStreamNode = await stream.attach("id");
+    let readBuffer: IStreamChunk<ArrayBuffer> = await audioNode.read();
+    try {
+        expect(readBuffer.buffer.byteLength).toEqual(readReturnVal);
+        expect(readBuffer.isEnd).toEqual(false);
+    } catch (error) {
+        done.fail(error);
+    }
 
     readReturnVal = bufferSize;
-    stream.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
-        audioNode.read().onSuccessContinueWith((readArray: IStreamChunk<ArrayBuffer>) => {
-            try {
-                expect(readArray.buffer.byteLength).toEqual(readReturnVal);
-                expect(readArray.isEnd).toEqual(false);
-                done();
-            } catch (error) {
-                done.fail(error);
-            }
-        });
-    });
+    audioNode = await stream.attach("id");
+    readBuffer = await audioNode.read();
+    try {
+        expect(readBuffer.buffer.byteLength).toEqual(readReturnVal);
+        expect(readBuffer.isEnd).toEqual(false);
+    } catch (error) {
+        done.fail(error);
+    }
 
     readReturnVal = bufferSize;
-    stream.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
-        audioNode.read().onSuccessContinueWith((readArray: IStreamChunk<ArrayBuffer>) => {
-            try {
-                expect(readArray.buffer.byteLength).toEqual(readReturnVal);
-                expect(readArray.isEnd).toEqual(false);
-                done();
-            } catch (error) {
-                done.fail(error);
-            }
-        });
-    });
+    audioNode = await stream.attach("id");
+    readBuffer = await audioNode.read();
+    try {
+        expect(readBuffer.buffer.byteLength).toEqual(readReturnVal);
+        expect(readBuffer.isEnd).toEqual(false);
+        done();
+    } catch (error) {
+        done.fail(error);
+    }
 });
 
-test("Returning 0 marks end of stream", (done: jest.DoneCallback) => {
+test("Returning 0 marks end of stream", async (done: jest.DoneCallback) => {
     const stream: PullAudioInputStreamImpl = new PullAudioInputStreamImpl({
         close: (): void => {
             return;
@@ -89,22 +81,20 @@ test("Returning 0 marks end of stream", (done: jest.DoneCallback) => {
         },
     });
 
-    stream.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
-        audioNode.read().onSuccessContinueWith((readArray: IStreamChunk<ArrayBuffer>) => {
-            try {
-                expect(readArray.buffer.byteLength).toEqual(0);
-                expect(readArray.isEnd).toEqual(true);
-                done();
-            } catch (error) {
-                done.fail(error);
-            }
-        });
-    });
+    const audioNode: IAudioStreamNode = await stream.attach("id");
+    const readBuffer: IStreamChunk<ArrayBuffer> = await audioNode.read();
+    try {
+        expect(readBuffer.buffer.byteLength).toEqual(0);
+        expect(readBuffer.isEnd).toEqual(true);
+        done();
+    } catch (error) {
+        done.fail(error);
+    }
 });
 
 // Validates that the pull stream will request more bytes until it has been satisfied.
 // Verifies no data is lost.
-test("Pull stream accumulates bytes", (done: jest.DoneCallback) => {
+test("Pull stream accumulates bytes", async (done: jest.DoneCallback) => {
     let bytesReturned: number = 0;
     const stream: PullAudioInputStreamImpl = new PullAudioInputStreamImpl({
         close: (): void => {
@@ -117,28 +107,26 @@ test("Pull stream accumulates bytes", (done: jest.DoneCallback) => {
         },
     });
 
-    stream.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
-        audioNode.read().onSuccessContinueWith((readBuffer: IStreamChunk<ArrayBuffer>) => {
-            try {
-                expect(bytesReturned).toEqual(bufferSize);
-                expect(readBuffer.buffer.byteLength).toEqual(bufferSize);
-                const readArray: Uint8Array = new Uint8Array(readBuffer.buffer);
+    const audioNode: IAudioStreamNode = await stream.attach("id");
+    const readBuffer: IStreamChunk<ArrayBuffer> = await audioNode.read();
+    try {
+        expect(bytesReturned).toEqual(bufferSize);
+        expect(readBuffer.buffer.byteLength).toEqual(bufferSize);
+        const readArray: Uint8Array = new Uint8Array(readBuffer.buffer);
 
-                for (let i: number = 0; i < bytesReturned; i++) {
-                    expect(readArray[i]).toEqual(i % 256);
-                }
+        for (let i: number = 0; i < bytesReturned; i++) {
+            expect(readArray[i]).toEqual(i % 256);
+        }
 
-                done();
-            } catch (error) {
-                done.fail(error);
-            }
-        });
-    });
+        done();
+    } catch (error) {
+        done.fail(error);
+    }
 });
 
 // Validates that the pull stream will request more bytes until there are no more.
 // Verifies no data is lost.
-test("Pull stream accumulates bytes while available", (done: jest.DoneCallback) => {
+test("Pull stream accumulates bytes while available", async (done: jest.DoneCallback) => {
     let bytesReturned: number = 0;
     const stream: PullAudioInputStreamImpl = new PullAudioInputStreamImpl({
         close: (): void => {
@@ -155,21 +143,19 @@ test("Pull stream accumulates bytes while available", (done: jest.DoneCallback) 
         },
     });
 
-    stream.attach("id").onSuccessContinueWith((audioNode: IAudioStreamNode) => {
-        audioNode.read().onSuccessContinueWith((readBuffer: IStreamChunk<ArrayBuffer>) => {
-            try {
-                expect(bytesReturned).toEqual(bufferSize / 2);
-                expect(readBuffer.buffer.byteLength).toEqual(bufferSize / 2);
-                const readArray: Uint8Array = new Uint8Array(readBuffer.buffer);
+    const audioNode: IAudioStreamNode = await stream.attach("id");
+    const readBuffer: IStreamChunk<ArrayBuffer> = await audioNode.read();
+    try {
+        expect(bytesReturned).toEqual(bufferSize / 2);
+        expect(readBuffer.buffer.byteLength).toEqual(bufferSize / 2);
+        const readArray: Uint8Array = new Uint8Array(readBuffer.buffer);
 
-                for (let i: number = 0; i < bytesReturned; i++) {
-                    expect(readArray[i]).toEqual(i % 256);
-                }
+        for (let i: number = 0; i < bytesReturned; i++) {
+            expect(readArray[i]).toEqual(i % 256);
+        }
 
-                done();
-            } catch (error) {
-                done.fail(error);
-            }
-        });
-    });
+        done();
+    } catch (error) {
+        done.fail(error);
+    }
 });

@@ -11,6 +11,7 @@ import {
     TranslationConnectionFactory,
     TranslationServiceRecognizer,
 } from "../common.speech/Exports";
+import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -181,7 +182,7 @@ export class TranslationRecognizer extends Recognizer {
      */
     public recognizeOnceAsync(cb?: (e: TranslationRecognitionResult) => void, err?: (e: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-        this.recognizeOnceAsyncImpl(RecognitionMode.Conversation, cb, err);
+        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -194,7 +195,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation, cb, err);
+        marshalPromiseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -206,7 +207,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.stopContinuousRecognitionAsyncImpl(cb, err);
+        marshalPromiseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
     }
 
     /**
@@ -215,21 +216,21 @@ export class TranslationRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public close(): void {
+    public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-
-        this.dispose(true);
+        marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
-    protected dispose(disposing: boolean): boolean {
+    protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposedTranslationRecognizer) {
             return;
         }
 
+        this.privDisposedTranslationRecognizer = true;
+
         if (disposing) {
-            this.implRecognizerStop();
-            this.privDisposedTranslationRecognizer = true;
-            super.dispose(disposing);
+            await this.implRecognizerStop();
+            await super.dispose(disposing);
         }
     }
 

@@ -8,10 +8,11 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechConnectionFactory,
     SpeechServiceConfig,
     SpeechServiceRecognizer,
 } from "../common.speech/Exports";
-import { SpeechConnectionFactory } from "../common.speech/SpeechConnectionFactory";
+import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
@@ -181,7 +182,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public recognizeOnceAsync(cb?: (e: SpeechRecognitionResult) => void, err?: (e: string) => void): void {
-            this.recognizeOnceAsyncImpl(RecognitionMode.Interactive, cb, err);
+        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Interactive), cb, err);
     }
 
     /**
@@ -194,7 +195,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation, cb, err);
+        marshalPromiseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
@@ -206,7 +207,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        this.stopContinuousRecognitionAsyncImpl(cb, err);
+        marshalPromiseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
     }
 
     /**
@@ -253,10 +254,9 @@ export class SpeechRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public close(): void {
+    public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
-
-        this.dispose(true);
+        marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
     /**
@@ -266,17 +266,17 @@ export class SpeechRecognizer extends Recognizer {
      * @public
      * @param {boolean} disposing - true if disposing the object.
      */
-    protected dispose(disposing: boolean): void {
+    protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposedSpeechRecognizer) {
             return;
         }
 
         if (disposing) {
-            this.implRecognizerStop(); // Dispose is synchronous, so just start it....
             this.privDisposedSpeechRecognizer = true;
+            await this.implRecognizerStop();
         }
 
-        super.dispose(disposing);
+        await super.dispose(disposing);
     }
 
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {

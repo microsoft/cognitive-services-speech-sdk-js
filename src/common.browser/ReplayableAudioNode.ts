@@ -5,8 +5,6 @@ import { AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
 import {
     IAudioStreamNode,
     IStreamChunk,
-    Promise,
-    PromiseHelper,
 } from "../common/Exports";
 
 export class ReplayableAudioNode implements IAudioStreamNode {
@@ -62,7 +60,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
                 this.privReplay = false;
             }
 
-            return PromiseHelper.fromResult<IStreamChunk<ArrayBuffer>>({
+            return Promise.resolve<IStreamChunk<ArrayBuffer>>({
                 buffer: retVal,
                 isEnd: false,
                 timeReceived: this.privBuffers[i].chunk.timeReceived,
@@ -70,7 +68,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
         }
 
         return this.privAudioNode.read()
-            .onSuccessContinueWith((result: IStreamChunk<ArrayBuffer>) => {
+            .then((result: IStreamChunk<ArrayBuffer>) => {
                 if (result && result.buffer) {
                     this.privBuffers.push(new BufferEntry(result, this.privBufferSerial++, this.privBufferedBytes));
                     this.privBufferedBytes += result.buffer.byteLength;
@@ -79,9 +77,9 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             });
     }
 
-    public detach(): void {
-        this.privAudioNode.detach();
+    public detach(): Promise<void> {
         this.privBuffers = undefined;
+        return this.privAudioNode.detach();
     }
 
     public replay(): void {
@@ -95,7 +93,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     // beginning of the buffer closest to the requested offset.
     // A replay request will start from the last shrink point.
     public shrinkBuffers(offset: number): void {
-        if (this.privBuffers === undefined) {
+        if (this.privBuffers === undefined || this.privBuffers.length === 0) {
             return;
         }
 
