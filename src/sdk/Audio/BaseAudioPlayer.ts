@@ -23,8 +23,12 @@ export class BaseAudioPlayer {
     /**
      * Creates and initializes an instance of this class.
      * @constructor
+     * @param {AudioStreamFormat} audioFormat audio stream format recognized by the player.
      */
-    public constructor(audioFormat: AudioStreamFormat) {
+    public constructor(audioFormat?: AudioStreamFormat) {
+        if (audioFormat === undefined) {
+            audioFormat = AudioStreamFormat.getDefaultInputFormat();
+        }
         this.init(audioFormat);
     }
 
@@ -33,13 +37,18 @@ export class BaseAudioPlayer {
      * @param newAudioData audio data to be played.
      */
     public playAudioSample(newAudioData: ArrayBuffer): void {
-        this.ensureInitializedContext();
-        const audioData = this.formatAudioData(newAudioData);
-        const newSamplesData = new Float32Array(this.samples.length + audioData.length);
-        newSamplesData.set(this.samples, 0);
-        newSamplesData.set(audioData, this.samples.length);
-        this.samples = newSamplesData;
+        if (!!(window as any).webkitAudioContext) {
+            this.playAudio(newAudioData);
+        } else {
+            this.ensureInitializedContext();
+            const audioData = this.formatAudioData(newAudioData);
+            const newSamplesData = new Float32Array(this.samples.length + audioData.length);
+            newSamplesData.set(this.samples, 0);
+            newSamplesData.set(audioData, this.samples.length);
+            this.samples = newSamplesData;
+        }
     }
+
     /**
      * stops audio and clears the buffers
      */
@@ -77,7 +86,7 @@ export class BaseAudioPlayer {
 
     private createAudioContext(): void {
         // new ((window as any).AudioContext || (window as any).webkitAudioContext)();
-        this.audioContext = new AudioContext();
+        this.audioContext = AudioStreamFormatImpl.getAudioContext();
 
         // TODO: Various examples shows this gain node, it does not seem to be needed unless we plan
         // to control the volume, not likely
@@ -141,5 +150,18 @@ export class BaseAudioPlayer {
 
         // Clear the samples for the next pushed data.
         this.samples = new Float32Array();
+    }
+
+    private playAudio(audioData: ArrayBuffer): void {
+        if (this.audioContext === null) {
+            this.createAudioContext();
+        }
+        const source: AudioBufferSourceNode = this.audioContext.createBufferSource();
+        const destination: AudioDestinationNode = this.audioContext.destination;
+        this.audioContext.decodeAudioData(audioData, (newBuffer: AudioBuffer): void => {
+            source.buffer = newBuffer;
+            source.connect(destination);
+            source.start(0);
+        });
     }
 }
