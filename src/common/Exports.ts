@@ -5,6 +5,7 @@ export * from "./AudioSourceEvents";
 export * from "./ConnectionEvents";
 export * from "./ConnectionMessage";
 export * from "./ConnectionOpenResponse";
+export * from "./Emitter";
 export * from "./Error";
 export * from "./Events";
 export * from "./EventSource";

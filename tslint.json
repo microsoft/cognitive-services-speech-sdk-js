@@ -6,10 +6,13 @@
   "extends": "tslint:recommended",
   "rules": {
 
-    "max-line-length": [false],
+    "interface-name": [ false ],
 
-    "member-ordering":[
-      true, {
+    "max-line-length": [ false ],
+
+    "member-ordering": [
+      true,
+      {
         "order": [
           "private-static-field",
           "private-instance-field",
@@ -20,7 +23,7 @@
           "protected-instance-method",
           "private-static-method",
           "private-instance-method"
-          ]
+        ]
       }
     ],
 
@@ -34,13 +37,14 @@
     ],
 
     "trailing-comma": [
-      true, {
+      true,
+      {
         "singleline": "never",
         "multiline": "ignore"
       }
     ],
 
-    "only-arrow-functions": [true, "allow-declarations"],
+    "only-arrow-functions": [ true, "allow-declarations" ],
 
     /* Enabling strictest possible type checking on every thing we write */
     "typedef": [
