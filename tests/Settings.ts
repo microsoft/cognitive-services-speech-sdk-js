@@ -60,6 +60,7 @@ export class Settings {
     public static LuisAppId: string = "b687b851-56c5-4d31-816f-35a741a3f0be";
 
     public static WaveFile: string = Settings.InputDir + "whatstheweatherlike.wav";
+    public static WaveFile8ch: string = Settings.InputDir + "Speech016_30s_xmos_8ch.wav";
     public static WaveFile44k: string = Settings.InputDir + "whatstheweatherlike.44khz.wav";
     public static VoiceSignatureWaveFile: string = Settings.InputDir + "StreamingEnrollment.wav";
     public static WaveFileLanguage: string = "en-US";

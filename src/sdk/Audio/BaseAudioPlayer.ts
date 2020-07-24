@@ -158,10 +158,12 @@ export class BaseAudioPlayer {
         }
         const source: AudioBufferSourceNode = this.audioContext.createBufferSource();
         const destination: AudioDestinationNode = this.audioContext.destination;
-        this.audioContext.decodeAudioData(audioData, (newBuffer: AudioBuffer): void => {
+        this.audioContext.decodeAudioData(audioData).then((newBuffer: AudioBuffer): void => {
             source.buffer = newBuffer;
             source.connect(destination);
             source.start(0);
-        });
+        },
+        /* tslint:disable:no-empty */
+        (error: any) => {});
     }
 }

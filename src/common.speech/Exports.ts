@@ -26,6 +26,7 @@ export * from "./TranslationServiceRecognizer";
 export * from "./ServiceMessages/SpeechDetected";
 export * from "./ServiceMessages/SpeechHypothesis";
 export * from "./SpeechServiceRecognizer";
+export * from "./TranscriptionServiceRecognizer";
 export * from "./ServiceMessages/DetailedSpeechPhrase";
 export * from "./ServiceMessages/SimpleSpeechPhrase";
 export * from "./AddedLmIntent";

@@ -131,17 +131,17 @@ export class InternalParticipants {
 /**
  * Recognizer for handling Conversation Translator websocket messages
  */
-export interface IConversationTranslatorRecognizer {
-    canceled: (sender: IConversationTranslatorRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
-    connectionOpened: (sender: IConversationTranslatorRecognizer, event: SessionEventArgs) => void;
-    connectionClosed: (sender: IConversationTranslatorRecognizer, event: SessionEventArgs) => void;
-    participantsListReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantsListEventArgs) => void;
-    translationReceived: (sender: IConversationTranslatorRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
-    lockRoomCommandReceived: (sender: IConversationTranslatorRecognizer, event: LockRoomEventArgs) => void;
-    muteAllCommandReceived: (sender: IConversationTranslatorRecognizer, event: MuteAllEventArgs) => void;
-    participantJoinCommandReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantEventArgs) => void;
-    participantLeaveCommandReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantEventArgs) => void;
-    participantUpdateCommandReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantAttributeEventArgs) => void;
+export interface ConversationRecognizer {
+    canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
+    connectionOpened: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
+    connectionClosed: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
+    participantsListReceived: (sender: ConversationRecognizer, event: ParticipantsListEventArgs) => void;
+    translationReceived: (sender: ConversationRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
+    lockRoomCommandReceived: (sender: ConversationRecognizer, event: LockRoomEventArgs) => void;
+    muteAllCommandReceived: (sender: ConversationRecognizer, event: MuteAllEventArgs) => void;
+    participantJoinCommandReceived: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
+    participantLeaveCommandReceived: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
+    participantUpdateCommandReceived: (sender: ConversationRecognizer, event: ParticipantAttributeEventArgs) => void;
 }
 
 /**

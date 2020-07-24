@@ -31,7 +31,7 @@ export class ConversationTranslationCanceledEventArgs extends RecognitionEventAr
 
     /**
      * The reason the recognition was canceled.
-     * @member SpeechRecognitionCanceledEventArgs.prototype.reason
+     * @member ConversationTranslationCanceledEventArgs.prototype.reason
      * @function
      * @public
      * @returns {CancellationReason} Specifies the reason canceled.
@@ -51,7 +51,7 @@ export class ConversationTranslationCanceledEventArgs extends RecognitionEventAr
 
     /**
      * In case of an unsuccessful recognition, provides details of the occurred error.
-     * @member SpeechRecognitionCanceledEventArgs.prototype.errorDetails
+     * @member ConversationTranslationCanceledEventArgs.prototype.errorDetails
      * @function
      * @public
      * @returns {string} A String that represents the error details.

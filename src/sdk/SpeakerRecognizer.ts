@@ -21,7 +21,6 @@ import {
     SpeakerRecognitionResult,
     SpeakerRecognitionResultType,
     SpeakerVerificationModel,
-    VoiceProfile,
 } from "./Exports";
 import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
 

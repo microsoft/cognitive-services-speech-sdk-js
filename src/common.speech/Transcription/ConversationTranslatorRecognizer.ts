@@ -37,10 +37,10 @@ import {
     ParticipantsListEventArgs
 } from "./ConversationTranslatorEventArgs";
 import {
+    ConversationRecognizer,
     ConversationTranslatorCommandTypes,
     ConversationTranslatorMessageTypes,
     IChangeNicknameCommand,
-    IConversationTranslatorRecognizer,
     IEjectParticipantCommand,
     IInstantMessageCommand,
     IInternalConversation,
@@ -54,7 +54,7 @@ import { PromiseToEmptyCallback } from "./ConversationUtils";
  * Sends messages to the Conversation Translator websocket and listens for incoming events containing websocket messages.
  * Based off the recognizers in the SDK folder.
  */
-export class ConversationTranslatorRecognizer extends Recognizer implements IConversationTranslatorRecognizer {
+export class ConversationTranslatorRecognizer extends Recognizer implements ConversationRecognizer {
 
     private privIsDisposed: boolean;
     private privSpeechRecognitionLanguage: string;
@@ -71,18 +71,18 @@ export class ConversationTranslatorRecognizer extends Recognizer implements ICon
 
     }
 
-    public canceled: (sender: IConversationTranslatorRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
-    public conversationExpiration: (sender: IConversationTranslatorRecognizer, event: ConversationExpirationEventArgs) => void;
-    public lockRoomCommandReceived: (sender: IConversationTranslatorRecognizer, event: LockRoomEventArgs) => void;
-    public muteAllCommandReceived: (sender: IConversationTranslatorRecognizer, event: MuteAllEventArgs) => void;
-    public participantJoinCommandReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantEventArgs) => void;
-    public participantLeaveCommandReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantEventArgs) => void;
-    public participantUpdateCommandReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantAttributeEventArgs) => void;
-    public connectionOpened: (sender: IConversationTranslatorRecognizer, event: SessionEventArgs) => void;
-    public connectionClosed: (sender: IConversationTranslatorRecognizer, event: SessionEventArgs) => void;
-    public translationReceived: (sender: IConversationTranslatorRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
-    public participantsListReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantsListEventArgs) => void;
-    public participantsChanged: (sender: IConversationTranslatorRecognizer, event: ConversationParticipantsChangedEventArgs) => void;
+    public canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
+    public conversationExpiration: (sender: ConversationRecognizer, event: ConversationExpirationEventArgs) => void;
+    public lockRoomCommandReceived: (sender: ConversationRecognizer, event: LockRoomEventArgs) => void;
+    public muteAllCommandReceived: (sender: ConversationRecognizer, event: MuteAllEventArgs) => void;
+    public participantJoinCommandReceived: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
+    public participantLeaveCommandReceived: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
+    public participantUpdateCommandReceived: (sender: ConversationRecognizer, event: ParticipantAttributeEventArgs) => void;
+    public connectionOpened: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
+    public connectionClosed: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
+    public translationReceived: (sender: ConversationRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
+    public participantsListReceived: (sender: ConversationRecognizer, event: ParticipantsListEventArgs) => void;
+    public participantsChanged: (sender: ConversationRecognizer, event: ConversationParticipantsChangedEventArgs) => void;
 
     public set conversation(value: IInternalConversation) {
         this.privRoom = value;
