@@ -25,7 +25,7 @@ export { TranslationRecognitionResult } from "./TranslationRecognitionResult";
 export { TranslationSynthesisResult } from "./TranslationSynthesisResult";
 export { ResultReason } from "./ResultReason";
 export { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
-export { SpeechTranslationConfig } from "./SpeechTranslationConfig";
+export { SpeechTranslationConfig, SpeechTranslationConfigImpl } from "./SpeechTranslationConfig";
 export { PropertyCollection } from "./PropertyCollection";
 export { PropertyId } from "./PropertyId";
 export { Recognizer } from "./Recognizer";

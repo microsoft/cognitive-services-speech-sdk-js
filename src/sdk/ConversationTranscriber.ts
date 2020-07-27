@@ -8,8 +8,8 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SpeechConnectionFactory,
     SpeechServiceConfig,
+    TranscriberConnectionFactory,
     TranscriptionServiceRecognizer,
 } from "../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../common/Exports";
@@ -26,6 +26,8 @@ import {
     SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
+    SpeechTranslationConfig,
+    SpeechTranslationConfigImpl,
 } from "./Exports";
 import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
 import { Conversation } from "./Transcription/Exports";
@@ -41,35 +43,49 @@ export class ConversationTranscriber extends Recognizer {
     /**
      * ConversationTranscriber constructor.
      * @constructor
-     * @param {SpeechConfig} speechConfig - an set of initial properties for this recognizer
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
-    public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
-        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
-        Contracts.throwIfNull(speechConfigImpl, "speechConfig");
+    private constructor(conversation: Conversation, audioConfig?: AudioConfig) {
+        Contracts.throwIfNull(conversation, "Conversation");
+        const speechTranslationConfigImpl: SpeechTranslationConfigImpl = conversation.config as SpeechTranslationConfigImpl;
+        Contracts.throwIfNull(speechTranslationConfigImpl, "conversationConfig");
 
         Contracts.throwIfNullOrWhitespace(
-            speechConfigImpl.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
+            speechTranslationConfigImpl.speechRecognitionLanguage,
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        super(audioConfig, speechConfigImpl.properties, new SpeechConnectionFactory());
+        super(audioConfig, speechTranslationConfigImpl.properties, new TranscriberConnectionFactory());
         this.privDisposedRecognizer = false;
     }
 
     /**
      * ConversationTranscriber constructor.
      * @constructor
-     * @param {SpeechConfig} speechConfig - an set of initial properties for this recognizer
-     * @param {AutoDetectSourceLanguageConfig} autoDetectSourceLanguageConfig - An source language detection configuration associated with the recognizer
+     * @param {Conversation} conversation - Initial conversation to recognize
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
-    public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): ConversationTranscriber {
-        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
-        autoDetectSourceLanguageConfig.properties.mergeTo(speechConfigImpl.properties);
-        const recognizer = new ConversationTranscriber(speechConfig, audioConfig);
+    public static FromConversation(conversation: Conversation, audioConfig?: AudioConfig): ConversationTranscriber {
+        const recognizer = new ConversationTranscriber(conversation, audioConfig);
         return recognizer;
     }
 
+    /**
+     * ConversationTranscriber constructor.
+     * @constructor
+     * @param {Conversation} converation - conversation to be recognized
+     */
+    public JoinConversationAsync(conversation: Conversation): void {
+        Contracts.throwIfNull(conversation, "Conversation");
+        const speechTranslationConfigImpl: SpeechTranslationConfigImpl = conversation.config as SpeechTranslationConfigImpl;
+        Contracts.throwIfNull(speechTranslationConfigImpl, "speechConfig");
+        Contracts.throwIfNullOrWhitespace(
+            speechTranslationConfigImpl.speechRecognitionLanguage,
+            PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
+
+        this.privProperties = speechTranslationConfigImpl.properties.clone();
+        this.setAuthFromProperties();
+        this.privConversation = conversation;
+    }
     /**
      * The event recognizing signals that an intermediate recognition result is received.
      * @member ConversationTranscriber.prototype.recognizing

@@ -55,6 +55,30 @@ export abstract class Recognizer {
     }
 
     /**
+     * This method gets an authentication object from a property collection.
+     * @member Recognizer.prototype.getAuthFromProperties
+     * @function
+     * @public
+     * @returns {IAuthentication} authentication object created from properties
+     */
+    public static getAuthFromProperties(properties: PropertyCollection): IAuthentication {
+        const subscriptionKey = properties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
+        const authentication = (subscriptionKey && subscriptionKey !== "") ?
+            new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
+            new CognitiveTokenAuthentication(
+                (authFetchEventId: string): Promise<string> => {
+                    const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
+                    return Promise.resolve(authorizationToken);
+                },
+                (authFetchEventId: string): Promise<string> => {
+                    const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
+                    return Promise.resolve(authorizationToken);
+                });
+
+        return authentication;
+    }
+
+    /**
      * Defines event handler for session started events.
      * @member Recognizer.prototype.sessionStarted
      * @function
@@ -95,6 +119,13 @@ export abstract class Recognizer {
     public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposed);
         marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
+    }
+
+    /**
+     * Used to reset authentication if member objects are changed
+     */
+    public setAuthFromProperties(): void {
+        this.privReco.authentication = Recognizer.getAuthFromProperties(this.privProperties);
     }
 
     /**
@@ -189,21 +220,8 @@ export abstract class Recognizer {
             new SpeechServiceConfig(
                 new Context(new OS(osPlatform, osName, osVersion))));
 
-        const subscriptionKey = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
-        const authentication = (subscriptionKey && subscriptionKey !== "") ?
-            new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
-            new CognitiveTokenAuthentication(
-                (authFetchEventId: string): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                },
-                (authFetchEventId: string): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                });
-
         this.privReco = this.createServiceRecognizer(
-            authentication,
+            Recognizer.getAuthFromProperties(this.privProperties),
             this.privConnectionFactory,
             this.audioConfig,
             recognizerConfig);

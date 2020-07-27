@@ -48,7 +48,6 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
     private privConnectionFactory: IConnectionFactory;
-    private privAudioSource: IAudioSource;
 
     // A promise for a configured connection.
     // Do not consume directly, call fetchConnection instead.
@@ -67,6 +66,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privServiceHasSentMessage: boolean;
     private privActivityTemplate: string;
     private privSetTimeout: (cb: () => void, delay: number) => number = setTimeout;
+    private privAudioSource: IAudioSource;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
@@ -134,6 +134,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public set conversationTranslatorToken(token: string) {
         this.privRecognizerConfig.parameters.setProperty(PropertyId.ConversationTranslator_Token, token);
+    }
+
+    public set authentication(auth: IAuthentication) {
+        this.privAuthentication = this.authentication;
     }
 
     public isDisposed(): boolean {
