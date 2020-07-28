@@ -2,11 +2,13 @@
 // Licensed under the MIT license.
 
 import {
+    ConnectionEventArgs,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
-    SessionEventArgs } from "../../sdk/Exports";
+    SessionEventArgs,
+    } from "../../sdk/Exports";
 // import { ConversationClient } from "./ConversationConnection";
 import {
     ConversationReceivedTranslationEventArgs,
@@ -61,6 +63,7 @@ export interface IInternalParticipant {
     isMuted?: boolean;
     isUsingTts?: boolean;
     preferredLanguage?: string;
+    voiceSignature?: string;
 }
 
 /** Users participating in the conversation */
@@ -132,6 +135,10 @@ export class InternalParticipants {
  * Recognizer for handling Conversation Translator websocket messages
  */
 export interface ConversationRecognizer {
+    isDisposed: boolean;
+    conversationExpiration: (sender: ConversationRecognizer, event: ConversationExpirationEventArgs) => void;
+    connected: (e: ConnectionEventArgs) => void;
+    disconnected: (e: ConnectionEventArgs) => void;
     canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
     connectionOpened: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
     connectionClosed: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
@@ -142,6 +149,9 @@ export interface ConversationRecognizer {
     participantJoinCommandReceived: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
     participantLeaveCommandReceived: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
     participantUpdateCommandReceived: (sender: ConversationRecognizer, event: ParticipantAttributeEventArgs) => void;
+    close: () => Promise<void>;
+    connect: (token: string, cb?: () => void, err?: (e: string) => void) => void;
+    sendRequest: (command: string, cb?: () => void, err?: (e: string) => void) => void;
 }
 
 /**

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-export { Conversation } from "./Conversation";
+export { Conversation, ConversationImpl } from "./Conversation";
 export { ConversationExpirationEventArgs } from "./ConversationExpirationEventArgs";
 export { ConversationParticipantsChangedEventArgs } from "./ConversationParticipantsChangedEventArgs";
 export { ConversationTranslationCanceledEventArgs } from "./ConversationTranslationCanceledEventArgs";

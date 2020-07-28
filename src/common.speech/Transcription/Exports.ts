@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 export { ConversationManager } from "./ConversationManager";
-export { ConversationTranslatorRecognizer } from "./ConversationTranslatorRecognizer";
+export { ConversationRecognizerFactory } from "./ConversationTranslatorRecognizer";
 export { ConversationConnectionConfig } from "./ConversationConnectionConfig";
 export {
     ConversationReceivedTranslationEventArgs,
@@ -12,6 +12,7 @@ export {
     ParticipantEventArgs,
     ParticipantsListEventArgs } from "./ConversationTranslatorEventArgs";
 export {
+    ConversationRecognizer,
     ConversationTranslatorCommandTypes,
     ConversationTranslatorMessageTypes,
     IInternalConversation,

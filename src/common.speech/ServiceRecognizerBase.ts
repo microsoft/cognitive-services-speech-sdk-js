@@ -434,8 +434,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             return;
                         } else {
                             connection = await this.fetchConnection();
-                            await this.sendSpeechContext(connection);
-                            await this.sendWaveHeader(connection);
+                            await this.sendPrePayloadJSON(connection);
                         }
                         break;
 
@@ -465,6 +464,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 "application/json",
                 speechContextJson));
         }
+        return;
+    }
+
+    // Encapsulated for derived service recognizers that need to send additional JSON
+    protected async sendPrePayloadJSON(connection: IConnection): Promise<void> {
+        await this.sendSpeechContext(connection);
+        await this.sendWaveHeader(connection);
         return;
     }
 
@@ -707,8 +713,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             return this.configConnectionOverride(connection);
         }
         await this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
-        await this.sendSpeechContext(connection);
-        await this.sendWaveHeader(connection);
+        await this.sendPrePayloadJSON(connection);
         return connection;
     }
 }

@@ -17,8 +17,6 @@ import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
-    AutoDetectSourceLanguageConfig,
-    KeywordRecognitionModel,
     OutputFormat,
     PropertyCollection,
     PropertyId,
@@ -29,8 +27,7 @@ import {
     SpeechTranslationConfig,
     SpeechTranslationConfigImpl,
 } from "./Exports";
-import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
-import { Conversation } from "./Transcription/Exports";
+import { Conversation, ConversationImpl } from "./Transcription/Exports";
 
 /**
  * Performs conversation transcription from file, or other audio input streams, and gets transcribed text as result.
@@ -227,6 +224,15 @@ export class ConversationTranscriber extends Recognizer {
     }
 
     /**
+     * get conversation information from conversation member
+     * @return {object} conversation info
+     */
+    public get conversationSpeechEvent(): any {
+        Contracts.throwIfNull(this.privConversation, "Conversation");
+        return (this.privConversation as ConversationImpl).speechEventStart;
+   }
+
+    /**
      * Disposes any resources held by the object.
      * @member ConversationTranscriber.prototype.dispose
      * @function
@@ -240,6 +246,7 @@ export class ConversationTranscriber extends Recognizer {
 
         if (disposing) {
             this.privDisposedRecognizer = true;
+            await this.privConversation.deleteConversationAsync();
             await this.implRecognizerStop();
         }
 

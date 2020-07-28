@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IAudioSource } from "../common/Exports";
+import {
+    IAudioSource,
+    IConnection,
+    MessageType
+} from "../common/Exports";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -206,5 +210,31 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                 /* tslint:disable:no-empty */
             } catch { }
         }
+    }
+
+    // Encapsulated for derived service recognizers that need to send additional JSON
+    protected async sendPrePayloadJSON(connection: IConnection): Promise<void> {
+        await this.sendSpeechContext(connection);
+        await this.sendSpeechEvent(connection);
+        await this.sendWaveHeader(connection);
+        return;
+    }
+
+    private sendSpeechEvent = (connection: IConnection): Promise<void> => {
+        const speechEventJson = this.speechEvent.toJSON();
+
+        if (speechEventJson) {
+            return connection.send(new SpeechConnectionMessage(
+                MessageType.Text,
+                "speech.event",
+                this.privRequestSession.requestId,
+                "application/json",
+                speechEventJson));
+        }
+        return;
+    }
+
+    private get speechEvent(): any {
+        return this.privConversationTranscriber.conversationSpeechEvent;
     }
 }
