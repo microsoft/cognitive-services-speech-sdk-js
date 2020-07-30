@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RecognitionEventArgs, SpeechRecognitionResult } from "./Exports";
+import { RecognitionEventArgs, SpeechRecognitionResult } from "../Exports";
 
 /**
  * Defines contents of speech recognizing/recognized event.
  * @class SpeechRecognitionEventArgs
  */
-export class SpeechRecognitionEventArgs extends RecognitionEventArgs {
+export class ConversationTranscriptionEventArgs extends RecognitionEventArgs {
     private privResult: SpeechRecognitionResult;
 
     /**
@@ -25,7 +25,7 @@ export class SpeechRecognitionEventArgs extends RecognitionEventArgs {
 
     /**
      * Specifies the recognition result.
-     * @member SpeechRecognitionEventArgs.prototype.result
+     * @member ConversationTranscriptionEventArgs.prototype.result
      * @function
      * @public
      * @returns {SpeechRecognitionResult} the recognition result.
@@ -33,12 +33,4 @@ export class SpeechRecognitionEventArgs extends RecognitionEventArgs {
     public get result(): SpeechRecognitionResult {
         return this.privResult;
     }
-}
-
-/**
- * Defines contents of conversation transcribed/transcribing event.
- * @class ConversationTranscriptionEventArgs
- */
-// tslint:disable-next-line:max-classes-per-file
-export class ConversationTranscriptionEventArgs extends SpeechRecognitionEventArgs {
 }

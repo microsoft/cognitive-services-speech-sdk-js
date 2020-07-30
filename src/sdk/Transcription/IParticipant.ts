@@ -60,7 +60,7 @@ export class Participant implements IParticipant {
     private privIsMuted: boolean;
     private privIsUsingTts: boolean;
     private privPreferredLanguage: string;
-    private privPoperties: PropertyCollection;
+    private privProperties: PropertyCollection;
 
     constructor(id: string, avatar: string, displayName: string, isHost: boolean, isMuted: boolean, isUsingTts: boolean, preferredLanguage: string) {
         this.privId = id;
@@ -70,7 +70,7 @@ export class Participant implements IParticipant {
         this.privIsMuted = isMuted;
         this.privIsUsingTts = isUsingTts;
         this.privPreferredLanguage = preferredLanguage;
-        this.privPoperties = new PropertyCollection();
+        this.privProperties = new PropertyCollection();
     }
     public get avatar(): string {
         return this.privAvatar;
@@ -101,6 +101,6 @@ export class Participant implements IParticipant {
     }
 
     public get properties(): PropertyCollection {
-        return this.privPoperties;
+        return this.privProperties;
     }
 }

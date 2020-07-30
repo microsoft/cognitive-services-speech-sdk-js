@@ -135,23 +135,24 @@ export class InternalParticipants {
  * Recognizer for handling Conversation Translator websocket messages
  */
 export interface ConversationRecognizer {
-    isDisposed: boolean;
-    conversationExpiration: (sender: ConversationRecognizer, event: ConversationExpirationEventArgs) => void;
-    connected: (e: ConnectionEventArgs) => void;
-    disconnected: (e: ConnectionEventArgs) => void;
-    canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
-    connectionOpened: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
-    connectionClosed: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
-    participantsListReceived: (sender: ConversationRecognizer, event: ParticipantsListEventArgs) => void;
-    translationReceived: (sender: ConversationRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
-    lockRoomCommandReceived: (sender: ConversationRecognizer, event: LockRoomEventArgs) => void;
-    muteAllCommandReceived: (sender: ConversationRecognizer, event: MuteAllEventArgs) => void;
-    participantJoinCommandReceived: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
-    participantLeaveCommandReceived: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
-    participantUpdateCommandReceived: (sender: ConversationRecognizer, event: ParticipantAttributeEventArgs) => void;
-    close: () => Promise<void>;
-    connect: (token: string, cb?: () => void, err?: (e: string) => void) => void;
+    isDisposed(): boolean;
     sendRequest: (command: string, cb?: () => void, err?: (e: string) => void) => void;
+    cancelSpeech?: () => Promise<void>;
+    close?: () => Promise<void>;
+    conversationExpiration?: (sender: ConversationRecognizer, event: ConversationExpirationEventArgs) => void;
+    connected?: (e: ConnectionEventArgs) => void;
+    disconnected?: (e: ConnectionEventArgs) => void;
+    canceled?: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
+    connectionOpened?: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
+    connectionClosed?: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
+    participantsListReceived?: (sender: ConversationRecognizer, event: ParticipantsListEventArgs) => void;
+    translationReceived?: (sender: ConversationRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
+    lockRoomCommandReceived?: (sender: ConversationRecognizer, event: LockRoomEventArgs) => void;
+    muteAllCommandReceived?: (sender: ConversationRecognizer, event: MuteAllEventArgs) => void;
+    participantJoinCommandReceived?: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
+    participantLeaveCommandReceived?: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
+    participantUpdateCommandReceived?: (sender: ConversationRecognizer, event: ParticipantAttributeEventArgs) => void;
+    connect?: (token: string, cb?: () => void, err?: (e: string) => void) => void;
 }
 
 /**

@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 
 export { ConversationManager } from "./ConversationManager";
-export { ConversationRecognizerFactory } from "./ConversationTranslatorRecognizer";
 export { ConversationConnectionConfig } from "./ConversationConnectionConfig";
+export { ConversationRecognizerFactory } from "./ConversationTranslatorRecognizer";
 export {
     ConversationReceivedTranslationEventArgs,
     LockRoomEventArgs,

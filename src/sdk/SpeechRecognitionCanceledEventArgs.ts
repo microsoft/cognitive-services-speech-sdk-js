@@ -60,3 +60,11 @@ export class SpeechRecognitionCanceledEventArgs extends RecognitionEventArgs {
         return this.privErrorDetails;
     }
 }
+
+/**
+ * Defines contents of conversation transcription canceled event.
+ * @class ConversationTranscriptionCanceledEventArgs
+ */
+// tslint:disable-next-line:max-classes-per-file
+export class ConversationTranscriptionCanceledEventArgs extends SpeechRecognitionCanceledEventArgs {
+}

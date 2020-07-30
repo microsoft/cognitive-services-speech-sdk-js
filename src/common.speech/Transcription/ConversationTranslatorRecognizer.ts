@@ -106,7 +106,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         return this.privProperties;
     }
 
-    public get isDisposed(): boolean {
+    public isDisposed(): boolean {
         return this.privIsDisposed;
     }
 

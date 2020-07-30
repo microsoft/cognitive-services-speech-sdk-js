@@ -77,3 +77,9 @@ export interface IConversation {
     unmuteParticipantAsync(userId: string, cb?: () => void, err?: (e: string) => void): void;
 
 }
+
+export interface ConversationInfo {
+    id: string;
+    participants: IParticipant[];
+    conversationProperties: any;
+}

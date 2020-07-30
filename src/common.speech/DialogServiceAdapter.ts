@@ -274,7 +274,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     undefined, // ResultId
                     ResultReason.Canceled,
                     undefined, // Text
-                    undefined, // Druation
+                    undefined, // Duration
                     undefined, // Offset
                     undefined, // Language
                     undefined, // Language Detection Confidence

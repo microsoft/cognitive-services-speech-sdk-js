@@ -9,7 +9,6 @@ import {
 import {
     CancellationErrorCode,
     CancellationReason,
-    ConversationTranscriber,
     OutputFormat,
     PropertyCollection,
     PropertyId,
@@ -18,6 +17,7 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
+import { TranscriberRecognizer } from "../sdk/Transcription/Exports";
 import {
     CancellationErrorCodePropertyName,
     DetailedSpeechPhrase,
@@ -36,14 +36,14 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 // tslint:disable-next-line:max-classes-per-file
 export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
 
-    private privConversationTranscriber: ConversationTranscriber;
+    private privConversationTranscriber: TranscriberRecognizer;
 
     public constructor(
         authentication: IAuthentication,
         connectionFactory: IConnectionFactory,
         audioSource: IAudioSource,
         recognizerConfig: RecognizerConfig,
-        transcriber: ConversationTranscriber) {
+        transcriber: TranscriberRecognizer) {
         super(authentication, connectionFactory, audioSource, recognizerConfig, transcriber);
         this.privConversationTranscriber = transcriber;
     }
@@ -235,6 +235,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
     }
 
     private get speechEvent(): any {
-        return this.privConversationTranscriber.conversationSpeechEvent;
+        return;
+        // return this.privConversationTranscriber.conversationSpeechEvent;
     }
 }
