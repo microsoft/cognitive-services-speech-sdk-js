@@ -3,6 +3,7 @@
 // Multi-device Conversation is a Preview feature.
 
 export { Conversation, ConversationImpl } from "./Conversation";
+export { ConversationInfo } from "./IConversation";
 export { ConversationCommon } from "./ConversationCommon";
 export { ConversationExpirationEventArgs } from "./ConversationExpirationEventArgs";
 export { ConversationParticipantsChangedEventArgs } from "./ConversationParticipantsChangedEventArgs";

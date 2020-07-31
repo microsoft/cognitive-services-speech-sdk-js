@@ -713,7 +713,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     private getConversationProperties(): any {
-        return {};
+        const eventDict: { [id: string]: string } = {};
+        for (const key of ConversationConnectionConfig.transcriptionEventKeys) {
+            eventDict[key] = this.properties.getProperty(key, "");
+        }
+        return eventDict;
     }
 
     /** websocket callbacks */

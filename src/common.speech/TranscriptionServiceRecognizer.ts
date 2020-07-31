@@ -17,7 +17,7 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
-import { TranscriberRecognizer } from "../sdk/Transcription/Exports";
+import { ConversationInfo, TranscriberRecognizer } from "../sdk/Transcription/Exports";
 import {
     CancellationErrorCodePropertyName,
     DetailedSpeechPhrase,
@@ -36,7 +36,7 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 // tslint:disable-next-line:max-classes-per-file
 export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
 
-    private privConversationTranscriber: TranscriberRecognizer;
+    private privTranscriberRecognizer: TranscriberRecognizer;
 
     public constructor(
         authentication: IAuthentication,
@@ -45,7 +45,13 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
         recognizerConfig: RecognizerConfig,
         transcriber: TranscriberRecognizer) {
         super(authentication, connectionFactory, audioSource, recognizerConfig, transcriber);
-        this.privConversationTranscriber = transcriber;
+        this.privTranscriberRecognizer = transcriber;
+        this.sendPrePayloadJSONOverride = this.sendTranscriptionStartJSON;
+    }
+
+    public async sendSpeechEventAsync(info: ConversationInfo, command: string): Promise<void> {
+        const connection: IConnection = await this.fetchConnection();
+        await this.sendSpeechEvent(connection, this.createSpeechEventPayload(info, command));
     }
 
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
@@ -77,9 +83,9 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
 
                 const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
 
-                if (!!this.privConversationTranscriber.recognizing) {
+                if (!!this.privTranscriberRecognizer.recognizing) {
                     try {
-                        this.privConversationTranscriber.recognizing(this.privConversationTranscriber, ev);
+                        this.privTranscriberRecognizer.recognizing(this.privTranscriberRecognizer, ev);
                         /* tslint:disable:no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
@@ -134,9 +140,9 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
 
                         const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
 
-                        if (!!this.privConversationTranscriber.recognized) {
+                        if (!!this.privTranscriberRecognizer.recognized) {
                             try {
-                                this.privConversationTranscriber.recognized(this.privConversationTranscriber, event);
+                                this.privTranscriberRecognizer.recognized(this.privTranscriberRecognizer, event);
                                 /* tslint:disable:no-empty */
                             } catch (error) {
                                 // Not going to let errors in the event handler
@@ -179,7 +185,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
         const properties: PropertyCollection = new PropertyCollection();
         properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
-        if (!!this.privConversationTranscriber.canceled) {
+        if (!!this.privTranscriberRecognizer.canceled) {
             const cancelEvent: SpeechRecognitionCanceledEventArgs = new SpeechRecognitionCanceledEventArgs(
                 cancellationReason,
                 error,
@@ -187,7 +193,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                 undefined,
                 sessionId);
             try {
-                this.privConversationTranscriber.canceled(this.privConversationTranscriber, cancelEvent);
+                this.privTranscriberRecognizer.canceled(this.privTranscriberRecognizer, cancelEvent);
                 /* tslint:disable:no-empty */
             } catch { }
         }
@@ -213,15 +219,15 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
     }
 
     // Encapsulated for derived service recognizers that need to send additional JSON
-    protected async sendPrePayloadJSON(connection: IConnection): Promise<void> {
+    protected async sendTranscriptionStartJSON(connection: IConnection): Promise<void> {
         await this.sendSpeechContext(connection);
-        await this.sendSpeechEvent(connection);
+        await this.sendSpeechEvent(connection, this.createSpeechEventPayload(this.privTranscriberRecognizer.getConversationInfo(), "start"));
         await this.sendWaveHeader(connection);
         return;
     }
 
-    private sendSpeechEvent = (connection: IConnection): Promise<void> => {
-        const speechEventJson = this.speechEvent.toJSON();
+    private sendSpeechEvent = (connection: IConnection, payload: { [id: string]: any }): Promise<void> => {
+        const speechEventJson = payload.toJSON();
 
         if (speechEventJson) {
             return connection.send(new SpeechConnectionMessage(
@@ -234,8 +240,15 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
         return;
     }
 
-    private get speechEvent(): any {
-        return;
-        // return this.privConversationTranscriber.conversationSpeechEvent;
+    private createSpeechEventPayload(info: ConversationInfo, command: string): { [id: string]: any } {
+        const meeting: string = "meeting";
+        const eventDict: { [id: string]: any } = { id: meeting, name: command, meeting: info.conversationProperties };
+        const idString: string = "id";
+        const attendees: string = "attendees";
+        const record: string = "record";
+        eventDict[meeting][idString] = info.id;
+        eventDict[meeting][attendees] = info.participants;
+        eventDict[meeting][record] = info.conversationProperties.audiorecording === "on" ? "true" : "false";
+        return eventDict;
     }
 }

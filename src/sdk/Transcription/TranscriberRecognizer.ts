@@ -87,8 +87,11 @@ export class TranscriberRecognizer extends Recognizer {
         await this.dispose(true);
     }
 
-    public async pushConversationInfo(conversationInfo: ConversationInfo): Promise<void> {
-        // Push async conversation message via serviceRecognizer
+    // Push async join/leave conversation message via serviceRecognizer
+    public async pushConversationEvent(conversationInfo: ConversationInfo, command: string): Promise<void> {
+        const reco = (this.privReco) as TranscriptionServiceRecognizer;
+        Contracts.throwIfNullOrUndefined(reco, "serviceRecognizer");
+        await reco.sendSpeechEventAsync(conversationInfo, command);
     }
 
     /**
