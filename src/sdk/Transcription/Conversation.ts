@@ -99,6 +99,9 @@ export abstract class Conversation implements IConversation {
     /** Lock a conversation. This will prevent new participants from joining. */
     public abstract lockConversationAsync(cb?: Callback, err?: Callback): void;
 
+    /** Add Participant to Conversation. */
+    public abstract addParticipantAsync(participant: IParticipant, cb?: Callback, err?: Callback): void;
+
     /**
      * Mute all other participants in the conversation. After this no other participants will
      * have their speech recognitions broadcast, nor be able to send text messages.
@@ -333,6 +336,17 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     /**
      * Join a conversation as a participant.
+     * @param { IParticipant } participant - participant to add
+     * @param cb
+     * @param err
+     */
+    public addParticipantAsync(participant: IParticipant, cb?: Callback, err?: Callback): void {
+        Contracts.throwIfNullOrUndefined(participant, "Participant");
+        marshalPromiseToCallbacks(this.addParticipantImplAsync(participant), cb, err);
+    }
+
+    /**
+     * Join a conversation as a participant.
      * @param conversation
      * @param nickname
      * @param lang
@@ -494,33 +508,38 @@ export class ConversationImpl extends Conversation implements IDisposable {
     public removeParticipantAsync(userId: string | IParticipant | IUser, cb?: Callback, err?: Callback): void {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
-            Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
-            Contracts.throwIfNullOrUndefined(this.privRoom, this.privErrors.permissionDeniedSend);
-            if (!this.canSendAsHost) {
-                this.handleError(new Error(this.privErrors.permissionDeniedParticipant.replace("{command}", "remove")), err);
+            if (!!this.privTranscriberRecognizer && userId.hasOwnProperty("id")) {
+                // Assume this is a transcription participant
+                marshalPromiseToCallbacks(this.removeParticipantImplAsync(userId as IParticipant), cb, err);
+            } else {
+                Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
+                Contracts.throwIfNullOrUndefined(this.privRoom, this.privErrors.permissionDeniedSend);
+                if (!this.canSendAsHost) {
+                    this.handleError(new Error(this.privErrors.permissionDeniedParticipant.replace("{command}", "remove")), err);
+                }
+                let participantId: string = "";
+                if (typeof userId === "string") {
+                    participantId = userId as string;
+                } else if (userId.hasOwnProperty("id")) {
+                    const participant: IParticipant = userId as IParticipant;
+                    participantId = participant.id;
+                } else if (userId.hasOwnProperty("userId")) {
+                    const user: IUser = userId as IUser;
+                    participantId = user.userId;
+                }
+                Contracts.throwIfNullOrWhitespace(participantId, this.privErrors.invalidArgs.replace("{arg}", "userId"));
+                // check the participant exists
+                const index: number = this.participants.findIndex((p: Participant) => p.id === participantId);
+                if (index === -1) {
+                    this.handleError(new Error(this.privErrors.invalidParticipantRequest), err);
+                }
+                this.privConversationRecognizer?.sendRequest(this.getEjectCommand(participantId), (() => {
+                    this.handleCallback(cb, err);
+                }),
+                    ((error: any) => {
+                        this.handleError(error, err);
+                    }));
             }
-            let participantId: string = "";
-            if (typeof userId === "string") {
-                participantId = userId as string;
-            } else if (userId.hasOwnProperty("id")) {
-                const participant: IParticipant = userId as IParticipant;
-                participantId = participant.id;
-            } else if (userId.hasOwnProperty("userId")) {
-                const user: IUser = userId as IUser;
-                participantId = user.userId;
-            }
-            Contracts.throwIfNullOrWhitespace(participantId, this.privErrors.invalidArgs.replace("{arg}", "userId"));
-            // check the participant exists
-            const index: number = this.participants.findIndex((p: Participant) => p.id === participantId);
-            if (index === -1) {
-                this.handleError(new Error(this.privErrors.invalidParticipantRequest), err);
-            }
-            this.privConversationRecognizer?.sendRequest(this.getEjectCommand(participantId), (() => {
-                this.handleCallback(cb, err);
-            }),
-                ((error: any) => {
-                    this.handleError(error, err);
-                }));
         } catch (error) {
             this.handleError(error, err);
         }
@@ -694,18 +713,22 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privTranscriberRecognizer.getConversationInfo = this.getConversationInfo;
     }
 
-    public get speechEventStart(): any {
-        return {
-            id: "meeting",
-            meeting: { id: this.conversationId }
-        };
+    private addParticipantImplAsync(participant: IParticipant): Promise<void> {
+        const newParticipant: IInternalParticipant = this.privParticipants.addOrUpdateParticipant(participant);
+        if (newParticipant !== undefined) {
+            if (!!this.privTranscriberRecognizer) {
+                const conversationInfo = this.getConversationInfo();
+                conversationInfo.participants = [participant];
+                return this.privTranscriberRecognizer.pushConversationEvent(conversationInfo, "join");
+            }
+        }
     }
 
-    public get speechEventEnd(): any {
-        return {
-            id: "meeting",
-            meeting: { id: this.conversationId }
-        };
+    private removeParticipantImplAsync(participant: IParticipant): Promise<void> {
+        this.privParticipants.deleteParticipant(participant.id);
+        const conversationInfo = this.getConversationInfo();
+        conversationInfo.participants = [participant];
+        return this.privTranscriberRecognizer.pushConversationEvent(conversationInfo, "leave");
     }
 
     private getConversationInfo(): ConversationInfo {
