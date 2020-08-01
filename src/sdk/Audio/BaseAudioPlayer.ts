@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { InvalidOperationError } from "../../common/Error";
+import { marshalPromiseToCallbacks } from "../../common/Promise";
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 
@@ -36,17 +37,19 @@ export class BaseAudioPlayer {
      * play Audio sample
      * @param newAudioData audio data to be played.
      */
-    public playAudioSample(newAudioData: ArrayBuffer): void {
-        if (!!(window as any).webkitAudioContext) {
-            this.playAudio(newAudioData);
-        } else {
-            this.ensureInitializedContext();
-            const audioData = this.formatAudioData(newAudioData);
-            const newSamplesData = new Float32Array(this.samples.length + audioData.length);
-            newSamplesData.set(this.samples, 0);
-            newSamplesData.set(audioData, this.samples.length);
-            this.samples = newSamplesData;
-        }
+    public playAudioSample(newAudioData: ArrayBuffer, cb?: () => void, err?: (error: string) => void): void {
+        marshalPromiseToCallbacks((async (): Promise<void> => {
+            if (!!(window as any).webkitAudioContext) {
+                await this.playAudio(newAudioData);
+            } else {
+                this.ensureInitializedContext();
+                const audioData = this.formatAudioData(newAudioData);
+                const newSamplesData = new Float32Array(this.samples.length + audioData.length);
+                newSamplesData.set(this.samples, 0);
+                newSamplesData.set(audioData, this.samples.length);
+                this.samples = newSamplesData;
+            }
+        })(), cb, err);
     }
 
     /**
@@ -152,13 +155,13 @@ export class BaseAudioPlayer {
         this.samples = new Float32Array();
     }
 
-    private playAudio(audioData: ArrayBuffer): void {
+    private async playAudio(audioData: ArrayBuffer): Promise<void> {
         if (this.audioContext === null) {
             this.createAudioContext();
         }
         const source: AudioBufferSourceNode = this.audioContext.createBufferSource();
         const destination: AudioDestinationNode = this.audioContext.destination;
-        this.audioContext.decodeAudioData(audioData, (newBuffer: AudioBuffer): void => {
+        await this.audioContext.decodeAudioData(audioData, (newBuffer: AudioBuffer): void => {
             source.buffer = newBuffer;
             source.connect(destination);
             source.start(0);
