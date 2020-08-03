@@ -708,6 +708,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privRoom = undefined;
     }
 
+    public get transcriberRecognizer(): TranscriberRecognizer {
+        return this.privTranscriberRecognizer;
+    }
+
     public connectTranscriberRecognizer(recognizer: TranscriberRecognizer): void {
         this.privTranscriberRecognizer = recognizer;
         this.privTranscriberRecognizer.getConversationInfo = this.getConversationInfo;

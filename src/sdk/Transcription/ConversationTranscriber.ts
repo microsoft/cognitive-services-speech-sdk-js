@@ -75,15 +75,17 @@ export class ConversationTranscriber extends ConversationCommon implements Conve
 
         // ref the conversation object
         // create recognizer and subscribe to recognizer events
-        this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
+        this.privRecognizer = conversationImpl.transcriberRecognizer;
+        if (this.privRecognizer === undefined) {
+            this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
+            conversationImpl.connectTranscriberRecognizer(this.privRecognizer);
+        }
         Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
         this.privRecognizer.canceled = function(s: any, e: SpeechRecognitionCanceledEventArgs): void { this.canceled(this, e); };
         this.privRecognizer.recognizing = function(s: any, e: SpeechRecognitionEventArgs): void { this.transcribing(this, e); };
         this.privRecognizer.recognized = function(s: any, e: SpeechRecognitionEventArgs): void { this.transcribed(this, e); };
         this.privRecognizer.sessionStarted = function(s: any, e: SpeechRecognitionEventArgs): void { this.sessionStarted(this, e); };
         this.privRecognizer.sessionStopped = function(s: any, e: SpeechRecognitionEventArgs): void { this.sessionStopped(this, e); };
-
-        conversationImpl.connectTranscriberRecognizer(this.privRecognizer);
 
         this.handleCallback(cb, err);
     }
@@ -234,7 +236,13 @@ export class ConversationTranscriber extends ConversationCommon implements Conve
      * Leave the current conversation. After this is called, you will no longer receive any events.
      */
     public leaveConversationAsync(cb?: Callback, err?: Callback): void {
-        return;
+        this.privRecognizer.canceled = undefined;
+        this.privRecognizer.recognizing = undefined;
+        this.privRecognizer.recognized = undefined;
+        this.privRecognizer.sessionStarted = undefined;
+        this.privRecognizer.sessionStopped = undefined;
+
+        this.handleCallback(cb, err);
     }
 
     /**
