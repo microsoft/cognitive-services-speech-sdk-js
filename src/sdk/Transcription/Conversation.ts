@@ -64,27 +64,34 @@ export abstract class Conversation implements IConversation {
      * @param cb
      * @param err
      */
-    public static createConversationAsync(speechConfig: SpeechTranslationConfig, cb?: Callback, err?: Callback): Conversation {
+    public static createConversationAsync(speechConfig: SpeechTranslationConfig, arg2?: string | Callback, arg3?: Callback, arg4?: Callback): Conversation {
         Contracts.throwIfNullOrUndefined(speechConfig, ConversationConnectionConfig.restErrors.invalidArgs.replace("{arg}", "config"));
         Contracts.throwIfNullOrUndefined(speechConfig.region, ConversationConnectionConfig.restErrors.invalidArgs.replace("{arg}", "SpeechServiceConnection_Region"));
         if (!speechConfig.subscriptionKey && !speechConfig.getProperty(PropertyId[PropertyId.SpeechServiceAuthorization_Token])) {
             Contracts.throwIfNullOrUndefined(speechConfig.subscriptionKey, ConversationConnectionConfig.restErrors.invalidArgs.replace("{arg}", "SpeechServiceConnection_Key"));
         }
-        const conversationImpl: ConversationImpl = new ConversationImpl(speechConfig);
+        if (typeof arg2 === "string") {
+            const conversationImpl: ConversationImpl = new ConversationImpl(speechConfig, arg2);
+            marshalPromiseToCallbacks((async (): Promise<void> => { return; })(), arg3, arg4);
+            return conversationImpl;
+        } else {
+            const conversationImpl: ConversationImpl = new ConversationImpl(speechConfig);
+            const cb: Callback = arg2;
+            const err: Callback = arg3;
+            conversationImpl.createConversationAsync(
+                (() => {
+                    if (!!cb) {
+                        cb();
+                    }
+                }),
+                (error: any) => {
+                    if (!!err) {
+                        err(error);
+                    }
+                });
+            return conversationImpl;
+        }
 
-        conversationImpl.createConversationAsync(
-            (() => {
-                if (!!cb) {
-                    cb();
-                }
-            }),
-            (error: any) => {
-                if (!!err) {
-                    err(error);
-                }
-            });
-
-        return conversationImpl;
     }
 
     /** Start a conversation. */
@@ -150,6 +157,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private privConversationTranslator: ConversationTranslator;
     private privTranscriberRecognizer: TranscriberRecognizer;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
+    private privConversationId: string = "";
     private readonly privTextMessageMaxLength: number;
 
     public set conversationTranslator(value: ConversationTranslator) {
@@ -183,7 +191,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     // get the conversation Id
     public get conversationId(): string {
-        return this.privRoom ? this.privRoom.roomId : "";
+        return this.privRoom ? this.privRoom.roomId : this.privConversationId;
     }
 
     // get the properties
@@ -219,8 +227,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
     /**
      * Create a conversation impl
      * @param speechConfig
+     * @param {string} id - optional conversationId
      */
-    public constructor(speechConfig: SpeechTranslationConfig) {
+    public constructor(speechConfig: SpeechTranslationConfig, id?: string) {
         super();
         this.privProperties = new PropertyCollection();
         this.privManager = new ConversationManager();
@@ -232,25 +241,29 @@ export class ConversationImpl extends Conversation implements IDisposable {
         }
         this.privLanguage = speechConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        // check the target language(s)
-        if (speechConfig.targetLanguages.length === 0) {
-            speechConfig.addTargetLanguage(this.privLanguage);
-        }
+        if (!id) {
+            // check the target language(s)
+            if (speechConfig.targetLanguages.length === 0) {
+                speechConfig.addTargetLanguage(this.privLanguage);
+            }
 
-        // check the profanity setting: speech and conversationTranslator should be in sync
-        const profanity: string = speechConfig.getProperty(PropertyId[PropertyId.SpeechServiceResponse_ProfanityOption]);
-        if (!profanity) {
-            speechConfig.setProfanity(ProfanityOption.Masked);
-        }
+            // check the profanity setting: speech and conversationTranslator should be in sync
+            const profanity: string = speechConfig.getProperty(PropertyId[PropertyId.SpeechServiceResponse_ProfanityOption]);
+            if (!profanity) {
+                speechConfig.setProfanity(ProfanityOption.Masked);
+            }
+            // check the nickname: it should pass this regex: ^\w+([\s-][\w\(\)]+)*$"
+            // TODO: specify the regex required. Nicknames must be unique or get the duplicate nickname error
+            // TODO: check what the max length is and if a truncation is required or if the service handles it without an error
+            let hostNickname: string = speechConfig.getProperty(PropertyId[PropertyId.ConversationTranslator_Name]);
+            if (hostNickname === undefined || hostNickname === null || hostNickname.length <= 1 || hostNickname.length > 50) {
+                hostNickname = "Host";
+            }
+            speechConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], hostNickname);
 
-        // check the nickname: it should pass this regex: ^\w+([\s-][\w\(\)]+)*$"
-        // TODO: specify the regex required. Nicknames must be unique or get the duplicate nickname error
-        // TODO: check what the max length is and if a truncation is required or if the service handles it without an error
-        let hostNickname: string = speechConfig.getProperty(PropertyId[PropertyId.ConversationTranslator_Name]);
-        if (hostNickname === undefined || hostNickname === null || hostNickname.length <= 1 || hostNickname.length > 50) {
-            hostNickname = "Host";
+        } else {
+            this.privConversationId = id;
         }
-        speechConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], hostNickname);
 
         // save the speech config for future usage
         this.privConfig = speechConfig;
@@ -705,7 +718,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privIsConnected = false;
         this.privIsReady = false;
         this.privParticipants = undefined;
-        this.privRoom = undefined;
     }
 
     public get transcriberRecognizer(): TranscriberRecognizer {
