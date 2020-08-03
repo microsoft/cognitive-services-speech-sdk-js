@@ -117,7 +117,7 @@ export class Queue<TItem> implements IQueue<TItem> {
             }
 
             if (this.privPromiseStore.length() > 0 && pendingItemProcessor) {
-                const promiseArray: Array<Promise<TItem>> = [];
+                const promiseArray: Promise<TItem>[] = [];
 
                 this.privPromiseStore.toArray().forEach((wrapper: Promise<TItem>) => {
                     promiseArray.push(wrapper);
