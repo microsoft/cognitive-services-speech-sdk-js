@@ -73,6 +73,7 @@ export { Conversation,
     ConversationTranslationEventArgs,
     ConversationTranslationResult,
     ConversationTranslator,
+    ConversationTranscriber,
     Participant,
     ParticipantChangedReason,
     User

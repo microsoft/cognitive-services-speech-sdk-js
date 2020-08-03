@@ -35,14 +35,13 @@ import {
 } from "./Exports";
 import { Callback, IConversation } from "./IConversation";
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConversationTranscriber extends ConversationCommon implements ConversationTranscriptionHandler {
     private privDisposedRecognizer: boolean;
     private privRecognizer: TranscriberRecognizer;
     private privProperties: PropertyCollection;
 
     /**
-     * ConversationTranscriberImpl constructor.
+     * ConversationTranscriber constructor.
      * @constructor
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
