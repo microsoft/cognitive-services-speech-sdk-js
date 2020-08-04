@@ -724,7 +724,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
         return this.privTranscriberRecognizer;
     }
 
-    public connectTranscriberRecognizer(recognizer: TranscriberRecognizer): void {
+    public async connectTranscriberRecognizer(recognizer: TranscriberRecognizer): Promise<void> {
+        if (!!this.privTranscriberRecognizer) {
+            await this.privTranscriberRecognizer.close();
+        }
         this.privTranscriberRecognizer = recognizer;
         this.privTranscriberRecognizer.getConversationInfo = this.getConversationInfo;
     }

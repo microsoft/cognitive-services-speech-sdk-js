@@ -2,15 +2,7 @@
 // Licensed under the MIT license.
 
 import {
-    IAuthentication,
-    IConnectionFactory,
     OutputFormatPropertyName,
-    RecognitionMode,
-    RecognizerConfig,
-    ServiceRecognizerBase,
-    SpeechServiceConfig,
-    TranscriberConnectionFactory,
-    TranscriptionServiceRecognizer,
 } from "../../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../../common/Exports";
 import { Contracts } from "../Contracts";
@@ -24,7 +16,6 @@ import {
     SessionEventArgs,
     SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
-    SpeechTranslationConfigImpl,
 } from "../Exports";
 import {
     Conversation,
@@ -35,10 +26,11 @@ import {
 } from "./Exports";
 import { Callback, IConversation } from "./IConversation";
 
-export class ConversationTranscriber extends ConversationCommon implements ConversationTranscriptionHandler {
+export class ConversationTranscriber implements ConversationTranscriptionHandler {
     private privDisposedRecognizer: boolean;
     private privRecognizer: TranscriberRecognizer;
     private privProperties: PropertyCollection;
+    protected privAudioConfig: AudioConfig;
 
     /**
      * ConversationTranscriber constructor.
@@ -46,7 +38,7 @@ export class ConversationTranscriber extends ConversationCommon implements Conve
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
     public constructor(audioConfig?: AudioConfig) {
-        super(audioConfig);
+        this.privAudioConfig = audioConfig;
         this.privProperties = new PropertyCollection();
         this.privRecognizer = undefined;
         this.privDisposedRecognizer = false;
@@ -74,19 +66,14 @@ export class ConversationTranscriber extends ConversationCommon implements Conve
 
         // ref the conversation object
         // create recognizer and subscribe to recognizer events
-        this.privRecognizer = conversationImpl.transcriberRecognizer;
-        if (this.privRecognizer === undefined) {
-            this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
-            conversationImpl.connectTranscriberRecognizer(this.privRecognizer);
-        }
+        this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
         Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
         this.privRecognizer.canceled = function(s: any, e: SpeechRecognitionCanceledEventArgs): void { this.canceled(this, e); };
         this.privRecognizer.recognizing = function(s: any, e: SpeechRecognitionEventArgs): void { this.transcribing(this, e); };
         this.privRecognizer.recognized = function(s: any, e: SpeechRecognitionEventArgs): void { this.transcribed(this, e); };
         this.privRecognizer.sessionStarted = function(s: any, e: SpeechRecognitionEventArgs): void { this.sessionStarted(this, e); };
         this.privRecognizer.sessionStopped = function(s: any, e: SpeechRecognitionEventArgs): void { this.sessionStopped(this, e); };
-
-        this.handleCallback(cb, err);
+        marshalPromiseToCallbacks(conversationImpl.connectTranscriberRecognizer(this.privRecognizer), cb, err);
     }
 
      /**
@@ -240,8 +227,7 @@ export class ConversationTranscriber extends ConversationCommon implements Conve
         this.privRecognizer.recognized = undefined;
         this.privRecognizer.sessionStarted = undefined;
         this.privRecognizer.sessionStopped = undefined;
-
-        this.handleCallback(cb, err);
+        marshalPromiseToCallbacks((async (): Promise<void> => { return; })(), cb, err);
     }
 
     /**

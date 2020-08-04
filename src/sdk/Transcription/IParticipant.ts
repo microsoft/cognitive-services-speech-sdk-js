@@ -47,6 +47,8 @@ export interface IParticipant {
     readonly isUsingTts: boolean;
     /** The participant's preferred spoken language. */
     readonly preferredLanguage: string;
+    /** The participant's voice signature */
+    voiceSignature: string;
     /** Contains properties of the participant. */
     readonly properties: PropertyCollection;
 }
@@ -60,6 +62,7 @@ export class Participant implements IParticipant {
     private privIsMuted: boolean;
     private privIsUsingTts: boolean;
     private privPreferredLanguage: string;
+    private privVoiceSignature: string;
     private privProperties: PropertyCollection;
 
     constructor(id: string, avatar: string, displayName: string, isHost: boolean, isMuted: boolean, isUsingTts: boolean, preferredLanguage: string) {
@@ -72,6 +75,13 @@ export class Participant implements IParticipant {
         this.privPreferredLanguage = preferredLanguage;
         this.privProperties = new PropertyCollection();
     }
+
+    public static From(id: string, language: string, signature: string): IParticipant {
+        const participant: IParticipant = new Participant(id, "", id, false, false, false, language);
+        participant.voiceSignature = signature;
+        return participant;
+    }
+
     public get avatar(): string {
         return this.privAvatar;
     }
@@ -98,6 +108,14 @@ export class Participant implements IParticipant {
 
     public get isUsingTts(): boolean {
         return this.privIsUsingTts;
+    }
+
+    public get voiceSignature(): string {
+        return this.privVoiceSignature;
+    }
+
+    public set voiceSignature(signature: string) {
+        this.privVoiceSignature = signature;
     }
 
     public get properties(): PropertyCollection {
