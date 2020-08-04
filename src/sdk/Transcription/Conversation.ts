@@ -53,6 +53,7 @@ export abstract class Conversation implements IConversation {
     public abstract get config(): SpeechTranslationConfig;
 
     public abstract get conversationId(): string;
+    public abstract get conversationInfo(): ConversationInfo;
     public abstract get properties(): PropertyCollection;
     public abstract get speechRecognitionLanguage(): string;
 
@@ -157,6 +158,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private privConversationTranslator: ConversationTranslator;
     private privTranscriberRecognizer: TranscriberRecognizer;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
+    private readonly privTranscriptionEventKeys: string[] = ConversationConnectionConfig.transcriptionEventKeys;
     private privConversationId: string = "";
     private readonly privTextMessageMaxLength: number;
 
@@ -729,14 +731,25 @@ export class ConversationImpl extends Conversation implements IDisposable {
             await this.privTranscriberRecognizer.close();
         }
         this.privTranscriberRecognizer = recognizer;
-        this.privTranscriberRecognizer.getConversationInfo = this.getConversationInfo;
+        this.privTranscriberRecognizer.conversation = this;
+    }
+
+    public get conversationInfo(): ConversationInfo {
+        const convId: string = this.conversationId;
+        const p: Participant[] = this.participants;
+        const props: { [id: string]: string } = {};
+        for (const key of this.privTranscriptionEventKeys) {
+            props[key] = this.properties.getProperty(key, "");
+        }
+        const info: ConversationInfo = { id: convId, participants: p, conversationProperties: props };
+        return info;
     }
 
     private addParticipantImplAsync(participant: IParticipant): Promise<void> {
         const newParticipant: IInternalParticipant = this.privParticipants.addOrUpdateParticipant(participant);
         if (newParticipant !== undefined) {
             if (!!this.privTranscriberRecognizer) {
-                const conversationInfo = this.getConversationInfo();
+                const conversationInfo = this.conversationInfo;
                 conversationInfo.participants = [participant];
                 return this.privTranscriberRecognizer.pushConversationEvent(conversationInfo, "join");
             }
@@ -745,21 +758,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     private removeParticipantImplAsync(participant: IParticipant): Promise<void> {
         this.privParticipants.deleteParticipant(participant.id);
-        const conversationInfo = this.getConversationInfo();
+        const conversationInfo = this.conversationInfo;
         conversationInfo.participants = [participant];
         return this.privTranscriberRecognizer.pushConversationEvent(conversationInfo, "leave");
-    }
-
-    private getConversationInfo(): ConversationInfo {
-        return { id: this.conversationId, participants: this.participants, conversationProperties: this.getConversationProperties() };
-    }
-
-    private getConversationProperties(): any {
-        const eventDict: { [id: string]: string } = {};
-        for (const key of ConversationConnectionConfig.transcriptionEventKeys) {
-            eventDict[key] = this.properties.getProperty(key, "");
-        }
-        return eventDict;
     }
 
     /** websocket callbacks */

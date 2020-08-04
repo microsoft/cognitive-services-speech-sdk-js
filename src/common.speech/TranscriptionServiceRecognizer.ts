@@ -221,13 +221,15 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
     // Encapsulated for derived service recognizers that need to send additional JSON
     protected async sendTranscriptionStartJSON(connection: IConnection): Promise<void> {
         await this.sendSpeechContext(connection);
-        await this.sendSpeechEvent(connection, this.createSpeechEventPayload(this.privTranscriberRecognizer.getConversationInfo(), "start"));
+        const info: ConversationInfo = this.privTranscriberRecognizer.getConversationInfo();
+        const payload: { [id: string]: any } = this.createSpeechEventPayload(info, "start");
+        await this.sendSpeechEvent(connection, payload);
         await this.sendWaveHeader(connection);
         return;
     }
 
-    private sendSpeechEvent = (connection: IConnection, payload: { [id: string]: any }): Promise<void> => {
-        const speechEventJson = payload.toJSON();
+    protected sendSpeechEvent = (connection: IConnection, payload: { [id: string]: any }): Promise<void> => {
+        const speechEventJson = JSON.stringify(payload);
 
         if (speechEventJson) {
             return connection.send(new SpeechConnectionMessage(

@@ -25,10 +25,12 @@ import {
     SpeechTranslationConfig,
     SpeechTranslationConfigImpl,
 } from "../Exports";
+import { Conversation } from "./Conversation";
 import { ConversationInfo } from "./IConversation";
 
 export class TranscriberRecognizer extends Recognizer {
     private privDisposedRecognizer: boolean;
+    private privConversation: Conversation;
 
     /**
      * ConversationTranscriber constructor.
@@ -53,7 +55,10 @@ export class TranscriberRecognizer extends Recognizer {
 
     public canceled: (sender: Recognizer, event: SpeechRecognitionCanceledEventArgs) => void;
 
-    public getConversationInfo: () => ConversationInfo;
+    public getConversationInfo(): ConversationInfo {
+        Contracts.throwIfNullOrUndefined(this.privConversation, "Conversation");
+        return this.privConversation.conversationInfo;
+    }
 
     public get authorizationToken(): string {
         return this.properties.getProperty(PropertyId.SpeechServiceAuthorization_Token);
@@ -62,6 +67,11 @@ export class TranscriberRecognizer extends Recognizer {
     public set authorizationToken(token: string) {
         Contracts.throwIfNullOrWhitespace(token, "token");
         this.properties.setProperty(PropertyId.SpeechServiceAuthorization_Token, token);
+    }
+
+    public set conversation(c: Conversation) {
+        Contracts.throwIfNullOrUndefined(c, "Conversation");
+        this.privConversation = c;
     }
 
     public get speechRecognitionLanguage(): string {

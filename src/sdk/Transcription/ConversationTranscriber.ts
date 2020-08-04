@@ -30,6 +30,11 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
     private privDisposedRecognizer: boolean;
     private privRecognizer: TranscriberRecognizer;
     private privProperties: PropertyCollection;
+    private privTranscribed: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionEventArgs) => void;
+    private privTranscribing: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionEventArgs) => void;
+    private privSessionStarted: (sender: ConversationTranscriptionHandler, event: SessionEventArgs) => void;
+    private privSessionStopped: (sender: ConversationTranscriptionHandler, event: SessionEventArgs) => void;
+    private privCanceled: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionCanceledEventArgs) => void;
     protected privAudioConfig: AudioConfig;
 
     /**
@@ -51,7 +56,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @public
      */
     public set canceled(func: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionCanceledEventArgs) => void) {
-        this.canceled = func;
+        this.privCanceled = func;
         if (!!this.privRecognizer) {
             this.privRecognizer.canceled = function(s: any, e: SpeechRecognitionCanceledEventArgs): void { func(this, e); };
         }
@@ -68,11 +73,11 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         // create recognizer and subscribe to recognizer events
         this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
         Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
-        this.privRecognizer.canceled = function(s: any, e: SpeechRecognitionCanceledEventArgs): void { this.canceled(this, e); };
-        this.privRecognizer.recognizing = function(s: any, e: SpeechRecognitionEventArgs): void { this.transcribing(this, e); };
-        this.privRecognizer.recognized = function(s: any, e: SpeechRecognitionEventArgs): void { this.transcribed(this, e); };
-        this.privRecognizer.sessionStarted = function(s: any, e: SpeechRecognitionEventArgs): void { this.sessionStarted(this, e); };
-        this.privRecognizer.sessionStopped = function(s: any, e: SpeechRecognitionEventArgs): void { this.sessionStopped(this, e); };
+        this.privRecognizer.canceled = function(s: any, e: SpeechRecognitionCanceledEventArgs): void { this.privCanceled(this, e); };
+        this.privRecognizer.recognizing = function(s: any, e: SpeechRecognitionEventArgs): void { this.privTranscribing(this, e); };
+        this.privRecognizer.recognized = function(s: any, e: SpeechRecognitionEventArgs): void { this.privTranscribed(this, e); };
+        this.privRecognizer.sessionStarted = function(s: any, e: SpeechRecognitionEventArgs): void { this.privSessionStarted(this, e); };
+        this.privRecognizer.sessionStopped = function(s: any, e: SpeechRecognitionEventArgs): void { this.privSessionStopped(this, e); };
         marshalPromiseToCallbacks(conversationImpl.connectTranscriberRecognizer(this.privRecognizer), cb, err);
     }
 
@@ -83,7 +88,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
       * @public
       */
     public set transcribed(func: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionEventArgs) => void) {
-        this.transcribed = func;
+        this.privTranscribed = func;
         if (!!this.privRecognizer) {
             this.privRecognizer.recognized = function(s: any, e: SpeechRecognitionEventArgs): void { func(this, e); };
         }
@@ -96,7 +101,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
       * @public
       */
     public set transcribing(func: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionEventArgs) => void) {
-        this.transcribing = func;
+        this.privTranscribing = func;
         if (!!this.privRecognizer) {
             this.privRecognizer.recognizing = function(s: any, e: SpeechRecognitionEventArgs): void { func(this, e); };
         }
@@ -109,7 +114,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @public
      */
     public set sessionStarted(func: (sender: ConversationTranscriptionHandler, event: SessionEventArgs) => void) {
-        this.sessionStarted = func;
+        this.privSessionStarted = func;
         if (!!this.privRecognizer) {
             this.privRecognizer.sessionStarted = function(s: any, e: SpeechRecognitionEventArgs): void { func(this, e); };
         }
@@ -122,7 +127,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @public
      */
     public set sessionStopped(func: (sender: ConversationTranscriptionHandler, event: SessionEventArgs) => void) {
-        this.sessionStopped = func;
+        this.privSessionStopped = func;
         if (!!this.privRecognizer) {
             this.privRecognizer.sessionStopped = function(s: any, e: SpeechRecognitionEventArgs): void { func(this, e); };
         }
