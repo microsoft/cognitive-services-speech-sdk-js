@@ -25,6 +25,12 @@ export class User implements IUser {
     }
 }
 
+export interface VoiceSignature {
+    Version: number;
+    Tag: string;
+    Data: string;
+}
+
 /**
  * Represents a participant in a conversation.
  * Added in version 1.4.0
@@ -48,7 +54,7 @@ export interface IParticipant {
     /** The participant's preferred spoken language. */
     readonly preferredLanguage: string;
     /** The participant's voice signature */
-    voiceSignature: string;
+    readonly voiceSignature: string;
     /** Contains properties of the participant. */
     readonly properties: PropertyCollection;
 }
@@ -62,7 +68,7 @@ export class Participant implements IParticipant {
     private privIsMuted: boolean;
     private privIsUsingTts: boolean;
     private privPreferredLanguage: string;
-    private privVoiceSignature: string;
+    private privVoiceSignature: VoiceSignature;
     private privProperties: PropertyCollection;
 
     constructor(id: string, avatar: string, displayName: string, isHost: boolean, isMuted: boolean, isUsingTts: boolean, preferredLanguage: string) {
@@ -76,9 +82,9 @@ export class Participant implements IParticipant {
         this.privProperties = new PropertyCollection();
     }
 
-    public static From(id: string, language: string, signature: string): IParticipant {
-        const participant: IParticipant = new Participant(id, "", id, false, false, false, language);
-        participant.voiceSignature = signature;
+    public static From(id: string, language: string, signature: VoiceSignature): IParticipant {
+        const participant: Participant = new Participant(id, "", id, false, false, false, language);
+        participant.setVoiceSignature(signature);
         return participant;
     }
 
@@ -111,10 +117,10 @@ export class Participant implements IParticipant {
     }
 
     public get voiceSignature(): string {
-        return this.privVoiceSignature;
+        return JSON.stringify(this.privVoiceSignature);
     }
 
-    public set voiceSignature(signature: string) {
+    public setVoiceSignature(signature: VoiceSignature): void {
         this.privVoiceSignature = signature;
     }
 

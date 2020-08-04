@@ -76,7 +76,8 @@ export { Conversation,
     ConversationTranscriber,
     Participant,
     ParticipantChangedReason,
-    User
+    User,
+    VoiceSignature
     } from "./Transcription/Exports";
 export { SpeechSynthesisOutputFormat } from "./SpeechSynthesisOutputFormat";
 export { SpeechSynthesizer } from "./SpeechSynthesizer";

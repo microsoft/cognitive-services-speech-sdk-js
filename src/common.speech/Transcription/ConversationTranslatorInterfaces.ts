@@ -4,9 +4,7 @@
 import {
     ConnectionEventArgs,
     ConversationExpirationEventArgs,
-    ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
-    ConversationTranslationEventArgs,
     SessionEventArgs,
     } from "../../sdk/Exports";
 // import { ConversationClient } from "./ConversationConnection";
