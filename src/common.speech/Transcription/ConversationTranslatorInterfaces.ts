@@ -6,6 +6,7 @@ import {
     ConversationExpirationEventArgs,
     ConversationTranslationCanceledEventArgs,
     SessionEventArgs,
+    VoiceSignature,
     } from "../../sdk/Exports";
 // import { ConversationClient } from "./ConversationConnection";
 import {
@@ -61,7 +62,7 @@ export interface IInternalParticipant {
     isMuted?: boolean;
     isUsingTts?: boolean;
     preferredLanguage?: string;
-    voiceSignature?: string;
+    voice?: string;
 }
 
 /** Users participating in the conversation */

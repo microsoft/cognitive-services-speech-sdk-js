@@ -42,7 +42,7 @@ import {
 } from "../Exports";
 import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig";
 import { Callback, ConversationInfo, IConversation } from "./IConversation";
-import { IParticipant, IUser } from "./IParticipant";
+import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
 import { TranscriberRecognizer } from "./TranscriberRecognizer";
 
 export abstract class Conversation implements IConversation {
@@ -158,7 +158,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private privConversationTranslator: ConversationTranslator;
     private privTranscriberRecognizer: TranscriberRecognizer;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
-    private readonly privTranscriptionEventKeys: string[] = ConversationConnectionConfig.transcriptionEventKeys;
     private privConversationId: string = "";
     private readonly privTextMessageMaxLength: number;
 
@@ -736,11 +735,14 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     public get conversationInfo(): ConversationInfo {
         const convId: string = this.conversationId;
-        const p: Participant[] = this.participants;
+        const p: TranscriptionParticipant[] = this.participants.map((part: Participant) => {
+            return {
+                id: part.id,
+                preferredLanguage: part.preferredLanguage,
+                voice: part.voice
+            };
+        });
         const props: { [id: string]: string } = {};
-        for (const key of this.privTranscriptionEventKeys) {
-            props[key] = this.properties.getProperty(key, "");
-        }
         const info: ConversationInfo = { id: convId, participants: p, conversationProperties: props };
         return info;
     }
@@ -1021,7 +1023,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     private toParticipant(p: IInternalParticipant): Participant {
-        return new Participant(p.id, p.avatar, p.displayName, p.isHost, p.isMuted, p.isUsingTts, p.preferredLanguage);
+        return new Participant(p.id, p.avatar, p.displayName, p.isHost, p.isMuted, p.isUsingTts, p.preferredLanguage, p.voice);
     }
 
     private getMuteAllCommand(isMuted: boolean): string {

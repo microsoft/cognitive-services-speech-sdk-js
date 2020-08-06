@@ -60,14 +60,6 @@ export class TranscriberConnectionFactory extends ConnectionFactoryBase {
             }
         }
 
-        if (!endpoint || endpoint.search(QueryParameterNames.FormatParamName) === -1) {
-            queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
-        }
-
-        if (config.autoDetectSourceLanguages !== undefined) {
-            queryParams[QueryParameterNames.EnableLanguageID] = "true";
-        }
-
         this.setCommonUrlParams(config, queryParams, endpoint);
         if (!endpoint) {
             endpoint = host;

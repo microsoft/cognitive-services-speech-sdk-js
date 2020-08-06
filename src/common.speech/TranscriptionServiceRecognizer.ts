@@ -50,8 +50,10 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
     }
 
     public async sendSpeechEventAsync(info: ConversationInfo, command: string): Promise<void> {
-        const connection: IConnection = await this.fetchConnection();
-        await this.sendSpeechEvent(connection, this.createSpeechEventPayload(info, command));
+        if (!!this.privRequestSession.isRecognizing) {
+            const connection: IConnection = await this.fetchConnection();
+            await this.sendSpeechEvent(connection, this.createSpeechEventPayload(info, command));
+        }
     }
 
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {

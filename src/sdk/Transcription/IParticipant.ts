@@ -31,11 +31,20 @@ export interface VoiceSignature {
     Data: string;
 }
 
+export interface TranscriptionParticipant {
+    /** The unique identifier for the participant. */
+    readonly id: string;
+    /** The participant's preferred spoken language. */
+    readonly preferredLanguage: string;
+    /** The participant's voice signature */
+    readonly voice: string;
+}
+
 /**
  * Represents a participant in a conversation.
  * Added in version 1.4.0
  */
-export interface IParticipant {
+export interface IParticipant extends TranscriptionParticipant {
     /** Gets the colour of the user's avatar as an HTML hex string (e.g. FF0000 for red). */
     readonly avatar: string;
     /**
@@ -43,18 +52,12 @@ export interface IParticipant {
      * with the same name. You can use <see cref="Id"/> property to tell them apart.
      */
     readonly displayName: string;
-    /** The unique identifier for the participant. */
-    readonly id: string;
     /** Gets whether or not this participant is the host. */
     readonly isHost: boolean;
     /** Gets whether or not this participant is muted. */
     readonly isMuted: boolean;
     /** Gets whether or not the participant is using Text To Speech (TTS). */
     readonly isUsingTts: boolean;
-    /** The participant's preferred spoken language. */
-    readonly preferredLanguage: string;
-    /** The participant's voice signature */
-    readonly voiceSignature: string;
     /** Contains properties of the participant. */
     readonly properties: PropertyCollection;
 }
@@ -68,10 +71,10 @@ export class Participant implements IParticipant {
     private privIsMuted: boolean;
     private privIsUsingTts: boolean;
     private privPreferredLanguage: string;
-    private privVoiceSignature: VoiceSignature;
+    private privVoice: string;
     private privProperties: PropertyCollection;
 
-    constructor(id: string, avatar: string, displayName: string, isHost: boolean, isMuted: boolean, isUsingTts: boolean, preferredLanguage: string) {
+    constructor(id: string, avatar: string, displayName: string, isHost: boolean, isMuted: boolean, isUsingTts: boolean, preferredLanguage: string, voice?: string) {
         this.privId = id;
         this.privAvatar = avatar;
         this.privDisplayName = displayName;
@@ -79,13 +82,12 @@ export class Participant implements IParticipant {
         this.privIsMuted = isMuted;
         this.privIsUsingTts = isUsingTts;
         this.privPreferredLanguage = preferredLanguage;
+        this.privVoice = voice;
         this.privProperties = new PropertyCollection();
     }
 
-    public static From(id: string, language: string, signature: VoiceSignature): IParticipant {
-        const participant: Participant = new Participant(id, "", id, false, false, false, language);
-        participant.setVoiceSignature(signature);
-        return participant;
+    public static From(id: string, language: string, voice: string): IParticipant {
+        return new Participant(id, "", id, false, false, false, language, voice);
     }
 
     public get avatar(): string {
@@ -116,12 +118,8 @@ export class Participant implements IParticipant {
         return this.privIsUsingTts;
     }
 
-    public get voiceSignature(): string {
-        return JSON.stringify(this.privVoiceSignature);
-    }
-
-    public setVoiceSignature(signature: VoiceSignature): void {
-        this.privVoiceSignature = signature;
+    public get voice(): string {
+        return this.privVoice;
     }
 
     public get properties(): PropertyCollection {

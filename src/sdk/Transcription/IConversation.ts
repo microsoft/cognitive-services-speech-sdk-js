@@ -3,7 +3,7 @@
 // Multi-device Conversation is a Preview feature.
 
 import { PropertyCollection, SpeechTranslationConfig } from "../Exports";
-import { IParticipant, IUser } from "./IParticipant";
+import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
 
 export type Callback = (result?: any) => void;
 
@@ -80,6 +80,6 @@ export interface IConversation {
 
 export interface ConversationInfo {
     id: string;
-    participants: IParticipant[];
+    participants: TranscriptionParticipant[];
     conversationProperties: any;
 }
