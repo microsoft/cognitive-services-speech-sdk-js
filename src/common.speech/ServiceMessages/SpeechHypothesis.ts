@@ -9,6 +9,7 @@ export interface ISpeechHypothesis {
     Offset: number;
     Duration: number;
     PrimaryLanguage?: IPrimaryLanguage;
+    SpeakerId?: string;
 }
 
 export class SpeechHypothesis implements ISpeechHypothesis {
@@ -40,5 +41,9 @@ export class SpeechHypothesis implements ISpeechHypothesis {
 
     public get LanguageDetectionConfidence(): string {
         return this.privSpeechHypothesis.PrimaryLanguage === undefined ? undefined : this.privSpeechHypothesis.PrimaryLanguage.Confidence;
+    }
+
+    public get SpeakerId(): string {
+        return this.privSpeechHypothesis.SpeakerId;
     }
 }

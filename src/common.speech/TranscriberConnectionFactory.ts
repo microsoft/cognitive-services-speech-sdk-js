@@ -40,9 +40,7 @@ export class TranscriberConnectionFactory extends ConnectionFactoryBase {
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "centralus");
         const hostSuffix: string =  (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
-        const hostDefault: string = (region && region.toLowerCase() === "westus2") ?
-            "wss://westus2.online.princetondev.customspeech.ai/recognition/onlinemeeting/v1" :
-            "wss://transcribe." + region + ".cts.speech" + hostSuffix + this.multiaudioRelativeUri;
+        const hostDefault: string = "wss://transcribe." + region + ".cts.speech" + hostSuffix + this.multiaudioRelativeUri;
         const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, hostDefault);
 
         const queryParams: IStringDictionary<string> = {};

@@ -26,7 +26,7 @@ export class TranslationRecognitionResult extends SpeechRecognitionResult {
     public constructor(translations: Translations, resultId?: string, reason?: ResultReason,
                        text?: string, duration?: number, offset?: number, errorDetails?: string,
                        json?: string, properties?: PropertyCollection) {
-        super(resultId, reason, text, duration, offset, undefined, undefined, errorDetails, json, properties);
+        super(resultId, reason, text, duration, offset, undefined, undefined, undefined, errorDetails, json, properties);
 
         this.privTranslations = translations;
     }

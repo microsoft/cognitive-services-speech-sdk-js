@@ -167,6 +167,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     hypothesis.Language,
                     hypothesis.LanguageDetectionConfidence,
                     undefined,
+                    undefined,
                     connectionMessage.textBody,
                     resultProps);
 
@@ -278,6 +279,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     undefined, // Offset
                     undefined, // Language
                     undefined, // Language Detection Confidence
+                    undefined, // Speaker Id
                     error,
                     undefined, // Json
                     properties);
@@ -573,6 +575,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             offset,
             serviceResult.Language,
             serviceResult.LanguageDetectionConfidence,
+            undefined,
             undefined,
             JSON.stringify(serviceResult),
             properties);

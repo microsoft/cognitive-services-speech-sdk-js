@@ -77,6 +77,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                     offset,
                     hypothesis.Language,
                     hypothesis.LanguageDetectionConfidence,
+                    hypothesis.SpeakerId,
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
@@ -121,6 +122,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                                 simple.Offset + this.privRequestSession.currentTurnAudioOffset,
                                 simple.Language,
                                 simple.LanguageDetectionConfidence,
+                                simple.SpeakerId,
                                 undefined,
                                 connectionMessage.textBody,
                                 resultProps);
@@ -135,6 +137,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                                 detailed.Offset + this.privRequestSession.currentTurnAudioOffset,
                                 detailed.Language,
                                 detailed.LanguageDetectionConfidence,
+                                undefined,
                                 undefined,
                                 connectionMessage.textBody,
                                 resultProps);
@@ -209,6 +212,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                 undefined, // Offset
                 undefined, // Language
                 undefined, // Language Detection Confidence
+                undefined, // Speaker Id
                 error,
                 undefined, // Json
                 properties);

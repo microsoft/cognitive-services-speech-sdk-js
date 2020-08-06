@@ -18,8 +18,6 @@ import {
     SpeechRecognitionEventArgs,
 } from "../Exports";
 import {
-    Conversation,
-    ConversationCommon,
     ConversationImpl,
     ConversationTranscriptionHandler,
     TranscriberRecognizer,
@@ -167,23 +165,6 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         Contracts.throwIfDisposed(this.privDisposedRecognizer);
 
         return this.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
-    }
-
-    /**
-     * Gets the output format of recognition.
-     * @member ConversationTranscriber.prototype.outputFormat
-     * @function
-     * @public
-     * @returns {OutputFormat} The output format of recognition.
-     */
-    public get outputFormat(): OutputFormat {
-        Contracts.throwIfDisposed(this.privDisposedRecognizer);
-
-        if (this.properties.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]) === OutputFormat[OutputFormat.Simple]) {
-            return OutputFormat.Simple;
-        } else {
-            return OutputFormat.Detailed;
-        }
     }
 
     /**

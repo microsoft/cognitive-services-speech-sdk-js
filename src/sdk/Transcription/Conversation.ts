@@ -743,6 +743,12 @@ export class ConversationImpl extends Conversation implements IDisposable {
             };
         });
         const props: { [id: string]: string } = {};
+        for (const key of ConversationConnectionConfig.transcriptionEventKeys) {
+            const val: string = this.properties.getProperty(key, "");
+            if (val !== "") {
+                props[key] = val;
+            }
+        }
         const info: ConversationInfo = { id: convId, participants: p, conversationProperties: props };
         return info;
     }
