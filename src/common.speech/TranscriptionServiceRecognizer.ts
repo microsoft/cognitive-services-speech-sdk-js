@@ -9,11 +9,11 @@ import {
 import {
     CancellationErrorCode,
     CancellationReason,
+    ConversationTranscriptionCanceledEventArgs,
     OutputFormat,
     PropertyCollection,
     PropertyId,
     ResultReason,
-    SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
@@ -191,7 +191,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
         properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
         if (!!this.privTranscriberRecognizer.canceled) {
-            const cancelEvent: SpeechRecognitionCanceledEventArgs = new SpeechRecognitionCanceledEventArgs(
+            const cancelEvent: ConversationTranscriptionCanceledEventArgs = new ConversationTranscriptionCanceledEventArgs(
                 cancellationReason,
                 error,
                 errorCode,

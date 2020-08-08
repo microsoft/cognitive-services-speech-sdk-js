@@ -16,12 +16,11 @@ import { AudioConfigImpl } from "../Audio/AudioConfig";
 import { Contracts } from "../Contracts";
 import {
     AudioConfig,
+    CancellationEventArgs,
     PropertyCollection,
     PropertyId,
     Recognizer,
-    SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
-    SpeechRecognitionResult,
     SpeechTranslationConfig,
     SpeechTranslationConfigImpl,
 } from "../Exports";
@@ -53,7 +52,7 @@ export class TranscriberRecognizer extends Recognizer {
 
     public recognized: (sender: Recognizer, event: SpeechRecognitionEventArgs) => void;
 
-    public canceled: (sender: Recognizer, event: SpeechRecognitionCanceledEventArgs) => void;
+    public canceled: (sender: Recognizer, event: CancellationEventArgs) => void;
 
     public getConversationInfo(): ConversationInfo {
         Contracts.throwIfNullOrUndefined(this.privConversation, "Conversation");

@@ -1,20 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {
-    OutputFormatPropertyName,
-} from "../../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
     AudioConfig,
-    ConversationTranscriptionCanceledEventArgs,
+    CancellationEventArgs,
     ConversationTranscriptionEventArgs,
-    OutputFormat,
     PropertyCollection,
     PropertyId,
     SessionEventArgs,
-    SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
 } from "../Exports";
 import {
@@ -32,7 +27,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
     private privTranscribing: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionEventArgs) => void;
     private privSessionStarted: (sender: ConversationTranscriptionHandler, event: SessionEventArgs) => void;
     private privSessionStopped: (sender: ConversationTranscriptionHandler, event: SessionEventArgs) => void;
-    private privCanceled: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionCanceledEventArgs) => void;
+    private privCanceled: (sender: ConversationTranscriptionHandler, event: CancellationEventArgs) => void;
     protected privAudioConfig: AudioConfig;
 
     /**
@@ -53,10 +48,10 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @function
      * @public
      */
-    public set canceled(func: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionCanceledEventArgs) => void) {
+    public set canceled(func: (sender: ConversationTranscriptionHandler, event: CancellationEventArgs) => void) {
         this.privCanceled = func;
         if (!!this.privRecognizer) {
-            this.privRecognizer.canceled = function(s: any, e: SpeechRecognitionCanceledEventArgs): void { func(this, e); };
+            this.privRecognizer.canceled = function(s: any, e: CancellationEventArgs): void { func(this, e); };
         }
     }
 
@@ -71,7 +66,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         // create recognizer and subscribe to recognizer events
         this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
         Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
-        this.privRecognizer.canceled = function(s: any, e: SpeechRecognitionCanceledEventArgs): void { this.privCanceled(this, e); };
+        this.privRecognizer.canceled = function(s: any, e: CancellationEventArgs): void { this.privCanceled(this, e); };
         this.privRecognizer.recognizing = function(s: any, e: SpeechRecognitionEventArgs): void { this.privTranscribing(this, e); };
         this.privRecognizer.recognized = function(s: any, e: SpeechRecognitionEventArgs): void { this.privTranscribed(this, e); };
         this.privRecognizer.sessionStarted = function(s: any, e: SpeechRecognitionEventArgs): void { this.privSessionStarted(this, e); };

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { SpeechRecognitionCanceledEventArgs } from "../Exports";
+import { CancellationEventArgsBase } from "../CancellationEventArgsBase";
 
-export class ConversationTranslationCanceledEventArgs extends SpeechRecognitionCanceledEventArgs  {
+export class ConversationTranslationCanceledEventArgs extends CancellationEventArgsBase {
 }
