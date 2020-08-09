@@ -47,6 +47,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
         super(authentication, connectionFactory, audioSource, recognizerConfig, transcriber);
         this.privTranscriberRecognizer = transcriber;
         this.sendPrePayloadJSONOverride = this.sendTranscriptionStartJSON;
+        this.privAlignPayload = true;
     }
 
     public async sendSpeechEventAsync(info: ConversationInfo, command: string): Promise<void> {

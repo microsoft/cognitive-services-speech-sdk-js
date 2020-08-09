@@ -74,6 +74,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected privRecognizer: Recognizer;
     protected privSuccessCallback: (e: SpeechRecognitionResult) => void;
     protected privErrorCallback: (e: string) => void;
+    protected privAlignPayload: boolean = false;
 
     public constructor(
         authentication: IAuthentication,
@@ -642,12 +643,14 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 } else {
                     payload = audioStreamChunk.buffer;
 
-                    // Multiaudio endpoints require 8 byte aligned payloads
-                    const offset: number = payload.byteLength % 8;
-                    if (offset > 0) {
-                        const alignedByEightBytes = new Uint8Array(payload.byteLength + (8 - offset));
-                        alignedByEightBytes.set(new Uint8Array(payload), 0);
-                        payload = alignedByEightBytes.buffer;
+                    if (!!this.privAlignPayload) {
+                        // Multiaudio endpoints require 8 byte aligned payloads
+                        const offset: number = payload.byteLength % 8;
+                        if (offset > 0) {
+                            const alignedByEightBytes = new Uint8Array(payload.byteLength + (8 - offset));
+                            alignedByEightBytes.set(new Uint8Array(payload), 0);
+                            payload = alignedByEightBytes.buffer;
+                        }
                     }
                     this.privRequestSession.onAudioSent(payload.byteLength);
 
