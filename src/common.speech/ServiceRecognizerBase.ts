@@ -643,15 +643,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 } else {
                     payload = audioStreamChunk.buffer;
 
-                    if (!!this.privAlignPayload) {
-                        // Multiaudio endpoints require 8 byte aligned payloads
-                        const offset: number = payload.byteLength % 8;
-                        if (offset > 0) {
-                            const alignedByEightBytes = new Uint8Array(payload.byteLength + (8 - offset));
-                            alignedByEightBytes.set(new Uint8Array(payload), 0);
-                            payload = alignedByEightBytes.buffer;
-                        }
-                    }
                     this.privRequestSession.onAudioSent(payload.byteLength);
 
                     if (maxSendUnthrottledBytes >= this.privRequestSession.bytesSent) {
