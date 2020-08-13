@@ -56,6 +56,7 @@ export abstract class Conversation implements IConversation {
     public abstract get conversationInfo(): ConversationInfo;
     public abstract get properties(): PropertyCollection;
     public abstract get speechRecognitionLanguage(): string;
+    public abstract get participants(): Participant[];
 
     protected constructor() { }
 

@@ -31,6 +31,8 @@ export class Settings {
 
     public static SpeakerIDSubscriptionKey: string = "<<YOUR_SPEAKER_ID_SUBSCRIPTION_KEY>>";
     public static SpeakerIDRegion: string = "<<YOUR_SPEAKER_ID_REGION>>";
+    public static ConversationTranscriptionKey: string = "<<YOUR_TRANSCRIPTION_SUBSCRIPTION_KEY>>";
+    public static ConversationTranscriptionRegion: string = "<<YOUR_TRANSCRIPTION_REGION>>";
 
     public static InputDir: string = "tests/input/audio/";
 
