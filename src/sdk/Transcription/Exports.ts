@@ -13,6 +13,6 @@ export { ConversationTranslationResult } from "./ConversationTranslationResult";
 export { ConversationTranslator } from "./ConversationTranslator";
 export { ConversationTranscriber } from "./ConversationTranscriber";
 export { TranscriberRecognizer } from "./TranscriberRecognizer";
-export { Participant, User, VoiceSignature } from "./IParticipant";
+export { IParticipant, Participant, User, VoiceSignature } from "./IParticipant";
 export { ParticipantChangedReason } from "./ParticipantChangedReason";
 export { ConversationHandler, ConversationTranscriptionHandler, ConversationTranslationHandler } from "./ConversationHandler";

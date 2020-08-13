@@ -177,7 +177,7 @@ export class FileAudioSource implements IAudioSource {
             // Confirm if header is 44 bytes long.
             let pos: number = 36 + Math.max(formatSize - 16, 0);
             for (; getWord(pos) !== "data"; pos += 2) {
-              if (pos > maxHeaderSize - 4) {
+              if (pos > maxHeaderSize - 8) {
                   headerResult.reject("Invalid WAV header in file, data block was not found");
               }
             }
