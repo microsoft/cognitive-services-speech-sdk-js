@@ -15,6 +15,10 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
+function sleep(milliseconds: number): Promise<any> {
+    return new Promise((resolve: any) => setTimeout(resolve, milliseconds));
+}
+
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
@@ -55,7 +59,7 @@ const CreateConversation: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.Co
 };
 
 const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
-    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.ConversationTranscriptionKey, Settings.ConversationTranscriptionRegion);
+    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeakerIDSubscriptionKey, Settings.SpeakerIDRegion);
     expect(s).not.toBeUndefined();
     return s;
 };
@@ -196,6 +200,71 @@ describe.each([true, false])("Service based tests", () => {
                                                 done.fail(err);
                                             });
                                     }),
+                                    (err: string) => {
+                                        done.fail(err);
+                                    });
+                            });
+                    });
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+    }, 35000);
+
+    test("Leave Conversation", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: Leave Conversation");
+        const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+
+        const c: sdk.Conversation = CreateConversation(s);
+        objsToClose.push(c);
+
+        const t: sdk.ConversationTranscriber = BuildTranscriber();
+        t.joinConversationAsync(c,
+            () => {
+                expect(t.properties).not.toBeUndefined();
+                c.addParticipantAsync(GetParticipantKatie(),
+                    () => {
+                        expect(c.participants).not.toBeUndefined();
+                        expect(c.participants.length).toEqual(1);
+                        // Adds steve as a participant to the conversation.
+                        c.addParticipantAsync(GetParticipantSteve(),
+                            () => {
+                                expect(c.participants).not.toBeUndefined();
+                                expect(c.participants.length).toEqual(2);
+                                t.canceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
+                                    done.fail(e.errorDetails);
+                                };
+
+                                t.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
+                                    done.fail(e.result.text);
+                                };
+
+                                t.transcribing = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
+                                    done.fail(e.result.text);
+                                };
+
+                                // Start transcribing, then leave conversation immediately. Expected to detach all text result listeners.
+                                /* tslint:disable:no-empty */
+                                t.startTranscribingAsync(
+                                    () => {
+                                        t.leaveConversationAsync(
+                                            () => {
+                                                // Give potential transcription events a chance to be called back
+                                                sleep(10000).catch();
+                                                t.stopTranscribingAsync(
+                                                    () => {
+                                                        done();
+                                                    },
+                                                    (err: string) => {
+                                                        done.fail(err);
+                                                    });
+                                            },
+                                            (err: string) => {
+                                                done.fail(err);
+                                            });
+                                    },
                                     (err: string) => {
                                         done.fail(err);
                                     });
