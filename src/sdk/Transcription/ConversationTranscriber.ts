@@ -66,11 +66,32 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         // create recognizer and subscribe to recognizer events
         this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
         Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
-        this.privRecognizer.canceled = this.onCanceled;
-        this.privRecognizer.recognizing = this.onTranscribing;
-        this.privRecognizer.recognized = this.onTranscribed;
-        this.privRecognizer.sessionStarted = this.onSessionStarted;
-        this.privRecognizer.sessionStopped = this.onSessionStopped;
+
+        this.privRecognizer.canceled = function(s: any, e: CancellationEventArgs): void {
+            if (!!this.privCanceled) {
+                this.privCanceled(this, e);
+            }
+        };
+        this.privRecognizer.recognizing = function(s: any, e: SpeechRecognitionEventArgs): void {
+            if (!!this.privTranscribing) {
+                this.privTranscribing(this, e);
+            }
+        };
+        this.privRecognizer.recognized = function(s: any, e: SpeechRecognitionEventArgs): void {
+            if (!!this.privTranscribed) {
+                this.privTranscribed(this, e);
+            }
+        };
+        this.privRecognizer.sessionStarted = function(s: any, e: SpeechRecognitionEventArgs): void {
+            if (!!this.privSessionStarted) {
+                this.privSessionStarted(this, e);
+            }
+        };
+        this.privRecognizer.sessionStopped = function(s: any, e: SpeechRecognitionEventArgs): void {
+            if (!!this.privSessionStopped) {
+                this.privSessionStopped(this, e);
+            }
+        };
         marshalPromiseToCallbacks(conversationImpl.connectTranscriberRecognizer(this.privRecognizer), cb, err);
     }
 
@@ -236,56 +257,6 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
 
         if (disposing) {
             this.privDisposedRecognizer = true;
-        }
-    }
-
-    private onSessionStarted(s: any, e: SessionEventArgs): void {
-        try {
-            if (!!this.privSessionStarted) {
-                this.privSessionStarted(this, e);
-            }
-        } catch (e) {
-            //
-        }
-    }
-
-    private onSessionStopped(s: any, e: SessionEventArgs): void {
-        try {
-            if (!!this.privSessionStopped) {
-                this.privSessionStopped(this, e);
-            }
-        } catch (e) {
-            //
-        }
-    }
-
-    private onCanceled(s: any, e: CancellationEventArgs): void {
-        try {
-            if (!!this.privCanceled) {
-                this.privCanceled(this, e);
-            }
-        } catch (e) {
-            //
-        }
-    }
-
-    private onTranscribing(s: any, e: ConversationTranscriptionEventArgs): void {
-        try {
-            if (!!this.privTranscribing) {
-                this.privTranscribing(this, e);
-            }
-        } catch (e) {
-            //
-        }
-    }
-
-    private onTranscribed(s: any, e: ConversationTranscriptionEventArgs): void {
-        try {
-            if (!!this.privTranscribed) {
-                this.privTranscribed(this, e);
-            }
-        } catch (e) {
-            //
         }
     }
 }
