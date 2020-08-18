@@ -20,23 +20,27 @@ import {
     PropertyCollection,
     PropertyId,
     Recognizer,
+    SessionEventArgs,
     SpeechRecognitionEventArgs,
     SpeechTranslationConfig,
     SpeechTranslationConfigImpl,
 } from "../Exports";
 import { Conversation } from "./Conversation";
+import { ConversationTranscriber } from "./ConversationTranscriber";
 import { ConversationInfo } from "./IConversation";
 
 export class TranscriberRecognizer extends Recognizer {
     private privDisposedRecognizer: boolean;
     private privConversation: Conversation;
+    private privTranscriber: ConversationTranscriber;
 
     /**
-     * ConversationTranscriber constructor.
+     * TranscriberRecognizer constructor.
      * @constructor
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
-    public constructor(speechTranslationConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+    public constructor(transcriber: ConversationTranscriber, speechTranslationConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+        Contracts.throwIfNull(transcriber, "ConversationTranscriber");
         const speechTranslationConfigImpl: SpeechTranslationConfigImpl = speechTranslationConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(speechTranslationConfigImpl, "speechTranslationConfig");
 
@@ -46,6 +50,32 @@ export class TranscriberRecognizer extends Recognizer {
 
         super(audioConfig, speechTranslationConfigImpl.properties, new TranscriberConnectionFactory());
         this.privDisposedRecognizer = false;
+        this.privTranscriber = transcriber;
+        this.canceled = function(s: any, e: CancellationEventArgs): void {
+            if (!!this.privTranscriber.canceled) {
+                this.privTranscriber.canceled(this.privTranscriber, e);
+            }
+        };
+        this.recognizing = function(s: any, e: SpeechRecognitionEventArgs): void {
+            if (!!this.privTranscriber.transcribing) {
+                this.privTranscriber.transcribing(this.privTranscriber, e);
+            }
+        };
+        this.recognized = function(s: any, e: SpeechRecognitionEventArgs): void {
+            if (!!this.privTranscriber.transcribed) {
+                this.privTranscriber.transcribed(this.privTranscriber, e);
+            }
+        };
+        this.sessionStarted = function(s: any, e: SessionEventArgs): void {
+            if (!!this.privTranscriber.sessionStarted) {
+                this.privTranscriber.sessionStarted(this.privTranscriber, e);
+            }
+        };
+        this.sessionStopped = function(s: any, e: SessionEventArgs): void {
+            if (!!this.privTranscriber.sessionStopped) {
+                this.privTranscriber.sessionStopped(this.privTranscriber, e);
+            }
+        };
     }
 
     public recognizing: (sender: Recognizer, event: SpeechRecognitionEventArgs) => void;

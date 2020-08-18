@@ -65,6 +65,7 @@ export class Settings {
     public static WaveFile8ch: string = Settings.InputDir + "Speech016_30s_xmos_8ch.wav";
     public static WaveFile44k: string = Settings.InputDir + "whatstheweatherlike.44khz.wav";
     public static VoiceSignatureWaveFile: string = Settings.InputDir + "StreamingEnrollment.wav";
+    public static MonoChannelAlignedWaveFile: string = Settings.InputDir + "only-a-test.wav";
     public static WaveFileLanguage: string = "en-US";
     public static WaveFileDuration: number = 12900000;
     public static WaveFileOffset: number = 1000000;
