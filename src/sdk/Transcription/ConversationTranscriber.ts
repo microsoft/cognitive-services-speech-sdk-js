@@ -54,8 +54,9 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
 
         // ref the conversation object
         // create recognizer and subscribe to recognizer events
-        this.privRecognizer = new TranscriberRecognizer(this, conversation.config, this.privAudioConfig);
+        this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
         Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
+        this.privRecognizer.connectCallbacks(this);
 
         marshalPromiseToCallbacks(conversationImpl.connectTranscriberRecognizer(this.privRecognizer), cb, err);
     }
@@ -169,11 +170,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * Leave the current conversation. After this is called, you will no longer receive any events.
      */
     public leaveConversationAsync(cb?: Callback, err?: Callback): void {
-        this.privRecognizer.canceled = undefined;
-        this.privRecognizer.recognizing = undefined;
-        this.privRecognizer.recognized = undefined;
-        this.privRecognizer.sessionStarted = undefined;
-        this.privRecognizer.sessionStopped = undefined;
+        this.privRecognizer.disconnectCallbacks();
         marshalPromiseToCallbacks((async (): Promise<void> => { return; })(), cb, err);
     }
 

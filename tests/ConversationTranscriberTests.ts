@@ -287,18 +287,21 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
     const c: sdk.Conversation = CreateConversation(s);
     objsToClose.push(c);
     let sessionId: string = "";
+    let canceled: boolean = false;
 
     const t: sdk.ConversationTranscriber = BuildMonoWaveTranscriber();
     t.canceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
         try {
             expect(e.errorDetails).toBeUndefined();
             expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
+            canceled = true;
         } catch (error) {
             done.fail(error);
         }
     };
     t.sessionStopped = (o: sdk.ConversationTranscriber, e: sdk.SessionEventArgs) => {
         try {
+            expect(canceled).toEqual(true);
             expect(e.sessionId).not.toBeUndefined();
             expect(e.sessionId).toEqual(sessionId);
             done();
@@ -307,7 +310,6 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
         }
     };
 
-    // let stopped: boolean = false;
     t.joinConversationAsync(c,
         () => {
             expect(t.properties).not.toBeUndefined();
