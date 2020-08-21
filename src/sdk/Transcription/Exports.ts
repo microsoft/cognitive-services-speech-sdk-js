@@ -12,7 +12,6 @@ export { ConversationTranslationEventArgs } from "./ConversationTranslationEvent
 export { ConversationTranslationResult } from "./ConversationTranslationResult";
 export { ConversationTranslator } from "./ConversationTranslator";
 export { ConversationTranscriber } from "./ConversationTranscriber";
-export { TranscriberRecognizer } from "./TranscriberRecognizer";
 export { IParticipant, Participant, User, VoiceSignature } from "./IParticipant";
 export { ParticipantChangedReason } from "./ParticipantChangedReason";
-export { ConversationHandler, ConversationTranscriptionHandler, ConversationTranslationHandler } from "./ConversationHandler";
+export { ConversationHandler, ConversationTranscriptionHandler, IConversationTranslator } from "./ConversationHandler";

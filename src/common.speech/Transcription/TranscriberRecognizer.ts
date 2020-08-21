@@ -1,6 +1,23 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { marshalPromiseToCallbacks } from "../../common/Exports";
+import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
+import { Contracts } from "../../sdk/Contracts";
+import {
+    AudioConfig,
+    CancellationEventArgs,
+    Conversation,
+    ConversationInfo,
+    ConversationTranscriber,
+    PropertyCollection,
+    PropertyId,
+    Recognizer,
+    SessionEventArgs,
+    SpeechRecognitionEventArgs,
+    SpeechTranslationConfig,
+    SpeechTranslationConfigImpl,
+} from "../../sdk/Exports";
 import {
     IAuthentication,
     IConnectionFactory,
@@ -10,24 +27,7 @@ import {
     SpeechServiceConfig,
     TranscriberConnectionFactory,
     TranscriptionServiceRecognizer,
-} from "../../common.speech/Exports";
-import { marshalPromiseToCallbacks } from "../../common/Exports";
-import { AudioConfigImpl } from "../Audio/AudioConfig";
-import { Contracts } from "../Contracts";
-import {
-    AudioConfig,
-    CancellationEventArgs,
-    PropertyCollection,
-    PropertyId,
-    Recognizer,
-    SessionEventArgs,
-    SpeechRecognitionEventArgs,
-    SpeechTranslationConfig,
-    SpeechTranslationConfigImpl,
 } from "../Exports";
-import { Conversation } from "./Conversation";
-import { ConversationTranscriber } from "./ConversationTranscriber";
-import { ConversationInfo } from "./IConversation";
 
 export class TranscriberRecognizer extends Recognizer {
     private privDisposedRecognizer: boolean;

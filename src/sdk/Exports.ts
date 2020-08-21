@@ -68,6 +68,7 @@ export { SourceLanguageConfig } from "./SourceLanguageConfig";
 export { SpeakerRecognitionResult, SpeakerRecognitionResultType, SpeakerRecognitionCancellationDetails } from "./SpeakerRecognitionResult";
 export { Conversation,
     ConversationExpirationEventArgs,
+    ConversationInfo,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,

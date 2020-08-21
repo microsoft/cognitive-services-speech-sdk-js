@@ -17,7 +17,8 @@ import {
     MuteAllEventArgs,
     ParticipantAttributeEventArgs,
     ParticipantEventArgs,
-    ParticipantsListEventArgs
+    ParticipantsListEventArgs,
+    TranscriberRecognizer
 } from "../../common.speech/Exports";
 import {
     IDisposable,
@@ -43,7 +44,6 @@ import {
 import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig";
 import { Callback, ConversationInfo, IConversation } from "./IConversation";
 import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
-import { TranscriberRecognizer } from "./TranscriberRecognizer";
 
 export abstract class Conversation implements IConversation {
 

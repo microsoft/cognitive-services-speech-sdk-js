@@ -4,6 +4,7 @@
 export { ConversationManager } from "./ConversationManager";
 export { ConversationConnectionConfig } from "./ConversationConnectionConfig";
 export { ConversationRecognizerFactory } from "./ConversationTranslatorRecognizer";
+export { TranscriberRecognizer } from "./TranscriberRecognizer";
 export {
     ConversationReceivedTranslationEventArgs,
     LockRoomEventArgs,

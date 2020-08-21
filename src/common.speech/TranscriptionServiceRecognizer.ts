@@ -17,7 +17,7 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
-import { ConversationInfo, TranscriberRecognizer } from "../sdk/Transcription/Exports";
+import { ConversationInfo } from "../sdk/Transcription/Exports";
 import {
     CancellationErrorCodePropertyName,
     DetailedSpeechPhrase,
@@ -27,6 +27,7 @@ import {
     ServiceRecognizerBase,
     SimpleSpeechPhrase,
     SpeechHypothesis,
+    TranscriberRecognizer
 } from "./Exports";
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";

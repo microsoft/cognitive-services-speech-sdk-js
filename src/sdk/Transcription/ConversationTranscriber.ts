@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { TranscriberRecognizer } from "../../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
@@ -10,12 +11,10 @@ import {
     PropertyCollection,
     PropertyId,
     SessionEventArgs,
-    SpeechRecognitionEventArgs,
 } from "../Exports";
 import {
     ConversationImpl,
     ConversationTranscriptionHandler,
-    TranscriberRecognizer,
 } from "./Exports";
 import { Callback, IConversation } from "./IConversation";
 

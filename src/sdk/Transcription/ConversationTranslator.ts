@@ -34,7 +34,7 @@ import {
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
-    ConversationTranslationHandler,
+    IConversationTranslator,
     Participant,
 } from "./Exports";
 import { Callback, IConversation } from "./IConversation";
@@ -46,7 +46,7 @@ export enum SpeechState {
 /***
  * Join, leave or connect to a conversation.
  */
-export class ConversationTranslator extends ConversationCommon implements ConversationTranslationHandler, IDisposable {
+export class ConversationTranslator extends ConversationCommon implements IConversationTranslator, IDisposable {
 
     private privSpeechRecognitionLanguage: string;
     private privProperties: PropertyCollection;
@@ -77,14 +77,14 @@ export class ConversationTranslator extends ConversationCommon implements Conver
         return this.privConversation?.participants;
     }
 
-    public canceled: (sender: ConversationTranslationHandler, event: ConversationTranslationCanceledEventArgs) => void;
-    public conversationExpiration: (sender: ConversationTranslationHandler, event: ConversationExpirationEventArgs) => void;
-    public participantsChanged: (sender: ConversationTranslationHandler, event: ConversationParticipantsChangedEventArgs) => void;
-    public sessionStarted: (sender: ConversationTranslationHandler, event: SessionEventArgs) => void;
-    public sessionStopped: (sender: ConversationTranslationHandler, event: SessionEventArgs) => void;
-    public textMessageReceived: (sender: ConversationTranslationHandler, event: ConversationTranslationEventArgs) => void;
-    public transcribed: (sender: ConversationTranslationHandler, event: ConversationTranslationEventArgs) => void;
-    public transcribing: (sender: ConversationTranslationHandler, event: ConversationTranslationEventArgs) => void;
+    public canceled: (sender: IConversationTranslator, event: ConversationTranslationCanceledEventArgs) => void;
+    public conversationExpiration: (sender: IConversationTranslator, event: ConversationExpirationEventArgs) => void;
+    public participantsChanged: (sender: IConversationTranslator, event: ConversationParticipantsChangedEventArgs) => void;
+    public sessionStarted: (sender: IConversationTranslator, event: SessionEventArgs) => void;
+    public sessionStopped: (sender: IConversationTranslator, event: SessionEventArgs) => void;
+    public textMessageReceived: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+    public transcribed: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+    public transcribing: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
 
     /**
      * Join a conversation. If this is the host, pass in the previously created Conversation object.
@@ -308,7 +308,7 @@ export class ConversationTranslator extends ConversationCommon implements Conver
     /**
      * Cancel the speech websocket
      */
-    public async cancelSpeech(): Promise<void> {
+    private async cancelSpeech(): Promise<void> {
         try {
             this.privIsSpeaking = false;
             this.privTranslationRecognizer?.stopContinuousRecognitionAsync();

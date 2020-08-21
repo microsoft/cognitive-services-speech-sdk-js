@@ -50,7 +50,7 @@ export interface ConversationHandler {
  * own devices to see everyone else's recognitions and IMs in their own languages. Participants
  * can also speak and send IMs to others.
  */
-export interface ConversationTranslationHandler extends ConversationHandler {
+export interface IConversationTranslator extends ConversationHandler {
 
     /** Gets the collection of properties and their values defined for this instance. */
     readonly properties: PropertyCollection;
@@ -61,27 +61,27 @@ export interface ConversationTranslationHandler extends ConversationHandler {
     /**
      * Event that signals how many more minutes are left before the conversation expires.
      */
-    conversationExpiration: (sender: ConversationTranslationHandler, event: ConversationExpirationEventArgs) => void;
+    conversationExpiration: (sender: IConversationTranslator, event: ConversationExpirationEventArgs) => void;
 
     /**
      * Event that signals participants in the conversation have changed (e.g. a new participant joined).
      */
-    participantsChanged: (sender: ConversationTranslationHandler, event: ConversationParticipantsChangedEventArgs) => void;
+    participantsChanged: (sender: IConversationTranslator, event: ConversationParticipantsChangedEventArgs) => void;
 
     /**
      * Event that signals a translated text message from a conversation participant.
      */
-    textMessageReceived: (sender: ConversationTranslationHandler, event: ConversationTranslationEventArgs) => void;
+    textMessageReceived: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
 
      /**
       * The event recognized signals that a final  conversation translation result is received.
       */
-    transcribed: (sender: ConversationTranslationHandler, event: ConversationTranslationEventArgs) => void;
+    transcribed: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
 
      /**
       * The event recognizing signals that an intermediate conversation translation result is received.
       */
-    transcribing: (sender: ConversationTranslationHandler, event: ConversationTranslationEventArgs) => void;
+    transcribing: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
 
     /**
      * Joins an existing conversation. You should use this method if you have created a conversation using
