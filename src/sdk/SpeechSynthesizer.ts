@@ -158,11 +158,12 @@ export class SpeechSynthesizer {
 
         if (audioConfig !== null) {
             if (audioConfig === undefined) {
-                this.audioConfig = (typeof window === "undefined") ? null : AudioConfig.fromDefaultSpeakerOutput();
+                this.audioConfig = (typeof window === "undefined") ? undefined : AudioConfig.fromDefaultSpeakerOutput();
             } else {
                 this.audioConfig = audioConfig;
             }
         }
+
         this.privProperties = speechConfigImpl.properties.clone();
         this.privDisposed = false;
         this.privSynthesizing = false;
