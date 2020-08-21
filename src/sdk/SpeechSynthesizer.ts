@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {PathLike} from "fs";
+import { PathLike } from "fs";
 import {
     AutoDetectSourceLanguagesOpenRangeOptionName,
     CognitiveSubscriptionKeyAuthentication,
@@ -149,15 +149,19 @@ export class SpeechSynthesizer {
     /**
      * SpeechSynthesizer constructor.
      * @constructor
-     * @param {SpeechConfig} speechConfig - An set of initial properties for this synthesizer
-     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the synthesizer
+     * @param {SpeechConfig} speechConfig - An set of initial properties for this synthesizer.
+     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the synthesizer.
      */
     public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         Contracts.throwIfNull(speechConfigImpl, "speechConfig");
 
         if (audioConfig !== null) {
-            this.audioConfig = (audioConfig !== undefined) ? audioConfig : AudioConfig.fromDefaultSpeakerOutput();
+            if (audioConfig === undefined) {
+                this.audioConfig = (typeof window === "undefined") ? null : AudioConfig.fromDefaultSpeakerOutput();
+            } else {
+                this.audioConfig = audioConfig;
+            }
         }
         this.privProperties = speechConfigImpl.properties.clone();
         this.privDisposed = false;

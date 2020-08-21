@@ -11,9 +11,7 @@ import { PropertyCollection, ResultReason } from "./Exports";
 export class SpeechSynthesisResult {
     private privResultId: string;
     private privReason: ResultReason;
-    private privText: string;
     private privAudioData: ArrayBuffer;
-    private privOffset: number;
     private privErrorDetails: string;
     private privProperties: PropertyCollection;
 
