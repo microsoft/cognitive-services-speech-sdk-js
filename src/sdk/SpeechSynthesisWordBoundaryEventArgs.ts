@@ -7,7 +7,7 @@
  * Added in version 1.11.0
  */
 export class SpeechSynthesisWordBoundaryEventArgs {
-    private privAduioOffset: number;
+    private privAudioOffset: number;
     private privText: string;
     private privWordLength: number;
     private privTextOffset: number;
@@ -21,7 +21,7 @@ export class SpeechSynthesisWordBoundaryEventArgs {
      * @param {number} textOffset - The text offset.
      */
     public constructor(audioOffset: number, text: string, wordLength: number, textOffset: number) {
-        this.privAduioOffset = audioOffset;
+        this.privAudioOffset = audioOffset;
         this.privText = text;
         this.privWordLength = wordLength;
         this.privTextOffset = textOffset;
@@ -35,7 +35,7 @@ export class SpeechSynthesisWordBoundaryEventArgs {
      * @returns {number} the audio offset.
      */
     public get audioOffset(): number {
-        return this.privAduioOffset;
+        return this.privAudioOffset;
     }
 
     /**

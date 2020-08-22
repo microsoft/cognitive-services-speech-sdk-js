@@ -6,7 +6,6 @@ import {
     ConnectionClosedEvent,
     ConnectionEvent,
     ConnectionMessage,
-    ConnectionOpenResponse,
     ConnectionState,
     createNoDashGuid,
     EventSource,
