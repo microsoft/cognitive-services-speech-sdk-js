@@ -291,15 +291,15 @@ test("Leave Conversation", (done: jest.DoneCallback) => {
                                             (err: string) => {
                                                 done.fail(err);
                                             });
-                                    } catch(error) {
+                                    } catch (error) {
                                         done.fail(error);
                                     }
                             });
-                        } catch(error) {
+                        } catch (error) {
                             done.fail(error);
                         }
                 });
-            } catch(error) {
+            } catch (error) {
                 done.fail(error);
             }
         },
@@ -386,4 +386,3 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
             done.fail(error);
         });
 });
-
