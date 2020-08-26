@@ -612,8 +612,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         // The time we last sent data to the service.
         let nextSendTime: number = Date.now();
-        let retryCount: number = 0;
-        const retryMax: number = 5;
 
         // Max amount to send before we start to throttle
         const fastLaneSizeMs: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-TransmitLengthBeforThrottleMs", "5000");
@@ -627,7 +625,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 this.privRequestSession.isRecognizing &&
                 this.privRequestSession.recogNumber === startRecogNumber) {
 
-                let connection: IConnection = await this.fetchConnection();
+                const connection: IConnection = await this.fetchConnection();
                 const audioStreamChunk: IStreamChunk<ArrayBuffer> = await audioStreamNode.read();
                 // we have a new audio chunk to upload.
                 if (this.privRequestSession.isSpeechEnded) {
@@ -666,24 +664,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     !this.privRequestSession.isSpeechEnded &&
                     this.privRequestSession.isRecognizing &&
                     this.privRequestSession.recogNumber === startRecogNumber) {
-                    let awaitingSend: boolean = true;
-                    while (awaitingSend) {
-                        try {
-                            await connection.send(
-                                new SpeechConnectionMessage(
-                                    MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
-                            awaitingSend = false;
-                        } catch (error) {
-                            if (retryCount < retryMax && connection.state() === ConnectionState.Disconnected) {
-                                await this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
-                                connection = await this.fetchConnection();
-                                retryCount++;
-                            } else {
-                                throw error;
-                            }
-                        }
-                    }
-                    retryCount = 0;
+                    connection.send(
+                        new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload)
+                    ).catch(() => {
+                        this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition).catch(() => { });
+                    });
 
                     if (!audioStreamChunk?.isEnd) {
                         // this.writeBufferToConsole(payload);
