@@ -38,7 +38,8 @@
     "distrib/es2015/external/ocsp/ocsp": false,
     "distrib/lib/external/ocsp/ocsp": false,
     "agent-base": false,
-    "tls": false
+    "tls": false,
+    "net": false
   },
   "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
   "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
