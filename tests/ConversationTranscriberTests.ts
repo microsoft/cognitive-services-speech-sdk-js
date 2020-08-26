@@ -386,3 +386,63 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
             done.fail(error);
         });
 });
+test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Create Conversation and force disconnect");
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    s.setServiceProperty("maxConnectionDurationSecs", "12", sdk.ServicePropertyChannel.UriQueryParameter);
+    objsToClose.push(s);
+
+    const c: sdk.Conversation = CreateConversation(s);
+    objsToClose.push(c);
+
+    const t: sdk.ConversationTranscriber = BuildTranscriber();
+    t.canceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+            expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    t.joinConversationAsync(c,
+        () => {
+            try {
+                expect(t.properties).not.toBeUndefined();
+                c.addParticipantAsync(GetParticipantKatie(),
+                    () => {
+                        try {
+                            expect(c.participants).not.toBeUndefined();
+                            expect(c.participants.length).toEqual(1);
+                            // Adds steve as a participant to the conversation.
+                            c.addParticipantAsync(GetParticipantSteve(),
+                                () => {
+                                    try {
+                                        expect(c.participants).not.toBeUndefined();
+                                        expect(c.participants.length).toEqual(2);
+                                    } catch (error) {
+                                        done.fail(error);
+                                    }
+
+                                    /* tslint:disable:no-empty */
+                                    t.startTranscribingAsync(
+                                        /* tslint:disable:no-empty */
+                                        () => { },
+                                        (err: string) => {
+                                            done.fail(err);
+                                        });
+                                });
+                        } catch (error) {
+                            done.fail(error);
+                        }
+                    });
+            } catch (error) {
+                done.fail(error);
+            }
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+}, 240000);

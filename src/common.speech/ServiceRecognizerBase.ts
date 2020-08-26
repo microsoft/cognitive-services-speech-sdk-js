@@ -74,7 +74,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected privRecognizer: Recognizer;
     protected privSuccessCallback: (e: SpeechRecognitionResult) => void;
     protected privErrorCallback: (e: string) => void;
-    protected privAlignPayload: boolean = false;
 
     public constructor(
         authentication: IAuthentication,
