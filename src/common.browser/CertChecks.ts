@@ -365,7 +365,11 @@ export class CertCheckAgent {
                 });
             });
         } else {
-            socketPromise = Promise.resolve(tls.connect(options));
+            if (!!options.secureEndpoint) {
+                socketPromise = Promise.resolve(tls.connect(options));
+            } else {
+                socketPromise = Promise.resolve(net.connect(options));
+            }
         }
 
         if (!!enableOCSP) {
