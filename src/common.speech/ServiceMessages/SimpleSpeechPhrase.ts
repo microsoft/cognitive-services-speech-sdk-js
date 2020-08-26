@@ -10,6 +10,7 @@ export interface ISimpleSpeechPhrase {
     Offset?: number;
     Duration?: number;
     PrimaryLanguage?: IPrimaryLanguage;
+    SpeakerId?: string;
 }
 
 export interface IPrimaryLanguage {
@@ -51,5 +52,9 @@ export class SimpleSpeechPhrase implements ISimpleSpeechPhrase {
 
     public get LanguageDetectionConfidence(): string {
         return this.privSimpleSpeechPhrase.PrimaryLanguage === undefined ? undefined : this.privSimpleSpeechPhrase.PrimaryLanguage.Confidence;
+    }
+
+    public get SpeakerId(): string {
+        return this.privSimpleSpeechPhrase.SpeakerId;
     }
 }

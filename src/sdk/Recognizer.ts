@@ -189,21 +189,8 @@ export abstract class Recognizer {
             new SpeechServiceConfig(
                 new Context(new OS(osPlatform, osName, osVersion))));
 
-        const subscriptionKey = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
-        const authentication = (subscriptionKey && subscriptionKey !== "") ?
-            new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
-            new CognitiveTokenAuthentication(
-                (authFetchEventId: string): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                },
-                (authFetchEventId: string): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                });
-
         this.privReco = this.createServiceRecognizer(
-            authentication,
+            Recognizer.getAuthFromProperties(this.privProperties),
             this.privConnectionFactory,
             this.audioConfig,
             recognizerConfig);
@@ -239,5 +226,22 @@ export abstract class Recognizer {
             await this.privReco.stopRecognizing();
         }
         return;
+    }
+
+    protected static getAuthFromProperties(properties: PropertyCollection): IAuthentication {
+        const subscriptionKey = properties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
+        const authentication = (subscriptionKey && subscriptionKey !== "") ?
+            new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
+            new CognitiveTokenAuthentication(
+                (authFetchEventId: string): Promise<string> => {
+                    const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
+                    return Promise.resolve(authorizationToken);
+                },
+                (authFetchEventId: string): Promise<string> => {
+                    const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
+                    return Promise.resolve(authorizationToken);
+                });
+
+        return authentication;
     }
 }

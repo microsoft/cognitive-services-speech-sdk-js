@@ -41,6 +41,8 @@ export class FileAudioSource implements IAudioSource {
 
     private privFile: File;
 
+    private privHeaderEnd: number = 44;
+
     public constructor(file: File, audioSourceId?: string) {
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
@@ -140,9 +142,10 @@ export class FileAudioSource implements IAudioSource {
         });
     }
 
-    private readHeader = (): Promise<AudioStreamFormatImpl> => {
+    private readHeader(): Promise<AudioStreamFormatImpl> {
         // Read the wave header.
-        const header: Blob = this.privFile.slice(0, 44);
+        const maxHeaderSize: number = 128;
+        const header: Blob = this.privFile.slice(0, maxHeaderSize);
         const headerReader: FileReader = new FileReader();
 
         const headerResult: Deferred<AudioStreamFormatImpl> = new Deferred<AudioStreamFormatImpl>();
@@ -152,32 +155,36 @@ export class FileAudioSource implements IAudioSource {
 
             const view: DataView = new DataView(header);
 
+            const getWord = (index: number): string => {
+                return String.fromCharCode(view.getUint8(index), view.getUint8(index + 1), view.getUint8(index + 2), view.getUint8(index + 3));
+            };
+
             // RIFF 4 bytes.
-            const riff: string = String.fromCharCode(view.getUint8(0), view.getUint8(1), view.getUint8(2), view.getUint8(3));
-            if ("RIFF" !== riff) {
+            if ("RIFF" !== getWord(0)) {
                 headerResult.reject("Invalid WAV header in file, RIFF was not found");
             }
 
             // length, 4 bytes
             // RIFF Type & fmt 8 bytes
-            const type: string = String.fromCharCode(
-                view.getUint8(8),
-                view.getUint8(9),
-                view.getUint8(10),
-                view.getUint8(11),
-                view.getUint8(12),
-                view.getUint8(13),
-                view.getUint8(14));
-            if ("WAVEfmt" !== type) {
+            if ("WAVE" !== getWord(8) || "fmt " !== getWord(12)) {
                 headerResult.reject("Invalid WAV header in file, WAVEfmt was not found");
             }
 
+            const formatSize: number = view.getInt32(16, true);
             const channelCount: number = view.getUint16(22, true);
             const sampleRate: number = view.getUint32(24, true);
             const bitsPerSample: number = view.getUint16(34, true);
+            // Confirm if header is 44 bytes long.
+            let pos: number = 36 + Math.max(formatSize - 16, 0);
+            for (; getWord(pos) !== "data"; pos += 2) {
+              if (pos > maxHeaderSize - 8) {
+                  headerResult.reject("Invalid WAV header in file, data block was not found");
+              }
+            }
+
+            this.privHeaderEnd = pos + 8;
 
             headerResult.resolve(AudioStreamFormat.getWaveFormatPCM(sampleRate, bitsPerSample, channelCount) as AudioStreamFormatImpl);
-
         };
 
         headerReader.onload = processHeader;
@@ -215,7 +222,7 @@ export class FileAudioSource implements IAudioSource {
             throw new Error(errorMsg);
         };
 
-        const chunk = this.privFile.slice(44);
+        const chunk = this.privFile.slice(this.privHeaderEnd);
         reader.readAsArrayBuffer(chunk);
 
         return stream;

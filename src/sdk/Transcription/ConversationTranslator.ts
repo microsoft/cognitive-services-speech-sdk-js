@@ -29,14 +29,15 @@ import {
 } from "../Exports";
 import { ConversationImpl } from "./Conversation";
 import {
+    ConversationCommon,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
+    IConversationTranslator,
     Participant,
 } from "./Exports";
 import { Callback, IConversation } from "./IConversation";
-import { IConversationTranslator } from "./IConversationTranslator";
 
 export enum SpeechState {
     Inactive, Connecting, Connected
@@ -45,12 +46,10 @@ export enum SpeechState {
 /***
  * Join, leave or connect to a conversation.
  */
-export class ConversationTranslator implements IConversationTranslator, IDisposable {
+export class ConversationTranslator extends ConversationCommon implements IConversationTranslator, IDisposable {
 
     private privSpeechRecognitionLanguage: string;
     private privProperties: PropertyCollection;
-    private privAudioConfig: AudioConfig;
-    private privSpeechTranslationConfig: SpeechTranslationConfig;
     private privTranslationRecognizerConnection: Connection;
     private privIsDisposed: boolean = false;
     private privTranslationRecognizer: TranslationRecognizer;
@@ -62,8 +61,8 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     private privPlaceholderRegion: string = "westus";
 
     public constructor(audioConfig?: AudioConfig) {
+        super(audioConfig);
         this.privProperties = new PropertyCollection();
-        this.privAudioConfig = audioConfig;
     }
 
     public get properties(): PropertyCollection {
@@ -113,7 +112,7 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
                 let lang: string = param1 as string;
                 if (lang === undefined || lang === null || lang === "") { lang = ConversationConnectionConfig.defaultLanguageCode; }
 
-                // create a placecholder config
+                // create a placeholder config
                 this.privSpeechTranslationConfig = SpeechTranslationConfig.fromSubscription(
                     this.privPlaceholderKey,
                     this.privPlaceholderRegion);
@@ -307,6 +306,22 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
     }
 
     /**
+     * Cancel the speech websocket
+     */
+    private async cancelSpeech(): Promise<void> {
+        try {
+            this.privIsSpeaking = false;
+            this.privTranslationRecognizer?.stopContinuousRecognitionAsync();
+            await this.privTranslationRecognizerConnection?.closeConnection();
+            this.privTranslationRecognizerConnection = undefined;
+            this.privTranslationRecognizer = undefined;
+            this.privSpeechState = SpeechState.Inactive;
+        } catch (e) {
+            // ignore the error
+        }
+    }
+
+    /**
      * Connect to the speech translation recognizer.
      * Currently there is no language validation performed before sending the SpeechLanguage code to the service.
      * If it's an invalid language the raw error will be: 'Error during WebSocket handshake: Unexpected response code: 400'
@@ -429,22 +444,6 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         }
     }
 
-    /**
-     * Cancel the speech websocket
-     */
-    private async cancelSpeech(): Promise<void> {
-        try {
-            this.privIsSpeaking = false;
-            this.privTranslationRecognizer?.stopContinuousRecognitionAsync();
-            await this.privTranslationRecognizerConnection?.closeConnection();
-            this.privTranslationRecognizerConnection = undefined;
-            this.privTranslationRecognizer = undefined;
-            this.privSpeechState = SpeechState.Inactive;
-        } catch (e) {
-            // ignore the error
-        }
-    }
-
     private get canSpeak(): boolean {
 
         // is there a Conversation websocket available
@@ -465,28 +464,4 @@ export class ConversationTranslator implements IConversationTranslator, IDisposa
         return true;
     }
 
-    private handleCallback(cb: Callback, err: Callback): void {
-        if (!!cb) {
-            try {
-                cb();
-            } catch (e) {
-                if (!!err) {
-                    err(e);
-                }
-            }
-            cb = undefined;
-        }
-    }
-
-    private handleError(error: any, err: Callback): void {
-        if (!!err) {
-            if (error instanceof Error) {
-                const typedError: Error = error as Error;
-                err(typedError.name + ": " + typedError.message);
-
-            } else {
-                err(error);
-            }
-        }
-    }
 }
