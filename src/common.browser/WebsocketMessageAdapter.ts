@@ -258,6 +258,11 @@ export class WebsocketMessageAdapter {
             if (this.isWebsocketOpen) {
                 this.privWebsocketClient.send(sendItem.RawWebsocketMessage.payload);
             } else {
+                this.privConnectionState = ConnectionState.Disconnected;
+                this.onEvent(new ConnectionClosedEvent(this.privConnectionId, 1006, "Websocket not ready"));
+                this.onClose(1006, "Websocket not ready").catch((reason: string): void => {
+                  Events.instance.onEvent(new BackgroundEvent(reason));
+                });
                 return Promise.reject("websocket send error: Websocket not ready " + this.privConnectionId + " " + sendItem.Message.id + " " + new Error().stack);
             }
             return Promise.resolve();
