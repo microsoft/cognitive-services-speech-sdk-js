@@ -48,7 +48,6 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
     private privConnectionFactory: IConnectionFactory;
-    private privAudioSource: IAudioSource;
 
     // A promise for a configured connection.
     // Do not consume directly, call fetchConnection instead.
@@ -67,6 +66,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privServiceHasSentMessage: boolean;
     private privActivityTemplate: string;
     private privSetTimeout: (cb: () => void, delay: number) => number = setTimeout;
+    private privAudioSource: IAudioSource;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
@@ -74,6 +74,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected privRecognizer: Recognizer;
     protected privSuccessCallback: (e: SpeechRecognitionResult) => void;
     protected privErrorCallback: (e: string) => void;
+    protected privAlignPayload: boolean = false;
 
     public constructor(
         authentication: IAuthentication,
@@ -134,6 +135,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public set conversationTranslatorToken(token: string) {
         this.privRecognizerConfig.parameters.setProperty(PropertyId.ConversationTranslator_Token, token);
+    }
+
+    public set authentication(auth: IAuthentication) {
+        this.privAuthentication = this.authentication;
     }
 
     public isDisposed(): boolean {
@@ -430,8 +435,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             return;
                         } else {
                             connection = await this.fetchConnection();
-                            await this.sendSpeechContext(connection);
-                            await this.sendWaveHeader(connection);
+                            await this.sendPrePayloadJSON(connection);
                         }
                         break;
 
@@ -461,6 +465,19 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 "application/json",
                 speechContextJson));
         }
+        return;
+    }
+
+    protected sendPrePayloadJSONOverride: (connection: IConnection) => Promise<void> = undefined;
+
+    // Encapsulated for derived service recognizers that need to send additional JSON
+    protected async sendPrePayloadJSON(connection: IConnection): Promise<void> {
+        if (this.sendPrePayloadJSONOverride !== undefined) {
+            return this.sendPrePayloadJSONOverride(connection);
+        }
+
+        await this.sendSpeechContext(connection);
+        await this.sendWaveHeader(connection);
         return;
     }
 
@@ -625,6 +642,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     sendDelay = 0;
                 } else {
                     payload = audioStreamChunk.buffer;
+
                     this.privRequestSession.onAudioSent(payload.byteLength);
 
                     if (maxSendUnthrottledBytes >= this.privRequestSession.bytesSent) {
@@ -703,8 +721,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             return this.configConnectionOverride(connection);
         }
         await this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
-        await this.sendSpeechContext(connection);
-        await this.sendWaveHeader(connection);
+        await this.sendPrePayloadJSON(connection);
         return connection;
     }
 }

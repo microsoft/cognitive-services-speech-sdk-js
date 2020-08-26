@@ -20,7 +20,6 @@ import {
     EnumTranslation,
     OutputFormatPropertyName,
     RecognitionStatus,
-    RequestSession,
     ServiceRecognizerBase,
     SimpleSpeechPhrase,
     SpeechHypothesis,
@@ -82,6 +81,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     offset,
                     hypothesis.Language,
                     hypothesis.LanguageDetectionConfidence,
+                    undefined, // Speaker Id
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
@@ -126,6 +126,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                                 simple.Offset + this.privRequestSession.currentTurnAudioOffset,
                                 simple.Language,
                                 simple.LanguageDetectionConfidence,
+                                undefined, // Speaker Id
                                 undefined,
                                 connectionMessage.textBody,
                                 resultProps);
@@ -140,6 +141,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                                 detailed.Offset + this.privRequestSession.currentTurnAudioOffset,
                                 detailed.Language,
                                 detailed.LanguageDetectionConfidence,
+                                undefined, // Speaker Id
                                 undefined,
                                 connectionMessage.textBody,
                                 resultProps);
@@ -214,6 +216,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 undefined, // Offset
                 undefined, // Language
                 undefined, // Language Detection Confidence
+                undefined, // Speaker Id
                 error,
                 undefined, // Json
                 properties);

@@ -34,7 +34,7 @@ import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
  * @class SpeechRecognizer
  */
 export class SpeechRecognizer extends Recognizer {
-    private privDisposedSpeechRecognizer: boolean;
+    private privDisposedRecognizer: boolean;
 
     /**
      * SpeechRecognizer constructor.
@@ -51,7 +51,7 @@ export class SpeechRecognizer extends Recognizer {
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
         super(audioConfig, speechConfigImpl.properties, new SpeechConnectionFactory());
-        this.privDisposedSpeechRecognizer = false;
+        this.privDisposedRecognizer = false;
     }
 
     /**
@@ -100,7 +100,7 @@ export class SpeechRecognizer extends Recognizer {
      * @returns {string} the endpoint id of a customized speech model that is used for speech recognition.
      */
     public get endpointId(): string {
-        Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
+        Contracts.throwIfDisposed(this.privDisposedRecognizer);
 
         return this.properties.getProperty(PropertyId.SpeechServiceConnection_EndpointId, "00000000-0000-0000-0000-000000000000");
     }
@@ -136,7 +136,7 @@ export class SpeechRecognizer extends Recognizer {
      * @returns {string} The spoken language of recognition.
      */
     public get speechRecognitionLanguage(): string {
-        Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
+        Contracts.throwIfDisposed(this.privDisposedRecognizer);
 
         return this.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
     }
@@ -149,7 +149,7 @@ export class SpeechRecognizer extends Recognizer {
      * @returns {OutputFormat} The output format of recognition.
      */
     public get outputFormat(): OutputFormat {
-        Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
+        Contracts.throwIfDisposed(this.privDisposedRecognizer);
 
         if (this.properties.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]) === OutputFormat[OutputFormat.Simple]) {
             return OutputFormat.Simple;
@@ -255,7 +255,7 @@ export class SpeechRecognizer extends Recognizer {
      * @public
      */
     public close(cb?: () => void, errorCb?: (error: string) => void): void {
-        Contracts.throwIfDisposed(this.privDisposedSpeechRecognizer);
+        Contracts.throwIfDisposed(this.privDisposedRecognizer);
         marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
@@ -267,12 +267,12 @@ export class SpeechRecognizer extends Recognizer {
      * @param {boolean} disposing - true if disposing the object.
      */
     protected async dispose(disposing: boolean): Promise<void> {
-        if (this.privDisposedSpeechRecognizer) {
+        if (this.privDisposedRecognizer) {
             return;
         }
 
         if (disposing) {
-            this.privDisposedSpeechRecognizer = true;
+            this.privDisposedRecognizer = true;
             await this.implRecognizerStop();
         }
 

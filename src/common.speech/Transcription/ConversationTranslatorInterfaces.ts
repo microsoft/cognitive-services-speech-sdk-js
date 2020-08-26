@@ -2,11 +2,12 @@
 // Licensed under the MIT license.
 
 import {
+    ConnectionEventArgs,
     ConversationExpirationEventArgs,
-    ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
-    ConversationTranslationEventArgs,
-    SessionEventArgs } from "../../sdk/Exports";
+    SessionEventArgs,
+    VoiceSignature,
+    } from "../../sdk/Exports";
 // import { ConversationClient } from "./ConversationConnection";
 import {
     ConversationReceivedTranslationEventArgs,
@@ -61,6 +62,7 @@ export interface IInternalParticipant {
     isMuted?: boolean;
     isUsingTts?: boolean;
     preferredLanguage?: string;
+    voice?: string;
 }
 
 /** Users participating in the conversation */
@@ -131,17 +133,25 @@ export class InternalParticipants {
 /**
  * Recognizer for handling Conversation Translator websocket messages
  */
-export interface IConversationTranslatorRecognizer {
-    canceled: (sender: IConversationTranslatorRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
-    connectionOpened: (sender: IConversationTranslatorRecognizer, event: SessionEventArgs) => void;
-    connectionClosed: (sender: IConversationTranslatorRecognizer, event: SessionEventArgs) => void;
-    participantsListReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantsListEventArgs) => void;
-    translationReceived: (sender: IConversationTranslatorRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
-    lockRoomCommandReceived: (sender: IConversationTranslatorRecognizer, event: LockRoomEventArgs) => void;
-    muteAllCommandReceived: (sender: IConversationTranslatorRecognizer, event: MuteAllEventArgs) => void;
-    participantJoinCommandReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantEventArgs) => void;
-    participantLeaveCommandReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantEventArgs) => void;
-    participantUpdateCommandReceived: (sender: IConversationTranslatorRecognizer, event: ParticipantAttributeEventArgs) => void;
+export interface ConversationRecognizer {
+    isDisposed(): boolean;
+    sendRequest: (command: string, cb?: () => void, err?: (e: string) => void) => void;
+    cancelSpeech?: () => Promise<void>;
+    close?: () => Promise<void>;
+    conversationExpiration?: (sender: ConversationRecognizer, event: ConversationExpirationEventArgs) => void;
+    connected?: (e: ConnectionEventArgs) => void;
+    disconnected?: (e: ConnectionEventArgs) => void;
+    canceled?: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
+    connectionOpened?: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
+    connectionClosed?: (sender: ConversationRecognizer, event: SessionEventArgs) => void;
+    participantsListReceived?: (sender: ConversationRecognizer, event: ParticipantsListEventArgs) => void;
+    translationReceived?: (sender: ConversationRecognizer, event: ConversationReceivedTranslationEventArgs) => void;
+    lockRoomCommandReceived?: (sender: ConversationRecognizer, event: LockRoomEventArgs) => void;
+    muteAllCommandReceived?: (sender: ConversationRecognizer, event: MuteAllEventArgs) => void;
+    participantJoinCommandReceived?: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
+    participantLeaveCommandReceived?: (sender: ConversationRecognizer, event: ParticipantEventArgs) => void;
+    participantUpdateCommandReceived?: (sender: ConversationRecognizer, event: ParticipantAttributeEventArgs) => void;
+    connect?: (token: string, cb?: () => void, err?: (e: string) => void) => void;
 }
 
 /**

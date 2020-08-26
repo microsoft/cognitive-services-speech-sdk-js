@@ -34,3 +34,11 @@ export class SpeechRecognitionEventArgs extends RecognitionEventArgs {
         return this.privResult;
     }
 }
+
+/**
+ * Defines contents of conversation transcribed/transcribing event.
+ * @class ConversationTranscriptionEventArgs
+ */
+// tslint:disable-next-line:max-classes-per-file
+export class ConversationTranscriptionEventArgs extends SpeechRecognitionEventArgs {
+}

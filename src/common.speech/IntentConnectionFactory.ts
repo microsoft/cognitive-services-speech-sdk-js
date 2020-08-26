@@ -17,7 +17,6 @@ import {
 } from "./ConnectionFactoryBase";
 import {
     AuthInfo,
-    IConnectionFactory,
     RecognizerConfig,
     WebsocketMessageFormatter,
 } from "./Exports";

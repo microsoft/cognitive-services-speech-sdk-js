@@ -236,7 +236,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     /**
-     * Gets/Sets the speech recognition language.
+     * Sets the speech recognition language.
      * @member SpeechTranslationConfigImpl.prototype.speechRecognitionLanguage
      * @function
      * @public
@@ -245,6 +245,17 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     public set speechRecognitionLanguage(value: string) {
         Contracts.throwIfNullOrWhitespace(value, "value");
         this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, value);
+    }
+
+    /**
+     * Gets the speech recognition language.
+     * @member SpeechTranslationConfigImpl.prototype.speechRecognitionLanguage
+     * @function
+     * @public
+     * @return {string} The speechRecognitionLanguage.
+     */
+    public get speechRecognitionLanguage(): string {
+        return this.privSpeechProperties.getProperty(PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
     }
 
     /**
