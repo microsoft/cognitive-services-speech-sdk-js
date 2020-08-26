@@ -17,7 +17,7 @@ export { RecognitionResult } from "./RecognitionResult";
 export { SpeechRecognitionResult } from "./SpeechRecognitionResult";
 export { IntentRecognitionResult } from "./IntentRecognitionResult";
 export { LanguageUnderstandingModel } from "./LanguageUnderstandingModel";
-export { SpeechRecognitionEventArgs } from "./SpeechRecognitionEventArgs";
+export { SpeechRecognitionEventArgs, ConversationTranscriptionEventArgs } from "./SpeechRecognitionEventArgs";
 export { SpeechRecognitionCanceledEventArgs } from "./SpeechRecognitionCanceledEventArgs";
 export { TranslationRecognitionEventArgs } from "./TranslationRecognitionEventArgs";
 export { TranslationSynthesisEventArgs } from "./TranslationSynthesisEventArgs";
@@ -25,7 +25,7 @@ export { TranslationRecognitionResult } from "./TranslationRecognitionResult";
 export { TranslationSynthesisResult } from "./TranslationSynthesisResult";
 export { ResultReason } from "./ResultReason";
 export { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
-export { SpeechTranslationConfig } from "./SpeechTranslationConfig";
+export { SpeechTranslationConfig, SpeechTranslationConfigImpl } from "./SpeechTranslationConfig";
 export { PropertyCollection } from "./PropertyCollection";
 export { PropertyId } from "./PropertyId";
 export { Recognizer } from "./Recognizer";
@@ -68,14 +68,18 @@ export { SourceLanguageConfig } from "./SourceLanguageConfig";
 export { SpeakerRecognitionResult, SpeakerRecognitionResultType, SpeakerRecognitionCancellationDetails } from "./SpeakerRecognitionResult";
 export { Conversation,
     ConversationExpirationEventArgs,
+    ConversationInfo,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
     ConversationTranslationResult,
     ConversationTranslator,
+    ConversationTranscriber,
+    IParticipant,
     Participant,
     ParticipantChangedReason,
-    User
+    User,
+    VoiceSignature
     } from "./Transcription/Exports";
 export { SpeechSynthesisOutputFormat } from "./SpeechSynthesisOutputFormat";
 export { SpeechSynthesizer } from "./SpeechSynthesizer";
@@ -84,3 +88,5 @@ export { SpeechSynthesisEventArgs } from "./SpeechSynthesisEventArgs";
 export { SpeechSynthesisWordBoundaryEventArgs} from "./SpeechSynthesisWordBoundaryEventArgs";
 export { IPlayer } from "./Audio/IPlayer";
 export { SpeakerAudioDestination } from "./Audio/SpeakerAudioDestination";
+export { CancellationEventArgs } from "./CancellationEventArgs";
+export { ConversationTranscriptionCanceledEventArgs } from "./ConversationTranscriptionCanceledEventArgs";

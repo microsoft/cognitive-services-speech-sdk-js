@@ -1,13 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { CancellationEventArgs } from "./CancellationEventArgs";
 import { CancellationErrorCode, CancellationReason, IntentRecognitionEventArgs, IntentRecognitionResult } from "./Exports";
 
 /**
  * Define payload of intent recognition canceled result events.
  * @class IntentRecognitionCanceledEventArgs
  */
-export class IntentRecognitionCanceledEventArgs extends IntentRecognitionEventArgs {
+export class IntentRecognitionCanceledEventArgs extends IntentRecognitionEventArgs implements CancellationEventArgs {
     private privReason: CancellationReason;
     private privErrorDetails: string;
     private privErrorCode: CancellationErrorCode;

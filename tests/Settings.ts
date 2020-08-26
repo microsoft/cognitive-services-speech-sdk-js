@@ -31,6 +31,8 @@ export class Settings {
 
     public static SpeakerIDSubscriptionKey: string = "<<YOUR_SPEAKER_ID_SUBSCRIPTION_KEY>>";
     public static SpeakerIDRegion: string = "<<YOUR_SPEAKER_ID_REGION>>";
+    public static ConversationTranscriptionKey: string = "<<YOUR_TRANSCRIPTION_SUBSCRIPTION_KEY>>";
+    public static ConversationTranscriptionRegion: string = "<<YOUR_TRANSCRIPTION_REGION>>";
 
     public static InputDir: string = "tests/input/audio/";
 
@@ -60,8 +62,10 @@ export class Settings {
     public static LuisAppId: string = "b687b851-56c5-4d31-816f-35a741a3f0be";
 
     public static WaveFile: string = Settings.InputDir + "whatstheweatherlike.wav";
+    public static WaveFile8ch: string = Settings.InputDir + "Speech016_30s_xmos_8ch.wav";
     public static WaveFile44k: string = Settings.InputDir + "whatstheweatherlike.44khz.wav";
     public static VoiceSignatureWaveFile: string = Settings.InputDir + "StreamingEnrollment.wav";
+    public static MonoChannelAlignedWaveFile: string = Settings.InputDir + "only-a-test.wav";
     public static WaveFileLanguage: string = "en-US";
     public static WaveFileDuration: number = 12900000;
     public static WaveFileOffset: number = 1000000;

@@ -28,7 +28,7 @@ export class IntentRecognitionResult extends SpeechRecognitionResult {
     constructor(intentId?: string, resultId?: string, reason?: ResultReason, text?: string,
                 duration?: number, offset?: number, language?: string, languageDetectionConfidence?: string,
                 errorDetails?: string, json?: string, properties?: PropertyCollection) {
-        super(resultId, reason, text, duration, offset, language, languageDetectionConfidence, errorDetails, json, properties);
+        super(resultId, reason, text, duration, offset, language, languageDetectionConfidence, undefined, errorDetails, json, properties);
 
         this.privIntentId = intentId;
     }
