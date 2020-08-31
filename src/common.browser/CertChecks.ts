@@ -31,7 +31,7 @@ import Agent from "agent-base";
 
 // @ts-ignore
 import Cache from "async-disk-cache";
-import HttpsProxyAgent from "https-proxy-agent";
+import { HttpsProxyAgent, HttpsProxyAgentOptions } from "https-proxy-agent";
 import * as net from "net";
 import { OCSPCacheUpdateErrorEvent } from "../common/OCSPEvents";
 
@@ -82,7 +82,7 @@ export class CertCheckAgent {
     }
 
     private static GetProxyAgent(proxyInfo: ProxyInfo): HttpsProxyAgent {
-        const httpProxyOptions: HttpsProxyAgent.HttpsProxyAgentOptions = {
+        const httpProxyOptions: HttpsProxyAgentOptions = {
             host: proxyInfo.HostName,
             port: proxyInfo.Port,
         };
