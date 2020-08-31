@@ -6,6 +6,8 @@
   "extends": "tslint:recommended",
   "rules": {
 
+    "array-type": [ true, "array" ],
+
     "interface-name": [ false ],
 
     "max-line-length": [ false ],
