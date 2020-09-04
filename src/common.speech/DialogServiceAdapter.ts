@@ -59,6 +59,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private terminateMessageLoop: boolean;
     private agentConfigSent: boolean;
     private privLastResult: SpeechRecognitionResult;
+    private privLastInteractionId: string;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -305,6 +306,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privRequestSession.startNewRecognition();
         this.privRequestSession.listenForServiceTelemetry(this.privDialogAudioSource.events);
 
+        this.privRecognizerConfig.parameters.setProperty(PropertyId.Speech_SessionId, this.privRequestSession.sessionId);
+
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
 
@@ -327,7 +330,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             return Promise.resolve();
         }
 
-        const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
+        const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privLastInteractionId);
 
         if (!!this.privRecognizer.sessionStarted) {
             this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
@@ -540,6 +543,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
     private sendAgentContext = (connection: IConnection): Promise<void> => {
         const guid: string = createGuid();
+        this.privLastInteractionId = guid;
 
         const speechActivityTemplate = this.privDialogServiceConnector.properties.getProperty(PropertyId.Conversation_Speech_Activity_Template);
 
