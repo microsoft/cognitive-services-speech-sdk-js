@@ -515,7 +515,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         this.privAuthFetchEventId = createNoDashGuid();
-        this.privConnectionId = createNoDashGuid();
+        const sessionId: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SessionId, undefined);
+        this.privConnectionId = (sessionId !== undefined) ? sessionId : createNoDashGuid();
 
         this.privRequestSession.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
 

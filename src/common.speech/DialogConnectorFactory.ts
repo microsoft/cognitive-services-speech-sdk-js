@@ -33,6 +33,7 @@ const customCommands: IBackendValues = {
 };
 
 const pathSuffix: string = "api";
+const connectionID: string = "connectionId";
 
 function getDialogSpecificValues(dialogType: string): IBackendValues {
     switch (dialogType) {
@@ -62,6 +63,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         const queryParams: IStringDictionary<string> = {};
         queryParams[QueryParameterNames.LanguageParamName] = language;
         queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(PropertyId.SpeechServiceResponse_OutputFormatOption, OutputFormat[OutputFormat.Simple]).toLowerCase();
+        queryParams[connectionID] = connectionId;
 
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
 
@@ -70,7 +72,6 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         if (authInfo.token != null && authInfo.token !== "") {
             headers[authInfo.headerName] = authInfo.token;
         }
-        headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
 
         if (applicationId !== "") {
             headers[authHeader] = applicationId;
