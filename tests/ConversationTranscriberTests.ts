@@ -390,7 +390,7 @@ test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation and force disconnect");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
-    s.setServiceProperty("maxConnectionDurationSecs", "10", sdk.ServicePropertyChannel.UriQueryParameter);
+    s.setServiceProperty("maxConnectionDurationSecs", "12", sdk.ServicePropertyChannel.UriQueryParameter);
     objsToClose.push(s);
 
     const c: sdk.Conversation = CreateConversation(s);
