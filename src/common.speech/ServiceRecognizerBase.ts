@@ -74,7 +74,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected privRecognizer: Recognizer;
     protected privSuccessCallback: (e: SpeechRecognitionResult) => void;
     protected privErrorCallback: (e: string) => void;
-    protected privAlignPayload: boolean = false;
 
     public constructor(
         authentication: IAuthentication,
@@ -665,9 +664,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     !this.privRequestSession.isSpeechEnded &&
                     this.privRequestSession.isRecognizing &&
                     this.privRequestSession.recogNumber === startRecogNumber) {
-                    await connection.send(
-                        new SpeechConnectionMessage(
-                            MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload));
+                    connection.send(
+                        new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload)
+                    ).catch(() => {
+                        this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition).catch(() => { });
+                    });
 
                     if (!audioStreamChunk?.isEnd) {
                         // this.writeBufferToConsole(payload);
