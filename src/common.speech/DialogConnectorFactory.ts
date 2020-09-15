@@ -72,7 +72,6 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         if (authInfo.token != null && authInfo.token !== "") {
             headers[authInfo.headerName] = authInfo.token;
         }
-        headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
 
         if (applicationId !== "") {
             headers[authHeader] = applicationId;
