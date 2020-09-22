@@ -583,6 +583,78 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         });
     }, 15000);
 
+    
+    test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: ListenOnceAsync with silence returned");
+
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
+        objsToClose.push(dialogConfig);
+
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig, Settings.InputDir + "initialSilence5s.wav");
+        objsToClose.push(connector);
+
+        let sessionId: string;
+
+        let firstReco: boolean = false;
+        let connected: number = 0;
+
+        const connection: sdk.Connection = sdk.Connection.fromRecognizer(connector);
+
+        connection.connected = (e: sdk.ConnectionEventArgs): void => {
+            connected++;
+        };
+
+        connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
+            sessionId = e.sessionId;
+        };
+
+        connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+            try {
+                expect(e.activity).not.toBeNull();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+            expect(e.sessionId).toEqual(sessionId);
+        };
+
+        connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            expect(result.reason).not.toBeUndefined();
+            expect(result.errorDetails).toBeUndefined();
+            firstReco = true;
+        },
+            (error: string) => {
+                done.fail(error);
+            });
+
+        WaitForCondition(() => {
+            return firstReco;
+        }, () => {
+            connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult) => {
+                try {
+                    expect(connected).toEqual(1);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
+            },
+                (error: string) => {
+                    done.fail(error);
+                });
+        });
+    }, 15000);
+
     // test("ListenOnce succeeds after reconnect", (done: jest.DoneCallback) => {
     //     // tslint:disable-next-line:no-console
     //     console.info("Name: ListenOnce succeeds after reconnect");
