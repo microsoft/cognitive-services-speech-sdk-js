@@ -583,7 +583,6 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         });
     }, 15000);
 
-    
     test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: ListenOnceAsync with silence returned");
