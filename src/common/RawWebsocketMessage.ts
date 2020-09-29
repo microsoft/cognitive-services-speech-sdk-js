@@ -15,7 +15,7 @@ export class RawWebsocketMessage {
             throw new ArgumentNullError("payload");
         }
 
-        if (messageType === MessageType.Binary && !(payload instanceof ArrayBuffer)) {
+        if (messageType === MessageType.Binary && payload.__proto__.constructor.name !== "ArrayBuffer") {
             throw new InvalidOperationError("Payload must be ArrayBuffer");
         }
 
