@@ -146,6 +146,7 @@ test("Create BotFrameworkConfig from subscription, null Region", () => {
 test("Create BotFrameworkConfig from subscription, null subscription", () => {
     expect(() => sdk.BotFrameworkConfig.fromSubscription(null, Settings.BotRegion)).toThrowError();
 });
+/*
 
 test("Create BotFrameworkConfig, null optional botId", () => {
     const connectorConfig: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, Settings.BotRegion, "");
@@ -1016,3 +1017,4 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         });
     });
 });
+*/
