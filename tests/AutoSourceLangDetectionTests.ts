@@ -280,7 +280,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 r.stopContinuousRecognitionAsync(() => {
                     try {
                         expect(speechEnded).toEqual(noMatchCount);
-                        expect(noMatchCount).toEqual(2);
+                        expect(noMatchCount).toBeGreaterThanOrEqual(2);
                         done();
                     } catch (error) {
                         done.fail(error);
