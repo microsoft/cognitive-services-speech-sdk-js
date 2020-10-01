@@ -83,23 +83,21 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
                 const headersString = this.makeHeaders(message);
                 const content = message.binaryBody;
 
-                const headerInt8Array = new Int8Array(this.stringToArrayBuffer(headersString));
+                const headerBuffer = this.stringToArrayBuffer(headersString);
+                const headerInt8Array = new Int8Array(headerBuffer);
+                const headerLength = headerInt8Array.byteLength;
 
-                const payload = new ArrayBuffer(2 + headerInt8Array.byteLength + (content ? content.byteLength : 0));
-                const dataView = new DataView(payload);
-
-                dataView.setInt16(0, headerInt8Array.length);
-
-                for (let i = 0; i < headerInt8Array.byteLength; i++) {
-                    dataView.setInt8(2 + i, headerInt8Array[i]);
-                }
+                const payloadInt8Array = new Int8Array(2 + headerLength + (content ? content.byteLength : 0));
+                payloadInt8Array[0] = ((headerLength >> 8) & 0xff);
+                payloadInt8Array[1] = headerLength & 0xff;
+                payloadInt8Array.set(headerInt8Array, 2);
 
                 if (content) {
                     const bodyInt8Array = new Int8Array(content);
-                    for (let i = 0; i < bodyInt8Array.byteLength; i++) {
-                        dataView.setInt8(2 + headerInt8Array.byteLength + i, bodyInt8Array[i]);
-                    }
+                    payloadInt8Array.set(bodyInt8Array, 2 + headerLength);
                 }
+
+                const payload: ArrayBuffer = payloadInt8Array.buffer;
 
                 deferral.resolve(new RawWebsocketMessage(MessageType.Binary, payload, message.id));
             }
