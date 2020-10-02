@@ -8,7 +8,6 @@ import {
     CancellationErrorCode,
     CancellationReason,
     PropertyCollection,
-    PropertyId,
     ResultReason,
 } from "./Exports";
 
@@ -62,6 +61,10 @@ export class VoiceProfileEnrollmentResult {
 
     public get properties(): PropertyCollection {
         return this.privProperties;
+    }
+
+    public get enrollmentResultDetails(): IEnrollmentResultDetails {
+        return this.privDetails;
     }
 
     public get errorDetails(): string {
