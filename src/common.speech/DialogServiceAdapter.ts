@@ -138,7 +138,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                 this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + speechPhrase.Offset + speechPhrase.Duration);
 
-                if (speechPhrase.RecognitionStatus === RecognitionStatus.Success) {
+                if (speechPhrase.RecognitionStatus !== RecognitionStatus.TooManyRequests && speechPhrase.RecognitionStatus !== RecognitionStatus.Error) {
                     const args: SpeechRecognitionEventArgs = this.fireEventForResult(speechPhrase, resultProps);
                     this.privLastResult = args.result;
 
