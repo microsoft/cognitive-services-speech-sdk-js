@@ -172,7 +172,7 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
 test("Output format, default", () => {
     // tslint:disable-next-line:no-console
     console.info("Name: Output format, default");
-    
+
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
     objsToClose.push(dialogConfig);
 
@@ -258,7 +258,7 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
         });
     });
 
-    test("GetDetailedOutputFormat", (done: jest.DoneCallback) => { 
+    test("GetDetailedOutputFormat", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: GetDetailedOutputFormat");
 
@@ -268,12 +268,12 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
 
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
         objsToClose.push(connector);
-        
+
         let recoCounter: number = 0;
         connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
             expect(result).not.toBeUndefined();
-                        
-            let resultProps = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+
+            const resultProps = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
             (expect(resultProps).toContain("NBest"));
             recoCounter++;
         },
