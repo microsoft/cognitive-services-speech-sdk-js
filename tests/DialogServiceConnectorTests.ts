@@ -10,7 +10,7 @@ import {
     Events,
     EventType,
 } from "../src/common/Exports";
-import { PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
+import { OutputFormat, PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
 import {
     closeAsyncObjects,
@@ -169,22 +169,15 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
     expect(connector instanceof sdk.DialogServiceConnector);
 });
 
-// test("Create DialogServiceConnector with CustomCommandsConfig", () => {
-//     // tslint:disable-next-line:no-console
-//     console.info("Name: Create DialogServiceConnector with CustomCommandsConfig");
+test("Output format, default", () => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Output format, default");
+    
+    const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
+    objsToClose.push(dialogConfig);
 
-//     const connectorConfig: sdk.DialogServiceConfig = sdk.DialogServiceConfig.fromBotSecret(Settings.BotSecret, Settings.BotSubscription, Settings.SpeechRegion);
-//     expect(connectorConfig).not.toBeUndefined();
-
-//     const file: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-//     const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(file);
-
-//     const connector: sdk.DialogServiceConnector = new sdk.DialogServiceConnector(connectorConfig, audioConfig);
-//     objsToClose.push(connector);
-
-//     expect(connector).not.toBeUndefined();
-//     expect(connector instanceof sdk.DialogServiceConnector);
-// });
+    expect(dialogConfig.outputFormat === sdk.OutputFormat.Simple);
+});
 
 describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean) => {
 
@@ -263,6 +256,32 @@ describe.each([true, false])("Service-based tests", (forceNodeWebSocket: boolean
                 }
             });
         });
+    });
+
+    test("GetDetailedOutputFormat", (done: jest.DoneCallback) => { 
+        // tslint:disable-next-line:no-console
+        console.info("Name: GetDetailedOutputFormat");
+
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
+        dialogConfig.outputFormat = OutputFormat.Detailed;
+        objsToClose.push(dialogConfig);
+
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
+        objsToClose.push(connector);
+        
+        let recoCounter: number = 0;
+        connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            expect(result).not.toBeUndefined();
+                        
+            let resultProps = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+            (expect(resultProps).toContain("NBest"));
+            recoCounter++;
+        },
+            (error: string) => {
+                done.fail(error);
+            });
+
+        WaitForCondition(() => (recoCounter === 1), done);
     });
 
     test("ListenOnceAsync", (done: jest.DoneCallback) => {
