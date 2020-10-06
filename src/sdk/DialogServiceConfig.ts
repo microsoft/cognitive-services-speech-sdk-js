@@ -3,6 +3,7 @@
 
 import { Contracts } from "./Contracts";
 import { PropertyCollection, PropertyId, ServicePropertyChannel, SpeechConfigImpl } from "./Exports";
+import { OutputFormat } from "./OutputFormat";
 
 /**
  * Class that defines base configurations for dialog service connector
@@ -140,6 +141,14 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
     public set speechRecognitionLanguage(value: string) {
         Contracts.throwIfNullOrWhitespace(value, "value");
         this.privSpeechConfig.speechRecognitionLanguage = value;
+    }
+
+    public get outputFormat(): OutputFormat {
+        return this.privSpeechConfig.outputFormat;
+    }
+
+    public set outputFormat(value: OutputFormat) {
+        this.privSpeechConfig.outputFormat = value;
     }
 
     /**

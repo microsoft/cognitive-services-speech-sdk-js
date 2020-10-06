@@ -62,7 +62,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
 
         const queryParams: IStringDictionary<string> = {};
         queryParams[QueryParameterNames.LanguageParamName] = language;
-        queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(PropertyId.SpeechServiceResponse_OutputFormatOption, OutputFormat[OutputFormat.Simple]).toLowerCase();
+        queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
         queryParams[connectionID] = connectionId;
 
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
