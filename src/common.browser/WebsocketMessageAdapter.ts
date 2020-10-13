@@ -108,7 +108,7 @@ export class WebsocketMessageAdapter {
 
                 this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
-                const options: ws.ClientOptions = { headers: this.privHeaders };
+                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: false };
                 // The ocsp library will handle validation for us and fail the connection if needed.
                 this.privCertificateValidatedDeferral.resolve();
                 const checkAgent: CertCheckAgent = new CertCheckAgent(this.proxyInfo);
