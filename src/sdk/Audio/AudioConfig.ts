@@ -68,6 +68,20 @@ export abstract class AudioConfig {
     }
 
     /**
+     * Creates an AudioConfig object representing a microphone with the specified MediaStreamTrack.
+     * @member AudioConfig.fromMediaStreamInput
+     * @function
+     * @public
+     * @param {MediaStream} mediaStream - Specifies the mediaStreamTrack to be used.
+     *        Default microphone is used the value is omitted.
+     * @returns {AudioConfig} The audio input configuration being created.
+     */
+    public static fromMediaStreamInput(mediaStream?: MediaStream): AudioConfig {
+        const pcmRecorder = new PcmRecorder();
+        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, null, null, mediaStream));
+    }
+
+    /**
      * Creates an AudioConfig object representing the specified file.
      * @member AudioConfig.fromWavFileInput
      * @function

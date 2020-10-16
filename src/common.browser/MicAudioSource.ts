@@ -63,8 +63,10 @@ export class MicAudioSource implements IAudioSource {
 
     public constructor(
         private readonly privRecorder: IRecorder,
-        private readonly deviceId?: string,
-        audioSourceId?: string) {
+        private readonly deviceId?: string,        
+        audioSourceId?: string,
+        private readonly mediaStream?: MediaStream
+        ) {
 
         this.privOutputChunkSize = MicAudioSource.AUDIOFORMAT.avgBytesPerSec / 10;
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
@@ -123,25 +125,31 @@ export class MicAudioSource implements IAudioSource {
         } else {
             const next = () => {
                 this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
-                getUserMedia(
-                    { audio: this.deviceId ? { deviceId: this.deviceId } : true, video: false },
-                    (mediaStream: MediaStream) => {
-                        this.privMediaStream = mediaStream;
-                        this.onEvent(new AudioSourceReadyEvent(this.privId));
-                        this.privInitializeDeferral.resolve();
-                    }, (error: MediaStreamError) => {
-                        const errorMsg = `Error occurred during microphone initialization: ${error}`;
-                        const tmp = this.privInitializeDeferral;
-                        // HACK: this should be handled through onError callbacks of all promises up the stack.
-                        // Unfortunately, the current implementation does not provide an easy way to reject promises
-                        // without a lot of code replication.
-                        // TODO: fix promise implementation, allow for a graceful reject chaining.
-                        this.privInitializeDeferral = null;
-                        tmp.reject(errorMsg); // this will bubble up through the whole chain of promises,
-                        // with each new level adding extra "Unhandled callback error" prefix to the error message.
-                        // The following line is not guaranteed to be executed.
-                        this.onEvent(new AudioSourceErrorEvent(this.privId, errorMsg));
-                    });
+                if (this.mediaStream) {
+                    this.privMediaStream = this.mediaStream;
+                    this.onEvent(new AudioSourceReadyEvent(this.privId));
+                    this.privInitializeDeferral.resolve();
+                } else {
+                    getUserMedia(
+                        { audio: this.deviceId ? { deviceId: this.deviceId } : true, video: false },
+                        (mediaStream: MediaStream) => {
+                            this.privMediaStream = mediaStream;
+                            this.onEvent(new AudioSourceReadyEvent(this.privId));
+                            this.privInitializeDeferral.resolve();
+                        }, (error: MediaStreamError) => {
+                            const errorMsg = `Error occurred during microphone initialization: ${error}`;
+                            const tmp = this.privInitializeDeferral;
+                            // HACK: this should be handled through onError callbacks of all promises up the stack.
+                            // Unfortunately, the current implementation does not provide an easy way to reject promises
+                            // without a lot of code replication.
+                            // TODO: fix promise implementation, allow for a graceful reject chaining.
+                            this.privInitializeDeferral = null;
+                            tmp.reject(errorMsg); // this will bubble up through the whole chain of promises,
+                            // with each new level adding extra "Unhandled callback error" prefix to the error message.
+                            // The following line is not guaranteed to be executed.
+                            this.onEvent(new AudioSourceErrorEvent(this.privId, errorMsg));
+                        });
+                }
             };
 
             if (this.privContext.state === "suspended") {
