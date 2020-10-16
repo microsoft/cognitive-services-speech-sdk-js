@@ -63,7 +63,7 @@ export class MicAudioSource implements IAudioSource {
 
     public constructor(
         private readonly privRecorder: IRecorder,
-        private readonly deviceId?: string,        
+        private readonly deviceId?: string,
         audioSourceId?: string,
         private readonly mediaStream?: MediaStream
         ) {
