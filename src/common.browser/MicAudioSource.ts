@@ -65,12 +65,13 @@ export class MicAudioSource implements IAudioSource {
         private readonly privRecorder: IRecorder,
         private readonly deviceId?: string,
         audioSourceId?: string,
-        private readonly mediaStream?: MediaStream
+        mediaStream?: MediaStream
         ) {
 
         this.privOutputChunkSize = MicAudioSource.AUDIOFORMAT.avgBytesPerSec / 10;
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
+        this.privMediaStream = mediaStream || null;
     }
 
     public get format(): Promise<AudioStreamFormatImpl> {
@@ -125,8 +126,7 @@ export class MicAudioSource implements IAudioSource {
         } else {
             const next = () => {
                 this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
-                if (this.mediaStream) {
-                    this.privMediaStream = this.mediaStream;
+                if (this.privMediaStream) {
                     this.onEvent(new AudioSourceReadyEvent(this.privId));
                     this.privInitializeDeferral.resolve();
                 } else {

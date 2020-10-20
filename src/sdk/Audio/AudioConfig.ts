@@ -72,7 +72,7 @@ export abstract class AudioConfig {
      * @member AudioConfig.fromMediaStreamInput
      * @function
      * @public
-     * @param {MediaStream} mediaStream - Specifies the mediaStreamTrack to be used.
+     * @param {MediaStream} mediaStream - Specifies the mediaStream to be used.
      *        Default microphone is used the value is omitted.
      * @returns {AudioConfig} The audio input configuration being created.
      */
