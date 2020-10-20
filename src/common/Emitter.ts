@@ -15,7 +15,20 @@ export interface Emitter<T extends EventMap> {
 
 // tslint:disable-next-line:max-classes-per-file
 class CustomEmitter {
-    private target: EventTarget = new EventTarget();
+    private target: Element | EventTarget = null;
+
+    public constructor() {
+        try {
+            this.target = new EventTarget();
+        } catch (error) {
+            if (typeof window !== "undefined") {
+                this.target = window.document.createElement("eventTarget");
+            } else {
+                throw error;
+            }
+        }
+    }
+
     public on(eventName: string, listener: EventReceiver<Event | PlatformEvent>): void {
         return this.target.addEventListener(eventName, listener);
     }
