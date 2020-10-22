@@ -68,20 +68,6 @@ export abstract class AudioConfig {
     }
 
     /**
-     * Creates an AudioConfig object representing a microphone with the specified MediaStreamTrack.
-     * @member AudioConfig.fromMediaStreamInput
-     * @function
-     * @public
-     * @param {MediaStream} mediaStream - Specifies the mediaStream to be used.
-     *        Default microphone is used the value is omitted.
-     * @returns {AudioConfig} The audio input configuration being created.
-     */
-    public static fromMediaStreamInput(mediaStream?: MediaStream): AudioConfig {
-        const pcmRecorder = new PcmRecorder();
-        return new AudioConfigImpl(new MicAudioSource(pcmRecorder, null, null, mediaStream));
-    }
-
-    /**
      * Creates an AudioConfig object representing the specified file.
      * @member AudioConfig.fromWavFileInput
      * @function
@@ -98,17 +84,22 @@ export abstract class AudioConfig {
      * @member AudioConfig.fromStreamInput
      * @function
      * @public
-     * @param {AudioInputStream | PullAudioInputStreamCallback} audioStream - Specifies the custom audio input
+     * @param {AudioInputStream | PullAudioInputStreamCallback | MediaStream} audioStream - Specifies the custom audio input
      *        stream. Currently, only WAV / PCM is supported.
      * @returns {AudioConfig} The audio input configuration being created.
      */
-    public static fromStreamInput(audioStream: AudioInputStream | PullAudioInputStreamCallback): AudioConfig {
+    public static fromStreamInput(audioStream: AudioInputStream | PullAudioInputStreamCallback
+        | MediaStream): AudioConfig {
         if (audioStream instanceof PullAudioInputStreamCallback) {
             return new AudioConfigImpl(new PullAudioInputStreamImpl(audioStream as PullAudioInputStreamCallback));
         }
 
         if (audioStream instanceof AudioInputStream) {
             return new AudioConfigImpl(audioStream as PushAudioInputStreamImpl);
+        }
+        if (audioStream instanceof MediaStream) {
+            const pcmRecorder = new PcmRecorder();
+            return new AudioConfigImpl(new MicAudioSource(pcmRecorder, null, null, audioStream));
         }
 
         throw new Error("Not Supported Type");
