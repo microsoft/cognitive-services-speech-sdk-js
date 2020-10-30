@@ -22,10 +22,8 @@ beforeAll(() => {
     bufferSize = (AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl).avgBytesPerSec / 10;
 });
 
-// Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
-// report the name.
 // tslint:disable-next-line:no-console
-beforeEach(() => console.info("---------------------------------------Starting test case-----------------------------------"));
+beforeEach(() => console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------"));
 
 test("PullStream correctly reports bytes read", async (done: jest.DoneCallback) => {
 
