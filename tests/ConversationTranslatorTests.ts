@@ -59,12 +59,10 @@ beforeAll(() => {
     beforeAll(() => jest.setTimeout(90 * 1000));
 });
 
-// Test cases are run linearly, the only other mechanism to demark them in the output is to put a console line in each case and
-// report the name.
 beforeEach(() => {
     objsToClose = [];
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
 });
 
 afterEach(async (done: jest.DoneCallback) => {
