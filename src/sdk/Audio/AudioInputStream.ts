@@ -188,7 +188,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
             const readCycle = (): Promise<Blob | Buffer> => {
                 return audioNode.read().then<Blob | Buffer>((audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
                     if (!audioStreamChunk || audioStreamChunk.isEnd) {
-                        if (typeof (XMLHttpRequest) !== "undefined") {
+                        if (typeof (XMLHttpRequest) !== "undefined" && typeof (Blob) !== "undefined") {
                             return Promise.resolve(new Blob(data));
                         } else {
                             return Promise.resolve(Buffer.from(bufferData));
