@@ -119,9 +119,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
             if (connectionEvent.name === "ConnectionClosedEvent") {
                 const connectionClosedEvent = connectionEvent as ConnectionClosedEvent;
-                await this.cancelRecognitionLocal(CancellationReason.Error,
-                    connectionClosedEvent.statusCode === 1007 ? CancellationErrorCode.BadRequestParameters : CancellationErrorCode.ConnectionFailure,
-                    connectionClosedEvent.reason + " websocket error code: " + connectionClosedEvent.statusCode);
+                if (connectionClosedEvent.statusCode !== 1000) {
+                    await this.cancelRecognitionLocal(CancellationReason.Error,
+                        connectionClosedEvent.statusCode === 1007 ? CancellationErrorCode.BadRequestParameters : CancellationErrorCode.ConnectionFailure,
+                        connectionClosedEvent.reason + " websocket error code: " + connectionClosedEvent.statusCode);
+                }
             }
         });
     }
