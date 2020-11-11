@@ -30,6 +30,7 @@ export class WebsocketConnection implements IConnection {
         headers: IStringDictionary<string>,
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
+        enableCompression: boolean = true,
         connectionId?: string) {
 
         if (!uri) {
@@ -75,7 +76,8 @@ export class WebsocketConnection implements IConnection {
             this.id,
             this.privMessageFormatter,
             proxyInfo,
-            headers);
+            headers,
+            enableCompression);
     }
 
     public async dispose(): Promise<void> {

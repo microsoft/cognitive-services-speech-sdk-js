@@ -90,6 +90,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
 
         this.setCommonUrlParams(config, queryParams, endpoint);
 
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
+        const enableCompression: boolean = config.parameters.getProperty("EnableWebsocketCompression", "true") !== "false";
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
     }
 }
