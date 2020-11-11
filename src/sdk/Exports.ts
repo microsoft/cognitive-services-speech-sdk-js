@@ -90,3 +90,7 @@ export { IPlayer } from "./Audio/IPlayer";
 export { SpeakerAudioDestination } from "./Audio/SpeakerAudioDestination";
 export { CancellationEventArgs } from "./CancellationEventArgs";
 export { ConversationTranscriptionCanceledEventArgs } from "./ConversationTranscriptionCanceledEventArgs";
+export { PronunciationAssessmentGradingSystem } from "./PronunciationAssessmentGradingSystem";
+export { PronunciationAssessmentGranularity } from "./PronunciationAssessmentGranularity";
+export { PronunciationAssessmentConfig } from "./PronunciationAssessmentConfig";
+export { PronunciationAssessmentResult } from "./PronunciationAssessmentResult";

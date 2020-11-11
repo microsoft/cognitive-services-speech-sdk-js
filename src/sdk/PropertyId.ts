@@ -354,5 +354,51 @@ export enum PropertyId {
      * service to service call from the speech service to the Conversation Translator service for relaying
      * recognitions. For internal use.
      */
-    ConversationTranslator_Token
+    ConversationTranslator_Token,
+
+    /**
+     * The reference text of the audio for pronunciation evaluation.
+     * For this and the following pronunciation assessment parameters, see
+     * https://docs.microsoft.com/azure/cognitive-services/speech-service/rest-speech-to-text#pronunciation-assessment-parameters for details.
+     * Under normal circumstances, you shouldn't have to use this property directly.
+     * Added in version 1.15.0
+     */
+    PronunciationAssessment_ReferenceText,
+
+    /**
+     * The point system for pronunciation score calibration (FivePoint or HundredMark).
+     * Under normal circumstances, you shouldn't have to use this property directly.
+     * Added in version 1.15.0
+     */
+    PronunciationAssessment_GradingSystem,
+
+    /**
+     * The pronunciation evaluation granularity (Phoneme, Word, or FullText).
+     * Under normal circumstances, you shouldn't have to use this property directly.
+     * Added in version 1.15.0
+     */
+    PronunciationAssessment_Granularity,
+
+    /**
+     * Defines if enable miscue calculation.
+     * With this enabled, the pronounced words will be compared to the reference text,
+     * and will be marked with omission/insertion based on the comparison. The default setting is False.
+     * Under normal circumstances, you shouldn't have to use this property directly.
+     * Added in version 1.15.0
+     */
+    PronunciationAssessment_EnableMiscue,
+
+    /**
+     * The json string of pronunciation assessment parameters
+     * Under normal circumstances, you shouldn't have to use this property directly.
+     * Added in version 1.15.0
+     */
+    PronunciationAssessment_Json,
+
+    /**
+     * Pronunciation assessment parameters.
+     * This property is intended to be read-only. The SDK is using it internally.
+     * Added in version 1.15.0
+     */
+    PronunciationAssessment_Params
 }

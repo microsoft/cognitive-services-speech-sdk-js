@@ -4,6 +4,7 @@
 import { ReplayableAudioNode } from "../common.browser/Exports";
 import {
     ArgumentNullError,
+    ConnectionClosedEvent,
     ConnectionEvent,
     ConnectionState,
     createNoDashGuid,
@@ -114,6 +115,15 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {
             this.privSetTimeout = Timeout.setTimeout;
         }
+
+        this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
+            if (connectionEvent.name === "ConnectionClosedEvent") {
+                const connectionClosedEvent = connectionEvent as ConnectionClosedEvent;
+                await this.cancelRecognitionLocal(CancellationReason.Error,
+                    connectionClosedEvent.statusCode === 1007 ? CancellationErrorCode.BadRequestParameters : CancellationErrorCode.ConnectionFailure,
+                    connectionClosedEvent.reason + " websocket error code: " + connectionClosedEvent.statusCode);
+            }
+        });
     }
 
     public get audioSource(): IAudioSource {
