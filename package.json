@@ -32,6 +32,8 @@
     "https-proxy-agent": false,
     "simple-lru-cache": false,
     "ws": false,
+    "bufferutil": false,
+    "utf-8-validate": false,
     "fs": false,
     "xmlhttprequest-ts": false,
     "async-disk-cache": false,
@@ -106,6 +108,8 @@
     "simple-lru-cache": "0.0.2",
     "uuid": "^8.3.1",
     "ws": "^7.2.0",
+    "bufferutil": "^4.0.2",
+    "utf-8-validate": "^5.0.3",
     "xmlhttprequest-ts": "^1.0.1"
   },
   "resolutions": {
