@@ -216,26 +216,29 @@ export class SynthesisAdapterBase implements IDisposable {
         this.privErrorCallback = errorCallBack;
 
         this.privSynthesisTurn.startNewSynthesis(requestId, text, isSSML, audioDestination);
+
         try {
-            const connection: IConnection = await this.fetchConnection();
-            await this.sendSynthesisContext(connection);
-            await this.sendSsmlMessage(connection, ssml, requestId);
-            const synthesisStartEventArgs: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(
-                new SpeechSynthesisResult(
-                    requestId,
-                    ResultReason.SynthesizingAudioStarted,
-                )
-            );
-
-            if (!!this.privSpeechSynthesizer.synthesisStarted) {
-                this.privSpeechSynthesizer.synthesisStarted(this.privSpeechSynthesizer, synthesisStartEventArgs);
-            }
-
-            const messageRetrievalPromise = this.receiveMessage();
+            await this.connectImpl();
         } catch (e) {
             this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, e);
             return Promise.reject(e);
         }
+
+        const connection: IConnection = await this.fetchConnection();
+        await this.sendSynthesisContext(connection);
+        await this.sendSsmlMessage(connection, ssml, requestId);
+        const synthesisStartEventArgs: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(
+            new SpeechSynthesisResult(
+                requestId,
+                ResultReason.SynthesizingAudioStarted,
+            )
+        );
+
+        if (!!this.privSpeechSynthesizer.synthesisStarted) {
+            this.privSpeechSynthesizer.synthesisStarted(this.privSpeechSynthesizer, synthesisStartEventArgs);
+        }
+
+        const messageRetrievalPromise = this.receiveMessage();
     }
 
     // Cancels synthesis.
