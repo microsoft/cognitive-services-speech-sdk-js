@@ -236,6 +236,7 @@ export class SynthesisTurn {
             this.privIsSynthesizing = false;
             this.privIsSynthesisEnded = true;
             this.privAudioOutputStream.close();
+            this.privInTurn = false;
             if (this.privTurnAudioDestination !== undefined) {
                 this.privTurnAudioDestination.close();
                 this.privTurnAudioDestination = undefined;
