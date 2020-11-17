@@ -30,7 +30,7 @@ export class WebsocketConnection implements IConnection {
         headers: IStringDictionary<string>,
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
-        enableCompression: boolean = true,
+        enableCompression: boolean = false,
         connectionId?: string) {
 
         if (!uri) {
