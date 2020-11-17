@@ -48,7 +48,7 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
-        const enableCompression: boolean = config.parameters.getProperty("EnableWebsocketCompression", "true") !== "false";
+        const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromParameters(config.parameters), enableCompression, connectionId);
     }
 }
