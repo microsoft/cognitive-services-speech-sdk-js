@@ -41,6 +41,10 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         [SpeechSynthesisOutputFormat.Raw8Khz16BitMonoPcm]: "raw-8khz-16bit-mono-pcm",
         [SpeechSynthesisOutputFormat.Ogg16Khz16BitMonoOpus]: "ogg-16khz-16bit-mono-opus",
         [SpeechSynthesisOutputFormat.Ogg24Khz16BitMonoOpus]: "ogg-24khz-16bit-mono-opus",
+        [SpeechSynthesisOutputFormat.Raw48Khz16BitMonoPcm]: "raw-48khz-16bit-mono-pcm",
+        [SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm]: "riff-48khz-16bit-mono-pcm",
+        [SpeechSynthesisOutputFormat.Audio48Khz96KBitRateMonoMp3]: "audio-48khz-96kbitrate-mono-mp3",
+        [SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3]: "audio-48khz-192kbitrate-mono-mp3",
     };
     private priAudioFormatString: string;
     /**
@@ -54,14 +58,14 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
      * Creates an instance with the given values.
      * @constructor
      * @param formatTag
-     * @param {number} samplesPerSec - Samples per second.
-     * @param {number} bitsPerSample - Bits per sample.
      * @param {number} channels - Number of channels.
-     * @param avgBytesPerSec
-     * @param blockAlign
-     * @param audioFormatString
-     * @param requestAudioFormatString
-     * @param hasHeader
+     * @param {number} samplesPerSec - Samples per second.
+     * @param {number} avgBytesPerSec - Average bytes per second.
+     * @param {number} blockAlign - Block alignment.
+     * @param {number} bitsPerSample - Bits per sample.
+     * @param {string} audioFormatString - Audio format string
+     * @param {string} requestAudioFormatString - Audio format string sent to service.
+     * @param {boolean} hasHeader - If the format has header or not.
      */
     public constructor(formatTag: AudioFormatTag,
                        channels: number,
@@ -161,7 +165,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                 return new AudioOutputFormatImpl(
                     AudioFormatTag.MP3,
                     1,
-                    16000,
+                    24000,
                     48 << 7,
                     2,
                     16,
@@ -172,7 +176,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                 return new AudioOutputFormatImpl(
                     AudioFormatTag.MP3,
                     1,
-                    16000,
+                    24000,
                     96 << 7,
                     2,
                     16,
@@ -183,7 +187,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                 return new AudioOutputFormatImpl(
                     AudioFormatTag.MP3,
                     1,
-                    16000,
+                    24000,
                     160 << 7,
                     2,
                     16,
@@ -289,6 +293,50 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     16,
                     speechSynthesisOutputFormatString,
                     "ogg-24khz-16bit-mono-opus",
+                    false);
+            case "raw-48khz-16bit-mono-pcm":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.PCM,
+                    1,
+                    48000,
+                    96000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    "raw-48khz-16bit-mono-pcm",
+                    false);
+            case "riff-48khz-16bit-mono-pcm":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.PCM,
+                    1,
+                    48000,
+                    96000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    "raw-48khz-16bit-mono-pcm",
+                    true);
+            case "audio-48khz-96kbitrate-mono-mp3":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.MP3,
+                    1,
+                    48000,
+                    96 << 7,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "audio-48khz-192kbitrate-mono-mp3":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.MP3,
+                    1,
+                    48000,
+                    192 << 7,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
                     false);
             case "riff-16khz-16bit-mono-pcm":
             default:
