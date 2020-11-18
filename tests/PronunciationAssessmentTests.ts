@@ -87,10 +87,10 @@ test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback) => {
     console.info("Name: testPronunciationAssessmentConfig:::normal");
     let pronConfig: sdk.PronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig("reference");
     let j = JSON.parse(pronConfig.toJSON());
-    expect(j.referenceText === "reference");
-    expect(j.gradingSystem === "FivePoint");
-    expect(j.granularity === "Phoneme");
-    expect(j.dimension === "Comprehensive");
+    expect(j.referenceText).toEqual("reference");
+    expect(j.gradingSystem).toEqual("FivePoint");
+    expect(j.granularity).toEqual("Phoneme");
+    expect(j.dimension).toEqual("Comprehensive");
     expect(j.scenarioId).toBeUndefined();
 
     pronConfig = new sdk.PronunciationAssessmentConfig("reference",
@@ -98,11 +98,11 @@ test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback) => {
         PronunciationAssessmentGranularity.Word, true);
     pronConfig.referenceText = "new reference";
     j = JSON.parse(pronConfig.toJSON());
-    expect(j.referenceText === "new reference");
-    expect(j.gradingSystem === "HundredMark");
-    expect(j.granularity === "Word");
-    expect(j.dimension === "Comprehensive");
-    expect(j.enableMiscue === true);
+    expect(j.referenceText).toEqual("new reference");
+    expect(j.gradingSystem).toEqual("HundredMark");
+    expect(j.granularity).toEqual("Word");
+    expect(j.dimension).toEqual("Comprehensive");
+    expect(j.enableMiscue).toBeTruthy();
     done();
 });
 
@@ -111,7 +111,7 @@ test("testPronunciationAssessmentConfig::fromJson", (done: jest.DoneCallback) =>
     console.info("Name: testPronunciationAssessmentConfig::fromJson");
     const jsonString = `{"dimension": "Comprehensive", "enableMiscue": false, "key": "value"}`;
     const pronConfig = sdk.PronunciationAssessmentConfig.fromJSON(jsonString);
-    expect(JSON.parse(pronConfig.toJSON()) === JSON.parse(jsonString));
+    expect(JSON.parse(pronConfig.toJSON())).toEqual(JSON.parse(jsonString));
     done();
 });
 
