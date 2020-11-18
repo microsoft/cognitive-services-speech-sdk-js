@@ -82,7 +82,7 @@ export class AutoDetectSourceLanguageConfig {
      * @function
      * @public
      * @return {PropertyCollection} Properties of the config.
-     * @summary Gets a auto detected language config properties
+     * @summary Gets an auto detected language config properties
      */
     public get properties(): PropertyCollection {
         return this.privProperties;

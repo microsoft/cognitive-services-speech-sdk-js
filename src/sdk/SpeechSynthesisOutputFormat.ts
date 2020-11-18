@@ -120,4 +120,28 @@ export enum SpeechSynthesisOutputFormat {
      * @member SpeechSynthesisOutputFormat.Ogg24Khz16BitMonoOpus
      */
     Ogg24Khz16BitMonoOpus,
+
+    /**
+     * raw-48khz-16bit-mono-pcm
+     * @member SpeechSynthesisOutputFormat.Raw48Khz16BitMonoPcm
+     */
+    Raw48Khz16BitMonoPcm,
+
+    /**
+     * riff-48khz-16bit-mono-pcm
+     * @member SpeechSynthesisOutputFormat.Riff48Khz16BitMonoPcm
+     */
+
+    Riff48Khz16BitMonoPcm,
+    /**
+     * audio-48khz-96kbitrate-mono-mp3
+     * @member SpeechSynthesisOutputFormat.Audio48Khz96KBitRateMonoMp3
+     */
+    Audio48Khz96KBitRateMonoMp3,
+
+    /**
+     * audio-48khz-192kbitrate-mono-mp3
+     * @member SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3
+     */
+    Audio48Khz192KBitRateMonoMp3,
 }

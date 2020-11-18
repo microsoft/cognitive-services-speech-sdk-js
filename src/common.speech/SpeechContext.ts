@@ -27,6 +27,35 @@ export class SpeechContext {
         this.privContext[sectionName] = value;
     }
 
+    /**
+     * @Internal
+     * This is only used by pronunciation assessment config.
+     * Do not use externally, object returned will change without warning or notice.
+     */
+    public setPronunciationAssessmentParams(params: string): void {
+        if (this.privContext.phraseDetection === undefined) {
+            this.privContext.phraseDetection = {
+                enrichment: {
+                    pronunciationAssessment: {}
+                }
+            };
+        }
+        this.privContext.phraseDetection.enrichment.pronunciationAssessment = JSON.parse(params);
+        if (this.privContext.phraseOutput === undefined) {
+            this.privContext.phraseOutput = {
+                detailed: {
+                    options: []
+                },
+                format: {}
+            };
+        }
+        this.privContext.phraseOutput.format = "Detailed";
+        this.privContext.phraseOutput.detailed.options.push("PronunciationAssessment");
+        if (this.privContext.phraseOutput.detailed.options.indexOf("WordTimings") === -1) {
+            this.privContext.phraseOutput.detailed.options.push("WordTimings");
+        }
+    }
+
     public toJSON(): string {
 
         const dgi: IDynamicGrammar = this.privDynamicGrammar.generateGrammarObject();
