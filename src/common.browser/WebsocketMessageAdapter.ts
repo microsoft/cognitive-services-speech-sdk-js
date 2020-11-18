@@ -50,6 +50,7 @@ export class WebsocketMessageAdapter {
     private proxyInfo: ProxyInfo;
     private privHeaders: { [key: string]: string; };
     private privLastErrorReceived: string;
+    private privEnableCompression: boolean;
 
     public static forceNpmWebSocket: boolean = false;
 
@@ -58,7 +59,8 @@ export class WebsocketMessageAdapter {
         connectionId: string,
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
-        headers: { [key: string]: string; }) {
+        headers: { [key: string]: string; },
+        enableCompression: boolean) {
 
         if (!uri) {
             throw new ArgumentNullError("uri");
@@ -75,6 +77,7 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.None;
         this.privUri = uri;
         this.privHeaders = headers;
+        this.privEnableCompression = enableCompression;
 
         // Add the connection ID to the headers
         this.privHeaders["X-ConnectionId"] = this.privConnectionId;
@@ -108,7 +111,7 @@ export class WebsocketMessageAdapter {
 
                 this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
-                const options: ws.ClientOptions = { headers: this.privHeaders };
+                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression };
                 // The ocsp library will handle validation for us and fail the connection if needed.
                 this.privCertificateValidatedDeferral.resolve();
                 const checkAgent: CertCheckAgent = new CertCheckAgent(this.proxyInfo);
