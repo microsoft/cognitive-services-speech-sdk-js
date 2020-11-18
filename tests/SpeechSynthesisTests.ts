@@ -5,10 +5,13 @@ import * as fs from "fs";
 import * as request from "request";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
+import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
 import {
+    ConnectionStartEvent,
     Events,
     EventType,
-    InvalidOperationError
+    InvalidOperationError,
+    PlatformEvent
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import {
@@ -665,6 +668,42 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             console.info("speaking finished, turn 2");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             expect(result.audioData.byteLength).toBeGreaterThan(64 << 7); // longer than 1s
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizerUsingCustomVoice", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizerUsingCustomVoice");
+
+        let uri: string;
+
+        Events.instance.attachListener({
+            onEvent: (event: PlatformEvent) => {
+                if (event instanceof ConnectionStartEvent) {
+                    const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                    uri = connectionEvent.uri;
+                }
+            },
+        });
+
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        speechConfig.endpointId = Settings.CustomVoiceEndpointId;
+        speechConfig.speechSynthesisVoiceName = Settings.CustomVoiceVoiceName;
+        objsToClose.push(speechConfig);
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, undefined);
+        objsToClose.push(s);
+
+        expect(s).not.toBeUndefined();
+
+        s.speakTextAsync("hello world 1.", (result: sdk.SpeechSynthesisResult): void => {
+            // tslint:disable-next-line:no-console
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            expect(uri).not.toBeUndefined();
+            expect(uri.search(QueryParameterNames.CustomVoiceDeploymentIdParamName + "=" + Settings.CustomVoiceEndpointId)).not.toEqual(-1);
             done();
         }, (e: string): void => {
             done.fail(e);
