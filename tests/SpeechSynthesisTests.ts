@@ -679,7 +679,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         console.info("Name: testSpeechSynthesizerUsingCustomVoice");
 
         let uri: string;
-
         Events.instance.attachListener({
             onEvent: (event: PlatformEvent) => {
                 if (event instanceof ConnectionStartEvent) {
@@ -699,8 +698,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         expect(s).not.toBeUndefined();
 
-        s.speakTextAsync("hello world 1.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             expect(uri).not.toBeUndefined();
             expect(uri.search(QueryParameterNames.CustomVoiceDeploymentIdParamName + "=" + Settings.CustomVoiceEndpointId)).not.toEqual(-1);

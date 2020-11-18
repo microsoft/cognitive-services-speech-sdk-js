@@ -33,7 +33,7 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
         const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
         const endpointId = config.parameters.getProperty(PropertyId.SpeechServiceConnection_EndpointId, undefined);
-        const hostPrefix = (endpointId === undefined) ? "tts": "voice"
+        const hostPrefix = (endpointId === undefined) ? "tts" : "voice";
         const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + "." + hostPrefix + ".speech" + hostSuffix);
 
         const queryParams: IStringDictionary<string> = {};
