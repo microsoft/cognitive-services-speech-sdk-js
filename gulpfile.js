@@ -10,8 +10,8 @@
   var webpack = require('webpack-stream');
   var dtsBundleWebpack = require('dts-bundle-webpack');
   var tsProject = ts.createProject('tsconfig.json');
-  var tsProject2015 = ts.createProject('tsconfig.json', {
-    target: 'es2015',
+  var tsProject2018 = ts.createProject('tsconfig.json', {
+    target: 'es2018',
     module: 'esnext'
   });
 
@@ -36,7 +36,7 @@
       .pipe(gulp.dest('./distrib/lib/external/'));
   }));
 
-  gulp.task('build2015', gulp.series(function build() {
+  gulp.task('build2018', gulp.series(function build() {
     return gulp.src([
       'src/**/*.ts',
       'microsoft.cognitiveservices.speech.sdk.ts'],
@@ -49,12 +49,12 @@
         summarizeFailureOutput: true
       }))
       .pipe(sourcemaps.init())
-      .pipe(tsProject2015())
+      .pipe(tsProject2018())
       .pipe(sourcemaps.write('.'))
-      .pipe(gulp.dest('distrib/es2015'));
+      .pipe(gulp.dest('distrib/es2018'));
   }, function () {
     return gulp.src('./external/**/*')
-      .pipe(gulp.dest('./distrib/es2015/external/'));
+      .pipe(gulp.dest('./distrib/es2018/external/'));
   }));
 
   gulp.task('bundle', gulp.series('build', function bundle() {

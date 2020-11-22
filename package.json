@@ -35,18 +35,18 @@
     "fs": false,
     "xmlhttprequest-ts": false,
     "async-disk-cache": false,
-    "distrib/es2015/external/ocsp/ocsp": false,
+    "distrib/es2018/external/ocsp/ocsp": false,
     "distrib/lib/external/ocsp/ocsp": false,
     "agent-base": false,
     "tls": false,
     "net": false
   },
   "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
-  "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
+  "module": "distrib/es2018/microsoft.cognitiveservices.speech.sdk.js",
   "types": "distrib/lib/microsoft.cognitiveservices.speech.sdk.d.ts",
   "files": [
     "distrib/lib/**/*",
-    "distrib/es2015/**/*",
+    "distrib/es2018/**/*",
     "distrib/browser/**/*",
     "LICENSE",
     "REDIST.txt"
@@ -79,7 +79,7 @@
     "webpack-stream": "^5.2.1"
   },
   "scripts": {
-    "build": "gulp compress && gulp build2015",
+    "build": "gulp compress && gulp build2018",
     "test": "npm run lint && npm run jest --coverage",
     "jest": "jest",
     "lint": "tslint -p tsconfig.json",

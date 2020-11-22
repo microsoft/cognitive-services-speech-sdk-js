@@ -8,7 +8,7 @@ module.exports = {
                 "^.+\\.ts$": "ts-jest",
             },
             testRegex: "tests/.*Tests\\.ts$",
-            testPathIgnorePatterns: ["/lib/", "/es2015/", "/node_modules/", "/src/"],
+            testPathIgnorePatterns: ["/lib/", "/es2018/", "/node_modules/", "/src/"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "jsdom",
             collectCoverage: false,
