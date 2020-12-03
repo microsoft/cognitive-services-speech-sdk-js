@@ -670,6 +670,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             expect(result.audioData.byteLength).toBeGreaterThan(64 << 7); // longer than 1s
             done();
         }, (e: string): void => {
+            console.info("failing, TEST LINE");
             done.fail(e);
         });
     });
