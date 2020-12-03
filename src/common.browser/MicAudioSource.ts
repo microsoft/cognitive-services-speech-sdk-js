@@ -126,7 +126,7 @@ export class MicAudioSource implements IAudioSource {
         } else {
             const next = () => {
                 this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
-                if (this.privMediaStream) {
+                if (this.privMediaStream && this.privMediaStream.active) {
                     this.onEvent(new AudioSourceReadyEvent(this.privId));
                     this.privInitializeDeferral.resolve();
                 } else {
