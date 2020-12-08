@@ -6,6 +6,9 @@ import { IResponse } from "./ConversationTranslatorInterfaces";
 import { IRequestOptions, RestConfigBase } from "../../common.browser/RestConfigBase";
 import { Callback } from "../../sdk/Transcription/IConversation";
 
+// Node.JS specific xmlhttprequest / browser support.
+import * as XHR from "xmlhttprequest-ts";
+
 /**
  * Config settings for Conversation Translator
  */
@@ -24,7 +27,7 @@ function withQuery(url: string, params: any = {}): any {
     return queryString ? url + (url.indexOf("?") === -1 ? "?" : "&") + queryString : url;
 }
 
-function parseXHRResult(xhr: XMLHttpRequest): IResponse {
+function parseXHRResult(xhr: XMLHttpRequest | XHR.XMLHttpRequest): IResponse {
     return {
         data: xhr.responseText,
         headers: xhr.getAllResponseHeaders(),
@@ -35,7 +38,7 @@ function parseXHRResult(xhr: XMLHttpRequest): IResponse {
     };
 }
 
-function errorResponse(xhr: XMLHttpRequest, message: string | null = null): IResponse {
+function errorResponse(xhr: XMLHttpRequest | XHR.XMLHttpRequest, message: string | null = null): IResponse {
     return {
         data: message || xhr.statusText,
         headers: xhr.getAllResponseHeaders(),
@@ -82,7 +85,13 @@ export function request(
     const headers = options.headers || defaultRequestOptions.headers;
     const timeout = options.timeout || defaultRequestOptions.timeout;
 
-    const xhr = new XMLHttpRequest();
+    let xhr: XMLHttpRequest | XHR.XMLHttpRequest;
+    if (typeof window === "undefined") { // Node
+        xhr = new XHR.XMLHttpRequest();
+
+    } else {
+        xhr = new XMLHttpRequest();
+    }
     xhr.open(method, withQuery(url, queryParams), true);
 
     if (headers) {

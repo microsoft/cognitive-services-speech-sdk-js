@@ -204,7 +204,7 @@ describe("conversation service tests", () => {
 
         WaitForCondition(() => (c.conversationId !== "" && c.conversationId.length === 5), done);
 
-    }, 20000);
+    }, 80000);
 
     test("Start Conversation, invalid language [400003]", (done: jest.DoneCallback) => {
 
@@ -226,9 +226,9 @@ describe("conversation service tests", () => {
 
         WaitForCondition(() => (errorMessage !== undefined), done);
 
-    }, 20000);
+    }, 80000);
 
-    test("Start Conversation, invalid nickname [400025]", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Start Conversation, invalid nickname [400025]", (done: jest.DoneCallback) => {
 
         let errorMessage: string;
 
@@ -250,9 +250,9 @@ describe("conversation service tests", () => {
 
         WaitForCondition(() => (errorMessage !== undefined), done);
 
-    }, 20000);
+    }, 80000);
 
-    test("Start Conversation, invalid subscription key or region [401000]", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Start Conversation, invalid subscription key or region [401000]", (done: jest.DoneCallback) => {
 
         let errorMessage: string;
 
@@ -273,9 +273,9 @@ describe("conversation service tests", () => {
 
         WaitForCondition(() => (errorMessage !== undefined), done);
 
-    }, 20000);
+    }, 80000);
 
-    test("Start Conversation, join as host and mute participants", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Start Conversation, join as host and mute participants", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Start Conversation, join as host, mute participants");
@@ -356,9 +356,9 @@ describe("conversation service tests", () => {
                 }));
         }
 
-    }, 20000);
+    }, 40000);
 
-    test("Start Conversation, join as host and send message", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Start Conversation, join as host and send message", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Start Conversation, join as host and send message");
@@ -418,9 +418,9 @@ describe("conversation service tests", () => {
 
         WaitForCondition(() => (textMessage.includes("Hello")), done);
 
-    }, 20000);
+    }, 60000);
 
-    test("Start Conversation, join as host and eject participant", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Start Conversation, join as host and eject participant", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Start Conversation, join as host and eject participant");
@@ -504,7 +504,7 @@ describe("conversation service tests", () => {
 
         WaitForCondition(() => (ejected > 0), done);
 
-    }, 30000);
+    }, 60000);
 
 });
 
@@ -543,7 +543,7 @@ describe("conversation translator config tests", () => {
 
 describe("conversation translator service tests", () => {
 
-    test("Join Conversation Translator, invalid conversation code [400027]", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Join Conversation Translator, invalid conversation code [400027]", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Join Conversation Translator, invalid conversation code [400027]");
@@ -575,7 +575,7 @@ describe("conversation translator service tests", () => {
 
     });
 
-    test("Join Conversation Translator, duplicate nickname [400028]", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Join Conversation Translator, duplicate nickname [400028]", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Join Conversation Translator, duplicate nickname [400028]");
@@ -627,9 +627,9 @@ describe("conversation translator service tests", () => {
 
         WaitForCondition(() => (errorMessage !== ""), done);
 
-    }, 20000);
+    }, 80000);
 
-    test("Join Conversation Translator, locked conversation [400044]", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Join Conversation Translator, locked conversation [400044]", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Join Conversation Translator, locked conversation [400044]");
@@ -670,16 +670,15 @@ describe("conversation translator service tests", () => {
 
             WaitForCondition(() => (errorMessage !== ""), done);
         }));
-    }, 20000);
+    }, 80000);
 
-    test("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Start Conversation, join as host with speech language and speak");
 
         // audio config
-        const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-        const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+        const audioConfig: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
         let final: string = "";
 
         // start a conversation
@@ -724,6 +723,6 @@ describe("conversation translator service tests", () => {
 
         WaitForCondition(() => (final !== ""), done);
 
-    }, 30000);
+    }, 90000);
 
 });

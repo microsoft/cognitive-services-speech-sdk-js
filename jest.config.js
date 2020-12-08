@@ -1,14 +1,34 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 module.exports = {
-    transform: {
-        "^.+\\.ts$": "ts-jest",
-    },
-    testRegex: "tests/.*Tests\\.ts$",
-    testPathIgnorePatterns: ["/lib/", "/es2015/", "/node_modules/", "/src/"],
-    moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
-    collectCoverage: false,
-    "reporters": ["default", "jest-junit"],
-    setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"],
-    testTimeout : 20000
+    projects: [
+        {
+            displayName: "jsdom",
+            transform: {
+                "^.+\\.ts$": "ts-jest",
+            },
+            testRegex: "tests/.*Tests\\.ts$",
+            testPathIgnorePatterns: ["/lib/", "/es2015/", "/node_modules/", "/src/"],
+            moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
+            testEnvironment: "jsdom",
+            collectCoverage: false,
+            "reporters": ["default", "jest-junit"],
+            setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"],
+            testTimeout : 20000
+        },
+        {
+            displayName: "node",
+            transform: {
+                "^.+\\.ts$": "ts-jest",
+            },
+            testRegex: "tests/.*Tests\\.ts$",
+            testPathIgnorePatterns: ["/lib/", "/es2015/", "/node_modules/", "/src/"],
+            moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
+            testEnvironment: "node",
+            collectCoverage: false,
+            "reporters": ["default", "jest-junit"],
+            setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"],
+            testTimeout : 30000
+        }
+    ]
 };
