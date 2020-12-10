@@ -187,7 +187,7 @@ test("Stream blocks when not closed", (done: jest.DoneCallback) => {
 
         readLoop();
     }, (error: string) => done.fail(error));
-});
+}, 15000);
 
 test("nonAligned data is fine", (done: jest.DoneCallback) => {
     const ps: PushAudioInputStreamImpl = new PushAudioInputStreamImpl();

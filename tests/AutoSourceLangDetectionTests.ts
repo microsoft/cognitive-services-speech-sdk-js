@@ -47,8 +47,7 @@ export const BuildRecognizer: (speechConfig?: sdk.SpeechConfig, autoConfig?: sdk
         objsToClose.push(a);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
 
     const r: sdk.SpeechRecognizer = sdk.SpeechRecognizer.FromConfig(s, a, config);
     expect(r).not.toBeUndefined();

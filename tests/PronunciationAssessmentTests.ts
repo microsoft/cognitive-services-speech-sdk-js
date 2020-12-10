@@ -51,8 +51,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, audioFileNa
     }
 
     const fileName: string = undefined === audioFileName ? Settings.LuisWaveFile : audioFileName;
-    const f: File = WaveFileAudioInput.LoadFile(fileName);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName);
 
     const language: string = Settings.WaveFileLanguage;
     if (s.speechRecognitionLanguage === undefined) {

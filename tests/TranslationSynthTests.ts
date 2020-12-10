@@ -50,8 +50,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) 
         objsToClose.push(s);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
     const language: string = Settings.WaveFileLanguage;
     if (s.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_RecoLanguage]) === undefined) {
@@ -86,7 +85,7 @@ test("GetOutputVoiceName", () => {
     expect(r.voiceName).toEqual(voice);
 });
 
-test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: TranslateVoiceRoundTrip");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -521,8 +520,7 @@ test("Config is copied on construction", () => {
     s.setProperty("RandomProperty", ranVal);
     s.voiceName = "Microsoft Server Speech Text to Speech Voice (en-US, ZiraRUS)";
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
     const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, config);
     expect(r).not.toBeUndefined();
