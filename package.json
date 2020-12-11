@@ -92,10 +92,11 @@
   "jest-junit": {
     "suiteName": "jest tests",
     "outputName": "./test-javascript-junit.xml",
-    "classNameTemplate": "{classname}-{title}",
-    "titleTemplate": "{classname}-{title}",
+    "classNameTemplate": "{filename}-{title}",
+    "titleTemplate": "{filename}-{title}",
     "ancestorSeparator": " � ",
-    "usePathForSuiteName": "true"
+    "suiteNameTemplate": "{filepath}",
+    "includeConsoleOutput": true
   },
   "dependencies": {
     "agent-base": "^6.0.0",

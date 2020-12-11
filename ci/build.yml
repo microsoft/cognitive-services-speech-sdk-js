@@ -16,7 +16,7 @@ resources:
 jobs:
 - job: Build
   pool:
-    name: Hosted VS2017
+    vmImage: 'windows-2019'
     demands: npm
   timeoutInMinutes: 60
   variables:
