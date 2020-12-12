@@ -67,7 +67,7 @@
     "gulp-tslint": "^8.1.4",
     "gulp-typescript": "^5.0.1",
     "jest": "^26.0.1",
-    "jest-junit": "^10.0.0",
+    "jest-junit": "^12.0.0",
     "ocsp": "^1.2.0",
     "request": "^2.88.0",
     "rimraf": "^3.0.2",
@@ -91,11 +91,12 @@
   },
   "jest-junit": {
     "suiteName": "jest tests",
-    "output": "./test-javascript-junit.xml",
-    "classNameTemplate": "{classname}-{title}",
-    "titleTemplate": "{classname}-{title}",
+    "outputName": "./test-javascript-junit.xml",
+    "classNameTemplate": "{filename}-{title}",
+    "titleTemplate": "{filename}-{title}",
     "ancestorSeparator": " � ",
-    "usePathForSuiteName": "true"
+    "suiteNameTemplate": "{filepath}",
+    "includeConsoleOutput": true
   },
   "dependencies": {
     "agent-base": "^6.0.0",

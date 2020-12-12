@@ -12,7 +12,6 @@ module.exports = {
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "jsdom",
             collectCoverage: false,
-            "reporters": ["default", "jest-junit"],
             setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"],
             testTimeout : 20000
         },
@@ -26,9 +25,9 @@ module.exports = {
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "node",
             collectCoverage: false,
-            "reporters": ["default", "jest-junit"],
             setupFilesAfterEnv: ["./secrets/TestConfiguration.ts"],
             testTimeout : 30000
         }
-    ]
+    ],
+    reporters: [ "default", "jest-junit" ],
 };
