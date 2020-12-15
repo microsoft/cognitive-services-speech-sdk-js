@@ -13,6 +13,7 @@ import {
     SessionEventArgs,
 } from "../Exports";
 import {
+    ConversationHandler,
     ConversationImpl,
     ConversationTranscriptionHandler,
 } from "./Exports";
@@ -42,7 +43,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @function
      * @public
      */
-    public canceled: (sender: ConversationTranscriptionHandler, event: CancellationEventArgs) => void;
+    public canceled: (sender: ConversationHandler, event: CancellationEventArgs) => void;
 
     /**
      * @param {Conversation} converation - conversation to be recognized
@@ -82,7 +83,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @function
      * @public
      */
-    public sessionStarted: (sender: ConversationTranscriptionHandler, event: SessionEventArgs) => void;
+    public sessionStarted: (sender: ConversationHandler, event: SessionEventArgs) => void;
 
     /**
      * Defines event handler for session stopped events.
@@ -90,7 +91,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @function
      * @public
      */
-    public sessionStopped: (sender: ConversationTranscriptionHandler, event: SessionEventArgs) => void;
+    public sessionStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
 
     /**
      * Gets the authorization token used to communicate with the service.
