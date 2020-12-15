@@ -34,6 +34,9 @@ export class Settings {
     public static ConversationTranscriptionKey: string = "<<YOUR_TRANSCRIPTION_SUBSCRIPTION_KEY>>";
     public static ConversationTranscriptionRegion: string = "<<YOUR_TRANSCRIPTION_REGION>>";
 
+    public static CustomVoiceSubscriptionKey: string = "<<YOUR_CUSTOM_VOICE_SUBSCRIPTION_KEY>>";
+    public static CustomVoiceRegion: string = "<<YOUR_CUSTOM_VOICE_REGION>>";
+
     public static InputDir: string = "tests/input/audio/";
 
     public static ExecuteLongRunningTests: string = "false";

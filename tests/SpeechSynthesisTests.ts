@@ -672,7 +672,8 @@ describe("Service based tests", () => {
             },
         });
 
-        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.CustomVoiceSubscriptionKey, Settings.CustomVoiceRegion);
+        expect(speechConfig).not.toBeUndefined();
         speechConfig.endpointId = Settings.CustomVoiceEndpointId;
         speechConfig.speechSynthesisVoiceName = Settings.CustomVoiceVoiceName;
         objsToClose.push(speechConfig);

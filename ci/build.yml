@@ -57,7 +57,9 @@ jobs:
         BotSubscription:$(BotSubscriptionKeyJS) ^
         BotRegion:$(BotRegionJS) ^
         SpeakerIDSubscriptionKey:$(SpeakerRecognition-WestUS-Key) ^
-        SpeakerIDRegion:westus
+        SpeakerIDRegion:westus ^
+        CustomVoiceSubscriptionKey:$(speech-ne-s0-key1) ^
+        CustomVoiceRegion:northeurope
 
 
     displayName: Run tests
