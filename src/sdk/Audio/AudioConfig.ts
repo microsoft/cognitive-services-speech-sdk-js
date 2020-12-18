@@ -122,7 +122,11 @@ export abstract class AudioConfig {
 
         audioStream.on('readable', () => {
             const buffer = audioStream.read();
-            pushStream.write(buffer);
+            if (buffer === null) {
+                pushStream.close();
+            } else {
+                pushStream.write(buffer);
+            }
         });
 
         return AudioConfig.fromStreamInput(pushStream);
