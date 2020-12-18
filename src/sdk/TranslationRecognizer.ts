@@ -206,7 +206,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param cb - Callback that received the translation has stopped.
      * @param err - Callback invoked in case of an error.
      */
-    public stopContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
+    public stopContinuousRecognitionAsync(cb?: (v: unknown) => void, err?: (e: string) => void): void {
         marshalPromiseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
     }
 
