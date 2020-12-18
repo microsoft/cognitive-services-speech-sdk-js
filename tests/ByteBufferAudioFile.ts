@@ -3,9 +3,6 @@
 
 export class ByteBufferAudioFile {
     public static Load(buffers: ArrayBuffer[]): File {
-
-        const file: File = new File(buffers, "file.wav");
-
-        return file;
+        return new File(buffers, "file.wav");
     }
 }

@@ -234,16 +234,21 @@ test("testGetParameters", () => {
     expect(r.endpointId === r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, null)); // todo: is this really the correct mapping?
 });
 
-Settings.testIfDOMCondition("BadWavFileProducesError", (done: jest.DoneCallback) => {
+test("BadWavFileProducesError", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: BadWavFileProducesError");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
     const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
-    const bigFile: File = ByteBufferAudioFile.Load([bigFileBuffer.buffer]);
-
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(bigFile);
+    let config: sdk.AudioConfig;
+    if (typeof File !== "undefined") {
+        const inputStream: File = ByteBufferAudioFile.Load([bigFileBuffer.buffer]);
+        config = sdk.AudioConfig.fromWavFileInput(inputStream);
+    } else {
+        const b: Buffer = Buffer.from(bigFileBuffer, bigFileBuffer.byteOffset, bigFileBuffer.byteLength);
+        config = sdk.AudioConfig.fromWavFileInput(b);
+    }
 
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
 
@@ -257,7 +262,7 @@ Settings.testIfDOMCondition("BadWavFileProducesError", (done: jest.DoneCallback)
             done.fail(error);
         }
     });
-});
+}, 15000);
 
 describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
@@ -1773,7 +1778,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         expect(r instanceof sdk.Recognizer).toEqual(true);
     });
 
-    test("Default mic is used when audio config is not specified.", () => {
+    Settings.testIfDOMCondition("Default mic is used when audio config is not specified.", () => {
         // tslint:disable-next-line:no-console
         console.info("Name: Default mic is used when audio config is not specified.");
         const s: sdk.SpeechConfig = BuildSpeechConfig();

@@ -85,7 +85,7 @@ test("GetOutputVoiceName", () => {
     expect(r.voiceName).toEqual(voice);
 });
 
-Settings.testIfDOMCondition("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
+test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: TranslateVoiceRoundTrip");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -162,8 +162,14 @@ Settings.testIfDOMCondition("TranslateVoiceRoundTrip", (done: jest.DoneCallback)
                     byteCount += rEvents[i].byteLength;
                 }
 
-                const inputStream: File = ByteBufferAudioFile.Load([result]);
-                const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(inputStream);
+                let config: sdk.AudioConfig;
+                if (typeof File !== "undefined") {
+                    const inputStream: File = ByteBufferAudioFile.Load([result]);
+                    config = sdk.AudioConfig.fromWavFileInput(inputStream);
+                } else {
+                    const b: Buffer = Buffer.from(result, result.byteOffset, result.byteLength);
+                    config = sdk.AudioConfig.fromWavFileInput(b);
+                }
                 const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
                 objsToClose.push(speechConfig);
                 speechConfig.speechRecognitionLanguage = "de-DE";
