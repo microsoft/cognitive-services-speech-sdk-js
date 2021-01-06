@@ -24,12 +24,10 @@ beforeAll(() => {
     Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-// Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
-// report the name.
 beforeEach(() => {
     objsToClose = [];
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
@@ -58,8 +56,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, audioFileNa
     }
 
     const fileName: string = undefined === audioFileName ? Settings.LuisWaveFile : audioFileName;
-    const f: File = WaveFileAudioInput.LoadFile(fileName);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName);
 
     const language: string = Settings.WaveFileLanguage;
     if (s.speechRecognitionLanguage === undefined) {
@@ -238,7 +235,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         testInitialSilenceTimeout(config, done);
     }, 20000);
 
-    test("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: InitialSilenceTimeout (File)");
         const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;

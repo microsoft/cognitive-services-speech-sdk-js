@@ -34,12 +34,10 @@ beforeAll(() => {
     Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-// Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
-// report the name.
 beforeEach(() => {
     objsToClose = [];
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
@@ -60,9 +58,7 @@ export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, file
         objsToClose.push(s);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
-
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
     const language: string = Settings.WaveFileLanguage;
     if (s.speechRecognitionLanguage === undefined) {
         s.speechRecognitionLanguage = language;
@@ -181,8 +177,7 @@ test("testSpeechRecognizer1", () => {
     const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     expect(speechConfig).not.toBeUndefined();
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(speechConfig, config);
     objsToClose.push(r);
@@ -239,7 +234,7 @@ test("testGetParameters", () => {
     expect(r.endpointId === r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, null)); // todo: is this really the correct mapping?
 });
 
-test("BadWavFileProducesError", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("BadWavFileProducesError", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: BadWavFileProducesError");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1364,7 +1359,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             testInitialSilenceTimeout(config, done);
         }, 15000);
 
-        test("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
+        Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
             // tslint:disable-next-line:no-console
             console.info("Name: InitialSilenceTimeout (File)");
             const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
@@ -1455,8 +1450,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
             s.speechRecognitionLanguage = "es-MX";
 
-            const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-            const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+            const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
             const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
             expect(r).not.toBeUndefined();
@@ -1673,8 +1667,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         s.speechRecognitionLanguage = "en-US";
 
-        const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-        const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+        const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
         objsToClose.push(r);
@@ -2220,7 +2213,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 35000);
 });
 
-test("Push Stream Async", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("Push Stream Async", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Push Stream Async");
 

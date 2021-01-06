@@ -31,11 +31,10 @@ beforeAll(() => {
     Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-// Test cases are run linerally, still looking for a way to get the test name to print that doesn't mean changing each test.
 beforeEach(() => {
     objsToClose = [];
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     // tslint:disable-next-line:no-console
     console.info("Sart Time: " + new Date(Date.now()).toLocaleString());
 });
@@ -56,8 +55,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) 
         objsToClose.push(s);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
     const language: string = Settings.WaveFileLanguage;
     if (s.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_RecoLanguage]) === undefined) {
@@ -523,7 +521,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         testInitialSilenceTimeout(config, done);
     }, 15000);
 
-    test("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: InitialSilenceTimeout (File)");
         const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
@@ -701,7 +699,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     });
 
-    test("Default mic is used when audio config is not specified. (once)", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Default mic is used when audio config is not specified. (once)", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: Default mic is used when audio config is not specified. (once)");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
@@ -724,7 +722,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
-    test("Default mic is used when audio config is not specified. (Cont)", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("Default mic is used when audio config is not specified. (Cont)", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: Default mic is used when audio config is not specified. (Cont)");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);

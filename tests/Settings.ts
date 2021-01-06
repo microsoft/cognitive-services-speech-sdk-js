@@ -34,6 +34,9 @@ export class Settings {
     public static ConversationTranscriptionKey: string = "<<YOUR_TRANSCRIPTION_SUBSCRIPTION_KEY>>";
     public static ConversationTranscriptionRegion: string = "<<YOUR_TRANSCRIPTION_REGION>>";
 
+    public static CustomVoiceSubscriptionKey: string = "<<YOUR_CUSTOM_VOICE_SUBSCRIPTION_KEY>>";
+    public static CustomVoiceRegion: string = "<<YOUR_CUSTOM_VOICE_REGION>>";
+
     public static InputDir: string = "tests/input/audio/";
 
     public static ExecuteLongRunningTests: string = "false";
@@ -89,6 +92,10 @@ export class Settings {
 
     private static IsSettingsInitialized: boolean = false;
     public static SettingsClassLock: Settings;
+
+    public static CustomVoiceEndpointId: string = "6b231818-6b8c-4452-9a69-2009355d5d7a";
+    public static CustomVoiceVoiceName: string = "sdk-test";
+    public static testIfDOMCondition: jest.It = (typeof window === "undefined") ? test.skip : test;
 
     public static initialize(): void {
         Settings.SettingsClassLock = new Settings();

@@ -17,12 +17,10 @@ beforeAll(() => {
     Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-// Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
-// report the name.
 beforeEach(() => {
     objsToClose = [];
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
@@ -49,8 +47,7 @@ export const BuildRecognizer: (speechConfig?: sdk.SpeechConfig, autoConfig?: sdk
         objsToClose.push(a);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
 
     const r: sdk.SpeechRecognizer = sdk.SpeechRecognizer.FromConfig(s, a, config);
     expect(r).not.toBeUndefined();

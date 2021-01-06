@@ -116,8 +116,8 @@ export class Sink<T> {
     private privPromiseResult: PromiseResult<T> = null;
     private privPromiseResultEvents: PromiseResultEventSource<T> = null;
 
-    private privSuccessHandlers: Array<((result: T) => void)> = [];
-    private privErrorHandlers: Array<(e: string) => void> = [];
+    private privSuccessHandlers: ((result: T) => void)[] = [];
+    private privErrorHandlers: ((e: string) => void)[] = [];
 
     public constructor() {
         this.privPromiseResultEvents = new PromiseResultEventSource();

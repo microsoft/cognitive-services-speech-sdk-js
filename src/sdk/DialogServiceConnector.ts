@@ -30,6 +30,7 @@ import {
 } from "./Exports";
 import { PropertyId } from "./PropertyId";
 import { SpeechSynthesisOutputFormat } from "./SpeechSynthesisOutputFormat";
+import { TurnStatusReceivedEventArgs } from "./TurnStatusReceivedEventArgs";
 
 /**
  * Dialog Service Connector
@@ -90,6 +91,17 @@ export class DialogServiceConnector extends Recognizer {
      * @public
      */
     public activityReceived: (sender: DialogServiceConnector, event: ActivityReceivedEventArgs) => void;
+
+    /**
+     * The event turnStatusReceived signals that a turn status message has been received. These messages are
+     * associated with both an interaction and a conversation. They are used to notify the client in the event
+     * of an interaction failure with the dialog backend, e.g. in the event of a network issue, timeout, crash,
+     * or other problem.
+     * @member DialogServiceConnector.prototype.turnStatusReceived
+     * @function
+     * @public
+     */
+    public turnStatusReceived: (sender: DialogServiceConnector, event: TurnStatusReceivedEventArgs) => void;
 
     /**
      * Starts a connection to the service.

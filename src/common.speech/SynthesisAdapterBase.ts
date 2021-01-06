@@ -79,8 +79,6 @@ export class SynthesisAdapterBase implements IDisposable {
 
     protected configConnectionOverride: (connection: IConnection) => any = undefined;
 
-    protected fetchConnectionOverride: () => any = undefined;
-
     public set audioOutputFormat(format: AudioOutputFormatImpl) {
         this.privAudioOutputFormat = format;
         this.privSynthesisTurn.audioOutputFormat = format;
@@ -146,9 +144,11 @@ export class SynthesisAdapterBase implements IDisposable {
         this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
             if (connectionEvent.name === "ConnectionClosedEvent") {
                 const connectionClosedEvent = connectionEvent as ConnectionClosedEvent;
-                this.cancelSynthesisLocal(CancellationReason.Error,
-                    connectionClosedEvent.statusCode === 1007 ? CancellationErrorCode.BadRequestParameters : CancellationErrorCode.ConnectionFailure,
-                    connectionClosedEvent.reason + " websocket error code: " + connectionClosedEvent.statusCode);
+                if (connectionClosedEvent.statusCode !== 1000) {
+                    this.cancelSynthesisLocal(CancellationReason.Error,
+                        connectionClosedEvent.statusCode === 1007 ? CancellationErrorCode.BadRequestParameters : CancellationErrorCode.ConnectionFailure,
+                        connectionClosedEvent.reason + " websocket error code: " + connectionClosedEvent.statusCode);
+                }
             }
         });
     }
@@ -216,7 +216,9 @@ export class SynthesisAdapterBase implements IDisposable {
         this.privErrorCallback = errorCallBack;
 
         this.privSynthesisTurn.startNewSynthesis(requestId, text, isSSML, audioDestination);
+
         try {
+            await this.connectImpl();
             const connection: IConnection = await this.fetchConnection();
             await this.sendSynthesisContext(connection);
             await this.sendSsmlMessage(connection, ssml, requestId);
@@ -514,12 +516,25 @@ export class SynthesisAdapterBase implements IDisposable {
             ssml));
     }
 
-    private fetchConnection = (): Promise<IConnection> => {
-        if (this.fetchConnectionOverride !== undefined) {
-            return this.fetchConnectionOverride();
+    private async fetchConnection(): Promise<IConnection> {
+        if (this.privConnectionConfigurationPromise) {
+            return this.privConnectionConfigurationPromise.then((connection: IConnection): Promise<IConnection> => {
+                if (connection.state() === ConnectionState.Disconnected) {
+                    this.privConnectionId = null;
+                    this.privConnectionConfigurationPromise = null;
+                    this.privServiceHasSentMessage = false;
+                    return this.fetchConnection();
+                }
+                return this.privConnectionConfigurationPromise;
+            }, (error: string): Promise<IConnection> => {
+                this.privConnectionId = null;
+                this.privConnectionConfigurationPromise = null;
+                this.privServiceHasSentMessage = false;
+                return this.fetchConnection();
+            });
         }
-
-        return this.configureConnection();
+        this.privConnectionConfigurationPromise = this.configureConnection();
+        return await this.privConnectionConfigurationPromise;
     }
 
     // Takes an established websocket connection to the endpoint and sends speech configuration information.

@@ -32,7 +32,9 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
         const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
-        const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + ".tts.speech" + hostSuffix);
+        const endpointId = config.parameters.getProperty(PropertyId.SpeechServiceConnection_EndpointId, undefined);
+        const hostPrefix = (endpointId === undefined) ? "tts" : "voice";
+        const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + "." + hostPrefix + ".speech" + hostSuffix);
 
         const queryParams: IStringDictionary<string> = {};
 
@@ -45,9 +47,13 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
             headers[authInfo.headerName] = authInfo.token;
         }
         headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
+        if (endpointId !== undefined) {
+            headers[QueryParameterNames.CustomVoiceDeploymentIdParamName] = endpointId;
+        }
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromParameters(config.parameters), connectionId);
+        const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromParameters(config.parameters), enableCompression, connectionId);
     }
 }

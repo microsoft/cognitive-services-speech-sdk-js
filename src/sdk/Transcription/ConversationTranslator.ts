@@ -4,8 +4,6 @@
 
 import { ConversationConnectionConfig } from "../../common.speech/Exports";
 import {
-    BackgroundEvent,
-    Events,
     IDisposable,
     IErrorMessages,
     marshalPromiseToCallbacks
@@ -31,6 +29,7 @@ import { ConversationImpl } from "./Conversation";
 import {
     ConversationCommon,
     ConversationExpirationEventArgs,
+    ConversationHandler,
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
@@ -77,11 +76,11 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         return this.privConversation?.participants;
     }
 
-    public canceled: (sender: IConversationTranslator, event: ConversationTranslationCanceledEventArgs) => void;
+    public canceled: (sender: ConversationHandler, event: ConversationTranslationCanceledEventArgs) => void;
     public conversationExpiration: (sender: IConversationTranslator, event: ConversationExpirationEventArgs) => void;
     public participantsChanged: (sender: IConversationTranslator, event: ConversationParticipantsChangedEventArgs) => void;
-    public sessionStarted: (sender: IConversationTranslator, event: SessionEventArgs) => void;
-    public sessionStopped: (sender: IConversationTranslator, event: SessionEventArgs) => void;
+    public sessionStarted: (sender: ConversationHandler, event: SessionEventArgs) => void;
+    public sessionStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
     public textMessageReceived: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
     public transcribed: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
     public transcribing: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;

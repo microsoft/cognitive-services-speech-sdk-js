@@ -57,12 +57,13 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         const applicationId: string = config.parameters.getProperty(PropertyId.Conversation_ApplicationId, "");
         const dialogType: string = config.parameters.getProperty(PropertyId.Conversation_DialogType);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
-
         const language: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-US");
+        const requestTurnStatus: string = config.parameters.getProperty(PropertyId.Conversation_Request_Bot_Status_Messages, "true");
 
         const queryParams: IStringDictionary<string> = {};
         queryParams[QueryParameterNames.LanguageParamName] = language;
         queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
+        queryParams[QueryParameterNames.RequestBotStatusMessagesParamName] = requestTurnStatus;
         queryParams[connectionID] = connectionId;
 
         const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
@@ -90,6 +91,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
 
         this.setCommonUrlParams(config, queryParams, endpoint);
 
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), connectionId);
+        const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
     }
 }

@@ -87,10 +87,14 @@ export abstract class DialogServiceConfig {
     public abstract set speechRecognitionLanguage(value: string);
 
     /**
-     * Not used in DialogServiceConfig
-     * @member DialogServiceConfig.applicationId
+     * Sets the corresponding backend application identifier.
+     * @member DialogServiceConfig.prototype.Conversation_ApplicationId
+     * @function
+     * @public
+     * @param {string} value - The application identifier to set.
      */
-    public applicationId: string;
+    // tslint:disable-next-line: no-empty
+    public set applicationId(value: string) { }
 }
 
 /**

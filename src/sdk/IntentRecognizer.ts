@@ -171,7 +171,7 @@ export class IntentRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        if (Object.keys(this.privAddedLmIntents).length !== 0) {
+        if (Object.keys(this.privAddedLmIntents).length !== 0 || undefined !== this.privUmbrellaIntent) {
             const context: IIntentContext = this.buildSpeechContext();
 
             this.privReco.speechContext.setSection("intent", context.Intent);

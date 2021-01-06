@@ -16,7 +16,7 @@ resources:
 jobs:
 - job: Build
   pool:
-    name: Hosted VS2017
+    vmImage: 'windows-2019'
     demands: npm
   timeoutInMinutes: 60
   variables:
@@ -57,13 +57,18 @@ jobs:
         BotSubscription:$(BotSubscriptionKeyJS) ^
         BotRegion:$(BotRegionJS) ^
         SpeakerIDSubscriptionKey:$(SpeakerRecognition-WestUS-Key) ^
-        SpeakerIDRegion:westus
+        SpeakerIDRegion:westus ^
+        CustomVoiceSubscriptionKey:$(speech-ne-s0-key1) ^
+        CustomVoiceRegion:northeurope
 
 
     displayName: Run tests
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
   - task: PublishTestResults@2
     displayName: Publish test results
+    inputs:
+      testRunner: JUnit
+      testResultsFiles: 'test-javascript-junit.xml'
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
   - bash: |
         set -e

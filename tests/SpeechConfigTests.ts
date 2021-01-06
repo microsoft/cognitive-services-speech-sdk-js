@@ -26,12 +26,10 @@ beforeAll(() => {
     Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-// Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
-// report the name.
 beforeEach(() => {
     objsToClose = [];
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
 });
 
 afterEach(async (done: jest.DoneCallback) => {
@@ -43,9 +41,7 @@ afterEach(async (done: jest.DoneCallback) => {
 
 const BuildSpeechRecognizerFromWaveFile: (speechConfig: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
 
-    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
-
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
     const language: string = Settings.WaveFileLanguage;
     if (speechConfig.speechRecognitionLanguage === undefined) {
         speechConfig.speechRecognitionLanguage = language;
@@ -59,8 +55,7 @@ const BuildSpeechRecognizerFromWaveFile: (speechConfig: sdk.SpeechConfig, fileNa
 
 const BuildIntentRecognizerFromWaveFile: (speechConfig: sdk.SpeechConfig, fileName?: string) => sdk.IntentRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.IntentRecognizer => {
 
-    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
 
     const language: string = Settings.WaveFileLanguage;
     if (speechConfig.speechRecognitionLanguage === undefined) {
@@ -75,8 +70,7 @@ const BuildIntentRecognizerFromWaveFile: (speechConfig: sdk.SpeechConfig, fileNa
 
 const BuildTranslationRecognizerFromWaveFile: (speechConfig: sdk.SpeechTranslationConfig, fileName?: string) => sdk.TranslationRecognizer = (speechConfig?: sdk.SpeechTranslationConfig, fileName?: string): sdk.TranslationRecognizer => {
 
-    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
 
     const language: string = Settings.WaveFileLanguage;
     if (speechConfig.speechRecognitionLanguage === undefined) {
@@ -207,8 +201,7 @@ test("Properties are passed to recognizer", () => {
 test("Create SR from AudioConfig", () => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
 
@@ -232,8 +225,7 @@ test("Create recognizer with language and audioConfig", () => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-EN";
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
 
@@ -277,8 +269,7 @@ test("Intent Recognizer with Wave File.", () => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-US";
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
     const r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s, config);
 
@@ -432,8 +423,7 @@ test("Translation Recog success", () => {
     s.speechRecognitionLanguage = "en-US";
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationVoice], "en-US");
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
     const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s);
     expect(r).not.toBeUndefined();
@@ -465,7 +455,7 @@ describe("NPM proxy test", () => {
         // Fiddler default port
         s.setProxy("localhost", 8888);
         WebsocketMessageAdapter.forceNpmWebSocket = true;
-        const a: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(WaveFileAudioInput.LoadFile(Settings.WaveFile));
+        const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
         objsToClose.push(r);
@@ -488,7 +478,7 @@ describe("NPM proxy test", () => {
 
         s.setProxy("localhost", 8880);
         WebsocketMessageAdapter.forceNpmWebSocket = true;
-        const a: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(WaveFileAudioInput.LoadFile(Settings.WaveFile));
+        const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
         objsToClose.push(r);
@@ -506,13 +496,13 @@ describe("NPM proxy test", () => {
     });
 });
 
-test("Proxy has no effect on browser WebSocket", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("Proxy has no effect on browser WebSocket", (done: jest.DoneCallback) => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     objsToClose.push(s);
 
     // Fiddler default port
     s.setProxy("localhost", 8880);
-    const a: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(WaveFileAudioInput.LoadFile(Settings.WaveFile));
+    const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
     objsToClose.push(r);

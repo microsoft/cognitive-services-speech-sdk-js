@@ -23,6 +23,9 @@ export class QueryParameterNames {
     public static get TranslationToParamName(): string {
         return "to";
     }
+    public static get CustomVoiceDeploymentIdParamName(): string {
+        return "deploymentId";
+    }
     public static get Profanify(): string {
         return "profanity";
     }
@@ -46,5 +49,8 @@ export class QueryParameterNames {
     }
     public static get EnableLanguageID(): string {
         return "lidEnabled";
+    }
+    public static get RequestBotStatusMessagesParamName(): string {
+        return "enableBotMessageStatus";
     }
 }

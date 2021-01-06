@@ -5,10 +5,13 @@ import * as fs from "fs";
 import * as request from "request";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
+import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
 import {
+    ConnectionStartEvent,
     Events,
     EventType,
-    InvalidOperationError
+    InvalidOperationError,
+    PlatformEvent
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import {
@@ -24,12 +27,10 @@ beforeAll(() => {
     Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-// Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
-// report the name.
 beforeEach(() => {
     objsToClose = [];
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
@@ -128,7 +129,7 @@ class PushAudioOutputStreamTestCallback extends sdk.PushAudioOutputStreamCallbac
     }
 }
 
-test("testSpeechSynthesizer1", () => {
+Settings.testIfDOMCondition("testSpeechSynthesizer1", () => {
     // tslint:disable-next-line:no-console
     console.info("Name: testSpeechSynthesizer1");
     const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
@@ -162,15 +163,7 @@ test("testSetAndGetParameters", () => {
         .toEqual(sdk.SpeechSynthesisOutputFormat[sdk.SpeechSynthesisOutputFormat.Audio16Khz128KBitRateMonoMp3]);
 });
 
-describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean) => {
-
-    beforeAll(() => {
-        WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
-    });
-
-    afterAll(() => {
-        WebsocketMessageAdapter.forceNpmWebSocket = false;
-    });
+describe("Service based tests", () => {
 
     test("testSpeechSynthesizerEvent1", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
@@ -409,7 +402,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         });
     });
 
-    test("testSpeechSynthesizer: synthesis with invalid key.", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("testSpeechSynthesizer: synthesis with invalid key.", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizer synthesis with invalid key.");
         const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("invalidKey", Settings.SpeechRegion);
@@ -423,10 +416,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         s.SynthesisCanceled = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
             try {
                 CheckSynthesisResult(e.result, sdk.ResultReason.Canceled);
-                // only node websocket will contains the status code 401
-                if (forceNodeWebSocket) {
-                    expect(e.result.errorDetails).toContain("401");
-                }
                 const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(e.result);
                 expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.ConnectionFailure);
                 expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
@@ -438,10 +427,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
             CheckSynthesisResult(result, sdk.ResultReason.Canceled);
-            // only node websocket will contains the status code 401
-            if (forceNodeWebSocket) {
-                expect(result.errorDetails).toContain("401");
-            }
             const cancellationDetail: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
             expect(cancellationDetail.ErrorCode).toEqual(sdk.CancellationErrorCode.ConnectionFailure);
             expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
@@ -552,7 +537,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         });
     });
 
-    test("testSpeechSynthesizer: synthesis to push audio output stream.", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("testSpeechSynthesizer: synthesis to push audio output stream.", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizer synthesis to push audio output stream.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
@@ -667,6 +652,41 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             console.info("speaking finished, turn 2");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             expect(result.audioData.byteLength).toBeGreaterThan(64 << 7); // longer than 1s
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizerUsingCustomVoice", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizerUsingCustomVoice");
+
+        let uri: string;
+        Events.instance.attachListener({
+            onEvent: (event: PlatformEvent) => {
+                if (event instanceof ConnectionStartEvent) {
+                    const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                    uri = connectionEvent.uri;
+                }
+            },
+        });
+
+        const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.CustomVoiceSubscriptionKey, Settings.CustomVoiceRegion);
+        expect(speechConfig).not.toBeUndefined();
+        speechConfig.endpointId = Settings.CustomVoiceEndpointId;
+        speechConfig.speechSynthesisVoiceName = Settings.CustomVoiceVoiceName;
+        objsToClose.push(speechConfig);
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, undefined);
+        objsToClose.push(s);
+
+        expect(s).not.toBeUndefined();
+
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            expect(uri).not.toBeUndefined();
+            expect(uri.search(QueryParameterNames.CustomVoiceDeploymentIdParamName + "=" + Settings.CustomVoiceEndpointId)).not.toEqual(-1);
             done();
         }, (e: string): void => {
             done.fail(e);

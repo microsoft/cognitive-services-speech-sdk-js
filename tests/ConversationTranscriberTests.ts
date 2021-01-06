@@ -25,11 +25,10 @@ beforeAll(() => {
     Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-// Test cases are run linerally, still looking for a way to get the test name to print that doesn't mean changing each test.
 beforeEach(() => {
     objsToClose = [];
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
@@ -66,8 +65,7 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
 
 const BuildTranscriber: () => sdk.ConversationTranscriber = (): sdk.ConversationTranscriber => {
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.WaveFile8ch);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile8ch);
 
     const t: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(config);
     expect(t).not.toBeUndefined();
@@ -77,8 +75,7 @@ const BuildTranscriber: () => sdk.ConversationTranscriber = (): sdk.Conversation
 
 const BuildMonoWaveTranscriber: () => sdk.ConversationTranscriber = (): sdk.ConversationTranscriber => {
 
-    const f: File = WaveFileAudioInput.LoadFile(Settings.DependentVerificationWaveFile);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.DependentVerificationWaveFile);
 
     const t: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(config);
     expect(t).not.toBeUndefined();
@@ -153,7 +150,7 @@ test("Create Conversation and join to Transcriber", (done: jest.DoneCallback) =>
         });
 });
 
-test("Create Conversation and add participants", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("Create Conversation and add participants", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation and join to Transcriber");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -229,9 +226,9 @@ test("Create Conversation and add participants", (done: jest.DoneCallback) => {
         (error: string) => {
             done.fail(error);
         });
-}, 40000);
+}, 400000);
 
-test("Leave Conversation", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("Leave Conversation", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Leave Conversation");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -307,7 +304,7 @@ test("Leave Conversation", (done: jest.DoneCallback) => {
             done.fail(error);
         });
 });
-test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("Create Conversation with one channel audio (aligned)", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation with one channel audio (aligned)");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -386,7 +383,7 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
             done.fail(error);
         });
 });
-test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation and force disconnect");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();

@@ -20,7 +20,6 @@ import {
 
 import * as fs from "fs";
 import { allowedNodeEnvironmentFlags } from "process";
-import { PropertyId } from "../src/sdk/Exports";
 
 let objsToClose: any[];
 
@@ -30,12 +29,10 @@ beforeAll(() => {
     Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-// Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
-// report the name.
 beforeEach(() => {
     objsToClose = [];
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
@@ -56,8 +53,7 @@ export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, file
         objsToClose.push(s);
     }
 
-    const f: File = WaveFileAudioInput.LoadFile(fileName === undefined ? Settings.WaveFile : fileName);
-    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(f);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
 
     const language: string = Settings.WaveFileLanguage;
     if (s.speechRecognitionLanguage === undefined) {
@@ -633,7 +629,7 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
     });
 }, 20000);
 
-test("testAudioMessagesSent", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("testAudioMessagesSent", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: testAudioMessagesSent");
 

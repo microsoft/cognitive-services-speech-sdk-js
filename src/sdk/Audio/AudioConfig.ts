@@ -84,17 +84,22 @@ export abstract class AudioConfig {
      * @member AudioConfig.fromStreamInput
      * @function
      * @public
-     * @param {AudioInputStream | PullAudioInputStreamCallback} audioStream - Specifies the custom audio input
+     * @param {AudioInputStream | PullAudioInputStreamCallback | MediaStream} audioStream - Specifies the custom audio input
      *        stream. Currently, only WAV / PCM is supported.
      * @returns {AudioConfig} The audio input configuration being created.
      */
-    public static fromStreamInput(audioStream: AudioInputStream | PullAudioInputStreamCallback): AudioConfig {
+    public static fromStreamInput(audioStream: AudioInputStream | PullAudioInputStreamCallback
+        | MediaStream): AudioConfig {
         if (audioStream instanceof PullAudioInputStreamCallback) {
             return new AudioConfigImpl(new PullAudioInputStreamImpl(audioStream as PullAudioInputStreamCallback));
         }
 
         if (audioStream instanceof AudioInputStream) {
             return new AudioConfigImpl(audioStream as PushAudioInputStreamImpl);
+        }
+        if (audioStream instanceof MediaStream) {
+            const pcmRecorder = new PcmRecorder();
+            return new AudioConfigImpl(new MicAudioSource(pcmRecorder, null, null, audioStream));
         }
 
         throw new Error("Not Supported Type");

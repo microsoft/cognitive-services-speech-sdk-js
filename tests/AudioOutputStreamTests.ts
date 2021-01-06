@@ -13,11 +13,9 @@ beforeAll(() => {
     Settings.LoadSettings();
 });
 
-// Test cases are run linerally, the only other mechanism to demark them in the output is to put a console line in each case and
-// report the name.
 beforeEach(() => {
     // tslint:disable-next-line:no-console
-    console.info("---------------------------------------Starting test case-----------------------------------");
+    console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     objsToClose = [];
     const used = process.memoryUsage().heapUsed / 1024 / 1024;
     // tslint:disable-next-line:no-console
