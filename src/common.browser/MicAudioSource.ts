@@ -138,15 +138,7 @@ export class MicAudioSource implements IAudioSource {
                             this.privInitializeDeferral.resolve();
                         }, (error: MediaStreamError) => {
                             const errorMsg = `Error occurred during microphone initialization: ${error}`;
-                            const tmp = this.privInitializeDeferral;
-                            // HACK: this should be handled through onError callbacks of all promises up the stack.
-                            // Unfortunately, the current implementation does not provide an easy way to reject promises
-                            // without a lot of code replication.
-                            // TODO: fix promise implementation, allow for a graceful reject chaining.
-                            this.privInitializeDeferral = null;
-                            tmp.reject(errorMsg); // this will bubble up through the whole chain of promises,
-                            // with each new level adding extra "Unhandled callback error" prefix to the error message.
-                            // The following line is not guaranteed to be executed.
+                            this.privInitializeDeferral.reject(errorMsg);
                             this.onEvent(new AudioSourceErrorEvent(this.privId, errorMsg));
                         });
                 }
@@ -155,9 +147,11 @@ export class MicAudioSource implements IAudioSource {
             if (this.privContext.state === "suspended") {
                 // NOTE: On iOS, the Web Audio API requires sounds to be triggered from an explicit user action.
                 // https://github.com/WebAudio/web-audio-api/issues/790
-                this.privContext.resume().then(next, (reason: any) => {
-                    this.privInitializeDeferral.reject(`Failed to initialize audio context: ${reason}`);
-                });
+                this.privContext.resume()
+                    .then(next)
+                    .catch((reason: any) => {
+                        this.privInitializeDeferral.reject(`Failed to initialize audio context: ${reason}`);
+                    });
             } else {
                 next();
             }
