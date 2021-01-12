@@ -615,7 +615,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             default:
                 Events.instance.onEvent(
-                    new BackgroundEvent("Unexpected response of type '" + responsePayload.messageType + "'. Ignoring."));
+                    new BackgroundEvent("Unexpected response of type `${responsePayload.messageType}`. Ignoring."));
                 break;
         }
     }

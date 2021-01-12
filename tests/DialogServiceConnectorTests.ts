@@ -316,7 +316,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
     connector.turnStatusReceived = (sender: sdk.DialogServiceConnector, e: sdk.TurnStatusReceivedEventArgs) => {
         turnStatusCounter++;
         try {
-            expect(e.statusCode == 200);
+            expect(e.statusCode === 200);
         } catch (error) {
             done.fail(error);
         }
@@ -339,7 +339,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         });
 
     WaitForCondition(() => (recoCounter === 2), done);
-    WaitForCondition(() => (turnStatusCounter == 1), done);
+    WaitForCondition(() => (turnStatusCounter === 1), done);
 });
 
 Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.DoneCallback) => {
