@@ -614,8 +614,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 break;
 
             default:
-                // tslint:disable-next-line:no-console
-                console.log("Unexpected response of type " + responsePayload.messageType + ". Ignoring.");
+                Events.instance.onEvent(
+                    new BackgroundEvent("Unexpected response of type '" + responsePayload.messageType + "'. Ignoring."));
                 break;
         }
     }
