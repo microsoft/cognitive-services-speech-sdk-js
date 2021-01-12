@@ -50,4 +50,7 @@ export class QueryParameterNames {
     public static get EnableLanguageID(): string {
         return "lidEnabled";
     }
+    public static get RequestBotStatusMessagesParamName(): string {
+        return "enableBotMessageStatus";
+    }
 }

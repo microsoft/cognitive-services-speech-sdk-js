@@ -327,6 +327,13 @@ export enum PropertyId {
     Conversation_Speech_Activity_Template,
 
     /**
+     * Enables or disables the receipt of turn status messages as obtained on the turnStatusReceived event.
+     * @member PropertyId.Conversation_Request_Bot_Status_Messages
+     * Added in version 1.15.0.
+     */
+    Conversation_Request_Bot_Status_Messages,
+
+    /**
      * The Cognitive Services Speech Service host (url). Under normal circumstances, you shouldn't have to use this property directly.
      * Instead, use [[SpeechConfig.fromHost]].
      */

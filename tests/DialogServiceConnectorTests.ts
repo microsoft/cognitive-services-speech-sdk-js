@@ -283,6 +283,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
     let sessionId: string;
     let hypoCounter: number = 0;
     let recoCounter: number = 0;
+    let turnStatusCounter: number = 0;
 
     connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
         sessionId = e.sessionId;
@@ -312,6 +313,15 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         }
     };
 
+    connector.turnStatusReceived = (sender: sdk.DialogServiceConnector, e: sdk.TurnStatusReceivedEventArgs) => {
+        turnStatusCounter++;
+        try {
+            expect(e.statusCode === 200);
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
     connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
         expect(e.sessionId).toEqual(sessionId);
     };
@@ -329,6 +339,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         });
 
     WaitForCondition(() => (recoCounter === 2), done);
+    WaitForCondition(() => (turnStatusCounter === 1), done);
 });
 
 Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.DoneCallback) => {

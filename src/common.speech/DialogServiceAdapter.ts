@@ -32,6 +32,7 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
     SpeechSynthesisOutputFormat,
+    TurnStatusReceivedEventArgs,
 } from "../sdk/Exports";
 import { DialogServiceTurnStateManager } from "./DialogServiceTurnStateManager";
 import {
@@ -208,28 +209,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             case "response":
                 {
-                    const responseRequestId = connectionMessage.requestId.toUpperCase();
-                    const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(connectionMessage.textBody);
-                    const turn = this.privTurnStateManager.GetTurn(responseRequestId);
+                    this.handleResponseMessage(connectionMessage);
 
-                    // update the conversation Id
-                    if (activityPayload.conversationId) {
-                        const updateAgentConfig = this.agentConfig.get();
-                        updateAgentConfig.botInfo.conversationId = activityPayload.conversationId;
-                        this.agentConfig.set(updateAgentConfig);
-                    }
-
-                    const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload, (SpeechSynthesisOutputFormat as any)[this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]);
-                    const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
-                    if (!!this.privDialogServiceConnector.activityReceived) {
-                        try {
-                            this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
-                            /* tslint:disable:no-empty */
-                        } catch (error) {
-                            // Not going to let errors in the event handler
-                            // trip things up.
-                        }
-                    }
                 }
                 processed = true;
                 break;
@@ -584,5 +565,58 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         const ev = new SpeechRecognitionEventArgs(result, offset, this.privRequestSession.sessionId);
         return ev;
+    }
+
+    private handleResponseMessage = (responseMessage: SpeechConnectionMessage): void => {
+        // "response" messages can contain either "message" (activity) or "MessageStatus" data. Fire the appropriate
+        // event according to the message type that's specified.
+        const responsePayload = JSON.parse(responseMessage.textBody);
+        switch (responsePayload.messageType.toLowerCase()) {
+            case "message":
+                const responseRequestId = responseMessage.requestId.toUpperCase();
+                const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(responseMessage.textBody);
+                const turn = this.privTurnStateManager.GetTurn(responseRequestId);
+
+                // update the conversation Id
+                if (activityPayload.conversationId) {
+                    const updateAgentConfig = this.agentConfig.get();
+                    updateAgentConfig.botInfo.conversationId = activityPayload.conversationId;
+                    this.agentConfig.set(updateAgentConfig);
+                }
+
+                const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(
+                    activityPayload,
+                    (SpeechSynthesisOutputFormat as any)[this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]);
+                const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
+                if (!!this.privDialogServiceConnector.activityReceived) {
+                    try {
+                        this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
+                        /* tslint:disable:no-empty */
+                    } catch (error) {
+                        // Not going to let errors in the event handler
+                        // trip things up.
+                    }
+                }
+                break;
+
+            case "messagestatus":
+                if (!!this.privDialogServiceConnector.turnStatusReceived) {
+                    try {
+                        this.privDialogServiceConnector.turnStatusReceived(
+                            this.privDialogServiceConnector,
+                            new TurnStatusReceivedEventArgs(responseMessage.textBody));
+                        /* tslint:disable:no-empty */
+                    } catch (error) {
+                        // Not going to let errors in the event handler
+                        // trip things up.
+                    }
+                }
+                break;
+
+            default:
+                Events.instance.onEvent(
+                    new BackgroundEvent("Unexpected response of type `${responsePayload.messageType}`. Ignoring."));
+                break;
+        }
     }
 }
