@@ -22,8 +22,10 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
+    SpeechSynthesisBookmarkEventArgs,
     SpeechSynthesisEventArgs,
     SpeechSynthesisResult,
+    SpeechSynthesisVisemeEventArgs,
     SpeechSynthesisWordBoundaryEventArgs,
     SpeechSynthesizer,
 } from "../sdk/Exports";
@@ -31,6 +33,7 @@ import {
     AgentConfig,
     CancellationErrorCodePropertyName,
     ISynthesisConnectionFactory,
+    MetadataType,
     SynthesisAudioMetadata,
     SynthesisContext,
     SynthesisTurn,
@@ -356,24 +359,55 @@ export class SynthesisAdapterBase implements IDisposable {
                     case "audio.metadata":
                         const metadataList = SynthesisAudioMetadata.fromJSON(connectionMessage.textBody).Metadata;
                         for (const metadata of metadataList) {
-                            if (metadata.Type.toLowerCase() === "WordBoundary".toLowerCase()) {
+                            switch (metadata.Type) {
+                                case MetadataType.WordBoundary:
+                                    this.privSynthesisTurn.onWordBoundaryEvent(metadata.Data.text.Text);
 
-                                this.privSynthesisTurn.onWordBoundaryEvent(metadata.Data.text.Text);
+                                    const ev: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
+                                        metadata.Data.Offset,
+                                        metadata.Data.text.Text,
+                                        metadata.Data.text.Length,
+                                        this.privSynthesisTurn.currentTextOffset);
 
-                                const ev: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
-                                    metadata.Data.Offset,
-                                    metadata.Data.text.Text,
-                                    metadata.Data.text.Length,
-                                    this.privSynthesisTurn.currentTextOffset);
-
-                                if (!!this.privSpeechSynthesizer.wordBoundary) {
-                                    try {
-                                        this.privSpeechSynthesizer.wordBoundary(this.privSpeechSynthesizer, ev);
-                                    } catch (error) {
-                                        // Not going to let errors in the event handler
-                                        // trip things up.
+                                    if (!!this.privSpeechSynthesizer.wordBoundary) {
+                                        try {
+                                            this.privSpeechSynthesizer.wordBoundary(this.privSpeechSynthesizer, ev);
+                                        } catch (error) {
+                                            // Not going to let errors in the event handler
+                                            // trip things up.
+                                        }
                                     }
-                                }
+                                    break;
+                                case MetadataType.Bookmark:
+                                    const bev: SpeechSynthesisBookmarkEventArgs = new SpeechSynthesisBookmarkEventArgs(
+                                        metadata.Data.Offset,
+                                        metadata.Data.Bookmark);
+
+                                    if (!!this.privSpeechSynthesizer.bookmark) {
+                                        try {
+                                            this.privSpeechSynthesizer.bookmark(this.privSpeechSynthesizer, bev);
+                                        } catch (error) {
+                                            // Not going to let errors in the event handler
+                                            // trip things up.
+                                        }
+                                    }
+                                    break;
+                                case MetadataType.Viseme:
+                                    const vev: SpeechSynthesisVisemeEventArgs = new SpeechSynthesisVisemeEventArgs(
+                                        metadata.Data.Offset,
+                                        metadata.Data.Viseme,
+                                        metadata.Data.Description,
+                                        metadata.Data.Animation);
+
+                                    if (!!this.privSpeechSynthesizer.viseme) {
+                                        try {
+                                            this.privSpeechSynthesizer.viseme(this.privSpeechSynthesizer, vev);
+                                        } catch (error) {
+                                            // Not going to let errors in the event handler
+                                            // trip things up.
+                                        }
+                                    }
+                                    break;
                             }
                         }
                         break;

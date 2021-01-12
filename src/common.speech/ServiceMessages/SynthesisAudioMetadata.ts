@@ -1,14 +1,24 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+export enum MetadataType {
+    WordBoundary = "WordBoundary",
+    Bookmark = "BookmarkReachedBoundary",
+    Viseme = "Viseme"
+}
+
 export interface ISynthesisMetadata {
-    Type: string;
+    Type: MetadataType;
     Data: {
         Offset: number;
         text: {
             Text: string;
             Length: number;
         };
+        Bookmark: string;
+        Viseme: string;
+        Description: string;
+        Animation: string;
     };
 }
 
