@@ -64,6 +64,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private agentConfigSent: boolean;
     private privLastResult: SpeechRecognitionResult;
     private privFormat: AudioOutputFormatImpl;
+    private privProcessingAudio: boolean;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -91,6 +92,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.agentConfigSent = false;
         this.privLastResult = null;
+        this.privProcessingAudio = false;
         this.privSessionAudioDestination = audioDestination;
         if (this.privSessionAudioDestination !== undefined) {
             /*
@@ -222,9 +224,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     if (this.privSessionAudioDestination !== undefined) {
                         if (!connectionMessage.binaryBody) {
                             this.privSessionAudioDestination.close();
+                            this.privProcessingAudio = false;
                         } else {
                             if (turn) {
-                                const binary = SynthesisAdapterBase.addHeader(connectionMessage.binaryBody, this.privFormat);
+                                const binary = this.privProcessingAudio ? connectionMessage.binaryBody : SynthesisAdapterBase.addHeader(connectionMessage.binaryBody, this.privFormat);
+                                this.privProcessingAudio = true;
                                 this.privSessionAudioDestination.write(binary);
                             }
                         }
@@ -235,7 +239,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         if (!connectionMessage.binaryBody) {
                             turn.endAudioStream();
                         } else {
-                            turn.audioStream.write(connectionMessage.binaryBody);
+                            const format = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Riff48Khz16BitMonoPcm);
+                            const binary = SynthesisAdapterBase.addHeader(connectionMessage.binaryBody, this.privFormat);
+                            turn.audioStream.write(binary);
                         }
                     } catch (error) {
                         // Not going to let errors in the event handler
