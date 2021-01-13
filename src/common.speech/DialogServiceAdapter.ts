@@ -9,6 +9,7 @@ import {
     createNoDashGuid,
     Deferred,
     Events,
+    IAudioDestination,
     IAudioSource,
     IAudioStreamNode,
     IConnection,
@@ -50,9 +51,11 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig";
 import { ActivityPayloadResponse } from "./ServiceMessages/ActivityResponsePayload";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+import { SynthesisAdapterBase } from "./SynthesisAdapterBase";
 
 export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privDialogServiceConnector: DialogServiceConnector;
+    private privSessionAudioDestination: IAudioDestination;
 
     private privDialogAudioSource: IAudioSource;
 
@@ -60,6 +63,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private terminateMessageLoop: boolean;
     private agentConfigSent: boolean;
     private privLastResult: SpeechRecognitionResult;
+    private privFormat: AudioOutputFormatImpl;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -70,6 +74,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         authentication: IAuthentication,
         connectionFactory: IConnectionFactory,
         audioSource: IAudioSource,
+        audioDestination: IAudioDestination,
         recognizerConfig: RecognizerConfig,
         dialogServiceConnector: DialogServiceConnector) {
 
@@ -86,6 +91,21 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.agentConfigSent = false;
         this.privLastResult = null;
+        this.privSessionAudioDestination = audioDestination;
+        if (this.privSessionAudioDestination !== undefined) {
+            /*
+            const format = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(
+                (SpeechSynthesisOutputFormat as any)[this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]
+            );
+            */
+            const format = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Riff48Khz16BitMonoPcm);
+            if (format !== undefined) {
+                this.privFormat = format;
+            } else {
+                this.privFormat = AudioOutputFormatImpl.getDefaultOutputFormat();
+            }
+            this.privSessionAudioDestination.format = this.privFormat;
+        }
     }
 
     public async sendMessage(message: string): Promise<void> {
@@ -109,6 +129,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             "application/json",
             agentMessageJson));
 
+    }
+
+    public async dispose(reason?: string): Promise<void> {
+        await super.dispose(reason);
+        if (this.privSessionAudioDestination !== undefined) {
+            this.privSessionAudioDestination.close();
+        }
     }
 
     protected async privDisconnect(): Promise<void> {
@@ -192,6 +219,17 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 {
                     const audioRequestId = connectionMessage.requestId.toUpperCase();
                     const turn = this.privTurnStateManager.GetTurn(audioRequestId);
+                    if (this.privSessionAudioDestination !== undefined) {
+                        if (!connectionMessage.binaryBody) {
+                            this.privSessionAudioDestination.close();
+                        } else {
+                            if (turn) {
+                                const binary = SynthesisAdapterBase.addHeader(connectionMessage.binaryBody, this.privFormat);
+                                this.privSessionAudioDestination.write(binary);
+                            }
+                        }
+                    }
+                    /*
                     try {
                         // Empty binary message signals end of stream.
                         if (!connectionMessage.binaryBody) {
@@ -203,6 +241,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // Not going to let errors in the event handler
                         // trip things up.
                     }
+                    */
                 }
                 processed = true;
                 break;
@@ -210,7 +249,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             case "response":
                 {
                     this.handleResponseMessage(connectionMessage);
-
                 }
                 processed = true;
                 break;
