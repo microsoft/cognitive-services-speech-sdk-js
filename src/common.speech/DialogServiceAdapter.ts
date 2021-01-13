@@ -210,7 +210,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             case "response":
                 {
                     this.handleResponseMessage(connectionMessage);
-
                 }
                 processed = true;
                 break;
@@ -583,10 +582,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     updateAgentConfig.botInfo.conversationId = activityPayload.conversationId;
                     this.agentConfig.set(updateAgentConfig);
                 }
-
-                const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(
-                    activityPayload,
-                    (SpeechSynthesisOutputFormat as any)[this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]);
+                const formatString = this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined);
+                const outputFormat = (formatString !== undefined) ? AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString(formatString) : AudioOutputFormatImpl.getDefaultOutputFormat();
+                const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload, outputFormat);
+                
                 const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
                 if (!!this.privDialogServiceConnector.activityReceived) {
                     try {
