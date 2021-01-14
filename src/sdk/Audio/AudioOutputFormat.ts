@@ -399,7 +399,9 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
     public updateHeader(audioLength: number): void {
         if (this.priHasHeader) {
             const view = new DataView(this.privHeader);
+            // Bytes 4-7 are for size of WAV file/buffer
             view.setUint32(4, audioLength, true);
+            // Bytes 40-43 are for size of WAV data
             view.setUint32(40, audioLength, true);
         }
     }
