@@ -178,7 +178,9 @@ test("Output format, default", () => {
     expect(dialogConfig.outputFormat === sdk.OutputFormat.Simple);
 });
 
-test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
+// Skip this test pending parity check with C++/C# -- 1006/404 is only returned when an unintended double-forwardslash
+// is present in the connection URL.
+test.skip("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Create BotFrameworkConfig, invalid optional botId");
 
@@ -191,7 +193,7 @@ test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallba
     connector.listenOnceAsync(
         (successResult: sdk.SpeechRecognitionResult) => {
             if (successResult.reason !== sdk.ResultReason.Canceled) {
-                done.fail(`listenOnceAsync shouldn't have reason '${successResult.reason} with this config`);
+                done.fail(`listenOnceAsync shouldn't have reason '${successResult.reason}' with this config`);
             } else {
                 expect(successResult.errorDetails).toContain("1006");
             }
