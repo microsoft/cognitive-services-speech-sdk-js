@@ -10,15 +10,17 @@ import { PullAudioOutputStream } from "./Audio/AudioOutputStream";
 export class ActivityReceivedEventArgs {
     private privActivity: any;
     private privAudioStream: PullAudioOutputStream;
+    private privPayload: ArrayBuffer;
 
     /**
      * Creates and initializes an instance of this class.
      * @constructor
      * @param {any} activity - The activity..
      */
-    public constructor(activity: any, audioStream?: PullAudioOutputStream) {
+    public constructor(activity: any, audioStream?: PullAudioOutputStream, payload?: ArrayBuffer) {
         this.privActivity = activity;
         this.privAudioStream = audioStream;
+        this.privPayload = payload;
     }
 
     /**
@@ -34,5 +36,9 @@ export class ActivityReceivedEventArgs {
 
     public get audioStream(): PullAudioOutputStream {
         return this.privAudioStream;
+    }
+
+    public get payload(): ArrayBuffer {
+        return this.privPayload;
     }
 }

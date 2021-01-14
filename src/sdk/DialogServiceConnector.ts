@@ -17,7 +17,7 @@ import {
     marshalPromiseToCallbacks
 } from "../common/Exports";
 import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
-import { AudioConfigImpl, AudioOutputConfigImpl } from "./Audio/AudioConfig";
+import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
 import {
@@ -256,9 +256,8 @@ export class DialogServiceConnector extends Recognizer {
         recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
 
         const audioSource: AudioConfigImpl = audioConfig as AudioConfigImpl;
-        const audioOutputConfig = (typeof window === "undefined") ? undefined : AudioConfig.fromDefaultSpeakerOutput();
 
-        return new DialogServiceAdapter(authentication, connectionFactory, audioSource, audioOutputConfig as AudioOutputConfigImpl, recognizerConfig, this);
+        return new DialogServiceAdapter(authentication, connectionFactory, audioSource, recognizerConfig, this);
     }
 
     private buildAgentConfig(): IAgentConfig {

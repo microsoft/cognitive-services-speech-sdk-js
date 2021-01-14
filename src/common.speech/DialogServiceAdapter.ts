@@ -55,7 +55,6 @@ import { SynthesisAdapterBase } from "./SynthesisAdapterBase";
 
 export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privDialogServiceConnector: DialogServiceConnector;
-    private privSessionAudioDestination: IAudioDestination;
 
     private privDialogAudioSource: IAudioSource;
 
@@ -64,6 +63,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private agentConfigSent: boolean;
     private privLastResult: SpeechRecognitionResult;
     private privFormat: AudioOutputFormatImpl;
+    private privBuffer: ArrayBuffer;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -74,7 +74,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         authentication: IAuthentication,
         connectionFactory: IConnectionFactory,
         audioSource: IAudioSource,
-        audioDestination: IAudioDestination,
         recognizerConfig: RecognizerConfig,
         dialogServiceConnector: DialogServiceConnector) {
 
@@ -91,21 +90,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.agentConfigSent = false;
         this.privLastResult = null;
-        this.privSessionAudioDestination = audioDestination;
-        if (this.privSessionAudioDestination !== undefined) {
-            /*
-            const format = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(
-                (SpeechSynthesisOutputFormat as any)[this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]
-            );
-            */
-            const format = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Riff48Khz16BitMonoPcm);
-            if (format !== undefined) {
-                this.privFormat = format;
-            } else {
-                this.privFormat = AudioOutputFormatImpl.getDefaultOutputFormat();
-            }
-            this.privSessionAudioDestination.format = this.privFormat;
-        }
+        this.privBuffer = new ArrayBuffer(0);
     }
 
     public async sendMessage(message: string): Promise<void> {
@@ -129,13 +114,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             "application/json",
             agentMessageJson));
 
-    }
-
-    public async dispose(reason?: string): Promise<void> {
-        await super.dispose(reason);
-        if (this.privSessionAudioDestination !== undefined) {
-            this.privSessionAudioDestination.close();
-        }
     }
 
     protected async privDisconnect(): Promise<void> {
@@ -219,13 +197,29 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 {
                     const audioRequestId = connectionMessage.requestId.toUpperCase();
                     const turn = this.privTurnStateManager.GetTurn(audioRequestId);
-                    if (this.privSessionAudioDestination !== undefined) {
-                        if (!connectionMessage.binaryBody) {
-                            this.privSessionAudioDestination.close();
-                        } else {
-                            if (turn) {
-                                this.privSessionAudioDestination.write(connectionMessage.binaryBody);
+                    if (!connectionMessage.binaryBody && this.privBuffer.byteLength > 0) {
+                        const format = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm);
+                        const binary = SynthesisAdapterBase.addHeader(this.privBuffer, format);
+                        const activity = new ActivityReceivedEventArgs({}, null, binary);
+                        if (!!this.privDialogServiceConnector.activityReceived) {
+                            try {
+                                this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
+                                /* tslint:disable:no-empty */
+                            } catch (error) {
+                                // Not going to let errors in the event handler
+                                // trip things up.
                             }
+                        }
+                        this.privBuffer = new ArrayBuffer(0);
+                    } else {
+                        if (turn) {
+                            const tmpBuffer = new Uint8Array(this.privBuffer.byteLength + connectionMessage.binaryBody.byteLength);
+                            const sourceBuffer = new Uint8Array(connectionMessage.binaryBody);
+                            const targetBuffer = new Uint8Array(this.privBuffer);
+                            tmpBuffer.set(targetBuffer, 0);
+                            tmpBuffer.set(sourceBuffer, targetBuffer.length);
+                            this.privBuffer = tmpBuffer.buffer;
+                            // this.privSessionAudioDestination.write(connectionMessage.binaryBody);
                         }
                     }
                     /*
