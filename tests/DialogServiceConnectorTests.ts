@@ -188,12 +188,17 @@ test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallba
     const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(botConfig);
 
     // the service should return an error if an invalid botId was specified, even though the subscription is valid
-    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
-        done.fail();
-    },
-        (error: string) => {
+    connector.listenOnceAsync(
+        (successResult: sdk.SpeechRecognitionResult) => {
+            if (successResult.reason !== sdk.ResultReason.Canceled) {
+                done.fail(`listenOnceAsync shouldn't have reason '${successResult.reason} with this config`);
+            } else {
+                expect(successResult.errorDetails).toContain("1006");
+            }
+        },
+        (failureDetails: string) => {
             try {
-                expect(error).toContain("1006");
+                expect(failureDetails).toContain("1006");
                 done();
             } catch (error) {
                 done.fail(error);
@@ -1159,6 +1164,15 @@ describe.each([
         "myApplicationId",
     ],
     [
+        "Simulated BotFrameworkConfig.fromHost with appId via properties",
+        "simulatedFromHostWithProperties",
+        ["ws://customhostname.com/", "api/v3", "X-DLS-Secret"],
+        ["convai", "wss://", "//hostName", "Authorization"],
+        undefined,
+        new URL("ws://customHostName.com"),
+        "myApplicationId",
+    ],
+    [
         "BotFrameworkConfig.fromAuthorizationToken with appId",
         sdk.BotFrameworkConfig.fromAuthorizationToken,
         ["wss://region.convai.speech", "api/v3", "Authorization", "X-DLS-Secret"],
@@ -1171,6 +1185,17 @@ describe.each([
     [
         "BotFrameworkConfig.fromEndpoint",
         sdk.BotFrameworkConfig.fromEndpoint,
+        ["ws://this.is/my/custom/endpoint", "Subscription-Key"],
+        ["wss", "api/v3", "convai", "X-DLS-Secret"],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        new URL("ws://this.is/my/custom/endpoint"),
+    ],
+    [
+        "Simulated BotFrameworkConfig.fromEndpoint with properties",
+        "simulatedFromEndpointWithProperties",
         ["ws://this.is/my/custom/endpoint", "Subscription-Key"],
         ["wss", "api/v3", "convai", "X-DLS-Secret"],
         undefined,
@@ -1234,7 +1259,6 @@ describe.each([
                 result = configCreationMethod("testKey", overrideRegion ?? "region");
                 break;
             case sdk.BotFrameworkConfig.fromHost:
-                console.log(`overrideHost: ${overrideHost}`);
                 result = configCreationMethod(overrideHost ?? new URL("wss://hostName"), "testKey");
                 break;
             case sdk.BotFrameworkConfig.fromAuthorizationToken:
@@ -1249,6 +1273,16 @@ describe.each([
                 expect(applicationId).not.toBeUndefined();
                 result = configCreationMethod(applicationId, "testKey", overrideRegion ?? "region");
                 break;
+            case "simulatedFromHostWithProperties":
+                result = sdk.BotFrameworkConfig.fromSubscription("testKey", overrideRegion ?? "region");
+                const host = overrideHost ?? "wss://my.custom.host";
+                const hostPropertyValue: string = (overrideHost as string) ?? overrideHost.toString();
+                result.setProperty(sdk.PropertyId.SpeechServiceConnection_Host, hostPropertyValue);
+                break;
+            case "simulatedFromEndpointWithProperties":
+                result = sdk.BotFrameworkConfig.fromSubscription("testKey", overrideRegion ?? "region");
+                result.setProperty(sdk.PropertyId.SpeechServiceConnection_Endpoint, endpoint.toString());
+                break;
             default:
                 result = undefined;
         }
@@ -1262,7 +1296,7 @@ describe.each([
         return result;
     }
 
-    test(`Validate:`, async (done: jest.DoneCallback) => {
+    test(`Validate: ${description}`, async (done: jest.DoneCallback) => {
         const config = getConfig();
         connector = new sdk.DialogServiceConnector(config);
         expect(connector).not.toBeUndefined();
@@ -1285,7 +1319,7 @@ describe.each([
                 }
                 // Known issue: reconnection attempts continue upon failure; we'll wait a short
                 // period of time here to avoid logger pollution.
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise((resolve: any) => setTimeout(resolve, 1000));
                 done();
             },
         );
