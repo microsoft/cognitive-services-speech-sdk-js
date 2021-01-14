@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { Contracts } from "./Contracts";
-import { DialogServiceConfigImpl } from "./DialogServiceConfig";
+import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
 import { PropertyId } from "./Exports";
 
 /**
@@ -33,7 +33,7 @@ export class BotFrameworkConfig extends DialogServiceConfigImpl {
         Contracts.throwIfNullOrWhitespace(region, "region");
 
         const botFrameworkConfig: BotFrameworkConfig = new DialogServiceConfigImpl();
-        botFrameworkConfig.setProperty(PropertyId.Conversation_DialogType, "bot_framework");
+        botFrameworkConfig.setProperty(PropertyId.Conversation_DialogType, DialogServiceConfig.DialogTypes.BotFramework);
         botFrameworkConfig.setProperty(PropertyId.SpeechServiceConnection_Key, subscription);
         botFrameworkConfig.setProperty(PropertyId.SpeechServiceConnection_Region, region);
 
@@ -64,7 +64,7 @@ export class BotFrameworkConfig extends DialogServiceConfigImpl {
         Contracts.throwIfNullOrWhitespace(region, "region");
 
         const botFrameworkConfig: BotFrameworkConfig = new DialogServiceConfigImpl();
-        botFrameworkConfig.setProperty(PropertyId.Conversation_DialogType, "bot_framework");
+        botFrameworkConfig.setProperty(PropertyId.Conversation_DialogType, DialogServiceConfig.DialogTypes.BotFramework);
         botFrameworkConfig.setProperty(PropertyId.SpeechServiceAuthorization_Token, authorizationToken);
         botFrameworkConfig.setProperty(PropertyId.SpeechServiceConnection_Region, region);
 
@@ -102,7 +102,7 @@ export class BotFrameworkConfig extends DialogServiceConfigImpl {
         Contracts.throwIfNullOrUndefined(resolvedHost, "resolvedHost");
 
         const botFrameworkConfig: BotFrameworkConfig = new DialogServiceConfigImpl();
-        botFrameworkConfig.setProperty(PropertyId.Conversation_DialogType, "bot_framework");
+        botFrameworkConfig.setProperty(PropertyId.Conversation_DialogType, DialogServiceConfig.DialogTypes.BotFramework);
         botFrameworkConfig.setProperty(PropertyId.SpeechServiceConnection_Host, resolvedHost.toString());
 
         if (undefined !== subscriptionKey) {
@@ -130,7 +130,7 @@ export class BotFrameworkConfig extends DialogServiceConfigImpl {
         Contracts.throwIfNull(endpoint, "endpoint");
 
         const botFrameworkConfig: BotFrameworkConfig = new DialogServiceConfigImpl();
-        botFrameworkConfig.setProperty(PropertyId.Conversation_DialogType, "bot_framework");
+        botFrameworkConfig.setProperty(PropertyId.Conversation_DialogType, DialogServiceConfig.DialogTypes.BotFramework);
         botFrameworkConfig.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.toString());
 
         if (undefined !== subscriptionKey) {

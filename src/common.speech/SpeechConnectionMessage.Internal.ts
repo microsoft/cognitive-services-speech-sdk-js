@@ -2,12 +2,7 @@
 // Licensed under the MIT license.
 
 import { ArgumentNullError, ConnectionMessage, IStringDictionary, MessageType } from "../common/Exports";
-
-const PathHeaderName: string = "Path";
-const ContentTypeHeaderName: string = "Content-Type";
-const RequestIdHeaderName: string = "X-RequestId";
-const RequestTimestampHeaderName: string = "X-Timestamp";
-const RequestStreamIdHeaderName: string = "x-streamid";
+import { HeaderNames } from "./HeaderNames";
 
 export class SpeechConnectionMessage extends ConnectionMessage {
 
@@ -36,15 +31,15 @@ export class SpeechConnectionMessage extends ConnectionMessage {
         }
 
         const headers: IStringDictionary<string> = {};
-        headers[PathHeaderName] = path;
-        headers[RequestIdHeaderName] = requestId;
-        headers[RequestTimestampHeaderName] = new Date().toISOString();
+        headers[HeaderNames.Path] = path;
+        headers[HeaderNames.RequestId] = requestId;
+        headers[HeaderNames.RequestTimestamp] = new Date().toISOString();
         if (contentType) {
-            headers[ContentTypeHeaderName] = contentType;
+            headers[HeaderNames.ContentType] = contentType;
         }
 
         if (streamId) {
-            headers[RequestStreamIdHeaderName] = streamId;
+            headers[HeaderNames.RequestStreamId] = streamId;
         }
 
         if (additionalHeaders) {
@@ -100,15 +95,15 @@ export class SpeechConnectionMessage extends ConnectionMessage {
         if (message.headers) {
             for (const headerName in message.headers) {
                 if (headerName) {
-                    if (headerName.toLowerCase() === PathHeaderName.toLowerCase()) {
+                    if (headerName.toLowerCase() === HeaderNames.Path.toLowerCase()) {
                         path = message.headers[headerName];
-                    } else if (headerName.toLowerCase() === RequestIdHeaderName.toLowerCase()) {
+                    } else if (headerName.toLowerCase() === HeaderNames.RequestId.toLowerCase()) {
                         requestId = message.headers[headerName];
-                    } else if (headerName.toLowerCase() === RequestTimestampHeaderName.toLowerCase()) {
+                    } else if (headerName.toLowerCase() === HeaderNames.RequestTimestamp.toLowerCase()) {
                         requestTimestamp = message.headers[headerName];
-                    } else if (headerName.toLowerCase() === ContentTypeHeaderName.toLowerCase()) {
+                    } else if (headerName.toLowerCase() === HeaderNames.ContentType.toLowerCase()) {
                         contentType = message.headers[headerName];
-                    } else if (headerName.toLowerCase() === RequestStreamIdHeaderName.toLowerCase()) {
+                    } else if (headerName.toLowerCase() === HeaderNames.RequestStreamId.toLowerCase()) {
                         streamId = message.headers[headerName];
                     } else {
                         additionalHeaders[headerName] = message.headers[headerName];

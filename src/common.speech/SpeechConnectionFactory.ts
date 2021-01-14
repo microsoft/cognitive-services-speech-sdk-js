@@ -26,6 +26,7 @@ import {
     RecognizerConfig,
     WebsocketMessageFormatter
 } from "./Exports";
+import { HeaderNames } from "./HeaderNames";
 import {
     QueryParameterNames
 } from "./QueryParameterNames";
@@ -52,21 +53,21 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         const language: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, undefined);
 
         if (endpointId) {
-            if (!endpoint || endpoint.search(QueryParameterNames.DeploymentIdParamName) === -1) {
-                queryParams[QueryParameterNames.DeploymentIdParamName] = endpointId;
+            if (!endpoint || endpoint.search(QueryParameterNames.CustomSpeechDeploymentId) === -1) {
+                queryParams[QueryParameterNames.CustomSpeechDeploymentId] = endpointId;
             }
         } else if (language) {
-            if (!endpoint || endpoint.search(QueryParameterNames.LanguageParamName) === -1) {
-                queryParams[QueryParameterNames.LanguageParamName] = language;
+            if (!endpoint || endpoint.search(QueryParameterNames.Language) === -1) {
+                queryParams[QueryParameterNames.Language] = language;
             }
         }
 
-        if (!endpoint || endpoint.search(QueryParameterNames.FormatParamName) === -1) {
-            queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
+        if (!endpoint || endpoint.search(QueryParameterNames.Format) === -1) {
+            queryParams[QueryParameterNames.Format] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
         }
 
         if (config.autoDetectSourceLanguages !== undefined) {
-            queryParams[QueryParameterNames.EnableLanguageID] = "true";
+            queryParams[QueryParameterNames.EnableLanguageId] = "true";
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);
@@ -93,7 +94,7 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         if (authInfo.token !== undefined && authInfo.token !== "") {
             headers[authInfo.headerName] = authInfo.token;
         }
-        headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
+        headers[HeaderNames.ConnectionId] = connectionId;
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 

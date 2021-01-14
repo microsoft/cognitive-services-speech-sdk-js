@@ -6,6 +6,8 @@ import {
     ConsoleLoggingListener,
     WebsocketMessageAdapter,
 } from "../src/common.browser/Exports";
+import { HeaderNames } from "../src/common.speech/HeaderNames";
+import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
 import {
     ConnectionStartEvent,
     Events,
@@ -180,7 +182,7 @@ test("Output format, default", () => {
 
 // Skip this test pending parity check with C++/C# -- 1006/404 is only returned when an unintended double-forwardslash
 // is present in the connection URL.
-test.skip("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
+test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Create BotFrameworkConfig, invalid optional botId");
 
@@ -198,13 +200,12 @@ test.skip("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneC
                 expect(successResult.errorDetails).toContain("1006");
             }
         },
-        (failureDetails: string) => {
-            try {
-                expect(failureDetails).toContain("1006");
-                done();
-            } catch (error) {
-                done.fail(error);
-            }
+        async (failureDetails: string) => {
+            expect(failureDetails).toContain("1006");
+            // Known issue: reconnection attempts continue upon failure; we'll wait a short
+            // period of time here to avoid logger pollution.
+            await new Promise((resolve: any) => setTimeout(resolve, 1000));
+            done();
         });
 }, 15000);
 
@@ -1129,12 +1130,12 @@ describe.each([
         "Standard BotFrameworkConfig.fromSubscription",
         sdk.BotFrameworkConfig.fromSubscription,
         ["wss://region.convai.speech", "api/v3"],
-        ["X-DLS-Secret"],
+        [QueryParameterNames.BotId],
     ],
     [
         "BotFrameworkConfig.fromSubscription with region and appId",
         sdk.BotFrameworkConfig.fromSubscription,
-        ["wss://differentRegion.convai.speech", "api/v3", "X-DLS-Secret"],
+        ["wss://differentRegion.convai.speech", "api/v3", QueryParameterNames.BotId],
         ["wss://region.convai"],
         "differentRegion",
         undefined,
@@ -1159,7 +1160,7 @@ describe.each([
     [
         "BotFrameworkConfig.fromHost with appId",
         sdk.BotFrameworkConfig.fromHost,
-        ["ws://customhostname.com/", "api/v3", "X-DLS-Secret"],
+        ["ws://customhostname.com/", "api/v3", QueryParameterNames.BotId],
         ["convai", "wss://", "//hostName", "Authorization"],
         undefined,
         new URL("ws://customHostName.com"),
@@ -1168,7 +1169,7 @@ describe.each([
     [
         "Simulated BotFrameworkConfig.fromHost with appId via properties",
         "simulatedFromHostWithProperties",
-        ["ws://customhostname.com/", "api/v3", "X-DLS-Secret"],
+        ["ws://customhostname.com/", "api/v3", QueryParameterNames.BotId],
         ["convai", "wss://", "//hostName", "Authorization"],
         undefined,
         new URL("ws://customHostName.com"),
@@ -1177,8 +1178,8 @@ describe.each([
     [
         "BotFrameworkConfig.fromAuthorizationToken with appId",
         sdk.BotFrameworkConfig.fromAuthorizationToken,
-        ["wss://region.convai.speech", "api/v3", "Authorization", "X-DLS-Secret"],
-        ["Subscription-Key"],
+        ["wss://region.convai.speech", "api/v3", "Authorization", QueryParameterNames.BotId],
+        [HeaderNames.AuthKey],
         undefined,
         undefined,
         "myApplicationId",
@@ -1187,8 +1188,8 @@ describe.each([
     [
         "BotFrameworkConfig.fromEndpoint",
         sdk.BotFrameworkConfig.fromEndpoint,
-        ["ws://this.is/my/custom/endpoint", "Subscription-Key"],
-        ["wss", "api/v3", "convai", "X-DLS-Secret"],
+        ["ws://this.is/my/custom/endpoint", HeaderNames.AuthKey],
+        ["wss", "api/v3", "convai", QueryParameterNames.BotId],
         undefined,
         undefined,
         undefined,
@@ -1199,7 +1200,7 @@ describe.each([
         "Simulated BotFrameworkConfig.fromEndpoint with properties",
         "simulatedFromEndpointWithProperties",
         ["ws://this.is/my/custom/endpoint", "Subscription-Key"],
-        ["wss", "api/v3", "convai", "X-DLS-Secret"],
+        ["wss", "api/v3", "convai", QueryParameterNames.BotId],
         undefined,
         undefined,
         undefined,
@@ -1209,8 +1210,8 @@ describe.each([
     [
         "Standard CustomCommandsConfig.fromSubscription",
         sdk.CustomCommandsConfig.fromSubscription,
-        ["wss://region.convai.speech.microsoft.com/commands/api/v1", "X-CommandsAppId"],
-        ["api/v3", "X-DLS-Secret"],
+        ["wss://region.convai.speech.microsoft.com/commands/api/v1", HeaderNames.CustomCommandsAppId],
+        ["api/v3"],
         undefined,
         undefined,
         "myApplicationId",

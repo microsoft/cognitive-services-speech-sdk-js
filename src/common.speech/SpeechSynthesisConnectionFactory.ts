@@ -15,6 +15,7 @@ import {
     SynthesizerConfig,
     WebsocketMessageFormatter
 } from "./Exports";
+import { HeaderNames } from "./HeaderNames";
 import { ISynthesisConnectionFactory } from "./ISynthesisConnectionFactory";
 import {
     QueryParameterNames
@@ -46,9 +47,9 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
         if (authInfo.token !== undefined && authInfo.token !== "") {
             headers[authInfo.headerName] = authInfo.token;
         }
-        headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
+        headers[HeaderNames.ConnectionId] = connectionId;
         if (endpointId !== undefined) {
-            headers[QueryParameterNames.CustomVoiceDeploymentIdParamName] = endpointId;
+            headers[QueryParameterNames.CustomVoiceDeploymentId] = endpointId;
         }
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
