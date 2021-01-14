@@ -64,7 +64,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private agentConfigSent: boolean;
     private privLastResult: SpeechRecognitionResult;
     private privFormat: AudioOutputFormatImpl;
-    private privProcessingAudio: boolean;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -92,7 +91,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.agentConfigSent = false;
         this.privLastResult = null;
-        this.privProcessingAudio = false;
         this.privSessionAudioDestination = audioDestination;
         if (this.privSessionAudioDestination !== undefined) {
             /*
@@ -224,7 +222,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     if (this.privSessionAudioDestination !== undefined) {
                         if (!connectionMessage.binaryBody) {
                             this.privSessionAudioDestination.close();
-                            this.privProcessingAudio = false;
                         } else {
                             if (turn) {
                                 this.privSessionAudioDestination.write(connectionMessage.binaryBody);
@@ -236,7 +233,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // Empty binary message signals end of stream.
                         if (!connectionMessage.binaryBody) {
                             turn.endAudioStream();
-                            this.privProcessingAudio = false;
                         } else {
                             turn.audioStream.write(binary);
                         }
