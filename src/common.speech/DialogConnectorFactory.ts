@@ -13,12 +13,12 @@ import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports
 import { HeaderNames } from "./HeaderNames";
 import { QueryParameterNames } from "./QueryParameterNames";
 
-const baseUrl: string = "convai.speech";
-
-const pathSuffix: string = "api";
-const connectionID: string = "connectionId";
-
 export class DialogConnectionFactory extends ConnectionFactoryBase {
+
+    private Constants: any = class {
+        private ApiKey: string = "api";
+        private BaseUrl: string = "convai.speech";
+    };
 
     public create = (
         config: RecognizerConfig,
@@ -66,8 +66,8 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
             const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
             const host: string = config.parameters.getProperty(
                 PropertyId.SpeechServiceConnection_Host,
-                `wss://${region}.${baseUrl}${hostSuffix}`);
-            endpoint = `${host}${resourceInfix}/api/${version}`;
+                `wss://${region}.${this.Constants.BaseUrl}${hostSuffix}`);
+            endpoint = `${host}${resourceInfix}/${this.Constants.ApiKey}/${version}`;
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);

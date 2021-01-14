@@ -96,7 +96,6 @@ export abstract class DialogServiceConfig {
     // tslint:disable-next-line: no-empty
     public set applicationId(value: string) { }
 
-    // tslint:disable-next-line:max-classes-per-file
     public static DialogTypes: any = class {
         public static BotFramework: string = "bot_framework";
         public static CustomCommands: string = "custom_commands";
