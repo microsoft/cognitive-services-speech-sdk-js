@@ -78,15 +78,19 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
             headers[authHeader] = applicationId;
         }
 
+        // The URL used for connection is chosen in a priority order of specification:
+        //  1. If a custom endpoint is provided, that URL is used verbatim.
+        //  2. If a custom host is provided (e.g. "wss://my.custom.endpoint.com:1123"), a URL is constructed from it.
+        //  3. If no custom connection details are provided, a URL is constructed from default values.
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, "");
         if (endpoint === "") {
             const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
-            // ApplicationId is only required for CustomCommands, so we're using that to determine default endpoint
-            if (applicationId === "") {
-                endpoint = `wss://${region}.${baseUrl}${hostSuffix}/${pathSuffix}/${version}`;
-            } else {
-                endpoint = `wss://${region}.${baseUrl}${hostSuffix}/${resourcePath}/${pathSuffix}/${version}`;
-            }
+            const host: string = config.parameters.getProperty(
+                PropertyId.SpeechServiceConnection_Host,
+                `wss://${region}.${baseUrl}${hostSuffix}`);
+            endpoint = `${host}`
+                + (resourcePath ? `/${resourcePath}` : "")
+                + `/${pathSuffix}/${version}`;
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);

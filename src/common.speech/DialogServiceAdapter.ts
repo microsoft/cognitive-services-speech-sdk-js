@@ -615,7 +615,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             default:
                 Events.instance.onEvent(
+<<<<<<< HEAD
                     new BackgroundEvent("Unexpected response of type `${responsePayload.messageType}`. Ignoring."));
+=======
+                    new BackgroundEvent(`Unexpected response of type ${responsePayload.messageType}. Ignoring.`));
+>>>>>>> user/travisw/turnstatus
                 break;
         }
     }
