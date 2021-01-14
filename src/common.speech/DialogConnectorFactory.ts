@@ -15,9 +15,9 @@ import { QueryParameterNames } from "./QueryParameterNames";
 
 export class DialogConnectionFactory extends ConnectionFactoryBase {
 
-    private Constants: any = class {
-        private ApiKey: string = "api";
-        private BaseUrl: string = "convai.speech";
+    private static Constants: any = class {
+        private static ApiKey: string = "api";
+        private static BaseUrl: string = "convai.speech";
     };
 
     public create = (
@@ -66,8 +66,8 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
             const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
             const host: string = config.parameters.getProperty(
                 PropertyId.SpeechServiceConnection_Host,
-                `wss://${region}.${this.Constants.BaseUrl}${hostSuffix}`);
-            endpoint = `${host}${resourceInfix}/${this.Constants.ApiKey}/${version}`;
+                `wss://${region}.${DialogConnectionFactory.Constants.BaseUrl}${hostSuffix}`);
+            endpoint = `${host}${resourceInfix}/${DialogConnectionFactory.Constants.ApiKey}/${version}`;
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);
