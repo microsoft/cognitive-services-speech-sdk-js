@@ -7,10 +7,13 @@ import {
     WebsocketMessageAdapter,
 } from "../src/common.browser/Exports";
 import {
+    ConnectionStartEvent,
     Events,
     EventType,
+    IDetachable,
+    PlatformEvent,
 } from "../src/common/Exports";
-import { OutputFormat, PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
+import { BotFrameworkConfig, OutputFormat, PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
 import {
     closeAsyncObjects,
@@ -1100,5 +1103,191 @@ test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) =>
     connector.sendActivityAsync(malformedJSON, () => { done.fail("Should have failed"); }, (error: string) => {
         expect(error).toContain("Unexpected token");
         done();
+    });
+});
+
+describe.each([
+    /* [
+      <description>,
+      <method to use for creating the config>,
+      <expected fragments in connection URI>,
+      <unexpected fragments in connection URI>,
+      ?<override region to use>,
+      ?<override host to use>,
+      ?<applicationId to use>,
+      ?<authToken to use>,
+      ?<endpoint to use>,
+    ] */
+    [
+        "Standard BotFrameworkConfig.fromSubscription",
+        sdk.BotFrameworkConfig.fromSubscription,
+        ["wss://region.convai.speech", "api/v3"],
+        ["X-DLS-Secret"],
+    ],
+    [
+        "BotFrameworkConfig.fromSubscription with region and appId",
+        sdk.BotFrameworkConfig.fromSubscription,
+        ["wss://differentRegion.convai.speech", "api/v3", "X-DLS-Secret"],
+        ["wss://region.convai"],
+        "differentRegion",
+        undefined,
+        "myApplicationId",
+    ],
+    [
+        "Standard BotFrameworkConfig.fromHost",
+        sdk.BotFrameworkConfig.fromHost,
+        ["wss://hostname/", "api/v3"],
+        ["convai"],
+    ],
+    [
+        "BotFrameworkConfig.fromHost with implicit URL generation",
+        sdk.BotFrameworkConfig.fromHost,
+        ["wss://basename.convai.speech.azure.us/", "api/v3"],
+        ["hostname"],
+        undefined,
+        "baseName",
+        undefined,
+        undefined,
+    ],
+    [
+        "BotFrameworkConfig.fromHost with appId",
+        sdk.BotFrameworkConfig.fromHost,
+        ["ws://customhostname.com/", "api/v3", "X-DLS-Secret"],
+        ["convai", "wss://", "//hostName", "Authorization"],
+        undefined,
+        new URL("ws://customHostName.com"),
+        "myApplicationId",
+    ],
+    [
+        "BotFrameworkConfig.fromAuthorizationToken with appId",
+        sdk.BotFrameworkConfig.fromAuthorizationToken,
+        ["wss://region.convai.speech", "api/v3", "Authorization", "X-DLS-Secret"],
+        ["Subscription-Key"],
+        undefined,
+        undefined,
+        "myApplicationId",
+        "myAuthToken",
+    ],
+    [
+        "BotFrameworkConfig.fromEndpoint",
+        sdk.BotFrameworkConfig.fromEndpoint,
+        ["ws://this.is/my/custom/endpoint", "Subscription-Key"],
+        ["wss", "api/v3", "convai", "X-DLS-Secret"],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        new URL("ws://this.is/my/custom/endpoint"),
+    ],
+    [
+        "Standard CustomCommandsConfig.fromSubscription",
+        sdk.CustomCommandsConfig.fromSubscription,
+        ["wss://region.convai.speech.microsoft.com/commands/api/v1", "X-CommandsAppId"],
+        ["api/v3", "X-DLS-Secret"],
+        undefined,
+        undefined,
+        "myApplicationId",
+    ],
+])("Connection URL contents", (
+    description: string,
+    configCreationMethod: any,
+    expectedContainedThings: string[],
+    expectedNotContainedThings: string[],
+    overrideRegion: string = undefined,
+    overrideHost: string | URL = undefined,
+    applicationId: string = undefined,
+    authToken: string = undefined,
+    endpoint: URL = undefined,
+) => {
+    let observedUri: string;
+    let eventListener: IDetachable;
+    let connector: sdk.DialogServiceConnector;
+
+    async function detachListener(): Promise<void> {
+        if (eventListener) {
+            await eventListener.detach();
+            eventListener = undefined;
+        }
+    }
+
+    beforeEach(() => {
+        eventListener = Events.instance.attachListener({
+            onEvent: (event: PlatformEvent) => {
+                if (event instanceof ConnectionStartEvent) {
+                    const connectionEvent = event as ConnectionStartEvent;
+                    observedUri = connectionEvent.uri;
+                }
+            },
+        });
+    });
+
+    afterEach(async () => {
+        await eventListener.detach();
+        observedUri = undefined;
+    });
+
+    function getConfig(): sdk.DialogServiceConfig {
+        let result: sdk.DialogServiceConfig;
+
+        switch (configCreationMethod) {
+            case sdk.BotFrameworkConfig.fromSubscription:
+                result = configCreationMethod("testKey", overrideRegion ?? "region");
+                break;
+            case sdk.BotFrameworkConfig.fromHost:
+                console.log(`overrideHost: ${overrideHost}`);
+                result = configCreationMethod(overrideHost ?? new URL("wss://hostName"), "testKey");
+                break;
+            case sdk.BotFrameworkConfig.fromAuthorizationToken:
+                expect(authToken).not.toBeUndefined();
+                result = configCreationMethod(authToken, overrideRegion ?? "region");
+                break;
+            case sdk.BotFrameworkConfig.fromEndpoint:
+                expect(endpoint).not.toBeUndefined();
+                result = configCreationMethod(endpoint, "testKey");
+                break;
+            case sdk.CustomCommandsConfig.fromSubscription:
+                expect(applicationId).not.toBeUndefined();
+                result = configCreationMethod(applicationId, "testKey", overrideRegion ?? "region");
+                break;
+            default:
+                result = undefined;
+        }
+
+        expect(result).not.toBeUndefined();
+
+        if (applicationId) {
+            result.setProperty(PropertyId.Conversation_ApplicationId, applicationId);
+        }
+
+        return result;
+    }
+
+    test(`Validate:`, async (done: jest.DoneCallback) => {
+        const config = getConfig();
+        connector = new sdk.DialogServiceConnector(config);
+        expect(connector).not.toBeUndefined();
+
+        connector.listenOnceAsync(
+            (successArgs: any) => {
+                done.fail("Success callback not expected with invalid auth details!");
+            },
+            async (failureArgs?: string) => {
+                expect(observedUri).not.toBeUndefined();
+                for (const expectedThing of expectedContainedThings) {
+                    expect(observedUri).toEqual(expect.stringContaining(expectedThing));
+                }
+                for (const unexpectedThing of expectedNotContainedThings) {
+                    expect(observedUri.toLowerCase()).not.toEqual(
+                        expect.stringContaining(unexpectedThing.toLowerCase()));
+                }
+                if (applicationId) {
+                    expect(observedUri).toEqual(expect.stringContaining(applicationId));
+                }
+                // Known issue: reconnection attempts continue upon failure; we'll wait a short
+                // period of time here to avoid logger pollution.
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                done();
+            },
+        );
     });
 });

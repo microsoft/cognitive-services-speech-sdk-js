@@ -25,7 +25,7 @@ export abstract class DialogServiceConfig {
      * @param {string} name - The name of the property to set.
      * @param {string} value - The new value of the property.
      */
-    public abstract setProperty(name: string, value: string): void;
+    public abstract setProperty(name: string | PropertyId, value: string): void;
 
     /**
      * Returns the current value of an arbitrary property.
@@ -36,7 +36,7 @@ export abstract class DialogServiceConfig {
      * @param {string} def - The value to return in case the property is not known.
      * @returns {string} The current value, or provided default, of the given property.
      */
-    public abstract getProperty(name: string, def?: string): string;
+    public abstract getProperty(name: string | PropertyId, def?: string): string;
 
     /**
      * @member DialogServiceConfig.prototype.setServiceProperty
