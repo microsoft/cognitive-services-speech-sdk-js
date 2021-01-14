@@ -118,11 +118,17 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                     `Unknown mimeType for format ${AudioFormatTag[this.privFormat.formatTag]}.`);
 
             } else if (typeof (MediaSource) !== "undefined" && MediaSource.isTypeSupported(mimeType)) {
-                this.privAudio = new Audio();
-                this.privAudioBuffer = [];
-                this.privMediaSource = new MediaSource();
-                this.privAudio.src = URL.createObjectURL(this.privMediaSource);
-                this.privAudio.load();
+                try {
+                    this.privAudio = new Audio();
+                    this.privAudioBuffer = [];
+                    this.privMediaSource = new MediaSource();
+                    this.privAudio.src = URL.createObjectURL(this.privMediaSource);
+                    this.privAudio.load();
+                } catch (error) {
+                    // tslint:disable-next-line:no-console
+                    console.warn(`SpeakerAudioDestination setup error: ${error}`);
+                    return;
+                }
                 this.privMediaSource.onsourceopen = (event: Event): void => {
                     this.privMediaSourceOpened = true;
                     this.privMediaSource.duration = MediaDurationPlaceholderSeconds;
@@ -208,7 +214,13 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                     "buffer filled, pausing addition of binaries until space is made");
                 return;
             }
-            await this.notifyPlayback();
+            try {
+                await this.notifyPlayback();
+            } catch (error) {
+                // tslint:disable-next-line:no-console
+                console.log(`SpeakerAudioDestination.notifyPlayback error: ${error}`);
+                return;
+            }
         } else if (this.canEndStream()) {
             await this.handleSourceBufferUpdateEnd();
         }

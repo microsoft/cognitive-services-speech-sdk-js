@@ -227,9 +227,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                             this.privProcessingAudio = false;
                         } else {
                             if (turn) {
-                                const binary = this.privProcessingAudio ? connectionMessage.binaryBody : SynthesisAdapterBase.addHeader(connectionMessage.binaryBody, this.privFormat);
-                                this.privProcessingAudio = true;
-                                this.privSessionAudioDestination.write(binary);
+                                this.privSessionAudioDestination.write(connectionMessage.binaryBody);
                             }
                         }
                     }
@@ -238,9 +236,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         // Empty binary message signals end of stream.
                         if (!connectionMessage.binaryBody) {
                             turn.endAudioStream();
+                            this.privProcessingAudio = false;
                         } else {
-                            const format = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Riff48Khz16BitMonoPcm);
-                            const binary = SynthesisAdapterBase.addHeader(connectionMessage.binaryBody, this.privFormat);
                             turn.audioStream.write(binary);
                         }
                     } catch (error) {
