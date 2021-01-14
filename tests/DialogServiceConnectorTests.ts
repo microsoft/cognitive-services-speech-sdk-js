@@ -180,8 +180,6 @@ test("Output format, default", () => {
     expect(dialogConfig.outputFormat === sdk.OutputFormat.Simple);
 });
 
-// Skip this test pending parity check with C++/C# -- 1006/404 is only returned when an unintended double-forwardslash
-// is present in the connection URL.
 test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Create BotFrameworkConfig, invalid optional botId");

@@ -8,6 +8,6 @@ export class HeaderNames {
     public static CustomCommandsAppId: string = "X-CommandsAppId";
     public static Path: string = "Path";
     public static RequestId: string = "X-RequestId";
-    public static RequestStreamId: string = "x-streamid";
+    public static RequestStreamId: string = "X-StreamId";
     public static RequestTimestamp: string = "X-Timestamp";
 }
