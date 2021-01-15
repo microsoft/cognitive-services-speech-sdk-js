@@ -2,55 +2,20 @@
 // Licensed under the MIT license.
 
 export class QueryParameterNames {
-    public static get TestHooksParamName(): string {
-        return "testhooks";
-    }
-    public static get ConnectionIdHeader(): string {
-        return "X-ConnectionId";
-    }
-    public static get DeploymentIdParamName(): string {
-        return "cid";
-    }
-    public static get FormatParamName(): string {
-        return "format";
-    }
-    public static get LanguageParamName(): string {
-        return "language";
-    }
-    public static get TranslationFromParamName(): string {
-        return "from";
-    }
-    public static get TranslationToParamName(): string {
-        return "to";
-    }
-    public static get CustomVoiceDeploymentIdParamName(): string {
-        return "deploymentId";
-    }
-    public static get Profanify(): string {
-        return "profanity";
-    }
-    public static get EnableAudioLogging(): string {
-        return "storeAudio";
-    }
-    public static get EnableWordLevelTimestamps(): string {
-        return "wordLevelTimestamps";
-    }
-    public static get InitialSilenceTimeoutMs(): string {
-        return "initialSilenceTimeoutMs";
-    }
-    public static get EndSilenceTimeoutMs(): string {
-        return "endSilenceTimeoutMs";
-    }
-    public static get StableIntermediateThreshold(): string {
-        return "stableIntermediateThreshold";
-    }
-    public static get StableTranslation(): string {
-        return "stableTranslation";
-    }
-    public static get EnableLanguageID(): string {
-        return "lidEnabled";
-    }
-    public static get RequestBotStatusMessagesParamName(): string {
-        return "enableBotMessageStatus";
-    }
+    public static BotId: string = "botid";
+    public static ConnectionId: string = "connectionid";
+    public static CustomSpeechDeploymentId: string = "cid";
+    public static CustomVoiceDeploymentId: string = "deploymentId";
+    public static EnableAudioLogging: string = "storeAudio";
+    public static EnableLanguageId: string = "lidEnabled";
+    public static EnableWordLevelTimestamps: string = "wordLevelTimestamps";
+    public static EndSilenceTimeoutMs: string = "endSilenceTimeoutMs";
+    public static Format: string = "format";
+    public static InitialSilenceTimeoutMs: string = "initialSilenceTimeoutMs";
+    public static Language: string = "language";
+    public static Profanity: string = "profanity";
+    public static RequestBotStatusMessages: string = "enableBotMessageStatus";
+    public static StableIntermediateThreshold: string = "stableIntermediateThreshold";
+    public static StableTranslation: string = "stableTranslation";
+    public static TestHooks: string = "testhooks";
 }

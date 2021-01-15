@@ -22,6 +22,7 @@ import {
     ActivityReceivedEventArgs,
     CancellationErrorCode,
     CancellationReason,
+    DialogServiceConfig,
     DialogServiceConnector,
     PropertyCollection,
     PropertyId,
@@ -500,7 +501,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private sendAgentConfig = (connection: IConnection): Promise<void> => {
         if (this.agentConfig && !this.agentConfigSent) {
 
-            if (this.privRecognizerConfig.parameters.getProperty(PropertyId.Conversation_DialogType) === "custom_commands") {
+            if (this.privRecognizerConfig
+                .parameters
+                .getProperty(PropertyId.Conversation_DialogType) === DialogServiceConfig.DialogTypes.CustomCommands) {
                 const config = this.agentConfig.get();
                 config.botInfo.commandsCulture = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-us");
                 this.agentConfig.set(config);
@@ -615,7 +618,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             default:
                 Events.instance.onEvent(
-                    new BackgroundEvent("Unexpected response of type `${responsePayload.messageType}`. Ignoring."));
+                    new BackgroundEvent(`Unexpected response of type ${responsePayload.messageType}. Ignoring.`));
                 break;
         }
     }

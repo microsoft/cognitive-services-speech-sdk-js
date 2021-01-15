@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { HeaderNames } from "../common.speech/HeaderNames";
 import {
     ArgumentNullError,
     BackgroundEvent,
@@ -80,7 +81,7 @@ export class WebsocketMessageAdapter {
         this.privEnableCompression = enableCompression;
 
         // Add the connection ID to the headers
-        this.privHeaders["X-ConnectionId"] = this.privConnectionId;
+        this.privHeaders[HeaderNames.ConnectionId] = this.privConnectionId;
 
         this.privLastErrorReceived = "";
     }

@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import { EventType, PlatformEvent } from "../common/Exports";
 
 export class SpeechSynthesisEvent extends PlatformEvent {
@@ -17,7 +19,6 @@ export class SpeechSynthesisEvent extends PlatformEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class SynthesisTriggeredEvent extends SpeechSynthesisEvent {
     private privSessionAudioDestinationId: string;
     private privTurnAudioDestinationId: string;
@@ -38,7 +39,6 @@ export class SynthesisTriggeredEvent extends SpeechSynthesisEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectingToSynthesisServiceEvent extends SpeechSynthesisEvent {
     private privAuthFetchEventId: string;
 
@@ -52,7 +52,6 @@ export class ConnectingToSynthesisServiceEvent extends SpeechSynthesisEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class SynthesisStartedEvent extends SpeechSynthesisEvent {
     private privAuthFetchEventId: string;
 

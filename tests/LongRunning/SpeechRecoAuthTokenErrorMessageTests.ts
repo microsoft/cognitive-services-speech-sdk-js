@@ -1,15 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+import * as request from "request";
 import * as sdk from "../../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../../src/common.browser/Exports";
+import { HeaderNames } from "../../src/common.speech/HeaderNames";
 import { Events, EventType, PlatformEvent } from "../../src/common/Exports";
-
 import { Settings } from "../Settings";
-import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
-
-import * as request from "request";
-
 import { WaitForCondition } from "../Utilities";
+import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
@@ -51,7 +49,7 @@ test("Non-refreshed auth token has sensible error message", (done: jest.DoneCall
     const req = {
         headers: {
             "Content-Type": "application/json",
-            "Ocp-Apim-Subscription-Key": Settings.SpeechSubscriptionKey,
+            [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
         },
         url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
     };

@@ -24,6 +24,7 @@ import {
     RecognizerConfig,
     WebsocketMessageFormatter
 } from "./Exports";
+import { HeaderNames } from "./HeaderNames";
 import {
     QueryParameterNames
 } from "./QueryParameterNames";
@@ -49,12 +50,12 @@ export class TranscriberConnectionFactory extends ConnectionFactoryBase {
         const language: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, undefined);
 
         if (endpointId) {
-            if (!endpoint || endpoint.search(QueryParameterNames.DeploymentIdParamName) === -1) {
-                queryParams[QueryParameterNames.DeploymentIdParamName] = endpointId;
+            if (!endpoint || endpoint.search(QueryParameterNames.CustomSpeechDeploymentId) === -1) {
+                queryParams[QueryParameterNames.CustomSpeechDeploymentId] = endpointId;
             }
         } else if (language) {
-            if (!endpoint || endpoint.search(QueryParameterNames.LanguageParamName) === -1) {
-                queryParams[QueryParameterNames.LanguageParamName] = language;
+            if (!endpoint || endpoint.search(QueryParameterNames.Language) === -1) {
+                queryParams[QueryParameterNames.Language] = language;
             }
         }
 
@@ -67,7 +68,7 @@ export class TranscriberConnectionFactory extends ConnectionFactoryBase {
         if (authInfo.token !== undefined && authInfo.token !== "") {
             headers[authInfo.headerName] = authInfo.token;
         }
-        headers[QueryParameterNames.ConnectionIdHeader] = connectionId;
+        headers[HeaderNames.ConnectionId] = connectionId;
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
