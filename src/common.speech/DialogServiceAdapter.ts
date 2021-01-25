@@ -1,9 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ReplayableAudioNode } from "../common.browser/Exports";
+import {
+    ReplayableAudioNode
+} from "../common.browser/Exports";
 import {
     BackgroundEvent,
+    ConnectionEvent,
     ConnectionMessage,
     createGuid,
     createNoDashGuid,
@@ -15,7 +18,6 @@ import {
     MessageType,
     ServiceEvent,
 } from "../common/Exports";
-import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 import {
@@ -87,6 +89,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.agentConfigSent = false;
         this.privLastResult = null;
+        this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
+            if (connectionEvent.name === "ConnectionClosedEvent") {
+                this.terminateMessageLoop = true;
+            }
+        });
     }
 
     public async sendMessage(message: string): Promise<void> {
@@ -418,7 +425,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
                                 await this.privRequestSession.onServiceTurnEndResponse(false);
 
-                                if (this.privRequestSession.isSpeechEnded) {
+                                if (!this.privRecognizerConfig.isContinuousRecognition || this.privRequestSession.isSpeechEnded || !this.privRequestSession.isRecognizing) {
                                     if (!!this.privRecognizer.sessionStopped) {
                                         this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                                     }

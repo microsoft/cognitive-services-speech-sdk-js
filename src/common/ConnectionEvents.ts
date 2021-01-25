@@ -59,17 +59,17 @@ export class ConnectionEstablishedEvent extends ConnectionEvent {
 }
 
 export class ConnectionClosedEvent extends ConnectionEvent {
-    private privRreason: string;
+    private privReason: string;
     private privStatusCode: number;
 
     constructor(connectionId: string, statusCode: number, reason: string) {
         super("ConnectionClosedEvent", connectionId, EventType.Debug);
-        this.privRreason = reason;
+        this.privReason = reason;
         this.privStatusCode = statusCode;
     }
 
     public get reason(): string {
-        return this.privRreason;
+        return this.privReason;
     }
 
     public get statusCode(): number {
