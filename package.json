@@ -99,14 +99,14 @@
     "includeConsoleOutput": true
   },
   "dependencies": {
-    "agent-base": "^6.0.0",
-    "asn1.js-rfc2560": "^5.0.0",
+    "agent-base": "^6.0.1",
+    "asn1.js-rfc2560": "^5.0.1",
     "asn1.js-rfc5280": "^3.0.0",
     "async-disk-cache": "^2.1.0",
-    "https-proxy-agent": "^3.0.1",
+    "https-proxy-agent": "^4.0.0",
     "simple-lru-cache": "0.0.2",
     "uuid": "^3.3.3",
-    "ws": "^7.2.0",
+    "ws": "^7.3.1",
     "xmlhttprequest-ts": "^1.0.1"
   },
   "resolutions": {
