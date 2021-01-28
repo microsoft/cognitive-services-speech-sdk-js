@@ -286,20 +286,21 @@ export class WebsocketMessageAdapter {
     }
 
     private async processSendQueue(): Promise<void> {
-        const itemToSend: Promise<ISendItem> = this.privSendMessageQueue.dequeue();
-        const sendItem: ISendItem = await itemToSend;
-        // indicates we are draining the queue and it came with no message;
-        if (!sendItem) {
-            return;
-        }
+        while (true) {
+            const itemToSend: Promise<ISendItem> = this.privSendMessageQueue.dequeue();
+            const sendItem: ISendItem = await itemToSend;
+            // indicates we are draining the queue and it came with no message;
+            if (!sendItem) {
+                return;
+            }
 
-        try {
-            await this.sendRawMessage(sendItem);
-            sendItem.sendStatusDeferral.resolve();
-        } catch (sendError) {
-            sendItem.sendStatusDeferral.reject(sendError);
+            try {
+                await this.sendRawMessage(sendItem);
+                sendItem.sendStatusDeferral.resolve();
+            } catch (sendError) {
+                sendItem.sendStatusDeferral.reject(sendError);
+            }
         }
-        await this.processSendQueue();
     }
 
     private onEvent = (event: ConnectionEvent): void => {
