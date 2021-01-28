@@ -51,20 +51,22 @@ export class ReplayableAudioNode implements IAudioStreamNode {
                 bytesToSeek -= this.privBuffers[i++].chunk.buffer.byteLength;
             }
 
-            const retVal: ArrayBuffer = this.privBuffers[i].chunk.buffer.slice(bytesToSeek);
+            if (i < this.privBuffers.length) {
+                const retVal: ArrayBuffer = this.privBuffers[i].chunk.buffer.slice(bytesToSeek);
 
-            this.privReplayOffset += (retVal.byteLength / this.privBytesPerSecond) * 1e+7;
+                this.privReplayOffset += (retVal.byteLength / this.privBytesPerSecond) * 1e+7;
 
-            // If we've reached the end of the buffers, stop replaying.
-            if (i === this.privBuffers.length - 1) {
-                this.privReplay = false;
+                // If we've reached the end of the buffers, stop replaying.
+                if (i === this.privBuffers.length - 1) {
+                    this.privReplay = false;
+                }
+
+                return Promise.resolve<IStreamChunk<ArrayBuffer>>({
+                    buffer: retVal,
+                    isEnd: false,
+                    timeReceived: this.privBuffers[i].chunk.timeReceived,
+                });
             }
-
-            return Promise.resolve<IStreamChunk<ArrayBuffer>>({
-                buffer: retVal,
-                isEnd: false,
-                timeReceived: this.privBuffers[i].chunk.timeReceived,
-            });
         }
 
         return this.privAudioNode.read()
