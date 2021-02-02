@@ -6,6 +6,7 @@ import {
     ConsoleLoggingListener,
     WebsocketMessageAdapter,
 } from "../src/common.browser/Exports";
+import { AgentConfig } from "../src/common.speech/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
 import {
@@ -14,6 +15,7 @@ import {
     EventType,
     IDetachable,
     PlatformEvent,
+    SendingAgentContextMessageEvent,
 } from "../src/common/Exports";
 import { BotFrameworkConfig, OutputFormat, PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
@@ -1112,6 +1114,46 @@ test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) =>
     });
 });
 
+describe('Agent config message tests', () => {
+    let eventListener: IDetachable;
+    let observedAgentConfig: AgentConfig;
+
+    beforeEach(() => {
+        eventListener = Events.instance.attachListener({
+            onEvent: (event: PlatformEvent) => {
+                if (event instanceof SendingAgentContextMessageEvent) {
+                    const agentContextEvent = event as SendingAgentContextMessageEvent;
+                    observedAgentConfig = agentContextEvent.agentConfig;
+                }
+            },
+        });
+    });
+
+    afterEach(async () => {
+        await eventListener.detach();
+        observedAgentConfig = undefined;
+    });
+
+    test('Agent connection id can be set', async (done: jest.DoneCallback) => {
+        const testConnectionId: string = "thisIsTheTestConnectionId";
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
+        dialogConfig.setProperty(sdk.PropertyId.Conversation_Agent_Connection_Id, testConnectionId);
+        objsToClose.push(dialogConfig);
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
+        objsToClose.push(connector);
+
+        connector.listenOnceAsync(
+            () => {
+                expect(observedAgentConfig).not.toBeUndefined();
+                expect(observedAgentConfig.get().botInfo.connectionId === testConnectionId);
+                done();
+            },
+            () => {
+                done.fail();
+            });
+    });
+});
+
 describe.each([
     /* [
       <description>,
@@ -1277,7 +1319,7 @@ describe.each([
             case "simulatedFromHostWithProperties":
                 result = sdk.BotFrameworkConfig.fromSubscription("testKey", overrideRegion ?? "region");
                 const host = overrideHost ?? "wss://my.custom.host";
-                const hostPropertyValue: string = (overrideHost as string) ?? overrideHost.toString();
+                const hostPropertyValue: string = overrideHost.toString();
                 result.setProperty(sdk.PropertyId.SpeechServiceConnection_Host, hostPropertyValue);
                 break;
             case "simulatedFromEndpointWithProperties":
