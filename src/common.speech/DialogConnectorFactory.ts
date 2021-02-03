@@ -32,7 +32,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         const requestTurnStatus: string = config.parameters.getProperty(PropertyId.Conversation_Request_Bot_Status_Messages, "true");
 
         const queryParams: IStringDictionary<string> = {};
-        queryParams[QueryParameterNames.ConnectionId] = connectionId;
+        queryParams[HeaderNames.ConnectionId] = connectionId;
         queryParams[QueryParameterNames.Format] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
         queryParams[QueryParameterNames.Language] = language;
         queryParams[QueryParameterNames.RequestBotStatusMessages] = requestTurnStatus;
@@ -44,7 +44,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         }
 
         const resourceInfix: string =
-            dialogType === DialogServiceConfig.DialogTypes.CustomCommands ? "/commands"
+            dialogType === DialogServiceConfig.DialogTypes.CustomCommands ? "commands/"
             : "";
         const version: string =
             dialogType === DialogServiceConfig.DialogTypes.CustomCommands ? "v1"
@@ -67,7 +67,8 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
             const host: string = config.parameters.getProperty(
                 PropertyId.SpeechServiceConnection_Host,
                 `wss://${region}.${DialogConnectionFactory.Constants.BaseUrl}${hostSuffix}`);
-            endpoint = `${host}${resourceInfix}/${DialogConnectionFactory.Constants.ApiKey}/${version}`;
+            const standardizedHost: string = host.endsWith("/") ? host : host + "/";
+            endpoint = `${standardizedHost}${resourceInfix}${DialogConnectionFactory.Constants.ApiKey}/${version}`;
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);

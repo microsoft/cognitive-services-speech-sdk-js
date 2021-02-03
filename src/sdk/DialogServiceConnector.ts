@@ -267,7 +267,7 @@ export class DialogServiceConnector extends Recognizer {
             botInfo: {
                 commType: communicationType,
                 commandsCulture: undefined,
-                connectionId: this.properties.getProperty(PropertyId.Conversation_ApplicationId),
+                connectionId: this.properties.getProperty(PropertyId.Conversation_Agent_Connection_Id),
                 conversationId: this.properties.getProperty(PropertyId.Conversation_Conversation_Id, undefined),
                 fromId: this.properties.getProperty(PropertyId.Conversation_From_Id, undefined),
                 ttsAudioFormat: (SpeechSynthesisOutputFormat as any)[this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]
