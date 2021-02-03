@@ -3,7 +3,6 @@
 
 export class QueryParameterNames {
     public static BotId: string = "botid";
-    public static ConnectionId: string = "connectionid";
     public static CustomSpeechDeploymentId: string = "cid";
     public static CustomVoiceDeploymentId: string = "deploymentId";
     public static EnableAudioLogging: string = "storeAudio";
