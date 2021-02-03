@@ -1114,7 +1114,7 @@ test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) =>
     });
 });
 
-describe('Agent config message tests', () => {
+describe("Agent config message tests", () => {
     let eventListener: IDetachable;
     let observedAgentConfig: AgentConfig;
 
@@ -1134,7 +1134,7 @@ describe('Agent config message tests', () => {
         observedAgentConfig = undefined;
     });
 
-    test('Agent connection id can be set', async (done: jest.DoneCallback) => {
+    test("Agent connection id can be set", async (done: jest.DoneCallback) => {
         const testConnectionId: string = "thisIsTheTestConnectionId";
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         dialogConfig.setProperty(sdk.PropertyId.Conversation_Agent_Connection_Id, testConnectionId);
@@ -1144,12 +1144,16 @@ describe('Agent config message tests', () => {
 
         connector.listenOnceAsync(
             () => {
-                expect(observedAgentConfig).not.toBeUndefined();
-                expect(observedAgentConfig.get().botInfo.connectionId === testConnectionId);
-                done();
+                try {
+                    expect(observedAgentConfig).not.toBeUndefined();
+                    expect(observedAgentConfig.get().botInfo.connectionId).toEqual(testConnectionId);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
             },
-            () => {
-                done.fail();
+            (failureMessage: string) => {
+                done.fail(`ListenOnceAsync unexpectedly failed: ${failureMessage}`);
             });
     });
 });
@@ -1340,31 +1344,35 @@ describe.each([
     }
 
     test(`Validate: ${description}`, async (done: jest.DoneCallback) => {
-        const config = getConfig();
-        connector = new sdk.DialogServiceConnector(config);
-        expect(connector).not.toBeUndefined();
+         try {
+            const config = getConfig();
+            connector = new sdk.DialogServiceConnector(config);
+            expect(connector).not.toBeUndefined();
 
-        connector.listenOnceAsync(
-            (successArgs: any) => {
-                done.fail("Success callback not expected with invalid auth details!");
-            },
-            async (failureArgs?: string) => {
-                expect(observedUri).not.toBeUndefined();
-                for (const expectedThing of expectedContainedThings) {
-                    expect(observedUri).toEqual(expect.stringContaining(expectedThing));
-                }
-                for (const unexpectedThing of expectedNotContainedThings) {
-                    expect(observedUri.toLowerCase()).not.toEqual(
-                        expect.stringContaining(unexpectedThing.toLowerCase()));
-                }
-                if (applicationId) {
-                    expect(observedUri).toEqual(expect.stringContaining(applicationId));
-                }
-                // Known issue: reconnection attempts continue upon failure; we'll wait a short
-                // period of time here to avoid logger pollution.
-                await new Promise((resolve: any) => setTimeout(resolve, 1000));
-                done();
-            },
-        );
+            connector.listenOnceAsync(
+                (successArgs: any) => {
+                    done.fail("Success callback not expected with invalid auth details!");
+                },
+                async (failureArgs?: string) => {
+                    expect(observedUri).not.toBeUndefined();
+                    for (const expectedThing of expectedContainedThings) {
+                        expect(observedUri).toEqual(expect.stringContaining(expectedThing));
+                    }
+                    for (const unexpectedThing of expectedNotContainedThings) {
+                        expect(observedUri.toLowerCase()).not.toEqual(
+                            expect.stringContaining(unexpectedThing.toLowerCase()));
+                    }
+                    if (applicationId) {
+                        expect(observedUri).toEqual(expect.stringContaining(applicationId));
+                    }
+                    // Known issue: reconnection attempts continue upon failure; we'll wait a short
+                    // period of time here to avoid logger pollution.
+                    await new Promise((resolve: any) => setTimeout(resolve, 1000));
+                    done();
+                },
+            );
+         } catch (error) {
+             done.fail(error);
+         }
     });
 });
