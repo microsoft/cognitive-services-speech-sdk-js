@@ -334,6 +334,13 @@ export enum PropertyId {
     Conversation_Request_Bot_Status_Messages,
 
     /**
+     * Specifies the connection ID to be provided in the Agent configuration message, e.g. a Direct Line token for
+     * channel authentication.
+     * Added in version 1.15.1.
+     */
+    Conversation_Agent_Connection_Id,
+
+    /**
      * The Cognitive Services Speech Service host (url). Under normal circumstances, you shouldn't have to use this property directly.
      * Instead, use [[SpeechConfig.fromHost]].
      */

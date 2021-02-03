@@ -6,6 +6,7 @@ import {
     ConsoleLoggingListener,
     WebsocketMessageAdapter,
 } from "../src/common.browser/Exports";
+import { AgentConfig } from "../src/common.speech/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
 import {
@@ -14,6 +15,7 @@ import {
     EventType,
     IDetachable,
     PlatformEvent,
+    SendingAgentContextMessageEvent,
 } from "../src/common/Exports";
 import { BotFrameworkConfig, OutputFormat, PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
@@ -1112,6 +1114,50 @@ test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) =>
     });
 });
 
+describe("Agent config message tests", () => {
+    let eventListener: IDetachable;
+    let observedAgentConfig: AgentConfig;
+
+    beforeEach(() => {
+        eventListener = Events.instance.attachListener({
+            onEvent: (event: PlatformEvent) => {
+                if (event instanceof SendingAgentContextMessageEvent) {
+                    const agentContextEvent = event as SendingAgentContextMessageEvent;
+                    observedAgentConfig = agentContextEvent.agentConfig;
+                }
+            },
+        });
+    });
+
+    afterEach(async () => {
+        await eventListener.detach();
+        observedAgentConfig = undefined;
+    });
+
+    test("Agent connection id can be set", async (done: jest.DoneCallback) => {
+        const testConnectionId: string = "thisIsTheTestConnectionId";
+        const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
+        dialogConfig.setProperty(sdk.PropertyId.Conversation_Agent_Connection_Id, testConnectionId);
+        objsToClose.push(dialogConfig);
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
+        objsToClose.push(connector);
+
+        connector.listenOnceAsync(
+            () => {
+                try {
+                    expect(observedAgentConfig).not.toBeUndefined();
+                    expect(observedAgentConfig.get().botInfo.connectionId).toEqual(testConnectionId);
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
+            },
+            (failureMessage: string) => {
+                done.fail(`ListenOnceAsync unexpectedly failed: ${failureMessage}`);
+            });
+    });
+});
+
 describe.each([
     /* [
       <description>,
@@ -1277,7 +1323,7 @@ describe.each([
             case "simulatedFromHostWithProperties":
                 result = sdk.BotFrameworkConfig.fromSubscription("testKey", overrideRegion ?? "region");
                 const host = overrideHost ?? "wss://my.custom.host";
-                const hostPropertyValue: string = (overrideHost as string) ?? overrideHost.toString();
+                const hostPropertyValue: string = overrideHost.toString();
                 result.setProperty(sdk.PropertyId.SpeechServiceConnection_Host, hostPropertyValue);
                 break;
             case "simulatedFromEndpointWithProperties":
@@ -1298,31 +1344,35 @@ describe.each([
     }
 
     test(`Validate: ${description}`, async (done: jest.DoneCallback) => {
-        const config = getConfig();
-        connector = new sdk.DialogServiceConnector(config);
-        expect(connector).not.toBeUndefined();
+         try {
+            const config = getConfig();
+            connector = new sdk.DialogServiceConnector(config);
+            expect(connector).not.toBeUndefined();
 
-        connector.listenOnceAsync(
-            (successArgs: any) => {
-                done.fail("Success callback not expected with invalid auth details!");
-            },
-            async (failureArgs?: string) => {
-                expect(observedUri).not.toBeUndefined();
-                for (const expectedThing of expectedContainedThings) {
-                    expect(observedUri).toEqual(expect.stringContaining(expectedThing));
-                }
-                for (const unexpectedThing of expectedNotContainedThings) {
-                    expect(observedUri.toLowerCase()).not.toEqual(
-                        expect.stringContaining(unexpectedThing.toLowerCase()));
-                }
-                if (applicationId) {
-                    expect(observedUri).toEqual(expect.stringContaining(applicationId));
-                }
-                // Known issue: reconnection attempts continue upon failure; we'll wait a short
-                // period of time here to avoid logger pollution.
-                await new Promise((resolve: any) => setTimeout(resolve, 1000));
-                done();
-            },
-        );
+            connector.listenOnceAsync(
+                (successArgs: any) => {
+                    done.fail("Success callback not expected with invalid auth details!");
+                },
+                async (failureArgs?: string) => {
+                    expect(observedUri).not.toBeUndefined();
+                    for (const expectedThing of expectedContainedThings) {
+                        expect(observedUri).toEqual(expect.stringContaining(expectedThing));
+                    }
+                    for (const unexpectedThing of expectedNotContainedThings) {
+                        expect(observedUri.toLowerCase()).not.toEqual(
+                            expect.stringContaining(unexpectedThing.toLowerCase()));
+                    }
+                    if (applicationId) {
+                        expect(observedUri).toEqual(expect.stringContaining(applicationId));
+                    }
+                    // Known issue: reconnection attempts continue upon failure; we'll wait a short
+                    // period of time here to avoid logger pollution.
+                    await new Promise((resolve: any) => setTimeout(resolve, 1000));
+                    done();
+                },
+            );
+         } catch (error) {
+             done.fail(error);
+         }
     });
 });

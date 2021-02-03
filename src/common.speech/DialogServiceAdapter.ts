@@ -1,14 +1,19 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ReplayableAudioNode } from "../common.browser/Exports";
+import {
+    ReplayableAudioNode
+} from "../common.browser/Exports";
+import { SendingAgentContextMessageEvent } from "../common/DialogEvents";
 import {
     BackgroundEvent,
     ConnectionMessage,
     createGuid,
     createNoDashGuid,
     Deferred,
+    DialogEvent,
     Events,
+    EventSource,
     IAudioSource,
     IAudioStreamNode,
     IConnection,
@@ -61,6 +66,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private terminateMessageLoop: boolean;
     private agentConfigSent: boolean;
     private privLastResult: SpeechRecognitionResult;
+    private privEvents: EventSource<DialogEvent>;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -76,6 +82,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         super(authentication, connectionFactory, audioSource, recognizerConfig, dialogServiceConnector);
 
+        this.privEvents = new EventSource<DialogEvent>();
         this.privDialogServiceConnector = dialogServiceConnector;
         this.receiveMessageOverride = this.receiveDialogMessageOverride;
         this.privTurnStateManager = new DialogServiceTurnStateManager();
@@ -508,6 +515,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 config.botInfo.commandsCulture = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-us");
                 this.agentConfig.set(config);
             }
+            this.onEvent(new SendingAgentContextMessageEvent(this.agentConfig));
+
             const agentConfigJson = this.agentConfig.toJsonString();
 
             // guard against sending this multiple times on one connection
@@ -621,5 +630,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     new BackgroundEvent(`Unexpected response of type ${responsePayload.messageType}. Ignoring.`));
                 break;
         }
+    }
+
+    private onEvent(event: DialogEvent): void {
+        this.privEvents.onEvent(event);
+        Events.instance.onEvent(event);
     }
 }
