@@ -206,7 +206,11 @@ export class MicAudioSource implements IAudioSource {
         }
 
         this.onEvent(new AudioSourceOffEvent(this.privId)); // no stream now
-        this.privInitializeDeferral = null;
+        if (this.privInitializeDeferral) {
+            // Correctly handle when browser forces mic off before turnOn() completes
+            await this.privInitializeDeferral;
+            this.privInitializeDeferral = null;
+        }
 
         await this.destroyAudioContext();
 
