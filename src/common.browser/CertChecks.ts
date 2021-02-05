@@ -318,7 +318,7 @@ export class CertCheckAgent {
                     return;
                 }
 
-                const parsedUri = new parse.default(uri);
+                const parsedUri = parse.default(uri);
                 options = { ...options, ...parsedUri };
 
                 ocsp.utils.getResponse(options, req.data, (error: string, raw: Buffer): void => {
