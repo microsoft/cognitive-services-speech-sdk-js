@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { HeaderNames } from "../common.speech/HeaderNames";
 import {
     ArgumentNullError,
     BackgroundEvent,
@@ -80,7 +81,7 @@ export class WebsocketMessageAdapter {
         this.privEnableCompression = enableCompression;
 
         // Add the connection ID to the headers
-        this.privHeaders["X-ConnectionId"] = this.privConnectionId;
+        this.privHeaders[HeaderNames.ConnectionId] = this.privConnectionId;
 
         this.privLastErrorReceived = "";
     }
@@ -285,20 +286,21 @@ export class WebsocketMessageAdapter {
     }
 
     private async processSendQueue(): Promise<void> {
-        const itemToSend: Promise<ISendItem> = this.privSendMessageQueue.dequeue();
-        const sendItem: ISendItem = await itemToSend;
-        // indicates we are draining the queue and it came with no message;
-        if (!sendItem) {
-            return;
-        }
+        while (true) {
+            const itemToSend: Promise<ISendItem> = this.privSendMessageQueue.dequeue();
+            const sendItem: ISendItem = await itemToSend;
+            // indicates we are draining the queue and it came with no message;
+            if (!sendItem) {
+                return;
+            }
 
-        try {
-            await this.sendRawMessage(sendItem);
-            sendItem.sendStatusDeferral.resolve();
-        } catch (sendError) {
-            sendItem.sendStatusDeferral.reject(sendError);
+            try {
+                await this.sendRawMessage(sendItem);
+                sendItem.sendStatusDeferral.resolve();
+            } catch (sendError) {
+                sendItem.sendStatusDeferral.reject(sendError);
+            }
         }
-        await this.processSendQueue();
     }
 
     private onEvent = (event: ConnectionEvent): void => {

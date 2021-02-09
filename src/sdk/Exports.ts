@@ -50,6 +50,7 @@ export { BotFrameworkConfig } from "./BotFrameworkConfig";
 export { CustomCommandsConfig } from "./CustomCommandsConfig";
 export { DialogServiceConnector } from "./DialogServiceConnector";
 export { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
+export { TurnStatusReceivedEventArgs } from "./TurnStatusReceivedEventArgs";
 export { ServicePropertyChannel } from "./ServicePropertyChannel";
 export { ProfanityOption } from "./ProfanityOption";
 export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer";

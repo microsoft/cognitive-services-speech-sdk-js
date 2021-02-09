@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import {
     connectivity,
     ISpeechConfigAudioDevice,
@@ -81,7 +83,6 @@ export abstract class AudioInputStream {
  * Represents memory backed push audio input stream used for custom audio input configurations.
  * @class PushAudioInputStream
  */
-// tslint:disable-next-line:max-classes-per-file
 export abstract class PushAudioInputStream extends AudioInputStream {
 
     /**
@@ -120,7 +121,6 @@ export abstract class PushAudioInputStream extends AudioInputStream {
  * @private
  * @class PushAudioInputStreamImpl
  */
-// tslint:disable-next-line:max-classes-per-file
 export class PushAudioInputStreamImpl extends PushAudioInputStream implements IAudioSource {
 
     private privFormat: AudioStreamFormatImpl;
@@ -277,7 +277,6 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
  * Represents audio input stream used for custom audio input configurations.
  * @class PullAudioInputStream
  */
-// tslint:disable-next-line:max-classes-per-file
 export abstract class PullAudioInputStream extends AudioInputStream {
     /**
      * Creates and initializes and instance.
@@ -316,7 +315,6 @@ export abstract class PullAudioInputStream extends AudioInputStream {
  * @private
  * @class PullAudioInputStreamImpl
  */
-// tslint:disable-next-line:max-classes-per-file
 export class PullAudioInputStreamImpl extends PullAudioInputStream implements IAudioSource {
 
     private privCallback: PullAudioInputStreamCallback;

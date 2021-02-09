@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { Contracts } from "./Contracts";
-import { DialogServiceConfigImpl } from "./DialogServiceConfig";
+import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
 import { PropertyId } from "./Exports";
 
 /**
@@ -34,7 +34,7 @@ export class CustomCommandsConfig extends DialogServiceConfigImpl {
         Contracts.throwIfNullOrWhitespace(region, "region");
 
         const customCommandsConfig: CustomCommandsConfig = new DialogServiceConfigImpl();
-        customCommandsConfig.setProperty(PropertyId.Conversation_DialogType, "custom_commands");
+        customCommandsConfig.setProperty(PropertyId.Conversation_DialogType, DialogServiceConfig.DialogTypes.CustomCommands);
         customCommandsConfig.setProperty(PropertyId.Conversation_ApplicationId, applicationId);
         customCommandsConfig.setProperty(PropertyId.SpeechServiceConnection_Key, subscription);
         customCommandsConfig.setProperty(PropertyId.SpeechServiceConnection_Region, region);
@@ -62,7 +62,7 @@ export class CustomCommandsConfig extends DialogServiceConfigImpl {
         Contracts.throwIfNullOrWhitespace(region, "region");
 
         const customCommandsConfig: CustomCommandsConfig = new DialogServiceConfigImpl();
-        customCommandsConfig.setProperty(PropertyId.Conversation_DialogType, "custom_commands");
+        customCommandsConfig.setProperty(PropertyId.Conversation_DialogType, DialogServiceConfig.DialogTypes.CustomCommands);
         customCommandsConfig.setProperty(PropertyId.Conversation_ApplicationId, applicationId);
         customCommandsConfig.setProperty(PropertyId.SpeechServiceAuthorization_Token, authorizationToken);
         customCommandsConfig.setProperty(PropertyId.SpeechServiceConnection_Region, region);

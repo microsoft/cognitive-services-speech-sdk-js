@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import { EventType, PlatformEvent } from "./PlatformEvent";
 
 export class OCSPEvent extends PlatformEvent {
@@ -13,70 +15,60 @@ export class OCSPEvent extends PlatformEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPMemoryCacheHitEvent extends OCSPEvent {
     constructor(signature: string) {
         super("OCSPMemoryCacheHitEvent", EventType.Debug, signature);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPCacheMissEvent extends OCSPEvent {
     constructor(signature: string) {
         super("OCSPCacheMissEvent", EventType.Debug, signature);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPDiskCacheHitEvent extends OCSPEvent {
     constructor(signature: string) {
         super("OCSPDiskCacheHitEvent", EventType.Debug, signature);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPCacheUpdateNeededEvent extends OCSPEvent {
     constructor(signature: string) {
         super("OCSPCacheUpdateNeededEvent", EventType.Debug, signature);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPMemoryCacheStoreEvent extends OCSPEvent {
     constructor(signature: string) {
         super("OCSPMemoryCacheStoreEvent", EventType.Debug, signature);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPDiskCacheStoreEvent extends OCSPEvent {
     constructor(signature: string) {
         super("OCSPDiskCacheStoreEvent", EventType.Debug, signature);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPCacheUpdatehCompleteEvent extends OCSPEvent {
     constructor(signature: string) {
         super("OCSPCacheUpdatehCompleteEvent", EventType.Debug, signature);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPStapleReceivedEvent extends OCSPEvent {
     constructor() {
         super("OCSPStapleReceivedEvent", EventType.Debug, "");
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPWSUpgradeStartedEvent extends OCSPEvent {
     constructor(serialNumber: string) {
         super("OCSPWSUpgradeStartedEvent", EventType.Debug, serialNumber);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPCacheEntryExpiredEvent extends OCSPEvent {
     private privExpireTime: number;
 
@@ -86,7 +78,6 @@ export class OCSPCacheEntryExpiredEvent extends OCSPEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPCacheEntryNeedsRefreshEvent extends OCSPEvent {
     private privExpireTime: number;
     private privStartTime: number;
@@ -98,7 +89,6 @@ export class OCSPCacheEntryNeedsRefreshEvent extends OCSPEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPCacheHitEvent extends OCSPEvent {
     private privExpireTime: number;
     private privStartTime: number;
@@ -114,7 +104,6 @@ export class OCSPCacheHitEvent extends OCSPEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPVerificationFailedEvent extends OCSPEvent {
     private privError: string;
 
@@ -124,7 +113,6 @@ export class OCSPVerificationFailedEvent extends OCSPEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPCacheFetchErrorEvent extends OCSPEvent {
     private privError: string;
 
@@ -134,14 +122,12 @@ export class OCSPCacheFetchErrorEvent extends OCSPEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPResponseRetrievedEvent extends OCSPEvent {
     constructor(serialNumber: string) {
         super("OCSPResponseRetrievedEvent", EventType.Debug, serialNumber);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OCSPCacheUpdateErrorEvent extends OCSPEvent {
     private privError: string;
 

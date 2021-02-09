@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import { EventType, PlatformEvent } from "../common/Exports";
 
 export class SpeechRecognitionEvent extends PlatformEvent {
@@ -23,7 +25,6 @@ export class SpeechRecognitionEvent extends PlatformEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class RecognitionTriggeredEvent extends SpeechRecognitionEvent {
     private privAudioSourceId: string;
     private privAudioNodeId: string;
@@ -44,7 +45,6 @@ export class RecognitionTriggeredEvent extends SpeechRecognitionEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ListeningStartedEvent extends SpeechRecognitionEvent {
     private privAudioSourceId: string;
     private privAudioNodeId: string;
@@ -64,7 +64,6 @@ export class ListeningStartedEvent extends SpeechRecognitionEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectingToServiceEvent extends SpeechRecognitionEvent {
     private privAuthFetchEventid: string;
 
@@ -78,7 +77,6 @@ export class ConnectingToServiceEvent extends SpeechRecognitionEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class RecognitionStartedEvent extends SpeechRecognitionEvent {
     private privAudioSourceId: string;
     private privAudioNodeId: string;
@@ -118,7 +116,6 @@ export enum RecognitionCompletionStatus {
     UnknownError,
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class RecognitionEndedEvent extends SpeechRecognitionEvent {
     private privAudioSourceId: string;
     private privAudioNodeId: string;

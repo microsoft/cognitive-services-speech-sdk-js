@@ -33,7 +33,7 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
             endpoint);
 
         this.setUrlParameter(PropertyId.SpeechServiceResponse_ProfanityOption,
-            QueryParameterNames.Profanify,
+            QueryParameterNames.Profanity,
             config,
             queryParams,
             endpoint);

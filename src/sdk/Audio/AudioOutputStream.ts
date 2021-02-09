@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import {
     createNoDashGuid,
     Deferred,
@@ -58,7 +60,6 @@ export abstract class AudioOutputStream {
  * Represents memory backed push audio output stream used for custom audio output configurations.
  * @class PullAudioOutputStream
  */
-// tslint:disable-next-line:max-classes-per-file
 export abstract class PullAudioOutputStream extends AudioOutputStream {
 
     /**
@@ -96,7 +97,6 @@ export abstract class PullAudioOutputStream extends AudioOutputStream {
  * @private
  * @class PullAudioOutputStreamImpl
  */
-// tslint:disable-next-line:max-classes-per-file
 export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements IAudioDestination {
     private privFormat: AudioOutputFormatImpl;
     private privId: string;
@@ -225,7 +225,6 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
  * Represents audio output stream used for custom audio output configurations.
  * @class PushAudioOutputStream
  */
-// tslint:disable-next-line:max-classes-per-file
 export abstract class PushAudioOutputStream extends AudioOutputStream {
     /**
      * Creates and initializes and instance.
@@ -262,7 +261,6 @@ export abstract class PushAudioOutputStream extends AudioOutputStream {
  * @private
  * @class PushAudioOutputStreamImpl
  */
-// tslint:disable-next-line:max-classes-per-file
 export class PushAudioOutputStreamImpl extends PushAudioOutputStream implements IAudioDestination {
     private readonly privId: string;
     private privCallback: PushAudioOutputStreamCallback;

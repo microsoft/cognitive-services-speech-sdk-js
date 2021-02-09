@@ -3,6 +3,7 @@
 // Licensed under the MIT license. See LICENSE.md file in the project root for full license information.
 //
 
+import { HeaderNames } from "../common.speech/HeaderNames";
 import {
     ConnectionMessage as IntConnectionMessage,
     MessageType
@@ -71,8 +72,8 @@ export class ConnectionMessageImpl {
     constructor(message: IntConnectionMessage) {
         this.privConnectionMessage = message;
         this.privProperties = new PropertyCollection();
-        if (!!this.privConnectionMessage.headers["X-ConnectionId"]) {
-            this.privProperties.setProperty(PropertyId.Speech_SessionId, this.privConnectionMessage.headers["X-ConnectionId"]);
+        if (!!this.privConnectionMessage.headers[HeaderNames.ConnectionId]) {
+            this.privProperties.setProperty(PropertyId.Speech_SessionId, this.privConnectionMessage.headers[HeaderNames.ConnectionId]);
         }
 
         Object.keys(this.privConnectionMessage.headers).forEach((header: string, index: number, array: string[]): void => {

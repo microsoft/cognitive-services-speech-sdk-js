@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import {
     AudioSourceErrorEvent,
     AudioStreamNodeAttachedEvent,
@@ -22,7 +24,6 @@ export interface ITelemetry {
     ReceivedMessages: IStringDictionary<string[]>;
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export interface IMetric {
     End?: string;
     Error?: string;
@@ -33,7 +34,6 @@ export interface IMetric {
     FirstHypothesisLatencyMs?: number[];
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
     private privIsDisposed: boolean = false;
 
