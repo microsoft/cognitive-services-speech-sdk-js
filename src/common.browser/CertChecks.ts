@@ -318,7 +318,8 @@ export class CertCheckAgent {
                     return;
                 }
 
-                const parsedUri = parse.default(uri);
+                const parsedUri: {[k: string]: any} = parse.default(uri);
+                parsedUri.path = parsedUri.pathname;
                 options = { ...options, ...parsedUri };
 
                 ocsp.utils.getResponse(options, req.data, (error: string, raw: Buffer): void => {
