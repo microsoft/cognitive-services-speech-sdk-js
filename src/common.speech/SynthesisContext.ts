@@ -46,9 +46,9 @@ export class SynthesisContext {
         return {
             audio: {
                 metadataOptions: {
-                    bookmarkEnabled: (!!this.privSpeechSynthesizer.bookmark),
+                    bookmarkEnabled: (!!this.privSpeechSynthesizer.bookmarkReached),
                     sentenceBoundaryEnabled: false,
-                    visemeEnabled: (!!this.privSpeechSynthesizer.viseme),
+                    visemeEnabled: (!!this.privSpeechSynthesizer.visemeReceived),
                     wordBoundaryEnabled: (!!this.privSpeechSynthesizer.wordBoundary),
                 },
                 outputFormat: this.privAudioOutputFormat.requestAudioFormatString,

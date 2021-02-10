@@ -3,7 +3,7 @@
 
 export enum MetadataType {
     WordBoundary = "WordBoundary",
-    Bookmark = "BookmarkReachedBoundary",
+    Bookmark = "Bookmark",
     Viseme = "Viseme"
 }
 
@@ -16,9 +16,9 @@ export interface ISynthesisMetadata {
             Length: number;
         };
         Bookmark: string;
-        Viseme: string;
-        Description: string;
+        VisemeId: number;
         Animation: string;
+        NoMoreAnimation: boolean;
     };
 }
 

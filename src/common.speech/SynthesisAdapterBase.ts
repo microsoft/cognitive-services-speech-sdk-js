@@ -383,9 +383,9 @@ export class SynthesisAdapterBase implements IDisposable {
                                         metadata.Data.Offset,
                                         metadata.Data.Bookmark);
 
-                                    if (!!this.privSpeechSynthesizer.bookmark) {
+                                    if (!!this.privSpeechSynthesizer.bookmarkReached) {
                                         try {
-                                            this.privSpeechSynthesizer.bookmark(this.privSpeechSynthesizer, bev);
+                                            this.privSpeechSynthesizer.bookmarkReached(this.privSpeechSynthesizer, bev);
                                         } catch (error) {
                                             // Not going to let errors in the event handler
                                             // trip things up.
@@ -393,18 +393,22 @@ export class SynthesisAdapterBase implements IDisposable {
                                     }
                                     break;
                                 case MetadataType.Viseme:
-                                    const vev: SpeechSynthesisVisemeEventArgs = new SpeechSynthesisVisemeEventArgs(
-                                        metadata.Data.Offset,
-                                        metadata.Data.Viseme,
-                                        metadata.Data.Description,
-                                        metadata.Data.Animation);
 
-                                    if (!!this.privSpeechSynthesizer.viseme) {
-                                        try {
-                                            this.privSpeechSynthesizer.viseme(this.privSpeechSynthesizer, vev);
-                                        } catch (error) {
-                                            // Not going to let errors in the event handler
-                                            // trip things up.
+                                    this.privSynthesisTurn.onVisemeMetadataReceived(metadata);
+
+                                    if (metadata.Data.NoMoreAnimation !== false) {
+                                        const vev: SpeechSynthesisVisemeEventArgs = new SpeechSynthesisVisemeEventArgs(
+                                            metadata.Data.Offset,
+                                            metadata.Data.VisemeId,
+                                            this.privSynthesisTurn.visemeAnimation);
+
+                                        if (!!this.privSpeechSynthesizer.visemeReceived) {
+                                            try {
+                                                this.privSpeechSynthesizer.visemeReceived(this.privSpeechSynthesizer, vev);
+                                            } catch (error) {
+                                                // Not going to let errors in the event handler
+                                                // trip things up.
+                                            }
                                         }
                                     }
                                     break;

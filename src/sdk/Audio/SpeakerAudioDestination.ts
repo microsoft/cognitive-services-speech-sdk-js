@@ -189,6 +189,8 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         }
     }
 
+    public onAudioStart: (sender: IPlayer) => void;
+
     public onAudioEnd: (sender: IPlayer) => void;
 
     public get internalAudio(): HTMLAudioElement {
@@ -223,6 +225,10 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
 
     private async notifyPlayback(): Promise<void> {
         if (!this.privPlaybackStarted && this.privAudio !== undefined) {
+            this.privPlaybackStarted = true;
+            if (!!this.onAudioStart) {
+                this.onAudioStart(this);
+            }
             this.privAudio.onended = (): void => {
                 if (!!this.onAudioEnd) {
                     this.onAudioEnd(this);
@@ -231,7 +237,6 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
             if (!this.privIsPaused) {
                 await this.privAudio.play();
             }
-            this.privPlaybackStarted = true;
         }
     }
 

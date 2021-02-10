@@ -100,22 +100,22 @@ export class SpeechSynthesizer {
     public wordBoundary: (sender: SpeechSynthesizer, event: SpeechSynthesisWordBoundaryEventArgs) => void;
 
     /**
-     * Defines event handler for bookmark events
+     * Defines event handler for bookmark reached events
      * Added in version 1.16.0
-     * @member SpeechSynthesizer.prototype.bookmark
+     * @member SpeechSynthesizer.prototype.bookmarkReached
      * @function
      * @public
      */
-    public bookmark: (sender: SpeechSynthesizer, event: SpeechSynthesisBookmarkEventArgs) => void;
+    public bookmarkReached: (sender: SpeechSynthesizer, event: SpeechSynthesisBookmarkEventArgs) => void;
 
     /**
-     * Defines event handler for viseme events
+     * Defines event handler for viseme received event
      * Added in version 1.16.0
-     * @member SpeechSynthesizer.prototype.viseme
+     * @member SpeechSynthesizer.prototype.visemeReceived
      * @function
      * @public
      */
-    public viseme: (sender: SpeechSynthesizer, event: SpeechSynthesisVisemeEventArgs) => void;
+    public visemeReceived: (sender: SpeechSynthesizer, event: SpeechSynthesisVisemeEventArgs) => void;
 
     /**
      * Gets the authorization token used to communicate with the service.

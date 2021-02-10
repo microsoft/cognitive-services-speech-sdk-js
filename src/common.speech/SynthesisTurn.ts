@@ -8,6 +8,7 @@ import {
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
+import { ISynthesisMetadata } from "./ServiceMessages/SynthesisAudioMetadata";
 import { SynthesisAdapterBase } from "./SynthesisAdapterBase";
 import {
     ConnectingToSynthesisServiceEvent,
@@ -68,6 +69,12 @@ export class SynthesisTurn {
         return this.privTextOffset;
     }
 
+    public get visemeAnimation(): string {
+        const animation: string = this.privPartialVisemeAnimation;
+        this.privPartialVisemeAnimation = "";
+        return animation;
+    }
+
     // The number of bytes received for current turn
     public get bytesReceived(): number {
         return this.privBytesReceived;
@@ -88,6 +95,7 @@ export class SynthesisTurn {
     private privReceivedAudioWithHeader: ArrayBuffer;
     private privTextOffset: number = 0;
     private privNextSearchTextIndex: number = 0;
+    private privPartialVisemeAnimation: string;
     private privRawText: string;
     private privIsSSML: boolean;
     private privTurnAudioDestination: IAudioDestination;
@@ -200,6 +208,12 @@ export class SynthesisTurn {
 
     public onWordBoundaryEvent(text: string): void {
         this.updateTextOffset(text);
+    }
+
+    public onVisemeMetadataReceived(metadata: ISynthesisMetadata): void {
+        if (metadata.Data.Animation !== undefined) {
+            this.privPartialVisemeAnimation = this.privPartialVisemeAnimation + metadata.Data.Animation;
+        }
     }
 
     public dispose = (error?: string): void => {

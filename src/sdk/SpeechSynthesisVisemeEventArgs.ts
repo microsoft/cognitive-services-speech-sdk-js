@@ -8,22 +8,19 @@
  */
 export class SpeechSynthesisVisemeEventArgs {
     private privAudioOffset: number;
-    private privViseme: string;
-    private privDescription: string;
+    private privVisemeId: number;
     private privAnimation: string;
 
     /**
      * Creates and initializes an instance of this class.
      * @constructor
      * @param {number} audioOffset - The audio offset.
-     * @param {string} viseme - The text.
-     * @param {string} description - The description.
-     * @param {string} animation - The animation.
+     * @param {number} visemeId - The viseme ID.
+     * @param {string} animation - The animation, could be in svg or other format.
      */
-    public constructor(audioOffset: number, viseme: string, description: string, animation: string) {
+    public constructor(audioOffset: number, visemeId: number, animation: string) {
         this.privAudioOffset = audioOffset;
-        this.privViseme = viseme;
-        this.privDescription = description;
+        this.privVisemeId = visemeId;
         this.privAnimation = animation;
     }
 
@@ -39,25 +36,14 @@ export class SpeechSynthesisVisemeEventArgs {
     }
 
     /**
-     * Specifies the viseme.
-     * @member SpeechSynthesisVisemeEventArgs.prototype.viseme
+     * Specifies the viseme ID.
+     * @member SpeechSynthesisVisemeEventArgs.prototype.visemeId
      * @function
      * @public
-     * @returns {string} the viseme.
+     * @returns {number} the viseme ID.
      */
-    public get viseme(): string {
-        return this.privViseme;
-    }
-
-    /**
-     * Specifies the description.
-     * @member SpeechSynthesisVisemeEventArgs.prototype.description
-     * @function
-     * @public
-     * @returns {string} the description.
-     */
-    public get description(): string {
-        return this.privDescription;
+    public get visemeId(): number {
+        return this.privVisemeId;
     }
 
     /**
@@ -65,7 +51,7 @@ export class SpeechSynthesisVisemeEventArgs {
      * @member SpeechSynthesisVisemeEventArgs.prototype.animation
      * @function
      * @public
-     * @returns {string} the animation.
+     * @returns {string} the animation, could be in svg or other format.
      */
     public get animation(): string {
         return this.privAnimation;

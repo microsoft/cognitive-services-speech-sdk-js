@@ -382,12 +382,11 @@ describe("Service based tests", () => {
 
         let bookmarkCount: number = 0;
 
-        s.bookmark = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisBookmarkEventArgs): void => {
+        s.bookmarkReached = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisBookmarkEventArgs): void => {
             try {
                 expect(e).not.toBeUndefined();
                 expect(e.audioOffset).not.toBeUndefined();
-                expect(e.bookmark).not.toBeUndefined();
-                expect(e.bookmark).toEqual("2bookmark_one2");
+                expect(e.text).toEqual("2bookmark_one2");
             } catch (e) {
                 done.fail(e);
             }
@@ -421,12 +420,11 @@ describe("Service based tests", () => {
 
         let visemeCount: number = 0;
 
-        s.viseme = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisVisemeEventArgs): void => {
+        s.visemeReceived = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisVisemeEventArgs): void => {
             try {
                 expect(e).not.toBeUndefined();
                 expect(e.audioOffset).not.toBeUndefined();
-                expect(e.viseme).not.toBeUndefined();
-                expect(e.description).not.toBeUndefined();
+                expect(e.visemeId).not.toBeUndefined();
                 expect(e.animation).not.toBeUndefined();
             } catch (e) {
                 done.fail(e);
@@ -436,7 +434,7 @@ describe("Service based tests", () => {
 
         const ssml: string =
             `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
-<voice name='Microsoft Server Speech Text to Speech Voice (en-US, JessaNeural)'>
+<voice name='Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)'>
 <mstts:viseme type='svg'/><s>I want to <break time='50ms'/>avoid<break time='100ms'/> monotony.</s></voice></speak>`;
         s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
             expect(visemeCount).toBeGreaterThan(0);

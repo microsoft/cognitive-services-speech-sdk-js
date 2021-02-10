@@ -8,17 +8,17 @@
  */
 export class SpeechSynthesisBookmarkEventArgs {
     private privAudioOffset: number;
-    private privBookmark: string;
+    private privText: string;
 
     /**
      * Creates and initializes an instance of this class.
      * @constructor
      * @param {number} audioOffset - The audio offset.
-     * @param {string} bookmark - The bookmark.
+     * @param {string} text - The bookmark text.
      */
-    public constructor(audioOffset: number, bookmark: string) {
+    public constructor(audioOffset: number, text: string) {
         this.privAudioOffset = audioOffset;
-        this.privBookmark = bookmark;
+        this.privText = text;
     }
 
     /**
@@ -34,12 +34,12 @@ export class SpeechSynthesisBookmarkEventArgs {
 
     /**
      * Specifies the bookmark.
-     * @member SpeechSynthesisBookmarkEventArgs.prototype.bookmark
+     * @member SpeechSynthesisBookmarkEventArgs.prototype.text
      * @function
      * @public
-     * @returns {string} the bookmark.
+     * @returns {string} the bookmark text.
      */
-    public get bookmark(): string {
-        return this.privBookmark;
+    public get text(): string {
+        return this.privText;
     }
 }
