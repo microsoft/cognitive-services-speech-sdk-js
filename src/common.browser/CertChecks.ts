@@ -3,7 +3,7 @@
 
 import * as http from "http";
 import * as tls from "tls";
-import * as url from "url";
+import * as parse from "url-parse";
 import * as ocsp from "../../external/ocsp/ocsp";
 import {
     Events,
@@ -22,7 +22,6 @@ import {
     OCSPResponseRetrievedEvent,
     OCSPStapleReceivedEvent,
     OCSPVerificationFailedEvent,
-    OCSPWSUpgradeStartedEvent
 } from "../common/Exports";
 import { IStringDictionary } from "../common/IDictionary";
 import { ProxyInfo } from "./ProxyInfo";
@@ -319,7 +318,8 @@ export class CertCheckAgent {
                     return;
                 }
 
-                const parsedUri = url.parse(uri);
+                const parsedUri: {[k: string]: any} = parse.default(uri);
+                parsedUri.path = parsedUri.pathname;
                 options = { ...options, ...parsedUri };
 
                 ocsp.utils.getResponse(options, req.data, (error: string, raw: Buffer): void => {
