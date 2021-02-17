@@ -273,7 +273,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
 
                 // stop the recognition but leave the websocket open
                 this.privIsSpeaking = false;
-                await new Promise((resolve: (value: unknown) => void, reject: (error: string) => void): void => {
+                await new Promise((resolve: () => void, reject: (error: string) => void): void => {
                     this.privTranslationRecognizer?.stopContinuousRecognitionAsync(resolve, reject);
                 });
 
