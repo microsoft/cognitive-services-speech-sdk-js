@@ -204,18 +204,25 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privRequestSession.startNewRecognition();
         this.privRequestSession.listenForServiceTelemetry(this.privAudioSource.events);
 
-        const audioStreamNode: IAudioStreamNode = await this.audioSource.attach(this.privRequestSession.audioNodeId);
-        const format: AudioStreamFormatImpl = await this.audioSource.format;
-        const deviceInfo: ISpeechConfigAudioDevice = await this.audioSource.deviceInfo;
-        this.privIsLiveAudio = deviceInfo.type && deviceInfo.type === type.Microphones;
-
-        const audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
-        await this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
-
-        this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
-
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
+        let audioNode: ReplayableAudioNode;
+
+        try {
+            const audioStreamNode: IAudioStreamNode = await this.audioSource.attach(this.privRequestSession.audioNodeId);
+            const format: AudioStreamFormatImpl = await this.audioSource.format;
+            const deviceInfo: ISpeechConfigAudioDevice = await this.audioSource.deviceInfo;
+            this.privIsLiveAudio = deviceInfo.type && deviceInfo.type === type.Microphones;
+
+            audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
+            await this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
+            this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
+
+        } catch (error) {
+            await this.privRequestSession.onStopRecognizing();
+            throw error;
+        }
+
         try {
             await conPromise;
         } catch (error) {
