@@ -21,10 +21,8 @@ import {
     RecognizerConfig,
     WebsocketMessageFormatter,
 } from "./Exports";
+import { HeaderNames } from "./HeaderNames";
 import { QueryParameterNames } from "./QueryParameterNames";
-
-const TestHooksParamName: string = "testhooks";
-const ConnectionIdHeader: string = "X-ConnectionId";
 
 export class TranslationConnectionFactory extends ConnectionFactoryBase {
 
@@ -67,7 +65,7 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         if (authInfo.token !== undefined && authInfo.token !== "") {
             headers[authInfo.headerName] = authInfo.token;
         }
-        headers[ConnectionIdHeader] = connectionId;
+        headers[HeaderNames.ConnectionId] = connectionId;
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 

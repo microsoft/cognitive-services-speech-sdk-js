@@ -4,6 +4,7 @@
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { ServiceRecognizerBase } from "../src/common.speech/Exports";
+import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
 import { ConnectionStartEvent, IDetachable } from "../src/common/Exports";
 import { Events, EventType, PlatformEvent } from "../src/common/Exports";
@@ -359,7 +360,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         const req = {
             headers: {
                 "Content-Type": "application/json",
-                "Ocp-Apim-Subscription-Key": Settings.SpeechSubscriptionKey,
+                [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
             },
             url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
         };
@@ -1888,8 +1889,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                     expect("What's the weather like?").toEqual(res.text);
                     expect(uri).not.toBeUndefined();
-                    expect(uri.search(QueryParameterNames.DeploymentIdParamName + "=" + Settings.SpeechTestEndpointId)).not.toEqual(-1);
-                    expect(uri.search(QueryParameterNames.LanguageParamName)).toEqual(-1);
+                    expect(uri.search(QueryParameterNames.CustomSpeechDeploymentId + "=" + Settings.SpeechTestEndpointId)).not.toEqual(-1);
+                    expect(uri.search(QueryParameterNames.Language)).toEqual(-1);
 
                     done();
                 } catch (error) {

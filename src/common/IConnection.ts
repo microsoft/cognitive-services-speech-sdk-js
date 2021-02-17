@@ -5,7 +5,6 @@ import { ConnectionEvent } from "./ConnectionEvents";
 import { ConnectionMessage } from "./ConnectionMessage";
 import { ConnectionOpenResponse } from "./ConnectionOpenResponse";
 import { EventSource } from "./EventSource";
-import { IDisposable } from "./IDisposable";
 
 export enum ConnectionState {
     None,

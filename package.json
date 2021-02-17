@@ -56,7 +56,8 @@
     "@types/node": "^12.12.30",
     "@types/request": "^2.48.3",
     "@types/rimraf": "^3.0.0",
-    "@types/uuid": "^8.3.0",
+    "@types/url-parse": "^1.4.3",
+    "@types/uuid": "^3.3.3",
     "@types/ws": "^6.0.4",
     "asn1.js": "^5.2.0",
     "dts-bundle-webpack": "^1.0.2",
@@ -99,14 +100,15 @@
     "includeConsoleOutput": true
   },
   "dependencies": {
-    "agent-base": "^6.0.0",
-    "asn1.js-rfc2560": "^5.0.0",
+    "agent-base": "^6.0.1",
+    "asn1.js-rfc2560": "^5.0.1",
     "asn1.js-rfc5280": "^3.0.0",
     "async-disk-cache": "^2.1.0",
-    "https-proxy-agent": "^3.0.1",
+    "https-proxy-agent": "^4.0.0",
     "simple-lru-cache": "0.0.2",
-    "uuid": "^8.3.1",
-    "ws": "^7.2.0",
+    "url-parse": "^1.4.7",
+    "uuid": "^3.3.3",
+    "ws": "^7.3.1",
     "xmlhttprequest-ts": "^1.0.1"
   },
   "resolutions": {

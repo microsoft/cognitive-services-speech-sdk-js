@@ -53,6 +53,23 @@ Run the build:
 npm run build
 ```
 
+Run tests (see [ci/build.yml](ci/build.yml)) -- complete results require several specifically-configured subscriptions, but incomplete results can be obtained with a subset (expect and ignore failures involving missing assignments).
+
+At a minimum, invoking `npm run test` will compile/lint the test files to catch early problems in test code changes.
+
+    RunTests.cmd ^
+        SpeechSubscriptionKey:SPEECH_KEY ^
+        SpeechRegion:SPEECH_REGION ^
+        LuisSubscriptionKey:LUIS_KEY ^
+        LuisRegion:LUIS_REGION ^
+        SpeechTestEndpointId:CUSTOM_ENDPOINT ^
+        BotSubscription:BOT_KEY ^
+        BotRegion:BOT_REGION ^
+        SpeakerIDSubscriptionKey:SPEAKER_ID_KEY ^
+        SpeakerIDRegion:SPEAKER_ID_SUBSCRIPTION_REGION ^
+        CustomVoiceSubscriptionKey:CUSTOM_VOICE_KEY ^
+        CustomVoiceRegion:CUSTOM_VOICE_REGION
+
 ## Data / Telemetry
 
 This project collects data and sends it to Microsoft to help monitor our service performance and improve our products and services. Read the [Microsoft

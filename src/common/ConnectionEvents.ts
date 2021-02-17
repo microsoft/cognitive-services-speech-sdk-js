@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import { ConnectionMessage } from "./ConnectionMessage";
 import { IStringDictionary } from "./IDictionary";
 import { EventType, PlatformEvent } from "./PlatformEvent";
@@ -18,7 +20,6 @@ export class ServiceEvent extends PlatformEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectionEvent extends PlatformEvent {
     private privConnectionId: string;
 
@@ -32,7 +33,6 @@ export class ConnectionEvent extends PlatformEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectionStartEvent extends ConnectionEvent {
     private privUri: string;
     private privHeaders: IStringDictionary<string>;
@@ -52,26 +52,24 @@ export class ConnectionStartEvent extends ConnectionEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectionEstablishedEvent extends ConnectionEvent {
     constructor(connectionId: string, metadata?: IStringDictionary<string>) {
         super("ConnectionEstablishedEvent", connectionId);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectionClosedEvent extends ConnectionEvent {
-    private privRreason: string;
+    private privReason: string;
     private privStatusCode: number;
 
     constructor(connectionId: string, statusCode: number, reason: string) {
         super("ConnectionClosedEvent", connectionId, EventType.Debug);
-        this.privRreason = reason;
+        this.privReason = reason;
         this.privStatusCode = statusCode;
     }
 
     public get reason(): string {
-        return this.privRreason;
+        return this.privReason;
     }
 
     public get statusCode(): number {
@@ -79,7 +77,6 @@ export class ConnectionClosedEvent extends ConnectionEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectionErrorEvent extends ConnectionEvent {
     private readonly privMessage: string;
     private readonly privType: string;
@@ -99,7 +96,6 @@ export class ConnectionErrorEvent extends ConnectionEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectionEstablishErrorEvent extends ConnectionEvent {
     private privStatusCode: number;
     private privReason: string;
@@ -119,7 +115,6 @@ export class ConnectionEstablishErrorEvent extends ConnectionEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectionMessageReceivedEvent extends ConnectionEvent {
     private privNetworkReceivedTime: string;
     private privMessage: ConnectionMessage;
@@ -139,7 +134,6 @@ export class ConnectionMessageReceivedEvent extends ConnectionEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectionMessageSentEvent extends ConnectionEvent {
     private privNetworkSentTime: string;
     private privMessage: ConnectionMessage;

@@ -7,47 +7,18 @@ import {
 } from "../common.browser/Exports";
 import { OutputFormatPropertyName } from "../common.speech/Exports";
 import { IConnection, IStringDictionary } from "../common/Exports";
-import { OutputFormat, PropertyId } from "../sdk/Exports";
+import { DialogServiceConfig, OutputFormat, PropertyId } from "../sdk/Exports";
 import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
 import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
+import { HeaderNames } from "./HeaderNames";
 import { QueryParameterNames } from "./QueryParameterNames";
 
-const baseUrl: string = "convai.speech";
-
-interface IBackendValues {
-    authHeader: string;
-    resourcePath: string;
-    version: string;
-}
-
-const botFramework: IBackendValues = {
-    authHeader: "X-DLS-Secret",
-    resourcePath: "",
-    version: "v3"
-};
-
-const customCommands: IBackendValues = {
-    authHeader: "X-CommandsAppId",
-    resourcePath: "commands",
-    version: "v1"
-};
-
-const pathSuffix: string = "api";
-const connectionID: string = "connectionId";
-
-function getDialogSpecificValues(dialogType: string): IBackendValues {
-    switch (dialogType) {
-        case "custom_commands": {
-            return customCommands;
-        }
-        case "bot_framework": {
-            return botFramework;
-        }
-    }
-    throw new Error(`Invalid dialog type '${dialogType}'`);
-}
-
 export class DialogConnectionFactory extends ConnectionFactoryBase {
+
+    private static Constants: any = class {
+        private static ApiKey: string = "api";
+        private static BaseUrl: string = "convai.speech";
+    };
 
     public create = (
         config: RecognizerConfig,
@@ -57,15 +28,28 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         const applicationId: string = config.parameters.getProperty(PropertyId.Conversation_ApplicationId, "");
         const dialogType: string = config.parameters.getProperty(PropertyId.Conversation_DialogType);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
-
         const language: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-US");
+        const requestTurnStatus: string = config.parameters.getProperty(PropertyId.Conversation_Request_Bot_Status_Messages, "true");
 
         const queryParams: IStringDictionary<string> = {};
-        queryParams[QueryParameterNames.LanguageParamName] = language;
-        queryParams[QueryParameterNames.FormatParamName] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
-        queryParams[connectionID] = connectionId;
+        queryParams[HeaderNames.ConnectionId] = connectionId;
+        queryParams[QueryParameterNames.Format] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
+        queryParams[QueryParameterNames.Language] = language;
+        queryParams[QueryParameterNames.RequestBotStatusMessages] = requestTurnStatus;
+        if (applicationId) {
+            queryParams[QueryParameterNames.BotId] = applicationId;
+            if (dialogType === DialogServiceConfig.DialogTypes.CustomCommands) {
+                queryParams[HeaderNames.CustomCommandsAppId] = applicationId;
+            }
+        }
 
-        const {resourcePath, version, authHeader} = getDialogSpecificValues(dialogType);
+        const resourceInfix: string =
+            dialogType === DialogServiceConfig.DialogTypes.CustomCommands ? "commands/"
+            : "";
+        const version: string =
+            dialogType === DialogServiceConfig.DialogTypes.CustomCommands ? "v1"
+            : dialogType === DialogServiceConfig.DialogTypes.BotFramework ? "v3"
+            : "v0";
 
         const headers: IStringDictionary<string> = {};
 
@@ -73,19 +57,18 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
             headers[authInfo.headerName] = authInfo.token;
         }
 
-        if (applicationId !== "") {
-            headers[authHeader] = applicationId;
-        }
-
+        // The URL used for connection is chosen in a priority order of specification:
+        //  1. If a custom endpoint is provided, that URL is used verbatim.
+        //  2. If a custom host is provided (e.g. "wss://my.custom.endpoint.com:1123"), a URL is constructed from it.
+        //  3. If no custom connection details are provided, a URL is constructed from default values.
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, "");
-        if (endpoint === "") {
+        if (!endpoint) {
             const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
-            // ApplicationId is only required for CustomCommands, so we're using that to determine default endpoint
-            if (applicationId === "") {
-                endpoint = `wss://${region}.${baseUrl}${hostSuffix}/${pathSuffix}/${version}`;
-            } else {
-                endpoint = `wss://${region}.${baseUrl}${hostSuffix}/${resourcePath}/${pathSuffix}/${version}`;
-            }
+            const host: string = config.parameters.getProperty(
+                PropertyId.SpeechServiceConnection_Host,
+                `wss://${region}.${DialogConnectionFactory.Constants.BaseUrl}${hostSuffix}`);
+            const standardizedHost: string = host.endsWith("/") ? host : host + "/";
+            endpoint = `${standardizedHost}${resourceInfix}${DialogConnectionFactory.Constants.ApiKey}/${version}`;
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);

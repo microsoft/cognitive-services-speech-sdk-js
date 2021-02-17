@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 /**
  * The error that is thrown when an argument passed in is null.
  *
@@ -31,7 +33,6 @@ export class ArgumentNullError extends Error {
  * @class InvalidOperationError
  * @extends {Error}
  */
-// tslint:disable-next-line:max-classes-per-file
 export class InvalidOperationError extends Error {
 
     /**

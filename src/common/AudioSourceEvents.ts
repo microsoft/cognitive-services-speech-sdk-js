@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import { EventType, PlatformEvent } from "./PlatformEvent";
 
 export class AudioSourceEvent extends PlatformEvent {
@@ -16,28 +18,24 @@ export class AudioSourceEvent extends PlatformEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioSourceInitializingEvent extends AudioSourceEvent {
     constructor(audioSourceId: string) {
         super("AudioSourceInitializingEvent", audioSourceId);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioSourceReadyEvent extends AudioSourceEvent {
     constructor(audioSourceId: string) {
         super("AudioSourceReadyEvent", audioSourceId);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioSourceOffEvent extends AudioSourceEvent {
     constructor(audioSourceId: string) {
         super("AudioSourceOffEvent", audioSourceId);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioSourceErrorEvent extends AudioSourceEvent {
     private privError: string;
 
@@ -51,7 +49,6 @@ export class AudioSourceErrorEvent extends AudioSourceEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioStreamNodeEvent extends AudioSourceEvent {
     private privAudioNodeId: string;
 
@@ -65,28 +62,24 @@ export class AudioStreamNodeEvent extends AudioSourceEvent {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioStreamNodeAttachingEvent extends AudioStreamNodeEvent {
     constructor(audioSourceId: string, audioNodeId: string) {
         super("AudioStreamNodeAttachingEvent", audioSourceId, audioNodeId);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioStreamNodeAttachedEvent extends AudioStreamNodeEvent {
     constructor(audioSourceId: string, audioNodeId: string) {
         super("AudioStreamNodeAttachedEvent", audioSourceId, audioNodeId);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioStreamNodeDetachedEvent extends AudioStreamNodeEvent {
     constructor(audioSourceId: string, audioNodeId: string) {
         super("AudioStreamNodeDetachedEvent", audioSourceId, audioNodeId);
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioStreamNodeErrorEvent extends AudioStreamNodeEvent {
     private privError: string;
 

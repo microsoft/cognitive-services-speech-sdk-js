@@ -1,27 +1,33 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ReplayableAudioNode } from "../common.browser/Exports";
+import {
+    ReplayableAudioNode
+} from "../common.browser/Exports";
+import { SendingAgentContextMessageEvent } from "../common/DialogEvents";
 import {
     BackgroundEvent,
+    ConnectionEvent,
     ConnectionMessage,
     createGuid,
     createNoDashGuid,
     Deferred,
+    DialogEvent,
     Events,
+    EventSource,
     IAudioSource,
     IAudioStreamNode,
     IConnection,
     MessageType,
     ServiceEvent,
 } from "../common/Exports";
-import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
 import {
     ActivityReceivedEventArgs,
     CancellationErrorCode,
     CancellationReason,
+    DialogServiceConfig,
     DialogServiceConnector,
     PropertyCollection,
     PropertyId,
@@ -32,6 +38,7 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
     SpeechSynthesisOutputFormat,
+    TurnStatusReceivedEventArgs,
 } from "../sdk/Exports";
 import { DialogServiceTurnStateManager } from "./DialogServiceTurnStateManager";
 import {
@@ -59,6 +66,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private terminateMessageLoop: boolean;
     private agentConfigSent: boolean;
     private privLastResult: SpeechRecognitionResult;
+    private privEvents: EventSource<DialogEvent>;
 
     // Turns are of two kinds:
     // 1: SR turns, end when the SR result is returned and then turn end.
@@ -74,6 +82,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         super(authentication, connectionFactory, audioSource, recognizerConfig, dialogServiceConnector);
 
+        this.privEvents = new EventSource<DialogEvent>();
         this.privDialogServiceConnector = dialogServiceConnector;
         this.receiveMessageOverride = this.receiveDialogMessageOverride;
         this.privTurnStateManager = new DialogServiceTurnStateManager();
@@ -85,6 +94,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.agentConfigSent = false;
         this.privLastResult = null;
+        this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
+            if (connectionEvent.name === "ConnectionClosedEvent") {
+                this.terminateMessageLoop = true;
+            }
+        });
     }
 
     public async sendMessage(message: string): Promise<void> {
@@ -208,28 +222,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             case "response":
                 {
-                    const responseRequestId = connectionMessage.requestId.toUpperCase();
-                    const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(connectionMessage.textBody);
-                    const turn = this.privTurnStateManager.GetTurn(responseRequestId);
+                    this.handleResponseMessage(connectionMessage);
 
-                    // update the conversation Id
-                    if (activityPayload.conversationId) {
-                        const updateAgentConfig = this.agentConfig.get();
-                        updateAgentConfig.botInfo.conversationId = activityPayload.conversationId;
-                        this.agentConfig.set(updateAgentConfig);
-                    }
-
-                    const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload, (SpeechSynthesisOutputFormat as any)[this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]);
-                    const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
-                    if (!!this.privDialogServiceConnector.activityReceived) {
-                        try {
-                            this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
-                            /* tslint:disable:no-empty */
-                        } catch (error) {
-                            // Not going to let errors in the event handler
-                            // trip things up.
-                        }
-                    }
                 }
                 processed = true;
                 break;
@@ -436,7 +430,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
                                 await this.privRequestSession.onServiceTurnEndResponse(false);
 
-                                if (this.privRequestSession.isSpeechEnded) {
+                                if (!this.privRecognizerConfig.isContinuousRecognition || this.privRequestSession.isSpeechEnded || !this.privRequestSession.isRecognizing) {
                                     if (!!this.privRecognizer.sessionStopped) {
                                         this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                                     }
@@ -519,11 +513,15 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private sendAgentConfig = (connection: IConnection): Promise<void> => {
         if (this.agentConfig && !this.agentConfigSent) {
 
-            if (this.privRecognizerConfig.parameters.getProperty(PropertyId.Conversation_DialogType) === "custom_commands") {
+            if (this.privRecognizerConfig
+                .parameters
+                .getProperty(PropertyId.Conversation_DialogType) === DialogServiceConfig.DialogTypes.CustomCommands) {
                 const config = this.agentConfig.get();
                 config.botInfo.commandsCulture = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-us");
                 this.agentConfig.set(config);
             }
+            this.onEvent(new SendingAgentContextMessageEvent(this.agentConfig));
+
             const agentConfigJson = this.agentConfig.toJsonString();
 
             // guard against sending this multiple times on one connection
@@ -584,5 +582,63 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         const ev = new SpeechRecognitionEventArgs(result, offset, this.privRequestSession.sessionId);
         return ev;
+    }
+
+    private handleResponseMessage = (responseMessage: SpeechConnectionMessage): void => {
+        // "response" messages can contain either "message" (activity) or "MessageStatus" data. Fire the appropriate
+        // event according to the message type that's specified.
+        const responsePayload = JSON.parse(responseMessage.textBody);
+        switch (responsePayload.messageType.toLowerCase()) {
+            case "message":
+                const responseRequestId = responseMessage.requestId.toUpperCase();
+                const activityPayload: ActivityPayloadResponse = ActivityPayloadResponse.fromJSON(responseMessage.textBody);
+                const turn = this.privTurnStateManager.GetTurn(responseRequestId);
+
+                // update the conversation Id
+                if (activityPayload.conversationId) {
+                    const updateAgentConfig = this.agentConfig.get();
+                    updateAgentConfig.botInfo.conversationId = activityPayload.conversationId;
+                    this.agentConfig.set(updateAgentConfig);
+                }
+
+                const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(
+                    activityPayload,
+                    (SpeechSynthesisOutputFormat as any)[this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]);
+                const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
+                if (!!this.privDialogServiceConnector.activityReceived) {
+                    try {
+                        this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
+                        /* tslint:disable:no-empty */
+                    } catch (error) {
+                        // Not going to let errors in the event handler
+                        // trip things up.
+                    }
+                }
+                break;
+
+            case "messagestatus":
+                if (!!this.privDialogServiceConnector.turnStatusReceived) {
+                    try {
+                        this.privDialogServiceConnector.turnStatusReceived(
+                            this.privDialogServiceConnector,
+                            new TurnStatusReceivedEventArgs(responseMessage.textBody));
+                        /* tslint:disable:no-empty */
+                    } catch (error) {
+                        // Not going to let errors in the event handler
+                        // trip things up.
+                    }
+                }
+                break;
+
+            default:
+                Events.instance.onEvent(
+                    new BackgroundEvent(`Unexpected response of type ${responsePayload.messageType}. Ignoring.`));
+                break;
+        }
+    }
+
+    private onEvent(event: DialogEvent): void {
+        this.privEvents.onEvent(event);
+        Events.instance.onEvent(event);
     }
 }

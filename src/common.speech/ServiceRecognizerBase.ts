@@ -37,6 +37,7 @@ import {
     RequestSession,
     SpeechContext,
     SpeechDetected,
+    type
 } from "./Exports";
 import {
     AuthInfo,
@@ -68,6 +69,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privActivityTemplate: string;
     private privSetTimeout: (cb: () => void, delay: number) => number = setTimeout;
     private privAudioSource: IAudioSource;
+    private privIsLiveAudio: boolean = false;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
@@ -205,6 +207,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const audioStreamNode: IAudioStreamNode = await this.audioSource.attach(this.privRequestSession.audioNodeId);
         const format: AudioStreamFormatImpl = await this.audioSource.format;
         const deviceInfo: ISpeechConfigAudioDevice = await this.audioSource.deviceInfo;
+        this.privIsLiveAudio = deviceInfo.type && deviceInfo.type === type.Microphones;
 
         const audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
         await this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
@@ -691,7 +694,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     } else {
                         // the audio stream has been closed, no need to schedule next
                         // read-upload cycle.
-                        this.privRequestSession.onSpeechEnded();
+                        if (!this.privIsLiveAudio) {
+                            this.privRequestSession.onSpeechEnded();
+                        }
                     }
                 }
             }

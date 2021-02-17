@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import { ArgumentNullError } from "./Error";
 
 export enum PromiseState {
@@ -62,7 +64,6 @@ export class PromiseResult<T> {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class PromiseResultEventSource<T>  {
 
     private privOnSetResult: (result: T) => void;
@@ -82,7 +83,6 @@ export class PromiseResultEventSource<T>  {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class Deferred<T> implements IDeferred<T> {
     private privPromise: Promise<T>;
     private privResolve: (value?: T | PromiseLike<T>) => void;
@@ -110,7 +110,6 @@ export class Deferred<T> implements IDeferred<T> {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class Sink<T> {
     private privState: PromiseState = PromiseState.None;
     private privPromiseResult: PromiseResult<T> = null;

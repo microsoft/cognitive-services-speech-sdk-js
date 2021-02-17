@@ -4,12 +4,11 @@
 import {
     ArgumentNullError,
 } from "../common/Exports";
+import { HeaderNames } from "./HeaderNames";
 import {
     AuthInfo,
     IAuthentication
 } from "./IAuthentication";
-
-const AuthHeader: string = "Ocp-Apim-Subscription-Key";
 
 /**
  * @class
@@ -27,7 +26,7 @@ export class CognitiveSubscriptionKeyAuthentication implements IAuthentication {
             throw new ArgumentNullError("subscriptionKey");
         }
 
-        this.privAuthInfo = new AuthInfo(AuthHeader, subscriptionKey);
+        this.privAuthInfo = new AuthInfo(HeaderNames.AuthKey, subscriptionKey);
     }
 
     /**

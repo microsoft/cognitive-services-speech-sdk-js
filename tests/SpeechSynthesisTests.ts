@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as request from "request";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
+import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
 import {
     ConnectionStartEvent,
@@ -570,7 +571,7 @@ describe("Service based tests", () => {
         const req = {
             headers: {
                 "Content-Type": "application/json",
-                "Ocp-Apim-Subscription-Key": Settings.SpeechSubscriptionKey,
+                [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
             },
             url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
         };
@@ -686,7 +687,7 @@ describe("Service based tests", () => {
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             expect(uri).not.toBeUndefined();
-            expect(uri.search(QueryParameterNames.CustomVoiceDeploymentIdParamName + "=" + Settings.CustomVoiceEndpointId)).not.toEqual(-1);
+            expect(uri.search(QueryParameterNames.CustomVoiceDeploymentId + "=" + Settings.CustomVoiceEndpointId)).not.toEqual(-1);
             done();
         }, (e: string): void => {
             done.fail(e);

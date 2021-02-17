@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import { PathLike } from "fs";
 import {
     FileAudioSource,
@@ -213,7 +215,6 @@ export abstract class AudioConfig {
  * @private
  * @class AudioConfigImpl
  */
-// tslint:disable-next-line:max-classes-per-file
 export class AudioConfigImpl extends AudioConfig implements IAudioSource {
     private privSource: IAudioSource;
 
@@ -346,7 +347,6 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class AudioOutputConfigImpl extends AudioConfig implements IAudioDestination {
     private privDestination: IAudioDestination;
 

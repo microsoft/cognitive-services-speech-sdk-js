@@ -10,6 +10,8 @@
 
     "interface-name": [ false ],
 
+    "max-classes-per-file": [ true, 1, "exclude-class-expressions" ],
+
     "max-line-length": [ false ],
 
     "member-ordering": [

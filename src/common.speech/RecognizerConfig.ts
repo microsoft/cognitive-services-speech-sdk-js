@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// tslint:disable:max-classes-per-file
+
 import { PropertyCollection, PropertyId } from "../sdk/Exports";
 
 export enum RecognitionMode {
@@ -59,7 +61,6 @@ export class RecognizerConfig {
 }
 
 // The config is serialized and sent as the Speech.Config
-// tslint:disable-next-line:max-classes-per-file
 export class SpeechServiceConfig {
     private context: Context;
     private recognition: string;
@@ -96,7 +97,6 @@ export class SpeechServiceConfig {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class Context {
     public system: System;
     public os: OS;
@@ -108,7 +108,6 @@ export class Context {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class System {
     public name: string;
     public version: string;
@@ -126,7 +125,6 @@ export class System {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class OS {
     public platform: string;
     public name: string;
@@ -139,7 +137,6 @@ export class OS {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class Device {
     public manufacturer: string;
     public model: string;
