@@ -147,7 +147,7 @@ export class FileAudioSource implements IAudioSource {
 
     private readHeader(): Promise<AudioStreamFormatImpl> {
         // Read the wave header.
-        const maxHeaderSize: number = 128;
+        const maxHeaderSize: number = 512;
         const header: Blob | Buffer = this.privSource.slice(0, maxHeaderSize);
 
         const headerResult: Deferred<AudioStreamFormatImpl> = new Deferred<AudioStreamFormatImpl>();
