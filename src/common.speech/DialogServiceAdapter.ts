@@ -601,9 +601,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     this.agentConfig.set(updateAgentConfig);
                 }
 
-                const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(
-                    activityPayload,
-                    AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString(this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)));
+                const formatString = this.privDialogServiceConnector.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined);
+                const outputFormat = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormatString(formatString);
+                const pullAudioOutputStream: PullAudioOutputStreamImpl = turn.processActivityPayload(activityPayload, outputFormat);
                 const activity = new ActivityReceivedEventArgs(activityPayload.messagePayload, pullAudioOutputStream);
                 if (!!this.privDialogServiceConnector.activityReceived) {
                     try {
