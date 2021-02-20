@@ -150,17 +150,4 @@ export class BaseAudioPlayer {
         // Clear the samples for the next pushed data.
         this.samples = new Float32Array();
     }
-
-    private async playAudio(audioData: ArrayBuffer): Promise<void> {
-        if (this.audioContext === null) {
-            this.createAudioContext();
-        }
-        const source: AudioBufferSourceNode = this.audioContext.createBufferSource();
-        const destination: AudioDestinationNode = this.audioContext.destination;
-        await this.audioContext.decodeAudioData(audioData, (newBuffer: AudioBuffer): void => {
-            source.buffer = newBuffer;
-            source.connect(destination);
-            source.start(0);
-        });
-    }
 }
