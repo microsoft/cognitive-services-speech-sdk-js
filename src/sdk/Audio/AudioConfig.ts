@@ -77,8 +77,8 @@ export abstract class AudioConfig {
      * @param {File} fileName - Specifies the audio input file. Currently, only WAV / PCM is supported.
      * @returns {AudioConfig} The audio input configuration being created.
      */
-    public static fromWavFileInput(file: File): AudioConfig {
-        return new AudioConfigImpl(new FileAudioSource(file));
+    public static fromWavFileInput(file: File | Buffer, name: string = "unnamedBuffer.wav"): AudioConfig {
+        return new AudioConfigImpl(new FileAudioSource(file, name));
     }
 
     /**
