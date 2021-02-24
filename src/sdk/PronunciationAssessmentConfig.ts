@@ -35,7 +35,7 @@ export class PronunciationAssessmentConfig {
         this.privProperties = new PropertyCollection();
         this.privProperties.setProperty(PropertyId.PronunciationAssessment_ReferenceText, referenceText);
         this.privProperties.setProperty(PropertyId.PronunciationAssessment_GradingSystem, PronunciationAssessmentGradingSystem[gradingSystem]);
-        this.privProperties.setProperty(PropertyId.PronunciationAssessment_Granularity, PronunciationAssessmentGranularity[gradingSystem]);
+        this.privProperties.setProperty(PropertyId.PronunciationAssessment_Granularity, PronunciationAssessmentGranularity[granularity]);
         this.privProperties.setProperty(PropertyId.PronunciationAssessment_EnableMiscue, String(enableMiscue));
     }
 
