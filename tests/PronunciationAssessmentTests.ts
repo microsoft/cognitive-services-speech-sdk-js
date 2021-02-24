@@ -108,7 +108,7 @@ test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback) => {
         PronunciationAssessmentGranularity.FullText, true);
     j = JSON.parse(pronConfig.toJSON());
     expect(j.gradingSystem).toEqual("HundredMark");
-    expect(j.granularity).toEqual("Fulltext");
+    expect(j.granularity).toEqual("FullText");
     expect(j.dimension).toEqual("Comprehensive");
     expect(j.enableMiscue).toBeTruthy();
     done();
