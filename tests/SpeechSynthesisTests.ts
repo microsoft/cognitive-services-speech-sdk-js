@@ -386,7 +386,9 @@ describe("Service based tests", () => {
             try {
                 expect(e).not.toBeUndefined();
                 expect(e.audioOffset).not.toBeUndefined();
-                expect(e.text).toEqual("2bookmark_one2");
+                if (bookmarkCount === 0) {
+                    expect(e.text).toEqual("bookmark");
+                }
             } catch (e) {
                 done.fail(e);
             }
@@ -395,11 +397,10 @@ describe("Service based tests", () => {
 
         const ssml: string =
             `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
-<voice name='Microsoft Server Speech Text to Speech Voice (en-US, JessaNeural)'>
-<prosody contour='(50%,+50%)(80%,-4st)(90%,+3st)(100%,+40Hz)'>Hi, this</prosody> is TTS Engine test script z.
-<bookmark mark='2bookmark_one2'/> one. two. three. four. </voice></speak>`;
+ <voice name='Microsoft Server Speech Text to Speech Voice (en-US, Guy24KRUS)'>
+ <bookmark mark='bookmark'/> one. <bookmark mark='书签'/> two. three. four.</voice></speak>`;
         s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
-            expect(bookmarkCount).toEqual(1);
+            expect(bookmarkCount).toEqual(2);
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             done();
         }, (e: string): void => {
@@ -434,8 +435,8 @@ describe("Service based tests", () => {
 
         const ssml: string =
             `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
-<voice name='Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)'>
-<mstts:viseme type='svg'/><s>I want to <break time='50ms'/>avoid<break time='100ms'/> monotony.</s></voice></speak>`;
+<voice name='Microsoft Server Speech Text to Speech Voice (en-US, Guy24KRUS)'>
+<mstts:viseme type='svg'/>I want to avoid monotony.</voice></speak>`;
         s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
             expect(visemeCount).toBeGreaterThan(0);
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);

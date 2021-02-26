@@ -17,8 +17,8 @@ export interface ISynthesisMetadata {
         };
         Bookmark: string;
         VisemeId: number;
-        Animation: string;
-        NoMoreAnimation: boolean;
+        AnimationChunk: string;
+        IsLastAnimation: boolean;
     };
 }
 

@@ -396,7 +396,7 @@ export class SynthesisAdapterBase implements IDisposable {
 
                                     this.privSynthesisTurn.onVisemeMetadataReceived(metadata);
 
-                                    if (metadata.Data.NoMoreAnimation !== false) {
+                                    if (metadata.Data.IsLastAnimation !== false) {
                                         const vev: SpeechSynthesisVisemeEventArgs = new SpeechSynthesisVisemeEventArgs(
                                             metadata.Data.Offset,
                                             metadata.Data.VisemeId,

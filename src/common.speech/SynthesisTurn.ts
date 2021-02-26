@@ -148,6 +148,7 @@ export class SynthesisTurn {
         this.privBytesReceived = 0;
         this.privTextOffset = 0;
         this.privNextSearchTextIndex = 0;
+        this.privPartialVisemeAnimation = "";
         if (audioDestination !== undefined) {
             this.privTurnAudioDestination = audioDestination;
             this.privTurnAudioDestination.format = this.privAudioOutputFormat;
@@ -211,8 +212,8 @@ export class SynthesisTurn {
     }
 
     public onVisemeMetadataReceived(metadata: ISynthesisMetadata): void {
-        if (metadata.Data.Animation !== undefined) {
-            this.privPartialVisemeAnimation = this.privPartialVisemeAnimation + metadata.Data.Animation;
+        if (metadata.Data.AnimationChunk !== undefined) {
+            this.privPartialVisemeAnimation = this.privPartialVisemeAnimation + metadata.Data.AnimationChunk;
         }
     }
 
