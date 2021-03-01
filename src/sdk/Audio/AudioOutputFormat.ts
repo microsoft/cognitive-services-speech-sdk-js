@@ -296,7 +296,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     2,
                     16,
                     speechSynthesisOutputFormatString,
-                    speechSynthesisOutputFormatString
+                    speechSynthesisOutputFormatString,
                     false);
             case "raw-48khz-16bit-mono-pcm":
                 return new AudioOutputFormatImpl(
