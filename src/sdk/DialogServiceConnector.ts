@@ -18,6 +18,7 @@ import {
 } from "../common/Exports";
 import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
+import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat";
 import { Contracts } from "./Contracts";
 import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
 import {
@@ -29,7 +30,6 @@ import {
     SpeechRecognitionResult
 } from "./Exports";
 import { PropertyId } from "./PropertyId";
-import { SpeechSynthesisOutputFormat } from "./SpeechSynthesisOutputFormat";
 import { TurnStatusReceivedEventArgs } from "./TurnStatusReceivedEventArgs";
 
 /**
@@ -270,7 +270,7 @@ export class DialogServiceConnector extends Recognizer {
                 connectionId: this.properties.getProperty(PropertyId.Conversation_Agent_Connection_Id),
                 conversationId: this.properties.getProperty(PropertyId.Conversation_Conversation_Id, undefined),
                 fromId: this.properties.getProperty(PropertyId.Conversation_From_Id, undefined),
-                ttsAudioFormat: (SpeechSynthesisOutputFormat as any)[this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]
+                ttsAudioFormat: this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)
             },
             version: 0.2
         };

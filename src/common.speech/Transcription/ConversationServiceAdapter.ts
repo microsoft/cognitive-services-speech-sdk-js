@@ -88,7 +88,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     }
 
     public isDisposed(): boolean {
-        return this.privConversationIsDisposed;
+        return super.isDisposed() || this.privConversationIsDisposed;
     }
 
     public async dispose(reason?: string): Promise<void> {
@@ -97,6 +97,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
             const connection: IConnection = await this.privConnectionConfigPromise;
             await connection.dispose(reason);
         }
+        await super.dispose(reason);
     }
 
     public async sendMessage(message: string): Promise<void> {
@@ -177,28 +178,28 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     /**
      * Process incoming websocket messages
      */
-    private receiveConversationMessageOverride(): Promise<void> {
-
+    private async receiveConversationMessageOverride(): Promise<void> {
+        if (this.isDisposed() || this.terminateMessageLoop) {
+            return Promise.resolve();
+        }
         // we won't rely on the cascading promises of the connection since we want to continually be available to receive messages
         const communicationCustodian: Deferred<void> = new Deferred<void>();
 
-        this.fetchConnection().then(async (connection: IConnection): Promise<void> => {
-            const isDisposed: boolean = this.isDisposed();
-            const terminateMessageLoop = (!this.isDisposed() && this.terminateMessageLoop);
-
-            if (isDisposed || terminateMessageLoop) {
+        try {
+            const connection: IConnection = await this.fetchConnection();
+            const message: ConversationConnectionMessage = await connection.read() as ConversationConnectionMessage;
+            if (this.isDisposed() || this.terminateMessageLoop) {
                 // We're done.
                 communicationCustodian.resolve();
                 return Promise.resolve();
             }
 
-            const message: ConversationConnectionMessage = await connection.read() as ConversationConnectionMessage;
-            const sessionId: string = this.privConversationRequestSession.sessionId;
-            let sendFinal: boolean = false;
-
             if (!message) {
                 return this.receiveConversationMessageOverride();
             }
+
+            const sessionId: string = this.privConversationRequestSession.sessionId;
+            let sendFinal: boolean = false;
 
             try {
                 switch (message.conversationMessageType.toLowerCase()) {
@@ -497,15 +498,17 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                 // continue
             }
             return this.receiveConversationMessageOverride();
-        }, (error: string) => {
+        } catch (e) {
             this.terminateMessageLoop = true;
-        });
+        }
 
         return communicationCustodian.promise;
     }
 
     private async startMessageLoop(): Promise<void> {
-
+        if (this.isDisposed()) {
+            return Promise.resolve();
+        }
         this.terminateMessageLoop = false;
 
         const messageRetrievalPromise = this.receiveConversationMessageOverride();
@@ -521,6 +524,9 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
 
     // Takes an established websocket connection to the endpoint
     private configConnection(): Promise<IConnection> {
+        if (this.isDisposed()) {
+            return Promise.resolve<IConnection>(undefined);
+        }
         if (this.privConnectionConfigPromise) {
             return this.privConnectionConfigPromise.then((connection: IConnection): Promise<IConnection> => {
                 if (connection.state() === ConnectionState.Disconnected) {

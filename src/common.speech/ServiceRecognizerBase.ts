@@ -37,6 +37,7 @@ import {
     RequestSession,
     SpeechContext,
     SpeechDetected,
+    type
 } from "./Exports";
 import {
     AuthInfo,
@@ -68,6 +69,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privActivityTemplate: string;
     private privSetTimeout: (cb: () => void, delay: number) => number = setTimeout;
     private privAudioSource: IAudioSource;
+    private privIsLiveAudio: boolean = false;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
@@ -204,15 +206,22 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
+        let audioNode: ReplayableAudioNode;
 
-        const audioStreamNode: IAudioStreamNode = await this.audioSource.attach(this.privRequestSession.audioNodeId);
-        const format: AudioStreamFormatImpl = await this.audioSource.format;
-        const deviceInfo: ISpeechConfigAudioDevice = await this.audioSource.deviceInfo;
+        try {
+            const audioStreamNode: IAudioStreamNode = await this.audioSource.attach(this.privRequestSession.audioNodeId);
+            const format: AudioStreamFormatImpl = await this.audioSource.format;
+            const deviceInfo: ISpeechConfigAudioDevice = await this.audioSource.deviceInfo;
+            this.privIsLiveAudio = deviceInfo.type && deviceInfo.type === type.Microphones;
 
-        const audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
-        await this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
+            audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
+            await this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
+            this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
 
-        this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
+        } catch (error) {
+            await this.privRequestSession.onStopRecognizing();
+            throw error;
+        }
 
         try {
             await conPromise;
@@ -692,7 +701,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     } else {
                         // the audio stream has been closed, no need to schedule next
                         // read-upload cycle.
-                        this.privRequestSession.onSpeechEnded();
+                        if (!this.privIsLiveAudio) {
+                            this.privRequestSession.onSpeechEnded();
+                        }
                     }
                 }
             }

@@ -56,6 +56,7 @@
     "@types/node": "^12.12.30",
     "@types/request": "^2.48.3",
     "@types/rimraf": "^3.0.0",
+    "@types/url-parse": "^1.4.3",
     "@types/uuid": "^3.3.3",
     "@types/ws": "^6.0.4",
     "asn1.js": "^5.2.0",
@@ -73,7 +74,7 @@
     "rimraf": "^3.0.2",
     "semver": "^6.3.0",
     "source-map-loader": "^0.2.4",
-    "ts-jest": "^25.5.1",
+    "ts-jest": "^26.4.4",
     "tslint": "^5.20.1",
     "typescript": "^3.5.3",
     "webpack-stream": "^5.2.1"
@@ -105,6 +106,7 @@
     "async-disk-cache": "^2.1.0",
     "https-proxy-agent": "^4.0.0",
     "simple-lru-cache": "0.0.2",
+    "url-parse": "^1.4.7",
     "uuid": "^3.3.3",
     "ws": "^7.3.1",
     "xmlhttprequest-ts": "^1.0.1"

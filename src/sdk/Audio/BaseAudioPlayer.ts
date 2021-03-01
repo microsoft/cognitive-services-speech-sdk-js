@@ -39,16 +39,12 @@ export class BaseAudioPlayer {
      */
     public playAudioSample(newAudioData: ArrayBuffer, cb?: () => void, err?: (error: string) => void): void {
         marshalPromiseToCallbacks((async (): Promise<void> => {
-            if (!!(window as any).webkitAudioContext) {
-                await this.playAudio(newAudioData);
-            } else {
                 this.ensureInitializedContext();
                 const audioData = this.formatAudioData(newAudioData);
                 const newSamplesData = new Float32Array(this.samples.length + audioData.length);
                 newSamplesData.set(this.samples, 0);
                 newSamplesData.set(audioData, this.samples.length);
                 this.samples = newSamplesData;
-            }
         })(), cb, err);
     }
 

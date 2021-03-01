@@ -629,7 +629,7 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
     });
 }, 20000);
 
-Settings.testIfDOMCondition("testAudioMessagesSent", (done: jest.DoneCallback) => {
+test("testAudioMessagesSent", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: testAudioMessagesSent");
 

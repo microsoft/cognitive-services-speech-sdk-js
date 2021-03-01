@@ -3,25 +3,12 @@
 
 import * as fs from "fs";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
-import { Settings } from "./Settings";
 
 export class WaveFileAudioInput {
 
     public static getAudioConfigFromFile(filename: string): sdk.AudioConfig {
         if (typeof File === "undefined") {
-            let pushStream: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
-            if (filename === Settings.WaveFile44k) {
-                const f: sdk.AudioStreamFormat = sdk.AudioStreamFormat.getWaveFormatPCM(44100, 16, 1);
-                pushStream = sdk.AudioInputStream.createPushStream(f);
-            } else {
-                pushStream = sdk.AudioInputStream.createPushStream();
-            }
-            fs.createReadStream(filename).on("data", (arrayBuffer: Buffer): void => {
-                pushStream.write(arrayBuffer.slice());
-            }).on("end", (): void => {
-                pushStream.close();
-            });
-            return sdk.AudioConfig.fromStreamInput(pushStream);
+            return sdk.AudioConfig.fromWavFileInput(fs.readFileSync(filename), filename);
         } else {
             const f: File = WaveFileAudioInput.LoadFile(filename);
             return sdk.AudioConfig.fromWavFileInput(f);
