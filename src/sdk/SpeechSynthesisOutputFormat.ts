@@ -4,7 +4,7 @@
 /**
  * Define speech synthesis audio output formats.
  * @enum SpeechSynthesisOutputFormat
- * Added in version 1.11.0
+ * Updated in version 1.16.0
  */
 export enum SpeechSynthesisOutputFormat {
     /**
@@ -144,4 +144,25 @@ export enum SpeechSynthesisOutputFormat {
      * @member SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3
      */
     Audio48Khz192KBitRateMonoMp3,
+
+    /**
+     * ogg-48khz-16bit-mono-opus
+     * Added in version 1.16.0
+     * @member SpeechSynthesisOutputFormat.Ogg48Khz16BitMonoOpus
+     */
+    Ogg48Khz16BitMonoOpus,
+
+    /**
+     * webm-16khz-16bit-mono-opus
+     * Added in version 1.16.0
+     * @member SpeechSynthesisOutputFormat.Webm16Khz16BitMonoOpus
+     */
+    Webm16Khz16BitMonoOpus,
+
+    /**
+     * webm-24khz-16bit-mono-opus
+     * Added in version 1.16.0
+     * @member SpeechSynthesisOutputFormat.Webm24Khz16BitMonoOpus
+     */
+    Webm24Khz16BitMonoOpus,
 }

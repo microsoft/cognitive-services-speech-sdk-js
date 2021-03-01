@@ -18,7 +18,8 @@ const MediaDurationPlaceholderSeconds = 60 * 30;
 const AudioFormatToMimeType: INumberDictionary<string> = {
     [AudioFormatTag.PCM]: "audio/wav",
     [AudioFormatTag.MP3]: "audio/mpeg",
-    [AudioFormatTag.Opus]: "audio/ogg",
+    [AudioFormatTag.OGG_OPUS]: "audio/ogg",
+    [AudioFormatTag.WEBM_OPUS]: "audio/webm; codecs=opus"
 };
 
 /**

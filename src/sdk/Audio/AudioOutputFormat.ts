@@ -11,13 +11,14 @@ export enum AudioFormatTag {
     Siren,
     MP3,
     SILKSkype,
-    Opus,
+    OGG_OPUS,
+    WEBM_OPUS,
 }
 
 /**
  * @private
  * @class AudioOutputFormatImpl
- * Added in version 1.11.0
+ * Updated in version 1.16.0
  */
 // tslint:disable-next-line:max-classes-per-file
 export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
@@ -45,6 +46,9 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         [SpeechSynthesisOutputFormat.Riff48Khz16BitMonoPcm]: "riff-48khz-16bit-mono-pcm",
         [SpeechSynthesisOutputFormat.Audio48Khz96KBitRateMonoMp3]: "audio-48khz-96kbitrate-mono-mp3",
         [SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3]: "audio-48khz-192kbitrate-mono-mp3",
+        [SpeechSynthesisOutputFormat.Ogg48Khz16BitMonoOpus]: "ogg-48khz-16bit-mono-opus",
+        [SpeechSynthesisOutputFormat.Webm16Khz16BitMonoOpus]: "webm-16khz-16bit-mono-opus",
+        [SpeechSynthesisOutputFormat.Webm24Khz16BitMonoOpus]: "webm-24khz-16bit-mono-opus",
     };
     private priAudioFormatString: string;
     /**
@@ -274,25 +278,25 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     false);
             case "ogg-16khz-16bit-mono-opus":
                 return new AudioOutputFormatImpl(
-                    AudioFormatTag.Opus,
+                    AudioFormatTag.OGG_OPUS,
                     1,
                     16000,
                     8192,
                     2,
                     16,
                     speechSynthesisOutputFormatString,
-                    "ogg-16khz-16bit-mono-opus",
+                    speechSynthesisOutputFormatString,
                     false);
             case "ogg-24khz-16bit-mono-opus":
                 return new AudioOutputFormatImpl(
-                    AudioFormatTag.Opus,
+                    AudioFormatTag.OGG_OPUS,
                     1,
                     24000,
                     8192,
                     2,
                     16,
                     speechSynthesisOutputFormatString,
-                    "ogg-24khz-16bit-mono-opus",
+                    speechSynthesisOutputFormatString
                     false);
             case "raw-48khz-16bit-mono-pcm":
                 return new AudioOutputFormatImpl(
@@ -333,6 +337,39 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     1,
                     48000,
                     192 << 7,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "ogg-48khz-16bit-mono-opus":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.OGG_OPUS,
+                    1,
+                    48000,
+                    12000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "webm-16khz-16bit-mono-opus":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.WEBM_OPUS,
+                    1,
+                    16000,
+                    8000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "webm-24khz-16bit-mono-opus":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.WEBM_OPUS,
+                    1,
+                    24000,
+                    8000,
                     2,
                     16,
                     speechSynthesisOutputFormatString,
