@@ -363,7 +363,7 @@ export class SynthesisAdapterBase implements IDisposable {
                                 case MetadataType.WordBoundary:
                                     this.privSynthesisTurn.onWordBoundaryEvent(metadata.Data.text.Text);
 
-                                    const ev: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
+                                    const wordBoundaryEventArgs: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
                                         metadata.Data.Offset,
                                         metadata.Data.text.Text,
                                         metadata.Data.text.Length,
@@ -371,7 +371,7 @@ export class SynthesisAdapterBase implements IDisposable {
 
                                     if (!!this.privSpeechSynthesizer.wordBoundary) {
                                         try {
-                                            this.privSpeechSynthesizer.wordBoundary(this.privSpeechSynthesizer, ev);
+                                            this.privSpeechSynthesizer.wordBoundary(this.privSpeechSynthesizer, wordBoundaryEventArgs);
                                         } catch (error) {
                                             // Not going to let errors in the event handler
                                             // trip things up.
@@ -379,13 +379,13 @@ export class SynthesisAdapterBase implements IDisposable {
                                     }
                                     break;
                                 case MetadataType.Bookmark:
-                                    const bev: SpeechSynthesisBookmarkEventArgs = new SpeechSynthesisBookmarkEventArgs(
+                                    const bookmarkEventArgs: SpeechSynthesisBookmarkEventArgs = new SpeechSynthesisBookmarkEventArgs(
                                         metadata.Data.Offset,
                                         metadata.Data.Bookmark);
 
                                     if (!!this.privSpeechSynthesizer.bookmarkReached) {
                                         try {
-                                            this.privSpeechSynthesizer.bookmarkReached(this.privSpeechSynthesizer, bev);
+                                            this.privSpeechSynthesizer.bookmarkReached(this.privSpeechSynthesizer, bookmarkEventArgs);
                                         } catch (error) {
                                             // Not going to let errors in the event handler
                                             // trip things up.
@@ -396,15 +396,15 @@ export class SynthesisAdapterBase implements IDisposable {
 
                                     this.privSynthesisTurn.onVisemeMetadataReceived(metadata);
 
-                                    if (metadata.Data.IsLastAnimation !== false) {
-                                        const vev: SpeechSynthesisVisemeEventArgs = new SpeechSynthesisVisemeEventArgs(
+                                    if (metadata.Data.IsLastAnimation) {
+                                        const visemeEventArgs: SpeechSynthesisVisemeEventArgs = new SpeechSynthesisVisemeEventArgs(
                                             metadata.Data.Offset,
                                             metadata.Data.VisemeId,
-                                            this.privSynthesisTurn.visemeAnimation);
+                                            this.privSynthesisTurn.getAndClearVisemeAnimation());
 
                                         if (!!this.privSpeechSynthesizer.visemeReceived) {
                                             try {
-                                                this.privSpeechSynthesizer.visemeReceived(this.privSpeechSynthesizer, vev);
+                                                this.privSpeechSynthesizer.visemeReceived(this.privSpeechSynthesizer, visemeEventArgs);
                                             } catch (error) {
                                                 // Not going to let errors in the event handler
                                                 // trip things up.

@@ -69,12 +69,6 @@ export class SynthesisTurn {
         return this.privTextOffset;
     }
 
-    public get visemeAnimation(): string {
-        const animation: string = this.privPartialVisemeAnimation;
-        this.privPartialVisemeAnimation = "";
-        return animation;
-    }
-
     // The number of bytes received for current turn
     public get bytesReceived(): number {
         return this.privBytesReceived;
@@ -213,7 +207,7 @@ export class SynthesisTurn {
 
     public onVisemeMetadataReceived(metadata: ISynthesisMetadata): void {
         if (metadata.Data.AnimationChunk !== undefined) {
-            this.privPartialVisemeAnimation = this.privPartialVisemeAnimation + metadata.Data.AnimationChunk;
+            this.privPartialVisemeAnimation += metadata.Data.AnimationChunk;
         }
     }
 
@@ -226,6 +220,16 @@ export class SynthesisTurn {
 
     public onStopSynthesizing(): void {
         this.onComplete();
+    }
+
+    /**
+     * Gets the viseme animation string (merged from animation chunk), and clears the internal
+     * partial animation.
+     */
+    public getAndClearVisemeAnimation(): string {
+        const animation: string = this.privPartialVisemeAnimation;
+        this.privPartialVisemeAnimation = "";
+        return animation;
     }
 
     protected onEvent = (event: SpeechSynthesisEvent): void => {
