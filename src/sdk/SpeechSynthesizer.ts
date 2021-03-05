@@ -39,16 +39,18 @@ import {
     PullAudioOutputStream,
     PushAudioOutputStreamCallback,
     SpeechConfig,
+    SpeechSynthesisBookmarkEventArgs,
     SpeechSynthesisEventArgs,
     SpeechSynthesisOutputFormat,
     SpeechSynthesisResult,
+    SpeechSynthesisVisemeEventArgs,
     SpeechSynthesisWordBoundaryEventArgs,
 } from "./Exports";
 import { SpeechConfigImpl } from "./SpeechConfig";
 
 /**
  * Defines the class SpeechSynthesizer for text to speech.
- * Added in version 1.11.0
+ * Updated in version 1.16.0
  * @class SpeechSynthesizer
  */
 export class SpeechSynthesizer {
@@ -96,6 +98,24 @@ export class SpeechSynthesizer {
      * @public
      */
     public wordBoundary: (sender: SpeechSynthesizer, event: SpeechSynthesisWordBoundaryEventArgs) => void;
+
+    /**
+     * Defines event handler for bookmark reached events
+     * Added in version 1.16.0
+     * @member SpeechSynthesizer.prototype.bookmarkReached
+     * @function
+     * @public
+     */
+    public bookmarkReached: (sender: SpeechSynthesizer, event: SpeechSynthesisBookmarkEventArgs) => void;
+
+    /**
+     * Defines event handler for viseme received event
+     * Added in version 1.16.0
+     * @member SpeechSynthesizer.prototype.visemeReceived
+     * @function
+     * @public
+     */
+    public visemeReceived: (sender: SpeechSynthesizer, event: SpeechSynthesisVisemeEventArgs) => void;
 
     /**
      * Gets the authorization token used to communicate with the service.

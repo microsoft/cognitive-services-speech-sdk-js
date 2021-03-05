@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
-import { PropertyId, SpeechSynthesizer } from "../sdk/Exports";
+import { SpeechSynthesizer } from "../sdk/Exports";
 
 /**
  * Represents the JSON used in the synthesis.context message sent to the speech service.
@@ -46,7 +46,9 @@ export class SynthesisContext {
         return {
             audio: {
                 metadataOptions: {
+                    bookmarkEnabled: (!!this.privSpeechSynthesizer.bookmarkReached),
                     sentenceBoundaryEnabled: false,
+                    visemeEnabled: (!!this.privSpeechSynthesizer.visemeReceived),
                     wordBoundaryEnabled: (!!this.privSpeechSynthesizer.wordBoundary),
                 },
                 outputFormat: this.privAudioOutputFormat.requestAudioFormatString,
@@ -62,7 +64,9 @@ interface ISynthesisSection {
     audio: {
         outputFormat: string,
         metadataOptions: {
+            bookmarkEnabled: boolean,
             wordBoundaryEnabled: boolean,
+            visemeEnabled: boolean,
             sentenceBoundaryEnabled: boolean,
         }
     };

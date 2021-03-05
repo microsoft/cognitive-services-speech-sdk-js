@@ -180,7 +180,7 @@ describe("Service based tests", () => {
 
         let audioLength: number = 0;
         let startEventCount: number = 0;
-        let synthesisingEventCount: number = 0;
+        let synthesizingEventCount: number = 0;
         let completeEventCount: number = 0;
 
         s.synthesisStarted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
@@ -203,7 +203,7 @@ describe("Service based tests", () => {
             } catch (e) {
                 done.fail(e);
             }
-            synthesisingEventCount += 1;
+            synthesizingEventCount += 1;
         };
 
         s.synthesisCompleted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
@@ -234,7 +234,7 @@ describe("Service based tests", () => {
             return completeEventCount !== 0;
         }, (): void => {
             expect(startEventCount).toEqual(1);
-            expect(synthesisingEventCount).toBeGreaterThan(0);
+            expect(synthesizingEventCount).toBeGreaterThan(0);
             done();
         });
     });
@@ -362,6 +362,83 @@ describe("Service based tests", () => {
 
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
             expect(wordBoundaryCount).toBeGreaterThan(0);
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizerBookmark", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizerBookmark");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        objsToClose.push(s);
+
+        expect(s).not.toBeUndefined();
+
+        let bookmarkCount: number = 0;
+
+        s.bookmarkReached = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisBookmarkEventArgs): void => {
+            try {
+                expect(e).not.toBeUndefined();
+                expect(e.audioOffset).not.toBeUndefined();
+                if (bookmarkCount === 0) {
+                    expect(e.text).toEqual("bookmark");
+                }
+            } catch (e) {
+                done.fail(e);
+            }
+            bookmarkCount += 1;
+        };
+
+        const ssml: string =
+            `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
+ <voice name='Microsoft Server Speech Text to Speech Voice (en-US, Guy24KRUS)'>
+ <bookmark mark='bookmark'/> one. <bookmark mark='书签'/> two. three. four.</voice></speak>`;
+        s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
+            expect(bookmarkCount).toEqual(2);
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizerViseme", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizerViseme");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        objsToClose.push(s);
+
+        expect(s).not.toBeUndefined();
+
+        let visemeCount: number = 0;
+
+        s.visemeReceived = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisVisemeEventArgs): void => {
+            try {
+                expect(e).not.toBeUndefined();
+                expect(e.audioOffset).not.toBeUndefined();
+                expect(e.visemeId).not.toBeUndefined();
+                expect(e.animation).not.toBeUndefined();
+            } catch (e) {
+                done.fail(e);
+            }
+            visemeCount += 1;
+        };
+
+        const ssml: string =
+            `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
+<voice name='Microsoft Server Speech Text to Speech Voice (en-US, Guy24KRUS)'>
+<mstts:viseme type='svg'/>I want to avoid monotony.</voice></speak>`;
+        s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
+            expect(visemeCount).toBeGreaterThan(0);
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             done();
         }, (e: string): void => {

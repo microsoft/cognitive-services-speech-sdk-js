@@ -8,6 +8,7 @@ import {
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
+import { ISynthesisMetadata } from "./ServiceMessages/SynthesisAudioMetadata";
 import { SynthesisAdapterBase } from "./SynthesisAdapterBase";
 import {
     ConnectingToSynthesisServiceEvent,
@@ -88,6 +89,7 @@ export class SynthesisTurn {
     private privReceivedAudioWithHeader: ArrayBuffer;
     private privTextOffset: number = 0;
     private privNextSearchTextIndex: number = 0;
+    private privPartialVisemeAnimation: string;
     private privRawText: string;
     private privIsSSML: boolean;
     private privTurnAudioDestination: IAudioDestination;
@@ -140,6 +142,7 @@ export class SynthesisTurn {
         this.privBytesReceived = 0;
         this.privTextOffset = 0;
         this.privNextSearchTextIndex = 0;
+        this.privPartialVisemeAnimation = "";
         if (audioDestination !== undefined) {
             this.privTurnAudioDestination = audioDestination;
             this.privTurnAudioDestination.format = this.privAudioOutputFormat;
@@ -202,6 +205,12 @@ export class SynthesisTurn {
         this.updateTextOffset(text);
     }
 
+    public onVisemeMetadataReceived(metadata: ISynthesisMetadata): void {
+        if (metadata.Data.AnimationChunk !== undefined) {
+            this.privPartialVisemeAnimation += metadata.Data.AnimationChunk;
+        }
+    }
+
     public dispose = (error?: string): void => {
         if (!this.privIsDisposed) {
             // we should have completed by now. If we did not its an unknown error.
@@ -211,6 +220,16 @@ export class SynthesisTurn {
 
     public onStopSynthesizing(): void {
         this.onComplete();
+    }
+
+    /**
+     * Gets the viseme animation string (merged from animation chunk), and clears the internal
+     * partial animation.
+     */
+    public getAndClearVisemeAnimation(): string {
+        const animation: string = this.privPartialVisemeAnimation;
+        this.privPartialVisemeAnimation = "";
+        return animation;
     }
 
     protected onEvent = (event: SpeechSynthesisEvent): void => {

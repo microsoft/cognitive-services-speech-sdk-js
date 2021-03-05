@@ -24,6 +24,14 @@ export interface IPlayer {
     resume(cb?: () => void, err?: (error: string) => void): void;
 
     /**
+     * Defines event handler audio playback start event.
+     * @member IPlayer.prototype.onAudioStart
+     * @function
+     * @public
+     */
+    onAudioStart: (sender: IPlayer) => void;
+
+    /**
      * Defines event handler audio playback end event.
      * @member IPlayer.prototype.onAudioEnd
      * @function
