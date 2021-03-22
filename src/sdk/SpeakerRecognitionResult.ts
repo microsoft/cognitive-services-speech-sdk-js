@@ -24,7 +24,7 @@ export class SpeakerRecognitionResult {
     private privReason: ResultReason;
     private privProperties: PropertyCollection;
     private privProfileId: string;
-    private privScore: number;
+    private privConfidence: string;
     private privErrorDetails: string;
 
     public constructor(resultType: SpeakerRecognitionResultType, data: string, profileId: string, resultReason: ResultReason = ResultReason.RecognizedSpeaker) {
@@ -35,12 +35,12 @@ export class SpeakerRecognitionResult {
                 const json: { identifiedProfile: { profileId: string, score: number } } = JSON.parse(data);
                 Contracts.throwIfNullOrUndefined(json, "JSON");
                 this.privProfileId = json.identifiedProfile.profileId;
-                this.privScore = json.identifiedProfile.score;
+                // this.privScore = json.identifiedProfile.score;
             } else {
-                const json: { recognitionResult: string, score: number } = JSON.parse(data);
+                const json: { result: string, confidence: string } = JSON.parse(data);
                 Contracts.throwIfNullOrUndefined(json, "JSON");
-                this.privScore = json.score;
-                if (json.recognitionResult.toLowerCase() !== "accept") {
+                this.privConfidence = json.confidence;
+                if (json.result.toLowerCase() !== "accept") {
                     this.privReason = ResultReason.NoMatch;
                 }
                 if (profileId !== undefined && profileId !== "") {
@@ -72,8 +72,8 @@ export class SpeakerRecognitionResult {
         return this.privErrorDetails;
     }
 
-    public get score(): number {
-        return this.privScore;
+    public get confidence(): string {
+        return this.privConfidence;
     }
 }
 

@@ -11,15 +11,15 @@ import {
     ResultReason,
 } from "./Exports";
 
-export interface IEnrollmentResultDetails {
-    enrollmentsCount: number;
-    enrollmentsLength: number;
-    enrollmentsSpeechLength: number;
-    remainingEnrollmentsCount: number;
-    remainingEnrollmentsSpeechLength: number;
-    audioLength: number;
-    audioSpeechLength: number;
+export interface EnrollmentResultDetails {
     enrollmentStatus: string;
+    profileId: string;
+    enrollmentCount?: number;
+    enrollmentLength?: number;
+    remainingEnrollmentCount?: number;
+    remainingEnrollmentSpeechLength?: number;
+    audioLength?: number;
+    audioSpeechLength?: number;
 }
 
 /**
@@ -28,18 +28,19 @@ export interface IEnrollmentResultDetails {
  */
 export class VoiceProfileEnrollmentResult {
     private privReason: ResultReason;
-    private privDetails: IEnrollmentResultDetails;
+    private privDetails: EnrollmentResultDetails;
     private privProperties: PropertyCollection;
     private privErrorDetails: string;
 
-    public constructor(reason: ResultReason, json: string, statusText: string) {
+    public constructor( reason: ResultReason, json: string, statusText: string ) {
         this.privReason = reason;
         this.privProperties = new PropertyCollection();
         if (this.privReason !== ResultReason.Canceled) {
-            this.privDetails = JSON.parse(json);
-            Contracts.throwIfNullOrUndefined(json, "JSON");
-            if (this.privDetails.enrollmentStatus.toLowerCase() === "enrolling") {
-                this.privReason = ResultReason.EnrollingVoiceProfile;
+            if (!!json) {
+                this.privDetails = JSON.parse(json);
+                if (this.privDetails.enrollmentStatus.toLowerCase() === "enrolling") {
+                    this.privReason = ResultReason.EnrollingVoiceProfile;
+                }
             }
         } else {
             this.privErrorDetails = statusText;
@@ -47,23 +48,50 @@ export class VoiceProfileEnrollmentResult {
         }
     }
 
+    public static FromVerificationEnrollmentResponse(profileId: string, json: { enrollmentStatus: string, enrollmentsCount: number, remainingEnrollments?: number, remainingEnrollmentsCount?: number }): VoiceProfileEnrollmentResult {
+        const reason: ResultReason = json.enrollmentStatus.toLowerCase() === "enrolling" ?
+            ResultReason.EnrollingVoiceProfile : json.enrollmentStatus.toLowerCase() === "enrolled" ?
+            ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
+        const result = new VoiceProfileEnrollmentResult(reason, null, null);
+        result.privDetails = {
+            enrollmentCount: json.enrollmentsCount,
+            enrollmentStatus: json.enrollmentStatus,
+            profileId,
+            remainingEnrollmentCount: json.remainingEnrollments || json.remainingEnrollmentsCount
+        };
+        return result;
+    }
+
+    public static FromIdentificationEnrollmentResponse(profileId: string, json: { status: string, processingResult: any }): VoiceProfileEnrollmentResult {
+        const reason: ResultReason = json.status === "succeeded" ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
+        const result = new VoiceProfileEnrollmentResult(reason, null, null);
+        result.privDetails = {
+            audioSpeechLength: parseFloat(json.processingResult.speechTime),
+            enrollmentLength: parseFloat(json.processingResult.enrollmentSpeechTime),
+            enrollmentStatus: json.processingResult.enrollmentStatus,
+            profileId,
+            remainingEnrollmentSpeechLength: parseFloat(json.processingResult.remainingEnrollmentSpeechTime)
+        };
+        return result;
+    }
+
     public get reason(): ResultReason {
         return this.privReason;
     }
 
-    public get enrollmentsCount(): number {
-        return this.privDetails.enrollmentsCount;
+    public get enrollmentCount(): number {
+        return this.privDetails.enrollmentCount;
     }
 
-    public get enrollmentsLength(): number {
-        return this.privDetails.enrollmentsLength;
+    public get enrollmentLength(): number {
+        return this.privDetails.enrollmentLength;
     }
 
     public get properties(): PropertyCollection {
         return this.privProperties;
     }
 
-    public get enrollmentResultDetails(): IEnrollmentResultDetails {
+    public get enrollmentResultDetails(): EnrollmentResultDetails {
         return this.privDetails;
     }
 

@@ -35,8 +35,7 @@ export class SpeakerIdMessageAdapter {
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "westus");
             const hostSuffix: string = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "https://" + region + ".api.cognitive" + hostSuffix + "/speaker/{mode}/v2.0/{dependency}");
-            endpoint = host + "/profiles";
+            endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "https://" + region + ".api.cognitive" + hostSuffix + "/spid/v1.0");
         }
         this.privUri = endpoint;
 
@@ -59,7 +58,7 @@ export class SpeakerIdMessageAdapter {
 
         const uri = this.getOperationUri(profileType);
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "application/json");
-        return this.privRestAdapter.request(RestRequestType.Post, uri, {}, { locale: lang });
+        return this.requestRest(RestRequestType.Post, uri, {}, { locale: lang });
     }
 
     /**
@@ -70,14 +69,17 @@ export class SpeakerIdMessageAdapter {
      * @public
      * @returns {Promise<IRestResponse>} rest response to enrollment request.
      */
-    public createEnrollment(profile: VoiceProfile, audioSource: IAudioSource):
-        Promise<IRestResponse> {
+    public async createEnrollment(profile: VoiceProfile, audioSource: IAudioSource): Promise<IRestResponse> {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
-        const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/enrollments";
-        return audioSource.blob.then<IRestResponse>((result: Blob | Buffer): Promise<IRestResponse> => {
-            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, null, result);
-        });
+        const uri = `${this.getOperationUri(profile.profileType)}/${profile.profileId}/enroll`;
+        const result: Blob | Buffer = await audioSource.blob;
+        const enrollResponse: IRestResponse = await this.requestRest(RestRequestType.File, uri, { shortAudio: "true" }, null, result);
+        if (!enrollResponse.ok || (profile.profileType !== VoiceProfileType.TextIndependentIdentification)) {
+            return enrollResponse;
+        }
+
+        return this.getRestAsyncResult(enrollResponse);
     }
 
     /**
@@ -92,10 +94,10 @@ export class SpeakerIdMessageAdapter {
         Promise<IRestResponse> {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
-        const uri = this.getOperationUri(model.voiceProfile.profileType) + "/" + model.voiceProfile.profileId + "/verify";
+        const uri = `${this.getOperationUri()}/verify`;
         try {
             const result: Blob | Buffer = await audioSource.blob;
-            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, null, result);
+            return this.requestRest(RestRequestType.File, uri, { verificationProfileId: model.voiceProfile.profileId, shortAudio: "true" }, null, result);
         } catch (e) {
             return Promise.resolve({ data: e } as IRestResponse);
         }
@@ -113,13 +115,32 @@ export class SpeakerIdMessageAdapter {
         Promise<IRestResponse> {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
-        const uri = this.getOperationUri(VoiceProfileType.TextIndependentIdentification) + "/identifySingleSpeaker";
+        const uri = this.getOperationUri() + "/identify";
         try {
+
             const result: Blob | Buffer = await audioSource.blob;
-            return this.privRestAdapter.request(RestRequestType.File, uri, { profileIds: model.voiceProfileIds, ignoreMinLength: "true" }, null, result);
+            const identifyResponse: IRestResponse = await this.requestRest(RestRequestType.File, uri, { identificationProfileIds: model.voiceProfileIds, shortAudio: "true" }, null, result);
+            if (!identifyResponse.ok) {
+                return identifyResponse;
+            }
+            return this.getRestAsyncResult(identifyResponse);
+
         } catch (e) {
             return Promise.resolve({ data: e } as IRestResponse);
         }
+    }
+
+    /**
+     * Sends profile status request to endpoint.
+     * @function
+     * @param {VoiceProfile} profile - voice profile to check.
+     * @public
+     * @returns {Promise<IRestResponse>} rest response to status request
+     */
+    public getProfileStatus(profile: VoiceProfile): Promise<IRestResponse> {
+
+        const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId;
+        return this.requestRest(RestRequestType.Get, uri, {});
     }
 
     /**
@@ -132,7 +153,7 @@ export class SpeakerIdMessageAdapter {
     public deleteProfile(profile: VoiceProfile): Promise<IRestResponse> {
 
         const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId;
-        return this.privRestAdapter.request(RestRequestType.Delete, uri, {});
+        return this.requestRest(RestRequestType.Delete, uri, {});
     }
 
     /**
@@ -143,16 +164,72 @@ export class SpeakerIdMessageAdapter {
      * @returns {Promise<IRestResponse>} rest response to reset request
      */
     public resetProfile(profile: VoiceProfile): Promise<IRestResponse> {
-
         const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/reset";
-        return this.privRestAdapter.request(RestRequestType.Post, uri, {});
+        return this.requestRest(RestRequestType.Post, uri, {});
     }
 
-    private getOperationUri(profileType: VoiceProfileType): string {
+    private getOperationUri(profileType?: VoiceProfileType): string {
+        if (profileType === undefined) {
+            return this.privUri;
+        }
 
         const mode = profileType === VoiceProfileType.TextIndependentIdentification ? "identification" : "verification";
-        const dependency = profileType === VoiceProfileType.TextDependentVerification ? "text-dependent" : "text-independent";
-        return this.privUri.replace("{mode}", mode).replace("{dependency}", dependency);
+        return `${this.privUri}/{mode}Profiles`.replace("{mode}", mode);
     }
 
+    private async requestRest(
+        method: RestRequestType,
+        uri: string,
+        queryParams: any = {},
+        body: any = null,
+        binaryBody: Blob | Buffer = null,
+        ): Promise<IRestResponse> {
+
+        const deferral: Deferred<IRestResponse> = new Deferred<IRestResponse>();
+        try {
+            let response: IRestResponse = await this.privRestAdapter.request(method, uri, queryParams, body, binaryBody);
+            let i: number = 0;
+            const retryCount: number = 3;
+            while (!response.ok && i < retryCount) {
+                response = await this.privRestAdapter.request(method, uri, queryParams, body, binaryBody);
+                i += 1;
+            }
+            deferral.resolve(response);
+        } catch (e) {
+            deferral.reject(e);
+        }
+        return deferral.promise;
+    }
+
+    private async getRestAsyncResult(initialResponse: IRestResponse): Promise<IRestResponse> {
+        const deferral: Deferred<IRestResponse> = new Deferred<IRestResponse>();
+        try {
+            const operationKeyValuePairs: string[] = initialResponse.headers.split("\r\n");
+            let operationUri: string = "";
+            for (const pair of operationKeyValuePairs) {
+                const key: string = "operation-location:";
+                if (pair.startsWith(key)) {
+                    operationUri = pair.substring(pair.indexOf(":") + 1);
+                    break;
+                }
+            }
+            if (!operationUri) {
+                deferral.resolve(initialResponse);
+            }
+            let res: IRestResponse = await this.requestRest(RestRequestType.Get, operationUri, {});
+            if (res.ok) {
+                let resJson: { status: string } = res.json();
+                while (resJson.status !== "succeeded" && resJson.status !== "failed") {
+                    res = await this.requestRest(RestRequestType.Get, operationUri, {});
+                    if (res.ok) {
+                        resJson = res.json();
+                    }
+                }
+            }
+            deferral.resolve(res);
+        } catch (e) {
+            deferral.reject(e);
+        }
+        return deferral.promise;
+    }
 }

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { exception } from "console";
 import {
     IRestResponse,
 } from "../common.browser/Exports";
@@ -81,6 +82,22 @@ export class VoiceProfileClient {
     }
 
     /**
+     * Get current information of a voice profile
+     * @member VoiceProfileClient.prototype.getProfileStatusAsync
+     * @function
+     * @public
+     * @param {VoiceProfile} profile Voice Profile to retrieve info for
+     * @param cb - Callback invoked once Voice Profile has been created.
+     * @param err - Callback invoked in case of an error.
+     */
+    public getProfileStatusAsync(profile: VoiceProfile, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
+            const result: IRestResponse = await this.privAdapter.getProfileStatus(profile);
+            return this.getEnrollmentResult(profile, result);
+        })(), cb, err);
+    }
+
+    /**
      * Create a speaker recognition voice profile
      * @member VoiceProfileClient.prototype.createProfileAsync
      * @function
@@ -95,8 +112,10 @@ export class VoiceProfileClient {
 
         marshalPromiseToCallbacks((async (): Promise<VoiceProfile> => {
             const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
-            const response: { profileId: string } = result.json();
-            const profile = new VoiceProfile(response.profileId, profileType);
+            const response: { identificationProfileId?: string, verificationProfileId?: string } = result.json();
+            const profileId: string = response.verificationProfileId || response.identificationProfileId;
+            Contracts.throwIfNullOrUndefined(profileId, "profileId");
+            const profile = new VoiceProfile(profileId, profileType);
             return profile;
         })(), cb, err);
     }
@@ -116,12 +135,7 @@ export class VoiceProfileClient {
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
         marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
             const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
-            const ret: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
-                result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
-                result.data,
-                result.statusText,
-            );
-            return ret;
+            return this.getEnrollmentResult(profile, result);
         })(), cb, err);
     }
 
@@ -188,12 +202,31 @@ export class VoiceProfileClient {
         this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
     }
 
-    private getResult(result: IRestResponse, successReason: ResultReason, cb?: (response: VoiceProfileResult) => void): VoiceProfileResult {
+    private getResult(result: IRestResponse, successReason: ResultReason): VoiceProfileResult {
         const response: VoiceProfileResult =
             new VoiceProfileResult(
                 result.ok ? successReason : ResultReason.Canceled,
                 result.statusText
             );
         return (response);
+    }
+
+    private getEnrollmentResult(profile: VoiceProfile, result: IRestResponse): VoiceProfileEnrollmentResult  {
+        if (!result.ok) {
+            return new VoiceProfileEnrollmentResult(
+                ResultReason.Canceled,
+                result.data,
+                result.statusText,
+            );
+        }
+        if (profile.profileType === VoiceProfileType.TextIndependentIdentification) {
+            try {
+                const json: { status: string, processingResult: any } = result.json();
+                return VoiceProfileEnrollmentResult.FromIdentificationEnrollmentResponse(profile.profileId, json);
+            } catch (e) {
+                throw e;
+            }
+        }
+        return VoiceProfileEnrollmentResult.FromVerificationEnrollmentResponse(profile.profileId, result.json());
     }
 }
