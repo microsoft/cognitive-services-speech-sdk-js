@@ -168,6 +168,30 @@ export class SpeakerIdMessageAdapter {
         return this.requestRest(RestRequestType.Post, uri, {});
     }
 
+    /**
+     * Sends get all profiles request to endpoint.
+     * @function
+     * @param {VoiceProfileType} profileType - type of profiles to return list of
+     * @public
+     * @returns {Promise<IRestResponse>} promised rest response containing all profiles
+     */
+    public getProfiles(profileType: VoiceProfileType): Promise<IRestResponse> {
+        const uri = this.getOperationUri(profileType);
+        return this.requestRest(RestRequestType.Get, uri, {});
+    }
+
+    /**
+     * Sends get authorization phrases request to endpoint.
+     * @function
+     * @param {string} lang - language/locale of voice profile
+     * @public
+     * @returns {Promise<IRestResponse>} promised rest response containing list of valid phrases
+     */
+    public getAuthorizationPhrases(lang: string): Promise<IRestResponse> {
+        const uri = `${this.getOperationUri()}/verificationPhrases`;
+        return this.requestRest(RestRequestType.Get, uri, { locale: lang });
+    }
+
     private getOperationUri(profileType?: VoiceProfileType): string {
         if (profileType === undefined) {
             return this.privUri;
@@ -189,8 +213,9 @@ export class SpeakerIdMessageAdapter {
         try {
             let response: IRestResponse = await this.privRestAdapter.request(method, uri, queryParams, body, binaryBody);
             let i: number = 0;
-            const retryCount: number = 3;
+            const retryCount: number = 4;
             while (!response.ok && i < retryCount) {
+                await new Promise((resolve: (_: void) => void) => setTimeout(resolve, 50));
                 response = await this.privRestAdapter.request(method, uri, queryParams, body, binaryBody);
                 i += 1;
             }

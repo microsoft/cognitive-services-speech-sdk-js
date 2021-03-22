@@ -158,7 +158,7 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
         (error: string) => {
             done.fail(error);
         });
-}, 30000);
+}, 20000);
 
 test("Create and Delete Voice Profile - Independent Identification", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
@@ -218,7 +218,7 @@ test("Create and Delete Voice Profile - Independent Identification", (done: jest
         (error: string) => {
             done.fail(error);
         });
-}, 15000);
+}, 20000);
 
 test("Create, Get, and Delete Voice Profile - Independent Verification", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
@@ -247,12 +247,24 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", (done: 
                     expect(enrollmentRes.enrollmentResultDetails.profileId).toEqual(res.profileId);
                     expect(enrollmentRes.enrollmentCount).toEqual(0);
                     expect(enrollmentRes.enrollmentResultDetails.remainingEnrollmentCount).toEqual(3);
-                    r.deleteProfileAsync(
-                        res,
-                        (result: sdk.VoiceProfileResult) => {
-                            expect(result).not.toBeUndefined();
-                            expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
-                            done();
+                    r.getAllProfilesAsync(
+                        res.profileType,
+                        (results: sdk.VoiceProfileEnrollmentResult[]) => {
+                            expect(results).not.toBeUndefined();
+                            expect(results.length).toBeGreaterThan(0);
+                            expect(results[0]).not.toBeUndefined();
+                            expect(results[0].enrollmentResultDetails.profileId).not.toBeUndefined();
+                            expect(results[0].enrollmentResultDetails.enrollmentStatus).not.toBeUndefined();
+                            r.deleteProfileAsync(
+                                res,
+                                (result: sdk.VoiceProfileResult) => {
+                                    expect(result).not.toBeUndefined();
+                                    expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
+                                    done();
+                                },
+                                (error: string) => {
+                                    done.fail(error);
+                                });
                         },
                         (error: string) => {
                             done.fail(error);
@@ -266,6 +278,28 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", (done: 
             done.fail(error);
         });
 }, 15000);
+
+test("Get Authorization Phrases for voice samples", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Create and Delete Voice Profile - Dependent Verification");
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const r: sdk.VoiceProfileClient = BuildClient(s);
+    objsToClose.push(r);
+
+    r.getAuthorizationPhrasesAsync(
+        "en-us",
+        (phrases: string[]) => {
+            expect(phrases).not.toBeUndefined();
+            expect(phrases.length).toBeGreaterThan(0);
+            expect(phrases[0]).not.toBeUndefined();
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+}, 20000);
 
 test("Create and Delete Voice Profile - Dependent Verification", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console

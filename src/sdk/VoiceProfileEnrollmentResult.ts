@@ -53,26 +53,42 @@ export class VoiceProfileEnrollmentResult {
             ResultReason.EnrollingVoiceProfile : json.enrollmentStatus.toLowerCase() === "enrolled" ?
             ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
         const result = new VoiceProfileEnrollmentResult(reason, null, null);
-        result.privDetails = {
-            enrollmentCount: json.enrollmentsCount,
-            enrollmentStatus: json.enrollmentStatus,
-            profileId,
-            remainingEnrollmentCount: json.remainingEnrollments || json.remainingEnrollmentsCount
-        };
+        result.privDetails = this.getVerificationDetails(json, profileId);
         return result;
     }
 
     public static FromIdentificationEnrollmentResponse(profileId: string, json: { status: string, processingResult: any }): VoiceProfileEnrollmentResult {
         const reason: ResultReason = json.status === "succeeded" ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
         const result = new VoiceProfileEnrollmentResult(reason, null, null);
-        result.privDetails = {
-            audioSpeechLength: parseFloat(json.processingResult.speechTime),
-            enrollmentLength: parseFloat(json.processingResult.enrollmentSpeechTime),
-            enrollmentStatus: json.processingResult.enrollmentStatus,
-            profileId,
-            remainingEnrollmentSpeechLength: parseFloat(json.processingResult.remainingEnrollmentSpeechTime)
-        };
+        result.privDetails = this.getIdentificationDetails(json.processingResult, profileId);
         return result;
+    }
+
+    public static FromIdentificationProfileList(array: any[]): VoiceProfileEnrollmentResult[] {
+        const results: VoiceProfileEnrollmentResult[] = [];
+        for (const item of array) {
+            const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
+                ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
+                ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
+            const result = new VoiceProfileEnrollmentResult(reason, null, null);
+            result.privDetails = this.getIdentificationDetails(item);
+            results.push(result);
+        }
+        return results;
+    }
+
+    public static FromVerificationProfileList(array: any[]): VoiceProfileEnrollmentResult[] {
+        const results: VoiceProfileEnrollmentResult[] = [];
+        for (const item of array) {
+            const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
+                ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
+                ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
+            const result = new VoiceProfileEnrollmentResult(reason, null, null);
+            result.privDetails = this.getVerificationDetails(item);
+            results.push(result);
+        }
+        return results;
+
     }
 
     public get reason(): ResultReason {
@@ -97,6 +113,25 @@ export class VoiceProfileEnrollmentResult {
 
     public get errorDetails(): string {
         return this.privErrorDetails;
+    }
+
+    private static getIdentificationDetails(json: any, profileId?: string): any {
+        return {
+            audioSpeechLength: json.speechTime ? parseFloat(json.speechTime) : null,
+            enrollmentLength: parseFloat(json.enrollmentSpeechTime),
+            enrollmentStatus: json.enrollmentStatus,
+            profileId: profileId || json.identificationProfileId,
+            remainingEnrollmentSpeechLength: parseFloat(json.remainingEnrollmentSpeechTime)
+        };
+    }
+
+    private static getVerificationDetails(json: any, profileId?: string): any {
+        return {
+            enrollmentCount: json.enrollmentsCount,
+            enrollmentStatus: json.enrollmentStatus,
+            profileId: profileId || json.verificationProfileId,
+            remainingEnrollmentCount: json.remainingEnrollments || json.remainingEnrollmentsCount
+        };
     }
 }
 

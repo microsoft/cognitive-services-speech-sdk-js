@@ -98,6 +98,46 @@ export class VoiceProfileClient {
     }
 
     /**
+     * Get all voice profiles on account with given voice profile type
+     * @member VoiceProfileClient.prototype.getAllProfilesAsync
+     * @function
+     * @public
+     * @param {VoiceProfileType} profileType profile type (identification/verification) for which to list profiles
+     * @param cb - Callback invoked once Profile list has been returned.
+     * @param err - Callback invoked in case of an error.
+     */
+    public getAllProfilesAsync(profileType: VoiceProfileType, cb?: (e: VoiceProfileEnrollmentResult[]) => void, err?: (e: string) => void): void {
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult[]> => {
+            const result: IRestResponse = await this.privAdapter.getProfiles(profileType);
+            if (profileType === VoiceProfileType.TextIndependentIdentification) {
+                return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json());
+            }
+            return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json());
+        })(), cb, err);
+    }
+
+    /**
+     * Get valid authorization phrases for voice profile enrollment
+     * @member VoiceProfileClient.prototype.getAuthorizationPhrasesAsync
+     * @function
+     * @public
+     * @param {string} lang Language string (locale) for Voice Profile
+     * @param cb - Callback invoked once phrases have been returned.
+     * @param err - Callback invoked in case of an error.
+     */
+    public getAuthorizationPhrasesAsync(lang: string, cb?: (e: string[]) => void, err?: (e: string) => void): void {
+        marshalPromiseToCallbacks((async (): Promise<string[]> => {
+            const result: IRestResponse = await this.privAdapter.getAuthorizationPhrases(lang);
+            const array: any[] = result.json();
+            const phrases: string[] = [];
+            for (const item of array) {
+                phrases.push(item.phrase);
+            }
+            return phrases;
+        })(), cb, err);
+    }
+
+    /**
      * Create a speaker recognition voice profile
      * @member VoiceProfileClient.prototype.createProfileAsync
      * @function
