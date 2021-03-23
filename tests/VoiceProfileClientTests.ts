@@ -239,7 +239,7 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", (done: 
             expect(res.profileType).not.toBeUndefined();
             expect(res.profileType).toEqual(type);
             expect(() => sdk.SpeakerIdentificationModel.fromProfiles([res])).toThrow();
-            r.getProfileStatusAsync(
+            r.retrieveEnrollmentResultAsync(
                 res,
                 (enrollmentRes: sdk.VoiceProfileEnrollmentResult) => {
                     expect(enrollmentRes).not.toBeUndefined();

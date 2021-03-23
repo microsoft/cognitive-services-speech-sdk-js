@@ -83,14 +83,14 @@ export class VoiceProfileClient {
 
     /**
      * Get current information of a voice profile
-     * @member VoiceProfileClient.prototype.getProfileStatusAsync
+     * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync
      * @function
      * @public
      * @param {VoiceProfile} profile Voice Profile to retrieve info for
      * @param cb - Callback invoked once Voice Profile has been created.
      * @param err - Callback invoked in case of an error.
      */
-    public getProfileStatusAsync(profile: VoiceProfile, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
+    public retrieveEnrollmentResultAsync(profile: VoiceProfile, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
         marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
             const result: IRestResponse = await this.privAdapter.getProfileStatus(profile);
             return this.getEnrollmentResult(profile, result);
