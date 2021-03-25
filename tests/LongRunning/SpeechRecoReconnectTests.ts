@@ -135,7 +135,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
     let disconnects: number = 0;
     let postDisconnectReco: boolean = false;
 
-    const tenMinutesHns:number = 10 * 60 * 1000 * 10000;
+    const tenMinutesHns: number = 10 * 60 * 1000 * 10000;
 
     const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
@@ -151,7 +151,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
 
                 // If there is silence exactly at the moment of disconnect, an extra speech.phrase with text ="" is returned just before the
                 // connection is disconnected.
-                const modTen:number = e.result.offset % tenMinutesHns;
+                const modTen: number = e.result.offset % tenMinutesHns;
 
                 // If withing 100ms of an even 10 min, ignore text issues. The Speech Service is forceably ending turns at 10 minute intervals.
                 if ("" !== e.result.text || modTen < 100 * 10000 || modTen > (tenMinutesHns - (100 * 10000))) {

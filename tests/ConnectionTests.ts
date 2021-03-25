@@ -22,8 +22,6 @@ import {
 } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
-import { allowedNodeEnvironmentFlags } from "process";
-import { doesNotReject } from "assert";
 
 let objsToClose: any[];
 
@@ -126,7 +124,7 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
 
     const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
 
-    let bytesSent: number = 0;
+    let bytesSent: number = 0x0;
     let sendSilence: boolean = false;
     let p: sdk.PullAudioInputStream;
 
@@ -928,7 +926,7 @@ describe("Connection errors are retried", () => {
             onEvent: (event: PlatformEvent) => {
                 if (event instanceof ConnectionErrorEvent) {
                     const connectionEvent: ConnectionErrorEvent = event as ConnectionErrorEvent;
-                    errorCount++;;
+                    errorCount++;
                 }
             },
         });
@@ -958,13 +956,11 @@ describe("Connection errors are retried", () => {
                 expect(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]).toEqual(sdk.CancellationErrorCode[canceledDetails.ErrorCode]);
                 expect(errorCount).toEqual(5);
                 done();
-            }
-            catch(e)
-            {
+            } catch (e) {
                 done.fail(e);
             }
         }, (e: string) => {
             done.fail(e);
-        })
+        });
     }, 15000);
 });
