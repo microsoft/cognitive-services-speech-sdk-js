@@ -53,13 +53,6 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Reconnect After timeout");
 
-    if (!Settings.ExecuteLongRunningTestsBool) {
-        // tslint:disable-next-line:no-console
-        console.info("Skipping test.");
-        done();
-        return;
-    }
-
     // Pump valid speech and then silence until at least one speech end cycle hits.
     const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
 
@@ -68,13 +61,26 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
     let p: sdk.PullAudioInputStream;
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechTimeoutEndpoint || undefined === Settings.SpeechTimeoutKey) {
+        if (!Settings.ExecuteLongRunningTestsBool) {
+            // tslint:disable-next-line:no-console
+            console.info("Skipping test.");
+            done();
+            return;
+        }
+
         // tslint:disable-next-line:no-console
         console.warn("Running timeout test against production, this will be very slow...");
         s = BuildSpeechConfig();
     } else {
         s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechTimeoutEndpoint), Settings.SpeechTimeoutKey);
+        s.setServiceProperty("maxConnectionDurationSecs", "30", sdk.ServicePropertyChannel.UriQueryParameter);
     }
+
     objsToClose.push(s);
+
+    if (Settings.proxyServer !== undefined && Settings.proxyPort !== undefined) {
+        s.setProxy(Settings.proxyServer, Settings.proxyPort);
+    }
 
     let pumpSilence: boolean = false;
     let sendAlternateFile: boolean = false;
@@ -129,13 +135,15 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
     let disconnects: number = 0;
     let postDisconnectReco: boolean = false;
 
+    const tenMinutesHns:number = 10 * 60 * 1000 * 10000;
+
     const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
     r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
         try {
             // If the target number of loops has been seen already, don't check as the audio being sent could have been clipped randomly during a phrase,
             // and failing because of that isn't warranted.
-            if (recogCount <= targetLoops) {
+            if (recogCount <= targetLoops && !postDisconnectReco) {
 
                 expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(e.offset).toBeGreaterThanOrEqual(lastOffset);
@@ -143,7 +151,10 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
 
                 // If there is silence exactly at the moment of disconnect, an extra speech.phrase with text ="" is returned just before the
                 // connection is disconnected.
-                if ("" !== e.result.text) {
+                const modTen:number = e.result.offset % tenMinutesHns;
+
+                // If withing 100ms of an even 10 min, ignore text issues. The Speech Service is forceably ending turns at 10 minute intervals.
+                if ("" !== e.result.text || modTen < 100 * 10000 || modTen > (tenMinutesHns - (100 * 10000))) {
                     if (alternatePhrase) {
                         expect(e.result.text).toEqual(Settings.LuisWavFileText);
                     } else {
@@ -201,4 +212,4 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
         (err: string) => {
             done.fail(err);
         });
-}, 1000 * 60 * 12);
+}, 1000 * 60 * 35);

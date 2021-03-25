@@ -39,6 +39,7 @@ export class RequestSession {
     private privSessionId: string;
     private privTurnDeferral: Deferred<void>;
     private privInTurn: boolean = false;
+    private privConnectionAttempts: number = 0;
 
     constructor(audioSourceId: string) {
         this.privAudioSourceId = audioSourceId;
@@ -80,6 +81,10 @@ export class RequestSession {
 
     public get recogNumber(): number {
         return this.privRecogNumber;
+    }
+
+    public get numConnectionAttempts(): number {
+        return this.privConnectionAttempts;
     }
 
     // The number of bytes sent for the current connection.
@@ -181,10 +186,15 @@ export class RequestSession {
         this.privLastRecoOffset = offset;
         this.privHypothesisReceived = false;
         this.privAudioNode.shrinkBuffers(offset);
+        this.privConnectionAttempts = 0;
     }
 
     public onAudioSent(bytesSent: number): void {
         this.privBytesSent += bytesSent;
+    }
+
+    public onRetryConnection() {
+        this.privConnectionAttempts++;
     }
 
     public async dispose(error?: string): Promise<void> {
