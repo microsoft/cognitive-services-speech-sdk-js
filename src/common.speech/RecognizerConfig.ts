@@ -21,6 +21,7 @@ export class RecognizerConfig {
     private privSpeechServiceConfig: SpeechServiceConfig;
     private privRecognitionActivityTimeout: number;
     private privParameters: PropertyCollection;
+    private privMaxRetryCount: number;
 
     constructor(
         speechServiceConfig: SpeechServiceConfig,
@@ -57,6 +58,10 @@ export class RecognizerConfig {
 
     public get autoDetectSourceLanguages(): string {
         return this.parameters.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, undefined);
+    }
+
+    public get maxRetryCount(): number {
+        return this.privMaxRetryCount;
     }
 }
 

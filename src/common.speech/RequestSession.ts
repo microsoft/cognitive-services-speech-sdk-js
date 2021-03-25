@@ -193,7 +193,7 @@ export class RequestSession {
         this.privBytesSent += bytesSent;
     }
 
-    public onRetryConnection() {
+    public onRetryConnection(): void {
         this.privConnectionAttempts++;
     }
 
