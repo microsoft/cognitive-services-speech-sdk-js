@@ -493,7 +493,7 @@ describe("NPM proxy test", () => {
                 done.fail(error);
             }
         });
-    });
+    }, 15000);
 });
 
 Settings.testIfDOMCondition("Proxy has no effect on browser WebSocket", (done: jest.DoneCallback) => {
@@ -625,7 +625,7 @@ describe("Connection URL Tests", () => {
                 "ws://fakehost/",
                 recognizerCreateMethod,
                 done);
-        });
+        }, 15000);
 
         test("Simple Host, protocol, and port", (done: jest.DoneCallback) => {
             // tslint:disable-next-line:no-console
@@ -636,7 +636,7 @@ describe("Connection URL Tests", () => {
                 "ws://fakehost:8080/",
                 recognizerCreateMethod,
                 done);
-        });
+        }, 15000);
     });
 
     function testUrlParameter(
