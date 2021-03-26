@@ -28,6 +28,7 @@ export class RecognizerConfig {
         parameters: PropertyCollection) {
         this.privSpeechServiceConfig = speechServiceConfig ? speechServiceConfig : new SpeechServiceConfig(new Context(null));
         this.privParameters = parameters;
+        this.privMaxRetryCount = parseInt(parameters.getProperty("SPEECH-Error-MaxRetryCount", "4"), 10);
     }
 
     public get parameters(): PropertyCollection {
