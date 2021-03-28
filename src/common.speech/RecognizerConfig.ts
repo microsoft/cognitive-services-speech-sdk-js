@@ -21,12 +21,14 @@ export class RecognizerConfig {
     private privSpeechServiceConfig: SpeechServiceConfig;
     private privRecognitionActivityTimeout: number;
     private privParameters: PropertyCollection;
+    private privMaxRetryCount: number;
 
     constructor(
         speechServiceConfig: SpeechServiceConfig,
         parameters: PropertyCollection) {
         this.privSpeechServiceConfig = speechServiceConfig ? speechServiceConfig : new SpeechServiceConfig(new Context(null));
         this.privParameters = parameters;
+        this.privMaxRetryCount = parseInt(parameters.getProperty("SPEECH-Error-MaxRetryCount", "4"), 10);
     }
 
     public get parameters(): PropertyCollection {
@@ -57,6 +59,10 @@ export class RecognizerConfig {
 
     public get autoDetectSourceLanguages(): string {
         return this.parameters.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, undefined);
+    }
+
+    public get maxRetryCount(): number {
+        return this.privMaxRetryCount;
     }
 }
 

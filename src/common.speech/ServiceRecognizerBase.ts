@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { ReplayableAudioNode } from "../common.browser/Exports";
+import { ConnectionOpenResponse } from "../common/ConnectionOpenResponse";
 import {
     ArgumentNullError,
     ConnectionClosedEvent,
@@ -121,7 +122,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
             if (connectionEvent.name === "ConnectionClosedEvent") {
                 const connectionClosedEvent = connectionEvent as ConnectionClosedEvent;
-                if (connectionClosedEvent.statusCode !== 1000) {
+                if (connectionClosedEvent.statusCode === 1003 ||
+                    connectionClosedEvent.statusCode === 1007 ||
+                    connectionClosedEvent.statusCode === 1002 ||
+                    connectionClosedEvent.statusCode === 4000 ||
+                    this.privRequestSession.numConnectionAttempts > this.privRecognizerConfig.maxRetryCount
+                ) {
                     await this.cancelRecognitionLocal(CancellationReason.Error,
                         connectionClosedEvent.statusCode === 1007 ? CancellationErrorCode.BadRequestParameters : CancellationErrorCode.ConnectionFailure,
                         connectionClosedEvent.reason + " websocket error code: " + connectionClosedEvent.statusCode);
@@ -516,7 +522,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected postConnectImplOverride: (connection: Promise<IConnection>) => Promise<IConnection> = undefined;
 
     // Establishes a websocket connection to the end point.
-    protected connectImpl(isUnAuthorized: boolean = false): Promise<IConnection> {
+    protected connectImpl(): Promise<IConnection> {
         if (this.privConnectionPromise) {
             return this.privConnectionPromise.then((connection: IConnection): Promise<IConnection> => {
                 if (connection.state() === ConnectionState.Disconnected) {
@@ -534,40 +540,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             });
         }
 
-        this.privAuthFetchEventId = createNoDashGuid();
-        const sessionId: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SessionId, undefined);
-        this.privConnectionId = (sessionId !== undefined) ? sessionId : createNoDashGuid();
-
-        this.privRequestSession.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
-
-        const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
-
-        this.privConnectionPromise = authPromise.then(async (result: AuthInfo) => {
-            await this.privRequestSession.onAuthCompleted(false);
-
-            const connection: IConnection = this.privConnectionFactory.create(this.privRecognizerConfig, result, this.privConnectionId);
-
-            this.privRequestSession.listenForServiceTelemetry(connection.events);
-
-            // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
-            // it'll stop sending events.
-            connection.events.attach((event: ConnectionEvent) => {
-                this.connectionEvents.onEvent(event);
-            });
-            const response = await connection.open();
-            if (response.statusCode === 200) {
-                await this.privRequestSession.onConnectionEstablishCompleted(response.statusCode);
-                return Promise.resolve(connection);
-            } else if (response.statusCode === 403 && !isUnAuthorized) {
-                return this.connectImpl(true);
-            } else {
-                await this.privRequestSession.onConnectionEstablishCompleted(response.statusCode, response.reason);
-                return Promise.reject(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
-            }
-        }, async (error: string): Promise<IConnection> => {
-            await this.privRequestSession.onAuthCompleted(true, error);
-            throw new Error(error);
-        });
+        this.privConnectionPromise = this.retryableConnect();
 
         // Attach an empty handler to allow the promise to run in the background while
         // other startup events happen. It'll eventually be awaited on.
@@ -625,6 +598,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 return this.fetchConnection();
             });
         }
+
         this.privConnectionConfigurationPromise = this.configureConnection();
         return await this.privConnectionConfigurationPromise;
     }
@@ -710,6 +684,56 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         };
 
         return readAndUploadCycle();
+    }
+
+    private async retryableConnect(): Promise<IConnection> {
+        let isUnAuthorized: boolean = false;
+
+        this.privAuthFetchEventId = createNoDashGuid();
+        const sessionId: string = this.privRequestSession.sessionId;
+        this.privConnectionId = (sessionId !== undefined) ? sessionId : createNoDashGuid();
+
+        this.privRequestSession.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
+        let lastStatusCode: number = 0;
+        let lastReason: string = "";
+
+        while (this.privRequestSession.numConnectionAttempts <= this.privRecognizerConfig.maxRetryCount) {
+
+            // Get the auth information for the connection. This is a bit of overkill for the current API surface, but leaving the plumbing in place to be able to raise a developer-customer
+            // facing event when a connection fails to let them try and provide new auth information.
+            const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
+            const auth: AuthInfo = await authPromise;
+
+            await this.privRequestSession.onAuthCompleted(false);
+
+            // Create the connection
+            const connection: IConnection = this.privConnectionFactory.create(this.privRecognizerConfig, auth, this.privConnectionId);
+            // Attach the telemetry handlers.
+            this.privRequestSession.listenForServiceTelemetry(connection.events);
+
+            // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
+            // it'll stop sending events.
+            connection.events.attach((event: ConnectionEvent) => {
+                this.connectionEvents.onEvent(event);
+            });
+
+            const response: ConnectionOpenResponse = await connection.open();
+            // 200 == everything is fine.
+            if (response.statusCode === 200) {
+                await this.privRequestSession.onConnectionEstablishCompleted(response.statusCode);
+                return Promise.resolve(connection);
+            } else if (response.statusCode === 1006) {
+                isUnAuthorized = true;
+            }
+
+            lastStatusCode = response.statusCode;
+            lastReason = response.reason;
+
+            this.privRequestSession.onRetryConnection();
+        }
+
+        await this.privRequestSession.onConnectionEstablishCompleted(lastStatusCode, lastReason);
+        return Promise.reject(`Unable to contact server. StatusCode: ${lastStatusCode}, ${this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${lastReason}`);
     }
 
     private delay(delayMs: number): Promise<void> {

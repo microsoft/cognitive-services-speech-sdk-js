@@ -63,7 +63,8 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 const CheckSynthesisResult: (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason) =>
     void = (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason): void => {
         expect(result).not.toBeUndefined();
-        expect(result.reason).toEqual(reason);
+
+        expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[reason]);
         switch (reason) {
             case sdk.ResultReason.SynthesizingAudio:
             case sdk.ResultReason.SynthesizingAudioCompleted:
