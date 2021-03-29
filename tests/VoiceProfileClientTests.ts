@@ -134,7 +134,7 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
                         (resetResult: sdk.VoiceProfileResult) => {
                             expect(resetResult).not.toBeUndefined();
                             expect(resetResult.reason).not.toBeUndefined();
-                            expect(resetResult.reason).toEqual(sdk.ResultReason.ResetVoiceProfile);
+                            expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
                             r.deleteProfileAsync(
                                 res,
                                 (result: sdk.VoiceProfileResult) => {
@@ -194,7 +194,7 @@ test("Create and Delete Voice Profile - Independent Identification", (done: jest
                         (resetResult: sdk.VoiceProfileResult) => {
                             expect(resetResult).not.toBeUndefined();
                             expect(resetResult.reason).not.toBeUndefined();
-                            expect(resetResult.reason).toEqual(sdk.ResultReason.ResetVoiceProfile);
+                            expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
                             r.deleteProfileAsync(
                                 res,
                                 (result: sdk.VoiceProfileResult) => {
@@ -354,7 +354,7 @@ test("Create and Delete Voice Profile - Dependent Verification", (done: jest.Don
                                         (recognizeResult: sdk.SpeakerRecognitionResult) => {
                                             expect(recognizeResult).not.toBeUndefined();
                                             expect(recognizeResult.reason).not.toBeUndefined();
-                                            expect(recognizeResult.reason).toEqual(sdk.ResultReason.RecognizedSpeaker);
+                                            expect(sdk.ResultReason[recognizeResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeaker]);
                                             expect(recognizeResult.profileId).toEqual(res.profileId);
                                             r.deleteProfileAsync(
                                                 res,

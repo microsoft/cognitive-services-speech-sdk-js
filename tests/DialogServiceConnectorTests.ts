@@ -1374,5 +1374,5 @@ describe.each([
          } catch (error) {
              done.fail(error);
          }
-    });
+    }, 30000);
 });

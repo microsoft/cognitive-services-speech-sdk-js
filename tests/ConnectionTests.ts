@@ -6,8 +6,11 @@ import {
     ConsoleLoggingListener
 } from "../src/common.browser/Exports";
 import {
+    ConnectionErrorEvent,
     Events,
-    EventType
+    EventType,
+    IDetachable,
+    PlatformEvent
 } from "../src/common/Exports";
 
 import {
@@ -19,7 +22,6 @@ import {
 } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
-import { allowedNodeEnvironmentFlags } from "process";
 
 let objsToClose: any[];
 
@@ -122,7 +124,7 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
 
     const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
 
-    let bytesSent: number = 0;
+    let bytesSent: number = 0x0;
     let sendSilence: boolean = false;
     let p: sdk.PullAudioInputStream;
 
@@ -912,4 +914,53 @@ test("Test InjectMessage", (done: jest.DoneCallback) => {
             });
         }, done.fail);
     }, done.fail);
+});
+
+describe("Connection errors are retried", () => {
+    let errorCount: number;
+    let detachObject: IDetachable;
+
+    beforeEach(() => {
+        errorCount = 0;
+        detachObject = Events.instance.attachListener({
+            onEvent: (event: PlatformEvent) => {
+                if (event instanceof ConnectionErrorEvent) {
+                    const connectionEvent: ConnectionErrorEvent = event as ConnectionErrorEvent;
+                    errorCount++;
+                }
+            },
+        });
+    });
+
+    afterEach(() => {
+        if (undefined !== detachObject) {
+            detachObject.detach().catch((error: string) => {
+                throw new Error(error);
+            });
+            detachObject = undefined;
+        }
+    });
+
+    test.only("Bad Auth", (done: jest.DoneCallback) => {
+        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("badKey", Settings.SpeechRegion);
+        const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+
+        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, sdk.AudioConfig.fromStreamInput(ps));
+        objsToClose.push(r);
+
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            try {
+                expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
+                const canceledDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
+                expect(sdk.CancellationReason[canceledDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+                expect(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]).toEqual(sdk.CancellationErrorCode[canceledDetails.ErrorCode]);
+                expect(errorCount).toEqual(5);
+                done();
+            } catch (e) {
+                done.fail(e);
+            }
+        }, (e: string) => {
+            done.fail(e);
+        });
+    }, 15000);
 });
