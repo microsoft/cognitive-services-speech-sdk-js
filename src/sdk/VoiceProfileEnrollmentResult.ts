@@ -117,11 +117,11 @@ export class VoiceProfileEnrollmentResult {
 
     private static getIdentificationDetails(json: any, profileId?: string): any {
         return {
-            audioSpeechLength: json.speechTime ? parseFloat(json.speechTime) : null,
-            enrollmentLength: parseFloat(json.enrollmentSpeechTime),
+            audioSpeechLength: json.speechTime ? parseFloat(json.speechTime) : 0,
+            enrollmentLength: json.enrollmentSpeechTime ? parseFloat(json.enrollmentSpeechTime) : 0,
             enrollmentStatus: json.enrollmentStatus,
             profileId: profileId || json.identificationProfileId,
-            remainingEnrollmentSpeechLength: parseFloat(json.remainingEnrollmentSpeechTime)
+            remainingEnrollmentSpeechLength: json.remainingEnrollmentSpeechTime ? parseFloat(json.remainingEnrollmentSpeechTime) : 0
         };
     }
 

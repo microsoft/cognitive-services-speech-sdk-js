@@ -69,12 +69,12 @@ export class SpeakerIdMessageAdapter {
      * @public
      * @returns {Promise<IRestResponse>} rest response to enrollment request.
      */
-    public async createEnrollment(profile: VoiceProfile, audioSource: IAudioSource): Promise<IRestResponse> {
+    public async createEnrollmentAsync(profile: VoiceProfile, audioSource: IAudioSource): Promise<IRestResponse> {
 
         this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
         const uri = `${this.getOperationUri(profile.profileType)}/${profile.profileId}/enroll`;
         const result: Blob | Buffer = await audioSource.blob;
-        const enrollResponse: IRestResponse = await this.requestRest(RestRequestType.File, uri, { shortAudio: "true" }, null, result);
+        const enrollResponse: IRestResponse = await this.requestRest(RestRequestType.File, uri, { shortAudio: "true" }, null, result, 10);
         if (!enrollResponse.ok || (profile.profileType !== VoiceProfileType.TextIndependentIdentification)) {
             return enrollResponse;
         }
@@ -207,13 +207,13 @@ export class SpeakerIdMessageAdapter {
         queryParams: any = {},
         body: any = null,
         binaryBody: Blob | Buffer = null,
+        retryCount: number = 4
         ): Promise<IRestResponse> {
 
         const deferral: Deferred<IRestResponse> = new Deferred<IRestResponse>();
         try {
             let response: IRestResponse = await this.privRestAdapter.request(method, uri, queryParams, body, binaryBody);
             let i: number = 0;
-            const retryCount: number = 4;
             while (!response.ok && i < retryCount) {
                 await new Promise((resolve: (_: void) => void) => setTimeout(resolve, 50));
                 response = await this.privRestAdapter.request(method, uri, queryParams, body, binaryBody);

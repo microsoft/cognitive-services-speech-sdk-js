@@ -35,7 +35,6 @@ export class SpeakerRecognitionResult {
                 const json: { identifiedProfile: { profileId: string, score: number } } = JSON.parse(data);
                 Contracts.throwIfNullOrUndefined(json, "JSON");
                 this.privProfileId = json.identifiedProfile.profileId;
-                // this.privScore = json.identifiedProfile.score;
             } else {
                 const json: { result: string, confidence: string } = JSON.parse(data);
                 Contracts.throwIfNullOrUndefined(json, "JSON");

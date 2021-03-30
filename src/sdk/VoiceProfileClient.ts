@@ -174,7 +174,7 @@ export class VoiceProfileClient {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
         marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
-            const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
+            const result: IRestResponse = await this.privAdapter.createEnrollmentAsync(profile, configImpl);
             return this.getEnrollmentResult(profile, result);
         })(), cb, err);
     }
