@@ -443,4 +443,4 @@ Settings.testIfDOMCondition("Create Conversation and force disconnect", (done: j
         (error: string) => {
             done.fail(error);
         });
-}, 640000);
+}, 64000);

@@ -99,7 +99,7 @@ export abstract class AudioConfig {
         if (audioStream instanceof AudioInputStream) {
             return new AudioConfigImpl(audioStream as PushAudioInputStreamImpl);
         }
-        if (audioStream instanceof MediaStream) {
+        if (typeof MediaStream !== "undefined" && audioStream instanceof MediaStream) {
             const pcmRecorder = new PcmRecorder();
             return new AudioConfigImpl(new MicAudioSource(pcmRecorder, null, null, audioStream));
         }
