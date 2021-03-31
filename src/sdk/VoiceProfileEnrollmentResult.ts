@@ -12,14 +12,15 @@ import {
 } from "./Exports";
 
 export interface EnrollmentResultDetails {
-    enrollmentStatus: string;
     profileId: string;
-    enrollmentCount?: number;
-    enrollmentLength?: number;
-    remainingEnrollmentCount?: number;
-    remainingEnrollmentSpeechLength?: number;
-    audioLength?: number;
-    audioSpeechLength?: number;
+    enrollmentsCount: number;
+    enrollmentsLength: number;
+    enrollmentsSpeechLength: number;
+    remainingEnrollmentsCount: number;
+    remainingEnrollmentsSpeechLength: number;
+    audioLength: number;
+    audioSpeechLength: number;
+    enrollmentStatus: string;
 }
 
 /**
@@ -32,7 +33,7 @@ export class VoiceProfileEnrollmentResult {
     private privProperties: PropertyCollection;
     private privErrorDetails: string;
 
-    public constructor( reason: ResultReason, json: string, statusText: string ) {
+    public constructor(reason: ResultReason, json: string, statusText: string) {
         this.privReason = reason;
         this.privProperties = new PropertyCollection();
         if (this.privReason !== ResultReason.Canceled) {
@@ -48,25 +49,9 @@ export class VoiceProfileEnrollmentResult {
         }
     }
 
-    public static FromVerificationEnrollmentResponse(profileId: string, json: { enrollmentStatus: string, enrollmentsCount: number, remainingEnrollments?: number, remainingEnrollmentsCount?: number }): VoiceProfileEnrollmentResult {
-        const reason: ResultReason = json.enrollmentStatus.toLowerCase() === "enrolling" ?
-            ResultReason.EnrollingVoiceProfile : json.enrollmentStatus.toLowerCase() === "enrolled" ?
-            ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
-        const result = new VoiceProfileEnrollmentResult(reason, null, null);
-        result.privDetails = this.getVerificationDetails(json, profileId);
-        return result;
-    }
-
-    public static FromIdentificationEnrollmentResponse(profileId: string, json: { status: string, processingResult: any }): VoiceProfileEnrollmentResult {
-        const reason: ResultReason = json.status === "succeeded" ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
-        const result = new VoiceProfileEnrollmentResult(reason, null, null);
-        result.privDetails = this.getIdentificationDetails(json.processingResult, profileId);
-        return result;
-    }
-
-    public static FromIdentificationProfileList(array: any[]): VoiceProfileEnrollmentResult[] {
+    public static FromIdentificationProfileList(json: { profiles: any[] }): VoiceProfileEnrollmentResult[] {
         const results: VoiceProfileEnrollmentResult[] = [];
-        for (const item of array) {
+        for (const item of json.profiles) {
             const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
                 ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
                 ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
@@ -77,9 +62,9 @@ export class VoiceProfileEnrollmentResult {
         return results;
     }
 
-    public static FromVerificationProfileList(array: any[]): VoiceProfileEnrollmentResult[] {
+    public static FromVerificationProfileList(json: { profiles: any[] }): VoiceProfileEnrollmentResult[] {
         const results: VoiceProfileEnrollmentResult[] = [];
-        for (const item of array) {
+        for (const item of json.profiles) {
             const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
                 ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
                 ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
@@ -88,19 +73,18 @@ export class VoiceProfileEnrollmentResult {
             results.push(result);
         }
         return results;
-
     }
 
     public get reason(): ResultReason {
         return this.privReason;
     }
 
-    public get enrollmentCount(): number {
-        return this.privDetails.enrollmentCount;
+    public get enrollmentsCount(): number {
+        return this.privDetails.enrollmentsCount;
     }
 
-    public get enrollmentLength(): number {
-        return this.privDetails.enrollmentLength;
+    public get enrollmentsLength(): number {
+        return this.privDetails.enrollmentsLength;
     }
 
     public get properties(): PropertyCollection {
@@ -115,22 +99,23 @@ export class VoiceProfileEnrollmentResult {
         return this.privErrorDetails;
     }
 
-    private static getIdentificationDetails(json: any, profileId?: string): any {
+    private static getIdentificationDetails(json: any): any {
         return {
             audioSpeechLength: json.speechTime ? parseFloat(json.speechTime) : 0,
-            enrollmentLength: json.enrollmentSpeechTime ? parseFloat(json.enrollmentSpeechTime) : 0,
             enrollmentStatus: json.enrollmentStatus,
-            profileId: profileId || json.identificationProfileId,
+            enrollmentsLength: json.enrollmentSpeechTime ? parseFloat(json.enrollmentSpeechTime) : 0,
+            profileId: json.profileId || json.identificationProfileId,
             remainingEnrollmentSpeechLength: json.remainingEnrollmentSpeechTime ? parseFloat(json.remainingEnrollmentSpeechTime) : 0
         };
     }
 
-    private static getVerificationDetails(json: any, profileId?: string): any {
+    private static getVerificationDetails(json: any): any {
         return {
-            enrollmentCount: json.enrollmentsCount,
             enrollmentStatus: json.enrollmentStatus,
-            profileId: profileId || json.verificationProfileId,
-            remainingEnrollmentCount: json.remainingEnrollments || json.remainingEnrollmentsCount
+            enrollmentsCount: json.enrollmentsCount,
+            profileId: json.profileId || json.verificationProfileId,
+            remainingEnrollmentSpeechLength: json.remainingEnrollmentSpeechLength ? parseFloat(json.remainingEnrollmentSpeechLength) : 0,
+            remainingEnrollmentsCount: json.remainingEnrollments || json.remainingEnrollmentsCount
         };
     }
 }

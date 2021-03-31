@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { exception } from "console";
 import {
     IRestResponse,
 } from "../common.browser/Exports";
@@ -19,6 +18,7 @@ import {
     PropertyId,
     ResultReason,
     VoiceProfile,
+    VoiceProfileAuthorizationPhraseResult,
     VoiceProfileEnrollmentResult,
     VoiceProfileResult,
     VoiceProfileType,
@@ -82,18 +82,42 @@ export class VoiceProfileClient {
     }
 
     /**
-     * Get current information of a voice profile
-     * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync
+     * Create a speaker recognition voice profile
+     * @member VoiceProfileClient.prototype.createProfileAsync
      * @function
      * @public
-     * @param {VoiceProfile} profile Voice Profile to retrieve info for
+     * @param {VoiceProfileType} profileType Type of Voice Profile to be created
+     *        specifies the keyword to be recognized.
+     * @param {string} lang Language string (locale) for Voice Profile
      * @param cb - Callback invoked once Voice Profile has been created.
      * @param err - Callback invoked in case of an error.
      */
+    public createProfileAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
+
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfile> => {
+            const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
+            const response: { profileId: string } = result.json();
+            const profile = new VoiceProfile(response.profileId, profileType);
+            return profile;
+        })(), cb, err);
+    }
+     /**
+      * Get current information of a voice profile
+      * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync
+      * @function
+      * @public
+      * @param {VoiceProfile} profile Voice Profile to retrieve info for
+      * @param cb - Callback invoked once Voice Profile has been created.
+      * @param err - Callback invoked in case of an error.
+      */
     public retrieveEnrollmentResultAsync(profile: VoiceProfile, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
+                marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
             const result: IRestResponse = await this.privAdapter.getProfileStatus(profile);
-            return this.getEnrollmentResult(profile, result);
+            return new VoiceProfileEnrollmentResult(
+                result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
+                result.data,
+                result.statusText,
+            );
         })(), cb, err);
     }
 
@@ -125,38 +149,14 @@ export class VoiceProfileClient {
      * @param cb - Callback invoked once phrases have been returned.
      * @param err - Callback invoked in case of an error.
      */
-    public getAuthorizationPhrasesAsync(lang: string, cb?: (e: string[]) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<string[]> => {
+    public getAuthorizationPhrasesAsync(lang: string, cb?: (e: VoiceProfileAuthorizationPhraseResult) => void, err?: (e: string) => void): void {
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfileAuthorizationPhraseResult> => {
             const result: IRestResponse = await this.privAdapter.getAuthorizationPhrases(lang);
-            const array: any[] = result.json();
-            const phrases: string[] = [];
-            for (const item of array) {
-                phrases.push(item.phrase);
-            }
-            return phrases;
-        })(), cb, err);
-    }
-
-    /**
-     * Create a speaker recognition voice profile
-     * @member VoiceProfileClient.prototype.createProfileAsync
-     * @function
-     * @public
-     * @param {VoiceProfileType} profileType Type of Voice Profile to be created
-     *        specifies the keyword to be recognized.
-     * @param {string} lang Language string (locale) for Voice Profile
-     * @param cb - Callback invoked once Voice Profile has been created.
-     * @param err - Callback invoked in case of an error.
-     */
-    public createProfileAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
-
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfile> => {
-            const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
-            const response: { identificationProfileId?: string, verificationProfileId?: string } = result.json();
-            const profileId: string = response.verificationProfileId || response.identificationProfileId;
-            Contracts.throwIfNullOrUndefined(profileId, "profileId");
-            const profile = new VoiceProfile(profileId, profileType);
-            return profile;
+            return new VoiceProfileAuthorizationPhraseResult(
+                result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
+                result.statusText,
+                result.json()
+            );
         })(), cb, err);
     }
 
@@ -174,8 +174,12 @@ export class VoiceProfileClient {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
         marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
-            const result: IRestResponse = await this.privAdapter.createEnrollmentAsync(profile, configImpl);
-            return this.getEnrollmentResult(profile, result);
+            const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
+            return new VoiceProfileEnrollmentResult(
+                result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
+                result.data,
+                result.statusText,
+            );
         })(), cb, err);
     }
 
@@ -242,31 +246,12 @@ export class VoiceProfileClient {
         this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
     }
 
-    private getResult(result: IRestResponse, successReason: ResultReason): VoiceProfileResult {
+    private getResult(result: IRestResponse, successReason: ResultReason, cb?: (response: VoiceProfileResult) => void): VoiceProfileResult {
         const response: VoiceProfileResult =
             new VoiceProfileResult(
                 result.ok ? successReason : ResultReason.Canceled,
                 result.statusText
             );
         return (response);
-    }
-
-    private getEnrollmentResult(profile: VoiceProfile, result: IRestResponse): VoiceProfileEnrollmentResult  {
-        if (!result.ok) {
-            return new VoiceProfileEnrollmentResult(
-                ResultReason.Canceled,
-                result.data,
-                result.statusText,
-            );
-        }
-        if (profile.profileType === VoiceProfileType.TextIndependentIdentification) {
-            try {
-                const json: { status: string, processingResult: any } = result.json();
-                return VoiceProfileEnrollmentResult.FromIdentificationEnrollmentResponse(profile.profileId, json);
-            } catch (e) {
-                throw e;
-            }
-        }
-        return VoiceProfileEnrollmentResult.FromVerificationEnrollmentResponse(profile.profileId, result.json());
     }
 }
