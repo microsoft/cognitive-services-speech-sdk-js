@@ -11,7 +11,8 @@ import {
     ResultReason,
 } from "./Exports";
 
-export interface IEnrollmentResultDetails {
+export interface EnrollmentResultDetails {
+    profileId: string;
     enrollmentsCount: number;
     enrollmentsLength: number;
     enrollmentsSpeechLength: number;
@@ -28,7 +29,7 @@ export interface IEnrollmentResultDetails {
  */
 export class VoiceProfileEnrollmentResult {
     private privReason: ResultReason;
-    private privDetails: IEnrollmentResultDetails;
+    private privDetails: EnrollmentResultDetails;
     private privProperties: PropertyCollection;
     private privErrorDetails: string;
 
@@ -36,15 +37,42 @@ export class VoiceProfileEnrollmentResult {
         this.privReason = reason;
         this.privProperties = new PropertyCollection();
         if (this.privReason !== ResultReason.Canceled) {
-            this.privDetails = JSON.parse(json);
-            Contracts.throwIfNullOrUndefined(json, "JSON");
-            if (this.privDetails.enrollmentStatus.toLowerCase() === "enrolling") {
-                this.privReason = ResultReason.EnrollingVoiceProfile;
+            if (!!json) {
+                this.privDetails = JSON.parse(json);
+                if (this.privDetails.enrollmentStatus.toLowerCase() === "enrolling") {
+                    this.privReason = ResultReason.EnrollingVoiceProfile;
+                }
             }
         } else {
             this.privErrorDetails = statusText;
             this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
         }
+    }
+
+    public static FromIdentificationProfileList(json: { profiles: any[] }): VoiceProfileEnrollmentResult[] {
+        const results: VoiceProfileEnrollmentResult[] = [];
+        for (const item of json.profiles) {
+            const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
+                ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
+                ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
+            const result = new VoiceProfileEnrollmentResult(reason, null, null);
+            result.privDetails = this.getIdentificationDetails(item);
+            results.push(result);
+        }
+        return results;
+    }
+
+    public static FromVerificationProfileList(json: { profiles: any[] }): VoiceProfileEnrollmentResult[] {
+        const results: VoiceProfileEnrollmentResult[] = [];
+        for (const item of json.profiles) {
+            const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
+                ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
+                ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
+            const result = new VoiceProfileEnrollmentResult(reason, null, null);
+            result.privDetails = this.getVerificationDetails(item);
+            results.push(result);
+        }
+        return results;
     }
 
     public get reason(): ResultReason {
@@ -63,12 +91,32 @@ export class VoiceProfileEnrollmentResult {
         return this.privProperties;
     }
 
-    public get enrollmentResultDetails(): IEnrollmentResultDetails {
+    public get enrollmentResultDetails(): EnrollmentResultDetails {
         return this.privDetails;
     }
 
     public get errorDetails(): string {
         return this.privErrorDetails;
+    }
+
+    private static getIdentificationDetails(json: any): any {
+        return {
+            audioSpeechLength: json.speechTime ? parseFloat(json.speechTime) : 0,
+            enrollmentStatus: json.enrollmentStatus,
+            enrollmentsLength: json.enrollmentSpeechTime ? parseFloat(json.enrollmentSpeechTime) : 0,
+            profileId: json.profileId || json.identificationProfileId,
+            remainingEnrollmentSpeechLength: json.remainingEnrollmentSpeechTime ? parseFloat(json.remainingEnrollmentSpeechTime) : 0
+        };
+    }
+
+    private static getVerificationDetails(json: any): any {
+        return {
+            enrollmentStatus: json.enrollmentStatus,
+            enrollmentsCount: json.enrollmentsCount,
+            profileId: json.profileId || json.verificationProfileId,
+            remainingEnrollmentSpeechLength: json.remainingEnrollmentSpeechLength ? parseFloat(json.remainingEnrollmentSpeechLength) : 0,
+            remainingEnrollmentsCount: json.remainingEnrollments || json.remainingEnrollmentsCount
+        };
     }
 }
 

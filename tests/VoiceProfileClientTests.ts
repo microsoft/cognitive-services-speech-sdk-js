@@ -8,6 +8,7 @@ import {
     Events,
     EventType
 } from "../src/common/Exports";
+import { VoiceProfileAuthorizationPhraseResult } from "../src/sdk/VoiceProfileAuthorizationPhraseResult";
 
 import { Settings } from "./Settings";
 import { closeAsyncObjects } from "./Utilities";
@@ -88,6 +89,28 @@ test("GetParameters", () => {
 
     expect(r.properties).not.toBeUndefined();
 });
+
+test("Get Authorization Phrases for voice samples", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Create and Delete Voice Profile - Dependent Verification");
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const r: sdk.VoiceProfileClient = BuildClient(s);
+    objsToClose.push(r);
+
+    r.getAuthorizationPhrasesAsync(
+        "en-us",
+        (res: VoiceProfileAuthorizationPhraseResult) => {
+            expect(res.phrases).not.toBeUndefined();
+            expect(res.phrases.length).toBeGreaterThan(0);
+            expect(res.phrases[0]).not.toBeUndefined();
+            done();
+        },
+        (error: string) => {
+            done.fail(error);
+        });
+}, 20000);
 
 test("Create and Delete Voice Profile using push stream - Independent Identification", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
@@ -217,9 +240,9 @@ test("Create and Delete Voice Profile - Independent Identification", (done: jest
         });
 }, 15000);
 
-test("Create and Delete Voice Profile - Independent Verification", (done: jest.DoneCallback) => {
+test("Create, Get, and Delete Voice Profile - Independent Verification", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
-    console.info("Name: Create and Delete Voice Profile - Independent Verification");
+    console.info("Name: Create, Get, and Delete Voice Profile - Independent Verification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
@@ -236,12 +259,36 @@ test("Create and Delete Voice Profile - Independent Verification", (done: jest.D
             expect(res.profileType).not.toBeUndefined();
             expect(res.profileType).toEqual(type);
             expect(() => sdk.SpeakerIdentificationModel.fromProfiles([res])).toThrow();
-            r.deleteProfileAsync(
+            r.retrieveEnrollmentResultAsync(
                 res,
-                (result: sdk.VoiceProfileResult) => {
-                    expect(result).not.toBeUndefined();
-                    expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
-                    done();
+                (enrollmentRes: sdk.VoiceProfileEnrollmentResult) => {
+                    expect(enrollmentRes).not.toBeUndefined();
+                    expect(enrollmentRes.enrollmentResultDetails.profileId).not.toBeUndefined();
+                    expect(enrollmentRes.enrollmentResultDetails.profileId).toEqual(res.profileId);
+                    expect(enrollmentRes.enrollmentsCount).toEqual(0);
+                    expect(enrollmentRes.enrollmentResultDetails.remainingEnrollmentsSpeechLength).toBeGreaterThan(0);
+                    r.getAllProfilesAsync(
+                        res.profileType,
+                        (results: sdk.VoiceProfileEnrollmentResult[]) => {
+                            expect(results).not.toBeUndefined();
+                            expect(results.length).toBeGreaterThan(0);
+                            expect(results[0]).not.toBeUndefined();
+                            expect(results[0].enrollmentResultDetails.profileId).not.toBeUndefined();
+                            expect(results[0].enrollmentResultDetails.enrollmentStatus).not.toBeUndefined();
+                            r.deleteProfileAsync(
+                                res,
+                                (result: sdk.VoiceProfileResult) => {
+                                    expect(result).not.toBeUndefined();
+                                    // expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
+                                    done();
+                                },
+                                (error: string) => {
+                                    done.fail(error);
+                                });
+                        },
+                        (error: string) => {
+                            done.fail(error);
+                        });
                 },
                 (error: string) => {
                     done.fail(error);

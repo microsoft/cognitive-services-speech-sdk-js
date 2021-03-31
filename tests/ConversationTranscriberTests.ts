@@ -226,7 +226,7 @@ Settings.testIfDOMCondition("Create Conversation and add participants", (done: j
         (error: string) => {
             done.fail(error);
         });
-}, 500000);
+}, 50000);
 
 Settings.testIfDOMCondition("Leave Conversation", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console

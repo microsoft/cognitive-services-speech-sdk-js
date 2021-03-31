@@ -18,6 +18,7 @@ import {
     PropertyId,
     ResultReason,
     VoiceProfile,
+    VoiceProfileAuthorizationPhraseResult,
     VoiceProfileEnrollmentResult,
     VoiceProfileResult,
     VoiceProfileType,
@@ -100,6 +101,64 @@ export class VoiceProfileClient {
             return profile;
         })(), cb, err);
     }
+     /**
+      * Get current information of a voice profile
+      * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync
+      * @function
+      * @public
+      * @param {VoiceProfile} profile Voice Profile to retrieve info for
+      * @param cb - Callback invoked once Voice Profile has been created.
+      * @param err - Callback invoked in case of an error.
+      */
+    public retrieveEnrollmentResultAsync(profile: VoiceProfile, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
+                marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
+            const result: IRestResponse = await this.privAdapter.getProfileStatus(profile);
+            return new VoiceProfileEnrollmentResult(
+                result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
+                result.data,
+                result.statusText,
+            );
+        })(), cb, err);
+    }
+
+    /**
+     * Get all voice profiles on account with given voice profile type
+     * @member VoiceProfileClient.prototype.getAllProfilesAsync
+     * @function
+     * @public
+     * @param {VoiceProfileType} profileType profile type (identification/verification) for which to list profiles
+     * @param cb - Callback invoked once Profile list has been returned.
+     * @param err - Callback invoked in case of an error.
+     */
+    public getAllProfilesAsync(profileType: VoiceProfileType, cb?: (e: VoiceProfileEnrollmentResult[]) => void, err?: (e: string) => void): void {
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult[]> => {
+            const result: IRestResponse = await this.privAdapter.getProfiles(profileType);
+            if (profileType === VoiceProfileType.TextIndependentIdentification) {
+                return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json());
+            }
+            return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json());
+        })(), cb, err);
+    }
+
+    /**
+     * Get valid authorization phrases for voice profile enrollment
+     * @member VoiceProfileClient.prototype.getAuthorizationPhrasesAsync
+     * @function
+     * @public
+     * @param {string} lang Language string (locale) for Voice Profile
+     * @param cb - Callback invoked once phrases have been returned.
+     * @param err - Callback invoked in case of an error.
+     */
+    public getAuthorizationPhrasesAsync(lang: string, cb?: (e: VoiceProfileAuthorizationPhraseResult) => void, err?: (e: string) => void): void {
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfileAuthorizationPhraseResult> => {
+            const result: IRestResponse = await this.privAdapter.getAuthorizationPhrases(lang);
+            return new VoiceProfileAuthorizationPhraseResult(
+                result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
+                result.statusText,
+                result.json()
+            );
+        })(), cb, err);
+    }
 
     /**
      * Create a speaker recognition voice profile
@@ -116,12 +175,11 @@ export class VoiceProfileClient {
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
         marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
             const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
-            const ret: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
+            return new VoiceProfileEnrollmentResult(
                 result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
                 result.data,
                 result.statusText,
             );
-            return ret;
         })(), cb, err);
     }
 

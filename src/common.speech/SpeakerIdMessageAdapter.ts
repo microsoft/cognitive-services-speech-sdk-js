@@ -123,6 +123,43 @@ export class SpeakerIdMessageAdapter {
     }
 
     /**
+     * Sends profile status request to endpoint.
+     * @function
+     * @param {VoiceProfile} profile - voice profile to check.
+     * @public
+     * @returns {Promise<IRestResponse>} rest response to status request
+     */
+    public getProfileStatus(profile: VoiceProfile): Promise<IRestResponse> {
+
+        const uri = `${this.getOperationUri(profile.profileType)}/${profile.profileId}`;
+        return this.privRestAdapter.request(RestRequestType.Get, uri, {});
+    }
+
+    /**
+     * Sends get all profiles request to endpoint.
+     * @function
+     * @param {VoiceProfileType} profileType - type of profiles to return list of
+     * @public
+     * @returns {Promise<IRestResponse>} promised rest response containing all profiles
+     */
+    public getProfiles(profileType: VoiceProfileType): Promise<IRestResponse> {
+        const uri = this.getOperationUri(profileType);
+        return this.privRestAdapter.request(RestRequestType.Get, uri, {});
+    }
+
+    /**
+     * Sends get authorization phrases request to endpoint.
+     * @function
+     * @param {string} lang - language/locale of voice profile
+     * @public
+     * @returns {Promise<IRestResponse>} promised rest response containing list of valid phrases
+     */
+    public getAuthorizationPhrases(lang: string): Promise<IRestResponse> {
+        const uri = `${this.getOperationUri(VoiceProfileType.TextDependentVerification)}`.replace(`profiles`, `phrases`) + "/" + lang;
+        return this.privRestAdapter.request(RestRequestType.Get, uri, {});
+    }
+
+    /**
      * Sends delete profile request to endpoint.
      * @function
      * @param {VoiceProfile} profile - voice profile to delete.
