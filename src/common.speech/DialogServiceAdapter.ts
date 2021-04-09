@@ -217,6 +217,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     connectionMessage.textBody,
                     resultProps);
 
+                if (keyword.Status !== "Accepted") {
+                    this.privLastResult = result;
+                }
+
                 const event = new SpeechRecognitionEventArgs(result, result.duration, result.resultId);
 
                 if (!!this.privDialogServiceConnector.recognized) {
