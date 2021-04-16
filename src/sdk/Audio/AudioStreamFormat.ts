@@ -1,6 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+export enum AudioFormatTag {
+    PCM = 1,
+    MuLaw,
+    Siren,
+    MP3,
+    SILKSkype,
+    OGG_OPUS,
+    WEBM_OPUS,
+}
+
 /**
  * Represents audio stream format used for custom audio input configurations.
  * @class AudioStreamFormat
@@ -56,10 +66,12 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
      * @param {number} samplesPerSec - Samples per second.
      * @param {number} bitsPerSample - Bits per sample.
      * @param {number} channels - Number of channels.
+     * @param {AudioFormatTag} format - Audio format (PCM or mulaw).
      */
-    public constructor(samplesPerSec: number = 16000, bitsPerSample: number = 16, channels: number = 1) {
+    public constructor(samplesPerSec: number = 16000, bitsPerSample: number = 16, channels: number = 1, format: AudioFormatTag = AudioFormatTag.PCM) {
         super();
-        this.formatTag = 1;
+        /* 1 for PCM; 6 for mulaw */
+        this.formatTag = format === AudioFormatTag.PCM ? 1 : 6;
         this.bitsPerSample = bitsPerSample;
         this.samplesPerSec = samplesPerSec;
         this.channels = channels;
@@ -79,8 +91,8 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
         this.setString(view, 8, "WAVEfmt ");
         /* format chunk length */
         view.setUint32(16, 16, true);
-        /* sample format (raw) */
-        view.setUint16(20, 1, true);
+        /* audio format 1=PCM, 3=IEEE Float, 6=mulaw, 7=alaw, 257=IBM Mu-Law, 258=IBM A-Law, 259=ADPCM, 65534=Extensible */
+        view.setUint16(20, this.formatTag, true);
         /* channel count */
         view.setUint16(22, this.channels, true);
         /* sample rate */
