@@ -50,6 +50,7 @@ import {
     SimpleSpeechPhrase,
     SpeechDetected,
     SpeechHypothesis,
+    SpeechKeyword,
 } from "./Exports";
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
@@ -200,7 +201,39 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 }
                 processed = true;
                 break;
+            case "speech.keyword":
+                const keyword: SpeechKeyword = SpeechKeyword.fromJSON(connectionMessage.textBody);
 
+                result = new SpeechRecognitionResult(
+                    this.privRequestSession.requestId,
+                    keyword.Status === "Accepted" ? ResultReason.RecognizedKeyword : ResultReason.NoMatch,
+                    keyword.Text,
+                    keyword.Duration,
+                    keyword.Offset,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    connectionMessage.textBody,
+                    resultProps);
+
+                if (keyword.Status !== "Accepted") {
+                    this.privLastResult = result;
+                }
+
+                const event = new SpeechRecognitionEventArgs(result, result.duration, result.resultId);
+
+                if (!!this.privDialogServiceConnector.recognized) {
+                    try {
+                        this.privDialogServiceConnector.recognized(this.privDialogServiceConnector, event);
+                        /* tslint:disable:no-empty */
+                    } catch (error) {
+                        // Not going to let errors in the event handler
+                        // trip things up.
+                    }
+                }
+                processed = true;
+                break;
             case "audio":
                 {
                     const audioRequestId = connectionMessage.requestId.toUpperCase();
@@ -506,6 +539,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
     private async sendPreAudioMessages(): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
+        this.addKeywordContextData();
+        await this.sendSpeechContext(connection);
         await this.sendAgentContext(connection);
         await this.sendWaveHeader(connection);
     }
@@ -640,5 +675,41 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private onEvent(event: DialogEvent): void {
         this.privEvents.onEvent(event);
         Events.instance.onEvent(event);
+    }
+
+    private addKeywordContextData(): void {
+        const keywordPropertyValue: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-KeywordsToDetect");
+        if (keywordPropertyValue === undefined) {
+            return;
+        }
+
+        const keywordOffsetPropertyValue: string = this.privRecognizerConfig.parameters
+            .getProperty("SPEECH-KeywordsToDetect-Offsets");
+        const keywordDurationPropertyValue: string = this.privRecognizerConfig.parameters
+            .getProperty("SPEECH-KeywordsToDetect-Durations");
+
+        const keywords = keywordPropertyValue.split(";");
+        const keywordOffsets = keywordOffsetPropertyValue === undefined ? [] : keywordOffsetPropertyValue.split(";");
+        const keywordDurations = keywordDurationPropertyValue === undefined ? [] : keywordDurationPropertyValue.split(";");
+
+        const keywordDefinitionArray = [];
+        for (let i = 0; i < keywords.length; i++) {
+            const definition: { [section: string]: any } = {};
+            definition.text = keywords[i];
+            if (i < keywordOffsets.length) {
+                definition.offset = Number(keywordOffsets[i]);
+            }
+            if (i < keywordDurations.length) {
+                definition.duration = Number(keywordDurations[i]);
+            }
+            keywordDefinitionArray.push(definition);
+        }
+
+        this.speechContext.setSection("invocationSource", "VoiceActivationWithKeyword");
+        this.speechContext.setSection("keywordDetection", [{
+            clientDetectedKeywords: keywordDefinitionArray,
+            onReject: { action: "EndOfTurn" },
+            type: "startTrigger"
+        }]);
     }
 }

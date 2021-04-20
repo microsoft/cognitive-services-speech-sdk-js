@@ -26,6 +26,7 @@ export * from "./ServiceMessages/TranslationPhrase";
 export * from "./TranslationServiceRecognizer";
 export * from "./ServiceMessages/SpeechDetected";
 export * from "./ServiceMessages/SpeechHypothesis";
+export * from "./ServiceMessages/SpeechKeyword";
 export * from "./SpeechServiceRecognizer";
 export * from "./TranscriptionServiceRecognizer";
 export * from "./ServiceMessages/DetailedSpeechPhrase";

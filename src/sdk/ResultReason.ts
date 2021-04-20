@@ -34,6 +34,13 @@ export enum ResultReason {
     RecognizedSpeech,
 
     /**
+     * Indicates the speech result contains a finalized acceptance of a provided keyword.
+     * Speech recognition will continue unless otherwise configured.
+     * @member ResultReason.RecognizedKeyword
+     */
+    RecognizedKeyword,
+
+    /**
      * Indicates the intent result contains hypothesis text and intent.
      * @member ResultReason.RecognizingIntent
      */

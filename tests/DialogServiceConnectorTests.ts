@@ -17,7 +17,7 @@ import {
     PlatformEvent,
     SendingAgentContextMessageEvent,
 } from "../src/common/Exports";
-import { BotFrameworkConfig, OutputFormat, PropertyId, PullAudioOutputStream } from "../src/sdk/Exports";
+import { BotFrameworkConfig, OutputFormat, PropertyId, PullAudioOutputStream, ResultReason } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
 import {
     closeAsyncObjects,
@@ -681,268 +681,6 @@ Settings.testIfDOMCondition("ListenOnceAsync with silence returned", (done: jest
     });
 }, 15000);
 
-// test("ListenOnce succeeds after reconnect", (done: jest.DoneCallback) => {
-//     // tslint:disable-next-line:no-console
-//     console.info("Name: ListenOnce succeeds after reconnect");
-
-//     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
-//     objsToClose.push(dialogConfig);
-
-//     // dialogConfig.setProxy("localhost", 8888);
-//     // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
-
-//     const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
-//     objsToClose.push(connector);
-
-//     let sessionId: string;
-
-//     let firstReco: boolean = false;
-//     let connected: number = 0;
-
-//     const connection: sdk.Connection = sdk.Connection.fromRecognizer(connector);
-
-//     connection.connected = (e: sdk.ConnectionEventArgs): void => {
-//         connected++;
-//     };
-
-//     connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
-//         sessionId = e.sessionId;
-//     };
-
-//     connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
-//         try {
-//             expect(e.activity).not.toBeNull();
-//         } catch (error) {
-//             done.fail(error);
-//         }
-//     };
-
-//     connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
-//         try {
-//             expect(e.errorDetails).toBeUndefined();
-//         } catch (error) {
-//             done.fail(error);
-//         }
-//     };
-
-//     connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
-//         expect(e.sessionId).toEqual(sessionId);
-//     };
-
-//     connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
-//         expect(result).not.toBeUndefined();
-//         expect(result.errorDetails).toBeUndefined();
-//         expect(result.text).not.toBeUndefined();
-//         firstReco = true;
-//     },
-//     (error: string) => {
-//         done.fail(error);
-//     });
-
-//     WaitForCondition(() => {
-//         return firstReco;
-//     }, () => {
-//         connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult) => {
-//             try {
-//                 const recoResult: sdk.SpeechRecognitionResult = result2;
-//                 expect(recoResult).not.toBeUndefined();
-//                 expect(recoResult.text).toEqual("What's the weather like?");
-//                 expect(connected).toEqual(1);
-//                 done();
-//             } catch (error) {
-//                 done.fail(error);
-//             }
-//         },
-//         (error: string) => {
-//             done.fail(error);
-//         });
-//     });
-// }, 360000);
-
-// test("Multiple ListenOnce", (done: jest.DoneCallback) => {
-//     // tslint:disable-next-line:no-console
-//     console.info("Name: Multiple ListenOnce");
-//     const dialogConfig: sdk.DialogServiceConfig = BuildDialogServiceConfig();
-//     objsToClose.push(dialogConfig);
-
-//     // dialogConfig.setProxy("localhost", 8888);
-//     // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
-
-//     const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
-//     objsToClose.push(connector);
-
-//     const recoAttempts: number = 5;
-//     let sessionId: string;
-//     let connected: number = 0;
-//     let recognized: number = 0;
-
-//     const connection: sdk.Connection = sdk.Connection.fromRecognizer(connector);
-
-//     connection.connected = (e: sdk.ConnectionEventArgs): void => {
-//         connected++;
-//     };
-
-//     connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
-//         sessionId = e.sessionId;
-//     };
-
-//     connector.recognized = (s: sdk.DialogServiceConnector, e: SpeechRecognitionEventArgs): void => {
-//         recognized++;
-//     };
-
-//     connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
-//         try {
-//             expect(e.activity).not.toBeNull();
-//         } catch (error) {
-//             done.fail(error);
-//         }
-//     };
-
-//     connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
-//         try {
-//             expect(e.errorDetails).toBeUndefined();
-//         } catch (error) {
-//             done.fail(error);
-//         }
-//     };
-
-//     connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
-//         expect(e.sessionId).toEqual(sessionId);
-//     };
-
-//     let recoDone: boolean = true;
-//     let recoCall = 0;
-//     for (; recoCall < recoAttempts; recoCall++) {
-
-//         connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
-//             expect(result).not.toBeUndefined();
-//             expect(result.errorDetails).toBeUndefined();
-//             expect(result.text).not.toBeUndefined();
-//             recoDone = true;
-//         },
-//         (error: string) => {
-//             done.fail(error);
-//         });
-
-//         WaitForCondition(() => {
-//             return recoDone === true;
-//         }, () => { recoDone = false; });
-//     }
-
-//     WaitForCondition(() => (recoAttempts === recoCall), () => {
-//         expect(recoCall).toEqual(recoAttempts);
-//         expect(recognized).toEqual(recoAttempts);
-//         expect(connected).toEqual(1);
-//         done();
-//     });
-// }, 15000);
-
-// test("Successive ListenOnce with timeout", (done: jest.DoneCallback) => {
-//     // tslint:disable-next-line:no-console
-//     console.info("Name: Successive ListenOnce with timeout");
-//     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
-//     objsToClose.push(dialogConfig);
-
-//     //dialogConfig.setProxy("localhost", 8888);
-//     // dialogConfig.setProperty("Conversation_Communication_Type", "AutoReply");
-
-//     const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
-//     objsToClose.push(connector);
-
-//     const recoAttempts: number = 5;
-//     let sessionId: string;
-//     let connected: number = 0;
-//     let recognized: number = 0;
-
-//     const connection: sdk.Connection = sdk.Connection.fromRecognizer(connector);
-
-//     connection.connected = (e: sdk.ConnectionEventArgs): void => {
-//         connected++;
-//     };
-
-//     connector.sessionStarted = (s: sdk.DialogServiceConnector, e: sdk.SessionEventArgs): void => {
-//         sessionId = e.sessionId;
-//     };
-
-//     connector.recognized = (s: sdk.DialogServiceConnector, e: SpeechRecognitionEventArgs): void => {
-//         recognized++;
-//     };
-
-//     connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
-//         try {
-//             expect(e.activity).not.toBeNull();
-//         } catch (error) {
-//             done.fail(error);
-//         }
-//     };
-
-//     connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
-//         try {
-//             expect(e.errorDetails).toBeUndefined();
-//         } catch (error) {
-//             done.fail(error);
-//         }
-//     };
-
-//     connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
-//         expect(e.sessionId).toEqual(sessionId);
-//     };
-
-//     let recoDone: boolean = false;
-
-//     // tslint:disable-next-line:no-console
-//     console.info("Starting first reco");
-
-//     connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
-//         expect(result).not.toBeUndefined();
-//         expect(result.errorDetails).toBeUndefined();
-//         expect(result.text).not.toBeUndefined();
-//         recoDone = true;
-
-//         // tslint:disable-next-line:no-console
-//         console.info("First reco done, received result");
-//     },
-//     (error: string) => {
-//         done.fail(error);
-//     });
-
-//     WaitForCondition(() => {
-//         return recoDone;
-//     }, () => {
-
-//         // tslint:disable-next-line:no-console
-//         console.info("Beginning 5 minute sleep to cause websocket timeout");
-
-//         // Wait for 5+ minutes
-//         sleep(310000).then( () => {
-
-//             // tslint:disable-next-line:no-console
-//             console.info("Websocket timeout complete, starting second reco");
-
-//             recoDone = false;
-//             connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
-//                 expect(result).not.toBeUndefined();
-//                 expect(result.errorDetails).toBeUndefined();
-//                 expect(result.text).not.toBeUndefined();
-//                 recoDone = true;
-
-//                 // tslint:disable-next-line:no-console
-//                 console.info("Second reco done");
-//             },
-//             (error: string) => {
-//                 done.fail(error);
-//             });
-
-//             WaitForCondition(() => {
-//                 return recoDone;
-//             }, () => {
-//                 done();
-//             });
-//         });
-//     });
-
-// }, 360000);
-
 test("Send/Receive messages", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Send/Receive messages");
@@ -1374,5 +1112,82 @@ describe.each([
          } catch (error) {
              done.fail(error);
          }
+    }, 30000);
+});
+
+describe.each([
+    [
+        "simple keyword gets a result when it should",
+        "contoso",
+        undefined,
+        true
+    ],
+    [
+        "simple keyword gets rejected when it should",
+        "banana",
+        undefined,
+        false
+    ],
+    [
+        "simple keyword works with adequate duration",
+        "contoso",
+        "20000000",
+        true
+    ],
+    [
+        "simple keyword fails with inadequate duration",
+        "contoso",
+        "5000000",
+        false
+    ],
+    [
+        "works with multiple keywords",
+        "foobar;baz;contoso;quz",
+        "123;456;20000000",
+        true
+    ]
+])("Keyword verification", (
+    description: string,
+    keywords: string,
+    durations: string,
+    successExpected: boolean,
+) => {
+
+    test(`${description}`, async (done: jest.DoneCallback) => {
+        const config: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
+        config.setProperty("SPEECH-KeywordsToDetect", keywords);
+        if (durations !== undefined) {
+            config.setProperty("SPEECH-KeywordsToDetect-Durations", durations);
+        }
+        const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(config, Settings.InputDir + "contoso-hows-the-weather.wav");
+
+        let keywordResultReceived: number = 0;
+        let noMatchesReceived: number = 0;
+        let speechRecognizedReceived: number = 0;
+
+        connector.recognized = (s: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
+            if  (e.result.reason === ResultReason.RecognizedKeyword) {
+                keywordResultReceived++;
+                expect(keywords).toContain(e.result.text);
+            } else if (e.result.reason === ResultReason.NoMatch) {
+                noMatchesReceived++;
+            } else if (e.result.reason === ResultReason.RecognizedSpeech) {
+                expect(keywordResultReceived).toBe(1);
+                speechRecognizedReceived++;
+            }
+        };
+
+        connector.listenOnceAsync(
+            (successfulResult: sdk.SpeechRecognitionResult) => {
+                expect(keywordResultReceived).toBe(successExpected ? 1 : 0);
+                expect(noMatchesReceived).toBe(successExpected ? 0 : 1);
+                expect(speechRecognizedReceived).toBe(successExpected ? 1 : 0);
+                expect(successfulResult.reason).toBe(
+                    successExpected ? ResultReason.RecognizedSpeech : ResultReason.NoMatch);
+                done();
+            },
+            (error: string) => {
+                done.fail(error);
+            });
     }, 30000);
 });
