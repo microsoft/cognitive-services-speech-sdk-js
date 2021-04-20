@@ -3,22 +3,12 @@
 
 import { INumberDictionary } from "../../common/Exports";
 import { SpeechSynthesisOutputFormat } from "../SpeechSynthesisOutputFormat";
-import { AudioStreamFormatImpl } from "./AudioStreamFormat";
-
-export enum AudioFormatTag {
-    PCM = 1,
-    MuLaw,
-    Siren,
-    MP3,
-    SILKSkype,
-    OGG_OPUS,
-    WEBM_OPUS,
-}
+import { AudioFormatTag, AudioStreamFormatImpl } from "./AudioStreamFormat";
 
 /**
  * @private
  * @class AudioOutputFormatImpl
- * Updated in version 1.16.0
+ * Updated in version 1.17.0
  */
 // tslint:disable-next-line:max-classes-per-file
 export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
@@ -49,6 +39,9 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         [SpeechSynthesisOutputFormat.Ogg48Khz16BitMonoOpus]: "ogg-48khz-16bit-mono-opus",
         [SpeechSynthesisOutputFormat.Webm16Khz16BitMonoOpus]: "webm-16khz-16bit-mono-opus",
         [SpeechSynthesisOutputFormat.Webm24Khz16BitMonoOpus]: "webm-24khz-16bit-mono-opus",
+        [SpeechSynthesisOutputFormat.Raw24Khz16BitMonoTrueSilk]: "raw-24khz-16bit-mono-truesilk",
+        [SpeechSynthesisOutputFormat.Raw8Khz8BitMonoALaw]: "raw-8khz-8bit-mono-alaw",
+        [SpeechSynthesisOutputFormat.Riff8Khz8BitMonoALaw]: "riff-8khz-8bit-mono-alaw",
     };
     private priAudioFormatString: string;
     /**
@@ -80,7 +73,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                        audioFormatString: string,
                        requestAudioFormatString: string,
                        hasHeader: boolean) {
-        super(samplesPerSec, bitsPerSample, channels);
+        super(samplesPerSec, bitsPerSample, channels, formatTag);
         this.formatTag = formatTag;
         this.avgBytesPerSec = avgBytesPerSec;
         this.blockAlign = blockAlign;
@@ -101,7 +94,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         switch (speechSynthesisOutputFormatString) {
             case "raw-8khz-8bit-mono-mulaw":
                 return new AudioOutputFormatImpl(
-                    AudioFormatTag.PCM,
+                    AudioFormatTag.MuLaw,
                     1,
                     8000,
                     8000,
@@ -375,6 +368,39 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     speechSynthesisOutputFormatString,
                     speechSynthesisOutputFormatString,
                     false);
+            case "raw-24khz-16bit-mono-truesilk":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.SILKSkype,
+                    1,
+                    24000,
+                    48000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "raw-8khz-8bit-mono-alaw":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.ALaw,
+                    1,
+                    8000,
+                    8000,
+                    1,
+                    8,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "riff-8khz-8bit-mono-alaw":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.ALaw,
+                    1,
+                    8000,
+                    8000,
+                    1,
+                    8,
+                    speechSynthesisOutputFormatString,
+                    "raw-8khz-8bit-mono-alaw",
+                    true);
             case "riff-16khz-16bit-mono-pcm":
             default:
                 return new AudioOutputFormatImpl(

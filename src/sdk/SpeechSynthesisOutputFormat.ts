@@ -4,7 +4,7 @@
 /**
  * Define speech synthesis audio output formats.
  * @enum SpeechSynthesisOutputFormat
- * Updated in version 1.16.0
+ * Updated in version 1.17.0
  */
 export enum SpeechSynthesisOutputFormat {
     /**
@@ -15,12 +15,14 @@ export enum SpeechSynthesisOutputFormat {
 
     /**
      * riff-16khz-16kbps-mono-siren
+     * @note Unsupported by the service. Do not use this value.
      * @member SpeechSynthesisOutputFormat.Riff16Khz16KbpsMonoSiren
      */
     Riff16Khz16KbpsMonoSiren ,
 
     /**
      * audio-16khz-16kbps-mono-siren
+     * @note Unsupported by the service. Do not use this value.
      * @member SpeechSynthesisOutputFormat.Audio16Khz16KbpsMonoSiren
      */
     Audio16Khz16KbpsMonoSiren,
@@ -165,4 +167,25 @@ export enum SpeechSynthesisOutputFormat {
      * @member SpeechSynthesisOutputFormat.Webm24Khz16BitMonoOpus
      */
     Webm24Khz16BitMonoOpus,
+
+    /**
+     * raw-24khz-16bit-mono-truesilk
+     * Added in version 1.17.0
+     * @member SpeechSynthesisOutputFormat.Raw24Khz16BitMonoTrueSilk
+     */
+     Raw24Khz16BitMonoTrueSilk,
+
+    /**
+     * raw-8khz-8bit-mono-alaw
+     * Added in version 1.17.0
+     * @member SpeechSynthesisOutputFormat.Raw8Khz8BitMonoALaw
+     */
+     Raw8Khz8BitMonoALaw,
+
+    /**
+     * riff-8khz-8bit-mono-alaw
+     * Added in version 1.17.0
+     * @member SpeechSynthesisOutputFormat.Riff8Khz8BitMonoALaw
+     */
+     Riff8Khz8BitMonoALaw,
 }

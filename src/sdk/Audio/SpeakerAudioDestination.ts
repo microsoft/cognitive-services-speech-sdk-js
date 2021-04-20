@@ -10,16 +10,19 @@ import {
     INumberDictionary
 } from "../../common/Exports";
 import { AudioStreamFormat, IPlayer } from "../Exports";
-import { AudioFormatTag, AudioOutputFormatImpl } from "./AudioOutputFormat";
+import { AudioOutputFormatImpl } from "./AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "./AudioOutputStream";
+import { AudioFormatTag } from "./AudioStreamFormat";
 
 const MediaDurationPlaceholderSeconds = 60 * 30;
 
 const AudioFormatToMimeType: INumberDictionary<string> = {
     [AudioFormatTag.PCM]: "audio/wav",
+    [AudioFormatTag.MuLaw]: "audio/x-wav",
     [AudioFormatTag.MP3]: "audio/mpeg",
     [AudioFormatTag.OGG_OPUS]: "audio/ogg",
-    [AudioFormatTag.WEBM_OPUS]: "audio/webm; codecs=opus"
+    [AudioFormatTag.WEBM_OPUS]: "audio/webm; codecs=opus",
+    [AudioFormatTag.ALaw]: "audio/x-wav",
 };
 
 /**
@@ -27,7 +30,7 @@ const AudioFormatToMimeType: INumberDictionary<string> = {
  * Note: the SDK will try to use <a href="https://www.w3.org/TR/media-source/">Media Source Extensions</a> to play audio.
  * Mp3 format has better supports on Microsoft Edge, Chrome and Safari (desktop), so, it's better to specify mp3 format for playback.
  * @class SpeakerAudioDestination
- * Updated in version 1.12.1
+ * Updated in version 1.17.0
  */
 export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     private readonly privId: string;
@@ -85,27 +88,39 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 }
             });
         } else if (this.privAudioOutputStream !== undefined) {
-            let receivedAudio = new ArrayBuffer(this.privBytesReceived);
-            this.privAudioOutputStream.read(receivedAudio).then((_: number): void => {
-                if (this.privFormat.hasHeader) {
-                    receivedAudio = SynthesisAdapterBase.addHeader(receivedAudio, this.privFormat);
+            if ((this.privFormat.formatTag === AudioFormatTag.PCM || this.privFormat.formatTag === AudioFormatTag.MuLaw
+                || this.privFormat.formatTag === AudioFormatTag.ALaw) && this.privFormat.hasHeader === false) {
+                // tslint:disable-next-line:no-console
+                console.warn(`Play back is not supported for raw PCM, mulaw or alaw format without header.`);
+                if (!!this.onAudioEnd) {
+                    this.onAudioEnd(this);
                 }
-                const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.formatTag] });
-                this.privAudio.src = window.URL.createObjectURL(audioBlob);
-                this.notifyPlayback().then(() => {
-                    if (!!cb) {
-                        cb();
-                    }
+            } else {
+                let receivedAudio = new ArrayBuffer(this.privBytesReceived);
+                this.privAudioOutputStream.read(receivedAudio).then((_: number): void => {
+                    receivedAudio = SynthesisAdapterBase.addHeader(receivedAudio, this.privFormat);
+                    const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.formatTag] });
+                    this.privAudio.src = window.URL.createObjectURL(audioBlob);
+                    this.notifyPlayback().then(() => {
+                        if (!!cb) {
+                            cb();
+                        }
+                    }, (error: string): void => {
+                        if (!!err) {
+                            err(error);
+                        }
+                    });
                 }, (error: string): void => {
                     if (!!err) {
                         err(error);
                     }
                 });
-            }, (error: string): void => {
-                if (!!err) {
-                    err(error);
-                }
-            });
+            }
+        } else {
+            // unsupported format, call onAudioEnd directly.
+            if (!!this.onAudioEnd) {
+                this.onAudioEnd(this);
+            }
         }
     }
 
@@ -116,7 +131,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
             if (mimeType === undefined) {
                 // tslint:disable-next-line:no-console
                 console.warn(
-                    `Unknown mimeType for format ${AudioFormatTag[this.privFormat.formatTag]}.`);
+                    `Unknown mimeType for format ${AudioFormatTag[this.privFormat.formatTag]}; playback is not supported.`);
 
             } else if (typeof (MediaSource) !== "undefined" && MediaSource.isTypeSupported(mimeType)) {
                 this.privAudio = new Audio();
