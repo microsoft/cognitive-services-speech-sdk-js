@@ -40,6 +40,8 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         [SpeechSynthesisOutputFormat.Webm16Khz16BitMonoOpus]: "webm-16khz-16bit-mono-opus",
         [SpeechSynthesisOutputFormat.Webm24Khz16BitMonoOpus]: "webm-24khz-16bit-mono-opus",
         [SpeechSynthesisOutputFormat.Raw24Khz16BitMonoTrueSilk]: "raw-24khz-16bit-mono-truesilk",
+        [SpeechSynthesisOutputFormat.Raw8Khz8BitMonoALaw]: "raw-8khz-8bit-mono-alaw",
+        [SpeechSynthesisOutputFormat.Riff8Khz8BitMonoALaw]: "riff-8khz-8bit-mono-alaw",
     };
     private priAudioFormatString: string;
     /**
@@ -377,6 +379,28 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     speechSynthesisOutputFormatString,
                     speechSynthesisOutputFormatString,
                     false);
+            case "raw-8khz-8bit-mono-alaw":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.ALaw,
+                    1,
+                    8000,
+                    8000,
+                    1,
+                    8,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "riff-8khz-8bit-mono-alaw":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.ALaw,
+                    1,
+                    8000,
+                    8000,
+                    1,
+                    8,
+                    speechSynthesisOutputFormatString,
+                    "raw-8khz-8bit-mono-alaw",
+                    true);
             case "riff-16khz-16bit-mono-pcm":
             default:
                 return new AudioOutputFormatImpl(

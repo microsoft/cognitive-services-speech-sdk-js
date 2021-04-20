@@ -174,4 +174,18 @@ export enum SpeechSynthesisOutputFormat {
      * @member SpeechSynthesisOutputFormat.Raw24Khz16BitMonoTrueSilk
      */
      Raw24Khz16BitMonoTrueSilk,
+
+    /**
+     * raw-8khz-8bit-mono-alaw
+     * Added in version 1.17.0
+     * @member SpeechSynthesisOutputFormat.Raw8Khz8BitMonoALaw
+     */
+     Raw8Khz8BitMonoALaw,
+
+    /**
+     * riff-8khz-8bit-mono-alaw
+     * Added in version 1.17.0
+     * @member SpeechSynthesisOutputFormat.Riff8Khz8BitMonoALaw
+     */
+     Riff8Khz8BitMonoALaw,
 }

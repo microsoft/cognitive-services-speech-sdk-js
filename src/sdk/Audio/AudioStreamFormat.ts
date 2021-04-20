@@ -9,6 +9,7 @@ export enum AudioFormatTag {
     SILKSkype,
     OGG_OPUS,
     WEBM_OPUS,
+    ALaw,
 }
 
 /**
@@ -66,12 +67,23 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
      * @param {number} samplesPerSec - Samples per second.
      * @param {number} bitsPerSample - Bits per sample.
      * @param {number} channels - Number of channels.
-     * @param {AudioFormatTag} format - Audio format (PCM or mulaw).
+     * @param {AudioFormatTag} format - Audio format (PCM, alaw or mulaw).
      */
     public constructor(samplesPerSec: number = 16000, bitsPerSample: number = 16, channels: number = 1, format: AudioFormatTag = AudioFormatTag.PCM) {
         super();
-        /* 1 for PCM; 6 for mulaw */
-        this.formatTag = format === AudioFormatTag.PCM ? 1 : 6;
+        /* 1 for PCM; 6 for alaw; 7 for mulaw */
+        switch (format) {
+            case AudioFormatTag.PCM:
+                this.formatTag = 1;
+                break;
+            case AudioFormatTag.ALaw:
+                this.formatTag = 6;
+                break;
+            case AudioFormatTag.MuLaw:
+                this.formatTag = 7;
+                break;
+            default:
+        }
         this.bitsPerSample = bitsPerSample;
         this.samplesPerSec = samplesPerSec;
         this.channels = channels;
@@ -91,7 +103,7 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
         this.setString(view, 8, "WAVEfmt ");
         /* format chunk length */
         view.setUint32(16, 16, true);
-        /* audio format 1=PCM, 3=IEEE Float, 6=mulaw, 7=alaw, 257=IBM Mu-Law, 258=IBM A-Law, 259=ADPCM, 65534=Extensible */
+        /* audio format */
         view.setUint16(20, this.formatTag, true);
         /* channel count */
         view.setUint16(22, this.channels, true);
