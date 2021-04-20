@@ -14,6 +14,7 @@ export class AudioFileWriter implements IAudioDestination {
     private privWriteStream: fs.WriteStream;
 
     public constructor(filename: fs.PathLike) {
+        Contracts.throwIfNullOrUndefined(fs.openSync, "\nFile System access not available, please use Push or PullAudioOutputStream");
         this.privFd = fs.openSync(filename, "w");
     }
 
