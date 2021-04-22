@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { Z_NO_COMPRESSION } from "zlib";
 import { ReplayableAudioNode } from "../common.browser/Exports";
 import {
     createNoDashGuid,
@@ -164,8 +165,10 @@ export class RequestSession {
         if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
+            // Avoid UnhandledPromiseRejection if privTurnDeferral is not being awaited
+            /* tslint:disable:no-empty */
+            this.privTurnDeferral.promise.then().catch(() => { });
         }
-
         this.privInTurn = true;
         this.privTurnDeferral = new Deferred<void>();
     }

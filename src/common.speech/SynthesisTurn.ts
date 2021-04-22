@@ -186,6 +186,9 @@ export class SynthesisTurn {
         if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
+            // Avoid UnhandledPromiseRejection if privTurnDeferral is not being awaited
+            /* tslint:disable:no-empty */
+            this.privTurnDeferral.promise.then().catch(() => { });
         }
         this.privInTurn = true;
         this.privTurnDeferral = new Deferred<void>();
