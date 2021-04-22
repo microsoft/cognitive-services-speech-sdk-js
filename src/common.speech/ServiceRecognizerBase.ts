@@ -254,11 +254,14 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public async stopRecognizing(): Promise<void> {
         if (this.privRequestSession.isRecognizing) {
-            await this.audioSource.turnOff();
-            await this.sendFinalAudio();
-            await this.privRequestSession.onStopRecognizing();
-            await this.privRequestSession.turnCompletionPromise;
-            await this.privRequestSession.dispose();
+            try {
+                await this.audioSource.turnOff();
+                await this.sendFinalAudio();
+                await this.privRequestSession.onStopRecognizing();
+                await this.privRequestSession.turnCompletionPromise;
+            } finally {
+                await this.privRequestSession.dispose();
+            }
         }
         return;
     }
