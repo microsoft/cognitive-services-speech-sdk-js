@@ -299,7 +299,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     private async cancelSpeech(): Promise<void> {
         try {
             this.privIsSpeaking = false;
-            await this.privTranslationRecognizer?.cancelSpeech();
+            await this.privTranslationRecognizer?.onDisconnection();
             this.privTranslationRecognizer = undefined;
         } catch (e) {
             // ignore the error

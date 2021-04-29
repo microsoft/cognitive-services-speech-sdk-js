@@ -51,6 +51,7 @@ export class TranslationRecognizer extends Recognizer {
      * @constructor
      * @param {SpeechTranslationConfig} speechConfig - Set of properties to configure this recognizer.
      * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
+     * @param {ConversationTranslator} translator - An optional reference to a higher ConversationTranslator instance for conversation translation scenarios
      */
     public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig, translator?: ConversationTranslator) {
         const configImpl = speechConfig as SpeechTranslationConfigImpl;
@@ -276,34 +277,24 @@ export class TranslationRecognizer extends Recognizer {
     }
 
     /**
-     * handles ConnectionEstablishedEvent.
+     * handles ConnectionEstablishedEvent for conversation translation scenarios.
      * @member TranslationRecognizer.prototype.onConnection
      * @function
      * @public
      */
-    public onConnection(event: ConnectionEvent): void {
+    public onConnection(): void {
         this.privSpeechState = SpeechState.Connected;
     }
 
     /**
-     * handles ConnectionClosedEvent.
+     * handles disconnection events for conversation translation scenarios.
      * @member TranslationRecognizer.prototype.onDisconnection
      * @function
      * @public
      */
-    public async onDisconnection(event: ConnectionEvent): Promise<void> {
+    public async onDisconnection(): Promise<void> {
         this.privSpeechState = SpeechState.Inactive;
         await this.cancelSpeech();
-    }
-
-    public async cancelSpeech(): Promise<void> {
-        try {
-            this.stopContinuousRecognitionAsync();
-            await this.privReco?.disconnect();
-            this.privSpeechState = SpeechState.Inactive;
-        } catch (e) {
-            // ignore the error
-        }
     }
 
     protected async dispose(disposing: boolean): Promise<void> {
@@ -352,6 +343,16 @@ export class TranslationRecognizer extends Recognizer {
             }
         } catch (e) {
             //
+        }
+    }
+
+    private async cancelSpeech(): Promise<void> {
+        try {
+            this.stopContinuousRecognitionAsync();
+            await this.privReco?.disconnect();
+            this.privSpeechState = SpeechState.Inactive;
+        } catch (e) {
+            // ignore the error
         }
     }
 

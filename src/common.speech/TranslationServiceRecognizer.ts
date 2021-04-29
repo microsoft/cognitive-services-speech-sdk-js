@@ -52,9 +52,9 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         this.privTranslationRecognizer = translationRecognizer;
         this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
             if (connectionEvent.name === "ConnectionEstablishedEvent") {
-                this.privTranslationRecognizer.onConnection(connectionEvent);
+                this.privTranslationRecognizer.onConnection();
             } else if (connectionEvent.name === "ConnectionClosedEvent") {
-                await this.privTranslationRecognizer.onDisconnection(connectionEvent);
+                await this.privTranslationRecognizer.onDisconnection();
             }
         });
 
