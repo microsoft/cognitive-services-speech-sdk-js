@@ -32,7 +32,7 @@ export { Recognizer } from "./Recognizer";
 export { SpeechRecognizer } from "./SpeechRecognizer";
 export { IntentRecognizer } from "./IntentRecognizer";
 export { VoiceProfileType } from "./VoiceProfileType";
-export { TranslationRecognizer } from "./TranslationRecognizer";
+export { SpeechState, TranslationRecognizer } from "./TranslationRecognizer";
 export { Translations } from "./Translations";
 export { NoMatchReason } from "./NoMatchReason";
 export { NoMatchDetails } from "./NoMatchDetails";

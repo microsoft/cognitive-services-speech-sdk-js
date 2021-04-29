@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {
+    ConnectionEvent,
     IAudioSource,
     MessageType,
     TranslationStatus,
@@ -49,6 +50,13 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
         super(authentication, connectionFactory, audioSource, recognizerConfig, translationRecognizer);
         this.privTranslationRecognizer = translationRecognizer;
+        this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
+            if (connectionEvent.name === "ConnectionEstablishedEvent") {
+                this.privTranslationRecognizer.onConnection(connectionEvent);
+            } else if (connectionEvent.name === "ConnectionClosedEvent") {
+                await this.privTranslationRecognizer.onDisconnection(connectionEvent);
+            }
+        });
 
     }
 
