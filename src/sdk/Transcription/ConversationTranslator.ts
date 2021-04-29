@@ -338,7 +338,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
 
             this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], url);
 
-            this.privTranslationRecognizer = new TranslationRecognizer(this, this.privSpeechTranslationConfig, this.privAudioConfig);
+            this.privTranslationRecognizer = new TranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this);
         } catch (error) {
             await this.cancelSpeech();
             throw error;

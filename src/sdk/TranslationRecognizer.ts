@@ -52,7 +52,7 @@ export class TranslationRecognizer extends Recognizer {
      * @param {SpeechTranslationConfig} speechConfig - Set of properties to configure this recognizer.
      * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
      */
-    public constructor(translator: ConversationTranslator, speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig, translator?: ConversationTranslator) {
         const configImpl = speechConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(configImpl, "speechConfig");
 
@@ -61,7 +61,6 @@ export class TranslationRecognizer extends Recognizer {
         this.privSpeechState = SpeechState.Inactive;
         this.privDisposedTranslationRecognizer = false;
         this.privProperties = configImpl.properties.clone();
-        this.privTranslator = translator;
 
         if (this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined) !== undefined) {
             Contracts.throwIfNullOrWhitespace(
@@ -77,34 +76,37 @@ export class TranslationRecognizer extends Recognizer {
             PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        this.sessionStarted = () => {
-            this.privSpeechState = SpeechState.Connected;
-        };
+        if (!!translator) {
+            this.privTranslator = translator;
+            this.sessionStarted = () => {
+                this.privSpeechState = SpeechState.Connected;
+            };
 
-        this.sessionStopped = () => {
-            this.privSpeechState = SpeechState.Inactive;
-        };
+            this.sessionStopped = () => {
+                this.privSpeechState = SpeechState.Inactive;
+            };
 
-        this.recognized = async (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs) => {
-            // TODO: add support for getting recognitions from here if own speech
+            this.recognized = async (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs) => {
+                // TODO: add support for getting recognitions from here if own speech
 
-            // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
-            if (e.result?.errorDetails) {
-                await this.cancelSpeech();
-                // TODO: format the error message contained in 'errorDetails'
-                this.fireCancelEvent(e.result.errorDetails);
-            }
-        };
-
-        this.canceled = async (r: TranslationRecognizer, e: TranslationRecognitionCanceledEventArgs) => {
-            if (this.privSpeechState !== SpeechState.Inactive) {
-                try {
+                // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
+                if (e.result?.errorDetails) {
                     await this.cancelSpeech();
-                } catch (error) {
-                    this.privSpeechState = SpeechState.Inactive;
+                    // TODO: format the error message contained in 'errorDetails'
+                    this.fireCancelEvent(e.result.errorDetails);
                 }
-            }
-        };
+            };
+
+            this.canceled = async (r: TranslationRecognizer, e: TranslationRecognitionCanceledEventArgs) => {
+                if (this.privSpeechState !== SpeechState.Inactive) {
+                    try {
+                        await this.cancelSpeech();
+                    } catch (error) {
+                        this.privSpeechState = SpeechState.Inactive;
+                    }
+                }
+            };
+        }
     }
 
     /**
