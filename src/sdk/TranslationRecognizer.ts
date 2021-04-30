@@ -61,6 +61,7 @@ export class TranslationRecognizer extends Recognizer {
         Contracts.throwIfNullOrWhitespace(this.properties.getProperty(
             PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
+
     }
 
     /**
@@ -221,6 +222,24 @@ export class TranslationRecognizer extends Recognizer {
         marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
+    /**
+     * handles ConnectionEstablishedEvent for conversation translation scenarios.
+     * @member TranslationRecognizer.prototype.onConnection
+     * @function
+     * @public
+     */
+    /* tslint:disable:no-empty */
+    public onConnection(): void { }
+
+    /**
+     * handles disconnection events for conversation translation scenarios.
+     * @member TranslationRecognizer.prototype.onDisconnection
+     * @function
+     * @public
+     */
+    /* tslint:disable:no-empty */
+    public async onDisconnection(): Promise<void> { }
+
     protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposedTranslationRecognizer) {
             return;
@@ -248,4 +267,5 @@ export class TranslationRecognizer extends Recognizer {
 
         return new TranslationServiceRecognizer(authentication, connectionFactory, configImpl, recognizerConfig, this);
     }
+
 }
