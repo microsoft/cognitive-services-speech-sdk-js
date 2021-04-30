@@ -11,18 +11,11 @@ import {
     TranslationConnectionFactory,
     TranslationServiceRecognizer,
 } from "../common.speech/Exports";
-import {
-    ConnectionEvent,
-    marshalPromiseToCallbacks
-} from "../common/Exports";
+import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
-    CancellationErrorCode,
-    CancellationReason,
-    ConversationTranslationCanceledEventArgs,
-    ConversationTranslator,
     PropertyCollection,
     PropertyId,
     Recognizer,
@@ -33,33 +26,25 @@ import {
 } from "./Exports";
 import { SpeechTranslationConfig, SpeechTranslationConfigImpl } from "./SpeechTranslationConfig";
 
-export enum SpeechState {
-    Inactive, Connecting, Connected
-}
-
 /**
  * Translation recognizer
  * @class TranslationRecognizer
  */
 export class TranslationRecognizer extends Recognizer {
     private privDisposedTranslationRecognizer: boolean;
-    private privSpeechState: SpeechState;
-    private privTranslator: ConversationTranslator;
 
     /**
      * Initializes an instance of the TranslationRecognizer.
      * @constructor
      * @param {SpeechTranslationConfig} speechConfig - Set of properties to configure this recognizer.
      * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
-     * @param {ConversationTranslator} translator - An optional reference to a higher ConversationTranslator instance for conversation translation scenarios
      */
-    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig, translator?: ConversationTranslator) {
+    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
         const configImpl = speechConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(configImpl, "speechConfig");
 
         super(audioConfig, configImpl.properties, new TranslationConnectionFactory());
 
-        this.privSpeechState = SpeechState.Inactive;
         this.privDisposedTranslationRecognizer = false;
         this.privProperties = configImpl.properties.clone();
 
@@ -77,37 +62,6 @@ export class TranslationRecognizer extends Recognizer {
             PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        if (!!translator) {
-            this.privTranslator = translator;
-            this.sessionStarted = () => {
-                this.privSpeechState = SpeechState.Connected;
-            };
-
-            this.sessionStopped = () => {
-                this.privSpeechState = SpeechState.Inactive;
-            };
-
-            this.recognized = async (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs) => {
-                // TODO: add support for getting recognitions from here if own speech
-
-                // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
-                if (e.result?.errorDetails) {
-                    await this.cancelSpeech();
-                    // TODO: format the error message contained in 'errorDetails'
-                    this.fireCancelEvent(e.result.errorDetails);
-                }
-            };
-
-            this.canceled = async (r: TranslationRecognizer, e: TranslationRecognitionCanceledEventArgs) => {
-                if (this.privSpeechState !== SpeechState.Inactive) {
-                    try {
-                        await this.cancelSpeech();
-                    } catch (error) {
-                        this.privSpeechState = SpeechState.Inactive;
-                    }
-                }
-            };
-        }
     }
 
     /**
@@ -215,14 +169,6 @@ export class TranslationRecognizer extends Recognizer {
         return this.privProperties;
     }
 
-    public get state(): SpeechState {
-        return this.privSpeechState;
-    }
-
-    public set state(newState: SpeechState) {
-        this.privSpeechState = newState;
-    }
-
     /**
      * Starts recognition and translation, and stops after the first utterance is recognized.
      * The task returns the translation text as result.
@@ -282,9 +228,8 @@ export class TranslationRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public onConnection(): void {
-        this.privSpeechState = SpeechState.Connected;
-    }
+    /* tslint:disable:no-empty */
+    public onConnection(): void { }
 
     /**
      * handles disconnection events for conversation translation scenarios.
@@ -292,10 +237,8 @@ export class TranslationRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public async onDisconnection(): Promise<void> {
-        this.privSpeechState = SpeechState.Inactive;
-        await this.cancelSpeech();
-    }
+    /* tslint:disable:no-empty */
+    public async onDisconnection(): Promise<void> { }
 
     protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposedTranslationRecognizer) {
@@ -323,37 +266,6 @@ export class TranslationRecognizer extends Recognizer {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
 
         return new TranslationServiceRecognizer(authentication, connectionFactory, configImpl, recognizerConfig, this);
-    }
-
-    /**
-     * Fire a cancel event
-     * @param error
-     */
-    private fireCancelEvent(error: any): void {
-        try {
-            if (!!this.privTranslator.canceled) {
-                const cancelEvent: ConversationTranslationCanceledEventArgs = new ConversationTranslationCanceledEventArgs(
-                    error?.reason ?? CancellationReason.Error,
-                    error?.errorDetails ?? error,
-                    error?.errorCode ?? CancellationErrorCode.RuntimeError,
-                    undefined,
-                    error?.sessionId);
-
-                this.privTranslator.canceled(this.privTranslator, cancelEvent);
-            }
-        } catch (e) {
-            //
-        }
-    }
-
-    private async cancelSpeech(): Promise<void> {
-        try {
-            this.stopContinuousRecognitionAsync();
-            await this.privReco?.disconnect();
-            this.privSpeechState = SpeechState.Inactive;
-        } catch (e) {
-            // ignore the error
-        }
     }
 
 }

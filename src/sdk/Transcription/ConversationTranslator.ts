@@ -11,12 +11,15 @@ import {
 import { Contracts } from "../Contracts";
 import {
     AudioConfig,
+    CancellationErrorCode,
+    CancellationReason,
     ProfanityOption,
     PropertyCollection,
     PropertyId,
     SessionEventArgs,
-    SpeechState,
     SpeechTranslationConfig,
+    TranslationRecognitionCanceledEventArgs,
+    TranslationRecognitionEventArgs,
     TranslationRecognizer
 } from "../Exports";
 import { ConversationImpl } from "./Conversation";
@@ -32,6 +35,101 @@ import {
 } from "./Exports";
 import { Callback, IConversation } from "./IConversation";
 
+export enum SpeechState {
+    Inactive, Connecting, Connected
+}
+
+// tslint:disable:max-classes-per-file
+
+// child class of TranslationRecognizer meant only for use with ConversationTranslator
+class ConversationTranslationRecognizer extends TranslationRecognizer {
+    private privTranslator: ConversationTranslator;
+    private privSpeechState: SpeechState;
+    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig, translator?: ConversationTranslator) {
+        super(speechConfig, audioConfig);
+        this.privSpeechState = SpeechState.Inactive;
+        if (!!translator) {
+            this.privTranslator = translator;
+            this.sessionStarted = () => {
+                this.privSpeechState = SpeechState.Connected;
+            };
+
+            this.sessionStopped = () => {
+                this.privSpeechState = SpeechState.Inactive;
+            };
+
+            this.recognized = async (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs) => {
+                // TODO: add support for getting recognitions from here if own speech
+
+                // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
+                if (e.result?.errorDetails) {
+                    await this.cancelSpeech();
+                    // TODO: format the error message contained in 'errorDetails'
+                    this.fireCancelEvent(e.result.errorDetails);
+                }
+            };
+
+            this.canceled = async (r: TranslationRecognizer, e: TranslationRecognitionCanceledEventArgs) => {
+                if (this.privSpeechState !== SpeechState.Inactive) {
+                    try {
+                        await this.cancelSpeech();
+                    } catch (error) {
+                        this.privSpeechState = SpeechState.Inactive;
+                    }
+                }
+            };
+        }
+    }
+    public get state(): SpeechState {
+        return this.privSpeechState;
+    }
+
+    public set state(newState: SpeechState) {
+        this.privSpeechState = newState;
+    }
+
+    public onConnection(): void {
+        this.privSpeechState = SpeechState.Connected;
+    }
+
+    public async onDisconnection(): Promise<void> {
+        this.privSpeechState = SpeechState.Inactive;
+        await this.cancelSpeech();
+    }
+
+    /**
+     * Fire a cancel event
+     * @param error
+     */
+    private fireCancelEvent(error: any): void {
+        try {
+            if (!!this.privTranslator.canceled) {
+                const cancelEvent: ConversationTranslationCanceledEventArgs = new ConversationTranslationCanceledEventArgs(
+                    error?.reason ?? CancellationReason.Error,
+                    error?.errorDetails ?? error,
+                    error?.errorCode ?? CancellationErrorCode.RuntimeError,
+                    undefined,
+                    error?.sessionId);
+
+                this.privTranslator.canceled(this.privTranslator, cancelEvent);
+            }
+        } catch (e) {
+            //
+        }
+    }
+
+    private async cancelSpeech(): Promise<void> {
+        try {
+            this.stopContinuousRecognitionAsync();
+            await this.privReco?.disconnect();
+            this.privSpeechState = SpeechState.Inactive;
+        } catch (e) {
+            // ignore the error
+        }
+    }
+
+}
+
 /***
  * Join, leave or connect to a conversation.
  */
@@ -40,7 +138,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     private privSpeechRecognitionLanguage: string;
     private privProperties: PropertyCollection;
     private privIsDisposed: boolean = false;
-    private privTranslationRecognizer: TranslationRecognizer;
+    private privCTRecognizer: ConversationTranslationRecognizer;
     private privIsSpeaking: boolean = false;
     private privConversation: ConversationImpl;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
@@ -226,10 +324,10 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 Contracts.throwIfNullOrUndefined(this.privConversation, this.privErrors.permissionDeniedSend);
                 Contracts.throwIfNullOrUndefined(this.privConversation.room.token, this.privErrors.permissionDeniedConnect);
 
-                if (this.privTranslationRecognizer === undefined) {
+                if (this.privCTRecognizer === undefined) {
                     await this.connectTranslatorRecognizer();
                 }
-                Contracts.throwIfNullOrUndefined(this.privTranslationRecognizer, this.privErrors.permissionDeniedSend);
+                Contracts.throwIfNullOrUndefined(this.privCTRecognizer, this.privErrors.permissionDeniedSend);
 
                 if (!this.canSpeak) {
                     this.handleError(new Error(this.privErrors.permissionDeniedSend), err);
@@ -263,7 +361,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 // stop the recognition but leave the websocket open
                 this.privIsSpeaking = false;
                 await new Promise((resolve: () => void, reject: (error: string) => void): void => {
-                    this.privTranslationRecognizer?.stopContinuousRecognitionAsync(resolve, reject);
+                    this.privCTRecognizer?.stopContinuousRecognitionAsync(resolve, reject);
                 });
 
             } catch (error) {
@@ -299,8 +397,8 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     private async cancelSpeech(): Promise<void> {
         try {
             this.privIsSpeaking = false;
-            await this.privTranslationRecognizer?.onDisconnection();
-            this.privTranslationRecognizer = undefined;
+            await this.privCTRecognizer?.onDisconnection();
+            this.privCTRecognizer = undefined;
         } catch (e) {
             // ignore the error
         }
@@ -338,7 +436,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
 
             this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], url);
 
-            this.privTranslationRecognizer = new TranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this);
+            this.privCTRecognizer = new ConversationTranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this);
         } catch (error) {
             await this.cancelSpeech();
             throw error;
@@ -352,19 +450,19 @@ export class ConversationTranslator extends ConversationCommon implements IConve
      */
     private startContinuousRecognition(): Promise<void> {
         return new Promise((resolve: () => void, reject: (error: string) => void): void => {
-            this.privTranslationRecognizer.startContinuousRecognitionAsync(resolve, reject);
+            this.privCTRecognizer.startContinuousRecognitionAsync(resolve, reject);
         });
     }
 
     private get canSpeak(): boolean {
 
         // is there a Conversation websocket available and has the Recognizer been set up
-        if (!this.privConversation.isConnected || !this.privTranslationRecognizer) {
+        if (!this.privConversation.isConnected || !this.privCTRecognizer) {
             return false;
         }
 
         // is the user already speaking
-        if (this.privIsSpeaking || this.privTranslationRecognizer.state === SpeechState.Connected || this.privTranslationRecognizer.state === SpeechState.Connecting) {
+        if (this.privIsSpeaking || this.privCTRecognizer.state === SpeechState.Connected || this.privCTRecognizer.state === SpeechState.Connecting) {
             return false;
         }
 
