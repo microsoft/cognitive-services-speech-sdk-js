@@ -196,7 +196,10 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         if (this.privDisposedRecognizer) {
             return;
         }
-
+        if (!!this.privRecognizer) {
+            await this.privRecognizer.close();
+            this.privRecognizer = undefined;
+        }
         if (disposing) {
             this.privDisposedRecognizer = true;
         }
