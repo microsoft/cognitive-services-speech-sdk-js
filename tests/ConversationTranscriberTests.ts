@@ -66,9 +66,11 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
 const BuildTranscriber: () => sdk.ConversationTranscriber = (): sdk.ConversationTranscriber => {
 
     const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile8ch);
+    objsToClose.push(config);
 
     const t: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(config);
     expect(t).not.toBeUndefined();
+    objsToClose.push(t);
 
     return t;
 };
@@ -76,9 +78,11 @@ const BuildTranscriber: () => sdk.ConversationTranscriber = (): sdk.Conversation
 const BuildMonoWaveTranscriber: () => sdk.ConversationTranscriber = (): sdk.ConversationTranscriber => {
 
     const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.DependentVerificationWaveFile);
+    objsToClose.push(config);
 
     const t: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(config);
     expect(t).not.toBeUndefined();
+    objsToClose.push(t);
 
     return t;
 };
@@ -121,7 +125,6 @@ test("BuildTranscriber", () => {
     // tslint:disable-next-line:no-console
     console.info("Name: BuildTranscriber");
     const t: sdk.ConversationTranscriber = BuildTranscriber();
-    objsToClose.push(t);
 
     expect(t.properties).not.toBeUndefined();
 });
@@ -150,7 +153,7 @@ test("Create Conversation and join to Transcriber", (done: jest.DoneCallback) =>
         });
 });
 
-Settings.testIfDOMCondition("Create Conversation and add participants", (done: jest.DoneCallback) => {
+test("Create Conversation and add participants", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation and join to Transcriber");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -228,7 +231,7 @@ Settings.testIfDOMCondition("Create Conversation and add participants", (done: j
         });
 }, 50000);
 
-Settings.testIfDOMCondition("Leave Conversation", (done: jest.DoneCallback) => {
+test("Leave Conversation", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Leave Conversation");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -304,7 +307,7 @@ Settings.testIfDOMCondition("Leave Conversation", (done: jest.DoneCallback) => {
             done.fail(error);
         });
 });
-Settings.testIfDOMCondition("Create Conversation with one channel audio (aligned)", (done: jest.DoneCallback) => {
+test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation with one channel audio (aligned)");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -383,7 +386,7 @@ Settings.testIfDOMCondition("Create Conversation with one channel audio (aligned
             done.fail(error);
         });
 });
-Settings.testIfDOMCondition("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
+test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation and force disconnect");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
