@@ -162,8 +162,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private privConversationId: string = "";
     private readonly privTextMessageMaxLength: number;
 
-    public set conversationTranslator(value: ConversationTranslator) {
-        this.privConversationTranslator = value;
+    public set conversationTranslator(conversationTranslator: ConversationTranslator) {
+        this.privConversationTranslator = conversationTranslator;
     }
 
     // get the internal data about a conversation

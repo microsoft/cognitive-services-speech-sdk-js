@@ -536,7 +536,7 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
     });
 }, 15000);
 
-Settings.testIfDOMCondition("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
+test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Successive ListenOnceAsync calls");
 
@@ -610,7 +610,7 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync calls", (done: jest.Done
     });
 }, 15000);
 
-Settings.testIfDOMCondition("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
+test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: ListenOnceAsync with silence returned");
 
@@ -1160,6 +1160,7 @@ describe.each([
             config.setProperty("SPEECH-KeywordsToDetect-Durations", durations);
         }
         const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(config, Settings.InputDir + "contoso-hows-the-weather.wav");
+        objsToClose.push(connector);
 
         let keywordResultReceived: number = 0;
         let noMatchesReceived: number = 0;

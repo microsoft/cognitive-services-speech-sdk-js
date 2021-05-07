@@ -275,7 +275,7 @@ describe("conversation service tests", () => {
 
     }, 80000);
 
-    Settings.testIfDOMCondition("Start Conversation, join as host and mute participants", (done: jest.DoneCallback) => {
+    test("Start Conversation, join as host and mute participants", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Start Conversation, join as host, mute participants");
@@ -298,7 +298,12 @@ describe("conversation service tests", () => {
                 if (e.errorCode !== sdk.CancellationErrorCode.NoError) {
                     done.fail();
                 } else {
-                    done();
+                    ct.leaveConversationAsync(() => {
+                        c.endConversationAsync(
+                            done,
+                            (e: string) => { done.fail(e); });
+                    },
+                    (e: string) => { done.fail(e); });
                 }
             });
 
@@ -318,7 +323,12 @@ describe("conversation service tests", () => {
                             // only the participants should be updated by a mute all command
                             try {
                                 expect(e.participants[0].isMuted).toEqual(isMuted);
-                                done();
+                                ct.leaveConversationAsync(() => {
+                                    c.endConversationAsync(
+                                        done,
+                                        (e: string) => { done.fail(e); });
+                                },
+                                (e: string) => { done.fail(e); });
                             } catch (e) {
                                 done.fail(e);
                             }
@@ -447,7 +457,12 @@ describe("conversation service tests", () => {
                 if (e.errorCode !== sdk.CancellationErrorCode.NoError) {
                     done.fail();
                 } else {
-                    done();
+                    ct.leaveConversationAsync(() => {
+                        c.endConversationAsync(
+                            done,
+                            (e: string) => { done.fail(e); });
+                    },
+                    (e: string) => { done.fail(e); });
                 }
             });
             ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs) => {
@@ -467,7 +482,13 @@ describe("conversation service tests", () => {
                     } catch (e) {
                         done.fail(e);
                     }
-                    ejected++;
+                    ct.leaveConversationAsync(() => {
+                        c.endConversationAsync(() => {
+                            ejected++;
+                        },
+                        (e: string) => { done.fail(e); });
+                    },
+                    (e: string) => { done.fail(e); });
                 }
             });
 
@@ -534,6 +555,7 @@ describe("conversation translator config tests", () => {
     test("Create Conversation Translator, audio config", () => {
 
         const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
+        objsToClose.push(audioConfig);
         const ct = new sdk.ConversationTranslator(audioConfig);
         objsToClose.push(ct);
 
@@ -550,6 +572,7 @@ describe("conversation translator service tests", () => {
         console.info("Join Conversation Translator, invalid conversation code [400027]");
 
         const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
+        objsToClose.push(audioConfig);
         const ct = new sdk.ConversationTranslator(audioConfig);
         objsToClose.push(ct);
         const code: string = "abcde";
@@ -588,10 +611,12 @@ describe("conversation translator service tests", () => {
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
         if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
         config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Name], "Tester");
+        objsToClose.push(config);
 
-        const c = sdk.Conversation.createConversationAsync(config, (() => {
+        const c = sdk.Conversation.createConversationAsync(config, () => {
+            objsToClose.push(c);
 
-            c.startConversationAsync((() => {
+            c.startConversationAsync(() => {
 
                 const ct = new sdk.ConversationTranslator();
                 objsToClose.push(ct);
@@ -603,28 +628,31 @@ describe("conversation translator service tests", () => {
                 const lang: string = "en-US";
 
                 ct.joinConversationAsync(c.conversationId, nickname, lang,
-                    (() => {
+                    () => {
                         // continue
-                    }),
-                    ((error: any) => {
+                    },
+                    (error: any) => {
                         try {
                             expect(error).toContain("400028");
+                            c.endConversationAsync(() => {
+                                errorMessage = error;
+                            },
+                            (error: any) => {
+                                done.fail();
+                            });
                         } catch (e) {
                             done.fail(e);
                         }
-                        errorMessage = error;
-                    }));
-            }),
-                ((error: any) => {
-                    done.fail();
-                }));
-
-        }),
-            ((error: any) => {
+                    });
+            },
+            (error: any) => {
                 done.fail();
-            }));
+            });
 
-        objsToClose.push(c);
+        },
+        (error: any) => {
+            done.fail();
+        });
 
         WaitForCondition(() => (errorMessage !== ""), done);
 
@@ -639,6 +667,7 @@ describe("conversation translator service tests", () => {
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
         if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
+        objsToClose.push(config);
 
         const c = sdk.Conversation.createConversationAsync(config, (() => {
             objsToClose.push(c);
@@ -662,10 +691,15 @@ describe("conversation translator service tests", () => {
                     ((error: any) => {
                         try {
                             expect(error).toContain("400044");
+                            c.endConversationAsync(() => {
+                                errorMessage = error;
+                            },
+                            (error: any) => {
+                                done.fail();
+                            });
                         } catch (e) {
                             done.fail(e);
                         }
-                        errorMessage = error;
                     }));
             });
 
@@ -673,18 +707,20 @@ describe("conversation translator service tests", () => {
         }));
     }, 80000);
 
-    Settings.testIfDOMCondition("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback) => {
+    test("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Start Conversation, join as host with speech language and speak");
 
         // audio config
         const audioConfig: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+        objsToClose.push(audioConfig);
 
         // start a conversation
         const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
         if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
+        objsToClose.push(config);
 
         const c = sdk.Conversation.createConversationAsync(config, (() => {
             objsToClose.push(c);
@@ -709,9 +745,15 @@ describe("conversation translator service tests", () => {
                 ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
                     expect(e.result.text).toContain("weather");
                     ct.stopTranscribingAsync(
-                        () => { done(); },
-                        (e: string) => { done.fail(e); }
-                    );
+                        () => {
+                            ct.leaveConversationAsync(() => {
+                                c.endConversationAsync(
+                                    done,
+                                    (e: string) => { done.fail(e); });
+                            },
+                            (e: string) => { done.fail(e); });
+                        },
+                        (e: string) => { done.fail(e); });
                 });
                 ct.joinConversationAsync(c.conversationId, nickname, lang,
                     (() => {
