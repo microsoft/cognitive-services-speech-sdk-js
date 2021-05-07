@@ -658,7 +658,7 @@ describe("conversation translator service tests", () => {
 
     }, 80000);
 
-    test("Join Conversation Translator, locked conversation [400044]", (done: jest.DoneCallback) => {
+    test.skip("Join Conversation Translator, locked conversation [400044]", (done: jest.DoneCallback) => {
 
         // tslint:disable-next-line:no-console
         console.info("Join Conversation Translator, locked conversation [400044]");
