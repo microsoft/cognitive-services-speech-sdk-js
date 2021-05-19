@@ -165,8 +165,10 @@ export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
                 if (!this.privReceivedMessages[e.message.headers.path]) {
                     this.privReceivedMessages[e.message.headers.path] = new Array<string>();
                 }
-
-                this.privReceivedMessages[e.message.headers.path].push(e.networkReceivedTime);
+                const maxMessagesToSend = 50;
+                if (this.privReceivedMessages[e.message.headers.path].length < maxMessagesToSend) {
+                    this.privReceivedMessages[e.message.headers.path].push(e.networkReceivedTime);
+                }
             }
         }
     }
