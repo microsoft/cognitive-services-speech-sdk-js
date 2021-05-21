@@ -452,6 +452,7 @@ describe("Service based tests", () => {
         console.info("Name: testSpeechSynthesizer synthesis with SSML.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
+        speechConfig.speechSynthesisVoiceName = "en-US-AriaRUS";
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
         expect(s).not.toBeUndefined();
