@@ -5,12 +5,7 @@ import {
     RestMessageAdapter,
     RestRequestType,
 } from "../common.browser/Exports";
-import {
-    createNoDashGuid,
-    Deferred,
-    IAudioSource,
-    PromiseResult,
-} from "../common/Exports";
+import { IAudioSource } from "../common/Exports";
 import {
     PropertyId,
     SpeakerIdentificationModel,
@@ -34,8 +29,9 @@ export class SpeakerIdMessageAdapter {
         let endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "westus");
+            const version: string = config.parameters.getProperty(PropertyId.SpeakerRecognition_Api_Version, "2.0");
             const hostSuffix: string = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "https://" + region + ".api.cognitive" + hostSuffix + "/speaker/{mode}/v2.0/{dependency}");
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.api.cognitive${hostSuffix}/speaker/{mode}/v${version}/{dependency}`);
             endpoint = host + "/profiles";
         }
         this.privUri = endpoint;
@@ -148,14 +144,15 @@ export class SpeakerIdMessageAdapter {
     }
 
     /**
-     * Sends get authorization phrases request to endpoint.
+     * Sends get activation/auth phrases request to endpoint.
      * @function
+     * @param {VoiceProfileType} profileType - type of profiles to return phrases for
      * @param {string} lang - language/locale of voice profile
      * @public
      * @returns {Promise<IRestResponse>} promised rest response containing list of valid phrases
      */
-    public getAuthorizationPhrases(lang: string): Promise<IRestResponse> {
-        const uri = `${this.getOperationUri(VoiceProfileType.TextDependentVerification)}`.replace(`profiles`, `phrases`) + "/" + lang;
+    public getPhrases(profileType: VoiceProfileType, lang: string): Promise<IRestResponse> {
+        const uri = `${this.getOperationUri(profileType)}`.replace(`profiles`, `phrases`) + "/" + lang;
         return this.privRestAdapter.request(RestRequestType.Get, uri, {});
     }
 

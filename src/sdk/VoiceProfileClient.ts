@@ -18,8 +18,8 @@ import {
     PropertyId,
     ResultReason,
     VoiceProfile,
-    VoiceProfileAuthorizationPhraseResult,
     VoiceProfileEnrollmentResult,
+    VoiceProfilePhraseResult,
     VoiceProfileResult,
     VoiceProfileType,
 } from "./Exports";
@@ -149,10 +149,10 @@ export class VoiceProfileClient {
      * @param cb - Callback invoked once phrases have been returned.
      * @param err - Callback invoked in case of an error.
      */
-    public getAuthorizationPhrasesAsync(lang: string, cb?: (e: VoiceProfileAuthorizationPhraseResult) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfileAuthorizationPhraseResult> => {
-            const result: IRestResponse = await this.privAdapter.getAuthorizationPhrases(lang);
-            return new VoiceProfileAuthorizationPhraseResult(
+    public getActivationPhrasesAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfilePhraseResult) => void, err?: (e: string) => void): void {
+        marshalPromiseToCallbacks((async (): Promise<VoiceProfilePhraseResult> => {
+            const result: IRestResponse = await this.privAdapter.getPhrases(profileType, lang);
+            return new VoiceProfilePhraseResult(
                 result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
                 result.statusText,
                 result.json()

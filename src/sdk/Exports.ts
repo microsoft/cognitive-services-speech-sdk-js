@@ -59,7 +59,7 @@ export { ConnectionMessage } from "./ConnectionMessage";
 export { VoiceProfile } from "./VoiceProfile";
 export { VoiceProfileEnrollmentResult, VoiceProfileEnrollmentCancellationDetails } from "./VoiceProfileEnrollmentResult";
 export { VoiceProfileResult, VoiceProfileCancellationDetails } from "./VoiceProfileResult";
-export { VoiceProfileAuthorizationPhraseResult } from "./VoiceProfileAuthorizationPhraseResult";
+export { VoiceProfilePhraseResult } from "./VoiceProfilePhraseResult";
 export { VoiceProfileClient } from "./VoiceProfileClient";
 export { SpeakerRecognizer } from "./SpeakerRecognizer";
 export { SpeakerIdentificationModel } from "./SpeakerIdentificationModel";

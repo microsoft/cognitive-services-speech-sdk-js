@@ -9,16 +9,16 @@ import {
 
 /**
  * Output format
- * @class VoiceProfileAuthorizationPhraseResult
+ * @class VoiceProfilePhraseResult
  */
-export class VoiceProfileAuthorizationPhraseResult extends VoiceProfileResult {
+export class VoiceProfilePhraseResult extends VoiceProfileResult {
     private privPhrases: string[] = [];
 
     public constructor(reason: ResultReason, statusText: string, json: any) {
         super(reason, statusText);
         Contracts.throwIfNullOrUndefined(json, "phrases array");
         for (const item of json) {
-            this.privPhrases.push(item.passPhrase);
+            this.privPhrases.push(item.passPhrase || item.activationPhrase);
         }
     }
 
