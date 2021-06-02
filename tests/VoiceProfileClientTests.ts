@@ -127,7 +127,7 @@ test("Get Activation Phrases for enrollment", (done: jest.DoneCallback) => {
     objsToClose.push(r);
     const types: sdk.VoiceProfileType[] = [sdk.VoiceProfileType.TextIndependentVerification, sdk.VoiceProfileType.TextIndependentIdentification];
 
-    types.forEach((type) => {
+    types.forEach((type: sdk.VoiceProfileType) => {
         r.getActivationPhrasesAsync(
             type,
             "en-us",
