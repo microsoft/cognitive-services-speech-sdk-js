@@ -414,5 +414,11 @@ export enum PropertyId {
      * This property is intended to be read-only. The SDK is using it internally.
      * Added in version 1.15.0
      */
-    PronunciationAssessment_Params
+    PronunciationAssessment_Params,
+
+    /**
+     * Version of Speaker Recognition API to use.
+     * Added in version 1.18.0
+     */
+    SpeakerRecognition_Api_Version
 }

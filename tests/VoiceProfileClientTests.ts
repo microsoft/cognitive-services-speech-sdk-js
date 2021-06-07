@@ -8,7 +8,7 @@ import {
     Events,
     EventType
 } from "../src/common/Exports";
-import { VoiceProfileAuthorizationPhraseResult } from "../src/sdk/VoiceProfileAuthorizationPhraseResult";
+import { VoiceProfilePhraseResult } from "../src/sdk/VoiceProfilePhraseResult";
 
 import { Settings } from "./Settings";
 import { closeAsyncObjects } from "./Utilities";
@@ -90,18 +90,21 @@ test("GetParameters", () => {
     expect(r.properties).not.toBeUndefined();
 });
 
-test("Get Authorization Phrases for voice samples", (done: jest.DoneCallback) => {
+test("Get Authorization Phrases for enrollment", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
-    console.info("Name: Create and Delete Voice Profile - Dependent Verification");
+    console.info("Name: Get Authorization Phrases for enrollment");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
     const r: sdk.VoiceProfileClient = BuildClient(s);
     objsToClose.push(r);
 
-    r.getAuthorizationPhrasesAsync(
+    r.getActivationPhrasesAsync(
+        sdk.VoiceProfileType.TextDependentVerification,
         "en-us",
-        (res: VoiceProfileAuthorizationPhraseResult) => {
+        (res: VoiceProfilePhraseResult) => {
+            expect(res.reason).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrollingVoiceProfile]);
             expect(res.phrases).not.toBeUndefined();
             expect(res.phrases.length).toBeGreaterThan(0);
             expect(res.phrases[0]).not.toBeUndefined();
@@ -110,7 +113,38 @@ test("Get Authorization Phrases for voice samples", (done: jest.DoneCallback) =>
         (error: string) => {
             done.fail(error);
         });
+
 }, 20000);
+
+test("Get Activation Phrases for enrollment", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: Get Activation Phrases for enrollment");
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeakerRecognition_Api_Version], "3.0");
+    objsToClose.push(s);
+
+    const r: sdk.VoiceProfileClient = BuildClient(s);
+    objsToClose.push(r);
+    const types: sdk.VoiceProfileType[] = [sdk.VoiceProfileType.TextIndependentVerification, sdk.VoiceProfileType.TextIndependentIdentification];
+
+    types.forEach((type: sdk.VoiceProfileType) => {
+        r.getActivationPhrasesAsync(
+            type,
+            "en-us",
+            (res: VoiceProfilePhraseResult) => {
+                expect(res.reason).not.toBeUndefined();
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrollingVoiceProfile]);
+                expect(res.phrases).not.toBeUndefined();
+                expect(res.phrases.length).toBeGreaterThan(0);
+                expect(res.phrases[0]).not.toBeUndefined();
+                done();
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+
+    });
+}, 40000);
 
 test("Create and Delete Voice Profile using push stream - Independent Identification", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
