@@ -148,6 +148,7 @@ test("Get Activation Phrases for enrollment", (done: jest.DoneCallback) => {
 }, 40000);
 
 test("Create and Delete Voice Profile using push stream - Independent Identification", async (done: jest.DoneCallback) => {
+
     // tslint:disable-next-line:no-console
     console.info("Name: Create and Delete Voice Profile using push stream - Independent Identification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
