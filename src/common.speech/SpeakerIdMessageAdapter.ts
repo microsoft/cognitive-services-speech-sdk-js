@@ -29,7 +29,7 @@ export class SpeakerIdMessageAdapter {
         let endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "westus");
-            const version: string = config.parameters.getProperty(PropertyId.SpeakerRecognition_Api_Version, "2.0");
+            const version: string = config.parameters.getProperty(PropertyId.SpeakerRecognition_Api_Version, "3.0");
             const hostSuffix: string = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
             const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.api.cognitive${hostSuffix}/speaker/{mode}/v${version}/{dependency}`);
             endpoint = host + "/profiles";

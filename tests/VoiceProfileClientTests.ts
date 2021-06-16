@@ -8,6 +8,7 @@ import {
     Events,
     EventType
 } from "../src/common/Exports";
+import { VoiceProfileEnrollmentResult } from "../src/sdk/VoiceProfileEnrollmentResult";
 import { VoiceProfilePhraseResult } from "../src/sdk/VoiceProfilePhraseResult";
 
 import { Settings } from "./Settings";
@@ -146,7 +147,7 @@ test("Get Activation Phrases for enrollment", (done: jest.DoneCallback) => {
     });
 }, 40000);
 
-test("Create and Delete Voice Profile using push stream - Independent Identification", (done: jest.DoneCallback) => {
+test("Create and Delete Voice Profile using push stream - Independent Identification", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create and Delete Voice Profile using push stream - Independent Identification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -159,7 +160,7 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
     r.createProfileAsync(
         type,
         "en-us",
-        (res: sdk.VoiceProfile) => {
+        async (res: sdk.VoiceProfile) => {
             expect(res).not.toBeUndefined();
             expect(res.profileId).not.toBeUndefined();
             expect(res.profileType).not.toBeUndefined();
@@ -174,31 +175,29 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
                 pushStream.close();
             });
             const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
-            r.enrollProfileAsync(
+            let resultReason: sdk.ResultReason = sdk.ResultReason.EnrollingVoiceProfile;
+            let result: VoiceProfileEnrollmentResult;
+            while (resultReason === sdk.ResultReason.EnrollingVoiceProfile) {
+                result = await r.enrollProfileAsync(res, config);
+                resultReason = result.reason;
+                expect(result).not.toBeUndefined();
+                expect(result.reason).not.toBeUndefined();
+            }
+            expect(sdk.ResultReason[resultReason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
+            expect(result.enrollmentsCount).toEqual(1);
+            expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
+            r.resetProfileAsync(
                 res,
-                config,
-                (enrollResult: sdk.VoiceProfileEnrollmentResult) => {
-                    expect(enrollResult).not.toBeUndefined();
-                    expect(enrollResult.reason).not.toBeUndefined();
-                    expect(sdk.ResultReason[enrollResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
-                    expect(enrollResult.enrollmentsCount).toEqual(1);
-                    expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
-                    r.resetProfileAsync(
+                (resetResult: sdk.VoiceProfileResult) => {
+                    expect(resetResult).not.toBeUndefined();
+                    expect(resetResult.reason).not.toBeUndefined();
+                    expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
+                    r.deleteProfileAsync(
                         res,
-                        (resetResult: sdk.VoiceProfileResult) => {
-                            expect(resetResult).not.toBeUndefined();
-                            expect(resetResult.reason).not.toBeUndefined();
-                            expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
-                            r.deleteProfileAsync(
-                                res,
-                                (result: sdk.VoiceProfileResult) => {
-                                    expect(result).not.toBeUndefined();
-                                    expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
-                                    done();
-                                },
-                                (error: string) => {
-                                    done.fail(error);
-                                });
+                        (result: sdk.VoiceProfileResult) => {
+                            expect(result).not.toBeUndefined();
+                            expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
+                            done();
                         },
                         (error: string) => {
                             done.fail(error);
@@ -207,14 +206,13 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
                 (error: string) => {
                     done.fail(error);
                 });
-
         },
         (error: string) => {
             done.fail(error);
         });
-}, 15000);
+}, 40000);
 
-test("Create and Delete Voice Profile - Independent Identification", (done: jest.DoneCallback) => {
+test("Create and Delete Voice Profile - Independent Identification", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create and Delete Voice Profile - Independent Identification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -227,38 +225,37 @@ test("Create and Delete Voice Profile - Independent Identification", (done: jest
     r.createProfileAsync(
         type,
         "en-us",
-        (res: sdk.VoiceProfile) => {
+        async (res: sdk.VoiceProfile) => {
             expect(res).not.toBeUndefined();
             expect(res.profileId).not.toBeUndefined();
             expect(res.profileType).not.toBeUndefined();
             expect(res.profileType).toEqual(type);
 
             const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.IndependentIdentificationWaveFile);
-            r.enrollProfileAsync(
+            let resultReason: sdk.ResultReason = sdk.ResultReason.EnrollingVoiceProfile;
+            let result: VoiceProfileEnrollmentResult;
+            while (resultReason === sdk.ResultReason.EnrollingVoiceProfile) {
+                result = await r.enrollProfileAsync(res, config);
+                resultReason = result.reason;
+                expect(result).not.toBeUndefined();
+                expect(result.reason).not.toBeUndefined();
+            }
+            expect(sdk.ResultReason[resultReason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
+            expect(result.enrollmentsCount).toEqual(1);
+            expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
+
+            r.resetProfileAsync(
                 res,
-                config,
-                (enrollResult: sdk.VoiceProfileEnrollmentResult) => {
-                    expect(enrollResult).not.toBeUndefined();
-                    expect(enrollResult.reason).not.toBeUndefined();
-                    expect(sdk.ResultReason[enrollResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
-                    expect(enrollResult.enrollmentsCount).toEqual(1);
-                    expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
-                    r.resetProfileAsync(
+                (resetResult: sdk.VoiceProfileResult) => {
+                    expect(resetResult).not.toBeUndefined();
+                    expect(resetResult.reason).not.toBeUndefined();
+                    expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
+                    r.deleteProfileAsync(
                         res,
-                        (resetResult: sdk.VoiceProfileResult) => {
-                            expect(resetResult).not.toBeUndefined();
-                            expect(resetResult.reason).not.toBeUndefined();
-                            expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
-                            r.deleteProfileAsync(
-                                res,
-                                (result: sdk.VoiceProfileResult) => {
-                                    expect(result).not.toBeUndefined();
-                                    expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
-                                    done();
-                                },
-                                (error: string) => {
-                                    done.fail(error);
-                                });
+                        (result: sdk.VoiceProfileResult) => {
+                            expect(result).not.toBeUndefined();
+                            expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
+                            done();
                         },
                         (error: string) => {
                             done.fail(error);
@@ -267,7 +264,6 @@ test("Create and Delete Voice Profile - Independent Identification", (done: jest
                 (error: string) => {
                     done.fail(error);
                 });
-
         },
         (error: string) => {
             done.fail(error);
@@ -333,7 +329,7 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", (done: 
         });
 }, 15000);
 
-test("Create and Delete Voice Profile - Dependent Verification", (done: jest.DoneCallback) => {
+test("Create and Delete Voice Profile - Dependent Verification", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create and Delete Voice Profile - Dependent Verification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -346,7 +342,7 @@ test("Create and Delete Voice Profile - Dependent Verification", (done: jest.Don
     r.createProfileAsync(
         type,
         "en-us",
-        (res: sdk.VoiceProfile) => {
+        async (res: sdk.VoiceProfile) => {
             expect(res).not.toBeUndefined();
             expect(res.profileId).not.toBeUndefined();
             expect(res.profileType).not.toBeUndefined();
@@ -355,57 +351,34 @@ test("Create and Delete Voice Profile - Dependent Verification", (done: jest.Don
             Settings.VerificationWaveFiles.forEach((file: string) => {
                 configs.push(WaveFileAudioInput.getAudioConfigFromFile(file));
             });
-            r.enrollProfileAsync(
-                res,
-                configs[0],
-                (enrollResult1: sdk.VoiceProfileEnrollmentResult) => {
-                    expect(enrollResult1).not.toBeUndefined();
-                    expect(enrollResult1.reason).not.toBeUndefined();
-                    expect(sdk.ResultReason[enrollResult1.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrollingVoiceProfile]);
-                    expect(enrollResult1.enrollmentsCount).toEqual(1);
-                    r.enrollProfileAsync(
+            let enrollmentCount: number = 1;
+            let result: VoiceProfileEnrollmentResult;
+            for (const config of configs) {
+                result = await r.enrollProfileAsync(res, config);
+                if (result.reason === sdk.ResultReason.Canceled) {
+                    done.fail("Enrollment unexpectedly canceled");
+                }
+                expect(result).not.toBeUndefined();
+                expect(result.reason).not.toBeUndefined();
+                expect(result.enrollmentsCount).toEqual(enrollmentCount);
+                enrollmentCount += 1;
+            }
+            expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
+            const reco: sdk.SpeakerRecognizer = BuildRecognizer();
+            const m: sdk.SpeakerVerificationModel = sdk.SpeakerVerificationModel.fromProfile(res);
+            reco.recognizeOnceAsync(
+                m,
+                (recognizeResult: sdk.SpeakerRecognitionResult) => {
+                    expect(recognizeResult).not.toBeUndefined();
+                    expect(recognizeResult.reason).not.toBeUndefined();
+                    expect(sdk.ResultReason[recognizeResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeaker]);
+                    expect(recognizeResult.profileId).toEqual(res.profileId);
+                    r.deleteProfileAsync(
                         res,
-                        configs[1],
-                        (enrollResult2: sdk.VoiceProfileEnrollmentResult) => {
-                            expect(enrollResult2).not.toBeUndefined();
-                            expect(enrollResult2.reason).not.toBeUndefined();
-                            expect(sdk.ResultReason[enrollResult2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrollingVoiceProfile]);
-                            expect(enrollResult2.enrollmentsCount).toEqual(2);
-                            r.enrollProfileAsync(
-                                res,
-                                configs[2],
-                                (enrollResult3: sdk.VoiceProfileEnrollmentResult) => {
-                                    expect(enrollResult3).not.toBeUndefined();
-                                    expect(enrollResult3.reason).not.toBeUndefined();
-                                    expect(sdk.ResultReason[enrollResult3.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
-                                    expect(enrollResult3.enrollmentsCount).toEqual(3);
-                                    const reco: sdk.SpeakerRecognizer = BuildRecognizer();
-                                    const m: sdk.SpeakerVerificationModel = sdk.SpeakerVerificationModel.fromProfile(res);
-                                    reco.recognizeOnceAsync(
-                                        m,
-                                        (recognizeResult: sdk.SpeakerRecognitionResult) => {
-                                            expect(recognizeResult).not.toBeUndefined();
-                                            expect(recognizeResult.reason).not.toBeUndefined();
-                                            expect(sdk.ResultReason[recognizeResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeaker]);
-                                            expect(recognizeResult.profileId).toEqual(res.profileId);
-                                            r.deleteProfileAsync(
-                                                res,
-                                                (result: sdk.VoiceProfileResult) => {
-                                                    expect(result).not.toBeUndefined();
-                                                    expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
-                                                    done();
-                                                },
-                                                (error: string) => {
-                                                    done.fail(error);
-                                                });
-                                        },
-                                        (error: string) => {
-                                            done.fail(error);
-                                        });
-                                },
-                                (error: string) => {
-                                    done.fail(error);
-                                });
+                        (result: sdk.VoiceProfileResult) => {
+                            expect(result).not.toBeUndefined();
+                            expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
+                            done();
                         },
                         (error: string) => {
                             done.fail(error);
@@ -414,8 +387,5 @@ test("Create and Delete Voice Profile - Dependent Verification", (done: jest.Don
                 (error: string) => {
                     done.fail(error);
                 });
-        },
-        (error: string) => {
-            done.fail(error);
         });
 }, 15000);
