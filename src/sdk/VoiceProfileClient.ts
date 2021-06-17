@@ -165,22 +165,21 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.enrollProfileAsync
      * @function
      * @public
+     * @async
      * @param {VoiceProfile} profile Voice Profile to create enrollment for
      * @param {AudioConfig} audioConfig source info from which to create enrollment
-     * @param cb - Callback invoked once Enrollment request has been submitted.
-     * @param err - Callback invoked in case of an error.
+     * @return {Promise<VoiceProfileEnrollmentResult>} - Promise of a VoiceProfileEnrollmentResult.
      */
-    public enrollProfileAsync(profile: VoiceProfile, audioConfig: AudioConfig, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
+    public async enrollProfileAsync(profile: VoiceProfile, audioConfig: AudioConfig): Promise<VoiceProfileEnrollmentResult> {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
-            const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
-            return new VoiceProfileEnrollmentResult(
-                result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
-                result.data,
-                result.statusText,
-            );
-        })(), cb, err);
+
+        const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
+        return new VoiceProfileEnrollmentResult(
+            result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
+            result.data,
+            result.statusText,
+        );
     }
 
     /**
