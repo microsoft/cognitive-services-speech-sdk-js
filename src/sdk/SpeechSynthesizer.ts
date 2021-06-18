@@ -220,7 +220,7 @@ export class SpeechSynthesizer {
             ["el-GR"]: "el-GR-AthinaNeural",
             ["en-AU"]: "en-AU-NatashaNeural",
             ["en-CA"]: "en-CA-ClaraNeural",
-            ["en-GB"]: "en-GB-MiaNeural",
+            ["en-GB"]: "en-GB-LibbyNeural",
             ["en-HK"]: "en-HK-SamNeural",
             ["en-IE"]: "en-IE-ConnorNeural",
             ["en-IN"]: "en-IN-NeerjaNeural",
