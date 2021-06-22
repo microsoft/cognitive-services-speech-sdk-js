@@ -54,6 +54,9 @@ export class SpeechContext {
         if (this.privContext.phraseOutput.detailed.options.indexOf("WordTimings") === -1) {
             this.privContext.phraseOutput.detailed.options.push("WordTimings");
         }
+        if (this.privContext.phraseOutput.detailed.options.indexOf("SNR") === -1) {
+            this.privContext.phraseOutput.detailed.options.push("SNR");
+        }
     }
 
     public toJSON(): string {

@@ -161,7 +161,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(result.errorDetails).toBeUndefined();
                 expect(result.text).toEqual(Settings.WaveFileText);
                 expect(result.properties).not.toBeUndefined();
-                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                const jsonString = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+                expect(jsonString).not.toBeUndefined();
+                const jsonResult = JSON.parse(jsonString);
+                expect(jsonResult.SNR).toBeGreaterThan(0);
                 const pronResult = sdk.PronunciationAssessmentResult.fromResult(result);
                 expect(pronResult).not.toBeUndefined();
                 expect(pronResult.detailResult).not.toBeUndefined();
