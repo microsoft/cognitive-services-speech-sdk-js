@@ -51,7 +51,7 @@ export abstract class AudioConfig {
      * @returns {AudioConfig} The audio input configuration being created.
      */
     public static fromDefaultMicrophoneInput(): AudioConfig {
-        const pcmRecorder = new PcmRecorder();
+        const pcmRecorder = new PcmRecorder(true);
         return new AudioConfigImpl(new MicAudioSource(pcmRecorder));
     }
 
@@ -65,7 +65,7 @@ export abstract class AudioConfig {
      * @returns {AudioConfig} The audio input configuration being created.
      */
     public static fromMicrophoneInput(deviceId?: string): AudioConfig {
-        const pcmRecorder = new PcmRecorder();
+        const pcmRecorder = new PcmRecorder(true);
         return new AudioConfigImpl(new MicAudioSource(pcmRecorder, deviceId));
     }
 
@@ -100,7 +100,11 @@ export abstract class AudioConfig {
             return new AudioConfigImpl(audioStream as PushAudioInputStreamImpl);
         }
         if (typeof MediaStream !== "undefined" && audioStream instanceof MediaStream) {
-            const pcmRecorder = new PcmRecorder();
+            const pcmRecorder = new PcmRecorder(false);
+            // tslint:disable-next-line:no-console
+            console.error("mediastream");
+            // tslint:disable-next-line:no-console
+            console.error(audioStream);
             return new AudioConfigImpl(new MicAudioSource(pcmRecorder, null, null, audioStream));
         }
 

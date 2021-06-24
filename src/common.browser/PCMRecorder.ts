@@ -7,6 +7,11 @@ import { IRecorder } from "./IRecorder";
 export class PcmRecorder implements IRecorder {
     private privMediaResources: IMediaResources;
     private privSpeechProcessorScript: string; // speech-processor.js Url
+    private privStopInputOnRelease: boolean;
+
+    public constructor(stopInputOnRelease: boolean) {
+        this.privStopInputOnRelease = stopInputOnRelease;
+    }
 
     public record = (context: AudioContext, mediaStream: MediaStream, outputStream: Stream<ArrayBuffer>): void => {
         const desiredSampleRate = 16000;
@@ -107,6 +112,9 @@ export class PcmRecorder implements IRecorder {
             }
             if (this.privMediaResources.source) {
                 this.privMediaResources.source.disconnect();
+                if (this.privStopInputOnRelease) {
+                    this.privMediaResources.stream.getTracks().forEach((track: any) => track.stop());
+                }
                 this.privMediaResources.source = null;
             }
         }
