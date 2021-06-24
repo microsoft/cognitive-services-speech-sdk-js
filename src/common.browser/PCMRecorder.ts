@@ -107,7 +107,6 @@ export class PcmRecorder implements IRecorder {
             }
             if (this.privMediaResources.source) {
                 this.privMediaResources.source.disconnect();
-                this.privMediaResources.stream.getTracks().forEach((track: any) => track.stop());
                 this.privMediaResources.source = null;
             }
         }
