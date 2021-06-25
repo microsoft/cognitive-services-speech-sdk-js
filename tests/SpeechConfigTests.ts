@@ -817,7 +817,7 @@ describe("Connection URL Tests", () => {
 
                 test("endSilenceTimeoutMs", (done: jest.DoneCallback) => {
                     // tslint:disable-next-line:no-console
-                    console.info("Name: initialSilenceTimeoutMs");
+                    console.info("Name: endSilenceTimeoutMs");
 
                     const propName: string = "endSilenceTimeoutMs";
                     const val: string = "251";
