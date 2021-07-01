@@ -28,7 +28,8 @@ import {
     SpeechTranslationConfig
 } from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
-import { Callback } from "../../sdk/Transcription/IConversation";
+import { ConversationImpl } from "../../sdk/Transcription/Conversation";
+import { Callback, IConversation } from "../../sdk/Transcription/IConversation";
 import { ConversationConnectionFactory } from "./ConversationConnectionFactory";
 import { ConversationServiceAdapter } from "./ConversationServiceAdapter";
 import {
@@ -46,8 +47,8 @@ import {
 import { PromiseToEmptyCallback } from "./ConversationUtils";
 
 export class ConversationRecognizerFactory {
-    public static fromConfig(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig): ConversationRecognizer {
-        return new ConversationTranslatorRecognizer(speechConfig, audioConfig);
+    public static fromConfig(conversation: IConversation, speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig): ConversationRecognizer {
+        return new ConversationTranslatorRecognizer(conversation, speechConfig, audioConfig);
     }
 }
 
@@ -61,21 +62,39 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
     private privIsDisposed: boolean;
     private privSpeechRecognitionLanguage: string;
     private privConnection: Connection;
+    private privConversation: ConversationImpl;
     private privTimeoutToken: any;
     private privSetTimeout: (cb: () => void, delay: number) => number;
     private privClearTimeout: (id: number) => void;
 
-    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+    public constructor(conversation: IConversation, speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
         const serviceConfigImpl = speechConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(serviceConfigImpl, "speechConfig");
+        const conversationImpl = conversation as ConversationImpl;
+        Contracts.throwIfNull(conversationImpl, "conversationImpl");
 
         super(audioConfig, serviceConfigImpl.properties, new ConversationConnectionFactory());
 
+        this.privConversation = conversationImpl;
         this.privIsDisposed = false;
         this.privProperties = serviceConfigImpl.properties.clone();
         this.privConnection = Connection.fromRecognizer(this);
         this.privSetTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.setTimeout : setTimeout;
         this.privClearTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.clearTimeout : clearTimeout;
+        // Because ConversationTranslator manually sets up and manages the connection, Conversation
+        // has to forward serviceRecognizer connection events that usually get passed automatically
+        this.connected = this.privConversation.onConnected;
+        this.disconnected = this.privConversation.onDisconnected;
+        this.canceled = this.privConversation.onCanceled;
+
+        this.participantUpdateCommandReceived = this.privConversation.onParticipantUpdateCommandReceived;
+        this.lockRoomCommandReceived = this.privConversation.onLockRoomCommandReceived;
+        this.muteAllCommandReceived = this.privConversation.onMuteAllCommandReceived;
+        this.participantJoinCommandReceived = this.privConversation.onParticipantJoinCommandReceived;
+        this.participantLeaveCommandReceived = this.privConversation.onParticipantLeaveCommandReceived;
+        this.translationReceived = this.privConversation.onTranslationReceived;
+        this.participantsListReceived = this.privConversation.onParticipantsListReceived;
+        this.conversationExpiration = this.privConversation.onConversationExpiration;
     }
 
     public canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
@@ -208,9 +227,6 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
      */
     public async close(): Promise<void> {
         Contracts.throwIfDisposed(this.privIsDisposed);
-        if (this.privTimeoutToken !== undefined) {
-            this.privClearTimeout(this.privTimeoutToken);
-        }
         this.privConnection?.closeConnection();
         this.privConnection?.close();
         this.privConnection = undefined;
@@ -222,13 +238,13 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
      * @param disposing
      */
     protected async dispose(disposing: boolean): Promise<void> {
-        if (this.privTimeoutToken !== undefined) {
-            this.privClearTimeout(this.privTimeoutToken);
-        }
         if (this.privIsDisposed) {
             return;
         }
         if (disposing) {
+            if (this.privTimeoutToken !== undefined) {
+                this.privClearTimeout(this.privTimeoutToken);
+            }
             this.privIsDisposed = true;
             if (!!this.privConnection) {
                 this.privConnection.closeConnection();
@@ -272,21 +288,13 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         this.resetConversationTimeout();
     }
 
-    private getKeepAlive(): string {
-        return JSON.stringify({
-            // tslint:disable-next-line: object-literal-shorthand
-            type: ConversationTranslatorMessageTypes.keepAlive
-        });
-    }
-
     private resetConversationTimeout(): void {
         if (this.privTimeoutToken !== undefined) {
             this.privClearTimeout(this.privTimeoutToken);
         }
 
         this.privTimeoutToken = this.privSetTimeout((): void => {
-            this.sendRequest(this.getKeepAlive());
-            return;
+            this.sendRequest(this.privConversation.getKeepAlive());
         }, 60000);
     }
 
