@@ -19,6 +19,7 @@ import {
     Translations
 } from "../../sdk/Exports";
 import {
+    CognitiveTokenAuthentication,
     IAuthentication,
     IConnectionFactory,
     RecognizerConfig,
@@ -168,7 +169,6 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
 
     /**
      * Establishes a websocket connection to the end point.
-     * @param isUnAuthorized
      */
     protected async conversationConnectImpl(connection: Promise<IConnection>): Promise<IConnection> {
         this.privConnectionLoop = this.startMessageLoop();
@@ -403,6 +403,20 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                 const disconnectParticipant: IInternalParticipant = {
                                     id: commandPayload.participantId
                                 };
+
+                                break;
+
+                            case "token":
+                                const token = new CognitiveTokenAuthentication(
+                                    (authFetchEventId: string): Promise<string> => {
+                                        const authorizationToken = commandPayload.token;
+                                        return Promise.resolve(authorizationToken);
+                                    },
+                                    (authFetchEventId: string): Promise<string> => {
+                                        const authorizationToken = commandPayload.token;
+                                        return Promise.resolve(authorizationToken);
+                                    });
+                                this.authentication = token;
 
                                 break;
 
