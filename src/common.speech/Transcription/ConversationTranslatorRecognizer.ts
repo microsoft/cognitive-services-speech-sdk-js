@@ -74,8 +74,8 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         this.privIsDisposed = false;
         this.privProperties = serviceConfigImpl.properties.clone();
         this.privConnection = Connection.fromRecognizer(this);
-        this.privSetTimeout = (Worker !== undefined) ? Timeout.setTimeout : setTimeout;
-        this.privClearTimeout = (Worker !== undefined) ? Timeout.clearTimeout : clearTimeout;
+        this.privSetTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.setTimeout : setTimeout;
+        this.privClearTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.clearTimeout : clearTimeout;
     }
 
     public canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
@@ -147,7 +147,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             if (this.privTimeoutToken !== undefined) {
-                this.privClearTimeout(this.privTimeoutToken);
+               this.privClearTimeout(this.privTimeoutToken);
             }
             this.privReco.disconnect().then(() => {
                 if (!!cb) {
@@ -208,6 +208,9 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
      */
     public async close(): Promise<void> {
         Contracts.throwIfDisposed(this.privIsDisposed);
+        if (this.privTimeoutToken !== undefined) {
+            this.privClearTimeout(this.privTimeoutToken);
+        }
         this.privConnection?.closeConnection();
         this.privConnection?.close();
         this.privConnection = undefined;
@@ -219,11 +222,11 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
      * @param disposing
      */
     protected async dispose(disposing: boolean): Promise<void> {
-        if (this.privIsDisposed) {
-            return;
-        }
         if (this.privTimeoutToken !== undefined) {
             this.privClearTimeout(this.privTimeoutToken);
+        }
+        if (this.privIsDisposed) {
+            return;
         }
         if (disposing) {
             this.privIsDisposed = true;
@@ -280,8 +283,6 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         if (this.privTimeoutToken !== undefined) {
             this.privClearTimeout(this.privTimeoutToken);
         }
-        // tslint:disable-next-line:no-console
-        // console.info("Timeout reset debugturn:" + this.privRequestId);
 
         this.privTimeoutToken = this.privSetTimeout((): void => {
             this.sendRequest(this.getKeepAlive());
