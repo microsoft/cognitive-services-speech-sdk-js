@@ -252,6 +252,7 @@ export const ConversationTranslatorMessageTypes = {
     final: "final",
     info: "info",
     instantMessage: "instant_message",
+    keepAlive: "keep_alive",
     partial: "partial",
     participantCommand: "participant_command",
     translatedMessage: "translated_message"
