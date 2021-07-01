@@ -63,6 +63,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
     private privConnection: Connection;
     private privTimeoutToken: any;
     private privSetTimeout: (cb: () => void, delay: number) => number;
+    private privClearTimeout: (id: number) => void;
 
     public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
         const serviceConfigImpl = speechConfig as SpeechTranslationConfigImpl;
@@ -74,6 +75,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         this.privProperties = serviceConfigImpl.properties.clone();
         this.privConnection = Connection.fromRecognizer(this);
         this.privSetTimeout = (Worker !== undefined) ? Timeout.setTimeout : setTimeout;
+        this.privClearTimeout = (Worker !== undefined) ? Timeout.clearTimeout : clearTimeout;
     }
 
     public canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
@@ -145,7 +147,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             if (this.privTimeoutToken !== undefined) {
-                clearTimeout(this.privTimeoutToken);
+                this.privClearTimeout(this.privTimeoutToken);
             }
             this.privReco.disconnect().then(() => {
                 if (!!cb) {
@@ -221,7 +223,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
             return;
         }
         if (this.privTimeoutToken !== undefined) {
-            clearTimeout(this.privTimeoutToken);
+            this.privClearTimeout(this.privTimeoutToken);
         }
         if (disposing) {
             this.privIsDisposed = true;
@@ -276,7 +278,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
 
     private resetConversationTimeout(): void {
         if (this.privTimeoutToken !== undefined) {
-            clearTimeout(this.privTimeoutToken);
+            this.privClearTimeout(this.privTimeoutToken);
         }
         // tslint:disable-next-line:no-console
         // console.info("Timeout reset debugturn:" + this.privRequestId);
