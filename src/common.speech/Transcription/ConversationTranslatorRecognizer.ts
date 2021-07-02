@@ -81,20 +81,6 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         this.privConnection = Connection.fromRecognizer(this);
         this.privSetTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.setTimeout : setTimeout;
         this.privClearTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.clearTimeout : clearTimeout;
-        // Because ConversationTranslator manually sets up and manages the connection, Conversation
-        // has to forward serviceRecognizer connection events that usually get passed automatically
-        this.connected = this.privConversation.onConnected;
-        this.disconnected = this.privConversation.onDisconnected;
-        this.canceled = this.privConversation.onCanceled;
-
-        this.participantUpdateCommandReceived = this.privConversation.onParticipantUpdateCommandReceived;
-        this.lockRoomCommandReceived = this.privConversation.onLockRoomCommandReceived;
-        this.muteAllCommandReceived = this.privConversation.onMuteAllCommandReceived;
-        this.participantJoinCommandReceived = this.privConversation.onParticipantJoinCommandReceived;
-        this.participantLeaveCommandReceived = this.privConversation.onParticipantLeaveCommandReceived;
-        this.translationReceived = this.privConversation.onTranslationReceived;
-        this.participantsListReceived = this.privConversation.onParticipantsListReceived;
-        this.conversationExpiration = this.privConversation.onConversationExpiration;
     }
 
     public canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
