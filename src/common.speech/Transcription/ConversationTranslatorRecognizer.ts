@@ -10,7 +10,8 @@ import {
 } from "../../common.speech/Exports";
 import {
     BackgroundEvent,
-    Events
+    Events,
+    Timeout
 } from "../../common/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
 import { Contracts } from "../../sdk/Contracts";
@@ -27,7 +28,8 @@ import {
     SpeechTranslationConfig
 } from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
-import { Callback } from "../../sdk/Transcription/IConversation";
+import { ConversationImpl } from "../../sdk/Transcription/Conversation";
+import { Callback, IConversation } from "../../sdk/Transcription/IConversation";
 import { ConversationConnectionFactory } from "./ConversationConnectionFactory";
 import { ConversationServiceAdapter } from "./ConversationServiceAdapter";
 import {
@@ -40,12 +42,13 @@ import {
 } from "./ConversationTranslatorEventArgs";
 import {
     ConversationRecognizer,
+    ConversationTranslatorMessageTypes
 } from "./ConversationTranslatorInterfaces";
 import { PromiseToEmptyCallback } from "./ConversationUtils";
 
 export class ConversationRecognizerFactory {
-    public static fromConfig(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig): ConversationRecognizer {
-        return new ConversationTranslatorRecognizer(speechConfig, audioConfig);
+    public static fromConfig(conversation: IConversation, speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig): ConversationRecognizer {
+        return new ConversationTranslatorRecognizer(conversation, speechConfig, audioConfig);
     }
 }
 
@@ -59,16 +62,25 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
     private privIsDisposed: boolean;
     private privSpeechRecognitionLanguage: string;
     private privConnection: Connection;
+    private privConversation: ConversationImpl;
+    private privTimeoutToken: any;
+    private privSetTimeout: (cb: () => void, delay: number) => number;
+    private privClearTimeout: (id: number) => void;
 
-    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+    public constructor(conversation: IConversation, speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
         const serviceConfigImpl = speechConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(serviceConfigImpl, "speechConfig");
+        const conversationImpl = conversation as ConversationImpl;
+        Contracts.throwIfNull(conversationImpl, "conversationImpl");
 
         super(audioConfig, serviceConfigImpl.properties, new ConversationConnectionFactory());
 
+        this.privConversation = conversationImpl;
         this.privIsDisposed = false;
         this.privProperties = serviceConfigImpl.properties.clone();
         this.privConnection = Connection.fromRecognizer(this);
+        this.privSetTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.setTimeout : setTimeout;
+        this.privClearTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.clearTimeout : clearTimeout;
     }
 
     public canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
@@ -119,6 +131,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
             Contracts.throwIfDisposed(this.privIsDisposed);
             Contracts.throwIfNullOrWhitespace(token, "token");
             this.privReco.conversationTranslatorToken = token;
+            this.resetConversationTimeout();
             this.privReco.connectAsync(cb, err);
         } catch (error) {
             if (!!err) {
@@ -138,6 +151,9 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
     public disconnect(cb?: () => void, err?: (e: string) => void): void {
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
+            if (this.privTimeoutToken !== undefined) {
+               this.privClearTimeout(this.privTimeoutToken);
+            }
             this.privReco.disconnect().then(() => {
                 if (!!cb) {
                     cb();
@@ -212,6 +228,9 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
             return;
         }
         if (disposing) {
+            if (this.privTimeoutToken !== undefined) {
+                this.privClearTimeout(this.privTimeoutToken);
+            }
             this.privIsDisposed = true;
             if (!!this.privConnection) {
                 this.privConnection.closeConnection();
@@ -252,6 +271,17 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
     private sendMessage(msg: string, cb?: Callback, err?: Callback): void {
         const withAsync = this.privReco as ConversationServiceAdapter;
         PromiseToEmptyCallback(withAsync.sendMessageAsync(msg), cb, err);
+        this.resetConversationTimeout();
+    }
+
+    private resetConversationTimeout(): void {
+        if (this.privTimeoutToken !== undefined) {
+            this.privClearTimeout(this.privTimeoutToken);
+        }
+
+        this.privTimeoutToken = this.privSetTimeout((): void => {
+            this.sendRequest(this.privConversation.getKeepAlive());
+        }, 60000);
     }
 
 }
