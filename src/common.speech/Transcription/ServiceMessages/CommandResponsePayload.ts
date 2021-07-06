@@ -12,6 +12,7 @@ export interface ICommandResponsePayload {
     participantId?: string;
     roomid?: string;
     value: boolean | number | string;
+    token?: string;
 }
 
 export class CommandResponsePayload implements ICommandResponsePayload {
@@ -45,5 +46,8 @@ export class CommandResponsePayload implements ICommandResponsePayload {
     }
     public get value(): boolean | number | string {
         return this.privCommandResponse.value;
+    }
+    public get token(): string {
+        return this.privCommandResponse.token;
     }
 }

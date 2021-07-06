@@ -321,7 +321,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
             Contracts.throwIfNullOrUndefined(this.privRoom, this.privErrors.permissionDeniedConnect);
             // connect to the conversation websocket
             this.privParticipants.meId = this.privRoom.participantId;
-            this.privConversationRecognizer = ConversationRecognizerFactory.fromConfig(this.privConfig);
+            this.privConversationRecognizer = ConversationRecognizerFactory.fromConfig(this, this.privConfig);
 
             // Because ConversationTranslator manually sets up and manages the connection, Conversation
             // has to forward serviceRecognizer connection events that usually get passed automatically
@@ -337,6 +337,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConversationRecognizer.translationReceived = this.onTranslationReceived;
             this.privConversationRecognizer.participantsListReceived = this.onParticipantsListReceived;
             this.privConversationRecognizer.conversationExpiration = this.onConversationExpiration;
+
             this.privConversationRecognizer.connect(this.privRoom.token,
                 (() => {
                     this.handleCallback(cb, err);
@@ -754,22 +755,15 @@ export class ConversationImpl extends Conversation implements IDisposable {
         return info;
     }
 
-    private addParticipantImplAsync(participant: IParticipant): Promise<void> {
-        const newParticipant: IInternalParticipant = this.privParticipants.addOrUpdateParticipant(participant);
-        if (newParticipant !== undefined) {
-            if (!!this.privTranscriberRecognizer) {
-                const conversationInfo = this.conversationInfo;
-                conversationInfo.participants = [participant];
-                return this.privTranscriberRecognizer.pushConversationEvent(conversationInfo, "join");
-            }
-        }
-    }
-
-    private removeParticipantImplAsync(participant: IParticipant): Promise<void> {
-        this.privParticipants.deleteParticipant(participant.id);
-        const conversationInfo = this.conversationInfo;
-        conversationInfo.participants = [participant];
-        return this.privTranscriberRecognizer.pushConversationEvent(conversationInfo, "leave");
+    public getKeepAlive(): string {
+        return JSON.stringify({
+            // tslint:disable-next-line: object-literal-shorthand
+            id: "0",
+            nickname: this.me.displayName,
+            participantId: this.privRoom.participantId,
+            roomId: this.privRoom.roomId,
+            type: ConversationTranslatorMessageTypes.keepAlive
+        });
     }
 
     /** websocket callbacks */
@@ -967,6 +961,24 @@ export class ConversationImpl extends Conversation implements IDisposable {
         }
     }
 
+    private addParticipantImplAsync(participant: IParticipant): Promise<void> {
+        const newParticipant: IInternalParticipant = this.privParticipants.addOrUpdateParticipant(participant);
+        if (newParticipant !== undefined) {
+            if (!!this.privTranscriberRecognizer) {
+                const conversationInfo = this.conversationInfo;
+                conversationInfo.participants = [participant];
+                return this.privTranscriberRecognizer.pushConversationEvent(conversationInfo, "join");
+            }
+        }
+    }
+
+    private removeParticipantImplAsync(participant: IParticipant): Promise<void> {
+        this.privParticipants.deleteParticipant(participant.id);
+        const conversationInfo = this.conversationInfo;
+        conversationInfo.participants = [participant];
+        return this.privTranscriberRecognizer.pushConversationEvent(conversationInfo, "leave");
+    }
+
     private async close(dispose: boolean): Promise<void> {
         try {
             this.privIsConnected = false;
@@ -1117,4 +1129,5 @@ export class ConversationImpl extends Conversation implements IDisposable {
             type: ConversationTranslatorMessageTypes.instantMessage
         });
     }
+
 }

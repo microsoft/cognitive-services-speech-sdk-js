@@ -398,8 +398,7 @@ describe("Service based tests", () => {
 
         const ssml: string =
             `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
- <voice name='Microsoft Server Speech Text to Speech Voice (en-US, Guy24KRUS)'>
- <bookmark mark='bookmark'/> one. <bookmark mark='书签'/> two. three. four.</voice></speak>`;
+ <voice name='en-US-GuyNeural'><bookmark mark='bookmark'/> one. <bookmark mark='书签'/> two. three. four.</voice></speak>`;
         s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
             expect(bookmarkCount).toEqual(2);
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
@@ -436,8 +435,7 @@ describe("Service based tests", () => {
 
         const ssml: string =
             `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
-<voice name='Microsoft Server Speech Text to Speech Voice (en-US, Guy24KRUS)'>
-<mstts:viseme type='svg'/>I want to avoid monotony.</voice></speak>`;
+<voice name='en-US-JennyNeural'><mstts:viseme type='svg'/>I want to avoid monotony.</voice></speak>`;
         s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
             expect(visemeCount).toBeGreaterThan(0);
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
