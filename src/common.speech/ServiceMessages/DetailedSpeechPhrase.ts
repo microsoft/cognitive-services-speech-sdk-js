@@ -18,6 +18,13 @@ export interface IPhrase {
     ITN: string;
     MaskedITN: string;
     Display: string;
+    Words?: IWord[];
+}
+
+export interface IWord {
+    Word: string;
+    Offset: number;
+    Duration: number;
 }
 
 export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
@@ -30,6 +37,19 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
 
     public static fromJSON(json: string): DetailedSpeechPhrase {
         return new DetailedSpeechPhrase(json);
+    }
+
+    public getJsonWithCorrectedOffsets(baseOffset: number): string {
+        const firstWordOffset: number = this.privDetailedSpeechPhrase.NBest[0].Words[0].Offset;
+        if (firstWordOffset && firstWordOffset < baseOffset) {
+            const offset: number = baseOffset - firstWordOffset;
+            for (const details of this.privDetailedSpeechPhrase.NBest) {
+                for (const word of details.Words) {
+                    word.Offset += offset;
+                }
+            }
+        }
+        return JSON.stringify(this.privDetailedSpeechPhrase);
     }
 
     public get RecognitionStatus(): RecognitionStatus {
