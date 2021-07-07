@@ -129,18 +129,20 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                                 resultProps);
                         } else {
                             const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody);
+                            const totalOffset: number = detailed.Offset + this.privRequestSession.currentTurnAudioOffset;
+                            const offsetCorrectedJson: string = detailed.getJsonWithCorrectedOffsets(totalOffset);
 
                             result = new SpeechRecognitionResult(
                                 this.privRequestSession.requestId,
                                 resultReason,
                                 detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : undefined,
                                 detailed.Duration,
-                                detailed.Offset + this.privRequestSession.currentTurnAudioOffset,
+                                totalOffset,
                                 detailed.Language,
                                 detailed.LanguageDetectionConfidence,
                                 undefined,
                                 undefined,
-                                connectionMessage.textBody,
+                                offsetCorrectedJson,
                                 resultProps);
                         }
 
