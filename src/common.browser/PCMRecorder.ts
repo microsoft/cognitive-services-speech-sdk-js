@@ -16,42 +16,29 @@ export class PcmRecorder implements IRecorder {
     public record = (context: AudioContext, mediaStream: MediaStream, outputStream: Stream<ArrayBuffer>): void => {
         const desiredSampleRate = 16000;
 
-        const scriptNode = (() => {
-            let bufferSize = 0;
-            try {
-                return context.createScriptProcessor(bufferSize, 1, 1);
-            } catch (error) {
-                // Webkit (<= version 31) requires a valid bufferSize.
-                bufferSize = 2048;
-                let audioSampleRate = context.sampleRate;
-                while (bufferSize < 16384 && audioSampleRate >= (2 * desiredSampleRate)) {
-                    bufferSize <<= 1;
-                    audioSampleRate >>= 1;
-                }
-                return context.createScriptProcessor(bufferSize, 1, 1);
-            }
-        })();
-
         const waveStreamEncoder = new RiffPcmEncoder(context.sampleRate, desiredSampleRate);
         let needHeader: boolean = true;
-        const that = this;
-        scriptNode.onaudioprocess = (event: AudioProcessingEvent) => {
-            const inputFrame = event.inputBuffer.getChannelData(0);
-
-            if (outputStream && !outputStream.isClosed) {
-                const waveFrame = waveStreamEncoder.encode(inputFrame);
-                if (!!waveFrame) {
-                    outputStream.writeStreamChunk({
-                        buffer: waveFrame,
-                        isEnd: false,
-                        timeReceived: Date.now(),
-                    });
-                    needHeader = false;
-                }
-            }
-        };
 
         const micInput = context.createMediaStreamSource(mediaStream);
+        if (!this.privSpeechProcessorScript) {
+            const workletScript = `class SP extends AudioWorkletProcessor {
+                constructor(options) {
+                  super(options);
+                }
+                process(inputs, outputs) {
+                  const input = inputs[0];
+                  const output = [];
+                  for (let channel = 0; channel < input.length; channel += 1) {
+                    output[channel] = input[channel];
+                  }
+                  this.port.postMessage(output[0]);
+                  return true;
+                }
+              }
+              registerProcessor('speech-processor', SP);`; // tslint:disable-line:max-line-length
+            const blob = new Blob([workletScript], { type: "application/javascript; charset=utf-8" });
+            this.privSpeechProcessorScript = URL.createObjectURL(blob);
+        }
 
         // https://webaudio.github.io/web-audio-api/#audioworklet
         // Using AudioWorklet to improve audio quality and avoid audio glitches due to blocking the UI thread
@@ -85,6 +72,36 @@ export class PcmRecorder implements IRecorder {
                     };
                 })
                 .catch(() => {
+                    const scriptNode = (() => {
+                        let bufferSize = 0;
+                        try {
+                            return context.createScriptProcessor(bufferSize, 1, 1);
+                        } catch (error) {
+                            // Webkit (<= version 31) requires a valid bufferSize.
+                            bufferSize = 2048;
+                            let audioSampleRate = context.sampleRate;
+                            while (bufferSize < 16384 && audioSampleRate >= (2 * desiredSampleRate)) {
+                                bufferSize <<= 1;
+                                audioSampleRate >>= 1;
+                            }
+                            return context.createScriptProcessor(bufferSize, 1, 1);
+                        }
+                    })();
+                    scriptNode.onaudioprocess = (event: AudioProcessingEvent) => {
+                        const inputFrame = event.inputBuffer.getChannelData(0);
+
+                        if (outputStream && !outputStream.isClosed) {
+                            const waveFrame = waveStreamEncoder.encode(inputFrame);
+                            if (!!waveFrame) {
+                                outputStream.writeStreamChunk({
+                                    buffer: waveFrame,
+                                    isEnd: false,
+                                    timeReceived: Date.now(),
+                                });
+                                needHeader = false;
+                            }
+                        }
+                    };
                     micInput.connect(scriptNode);
                     scriptNode.connect(context.destination);
                     this.privMediaResources = {
@@ -94,13 +111,7 @@ export class PcmRecorder implements IRecorder {
                     };
                 });
         } else {
-            micInput.connect(scriptNode);
-            scriptNode.connect(context.destination);
-            this.privMediaResources = {
-                scriptProcessorNode: scriptNode,
-                source: micInput,
-                stream: mediaStream,
-            };
+            throw new Error("Unable to start audio worklet node for PCMRecorder");
         }
     }
 
