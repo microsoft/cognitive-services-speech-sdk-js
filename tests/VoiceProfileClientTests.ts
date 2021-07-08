@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { doesNotReject } from "assert";
 import * as fs from "fs";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener } from "../src/common.browser/Exports";
@@ -80,6 +81,27 @@ test("VoiceProfileClient", () => {
     console.info("Name: VoiceProfileClient");
     const r: sdk.VoiceProfileClient = BuildClient();
     objsToClose.push(r);
+});
+
+test("VoiceProfileClient with Bad credentials throws meaningful error", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: VoiceProfileClient with Bad credentials throws meaningful error");
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("BADKEY", Settings.SpeakerIDRegion);
+    objsToClose.push(s);
+    const r: sdk.VoiceProfileClient = BuildClient(s);
+    objsToClose.push(r);
+
+    const type: sdk.VoiceProfileType = sdk.VoiceProfileType.TextIndependentIdentification;
+    r.createProfileAsync( type, "en-us",
+        (res: sdk.VoiceProfile) => {
+            done.fail();
+        },
+        (error: string) => {
+            const expectedCode: number = 401;
+            const expectedMessage: string = "Access denied due to invalid subscription key or wrong API endpoint. Make sure to provide a valid key for an active subscription and use a correct regional API endpoint for your resource.";
+            expect(error).toEqual(`Error: createProfileAsync failed with code: ${expectedCode}, message: ${expectedMessage}`);
+            done();
+        });
 });
 
 test("GetParameters", () => {
