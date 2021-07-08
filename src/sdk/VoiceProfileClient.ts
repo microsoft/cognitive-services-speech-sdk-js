@@ -96,6 +96,10 @@ export class VoiceProfileClient {
 
         marshalPromiseToCallbacks((async (): Promise<VoiceProfile> => {
             const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
+            if (!result.ok) {
+                const e: { error: { code: number, message: string } } = result.json();
+                throw new Error(`createProfileAsync failed with code: ${e.error.code}, message: ${e.error.message}`);
+            }
             const response: { profileId: string } = result.json();
             const profile = new VoiceProfile(response.profileId, profileType);
             return profile;
