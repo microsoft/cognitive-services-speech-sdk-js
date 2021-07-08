@@ -10,7 +10,7 @@ class SpeechProcessor extends AudioWorkletProcessor {
 
   process(inputs, outputs) {
     const input = inputs[0];
-    const output = outputs[0];
+    const output = []; // Make sure output array can be assigned to
     for (let channel = 0; channel < input.length; channel += 1) {
       output[channel] = input[channel];
     }
