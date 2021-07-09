@@ -221,7 +221,6 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
         return {
             detach: async () => {
-                stream.readEnded();
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                 return this.turnOff();
             },
