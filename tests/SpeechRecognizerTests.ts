@@ -1020,6 +1020,59 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
+    test("PushStream start-stop-start continuous recognition on PushStream", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: PushStream start-stop-start continuous recognition on PushStream");
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+        const pushStream: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+
+        // open the file and push it to the push stream.
+        fs.createReadStream(Settings.LongerWaveFile).on("data", (arrayBuffer: Buffer) => {
+            pushStream.write(arrayBuffer.slice());
+        }).on("end", () => {
+            pushStream.close();
+        });
+
+        const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
+
+        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+        objsToClose.push(r);
+
+        expect(r).not.toBeUndefined();
+        expect(r instanceof sdk.Recognizer);
+
+        let previouslyStopped: boolean = false;
+        r.sessionStopped = (s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+            if (!previouslyStopped) {
+                previouslyStopped = true;
+                r.startContinuousRecognitionAsync();
+            }
+        };
+
+        r.recognizing = (s: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+            if (previouslyStopped) {
+                expect(e).not.toBeUndefined();
+                expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizingSpeech]);
+                expect(e.result.properties).not.toBeUndefined();
+                expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                done();
+            }
+            r.stopContinuousRecognitionAsync();
+        };
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        r.startContinuousRecognitionAsync();
+    });
+
     test("PushStream44K file", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: PushStream44K file");
