@@ -1071,7 +1071,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.startContinuousRecognitionAsync();
-    });
+    }, 15000);
 
     test("PushStream44K file", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
