@@ -47,6 +47,10 @@ export class RiffPcmEncoder {
         srcRate: number,
         dstRate: number): Float32Array => {
 
+        if (!srcFrame) {
+            return null;
+        }
+
         if (dstRate === srcRate || dstRate > srcRate) {
             return srcFrame;
         }
