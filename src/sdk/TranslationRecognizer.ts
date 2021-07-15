@@ -316,8 +316,10 @@ export class TranslationRecognizer extends Recognizer {
 
     private updateLanguages(languages: string[]): void {
         const conn: Connection = Connection.fromRecognizer(this);
-        const langs: string[] = languages.map((l: string) => l.substring(0, 2));
         if (!!conn) {
+            const langs: string[] = languages.map((l: string) => l.substring(0, 2));
+
+            conn.setMessageProperty("speech.context", "translationcontext", {"to": langs});
             conn.sendMessageAsync("event", `{"id":"translation","name":"updateLanguage","to":["${langs}"]}`);
         }
     }
