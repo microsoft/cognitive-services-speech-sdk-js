@@ -150,6 +150,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
                 expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
                 expect("What's the weather like?").toEqual(res.translations.get("en", ""));
+                expect(res.translations.languages).toEqual(["en", "de"]);
                 done();
             },
             (error: string) => {

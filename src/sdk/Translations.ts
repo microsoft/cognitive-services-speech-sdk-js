@@ -46,10 +46,6 @@ export class Translations {
      * @returns {string[]} languages in translations object.
      */
     public get languages(): string[] {
-        const langs: string[] = [];
-        Object.keys(this.privMap).forEach((key: string) => {
-            langs.push(key);
-        });
-        return langs;
+        return this.privMap.keys;
     }
 }
