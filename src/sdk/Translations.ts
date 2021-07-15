@@ -5,7 +5,7 @@ import { PropertyCollection } from "./Exports";
 
 /**
  * Represents collection of parameters and their values.
- * @class Translation
+ * @class Translations
  */
 export class Translations {
     // Use an PropertyCollection internally, just wrapping it to hide the | enum syntax it has.
@@ -15,7 +15,7 @@ export class Translations {
      * Returns the parameter value in type String. The parameter must have the same type as String.
      * Currently only String, int and bool are allowed.
      * If the name is not available, the specified defaultValue is returned.
-     * @member Translation.prototype.get
+     * @member Translations.prototype.get
      * @function
      * @public
      * @param {string} key - The parameter name.
@@ -28,7 +28,7 @@ export class Translations {
 
     /**
      * Sets the String value of the parameter specified by name.
-     * @member Translation.prototype.set
+     * @member Translations.prototype.set
      * @function
      * @public
      * @param {string} key - The parameter name.
@@ -36,5 +36,20 @@ export class Translations {
      */
     public set(key: string, value: string): void {
         this.privMap.setProperty(key, value);
+    }
+
+    /**
+     * Get the languages in the object in a String array.
+     * @member Translations.prototype.languages
+     * @function
+     * @public
+     * @returns {string[]} languages in translations object.
+     */
+    public get languages(): string[] {
+        const langs: string[] = [];
+        Object.keys(this.privMap).forEach((key: string) => {
+            langs.push(key);
+        });
+        return langs;
     }
 }
