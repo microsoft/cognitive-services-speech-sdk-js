@@ -108,7 +108,7 @@ export class Connection {
      * @param propertyName Name of the property
      * @param propertyValue Value of the property. This is a json string.
      */
-    public setMessageProperty(path: string, propertyName: string, propertyValue: string | Object): void {
+    public setMessageProperty(path: string, propertyName: string, propertyValue: string | object): void {
         Contracts.throwIfNullOrWhitespace(propertyName, "propertyName");
 
         if (this.privInternalData instanceof ServiceRecognizerBase) {
