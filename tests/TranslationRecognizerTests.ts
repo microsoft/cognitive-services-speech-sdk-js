@@ -46,7 +46,7 @@ afterEach(async (done: jest.DoneCallback) => {
     done();
 });
 
-const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.TranslationRecognizer = (speechConfig?: sdk.SpeechTranslationConfig): sdk.TranslationRecognizer => {
+const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig, fileName?: string) => sdk.TranslationRecognizer = (speechConfig?: sdk.SpeechTranslationConfig, fileName?: string): sdk.TranslationRecognizer => {
 
     let s: sdk.SpeechTranslationConfig = speechConfig;
     if (s === undefined) {
@@ -55,7 +55,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) 
         objsToClose.push(s);
     }
 
-    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
 
     const language: string = Settings.WaveFileLanguage;
     if (s.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_RecoLanguage]) === undefined) {
@@ -150,12 +150,32 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
                 expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
                 expect("What's the weather like?").toEqual(res.translations.get("en", ""));
-                done();
+                expect(res.translations.languages).toEqual(["en", "de"]);
+                expect(r.targetLanguages.length).toEqual(res.translations.languages.length);
+                r.removeTargetLanguage("de-DE");
+                expect(r.targetLanguages.includes("de-DE")).toBeFalsy();
+                r.addTargetLanguage("es-MX");
+                expect(r.targetLanguages.includes("es-MX")).toBeTruthy();
+                r.recognizeOnceAsync(
+                    (secondRes: sdk.TranslationRecognitionResult) => {
+                        expect(secondRes).not.toBeUndefined();
+                        expect(secondRes.errorDetails).toBeUndefined();
+                        expect(sdk.ResultReason[secondRes.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
+                        expect("What's the weather like?").toEqual(secondRes.translations.get("en", ""));
+                        expect(secondRes.translations.languages.includes("es")).toBeTruthy();
+                        expect(secondRes.translations.languages.includes("en")).toBeTruthy();
+                        expect(secondRes.translations.languages.includes("de")).toBeFalsy();
+                        expect("¿Cómo es el clima?").toEqual(secondRes.translations.get("es", ""));
+                        done();
+                    },
+                    (error: string) => {
+                        done.fail(error);
+                    });
             },
             (error: string) => {
                 done.fail(error);
             });
-    });
+    }, 15000);
 
     test("Translate Bad Language", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console

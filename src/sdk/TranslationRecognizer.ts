@@ -13,6 +13,7 @@ import {
 } from "../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
+import { Connection } from "./Connection";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
@@ -212,6 +213,51 @@ export class TranslationRecognizer extends Recognizer {
     }
 
     /**
+     * dynamically remove a language from list of target language
+     * (can be used while recognition is ongoing)
+     * @member TranslationRecognizer.prototype.removeTargetLanguage
+     * @function
+     * @param lang - language to be removed
+     * @public
+     */
+    public removeTargetLanguage(lang: string): void {
+        Contracts.throwIfNullOrUndefined(lang, "language to be removed");
+        if (this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined) !== undefined) {
+            const languages: string[] = this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages).split(",");
+            const index: number = languages.indexOf(lang);
+            if (index > -1) {
+                languages.splice(index, 1);
+                this.properties.setProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, languages.join(","));
+                this.updateLanguages(languages);
+            }
+        }
+    }
+
+    /**
+     * dynamically add a language to list of target language
+     * (can be used while recognition is ongoing)
+     * @member TranslationRecognizer.prototype.addTargetLanguage
+     * @function
+     * @param lang - language to be added
+     * @public
+     */
+    public addTargetLanguage(lang: string): void {
+        Contracts.throwIfNullOrUndefined(lang, "language to be added");
+        let languages: string[] = [];
+        if (this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined) !== undefined) {
+            languages = this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages).split(",");
+            if (!languages.includes(lang)) {
+                languages.push(lang);
+                this.properties.setProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, languages.join(","));
+            }
+        } else {
+            this.properties.setProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, lang);
+            languages = [lang];
+        }
+        this.updateLanguages(languages);
+    }
+
+    /**
      * closes all external resources held by an instance of this class.
      * @member TranslationRecognizer.prototype.close
      * @function
@@ -266,6 +312,14 @@ export class TranslationRecognizer extends Recognizer {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
 
         return new TranslationServiceRecognizer(authentication, connectionFactory, configImpl, recognizerConfig, this);
+    }
+
+    private updateLanguages(languages: string[]): void {
+        const conn: Connection = Connection.fromRecognizer(this);
+        if (!!conn) {
+            conn.setMessageProperty("speech.context", "translationcontext", {to: languages});
+            conn.sendMessageAsync("event", `{"id":"translation","name":"updateLanguage","to":["${languages}"]}`);
+        }
     }
 
 }

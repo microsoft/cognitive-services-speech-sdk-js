@@ -102,4 +102,15 @@ export class PropertyCollection {
             }
         });
     }
+
+    /**
+     * Get the keys in Property Collection.
+     * @member PropertyCollection.prototype.keys
+     * @function
+     * @public
+     * @returns {string []} Keys in the collection.
+     */
+    public get keys(): string[] {
+        return this.privKeys;
+    }
 }
