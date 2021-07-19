@@ -52,6 +52,7 @@
     "REDIST.txt"
   ],
   "devDependencies": {
+    "@types/bent": "^7.3.2",
     "@types/jest": "^25.2.2",
     "@types/node": "^12.12.30",
     "@types/request": "^2.48.3",
@@ -104,6 +105,8 @@
     "asn1.js-rfc2560": "^5.0.1",
     "asn1.js-rfc5280": "^3.0.0",
     "async-disk-cache": "^2.1.0",
+    "bent": "^7.3.12",
+    "form-data": "^4.0.0",
     "https-proxy-agent": "^4.0.0",
     "simple-lru-cache": "0.0.2",
     "url-parse": "^1.4.7",
