@@ -63,7 +63,7 @@ export class RestMessageAdapter {
         const requestCommand = method === RestRequestType.File ? "POST" : method;
         const handleRestResponse = (data: BentResponse, j: any): IRestResponse => {
             // tslint:disable-next-line:no-console
-            console.debug(data);
+            // console.debug(data);
             const d: { statusText?: string, statusMessage?: string } = data;
             return {
                 data: JSON.stringify(j),
@@ -71,7 +71,7 @@ export class RestMessageAdapter {
                 json: j,
                 ok: data.statusCode >= 200 && data.statusCode < 300,
                 status: data.statusCode,
-                statusText: d.statusText ? d.statusText : d.statusMessage
+                statusText: j.error ? j.error.message : d.statusText ? d.statusText : d.statusMessage
             };
         };
 
@@ -94,7 +94,7 @@ export class RestMessageAdapter {
             const contentType = "multipart/form-data";
             this.privHeaders["content-type"] = contentType;
             this.privHeaders["Content-Type"] = contentType;
-            if (typeof Blob !== "undefined") {
+            if (typeof (Blob) !== "undefined" && binaryBody instanceof Blob) {
                 blobToArrayBuffer(binaryBody as Blob).then( (res: any) => {
                     const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 400, 401, 402, 403, 404);
                     const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
@@ -102,6 +102,8 @@ export class RestMessageAdapter {
                         const j: any = await data.json();
                         responseReceivedDeferral.resolve(handleRestResponse(data, j));
                     });
+                }).catch((error: any) => {
+                    responseReceivedDeferral.reject(error);
                 });
             } else {
                 const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 400, 401, 402, 403, 404);
@@ -109,6 +111,8 @@ export class RestMessageAdapter {
                 sendRequest(params, (binaryBody as Buffer)).then( async (data: any) => {
                     const j: any = await data.json();
                     responseReceivedDeferral.resolve(handleRestResponse(data, j));
+                }).catch((error: string) => {
+                    responseReceivedDeferral.reject(error);
                 });
             }
         } else {
@@ -117,15 +121,18 @@ export class RestMessageAdapter {
                 this.privHeaders["Content-Type"] = "application/json";
                 postData = body;
             }
-            const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 400, 401, 402, 403, 404);
+            const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 204, 400, 401, 402, 403, 404);
             const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
             sendRequest(params, postData).then( async (data: any) => {
-                if (method === RestRequestType.Delete) {
+                if (method === RestRequestType.Delete || data.statusCode === 204) {
+                    // No JSON from Delete and reset (204) operations
                     responseReceivedDeferral.resolve(handleRestResponse(data, {}));
                 } else {
                     const j: any = await data.json();
                     responseReceivedDeferral.resolve(handleRestResponse(data, j));
                 }
+            }).catch((error: string) => {
+                responseReceivedDeferral.reject(error);
             });
         }
 

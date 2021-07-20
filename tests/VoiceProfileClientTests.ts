@@ -46,7 +46,6 @@ const BuildClient: (speechConfig?: sdk.SpeechConfig) => sdk.VoiceProfileClient =
         // Since we're not going to return it, mark it for closure.
         objsToClose.push(s);
     }
-
     const r: sdk.VoiceProfileClient = new sdk.VoiceProfileClient(s);
     expect(r).not.toBeUndefined();
 
