@@ -7,10 +7,7 @@ import {
 } from "../common/Exports";
 import { IRequestOptions } from "./Exports";
 
-// Node.JS specific xmlhttprequest / browser support.
 import bent, { BentResponse } from "bent";
-import FormData from "form-data";
-import * as XHR from "xmlhttprequest-ts";
 
 export enum RestRequestType {
     Get = "GET",
@@ -42,6 +39,32 @@ export class RestMessageAdapter {
             throw new ArgumentNullError("configParams");
         }
 
+        this.privHeaders = configParams.headers;
+        this.privIgnoreCache = configParams.ignoreCache;
+    }
+
+    public static extractHeaderValue(headerKey: string, headers: string): string {
+        let headerValue: string = "";
+
+        try {
+            const arr = headers.trim().split(/[\r\n]+/);
+            const headerMap: any = {};
+            arr.forEach((line: any) => {
+                const parts = line.split(": ");
+                const header = parts.shift().toLowerCase();
+                const value = parts.join(": ");
+                headerMap[header] = value;
+            });
+
+            headerValue = headerMap[headerKey.toLowerCase()];
+        } catch (e) {
+            // ignore the error
+        }
+
+        return headerValue;
+    }
+
+    public set options(configParams: IRequestOptions) {
         this.privHeaders = configParams.headers;
         this.privIgnoreCache = configParams.ignoreCache;
     }
@@ -101,6 +124,8 @@ export class RestMessageAdapter {
                     sendRequest(params, res).then( async (data: any) => {
                         const j: any = await data.json();
                         responseReceivedDeferral.resolve(handleRestResponse(data, j));
+                    }).catch((error: any) => {
+                        responseReceivedDeferral.reject(error);
                     });
                 }).catch((error: any) => {
                     responseReceivedDeferral.reject(error);
@@ -137,17 +162,6 @@ export class RestMessageAdapter {
         }
 
         return responseReceivedDeferral.promise;
-    }
-
-    private errorResponse(xhr: XMLHttpRequest | XHR.XMLHttpRequest, message: string | null = null): IRestResponse {
-        return {
-            data: message || xhr.statusText,
-            headers: xhr.getAllResponseHeaders(),
-            json: {},
-            ok: false,
-            status: xhr.status,
-            statusText: xhr.statusText,
-        };
     }
 
     private withQuery(url: string, params: any = {}): any {
