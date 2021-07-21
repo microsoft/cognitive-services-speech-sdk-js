@@ -44,7 +44,6 @@ import {
     ConversationRecognizer,
     ConversationTranslatorMessageTypes
 } from "./ConversationTranslatorInterfaces";
-import { PromiseToEmptyCallback } from "./ConversationUtils";
 
 export class ConversationRecognizerFactory {
     public static fromConfig(conversation: IConversation, speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig): ConversationRecognizer {
@@ -270,6 +269,34 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
 
     private sendMessage(msg: string, cb?: Callback, err?: Callback): void {
         const withAsync = this.privReco as ConversationServiceAdapter;
+        function PromiseToEmptyCallback<T>(promise: Promise<T>, cb?: Callback, err?: Callback): void {
+            if (!!promise) {
+                promise.then((result: T): void => {
+                    try {
+                        if (!!cb) {
+                            cb();
+                        }
+                    } catch (e) {
+                        if (!!err) {
+                            err(`'Unhandled error on promise callback: ${e}'`);
+                        }
+                    }
+                }, (reason: any) => {
+                    try {
+                        if (!!err) {
+                            err(reason);
+                        }
+                        /* tslint:disable:no-empty */
+                    } catch (error) {
+                    }
+                });
+            } else {
+                if (!!err) {
+                    err("Null promise");
+                }
+            }
+        }
+
         PromiseToEmptyCallback(withAsync.sendMessageAsync(msg), cb, err);
         this.resetConversationTimeout();
     }

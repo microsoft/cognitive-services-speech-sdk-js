@@ -7,13 +7,12 @@ import {
 } from "../common/Exports";
 import { IRequestOptions } from "./Exports";
 
-// Node.JS specific xmlhttprequest / browser support.
-import * as XHR from "xmlhttprequest-ts";
+import bent, { BentResponse } from "bent";
 
 export enum RestRequestType {
-    Get = "get",
-    Post = "post",
-    Delete = "delete",
+    Get = "GET",
+    Post = "POST",
+    Delete = "DELETE",
     File = "file",
 }
 
@@ -22,20 +21,18 @@ export interface IRestResponse {
     status: number;
     statusText: string;
     data: string;
-    json: <T>() => T;
+    json: any;
     headers: string;
 }
 
 // accept rest operations via request method and return abstracted objects from server response
 export class RestMessageAdapter {
 
-    private privTimeout: number;
     private privIgnoreCache: boolean;
     private privHeaders: { [key: string]: string; };
 
     public constructor(
-        configParams: IRequestOptions,
-        connectionId?: string
+        configParams: IRequestOptions
         ) {
 
         if (!configParams) {
@@ -43,7 +40,32 @@ export class RestMessageAdapter {
         }
 
         this.privHeaders = configParams.headers;
-        this.privTimeout = configParams.timeout;
+        this.privIgnoreCache = configParams.ignoreCache;
+    }
+
+    public static extractHeaderValue(headerKey: string, headers: string): string {
+        let headerValue: string = "";
+
+        try {
+            const arr = headers.trim().split(/[\r\n]+/);
+            const headerMap: any = {};
+            arr.forEach((line: any) => {
+                const parts = line.split(": ");
+                const header = parts.shift().toLowerCase();
+                const value = parts.join(": ");
+                headerMap[header] = value;
+            });
+
+            headerValue = headerMap[headerKey.toLowerCase()];
+        } catch (e) {
+            // ignore the error
+        }
+
+        return headerValue;
+    }
+
+    public set options(configParams: IRequestOptions) {
+        this.privHeaders = configParams.headers;
         this.privIgnoreCache = configParams.ignoreCache;
     }
 
@@ -61,70 +83,85 @@ export class RestMessageAdapter {
 
         const responseReceivedDeferral = new Deferred<IRestResponse>();
 
-        let xhr: XMLHttpRequest | XHR.XMLHttpRequest;
-        if (typeof (XMLHttpRequest) === "undefined") {
-            xhr = new XHR.XMLHttpRequest();
-        } else {
-            xhr = new XMLHttpRequest();
-        }
-        const requestCommand = method === RestRequestType.File ? "post" : method;
-        xhr.open(requestCommand, this.withQuery(uri, queryParams), true);
+        const requestCommand = method === RestRequestType.File ? "POST" : method;
+        const handleRestResponse = (data: BentResponse, j: any): IRestResponse => {
+            // tslint:disable-next-line:no-console
+            // console.debug(data);
+            const d: { statusText?: string, statusMessage?: string } = data;
+            return {
+                data: JSON.stringify(j),
+                headers: JSON.stringify(data.headers),
+                json: j,
+                ok: data.statusCode >= 200 && data.statusCode < 300,
+                status: data.statusCode,
+                statusText: j.error ? j.error.message : d.statusText ? d.statusText : d.statusMessage
+            };
+        };
 
-        if (this.privHeaders) {
-            Object.keys(this.privHeaders).forEach((key: any) => xhr.setRequestHeader(key, this.privHeaders[key]));
-        }
+        const blobToArrayBuffer = (blob: Blob) => {
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(blob);
+            return new Promise((resolve: (value: unknown) => void) => {
+                reader.onloadend = () => {
+                resolve(reader.result);
+                };
+            });
+        };
 
         if (this.privIgnoreCache) {
-            xhr.setRequestHeader("Cache-Control", "no-cache");
+            this.privHeaders["Cache-Control"] = "no-cache";
         }
 
-        xhr.timeout = this.privTimeout;
-
-        xhr.onload = () => {
-            responseReceivedDeferral.resolve(this.parseXHRResult(xhr));
-        };
-
-        xhr.onerror = () => {
-            responseReceivedDeferral.resolve(this.errorResponse(xhr, "Failed to make request."));
-        };
-
-        xhr.ontimeout = () => {
-            responseReceivedDeferral.resolve(this.errorResponse(xhr, "Request took longer than expected."));
-        };
-
+        let postData;
         if (method === RestRequestType.File && binaryBody) {
-            xhr.setRequestHeader("Content-Type", "multipart/form-data");
-            xhr.send(binaryBody);
-        } else if (method === RestRequestType.Post && body) {
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.send(JSON.stringify(body));
+            const contentType = "multipart/form-data";
+            this.privHeaders["content-type"] = contentType;
+            this.privHeaders["Content-Type"] = contentType;
+            if (typeof (Blob) !== "undefined" && binaryBody instanceof Blob) {
+                blobToArrayBuffer(binaryBody as Blob).then( (res: any) => {
+                    const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 400, 401, 402, 403, 404);
+                    const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
+                    sendRequest(params, res).then( async (data: any) => {
+                        const j: any = await data.json();
+                        responseReceivedDeferral.resolve(handleRestResponse(data, j));
+                    }).catch((error: any) => {
+                        responseReceivedDeferral.reject(error);
+                    });
+                }).catch((error: any) => {
+                    responseReceivedDeferral.reject(error);
+                });
+            } else {
+                const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 400, 401, 402, 403, 404);
+                const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
+                sendRequest(params, (binaryBody as Buffer)).then( async (data: any) => {
+                    const j: any = await data.json();
+                    responseReceivedDeferral.resolve(handleRestResponse(data, j));
+                }).catch((error: string) => {
+                    responseReceivedDeferral.reject(error);
+                });
+            }
         } else {
-            xhr.send();
+            if (method === RestRequestType.Post && body) {
+                this.privHeaders["content-type"] = "application/json";
+                this.privHeaders["Content-Type"] = "application/json";
+                postData = body;
+            }
+            const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 204, 400, 401, 402, 403, 404);
+            const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
+            sendRequest(params, postData).then( async (data: any) => {
+                if (method === RestRequestType.Delete || data.statusCode === 204) {
+                    // No JSON from Delete and reset (204) operations
+                    responseReceivedDeferral.resolve(handleRestResponse(data, {}));
+                } else {
+                    const j: any = await data.json();
+                    responseReceivedDeferral.resolve(handleRestResponse(data, j));
+                }
+            }).catch((error: string) => {
+                responseReceivedDeferral.reject(error);
+            });
         }
 
         return responseReceivedDeferral.promise;
-    }
-
-    private parseXHRResult(xhr: XMLHttpRequest | XHR.XMLHttpRequest): IRestResponse {
-        return {
-            data: xhr.responseText,
-            headers: xhr.getAllResponseHeaders(),
-            json: <T>() => JSON.parse(xhr.responseText) as T,
-            ok: xhr.status >= 200 && xhr.status < 300,
-            status: xhr.status,
-            statusText: xhr.statusText,
-        };
-    }
-
-    private errorResponse(xhr: XMLHttpRequest | XHR.XMLHttpRequest, message: string | null = null): IRestResponse {
-        return {
-            data: message || xhr.statusText,
-            headers: xhr.getAllResponseHeaders(),
-            json: <T>() => JSON.parse(message || ("\"" + xhr.statusText + "\"")) as T,
-            ok: false,
-            status: xhr.status,
-            statusText: xhr.statusText,
-        };
     }
 
     private withQuery(url: string, params: any = {}): any {
