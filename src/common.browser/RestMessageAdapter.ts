@@ -84,9 +84,7 @@ export class RestMessageAdapter {
         const responseReceivedDeferral = new Deferred<IRestResponse>();
 
         const requestCommand = method === RestRequestType.File ? "POST" : method;
-        const handleRestResponse = (data: BentResponse, j: any): IRestResponse => {
-            // tslint:disable-next-line:no-console
-            // console.debug(data);
+        const handleRestResponse = (data: BentResponse, j: any = {}): IRestResponse => {
             const d: { statusText?: string, statusMessage?: string } = data;
             return {
                 data: JSON.stringify(j),
@@ -108,50 +106,13 @@ export class RestMessageAdapter {
             });
         };
 
-        if (this.privIgnoreCache) {
-            this.privHeaders["Cache-Control"] = "no-cache";
-        }
-
-        let postData;
-        if (method === RestRequestType.File && binaryBody) {
-            const contentType = "multipart/form-data";
-            this.privHeaders["content-type"] = contentType;
-            this.privHeaders["Content-Type"] = contentType;
-            if (typeof (Blob) !== "undefined" && binaryBody instanceof Blob) {
-                blobToArrayBuffer(binaryBody as Blob).then( (res: any) => {
-                    const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 400, 401, 402, 403, 404);
-                    const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
-                    sendRequest(params, res).then( async (data: any) => {
-                        const j: any = await data.json();
-                        responseReceivedDeferral.resolve(handleRestResponse(data, j));
-                    }).catch((error: any) => {
-                        responseReceivedDeferral.reject(error);
-                    });
-                }).catch((error: any) => {
-                    responseReceivedDeferral.reject(error);
-                });
-            } else {
-                const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 400, 401, 402, 403, 404);
-                const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
-                sendRequest(params, (binaryBody as Buffer)).then( async (data: any) => {
-                    const j: any = await data.json();
-                    responseReceivedDeferral.resolve(handleRestResponse(data, j));
-                }).catch((error: string) => {
-                    responseReceivedDeferral.reject(error);
-                });
-            }
-        } else {
-            if (method === RestRequestType.Post && body) {
-                this.privHeaders["content-type"] = "application/json";
-                this.privHeaders["Content-Type"] = "application/json";
-                postData = body;
-            }
+        const send = (postData: any): void => {
             const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 204, 400, 401, 402, 403, 404);
             const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
             sendRequest(params, postData).then( async (data: any) => {
                 if (method === RestRequestType.Delete || data.statusCode === 204) {
                     // No JSON from Delete and reset (204) operations
-                    responseReceivedDeferral.resolve(handleRestResponse(data, {}));
+                    responseReceivedDeferral.resolve(handleRestResponse(data));
                 } else {
                     const j: any = await data.json();
                     responseReceivedDeferral.resolve(handleRestResponse(data, j));
@@ -159,8 +120,32 @@ export class RestMessageAdapter {
             }).catch((error: string) => {
                 responseReceivedDeferral.reject(error);
             });
+        };
+
+        if (this.privIgnoreCache) {
+            this.privHeaders["Cache-Control"] = "no-cache";
         }
 
+        if (method === RestRequestType.File && binaryBody) {
+            const contentType = "multipart/form-data";
+            this.privHeaders["content-type"] = contentType;
+            this.privHeaders["Content-Type"] = contentType;
+            if (typeof (Blob) !== "undefined" && binaryBody instanceof Blob) {
+                blobToArrayBuffer(binaryBody as Blob).then( (res: any) => {
+                    send(res);
+                }).catch((error: any) => {
+                    responseReceivedDeferral.reject(error);
+                });
+            } else {
+                send(binaryBody as Buffer);
+            }
+        } else {
+            if (method === RestRequestType.Post && body) {
+                this.privHeaders["content-type"] = "application/json";
+                this.privHeaders["Content-Type"] = "application/json";
+            }
+            send(body);
+        }
         return responseReceivedDeferral.promise;
     }
 
