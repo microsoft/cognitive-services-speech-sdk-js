@@ -54,7 +54,6 @@ export class SpeakerIdMessageAdapter {
         Promise<IRestResponse> {
 
         const uri = this.getOperationUri(profileType);
-        this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "application/json");
         return this.privRestAdapter.request(RestRequestType.Post, uri, {}, { locale: lang });
     }
 
@@ -69,7 +68,6 @@ export class SpeakerIdMessageAdapter {
     public createEnrollment(profile: VoiceProfile, audioSource: IAudioSource):
         Promise<IRestResponse> {
 
-        this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
         const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/enrollments";
         return audioSource.blob.then<IRestResponse>((result: Blob | Buffer): Promise<IRestResponse> => {
             return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, null, result);
@@ -87,7 +85,6 @@ export class SpeakerIdMessageAdapter {
     public async verifySpeaker(model: SpeakerVerificationModel, audioSource: IAudioSource):
         Promise<IRestResponse> {
 
-        this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
         const uri = this.getOperationUri(model.voiceProfile.profileType) + "/" + model.voiceProfile.profileId + "/verify";
         try {
             const result: Blob | Buffer = await audioSource.blob;
@@ -108,7 +105,6 @@ export class SpeakerIdMessageAdapter {
     public async identifySpeaker(model: SpeakerIdentificationModel, audioSource: IAudioSource):
         Promise<IRestResponse> {
 
-        this.privRestAdapter.setHeaders(RestConfigBase.configParams.contentTypeKey, "multipart/form-data");
         const uri = this.getOperationUri(VoiceProfileType.TextIndependentIdentification) + "/identifySingleSpeaker";
         try {
             const result: Blob | Buffer = await audioSource.blob;
