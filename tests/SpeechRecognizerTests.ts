@@ -1020,6 +1020,32 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
+    test("Detailed output continuous recognition stops correctly", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Detailed output continuous recognition stops correctly");
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+        s.speechRecognitionLanguage = "en-US";
+        s.outputFormat = sdk.OutputFormat.Detailed;
+
+        const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.LongerWaveFile);
+
+        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+        objsToClose.push(r);
+        expect(r).not.toBeUndefined();
+        expect(r instanceof sdk.Recognizer);
+
+        r.sessionStopped = (s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+            done();
+        };
+
+        r.recognizing = (s: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+            r.stopContinuousRecognitionAsync();
+        };
+
+        r.startContinuousRecognitionAsync();
+    }, 15000);
+
     test("PushStream start-stop-start continuous recognition on PushStream", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: PushStream start-stop-start continuous recognition on PushStream");
@@ -1498,7 +1524,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     test("RecognizeOnceAsync is async", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
-        console.info("Name: ecognizeOnceAsync is async");
+        console.info("Name: RecognizeOnceAsync is async");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
