@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.18.0",
+  "version": "1.18.1-rc.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
@@ -33,7 +33,6 @@
     "simple-lru-cache": false,
     "ws": false,
     "fs": false,
-    "xmlhttprequest-ts": false,
     "async-disk-cache": false,
     "distrib/es2015/external/ocsp/ocsp": false,
     "distrib/lib/external/ocsp/ocsp": false,
@@ -52,6 +51,7 @@
     "REDIST.txt"
   ],
   "devDependencies": {
+    "@types/bent": "^7.3.2",
     "@types/jest": "^25.2.2",
     "@types/node": "^12.12.30",
     "@types/request": "^2.48.3",
@@ -104,12 +104,12 @@
     "asn1.js-rfc2560": "^5.0.1",
     "asn1.js-rfc5280": "^3.0.0",
     "async-disk-cache": "^2.1.0",
+    "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",
     "simple-lru-cache": "0.0.2",
     "url-parse": "^1.4.7",
     "uuid": "^3.3.3",
-    "ws": "^7.3.1",
-    "xmlhttprequest-ts": "^1.0.1"
+    "ws": "^7.3.1"
   },
   "resolutions": {
     "extend": "3.0.2"

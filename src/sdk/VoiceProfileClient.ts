@@ -97,10 +97,9 @@ export class VoiceProfileClient {
         marshalPromiseToCallbacks((async (): Promise<VoiceProfile> => {
             const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
             if (!result.ok) {
-                const e: { error: { code: number, message: string } } = result.json();
-                throw new Error(`createProfileAsync failed with code: ${e.error.code}, message: ${e.error.message}`);
+                throw new Error(`createProfileAsync failed with code: ${result.status}, message: ${result.statusText}`);
             }
-            const response: { profileId: string } = result.json();
+            const response: { profileId: string } = result.json;
             const profile = new VoiceProfile(response.profileId, profileType);
             return profile;
         })(), cb, err);
@@ -138,9 +137,9 @@ export class VoiceProfileClient {
         marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult[]> => {
             const result: IRestResponse = await this.privAdapter.getProfiles(profileType);
             if (profileType === VoiceProfileType.TextIndependentIdentification) {
-                return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json());
+                return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json);
             }
-            return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json());
+            return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json);
         })(), cb, err);
     }
 
@@ -159,7 +158,7 @@ export class VoiceProfileClient {
             return new VoiceProfilePhraseResult(
                 result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
                 result.statusText,
-                result.json()
+                result.json
             );
         })(), cb, err);
     }

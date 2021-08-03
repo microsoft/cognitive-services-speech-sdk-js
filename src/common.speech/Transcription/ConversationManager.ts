@@ -4,13 +4,15 @@
 import {
     IRequestOptions,
     IRestParams,
-} from "../../common.browser/RestConfigBase";
+    IRestResponse,
+    RestMessageAdapter,
+    RestRequestType
+} from "../../common.browser/Exports";
 import { IErrorMessages, IStringDictionary } from "../../common/Exports";
 import { Contracts } from "../../sdk/Contracts";
 import { PropertyCollection, PropertyId } from "../../sdk/Exports";
 import { ConversationConnectionConfig } from "./ConversationConnectionConfig";
 import { IConversationResponseError, IInternalConversation, IResponse } from "./ConversationTranslatorInterfaces";
-import { extractHeaderValue, request } from "./ConversationUtils";
 
 export class ConversationManager {
 
@@ -19,6 +21,7 @@ export class ConversationManager {
     private privHost: string;
     private privApiVersion: string;
     private privRestPath: string;
+    private privRestAdapter: RestMessageAdapter;
 
     public constructor() {
         //
@@ -27,6 +30,7 @@ export class ConversationManager {
         this.privHost = ConversationConnectionConfig.host;
         this.privApiVersion = ConversationConnectionConfig.apiVersion;
         this.privRestPath = ConversationConnectionConfig.restPath;
+        this.privRestAdapter = new RestMessageAdapter({});
     }
 
     /**
@@ -81,13 +85,14 @@ export class ConversationManager {
 
             const config: IRequestOptions = {};
             config.headers = headers;
+            this.privRestAdapter.options = config;
 
             const endpoint: string = `https://${endpointHost}${this.privRestPath}`;
 
             // TODO: support a proxy and certificate validation
-            request("post", endpoint, queryParams, null, config, (response: IResponse) => {
+            this.privRestAdapter.request(RestRequestType.Post, endpoint, queryParams, null).then((response: IRestResponse) => {
 
-                const requestId: string = extractHeaderValue(this.privRequestParams.requestId, response.headers);
+                const requestId: string = RestMessageAdapter.extractHeaderValue(this.privRequestParams.requestId, response.headers);
 
                 if (!response.ok) {
                     if (!!err) {
@@ -122,8 +127,8 @@ export class ConversationManager {
                     }
                     cb = undefined;
                 }
-
-            });
+            /* tslint:disable:no-empty */
+            }).catch( (e: any) => {});
 
         } catch (error) {
             if (!!err) {
@@ -165,18 +170,20 @@ export class ConversationManager {
 
                 const config: IRequestOptions = {};
                 config.headers = headers;
+                this.privRestAdapter.options = config;
 
                 const endpoint: string = `https://${endpointHost}${this.privRestPath}`;
 
                 // TODO: support a proxy and certificate validation
-                request("delete", endpoint, queryParams, null, config, (response: IResponse) => {
+                this.privRestAdapter.request(RestRequestType.Delete, endpoint, queryParams, null).then((response: IRestResponse) => {
 
                     if (!response.ok) {
                         // ignore errors on delete
                     }
 
                     resolve();
-                });
+                /* tslint:disable:no-empty */
+                }).catch( (e: any) => {});
 
             } catch (error) {
                 if (error instanceof Error) {
