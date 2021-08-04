@@ -61,6 +61,8 @@ export class MicAudioSource implements IAudioSource {
 
     private privOutputChunkSize: number;
 
+    private privIsClosing: boolean;
+
     public constructor(
         private readonly privRecorder: IRecorder,
         private readonly deviceId?: string,
@@ -72,6 +74,7 @@ export class MicAudioSource implements IAudioSource {
         this.privId = audioSourceId ? audioSourceId : createNoDashGuid();
         this.privEvents = new EventSource<AudioSourceEvent>();
         this.privMediaStream = mediaStream || null;
+        this.privIsClosing = false;
     }
 
     public get format(): Promise<AudioStreamFormatImpl> {
@@ -327,8 +330,13 @@ export class MicAudioSource implements IAudioSource {
         }
 
         if (hasClose) {
-            await this.privContext.close();
-            this.privContext = null;
+            if (!this.privIsClosing) {
+                // The audio context close may take enough time that the close is called twice
+                this.privIsClosing = true;
+                await this.privContext.close();
+                this.privContext = null;
+                this.privIsClosing = false;
+            }
         } else if (null !== this.privContext && this.privContext.state === "running") {
             // Suspend actually takes a callback, but analogous to the
             // resume method, it'll be only fired if suspend is called
