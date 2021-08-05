@@ -94,8 +94,9 @@ export class TranscriberRecognizer extends Recognizer {
     }
 
     public async close(): Promise<void> {
-        Contracts.throwIfDisposed(this.privDisposedRecognizer);
-        await this.dispose(true);
+        if (!this.privDisposedRecognizer) {
+            await this.dispose(true);
+        }
     }
 
     // Push async join/leave conversation message via serviceRecognizer

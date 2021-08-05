@@ -985,12 +985,13 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private async close(dispose: boolean): Promise<void> {
         try {
             this.privIsConnected = false;
-            await this.privConversationRecognizer.close();
-            await this.privTranscriberRecognizer?.close();
+            await this.privConversationRecognizer?.close();
             this.privConversationRecognizer = undefined;
+            await this.privTranscriberRecognizer?.close();
             this.privConversationTranslator?.dispose();
         } catch (e) {
             // ignore error
+            throw e;
         }
         if (dispose) {
             this.dispose();
