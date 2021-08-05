@@ -72,27 +72,30 @@ export abstract class Conversation implements IConversation {
         if (!speechConfig.subscriptionKey && !speechConfig.getProperty(PropertyId[PropertyId.SpeechServiceAuthorization_Token])) {
             Contracts.throwIfNullOrUndefined(speechConfig.subscriptionKey, ConversationConnectionConfig.restErrors.invalidArgs.replace("{arg}", "SpeechServiceConnection_Key"));
         }
+        let conversationImpl: ConversationImpl;
+        let cb: Callback;
+        let err: Callback;
         if (typeof arg2 === "string") {
-            const conversationImpl: ConversationImpl = new ConversationImpl(speechConfig, arg2);
-            marshalPromiseToCallbacks((async (): Promise<void> => { return; })(), arg3, arg4);
-            return conversationImpl;
+            conversationImpl = new ConversationImpl(speechConfig, arg2);
+            cb = arg3;
+            err = arg4;
         } else {
-            const conversationImpl: ConversationImpl = new ConversationImpl(speechConfig);
-            const cb: Callback = arg2;
-            const err: Callback = arg3;
-            conversationImpl.createConversationAsync(
-                (() => {
-                    if (!!cb) {
-                        cb();
-                    }
-                }),
-                (error: any) => {
-                    if (!!err) {
-                        err(error);
-                    }
-                });
-            return conversationImpl;
+            conversationImpl = new ConversationImpl(speechConfig);
+            cb = arg2;
+            err = arg3;
         }
+        conversationImpl.createConversationAsync(
+            (() => {
+                if (!!cb) {
+                    cb();
+                }
+            }),
+            (error: any) => {
+                if (!!err) {
+                    err(error);
+                }
+            });
+        return conversationImpl;
 
     }
 
