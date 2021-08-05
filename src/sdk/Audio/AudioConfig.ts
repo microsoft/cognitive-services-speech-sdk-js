@@ -101,10 +101,6 @@ export abstract class AudioConfig {
         }
         if (typeof MediaStream !== "undefined" && audioStream instanceof MediaStream) {
             const pcmRecorder = new PcmRecorder(false);
-            // tslint:disable-next-line:no-console
-            console.error("mediastream");
-            // tslint:disable-next-line:no-console
-            console.error(audioStream);
             return new AudioConfigImpl(new MicAudioSource(pcmRecorder, null, null, audioStream));
         }
 
