@@ -57,6 +57,7 @@ export abstract class Conversation implements IConversation {
     public abstract get properties(): PropertyCollection;
     public abstract get speechRecognitionLanguage(): string;
     public abstract get participants(): Participant[];
+    public abstract get isConnected(): boolean;
 
     protected constructor() { }
 
@@ -720,7 +721,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privRoom = undefined;
         this.privToken = undefined;
         this.privManager = undefined;
-        this.privConversationRecognizer = undefined;
         this.privIsConnected = false;
         this.privIsReady = false;
         this.privParticipants = undefined;
@@ -773,8 +773,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private onConnected = (e: ConnectionEventArgs): void => {
         this.privIsConnected = true;
         try {
-            if (!!this.privConversationTranslator.sessionStarted) {
+            if (!!this.privConversationTranslator?.sessionStarted) {
                 this.privConversationTranslator.sessionStarted(this.privConversationTranslator, e);
+            }
+            if (!!this.privTranscriberRecognizer?.sessionStarted) {
+                this.privTranscriberRecognizer.sessionStarted(this.privTranscriberRecognizer, e);
             }
         } catch (e) {
             //
@@ -782,21 +785,27 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     private onDisconnected = async (e: ConnectionEventArgs): Promise<void> => {
-        await this.close(false);
         try {
-            if (!!this.privConversationTranslator.sessionStopped) {
+            if (!!this.privConversationTranslator?.sessionStopped) {
                 this.privConversationTranslator.sessionStopped(this.privConversationTranslator, e);
+            }
+            if (!!this.privTranscriberRecognizer?.sessionStopped) {
+                this.privTranscriberRecognizer.sessionStopped(this.privTranscriberRecognizer, e);
             }
         } catch (e) {
             //
+        } finally {
+            await this.close(false);
         }
     }
 
     private onCanceled = async (r: ConversationRecognizer, e: ConversationTranslationCanceledEventArgs): Promise<void> => {
-        await this.close(false); // ?
         try {
-            if (!!this.privConversationTranslator.canceled) {
+            if (!!this.privConversationTranslator?.canceled) {
                 this.privConversationTranslator.canceled(this.privConversationTranslator, e);
+            }
+            if (!!this.privTranscriberRecognizer?.canceled) {
+                this.privTranscriberRecognizer.canceled(this.privTranscriberRecognizer, e);
             }
         } catch (e) {
             //
@@ -987,7 +996,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privIsConnected = false;
             await this.privConversationRecognizer?.close();
             this.privConversationRecognizer = undefined;
-            await this.privTranscriberRecognizer?.close();
             this.privConversationTranslator?.dispose();
         } catch (e) {
             // ignore error
