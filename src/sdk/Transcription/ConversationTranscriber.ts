@@ -38,6 +38,14 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
     }
 
     /**
+     * The event canceled signals that an error occurred during the conversation.
+     * @member ConversationTranscriber.prototype.conversationCanceled
+     * @function
+     * @public
+     */
+    public conversationCanceled: (sender: ConversationHandler, event: CancellationEventArgs) => void;
+
+    /**
      * The event canceled signals that an error occurred during transcription.
      * @member ConversationTranscriber.prototype.canceled
      * @function
@@ -92,6 +100,22 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @public
      */
     public sessionStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
+
+    /**
+     * Defines event handler for conversation started events.
+     * @member ConversationTranscriber.prototype.conversationStarted
+     * @function
+     * @public
+     */
+    public conversationStarted: (sender: ConversationHandler, event: SessionEventArgs) => void;
+
+    /**
+     * Defines event handler for conversation stopped events.
+     * @member ConversationTranscriber.prototype.conversationStopped
+     * @function
+     * @public
+     */
+    public conversationStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
 
     /**
      * Gets the authorization token used to communicate with the service.

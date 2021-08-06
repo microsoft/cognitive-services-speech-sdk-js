@@ -32,6 +32,7 @@ beforeEach(() => {
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
+    jest.setTimeout(12000);
 });
 
 afterEach(async (done: jest.DoneCallback) => {
@@ -131,29 +132,36 @@ test("BuildTranscriber", () => {
     expect(t.properties).not.toBeUndefined();
 });
 
-/*
 test("Create Conversation and join to Transcriber", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation and join to Transcriber");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const c: sdk.Conversation = CreateConversation(s);
-    objsToClose.push(c);
+    CreateConversation(s).then( (c: sdk.Conversation) => {
+        objsToClose.push(c);
+        expect(c.properties).not.toBeUndefined();
 
-    const t: sdk.ConversationTranscriber = BuildTranscriber();
-    t.joinConversationAsync(c,
-        () => {
-            try {
-                expect(t.properties).not.toBeUndefined();
-                done();
-            } catch (error) {
+        const t: sdk.ConversationTranscriber = BuildTranscriber();
+        c.startConversationAsync(
+            () => {
+                t.joinConversationAsync(c,
+                    () => {
+                        try {
+                            expect(t.properties).not.toBeUndefined();
+                            done();
+                        } catch (error) {
+                            done.fail(error);
+                        }
+                    },
+                    (error: string) => {
+                        done.fail(error);
+                    });
+            },
+            (error: string) => {
                 done.fail(error);
-            }
-        },
-        (error: string) => {
-            done.fail(error);
-        });
+            });
+        }).catch();
 });
 
 test("Create Conversation and add participants", (done: jest.DoneCallback) => {
@@ -162,83 +170,110 @@ test("Create Conversation and add participants", (done: jest.DoneCallback) => {
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const c: sdk.Conversation = CreateConversation(s);
-    objsToClose.push(c);
+    CreateConversation(s).then( (c: sdk.Conversation) => {
+        objsToClose.push(c);
+        expect(c.properties).not.toBeUndefined();
 
-    const t: sdk.ConversationTranscriber = BuildTranscriber();
-    t.sessionStopped = (o: sdk.ConversationTranscriber, e: sdk.SessionEventArgs) => {
-        try {
-            done();
-        } catch (error) {
-            done.fail(error);
-        }
-    };
-    t.canceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
-        try {
-            expect(e.errorDetails).toBeUndefined();
-            expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
-        } catch (error) {
-            done.fail(error);
-        }
-    };
-
-    t.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
-        try {
-            expect(e).not.toBeUndefined();
-            expect(e.result).not.toBeUndefined();
-            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-            expect(e.result.text).not.toBeUndefined();
-            expect(e.result.speakerId).not.toBeUndefined();
-        } catch (error) {
-            done.fail(error);
-        }
-    };
-
-    t.joinConversationAsync(c,
-        () => {
+        const t: sdk.ConversationTranscriber = BuildTranscriber();
+        t.sessionStopped = (o: sdk.ConversationTranscriber, e: sdk.SessionEventArgs) => {
             try {
-                expect(t.properties).not.toBeUndefined();
-                c.addParticipantAsync(GetParticipantKatie(),
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+        t.conversationCanceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
+            try {
+                expect(e.errorDetails).toEqual("Disconnecting");
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+        t.canceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        t.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
+            try {
+                expect(e).not.toBeUndefined();
+                expect(e.result).not.toBeUndefined();
+                expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                expect(e.result.text).not.toBeUndefined();
+                expect(e.result.speakerId).not.toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+        c.startConversationAsync(
+            () => {
+                t.joinConversationAsync(c,
                     () => {
                         try {
-                            expect(c.participants).not.toBeUndefined();
-                            expect(c.participants.length).toEqual(1);
-                            // Adds steve as a participant to the conversation.
-                            c.addParticipantAsync(GetParticipantSteve(),
+                            expect(t.properties).not.toBeUndefined();
+                            c.addParticipantAsync(GetParticipantKatie(),
                                 () => {
                                     try {
                                         expect(c.participants).not.toBeUndefined();
-                                        expect(c.participants.length).toEqual(2);
+                                        expect(c.participants.length).toEqual(1);
+                                        // Adds steve as a participant to the conversation.
+                                        c.addParticipantAsync(GetParticipantSteve(),
+                                            () => {
+                                                try {
+                                                    expect(c.participants).not.toBeUndefined();
+                                                    expect(c.participants.length).toEqual(2);
+                                                } catch (error) {
+                                                    done.fail(error);
+                                                }
+
+                                                // tslint:disable:no-empty
+                                                t.startTranscribingAsync(
+                                                    // tslint:disable:no-empty
+                                                    () => {},
+                                                    (err: string) => {
+                                                        done.fail(err);
+                                                    });
+                                            });
                                     } catch (error) {
                                         done.fail(error);
                                     }
-
-                                    // tslint:disable:no-empty
-                                    t.startTranscribingAsync(
-                                        // tslint:disable:no-empty
-                                        () => {},
-                                        (err: string) => {
-                                            done.fail(err);
-                                        });
                                 });
                         } catch (error) {
                             done.fail(error);
                         }
+                    },
+                    (error: string) => {
+                        done.fail(error);
                     });
-            } catch (error) {
+            },
+            (error: string) => {
                 done.fail(error);
-            }
-        },
-        (error: string) => {
-            done.fail(error);
-        });
+            });
+        }).catch();
+
 }, 50000);
 
+/*
 test("Leave Conversation", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Leave Conversation");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
+    CreateConversation(s).then( (c: sdk.Conversation) => {
+        objsToClose.push(c);
+        expect(c.properties).not.toBeUndefined();
+
+        const t: sdk.ConversationTranscriber = BuildTranscriber();
+        c.startConversationAsync(
+            () => {
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+        }).catch();
 
     const c: sdk.Conversation = CreateConversation(s);
     objsToClose.push(c);
@@ -315,6 +350,18 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
     console.info("Name: Create Conversation with one channel audio (aligned)");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
+    CreateConversation(s).then( (c: sdk.Conversation) => {
+        objsToClose.push(c);
+        expect(c.properties).not.toBeUndefined();
+
+        const t: sdk.ConversationTranscriber = BuildTranscriber();
+        c.startConversationAsync(
+            () => {
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+        }).catch();
 
     const c: sdk.Conversation = CreateConversation(s);
     objsToClose.push(c);
@@ -422,11 +469,10 @@ test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
             }
         };
 
-        t.canceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
+        t.conversationCanceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
             try {
                 expect(c.isConnected).toEqual(false);
                 expect(e.errorDetails).toEqual("Disconnecting");
-                // done();
             } catch (error) {
                 done.fail(error);
             }

@@ -56,6 +56,12 @@ export class TranscriberRecognizer extends Recognizer {
 
     public canceled: (sender: Recognizer, event: CancellationEventArgs) => void;
 
+    public conversationCanceled: (sender: Recognizer, event: CancellationEventArgs) => void;
+
+    public conversationStarted: (sender: Recognizer, event: SessionEventArgs) => void;
+
+    public conversationStopped: (sender: Recognizer, event: SessionEventArgs) => void;
+
     public getConversationInfo(): ConversationInfo {
         Contracts.throwIfNullOrUndefined(this.privConversation, "Conversation");
         return this.privConversation.conversationInfo;
@@ -112,6 +118,11 @@ export class TranscriberRecognizer extends Recognizer {
                 transcriber.canceled(transcriber, e);
             }
         };
+        this.conversationCanceled = (s: any, e: CancellationEventArgs): void => {
+            if (!!transcriber.conversationCanceled) {
+                transcriber.conversationCanceled(transcriber, e);
+            }
+        };
         this.recognizing = (s: any, e: SpeechRecognitionEventArgs): void => {
             if (!!transcriber.transcribing) {
                 transcriber.transcribing(transcriber, e);
@@ -120,6 +131,16 @@ export class TranscriberRecognizer extends Recognizer {
         this.recognized = (s: any, e: SpeechRecognitionEventArgs): void => {
             if (!!transcriber.transcribed) {
                 transcriber.transcribed(transcriber, e);
+            }
+        };
+        this.conversationStarted = (s: any, e: SessionEventArgs): void => {
+            if (!!transcriber.conversationStarted) {
+                transcriber.conversationStarted(transcriber, e);
+            }
+        };
+        this.conversationStopped = (s: any, e: SessionEventArgs): void => {
+            if (!!transcriber.conversationStopped) {
+                transcriber.conversationStopped(transcriber, e);
             }
         };
         this.sessionStarted = (s: any, e: SessionEventArgs): void => {
@@ -140,6 +161,9 @@ export class TranscriberRecognizer extends Recognizer {
         this.recognized = undefined;
         this.sessionStarted = undefined;
         this.sessionStopped = undefined;
+        this.conversationCanceled = undefined;
+        this.conversationStarted = undefined;
+        this.conversationStopped = undefined;
     }
 
     /**

@@ -776,8 +776,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!!this.privConversationTranslator?.sessionStarted) {
                 this.privConversationTranslator.sessionStarted(this.privConversationTranslator, e);
             }
-            if (!!this.privTranscriberRecognizer?.sessionStarted) {
-                this.privTranscriberRecognizer.sessionStarted(this.privTranscriberRecognizer, e);
+            if (!!this.privTranscriberRecognizer?.conversationStarted) {
+                this.privTranscriberRecognizer.conversationStarted(this.privTranscriberRecognizer, e);
             }
         } catch (e) {
             //
@@ -789,8 +789,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!!this.privConversationTranslator?.sessionStopped) {
                 this.privConversationTranslator.sessionStopped(this.privConversationTranslator, e);
             }
-            if (!!this.privTranscriberRecognizer?.sessionStopped) {
-                this.privTranscriberRecognizer.sessionStopped(this.privTranscriberRecognizer, e);
+            if (!!this.privTranscriberRecognizer?.conversationStopped) {
+                this.privTranscriberRecognizer.conversationStopped(this.privTranscriberRecognizer, e);
             }
         } catch (e) {
             //
@@ -804,8 +804,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!!this.privConversationTranslator?.canceled) {
                 this.privConversationTranslator.canceled(this.privConversationTranslator, e);
             }
-            if (!!this.privTranscriberRecognizer?.canceled) {
-                this.privTranscriberRecognizer.canceled(this.privTranscriberRecognizer, e);
+            if (!!this.privTranscriberRecognizer?.conversationCanceled) {
+                this.privTranscriberRecognizer.conversationCanceled(this.privTranscriberRecognizer, e);
             }
         } catch (e) {
             //
