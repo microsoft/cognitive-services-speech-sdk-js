@@ -759,10 +759,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     public getKeepAlive(): string {
+        const nickname: string = (!!this.me) ? this.me.displayName : "default_nickname";
         return JSON.stringify({
             // tslint:disable-next-line: object-literal-shorthand
             id: "0",
-            nickname: this.me.displayName,
+            nickname,
             participantId: this.privRoom.participantId,
             roomId: this.privRoom.roomId,
             type: ConversationTranslatorMessageTypes.keepAlive
