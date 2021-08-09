@@ -47,7 +47,7 @@ export class ConversationManager {
             Contracts.throwIfNullOrUndefined(args, "args");
 
             const languageCode: string = args.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, ConversationConnectionConfig.defaultLanguageCode);
-            const nickname: string = args.getProperty(PropertyId.ConversationTranslator_Name);
+            const nickname: string = args.getProperty(PropertyId.ConversationTranslator_Name, "conversation_host");
             const endpointHost: string = args.getProperty(PropertyId.ConversationTranslator_Host, this.privHost);
             const correlationId: string = args.getProperty(PropertyId.ConversationTranslator_CorrelationId);
             const subscriptionKey: string = args.getProperty(PropertyId.SpeechServiceConnection_Key);
