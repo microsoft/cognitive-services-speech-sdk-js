@@ -23,6 +23,7 @@ beforeEach(() => {
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
+    jest.setTimeout(12000);
 });
 
 afterEach(async (done: jest.DoneCallback) => {
