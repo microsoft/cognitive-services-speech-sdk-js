@@ -409,8 +409,6 @@ export class ConversationTranslator extends ConversationCommon implements IConve
      * Currently there is no language validation performed before sending the SpeechLanguage code to the service.
      * If it's an invalid language the raw error will be: 'Error during WebSocket handshake: Unexpected response code: 400'
      * e.g. pass in 'fr' instead of 'fr-FR', or a text-only language 'cy'
-     * @param cb
-     * @param err
      */
     private async connectTranslatorRecognizer(): Promise<void> {
         try {
@@ -445,8 +443,6 @@ export class ConversationTranslator extends ConversationCommon implements IConve
 
     /**
      * Handle the start speaking request
-     * @param cb
-     * @param err
      */
     private startContinuousRecognition(): Promise<void> {
         return new Promise((resolve: () => void, reject: (error: string) => void): void => {
