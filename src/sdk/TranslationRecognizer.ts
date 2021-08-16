@@ -47,7 +47,6 @@ export class TranslationRecognizer extends Recognizer {
         super(audioConfig, configImpl.properties, new TranslationConnectionFactory());
 
         this.privDisposedTranslationRecognizer = false;
-        this.privProperties = configImpl.properties.clone();
 
         if (this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined) !== undefined) {
             Contracts.throwIfNullOrWhitespace(
