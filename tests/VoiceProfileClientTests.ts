@@ -204,24 +204,22 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
         expect(sdk.ResultReason[resultReason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
         expect(result.enrollmentsCount).toEqual(1);
         expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
-        r.resetProfileAsync(
-            res,
-            async (resetResult: sdk.VoiceProfileResult) => {
-                expect(resetResult).not.toBeUndefined();
-                expect(resetResult.reason).not.toBeUndefined();
-                expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
-                try {
-                    const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
-                    expect(result).not.toBeUndefined();
-                    expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
-                    done();
-                } catch (error) {
-                    done.fail(error);
-                }
-            },
-            (error: string) => {
+        try {
+            const resetResult: sdk.VoiceProfileResult = await r.resetProfileAsync(res);
+            expect(resetResult).not.toBeUndefined();
+            expect(resetResult.reason).not.toBeUndefined();
+            expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
+            try {
+                const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
+                expect(result).not.toBeUndefined();
+                expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
+                done();
+            } catch (error) {
                 done.fail(error);
-            });
+            }
+        } catch (error) {
+            done.fail(error);
+        }
     } catch (error) {
         done.fail(error);
     }
@@ -257,24 +255,22 @@ test("Create and Delete Voice Profile - Independent Identification", async (done
         expect(result.enrollmentsCount).toEqual(1);
         expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
 
-        r.resetProfileAsync(
-            res,
-            async (resetResult: sdk.VoiceProfileResult) => {
-                expect(resetResult).not.toBeUndefined();
-                expect(resetResult.reason).not.toBeUndefined();
-                expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
-                try {
-                    const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
-                    expect(result).not.toBeUndefined();
-                    expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
-                    done();
-                } catch (error) {
-                    done.fail(error);
-                }
-            },
-            (error: string) => {
+        try {
+            const resetResult: sdk.VoiceProfileResult = await r.resetProfileAsync(res);
+            expect(resetResult).not.toBeUndefined();
+            expect(resetResult.reason).not.toBeUndefined();
+            expect(sdk.ResultReason[resetResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.ResetVoiceProfile]);
+            try {
+                const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
+                expect(result).not.toBeUndefined();
+                expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
+                done();
+            } catch (error) {
                 done.fail(error);
-            });
+            }
+        } catch (error) {
+            done.fail(error);
+        }
     } catch (error) {
         done.fail(error);
     }

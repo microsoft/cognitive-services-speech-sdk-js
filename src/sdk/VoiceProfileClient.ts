@@ -197,15 +197,13 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.resetProfileAsync
      * @function
      * @public
+     * @async
      * @param {VoiceProfile} profile Voice Profile to be reset
-     * @param cb - Callback invoked once Voice Profile has been reset.
-     * @param err - Callback invoked in case of an error.
+     * @return {Promise<VoiceProfileResult>} - Promise of a VoiceProfileResult.
      */
-    public resetProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfileResult> => {
-            const result: IRestResponse = await this.privAdapter.resetProfile(profile);
-            return this.getResult(result, ResultReason.ResetVoiceProfile);
-        })(), cb, err);
+    public async resetProfileAsync(profile: VoiceProfile): Promise<VoiceProfileResult> {
+        const result: IRestResponse = await this.privAdapter.resetProfile(profile);
+        return this.getResult(result, ResultReason.ResetVoiceProfile);
     }
 
     /**
