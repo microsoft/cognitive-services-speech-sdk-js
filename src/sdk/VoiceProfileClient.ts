@@ -86,23 +86,19 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.createProfileAsync
      * @function
      * @public
+     * @async
      * @param {VoiceProfileType} profileType Type of Voice Profile to be created
      *        specifies the keyword to be recognized.
      * @param {string} lang Language string (locale) for Voice Profile
-     * @param cb - Callback invoked once Voice Profile has been created.
-     * @param err - Callback invoked in case of an error.
      */
-    public createProfileAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
-
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfile> => {
-            const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
-            if (!result.ok) {
-                throw new Error(`createProfileAsync failed with code: ${result.status}, message: ${result.statusText}`);
-            }
-            const response: { profileId: string } = result.json;
-            const profile = new VoiceProfile(response.profileId, profileType);
-            return profile;
-        })(), cb, err);
+    public async createProfileAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfile> {
+        const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
+        if (!result.ok) {
+            throw new Error(`createProfileAsync failed with code: ${result.status}, message: ${result.statusText}`);
+        }
+        const response: { profileId: string } = result.json;
+        const profile = new VoiceProfile(response.profileId, profileType);
+        return profile;
     }
      /**
       * Get current information of a voice profile
