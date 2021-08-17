@@ -90,6 +90,7 @@ export class VoiceProfileClient {
      * @param {VoiceProfileType} profileType Type of Voice Profile to be created
      *        specifies the keyword to be recognized.
      * @param {string} lang Language string (locale) for Voice Profile
+     * @return {Promise<VoiceProfile>} - Promise of a VoiceProfile.
      */
     public async createProfileAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfile> {
         const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
@@ -186,15 +187,13 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.deleteProfileAsync
      * @function
      * @public
+     * @async
      * @param {VoiceProfile} profile Voice Profile to be deleted
-     * @param cb - Callback invoked once Voice Profile has been deleted.
-     * @param err - Callback invoked in case of an error.
+     * @return {Promise<VoiceProfileResult>} - Promise of a VoiceProfileResult.
      */
-    public deleteProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfileResult> => {
-            const result: IRestResponse = await this.privAdapter.deleteProfile(profile);
-            return this.getResult(result, ResultReason.DeletedVoiceProfile);
-        })(), cb, err);
+    public async deleteProfileAsync(profile: VoiceProfile): Promise<VoiceProfileResult> {
+        const result: IRestResponse = await this.privAdapter.deleteProfile(profile);
+        return this.getResult(result, ResultReason.DeletedVoiceProfile);
     }
 
     /**
