@@ -124,18 +124,16 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.getAllProfilesAsync
      * @function
      * @public
+     * @async
      * @param {VoiceProfileType} profileType profile type (identification/verification) for which to list profiles
-     * @param cb - Callback invoked once Profile list has been returned.
-     * @param err - Callback invoked in case of an error.
+     * @return {Promise<VoiceProfileEnrollmentResult[]>} - Promise of an array of VoiceProfileEnrollmentResults.
      */
-    public getAllProfilesAsync(profileType: VoiceProfileType, cb?: (e: VoiceProfileEnrollmentResult[]) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult[]> => {
-            const result: IRestResponse = await this.privAdapter.getProfiles(profileType);
-            if (profileType === VoiceProfileType.TextIndependentIdentification) {
-                return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json);
-            }
-            return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json);
-        })(), cb, err);
+    public async getAllProfilesAsync(profileType: VoiceProfileType): Promise<VoiceProfileEnrollmentResult[]> {
+        const result: IRestResponse = await this.privAdapter.getProfiles(profileType);
+        if (profileType === VoiceProfileType.TextIndependentIdentification) {
+            return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json);
+        }
+        return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json);
     }
 
     /**
