@@ -141,19 +141,17 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.getAuthorizationPhrasesAsync
      * @function
      * @public
+     * @async
+     * @param {VoiceProfileType} profileType Profile Type to get activation phrases for
      * @param {string} lang Language string (locale) for Voice Profile
-     * @param cb - Callback invoked once phrases have been returned.
-     * @param err - Callback invoked in case of an error.
      */
-    public getActivationPhrasesAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfilePhraseResult) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfilePhraseResult> => {
-            const result: IRestResponse = await this.privAdapter.getPhrases(profileType, lang);
-            return new VoiceProfilePhraseResult(
-                result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
-                result.statusText,
-                result.json
-            );
-        })(), cb, err);
+    public async getActivationPhrasesAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfilePhraseResult> {
+        const result: IRestResponse = await this.privAdapter.getPhrases(profileType, lang);
+        return new VoiceProfilePhraseResult(
+            result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
+            result.statusText,
+            result.json
+        );
     }
 
     /**

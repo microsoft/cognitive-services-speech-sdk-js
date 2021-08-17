@@ -110,7 +110,7 @@ test("GetParameters", () => {
     expect(r.properties).not.toBeUndefined();
 });
 
-test("Get Authorization Phrases for enrollment", (done: jest.DoneCallback) => {
+test("Get Authorization Phrases for enrollment", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Get Authorization Phrases for enrollment");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -119,21 +119,17 @@ test("Get Authorization Phrases for enrollment", (done: jest.DoneCallback) => {
     const r: sdk.VoiceProfileClient = BuildClient(s);
     objsToClose.push(r);
 
-    r.getActivationPhrasesAsync(
-        sdk.VoiceProfileType.TextDependentVerification,
-        "en-us",
-        (res: VoiceProfilePhraseResult) => {
-            expect(res.reason).not.toBeUndefined();
-            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrollingVoiceProfile]);
-            expect(res.phrases).not.toBeUndefined();
-            expect(res.phrases.length).toBeGreaterThan(0);
-            expect(res.phrases[0]).not.toBeUndefined();
-            done();
-        },
-        (error: string) => {
-            done.fail(error);
-        });
-
+    try {
+        const res: VoiceProfilePhraseResult = await r.getActivationPhrasesAsync(sdk.VoiceProfileType.TextDependentVerification, "en-us");
+        expect(res.reason).not.toBeUndefined();
+        expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrollingVoiceProfile]);
+        expect(res.phrases).not.toBeUndefined();
+        expect(res.phrases.length).toBeGreaterThan(0);
+        expect(res.phrases[0]).not.toBeUndefined();
+        done();
+    } catch (error) {
+        done.fail(error);
+    }
 }, 20000);
 
 test("Get Activation Phrases for enrollment", (done: jest.DoneCallback) => {
@@ -147,22 +143,18 @@ test("Get Activation Phrases for enrollment", (done: jest.DoneCallback) => {
     objsToClose.push(r);
     const types: sdk.VoiceProfileType[] = [sdk.VoiceProfileType.TextIndependentVerification, sdk.VoiceProfileType.TextIndependentIdentification];
 
-    types.forEach((type: sdk.VoiceProfileType) => {
-        r.getActivationPhrasesAsync(
-            type,
-            "en-us",
-            (res: VoiceProfilePhraseResult) => {
-                expect(res.reason).not.toBeUndefined();
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrollingVoiceProfile]);
-                expect(res.phrases).not.toBeUndefined();
-                expect(res.phrases.length).toBeGreaterThan(0);
-                expect(res.phrases[0]).not.toBeUndefined();
-                done();
-            },
-            (error: string) => {
-                done.fail(error);
-            });
-
+    types.forEach(async (type: sdk.VoiceProfileType) => {
+        try {
+            const res: VoiceProfilePhraseResult = await r.getActivationPhrasesAsync(type, "en-us");
+            expect(res.reason).not.toBeUndefined();
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrollingVoiceProfile]);
+            expect(res.phrases).not.toBeUndefined();
+            expect(res.phrases.length).toBeGreaterThan(0);
+            expect(res.phrases[0]).not.toBeUndefined();
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
     });
 }, 40000);
 
