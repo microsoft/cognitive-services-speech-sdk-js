@@ -297,38 +297,36 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", async (
         expect(res.profileType).not.toBeUndefined();
         expect(res.profileType).toEqual(type);
         expect(() => sdk.SpeakerIdentificationModel.fromProfiles([res])).toThrow();
-        r.retrieveEnrollmentResultAsync(
-            res,
-            (enrollmentRes: sdk.VoiceProfileEnrollmentResult) => {
-                expect(enrollmentRes).not.toBeUndefined();
-                expect(enrollmentRes.enrollmentResultDetails.profileId).not.toBeUndefined();
-                expect(enrollmentRes.enrollmentResultDetails.profileId).toEqual(res.profileId);
-                expect(enrollmentRes.enrollmentsCount).toEqual(0);
-                expect(enrollmentRes.enrollmentResultDetails.remainingEnrollmentsSpeechLength).toBeGreaterThan(0);
-                r.getAllProfilesAsync(
-                    res.profileType,
-                    async (results: sdk.VoiceProfileEnrollmentResult[]) => {
-                        expect(results).not.toBeUndefined();
-                        expect(results.length).toBeGreaterThan(0);
-                        expect(results[0]).not.toBeUndefined();
-                        expect(results[0].enrollmentResultDetails.profileId).not.toBeUndefined();
-                        expect(results[0].enrollmentResultDetails.enrollmentStatus).not.toBeUndefined();
-                        try {
-                            const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
-                            expect(result).not.toBeUndefined();
-                            // expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
-                            done();
-                        } catch (error) {
-                            done.fail(error);
-                        }
-                    },
-                    (error: string) => {
+        try {
+            const enrollmentRes: sdk.VoiceProfileEnrollmentResult = await r.retrieveEnrollmentResultAsync(res);
+            expect(enrollmentRes).not.toBeUndefined();
+            expect(enrollmentRes.enrollmentResultDetails.profileId).not.toBeUndefined();
+            expect(enrollmentRes.enrollmentResultDetails.profileId).toEqual(res.profileId);
+            expect(enrollmentRes.enrollmentsCount).toEqual(0);
+            expect(enrollmentRes.enrollmentResultDetails.remainingEnrollmentsSpeechLength).toBeGreaterThan(0);
+            r.getAllProfilesAsync(
+                res.profileType,
+                async (results: sdk.VoiceProfileEnrollmentResult[]) => {
+                    expect(results).not.toBeUndefined();
+                    expect(results.length).toBeGreaterThan(0);
+                    expect(results[0]).not.toBeUndefined();
+                    expect(results[0].enrollmentResultDetails.profileId).not.toBeUndefined();
+                    expect(results[0].enrollmentResultDetails.enrollmentStatus).not.toBeUndefined();
+                    try {
+                        const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
+                        expect(result).not.toBeUndefined();
+                        // expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
+                        done();
+                    } catch (error) {
                         done.fail(error);
-                    });
-            },
-            (error: string) => {
-                done.fail(error);
-            });
+                    }
+                },
+                (error: string) => {
+                    done.fail(error);
+                });
+        } catch (error) {
+            done.fail(error);
+        }
     } catch (error) {
         done.fail(error);
     }

@@ -101,24 +101,22 @@ export class VoiceProfileClient {
         const profile = new VoiceProfile(response.profileId, profileType);
         return profile;
     }
-     /**
-      * Get current information of a voice profile
-      * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync
-      * @function
-      * @public
-      * @param {VoiceProfile} profile Voice Profile to retrieve info for
-      * @param cb - Callback invoked once Voice Profile has been created.
-      * @param err - Callback invoked in case of an error.
-      */
-    public retrieveEnrollmentResultAsync(profile: VoiceProfile, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
-                marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
-            const result: IRestResponse = await this.privAdapter.getProfileStatus(profile);
-            return new VoiceProfileEnrollmentResult(
-                result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
-                result.data,
-                result.statusText,
-            );
-        })(), cb, err);
+    /**
+     * Get current information of a voice profile
+     * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync
+     * @function
+     * @public
+     * @async
+     * @param {VoiceProfile} profile Voice Profile to retrieve info for
+     * @return {Promise<VoiceProfileEnrollmentResult>} - Promise of a VoiceProfileEnrollmentResult.
+     */
+    public async retrieveEnrollmentResultAsync(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
+        const result: IRestResponse = await this.privAdapter.getProfileStatus(profile);
+        return new VoiceProfileEnrollmentResult(
+            result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
+            result.data,
+            result.statusText,
+        );
     }
 
     /**
