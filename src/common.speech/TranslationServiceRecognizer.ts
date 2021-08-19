@@ -86,7 +86,14 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 }
                 processed = true;
                 break;
+
+            case "translation.response":
+                const phrase: { SpeechPhrase: {} } = JSON.parse(connectionMessage.textBody);
+                if (!phrase) {
+                    break;
+                } // Intentional Fallthrough
             case "translation.phrase":
+
                 const translatedPhrase: TranslationPhrase = TranslationPhrase.fromJSON(connectionMessage.textBody);
 
                 this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
@@ -284,7 +291,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         if (undefined !== serviceResult.Translation.Translations) {
             translations = new Translations();
             for (const translation of serviceResult.Translation.Translations) {
-                translations.set(translation.Language, translation.Text);
+                translations.set(translation.Language, translation.Text || translation.DisplayText);
             }
         }
 
@@ -300,6 +307,13 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         }
 
         const offset: number = serviceResult.Offset + this.privRequestSession.currentTurnAudioOffset;
+        let serviceResultString: string = "";
+        try {
+            serviceResultString = JSON.stringify(serviceResult);
+        } catch (error) {
+            let e = error.toString();
+            e = "";
+        }
 
         const result = new TranslationRecognitionResult(
             translations,

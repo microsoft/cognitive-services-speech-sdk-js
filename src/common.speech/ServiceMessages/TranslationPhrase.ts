@@ -9,15 +9,23 @@ export interface ITranslationPhrase {
     RecognitionStatus: RecognitionStatus;
     Offset: number;
     Duration: number;
-    Text: string;
     Translation: ITranslations;
+    DisplayText?: string;
+    Text?: string;
 }
 
 export class TranslationPhrase implements ITranslationPhrase {
     private privTranslationPhrase: ITranslationPhrase;
 
     private constructor(json: string) {
-        this.privTranslationPhrase = JSON.parse(json);
+        const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(json);
+        if (!!phrase) {
+            this.privTranslationPhrase = phrase.SpeechPhrase;
+            phrase.SpeechPhrase = undefined;
+            this.privTranslationPhrase.Translation = (phrase as unknown as ITranslations);
+        } else {
+            this.privTranslationPhrase = JSON.parse(json);
+        }
         this.privTranslationPhrase.RecognitionStatus = (RecognitionStatus as any)[this.privTranslationPhrase.RecognitionStatus];
         if (this.privTranslationPhrase.Translation !== undefined) {
             this.privTranslationPhrase.Translation.TranslationStatus = (TranslationStatus as any)[this.privTranslationPhrase.Translation.TranslationStatus];
@@ -41,7 +49,7 @@ export class TranslationPhrase implements ITranslationPhrase {
     }
 
     public get Text(): string {
-        return this.privTranslationPhrase.Text;
+        return this.privTranslationPhrase.Text || this.privTranslationPhrase.DisplayText;
     }
 
     public get Translation(): ITranslations {
