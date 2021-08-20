@@ -253,4 +253,85 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         WaitForCondition(() => (doneCount === 2), done);
     });
+
+    test("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: fromEndPoint with Subscription key");
+
+        const endpoint = "wss://" + Settings.SpeechRegion + ".s2s.speech.microsoft.com/speech/translation/cognitiveservices/v1";
+
+        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), Settings.SpeechSubscriptionKey);
+        objsToClose.push(s);
+
+        s.addTargetLanguage("de-DE");
+        s.speechRecognitionLanguage = "en-US";
+        const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
+        objsToClose.push(r);
+
+        r.canceled = (o: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+        r.recognizeOnceAsync(
+            (res: sdk.TranslationRecognitionResult) => {
+                expect(res).not.toBeUndefined();
+                expect(res.errorDetails).toBeUndefined();
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
+                expect(res.translations.get("de", undefined) !== undefined).toEqual(true);
+                expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
+                expect(res.text).toEqual("What's the weather like?");
+                done();
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+    }, 12000);
+
+    test("fromV2EndPoint with Subscription key", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: fromV2EndPoint with Subscription key");
+
+        const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/universal/v2?SpeechContext-translation.targetLanguages=[\"de-de\"]";
+
+        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), Settings.SpeechSubscriptionKey);
+        objsToClose.push(s);
+
+        s.addTargetLanguage("de-DE");
+        s.speechRecognitionLanguage = "en-US";
+        s.setServiceProperty("language", "en-US", sdk.ServicePropertyChannel.UriQueryParameter);
+        s.setServiceProperty("SpeechContext-phraseDetection.interimResults", "true", sdk.ServicePropertyChannel.UriQueryParameter);
+        s.setServiceProperty("SpeechContext-phraseDetection.onInterim.action", "Translate", sdk.ServicePropertyChannel.UriQueryParameter);
+        s.setServiceProperty("SpeechContext-phraseDetection.onSuccess.action", "Translate", sdk.ServicePropertyChannel.UriQueryParameter);
+        s.setServiceProperty("SpeechContext-phraseOutput.interimResults.resultType", "Hypothesis", sdk.ServicePropertyChannel.UriQueryParameter);
+        s.setServiceProperty("SpeechContext-translation.onSuccess.action", "None", sdk.ServicePropertyChannel.UriQueryParameter);
+        s.setServiceProperty("SpeechContext-translation.output.includePassThroughResults", "true", sdk.ServicePropertyChannel.UriQueryParameter);
+        s.setServiceProperty("SpeechContext-translation.output.interimResults.mode", "Always", sdk.ServicePropertyChannel.UriQueryParameter);
+
+        const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
+        objsToClose.push(r);
+
+        r.canceled = (o: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+        r.recognizeOnceAsync(
+            (res: sdk.TranslationRecognitionResult) => {
+                expect(res).not.toBeUndefined();
+                expect(res.errorDetails).toBeUndefined();
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
+                expect(res.translations.get("de-de", undefined) !== undefined).toEqual(true);
+                expect("Wie ist das Wetter?").toEqual(res.translations.get("de-de", ""));
+                expect(res.text).toEqual("What's the weather like?");
+                done();
+            },
+            (error: string) => {
+                done.fail(error);
+            });
+    }, 12000);
 });

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { Contracts } from "../../sdk/Contracts";
 import { ITranslations, RecognitionStatus } from "../Exports";
 import { TranslationStatus } from "../TranslationStatus";
 
@@ -9,15 +10,16 @@ export interface ITranslationPhrase {
     RecognitionStatus: RecognitionStatus;
     Offset: number;
     Duration: number;
-    Text: string;
     Translation: ITranslations;
+    Text: string;
+    DisplayText?: string;
 }
 
 export class TranslationPhrase implements ITranslationPhrase {
     private privTranslationPhrase: ITranslationPhrase;
 
-    private constructor(json: string) {
-        this.privTranslationPhrase = JSON.parse(json);
+    private constructor(phrase: ITranslationPhrase) {
+        this.privTranslationPhrase = phrase;
         this.privTranslationPhrase.RecognitionStatus = (RecognitionStatus as any)[this.privTranslationPhrase.RecognitionStatus];
         if (this.privTranslationPhrase.Translation !== undefined) {
             this.privTranslationPhrase.Translation.TranslationStatus = (TranslationStatus as any)[this.privTranslationPhrase.Translation.TranslationStatus];
@@ -25,7 +27,16 @@ export class TranslationPhrase implements ITranslationPhrase {
     }
 
     public static fromJSON(json: string): TranslationPhrase {
-        return new TranslationPhrase(json);
+        return new TranslationPhrase(JSON.parse(json));
+    }
+
+    public static fromTranslationResponse(translationResponse: { SpeechPhrase: ITranslationPhrase }): TranslationPhrase {
+        Contracts.throwIfNullOrUndefined(translationResponse, "translationResponse");
+        const phrase: ITranslationPhrase = translationResponse.SpeechPhrase;
+        translationResponse.SpeechPhrase = undefined;
+        phrase.Translation = (translationResponse as unknown as ITranslations);
+        phrase.Text = phrase.DisplayText;
+        return new TranslationPhrase(phrase);
     }
 
     public get RecognitionStatus(): RecognitionStatus {
