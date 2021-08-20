@@ -179,7 +179,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
             case "translation.response":
                 const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody);
-                if (!!phrase) {
+                if (!!phrase.SpeechPhrase) {
                     await handleTranslationPhrase(TranslationPhrase.fromTranslationResponse(phrase));
                 }
                 break;

@@ -34,7 +34,7 @@ export class TranslationPhrase implements ITranslationPhrase {
         Contracts.throwIfNullOrUndefined(translationResponse, "translationResponse");
         const phrase: ITranslationPhrase = translationResponse.SpeechPhrase;
         translationResponse.SpeechPhrase = undefined;
-        phrase.Translation = (phrase as unknown as ITranslations);
+        phrase.Translation = (translationResponse as unknown as ITranslations);
         phrase.Text = phrase.DisplayText;
         return new TranslationPhrase(phrase);
     }
