@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { Contracts } from "../../sdk/Contracts";
 import { ITranslations, RecognitionStatus } from "../Exports";
 import { TranslationStatus } from "../TranslationStatus";
 
@@ -10,22 +11,15 @@ export interface ITranslationPhrase {
     Offset: number;
     Duration: number;
     Translation: ITranslations;
+    Text: string;
     DisplayText?: string;
-    Text?: string;
 }
 
 export class TranslationPhrase implements ITranslationPhrase {
     private privTranslationPhrase: ITranslationPhrase;
 
-    private constructor(json: string) {
-        const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(json);
-        if (!!phrase) {
-            this.privTranslationPhrase = phrase.SpeechPhrase;
-            phrase.SpeechPhrase = undefined;
-            this.privTranslationPhrase.Translation = (phrase as unknown as ITranslations);
-        } else {
-            this.privTranslationPhrase = JSON.parse(json);
-        }
+    private constructor(phrase: ITranslationPhrase) {
+        this.privTranslationPhrase = phrase;
         this.privTranslationPhrase.RecognitionStatus = (RecognitionStatus as any)[this.privTranslationPhrase.RecognitionStatus];
         if (this.privTranslationPhrase.Translation !== undefined) {
             this.privTranslationPhrase.Translation.TranslationStatus = (TranslationStatus as any)[this.privTranslationPhrase.Translation.TranslationStatus];
@@ -33,7 +27,16 @@ export class TranslationPhrase implements ITranslationPhrase {
     }
 
     public static fromJSON(json: string): TranslationPhrase {
-        return new TranslationPhrase(json);
+        return new TranslationPhrase(JSON.parse(json));
+    }
+
+    public static fromTranslationResponse(translationResponse: { SpeechPhrase: ITranslationPhrase }): TranslationPhrase {
+        Contracts.throwIfNullOrUndefined(translationResponse, "translationResponse");
+        const phrase: ITranslationPhrase = translationResponse.SpeechPhrase;
+        translationResponse.SpeechPhrase = undefined;
+        phrase.Translation = (phrase as unknown as ITranslations);
+        phrase.Text = phrase.DisplayText;
+        return new TranslationPhrase(phrase);
     }
 
     public get RecognitionStatus(): RecognitionStatus {
@@ -49,7 +52,7 @@ export class TranslationPhrase implements ITranslationPhrase {
     }
 
     public get Text(): string {
-        return this.privTranslationPhrase.Text || this.privTranslationPhrase.DisplayText;
+        return this.privTranslationPhrase.Text;
     }
 
     public get Translation(): ITranslations {
