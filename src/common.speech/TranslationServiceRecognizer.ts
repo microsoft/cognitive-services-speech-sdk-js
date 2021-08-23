@@ -35,6 +35,7 @@ import {
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
+import { ITranslationPhrase } from "./ServiceMessages/TranslationPhrase";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 // tslint:disable-next-line:max-classes-per-file
@@ -65,6 +66,95 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         const resultProps: PropertyCollection = new PropertyCollection();
         let processed: boolean = false;
 
+        const handleTranslationPhrase = async (translatedPhrase: TranslationPhrase): Promise<void> => {
+            this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
+
+            if (translatedPhrase.RecognitionStatus === RecognitionStatus.Success) {
+
+                // OK, the recognition was successful. How'd the translation do?
+                const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, resultProps);
+                if (!!this.privTranslationRecognizer.recognized) {
+                    try {
+                        this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, result);
+                        /* tslint:disable:no-empty */
+                    } catch (error) {
+                        // Not going to let errors in the event handler
+                        // trip things up.
+                    }
+                }
+
+                // report result to promise.
+                if (!!this.privSuccessCallback) {
+                    try {
+                        this.privSuccessCallback(result.result);
+                    } catch (e) {
+                        if (!!this.privErrorCallback) {
+                            this.privErrorCallback(e);
+                        }
+                    }
+                    // Only invoke the call back once.
+                    // and if it's successful don't invoke the
+                    // error after that.
+                    this.privSuccessCallback = undefined;
+                    this.privErrorCallback = undefined;
+                }
+            } else {
+                const reason: ResultReason = EnumTranslation.implTranslateRecognitionResult(translatedPhrase.RecognitionStatus);
+
+                const result = new TranslationRecognitionResult(
+                    undefined,
+                    this.privRequestSession.requestId,
+                    reason,
+                    translatedPhrase.Text,
+                    translatedPhrase.Duration,
+                    this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset,
+                    undefined,
+                    connectionMessage.textBody,
+                    resultProps);
+
+                if (reason === ResultReason.Canceled) {
+                    const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(translatedPhrase.RecognitionStatus);
+
+                    await this.cancelRecognitionLocal(
+                        cancelReason,
+                        EnumTranslation.implTranslateCancelErrorCode(translatedPhrase.RecognitionStatus),
+                        undefined);
+                } else {
+                    if (!(this.privRequestSession.isSpeechEnded && reason === ResultReason.NoMatch && translatedPhrase.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
+                        const ev = new TranslationRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
+
+                        if (!!this.privTranslationRecognizer.recognized) {
+                            try {
+                                this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, ev);
+                                /* tslint:disable:no-empty */
+                            } catch (error) {
+                                // Not going to let errors in the event handler
+                                // trip things up.
+                            }
+                        }
+                    }
+
+                    // report result to promise.
+                    if (!!this.privSuccessCallback) {
+                        try {
+                            this.privSuccessCallback(result);
+                        } catch (e) {
+                            if (!!this.privErrorCallback) {
+                                this.privErrorCallback(e);
+                            }
+                        }
+                        // Only invoke the call back once.
+                        // and if it's successful don't invoke the
+                        // error after that.
+                        this.privSuccessCallback = undefined;
+                        this.privErrorCallback = undefined;
+                    }
+                }
+                processed = true;
+            }
+
+        };
+
         if (connectionMessage.messageType === MessageType.Text) {
             resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
         }
@@ -86,96 +176,15 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 }
                 processed = true;
                 break;
-            case "translation.phrase":
-                const translatedPhrase: TranslationPhrase = TranslationPhrase.fromJSON(connectionMessage.textBody);
 
-                this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
-
-                if (translatedPhrase.RecognitionStatus === RecognitionStatus.Success) {
-
-                    // OK, the recognition was successful. How'd the translation do?
-                    const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, resultProps);
-                    if (!!this.privTranslationRecognizer.recognized) {
-                        try {
-                            this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, result);
-                            /* tslint:disable:no-empty */
-                        } catch (error) {
-                            // Not going to let errors in the event handler
-                            // trip things up.
-                        }
-                    }
-
-                    // report result to promise.
-                    if (!!this.privSuccessCallback) {
-                        try {
-                            this.privSuccessCallback(result.result);
-                        } catch (e) {
-                            if (!!this.privErrorCallback) {
-                                this.privErrorCallback(e);
-                            }
-                        }
-                        // Only invoke the call back once.
-                        // and if it's successful don't invoke the
-                        // error after that.
-                        this.privSuccessCallback = undefined;
-                        this.privErrorCallback = undefined;
-                    }
-
-                    break;
-                } else {
-                    const reason: ResultReason = EnumTranslation.implTranslateRecognitionResult(translatedPhrase.RecognitionStatus);
-
-                    const result = new TranslationRecognitionResult(
-                        undefined,
-                        this.privRequestSession.requestId,
-                        reason,
-                        translatedPhrase.Text,
-                        translatedPhrase.Duration,
-                        this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset,
-                        undefined,
-                        connectionMessage.textBody,
-                        resultProps);
-
-                    if (reason === ResultReason.Canceled) {
-                        const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(translatedPhrase.RecognitionStatus);
-
-                        await this.cancelRecognitionLocal(
-                            cancelReason,
-                            EnumTranslation.implTranslateCancelErrorCode(translatedPhrase.RecognitionStatus),
-                            undefined);
-                    } else {
-                        if (!(this.privRequestSession.isSpeechEnded && reason === ResultReason.NoMatch && translatedPhrase.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
-                            const ev = new TranslationRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
-
-                            if (!!this.privTranslationRecognizer.recognized) {
-                                try {
-                                    this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, ev);
-                                    /* tslint:disable:no-empty */
-                                } catch (error) {
-                                    // Not going to let errors in the event handler
-                                    // trip things up.
-                                }
-                            }
-                        }
-
-                        // report result to promise.
-                        if (!!this.privSuccessCallback) {
-                            try {
-                                this.privSuccessCallback(result);
-                            } catch (e) {
-                                if (!!this.privErrorCallback) {
-                                    this.privErrorCallback(e);
-                                }
-                            }
-                            // Only invoke the call back once.
-                            // and if it's successful don't invoke the
-                            // error after that.
-                            this.privSuccessCallback = undefined;
-                            this.privErrorCallback = undefined;
-                        }
-                    }
+            case "translation.response":
+                const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody);
+                if (!!phrase.SpeechPhrase) {
+                    await handleTranslationPhrase(TranslationPhrase.fromTranslationResponse(phrase));
                 }
-                processed = true;
+                break;
+            case "translation.phrase":
+                await handleTranslationPhrase(TranslationPhrase.fromJSON(connectionMessage.textBody));
                 break;
 
             case "translation.synthesis":
@@ -284,7 +293,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         if (undefined !== serviceResult.Translation.Translations) {
             translations = new Translations();
             for (const translation of serviceResult.Translation.Translations) {
-                translations.set(translation.Language, translation.Text);
+                translations.set(translation.Language, translation.Text || translation.DisplayText);
             }
         }
 

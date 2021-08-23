@@ -12,7 +12,8 @@ export interface ITranslations {
 
 export interface ITranslation {
     Language: string;
-    Text: string;
+    Text?: string;
+    DisplayText?: string;
 }
 
 export interface ISpeechEndDetectedResult {

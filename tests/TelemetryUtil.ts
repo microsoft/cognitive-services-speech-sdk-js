@@ -10,7 +10,7 @@ export const validateTelemetry: (json: string, numPhrases: number, numHypothesis
     if (0 < numPhrases) {
         let phrases: string[] = telemetryMessage.ReceivedMessages["speech.phrase"];
         if (undefined === phrases) {
-            phrases = telemetryMessage.ReceivedMessages["translation.phrase"];
+            phrases = telemetryMessage.ReceivedMessages["translation.phrase"] ? telemetryMessage.ReceivedMessages["translation.phrase"] : telemetryMessage.ReceivedMessages["translation.response"];
         }
         expect(phrases).not.toBeUndefined();
         expect(phrases.length).toEqual(numPhrases);
