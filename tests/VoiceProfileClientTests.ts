@@ -353,25 +353,23 @@ test("Create and Delete Voice Profile - Dependent Verification", async (done: je
         expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
         const reco: sdk.SpeakerRecognizer = BuildRecognizer();
         const m: sdk.SpeakerVerificationModel = sdk.SpeakerVerificationModel.fromProfile(res);
-        reco.recognizeOnceAsync(
-            m,
-            async (recognizeResult: sdk.SpeakerRecognitionResult) => {
-                expect(recognizeResult).not.toBeUndefined();
-                expect(recognizeResult.reason).not.toBeUndefined();
-                expect(sdk.ResultReason[recognizeResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeaker]);
-                expect(recognizeResult.profileId).toEqual(res.profileId);
-                try {
-                    const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
-                    expect(result).not.toBeUndefined();
-                    expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
-                    done();
-                } catch (error) {
-                    done.fail(error);
-                }
-            },
-            (error: string) => {
+        try {
+            const recognizeResult: sdk.SpeakerRecognitionResult = await reco.recognizeOnceAsync(m);
+            expect(recognizeResult).not.toBeUndefined();
+            expect(recognizeResult.reason).not.toBeUndefined();
+            expect(sdk.ResultReason[recognizeResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeaker]);
+            expect(recognizeResult.profileId).toEqual(res.profileId);
+            try {
+                const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
+                expect(result).not.toBeUndefined();
+                expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
+                done();
+            } catch (error) {
                 done.fail(error);
-            });
+            }
+        } catch (error) {
+            done.fail(error);
+        }
     } catch (error) {
         done.fail(error);
     }
