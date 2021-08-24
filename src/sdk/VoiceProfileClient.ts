@@ -86,42 +86,37 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.createProfileAsync
      * @function
      * @public
+     * @async
      * @param {VoiceProfileType} profileType Type of Voice Profile to be created
      *        specifies the keyword to be recognized.
      * @param {string} lang Language string (locale) for Voice Profile
-     * @param cb - Callback invoked once Voice Profile has been created.
-     * @param err - Callback invoked in case of an error.
+     * @return {Promise<VoiceProfile>} - Promise of a VoiceProfile.
      */
-    public createProfileAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfile) => void, err?: (e: string) => void): void {
-
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfile> => {
-            const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
-            if (!result.ok) {
-                throw new Error(`createProfileAsync failed with code: ${result.status}, message: ${result.statusText}`);
-            }
-            const response: { profileId: string } = result.json;
-            const profile = new VoiceProfile(response.profileId, profileType);
-            return profile;
-        })(), cb, err);
+    public async createProfileAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfile> {
+        const result: IRestResponse = await this.privAdapter.createProfile(profileType, lang);
+        if (!result.ok) {
+            throw new Error(`createProfileAsync failed with code: ${result.status}, message: ${result.statusText}`);
+        }
+        const response: { profileId: string } = result.json;
+        const profile = new VoiceProfile(response.profileId, profileType);
+        return profile;
     }
-     /**
-      * Get current information of a voice profile
-      * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync
-      * @function
-      * @public
-      * @param {VoiceProfile} profile Voice Profile to retrieve info for
-      * @param cb - Callback invoked once Voice Profile has been created.
-      * @param err - Callback invoked in case of an error.
-      */
-    public retrieveEnrollmentResultAsync(profile: VoiceProfile, cb?: (e: VoiceProfileEnrollmentResult) => void, err?: (e: string) => void): void {
-                marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult> => {
-            const result: IRestResponse = await this.privAdapter.getProfileStatus(profile);
-            return new VoiceProfileEnrollmentResult(
-                result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
-                result.data,
-                result.statusText,
-            );
-        })(), cb, err);
+    /**
+     * Get current information of a voice profile
+     * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync
+     * @function
+     * @public
+     * @async
+     * @param {VoiceProfile} profile Voice Profile to retrieve info for
+     * @return {Promise<VoiceProfileEnrollmentResult>} - Promise of a VoiceProfileEnrollmentResult.
+     */
+    public async retrieveEnrollmentResultAsync(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
+        const result: IRestResponse = await this.privAdapter.getProfileStatus(profile);
+        return new VoiceProfileEnrollmentResult(
+            result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
+            result.data,
+            result.statusText,
+        );
     }
 
     /**
@@ -129,18 +124,16 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.getAllProfilesAsync
      * @function
      * @public
+     * @async
      * @param {VoiceProfileType} profileType profile type (identification/verification) for which to list profiles
-     * @param cb - Callback invoked once Profile list has been returned.
-     * @param err - Callback invoked in case of an error.
+     * @return {Promise<VoiceProfileEnrollmentResult[]>} - Promise of an array of VoiceProfileEnrollmentResults.
      */
-    public getAllProfilesAsync(profileType: VoiceProfileType, cb?: (e: VoiceProfileEnrollmentResult[]) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfileEnrollmentResult[]> => {
-            const result: IRestResponse = await this.privAdapter.getProfiles(profileType);
-            if (profileType === VoiceProfileType.TextIndependentIdentification) {
-                return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json);
-            }
-            return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json);
-        })(), cb, err);
+    public async getAllProfilesAsync(profileType: VoiceProfileType): Promise<VoiceProfileEnrollmentResult[]> {
+        const result: IRestResponse = await this.privAdapter.getProfiles(profileType);
+        if (profileType === VoiceProfileType.TextIndependentIdentification) {
+            return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json);
+        }
+        return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json);
     }
 
     /**
@@ -148,19 +141,17 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.getAuthorizationPhrasesAsync
      * @function
      * @public
+     * @async
+     * @param {VoiceProfileType} profileType Profile Type to get activation phrases for
      * @param {string} lang Language string (locale) for Voice Profile
-     * @param cb - Callback invoked once phrases have been returned.
-     * @param err - Callback invoked in case of an error.
      */
-    public getActivationPhrasesAsync(profileType: VoiceProfileType, lang: string, cb?: (e: VoiceProfilePhraseResult) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfilePhraseResult> => {
-            const result: IRestResponse = await this.privAdapter.getPhrases(profileType, lang);
-            return new VoiceProfilePhraseResult(
-                result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
-                result.statusText,
-                result.json
-            );
-        })(), cb, err);
+    public async getActivationPhrasesAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfilePhraseResult> {
+        const result: IRestResponse = await this.privAdapter.getPhrases(profileType, lang);
+        return new VoiceProfilePhraseResult(
+            result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
+            result.statusText,
+            result.json
+        );
     }
 
     /**
@@ -190,15 +181,13 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.deleteProfileAsync
      * @function
      * @public
+     * @async
      * @param {VoiceProfile} profile Voice Profile to be deleted
-     * @param cb - Callback invoked once Voice Profile has been deleted.
-     * @param err - Callback invoked in case of an error.
+     * @return {Promise<VoiceProfileResult>} - Promise of a VoiceProfileResult.
      */
-    public deleteProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfileResult> => {
-            const result: IRestResponse = await this.privAdapter.deleteProfile(profile);
-            return this.getResult(result, ResultReason.DeletedVoiceProfile);
-        })(), cb, err);
+    public async deleteProfileAsync(profile: VoiceProfile): Promise<VoiceProfileResult> {
+        const result: IRestResponse = await this.privAdapter.deleteProfile(profile);
+        return this.getResult(result, ResultReason.DeletedVoiceProfile);
     }
 
     /**
@@ -206,15 +195,13 @@ export class VoiceProfileClient {
      * @member VoiceProfileClient.prototype.resetProfileAsync
      * @function
      * @public
+     * @async
      * @param {VoiceProfile} profile Voice Profile to be reset
-     * @param cb - Callback invoked once Voice Profile has been reset.
-     * @param err - Callback invoked in case of an error.
+     * @return {Promise<VoiceProfileResult>} - Promise of a VoiceProfileResult.
      */
-    public resetProfileAsync(profile: VoiceProfile, cb?: (response: VoiceProfileResult) => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<VoiceProfileResult> => {
-            const result: IRestResponse = await this.privAdapter.resetProfile(profile);
-            return this.getResult(result, ResultReason.ResetVoiceProfile);
-        })(), cb, err);
+    public async resetProfileAsync(profile: VoiceProfile): Promise<VoiceProfileResult> {
+        const result: IRestResponse = await this.privAdapter.resetProfile(profile);
+        return this.getResult(result, ResultReason.ResetVoiceProfile);
     }
 
     /**

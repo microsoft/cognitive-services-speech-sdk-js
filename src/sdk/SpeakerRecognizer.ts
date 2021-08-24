@@ -89,18 +89,19 @@ export class SpeakerRecognizer {
      * @member SpeakerRecognizer.prototype.recognizeOnceAsync
      * @function
      * @public
+     * @async
      * @param {SpeakerIdentificationModel} model Model containing Voice Profiles to be identified
      * @param cb - Callback invoked once result is returned.
      * @param err - Callback invoked in case of an error.
      */
-    public recognizeOnceAsync(model: SpeakerIdentificationModel | SpeakerVerificationModel, cb?: (e: SpeakerRecognitionResult) => void, err?: (e: string) => void): void {
+    public async recognizeOnceAsync(model: SpeakerIdentificationModel | SpeakerVerificationModel): Promise<SpeakerRecognitionResult> {
 
         if (model instanceof SpeakerIdentificationModel) {
             const responsePromise: Promise<IRestResponse> = this.privAdapter.identifySpeaker(model, this.privAudioConfigImpl);
-            marshalPromiseToCallbacks(this.getResult(responsePromise, SpeakerRecognitionResultType.Identify, undefined), cb, err);
+            return this.getResult(responsePromise, SpeakerRecognitionResultType.Identify, undefined);
         } else if (model instanceof SpeakerVerificationModel) {
             const responsePromise: Promise<IRestResponse> = this.privAdapter.verifySpeaker(model, this.privAudioConfigImpl);
-            marshalPromiseToCallbacks(this.getResult(responsePromise, SpeakerRecognitionResultType.Verify, model.voiceProfile.profileId), cb, err);
+            return this.getResult(responsePromise, SpeakerRecognitionResultType.Verify, model.voiceProfile.profileId);
         } else {
             throw new Error("SpeakerRecognizer.recognizeOnce: Unexpected model type");
         }
