@@ -9,6 +9,7 @@ const AuthHeader: string = "Authorization";
 export class CognitiveTokenAuthentication implements IAuthentication {
     private privFetchCallback: (authFetchEventId: string) => Promise<string>;
     private privFetchOnExpiryCallback: (authFetchEventId: string) => Promise<string>;
+    private static privTokenPrefix: string = "bearer ";
 
     constructor(fetchCallback: (authFetchEventId: string) => Promise<string>, fetchOnExpiryCallback: (authFetchEventId: string) => Promise<string>) {
         if (!fetchCallback) {
@@ -24,10 +25,10 @@ export class CognitiveTokenAuthentication implements IAuthentication {
     }
 
     public fetch = (authFetchEventId: string): Promise<AuthInfo> => {
-        return this.privFetchCallback(authFetchEventId).then((token: string) => new AuthInfo(AuthHeader, "bearer " + token));
+        return this.privFetchCallback(authFetchEventId).then((token: string) => new AuthInfo(AuthHeader, CognitiveTokenAuthentication.privTokenPrefix + token));
     }
 
     public fetchOnExpiry = (authFetchEventId: string): Promise<AuthInfo> => {
-        return this.privFetchOnExpiryCallback(authFetchEventId).then((token: string) => new AuthInfo(AuthHeader, "bearer " + token));
+        return this.privFetchOnExpiryCallback(authFetchEventId).then((token: string) => new AuthInfo(AuthHeader, CognitiveTokenAuthentication.privTokenPrefix + token));
     }
 }
