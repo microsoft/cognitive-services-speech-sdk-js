@@ -6,7 +6,7 @@ import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.b
 import { ServiceRecognizerBase } from "../src/common.speech/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
-import { ConnectionStartEvent, IDetachable } from "../src/common/Exports";
+import { ConnectionStartEvent, createNoDashGuid, IDetachable } from "../src/common/Exports";
 import { Events, EventType, PlatformEvent } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
@@ -1743,6 +1743,37 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect(uri).not.toBeUndefined();
                         // Make sure there's only a single ? in the URL.
                         expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+
+                        expect(p2.errorDetails).not.toBeUndefined();
+                        expect(sdk.ResultReason[p2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
+
+                        const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
+                        expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+                        expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
+                        done();
+                    } catch (error) {
+                        done.fail(error);
+                    }
+                });
+        }, 100000);
+
+        test("Endpoint URL With Auth Token Bearer added", (done: jest.DoneCallback) => {
+            // tslint:disable-next-line:no-console
+            console.info("Name: Endpoint URL With Auth Token Bearer added");
+
+            const fakeToken: string = createNoDashGuid();
+            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(fakeToken, "westus");
+            objsToClose.push(s);
+
+            const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+            objsToClose.push(r);
+
+            r.recognizeOnceAsync(
+                (p2: sdk.SpeechRecognitionResult) => {
+                    try {
+                        expect(uri).not.toBeUndefined();
+                        // make sure "bearer " is being added to uri
+                        expect(uri.indexOf("bearer " + fakeToken)).not.toBeUndefined();
 
                         expect(p2.errorDetails).not.toBeUndefined();
                         expect(sdk.ResultReason[p2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
