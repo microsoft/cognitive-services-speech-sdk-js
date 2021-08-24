@@ -93,6 +93,7 @@ test("VoiceProfileClient with Bad credentials throws meaningful error", async (d
     const type: sdk.VoiceProfileType = sdk.VoiceProfileType.TextIndependentIdentification;
     try {
         const res: sdk.VoiceProfile = await r.createProfileAsync(type, "en-us");
+        done.fail();
     } catch (error) {
         const expectedCode: number = 401;
         const expectedMessage: string = "Access denied due to invalid subscription key or wrong API endpoint. Make sure to provide a valid key for an active subscription and use a correct regional API endpoint for your resource.";

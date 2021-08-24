@@ -7,9 +7,9 @@ import { AuthInfo, IAuthentication } from "./IAuthentication";
 const AuthHeader: string = "Authorization";
 
 export class CognitiveTokenAuthentication implements IAuthentication {
+    private static privTokenPrefix: string = "bearer ";
     private privFetchCallback: (authFetchEventId: string) => Promise<string>;
     private privFetchOnExpiryCallback: (authFetchEventId: string) => Promise<string>;
-    private static privTokenPrefix: string = "bearer ";
 
     constructor(fetchCallback: (authFetchEventId: string) => Promise<string>, fetchOnExpiryCallback: (authFetchEventId: string) => Promise<string>) {
         if (!fetchCallback) {
