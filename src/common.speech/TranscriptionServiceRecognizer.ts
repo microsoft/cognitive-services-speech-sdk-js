@@ -135,12 +135,12 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                             result = new SpeechRecognitionResult(
                                 this.privRequestSession.requestId,
                                 resultReason,
-                                detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : undefined,
+                                detailed.Text,
                                 detailed.Duration,
                                 totalOffset,
                                 detailed.Language,
                                 detailed.LanguageDetectionConfidence,
-                                undefined,
+                                detailed.SpeakerId,
                                 undefined,
                                 offsetCorrectedJson,
                                 resultProps);

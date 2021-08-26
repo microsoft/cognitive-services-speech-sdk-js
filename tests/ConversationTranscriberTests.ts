@@ -166,8 +166,9 @@ test("Create Conversation and join to Transcriber", (done: jest.DoneCallback) =>
 
 test("Create Conversation and add participants", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
-    console.info("Name: Create Conversation and join to Transcriber");
+    console.info("Name: Create Conversation and add participants");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    s.outputFormat = sdk.OutputFormat.Detailed;
     objsToClose.push(s);
 
     CreateConversation(s).then( (c: sdk.Conversation) => {
@@ -345,6 +346,7 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation with one channel audio (aligned)");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    s.outputFormat = sdk.OutputFormat.Detailed;
     objsToClose.push(s);
     CreateConversation(s).then( (c: sdk.Conversation) => {
         objsToClose.push(c);
