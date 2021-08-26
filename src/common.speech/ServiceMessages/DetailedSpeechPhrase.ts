@@ -10,6 +10,8 @@ export interface IDetailedSpeechPhrase {
     Duration?: number;
     Offset?: number;
     PrimaryLanguage?: IPrimaryLanguage;
+    DisplayText?: string;
+    SpeakerId?: string;
 }
 
 export interface IPhrase {
@@ -71,5 +73,11 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
     }
     public get LanguageDetectionConfidence(): string {
         return this.privDetailedSpeechPhrase.PrimaryLanguage === undefined ? undefined : this.privDetailedSpeechPhrase.PrimaryLanguage.Confidence;
+    }
+    public get Text(): string {
+        return !!this.privDetailedSpeechPhrase.NBest && this.privDetailedSpeechPhrase.NBest[0] ? this.privDetailedSpeechPhrase.NBest[0].Display : this.privDetailedSpeechPhrase.DisplayText;
+    }
+    public get SpeakerId(): string {
+        return this.privDetailedSpeechPhrase.SpeakerId;
     }
 }
