@@ -10,6 +10,7 @@ export enum AudioFormatTag {
     OGG_OPUS,
     WEBM_OPUS,
     ALaw,
+    FLAC,
 }
 
 /**
