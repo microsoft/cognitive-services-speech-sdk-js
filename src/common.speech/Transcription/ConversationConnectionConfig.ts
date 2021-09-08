@@ -16,7 +16,7 @@ export class ConversationConnectionConfig extends RestConfigBase {
     private static readonly privWebSocketPath: string = "/capito/translate";
     private static readonly privSpeechHost: string = "{region}.s2s.speech.microsoft.com";
     private static readonly privSpeechPath: string = "/speech/translation/cognitiveservices/v1";
-    private static readonly privTranscriptionEventKeys: string[] = ["iCalUid", "callId", "organizer", "FLAC", "MTUri", "DifferenciateGuestSpeakers", "audiorecording", "Threadid", "OrganizerMri", "OrganizerTenantId", "UserToken"];
+    private static readonly privTranscriptionEventKeys: string[] = ["iCalUid", "callId", "organizer", "FLAC", "MTUri", "DifferentiateGuestSpeakers", "audiorecording", "Threadid", "OrganizerMri", "OrganizerTenantId", "UserToken"];
 
     public static get host(): string {
         return ConversationConnectionConfig.privHost;
