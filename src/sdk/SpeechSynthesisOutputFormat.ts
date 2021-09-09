@@ -188,4 +188,12 @@ export enum SpeechSynthesisOutputFormat {
      * @member SpeechSynthesisOutputFormat.Riff8Khz8BitMonoALaw
      */
      Riff8Khz8BitMonoALaw,
+
+    /**
+     * webm-24khz-16bit-24kbps-mono-opus
+     * Audio compressed by OPUS codec in a webm container, with bitrate of 24kbps, optimized for IoT scenario.
+     * Added in version 1.19.0
+     * @member SpeechSynthesisOutputFormat.Webm24Khz16Bit24KbpsMonoOpus
+     */
+    Webm24Khz16Bit24KbpsMonoOpus,
 }

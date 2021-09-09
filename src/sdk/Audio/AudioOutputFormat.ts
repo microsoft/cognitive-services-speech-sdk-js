@@ -39,6 +39,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         [SpeechSynthesisOutputFormat.Ogg48Khz16BitMonoOpus]: "ogg-48khz-16bit-mono-opus",
         [SpeechSynthesisOutputFormat.Webm16Khz16BitMonoOpus]: "webm-16khz-16bit-mono-opus",
         [SpeechSynthesisOutputFormat.Webm24Khz16BitMonoOpus]: "webm-24khz-16bit-mono-opus",
+        [SpeechSynthesisOutputFormat.Webm24Khz16Bit24KbpsMonoOpus]: "webm-24khz-16bit-24kbps-mono-opus",
         [SpeechSynthesisOutputFormat.Raw24Khz16BitMonoTrueSilk]: "raw-24khz-16bit-mono-truesilk",
         [SpeechSynthesisOutputFormat.Raw8Khz8BitMonoALaw]: "raw-8khz-8bit-mono-alaw",
         [SpeechSynthesisOutputFormat.Riff8Khz8BitMonoALaw]: "riff-8khz-8bit-mono-alaw",
@@ -363,6 +364,39 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     1,
                     24000,
                     8000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "webm-24khz-16bit-24kbps-mono-opus":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.WEBM_OPUS,
+                    1,
+                    24000,
+                    3000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "audio-24khz-16bit-mono-flac":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.FLAC,
+                    1,
+                    24000,
+                    24000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "audio-48khz-16bit-mono-flac":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.FLAC,
+                    1,
+                    48000,
+                    30000,
                     2,
                     16,
                     speechSynthesisOutputFormatString,
