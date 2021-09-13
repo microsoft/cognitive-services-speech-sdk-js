@@ -32,7 +32,7 @@ export class IntentConnectionFactory extends ConnectionFactoryBase {
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_IntentRegion);
-            const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
+            const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
             const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + ".sr.speech" + hostSuffix);
             endpoint = host + "/speech/recognition/interactive/cognitiveservices/v1";
         }

@@ -63,7 +63,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         //  3. If no custom connection details are provided, a URL is constructed from default values.
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, "");
         if (!endpoint) {
-            const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
+            const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
             const host: string = config.parameters.getProperty(
                 PropertyId.SpeechServiceConnection_Host,
                 `wss://${region}.${DialogConnectionFactory.Constants.BaseUrl}${hostSuffix}`);

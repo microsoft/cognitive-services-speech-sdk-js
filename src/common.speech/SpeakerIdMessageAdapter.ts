@@ -13,6 +13,7 @@ import {
     VoiceProfile,
     VoiceProfileType,
 } from "../sdk/Exports";
+import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
 import { SpeakerRecognitionConfig } from "./Exports";
 
 /**
@@ -30,7 +31,7 @@ export class SpeakerIdMessageAdapter {
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "westus");
             const version: string = config.parameters.getProperty(PropertyId.SpeakerRecognition_Api_Version, "2.0");
-            const hostSuffix: string = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
+            const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
             const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.api.cognitive${hostSuffix}/speaker/{mode}/v${version}/{dependency}`);
             endpoint = host + "/profiles";
         }

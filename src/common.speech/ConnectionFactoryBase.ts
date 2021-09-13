@@ -10,6 +10,19 @@ import { AuthInfo, IConnectionFactory, RecognitionMode, RecognizerConfig, Websoc
 import { QueryParameterNames } from "./QueryParameterNames";
 
 export abstract class ConnectionFactoryBase implements IConnectionFactory {
+
+    public static getHostSuffix(region: string): string {
+        if (!!region) {
+            if (region.toLowerCase().startsWith("china")) {
+                return ".azure.cn";
+            }
+            if (region.toLowerCase().startsWith("usgov")) {
+                return ".azure.us";
+            }
+        }
+        return ".microsoft.com";
+    }
+
     public abstract create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
@@ -76,4 +89,5 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
             queryParams[parameterName] = value.toLocaleLowerCase();
         }
     }
+
 }
