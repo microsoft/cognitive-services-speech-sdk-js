@@ -34,7 +34,7 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
-            const hostSuffix: string = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
+            const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
             const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + ".s2s.speech" + hostSuffix);
             endpoint = host + "/speech/translation/cognitiveservices/v1";
         }

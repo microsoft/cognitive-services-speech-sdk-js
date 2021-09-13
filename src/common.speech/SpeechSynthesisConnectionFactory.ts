@@ -10,6 +10,7 @@ import {
     IStringDictionary
 } from "../common/Exports";
 import { PropertyId } from "../sdk/Exports";
+import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
 import {
     AuthInfo,
     SynthesizerConfig,
@@ -32,7 +33,7 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
-        const hostSuffix = (region && region.toLowerCase().startsWith("china")) ? ".azure.cn" : ".microsoft.com";
+        const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
         const endpointId = config.parameters.getProperty(PropertyId.SpeechServiceConnection_EndpointId, undefined);
         const hostPrefix = (endpointId === undefined) ? "tts" : "voice";
         const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + "." + hostPrefix + ".speech" + hostSuffix);
