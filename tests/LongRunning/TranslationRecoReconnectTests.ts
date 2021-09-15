@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+import * as fs from "fs";
 import * as sdk from "../../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../../src/common.browser/Exports";
 import { Events, EventType, PlatformEvent } from "../../src/common/Exports";
 
 import { Settings } from "../Settings";
 import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
-
-import * as request from "request";
 
 import { WaitForCondition } from "../Utilities";
 
@@ -42,6 +41,7 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
     expect(s).not.toBeUndefined();
     return s;
 };
+/*
 
 // Tests client reconnect after speech timeouts.
 test("Reconnect After timeout", (done: jest.DoneCallback) => {
@@ -196,3 +196,117 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
             done.fail(err);
         });
 }, 1000 * 60 * 12);
+*/
+
+test("Test new connection on empty push stream for translator", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Test new connection on empty push stream for translator");
+
+    let s: sdk.SpeechTranslationConfig;
+    if (!Settings.ExecuteLongRunningTestsBool) {
+        // tslint:disable-next-line:no-console
+        console.info("Skipping test.");
+        done();
+        return;
+    }
+
+    // tslint:disable-next-line:no-console
+    console.warn("Running timeout test against production, this will be very slow...");
+    s = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    s.speechRecognitionLanguage = "en-US";
+    s.addTargetLanguage("de-DE");
+    const startTime: number = Date.now();
+    let longPauseOccured: boolean = false;
+    let shortPause: boolean = false;
+
+    const openPushStream = (): sdk.PushAudioInputStream => {
+        // create the push stream we need for the speech sdk.
+        const pushStream: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+        const chunkSize: number = 1024;
+
+        // open the file and push it to the push stream in chunkSize bytes per "data" event.
+        const stream = fs.createReadStream(Settings.LongerWaveFile, { highWaterMark: chunkSize });
+        const pauseInSeconds = 2;
+
+        stream.on("data", (arrayBuffer: Buffer): void => {
+            if (disconnected) {
+                stream.close();
+            } else {
+                pushStream.write(arrayBuffer.slice());
+                const currentTime: number = Date.now();
+
+                // Using very small chunks, we paused for pauseInSeconds after reading each chunk,
+                // elongating the read time for the file.
+                if (shortPause) {
+                    stream.pause();
+                    // set timeout for resume
+                    setTimeout(
+                        () => {
+                            stream.resume();
+                        },
+                        pauseInSeconds * 1000);
+                } else if (!longPauseOccured && currentTime > startTime + (1000 * 60 * 9.8)) {
+                    // pause reading the file
+                    stream.pause();
+                    longPauseOccured = true;
+                    // calculate restart timer. we will pause 20 seconds.
+                    const waitMSec = Math.round(1000 * 20);
+                    // set timeout for resume
+                    setTimeout(
+                        () => {
+                            stream.resume();
+                        },
+                        waitMSec);
+                }
+                shortPause = !shortPause;
+            }
+        });
+        objsToClose.push(stream);
+        objsToClose.push(pushStream);
+
+        return pushStream;
+    };
+
+    objsToClose.push(s);
+
+    /*
+    // Close p in 20 minutes.
+    const endTime: number = Date.now() + (1000 * 60 * 10); // 20 min.
+    WaitForCondition(() => {
+        return Date.now() >= endTime;
+    }, () => {
+    });
+    */
+
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(openPushStream());
+
+    const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, config);
+    objsToClose.push(r);
+
+    let disconnected: boolean = false;
+
+    r.recognized = (o: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionEventArgs) => {
+        try {
+            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
+        } catch (error) {
+            done.fail(error);
+        }
+    };
+
+    const conn: sdk.Connection = sdk.Connection.fromRecognizer(r);
+    objsToClose.push(conn);
+    conn.disconnected = (args: sdk.ConnectionEventArgs): void => {
+        disconnected = true;
+    };
+
+    r.startContinuousRecognitionAsync(() => {
+        WaitForCondition(() => (disconnected), () => {
+            // tslint:disable-next-line:no-console
+            console.log("DISCONNECTION REACHED");
+            done();
+        });
+    },
+    (err: string) => {
+        done.fail(err);
+    });
+}, 1000 * 60 * 20); // 20 minutes.
