@@ -22,6 +22,8 @@ export class EnumTranslation {
                 reason = ResultReason.NoMatch;
                 break;
             case RecognitionStatus.Error:
+            case RecognitionStatus.BadRequest:
+            case RecognitionStatus.Forbidden:
             default:
                 reason = ResultReason.Canceled;
                 break;
@@ -40,6 +42,8 @@ export class EnumTranslation {
             case RecognitionStatus.InitialSilenceTimeout:
             case RecognitionStatus.BabbleTimeout:
             case RecognitionStatus.Error:
+            case RecognitionStatus.BadRequest:
+            case RecognitionStatus.Forbidden:
             default:
                 reason = CancellationReason.Error;
                 break;
@@ -56,6 +60,12 @@ export class EnumTranslation {
             case RecognitionStatus.TooManyRequests:
                 reason = CancellationErrorCode.TooManyRequests;
                 break;
+            case RecognitionStatus.BadRequest:
+                reason = CancellationErrorCode.BadRequestParameters;
+                break;
+            case RecognitionStatus.Forbidden:
+                reason = CancellationErrorCode.Forbidden;
+                break;
             default:
                 reason = CancellationErrorCode.NoError;
                 break;
@@ -63,6 +73,24 @@ export class EnumTranslation {
 
         return reason;
 
+    }
+
+    public static implTranslateErrorDetails(cancellationErrorCode: CancellationErrorCode): string {
+        let errorDetails: string = "The speech service encountered an internal error and could not continue.";
+        switch (cancellationErrorCode) {
+            case CancellationErrorCode.Forbidden:
+                errorDetails = "The recognizer is using a free subscription that ran out of quota.";
+                break;
+            case CancellationErrorCode.BadRequestParameters:
+                errorDetails = "Invalid parameter or unsupported audio format in the request.";
+                break;
+            case CancellationErrorCode.TooManyRequests:
+                errorDetails = "The number of parallel requests exceeded the number of allowed concurrent transcriptions.";
+                break;
+            default:
+                break;
+        }
+        return errorDetails;
     }
 
 }

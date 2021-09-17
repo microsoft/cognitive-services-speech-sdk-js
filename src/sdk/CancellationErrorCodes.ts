@@ -46,4 +46,9 @@ export enum CancellationErrorCode {
      * Indicates an unexpected runtime error.
      */
     RuntimeError,
+
+    /**
+     * Indicates an quota overrun on existing key.
+     */
+    Forbidden,
 }
