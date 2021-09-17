@@ -114,11 +114,13 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
                 if (reason === ResultReason.Canceled) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(translatedPhrase.RecognitionStatus);
+                    const cancellationErrorCode: CancellationErrorCode = EnumTranslation.implTranslateCancelErrorCode(translatedPhrase.RecognitionStatus);
 
                     await this.cancelRecognitionLocal(
                         cancelReason,
-                        EnumTranslation.implTranslateCancelErrorCode(translatedPhrase.RecognitionStatus),
-                        undefined);
+                        cancellationErrorCode,
+                        EnumTranslation.implTranslateErrorDetails(cancellationErrorCode));
+
                 } else {
                     if (!(this.privRequestSession.isSpeechEnded && reason === ResultReason.NoMatch && translatedPhrase.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
                         const ev = new TranslationRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);

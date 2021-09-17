@@ -41,7 +41,7 @@ export class CancellationDetails extends CancellationDetailsBase {
             errorCode = (CancellationErrorCode as any)[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError])];
         }
 
-        return new CancellationDetails(reason, result.errorDetails, errorCode);
+        return new CancellationDetails(reason, result.errorDetails || EnumTranslation.implTranslateErrorDetails(errorCode), errorCode);
     }
 
 }

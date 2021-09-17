@@ -33,4 +33,6 @@ export enum RecognitionStatus {
     Error,
     EndOfDictation,
     TooManyRequests,
+    BadRequest,
+    Forbidden,
 }

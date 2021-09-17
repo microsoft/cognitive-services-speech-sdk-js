@@ -109,11 +109,12 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
                 if (ResultReason.Canceled === resultReason) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
+                    const cancellationErrorCode: CancellationErrorCode = EnumTranslation.implTranslateCancelErrorCode(simple.RecognitionStatus);
 
                     await this.cancelRecognitionLocal(
                         cancelReason,
-                        EnumTranslation.implTranslateCancelErrorCode(simple.RecognitionStatus),
-                        undefined);
+                        cancellationErrorCode,
+                        EnumTranslation.implTranslateErrorDetails(cancellationErrorCode));
 
                 } else {
                     if (!(this.privRequestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
