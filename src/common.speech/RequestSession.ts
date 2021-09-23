@@ -104,7 +104,6 @@ export class RequestSession {
         this.privIsRecognizing = true;
         this.privTurnStartAudioOffset = 0;
         this.privLastRecoOffset = 0;
-        this.privRequestId = createNoDashGuid();
         this.privRecogNumber++;
         this.privServiceTelemetryListener = new ServiceTelemetryListener(this.privRequestId, this.privAudioSourceId, this.privAudioNodeId);
         this.onEvent(new RecognitionTriggeredEvent(this.requestId, this.privSessionId, this.privAudioSourceId, this.privAudioNodeId));
@@ -156,9 +155,12 @@ export class RequestSession {
         } else {
             // Start a new request set.
             this.privTurnStartAudioOffset = this.privLastRecoOffset;
-            this.privRequestId = createNoDashGuid();
             this.privAudioNode.replay();
         }
+    }
+
+    public onSpeechContext = (): void => {
+        this.privRequestId = createNoDashGuid();
     }
 
     public onServiceTurnStartResponse = (): void => {
