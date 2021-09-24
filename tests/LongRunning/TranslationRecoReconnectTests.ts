@@ -41,7 +41,6 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
     expect(s).not.toBeUndefined();
     return s;
 };
-/*
 
 // Tests client reconnect after speech timeouts.
 test("Reconnect After timeout", (done: jest.DoneCallback) => {
@@ -196,7 +195,6 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
             done.fail(err);
         });
 }, 1000 * 60 * 12);
-*/
 
 test("Test new connection on empty push stream for translator", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
@@ -215,50 +213,32 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
     s = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-US";
     s.addTargetLanguage("de-DE");
-    const startTime: number = Date.now();
-    let longPauseOccured: boolean = false;
-    let shortPause: boolean = false;
+    let disconnected: boolean = false;
+    let reconnected: boolean = false;
+    let reconnectTime: number;
 
     const openPushStream = (): sdk.PushAudioInputStream => {
         // create the push stream we need for the speech sdk.
         const pushStream: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
-        const chunkSize: number = 1024;
+        const chunkSize: number = 512;
 
         // open the file and push it to the push stream in chunkSize bytes per "data" event.
-        const stream = fs.createReadStream(Settings.LongerWaveFile, { highWaterMark: chunkSize });
-        const pauseInSeconds = 2;
+        const stream = fs.createReadStream(Settings.EvenLongerWaveFile, { highWaterMark: chunkSize });
 
         stream.on("data", (arrayBuffer: Buffer): void => {
-            if (disconnected) {
-                stream.close();
-            } else {
-                pushStream.write(arrayBuffer.slice());
-                const currentTime: number = Date.now();
-
+            pushStream.write(arrayBuffer.slice());
+            if (!reconnected) {
                 // Using very small chunks, we paused for pauseInSeconds after reading each chunk,
                 // elongating the read time for the file.
-                if (shortPause) {
-                    stream.pause();
-                    // set timeout for resume
-                    setTimeout(
-                        () => {
-                            stream.resume();
-                        },
-                        pauseInSeconds * 1000);
-                } else if (!longPauseOccured && currentTime > startTime + (1000 * 60 * 9.8)) {
-                    // pause reading the file
-                    stream.pause();
-                    longPauseOccured = true;
-                    // calculate restart timer. we will pause 20 seconds.
-                    const waitMSec = Math.round(1000 * 20);
-                    // set timeout for resume
-                    setTimeout(
-                        () => {
-                            stream.resume();
-                        },
-                        waitMSec);
-                }
-                shortPause = !shortPause;
+                stream.pause();
+                const pauseInSeconds = Math.random();
+                // set timeout for resume
+                setTimeout(
+                    () => {
+                        stream.resume();
+                    },
+                    pauseInSeconds * 1000);
+
             }
         });
         objsToClose.push(stream);
@@ -269,27 +249,23 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
 
     objsToClose.push(s);
 
-    /*
-    // Close p in 20 minutes.
-    const endTime: number = Date.now() + (1000 * 60 * 10); // 20 min.
-    WaitForCondition(() => {
-        return Date.now() >= endTime;
-    }, () => {
-    });
-    */
-
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(openPushStream());
 
     const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, config);
     objsToClose.push(r);
 
-    let disconnected: boolean = false;
-
-    r.recognized = (o: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionEventArgs) => {
-        try {
-            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-        } catch (error) {
-            done.fail(error);
+    r.recognizing = (s: sdk.TranslationRecognizer, event: sdk.TranslationRecognitionEventArgs) => {
+        if (reconnected) {
+            if (Date.now() < reconnectTime + (1000 * 60 * 4)) {
+                done();
+            } else {
+                done.fail("Recognizing callback didn't happen within 4 minutes after reconnect");
+            }
+        }
+    };
+    r.canceled = (s: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
+        if (e.errorCode === sdk.CancellationErrorCode.BadRequestParameters) {
+            done.fail("Bad Request received from service, rerun test");
         }
     };
 
@@ -298,15 +274,17 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
     conn.disconnected = (args: sdk.ConnectionEventArgs): void => {
         disconnected = true;
     };
+    conn.connected = (args: sdk.ConnectionEventArgs): void => {
+        if (disconnected) {
+            reconnected = true;
+            reconnectTime = Date.now();
+        }
+    };
 
     r.startContinuousRecognitionAsync(() => {
-        WaitForCondition(() => (disconnected), () => {
-            // tslint:disable-next-line:no-console
-            console.log("DISCONNECTION REACHED");
-            done();
-        });
+        // empty block
     },
     (err: string) => {
         done.fail(err);
     });
-}, 1000 * 60 * 20); // 20 minutes.
+}, 1000 * 60 * 70); // 70 minutes.

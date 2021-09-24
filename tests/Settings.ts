@@ -74,6 +74,9 @@ export class Settings {
     public static WaveFileOffset: number = 1000000;
     public static WaveFileText: string = "What's the weather like?";
 
+    // Available at https://glharper-js-test.azurewebsites.net/speechServiceOverview.zip
+    public static EvenLongerWaveFile: string = Settings.InputDir + "speechServiceOverview.wav";
+
     public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
 
     public static IndependentIdentificationWaveFile: string = Settings.InputDir + "talkforafewseconds.wav";

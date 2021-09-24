@@ -485,6 +485,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected sendSpeechContext = (connection: IConnection): Promise<void> => {
         const speechContextJson = this.speechContext.toJSON();
+        this.privRequestSession.onSpeechContext();
 
         if (speechContextJson) {
             return connection.send(new SpeechConnectionMessage(
