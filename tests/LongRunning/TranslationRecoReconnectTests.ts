@@ -224,21 +224,22 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
 
         // open the file and push it to the push stream in chunkSize bytes per "data" event.
         const stream = fs.createReadStream(Settings.EvenLongerWaveFile, { highWaterMark: chunkSize });
-        let pauseInSeconds = .2;
 
         stream.on("data", (arrayBuffer: Buffer): void => {
             pushStream.write(arrayBuffer.slice());
+            if (!reconnected) {
+                // Using very small chunks, we paused for pauseInSeconds after reading each chunk,
+                // elongating the read time for the file.
+                stream.pause();
+                const pauseInSeconds = Math.random();
+                // set timeout for resume
+                setTimeout(
+                    () => {
+                        stream.resume();
+                    },
+                    pauseInSeconds * 1000);
 
-            // Using very small chunks, we paused for pauseInSeconds after reading each chunk,
-            // elongating the read time for the file.
-            stream.pause();
-            pauseInSeconds = Math.random();
-            // set timeout for resume
-            setTimeout(
-                () => {
-                    stream.resume();
-                },
-                pauseInSeconds * 1000);
+            }
         });
         objsToClose.push(stream);
         objsToClose.push(pushStream);
@@ -255,10 +256,10 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
 
     r.recognizing = (s: sdk.TranslationRecognizer, event: sdk.TranslationRecognitionEventArgs) => {
         if (reconnected) {
-            if (Date.now() < reconnectTime + (1000 * 60 * 10)) {
+            if (Date.now() < reconnectTime + (1000 * 60 * 4)) {
                 done();
             } else {
-                done.fail("Recognizing callback didn't happen within 10 minutes after reconnect");
+                done.fail("Recognizing callback didn't happen within 4 minutes after reconnect");
             }
         }
     };
