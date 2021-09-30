@@ -47,8 +47,10 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
             if (firstWordOffset && firstWordOffset < baseOffset) {
                 const offset: number = baseOffset - firstWordOffset;
                 for (const details of this.privDetailedSpeechPhrase.NBest) {
-                    for (const word of details.Words) {
-                        word.Offset += offset;
+                    if (!!details.Words) {
+                        for (const word of details.Words) {
+                            word.Offset += offset;
+                        }
                     }
                 }
             }
