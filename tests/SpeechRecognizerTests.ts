@@ -3,7 +3,7 @@
 
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
-import { ServiceRecognizerBase } from "../src/common.speech/Exports";
+import { DetailedSpeechPhrase, ServiceRecognizerBase } from "../src/common.speech/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
 import { ConnectionStartEvent, createNoDashGuid, IDetachable } from "../src/common/Exports";
@@ -172,6 +172,20 @@ test("speech.event from service", (done: jest.DoneCallback) => {
 
 }, 200000);
 */
+test("testDetailedSpeechPhrase1", (done: jest.DoneCallback) => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: testDetailedSpeechPhrase1");
+    try {
+        const testJsonString: string = `{"Id":"1234","RecognitionStatus":"Success","Offset":1,"Duration":4000000,"DisplayText":"This","NBest":[{"Confidence":0.9,"Lexical":"this","ITN":"this","MaskedITN":"this","Display":"This.","Words":[{"Word":"this","Offset":2,"Duration":4000000}]},{"Confidence":0.0,"Lexical":"","ITN":"","MaskedITN":"","Display":""}]}`;
+        const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(testJsonString);
+        const offsetCorrectedJson: string = detailed.getJsonWithCorrectedOffsets(3);
+        expect(offsetCorrectedJson).not.toBeUndefined();
+        done();
+    } catch (err) {
+        done.fail(err);
+    }
+});
+
 test("testSpeechRecognizer1", () => {
     // tslint:disable-next-line:no-console
     console.info("Name: testSpeechRecognizer1");
