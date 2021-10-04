@@ -16,9 +16,11 @@ export class VoiceProfilePhraseResult extends VoiceProfileResult {
 
     public constructor(reason: ResultReason, statusText: string, json: any) {
         super(reason, statusText);
-        Contracts.throwIfNullOrUndefined(json, "phrases array");
-        for (const item of json) {
-            this.privPhrases.push(item.passPhrase || item.activationPhrase);
+        Contracts.throwIfNullOrUndefined(json, "phrase result JSON");
+        if(!!json.phrases && !!json.phrases[0]) {
+            for (const item of json.phrases) {
+                this.privPhrases.push(item.passPhrase || item.activationPhrase);
+            }
         }
     }
 
