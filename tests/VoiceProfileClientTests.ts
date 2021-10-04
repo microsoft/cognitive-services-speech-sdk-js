@@ -137,7 +137,6 @@ test("Get Activation Phrases for enrollment", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Get Activation Phrases for enrollment");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
-    s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeakerRecognition_Api_Version], "3.0");
     objsToClose.push(s);
 
     const r: sdk.VoiceProfileClient = BuildClient(s);
