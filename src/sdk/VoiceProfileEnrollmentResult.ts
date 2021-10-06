@@ -101,20 +101,22 @@ export class VoiceProfileEnrollmentResult {
 
     private static getIdentificationDetails(json: any): any {
         return {
-            audioSpeechLength: json.speechTime ? parseFloat(json.speechTime) : 0,
+            audioSpeechLength: json.enrollmentsLengthInSec ? parseFloat(json.enrollmentsLengthInSec) : 0,
+            enrollmentsCount: json.enrollmentsCount || 0,
             enrollmentStatus: json.enrollmentStatus,
-            enrollmentsLength: json.enrollmentSpeechTime ? parseFloat(json.enrollmentSpeechTime) : 0,
+            enrollmentsLength: json.enrollmentsSpeechLengthInSec ? parseFloat(json.enrollmentsSpeechLengthInSec) : 0,
             profileId: json.profileId || json.identificationProfileId,
-            remainingEnrollmentSpeechLength: json.remainingEnrollmentSpeechTime ? parseFloat(json.remainingEnrollmentSpeechTime) : 0
+            remainingEnrollmentSpeechLength: json.remainingEnrollmentsSpeechLengthInSec ? parseFloat(json.remainingEnrollmentsSpeechLengthInSec) : 0
         };
     }
 
     private static getVerificationDetails(json: any): any {
         return {
+            audioSpeechLength: json.enrollmentsLengthInSec ? parseFloat(json.enrollmentsLengthInSec) : 0,
             enrollmentStatus: json.enrollmentStatus,
             enrollmentsCount: json.enrollmentsCount,
             profileId: json.profileId || json.verificationProfileId,
-            remainingEnrollmentSpeechLength: json.remainingEnrollmentSpeechLength ? parseFloat(json.remainingEnrollmentSpeechLength) : 0,
+            enrollmentsLength: json.enrollmentsSpeechLengthInSec ? parseFloat(json.enrollmentsSpeechLengthInSec) : 0,
             remainingEnrollmentsCount: json.remainingEnrollments || json.remainingEnrollmentsCount
         };
     }
