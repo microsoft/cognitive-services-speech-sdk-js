@@ -105,8 +105,8 @@ export class VoiceProfileEnrollmentResult {
             audioSpeechLength: json.audioSpeechLengthInSec ? parseFloat(json.audioSpeechLengthInSec) : 0,
             enrollmentStatus: json.enrollmentStatus,
             enrollmentsCount: json.enrollmentsCount || 0,
-            enrollmentsSpeechLength: json.enrollmentsSpeechLengthInSec ? parseFloat(json.enrollmentsSpeechLengthInSec) : 0,
             enrollmentsLength: json.enrollmentsLengthInSec ? parseFloat(json.enrollmentsLengthInSec) : 0,
+            enrollmentsSpeechLength: json.enrollmentsSpeechLengthInSec ? parseFloat(json.enrollmentsSpeechLengthInSec) : 0,
             profileId: json.profileId || json.identificationProfileId,
             remainingEnrollmentsSpeechLength: json.remainingEnrollmentsSpeechLengthInSec ? parseFloat(json.remainingEnrollmentsSpeechLengthInSec) : 0
         };

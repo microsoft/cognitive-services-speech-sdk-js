@@ -30,15 +30,15 @@ export class SpeakerIdMessageAdapter {
         let endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "westus");
-            const version: string = config.parameters.getProperty(PropertyId.SpeakerRecognition_Api_Version, "2021-09-05");
             const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.api.cognitive${hostSuffix}/speaker/{mode}/v${version}/{dependency}`);
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.api.cognitive${hostSuffix}/speaker/{mode}/{dependency}`);
             endpoint = host + "/profiles";
         }
         this.privUri = endpoint;
 
         const options: IRequestOptions = RestConfigBase.requestOptions;
         options.headers[RestConfigBase.configParams.subscriptionKey] = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
+        options.headers[RestConfigBase.configParams.apiVersion] = config.parameters.getProperty(PropertyId.SpeakerRecognition_Api_Version, "2021-09-05");
 
         this.privRestAdapter = new RestMessageAdapter(options);
     }
