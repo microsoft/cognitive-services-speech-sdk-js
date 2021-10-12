@@ -183,7 +183,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
-        s.addTargetLanguage("bo-GU");
+        s.addTargetLanguage("zz");
 
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
