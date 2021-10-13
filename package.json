@@ -85,7 +85,8 @@
     "jest": "jest",
     "lint": "tslint -p tsconfig.json",
     "civersion": "node ci/version.js",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "preinstall": "npm install --package-lock-only --ignore-scripts --no-audit && npx npm-force-resolutions"
   },
   "jest": {
     "testEnvironment": "node"
@@ -112,7 +113,10 @@
     "ws": "^7.3.1"
   },
   "resolutions": {
-    "extend": "3.0.2"
+    "extend": "3.0.2",
+    "set-value": "^4.0.1",
+    "glob-parent": "^5.1.2",
+    "minimist": "0.2.1"
   },
   "sideEffects": false
 }
