@@ -105,7 +105,8 @@ function makeRequest(disableOCSPStapling: boolean = true): Promise<void> {
     });
 }
 
-test("Test OCSP Revoked", (done: jest.DoneCallback) => {
+// https://github.com/chromium/badssl.com/issues/477
+test.skip("Test OCSP Revoked", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP Revoked");
 
