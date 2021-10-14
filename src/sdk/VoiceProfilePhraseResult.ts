@@ -17,8 +17,8 @@ export class VoiceProfilePhraseResult extends VoiceProfileResult {
     public constructor(reason: ResultReason, statusText: string, json: any) {
         super(reason, statusText);
         Contracts.throwIfNullOrUndefined(json, "phrase result JSON");
-        if (!!json.phrases && !!json.phrases[0]) {
-            for (const item of json.phrases) {
+        if (!!json.value && !!json.value[0]) {
+            for (const item of json.value) {
                 this.privPhrases.push(item.passPhrase || item.activationPhrase);
             }
         }
