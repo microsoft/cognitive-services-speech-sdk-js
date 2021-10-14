@@ -187,7 +187,7 @@ export class SpeakerIdMessageAdapter {
         return this.privUri.replace("{mode}", mode).replace("{dependency}", dependency);
     }
 
-    private getQueryParams(params: any = {}) {
+    private getQueryParams(params: any = {}): any {
 
         params[RestConfigBase.configParams.apiVersion] = this.privApiVersion;
         return params;
