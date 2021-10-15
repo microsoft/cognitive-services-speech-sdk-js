@@ -32,10 +32,9 @@ export class SpeakerIdMessageAdapter {
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "westus");
             const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.api.cognitive${hostSuffix}`);
-            endpoint = `${host}/speaker-recognition/{mode}/{dependency}/profiles`;
+            endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.api.cognitive${hostSuffix}`);
         }
-        this.privUri = endpoint;
+        this.privUri = `${endpoint}/speaker-recognition/{mode}/{dependency}/profiles`;
 
         const options: IRequestOptions = RestConfigBase.requestOptions;
         options.headers[RestConfigBase.configParams.subscriptionKey] = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
