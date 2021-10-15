@@ -55,6 +55,7 @@ const BuildClient: (speechConfig?: sdk.SpeechConfig) => sdk.VoiceProfileClient =
 
 const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeakerIDSubscriptionKey, Settings.SpeakerIDRegion);
+    // const s: sdk.SpeechConfig = sdk.SpeechConfig.fromHost(new URL(Settings.SpeakerIDDevHost), Settings.SpeakerIDSubscriptionKey);
     expect(s).not.toBeUndefined();
     return s;
 };
@@ -291,7 +292,7 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", async (
             expect(enrollmentRes.enrollmentResultDetails.profileId).not.toBeUndefined();
             expect(enrollmentRes.enrollmentResultDetails.profileId).toEqual(res.profileId);
             expect(enrollmentRes.enrollmentsCount).toEqual(0);
-            expect(enrollmentRes.enrollmentResultDetails.remainingEnrollmentsSpeechLength).toBeGreaterThan(0);
+            expect(enrollmentRes.enrollmentResultDetails.remainingEnrollmentsSpeechLengthInSec).toBeGreaterThan(0);
             try {
                 const results: sdk.VoiceProfileEnrollmentResult[] = await r.getAllProfilesAsync(res.profileType);
                 expect(results).not.toBeUndefined();
