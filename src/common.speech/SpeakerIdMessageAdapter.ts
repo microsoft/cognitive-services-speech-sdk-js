@@ -24,21 +24,21 @@ import { SpeakerRecognitionConfig } from "./Exports";
 export class SpeakerIdMessageAdapter {
     private privRestAdapter: RestMessageAdapter;
     private privUri: string;
+    private privApiVersion: string;
 
     public constructor(config: SpeakerRecognitionConfig) {
 
         let endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpoint) {
             const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "westus");
-            const version: string = config.parameters.getProperty(PropertyId.SpeakerRecognition_Api_Version, "2.0");
             const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.api.cognitive${hostSuffix}/speaker/{mode}/v${version}/{dependency}`);
-            endpoint = host + "/profiles";
+            endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.api.cognitive${hostSuffix}`);
         }
-        this.privUri = endpoint;
+        this.privUri = `${endpoint}/speaker-recognition/{mode}/{dependency}/profiles`;
 
         const options: IRequestOptions = RestConfigBase.requestOptions;
         options.headers[RestConfigBase.configParams.subscriptionKey] = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
+        this.privApiVersion = config.parameters.getProperty(PropertyId.SpeakerRecognition_Api_Version, "2021-09-05");
 
         this.privRestAdapter = new RestMessageAdapter(options);
     }
@@ -55,7 +55,7 @@ export class SpeakerIdMessageAdapter {
         Promise<IRestResponse> {
 
         const uri = this.getOperationUri(profileType);
-        return this.privRestAdapter.request(RestRequestType.Post, uri, {}, { locale: lang });
+        return this.privRestAdapter.request(RestRequestType.Post, uri, this.getQueryParams(), { locale: lang });
     }
 
     /**
@@ -71,7 +71,7 @@ export class SpeakerIdMessageAdapter {
 
         const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/enrollments";
         return audioSource.blob.then<IRestResponse>((result: Blob | Buffer): Promise<IRestResponse> => {
-            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, null, result);
+            return this.privRestAdapter.request(RestRequestType.File, uri, this.getQueryParams({ ignoreMinLength: "true" }), null, result);
         });
     }
 
@@ -86,10 +86,10 @@ export class SpeakerIdMessageAdapter {
     public async verifySpeaker(model: SpeakerVerificationModel, audioSource: IAudioSource):
         Promise<IRestResponse> {
 
-        const uri = this.getOperationUri(model.voiceProfile.profileType) + "/" + model.voiceProfile.profileId + "/verify";
+        const uri = this.getOperationUri(model.voiceProfile.profileType) + "/" + model.voiceProfile.profileId + ":verify";
         try {
             const result: Blob | Buffer = await audioSource.blob;
-            return this.privRestAdapter.request(RestRequestType.File, uri, { ignoreMinLength: "true" }, null, result);
+            return this.privRestAdapter.request(RestRequestType.File, uri, this.getQueryParams({ ignoreMinLength: "true" }), null, result);
         } catch (e) {
             return Promise.resolve({ data: e } as IRestResponse);
         }
@@ -106,10 +106,10 @@ export class SpeakerIdMessageAdapter {
     public async identifySpeaker(model: SpeakerIdentificationModel, audioSource: IAudioSource):
         Promise<IRestResponse> {
 
-        const uri = this.getOperationUri(VoiceProfileType.TextIndependentIdentification) + "/identifySingleSpeaker";
+        const uri = this.getOperationUri(VoiceProfileType.TextIndependentIdentification) + ":identifySingleSpeaker";
         try {
             const result: Blob | Buffer = await audioSource.blob;
-            return this.privRestAdapter.request(RestRequestType.File, uri, { profileIds: model.voiceProfileIds, ignoreMinLength: "true" }, null, result);
+            return this.privRestAdapter.request(RestRequestType.File, uri, this.getQueryParams({ profileIds: model.voiceProfileIds, ignoreMinLength: "true" }), null, result);
         } catch (e) {
             return Promise.resolve({ data: e } as IRestResponse);
         }
@@ -125,7 +125,7 @@ export class SpeakerIdMessageAdapter {
     public getProfileStatus(profile: VoiceProfile): Promise<IRestResponse> {
 
         const uri = `${this.getOperationUri(profile.profileType)}/${profile.profileId}`;
-        return this.privRestAdapter.request(RestRequestType.Get, uri, {});
+        return this.privRestAdapter.request(RestRequestType.Get, uri, this.getQueryParams());
     }
 
     /**
@@ -137,7 +137,7 @@ export class SpeakerIdMessageAdapter {
      */
     public getProfiles(profileType: VoiceProfileType): Promise<IRestResponse> {
         const uri = this.getOperationUri(profileType);
-        return this.privRestAdapter.request(RestRequestType.Get, uri, {});
+        return this.privRestAdapter.request(RestRequestType.Get, uri, this.getQueryParams());
     }
 
     /**
@@ -150,7 +150,7 @@ export class SpeakerIdMessageAdapter {
      */
     public getPhrases(profileType: VoiceProfileType, lang: string): Promise<IRestResponse> {
         const uri = `${this.getOperationUri(profileType)}`.replace(`profiles`, `phrases`) + "/" + lang;
-        return this.privRestAdapter.request(RestRequestType.Get, uri, {});
+        return this.privRestAdapter.request(RestRequestType.Get, uri, this.getQueryParams());
     }
 
     /**
@@ -163,7 +163,7 @@ export class SpeakerIdMessageAdapter {
     public deleteProfile(profile: VoiceProfile): Promise<IRestResponse> {
 
         const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId;
-        return this.privRestAdapter.request(RestRequestType.Delete, uri, {});
+        return this.privRestAdapter.request(RestRequestType.Delete, uri, this.getQueryParams());
     }
 
     /**
@@ -175,8 +175,8 @@ export class SpeakerIdMessageAdapter {
      */
     public resetProfile(profile: VoiceProfile): Promise<IRestResponse> {
 
-        const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/reset";
-        return this.privRestAdapter.request(RestRequestType.Post, uri, {});
+        const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + ":reset";
+        return this.privRestAdapter.request(RestRequestType.Post, uri, this.getQueryParams());
     }
 
     private getOperationUri(profileType: VoiceProfileType): string {
@@ -184,6 +184,12 @@ export class SpeakerIdMessageAdapter {
         const mode = profileType === VoiceProfileType.TextIndependentIdentification ? "identification" : "verification";
         const dependency = profileType === VoiceProfileType.TextDependentVerification ? "text-dependent" : "text-independent";
         return this.privUri.replace("{mode}", mode).replace("{dependency}", dependency);
+    }
+
+    private getQueryParams(params: any = {}): any {
+
+        params[RestConfigBase.configParams.apiVersion] = this.privApiVersion;
+        return params;
     }
 
 }
