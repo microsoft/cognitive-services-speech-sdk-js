@@ -51,9 +51,9 @@ export class OCSPDiskCacheStoreEvent extends OCSPEvent {
     }
 }
 
-export class OCSPCacheUpdatehCompleteEvent extends OCSPEvent {
+export class OCSPCacheUpdateCompleteEvent extends OCSPEvent {
     constructor(signature: string) {
-        super("OCSPCacheUpdatehCompleteEvent", EventType.Debug, signature);
+        super("OCSPCacheUpdateCompleteEvent", EventType.Debug, signature);
     }
 }
 
