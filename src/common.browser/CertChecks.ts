@@ -12,7 +12,7 @@ import {
     OCSPCacheFetchErrorEvent,
     OCSPCacheHitEvent,
     OCSPCacheMissEvent,
-    OCSPCacheUpdatehCompleteEvent,
+    OCSPCacheUpdateCompleteEvent,
     OCSPCacheUpdateNeededEvent,
     OCSPDiskCacheHitEvent,
     OCSPDiskCacheStoreEvent,
@@ -281,7 +281,7 @@ export class CertCheckAgent {
 
         const rawResponse: Buffer = await this.GetOCSPResponse(req, proxyInfo);
         this.StoreCacheEntry(signature, rawResponse);
-        this.onEvent(new OCSPCacheUpdatehCompleteEvent(req.id.toString("hex")));
+        this.onEvent(new OCSPCacheUpdateCompleteEvent(req.id.toString("hex")));
 
     }
 

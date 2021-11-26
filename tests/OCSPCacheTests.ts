@@ -195,7 +195,7 @@ test("Test OCSP expirey refreshes.", async (done: jest.DoneCallback) => {
     done();
 });
 
-test("Test OCSP expirey approaching refreshes.", async (done: jest.DoneCallback) => {
+test.skip("Test OCSP expirey approaching refreshes.", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP expirey approaching  refreshes.");
 
@@ -212,7 +212,7 @@ test("Test OCSP expirey approaching refreshes.", async (done: jest.DoneCallback)
     await waitForEvents("OCSPMemoryCacheStoreEvent", 1);
     await waitForEvents("OCSPDiskCacheStoreEvent", 1);
     await waitForEvents("OCSPCacheUpdateNeededEvent", 1);
-    await waitForEvents("OCSPCacheUpdatehCompleteEvent", 1);
+    await waitForEvents("OCSPCacheUpdateCompleteEvent", 1);
     done();
 });
 
