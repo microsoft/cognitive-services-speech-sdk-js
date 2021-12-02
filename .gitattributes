@@ -18,3 +18,5 @@ LICENSE text
 
 # Binary extensions:
 *.wav binary
+*.alaw binary
+*.mulaw binary
