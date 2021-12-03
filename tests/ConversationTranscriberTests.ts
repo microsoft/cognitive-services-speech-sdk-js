@@ -60,7 +60,7 @@ const CreateConversation: (speechConfig?: sdk.SpeechTranslationConfig) => Promis
 };
 
 const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
-    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeakerIDSubscriptionKey, Settings.SpeakerIDRegion);
+    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.ConversationTranscriptionKey, Settings.ConversationTranscriptionRegion);
     expect(s).not.toBeUndefined();
     return s;
 };
