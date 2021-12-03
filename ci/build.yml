@@ -58,8 +58,8 @@ jobs:
         BotRegion:$(BotRegionJS) ^
         SpeakerIDSubscriptionKey:$(SpeakerRecognition-WestUS-Key) ^
         SpeakerIDRegion:westus ^
-        ConversationTranscriptionKey:$(ConverstationTranscriptionKeyCentralUS20190509) ^
-        ConversationTranscriptionRegion:centralus ^
+        ConversationTranscriptionKey:$(SpeakerRecognition-WestUS-Key2) ^
+        ConversationTranscriptionRegion:westus ^
         CustomVoiceSubscriptionKey:$(speech-ne-s0-key1) ^
         CustomVoiceRegion:northeurope
 
