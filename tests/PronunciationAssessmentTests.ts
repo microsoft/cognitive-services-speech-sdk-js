@@ -111,6 +111,13 @@ test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback) => {
     expect(j.granularity).toEqual("FullText");
     expect(j.dimension).toEqual("Comprehensive");
     expect(j.enableMiscue).toBeTruthy();
+
+    pronConfig.phonemeAlphabet = "ipa";
+    pronConfig.nbestPhonemeCount = 5;
+    j = JSON.parse((pronConfig.toJSON()));
+    expect(j.phonemeAlphabet).toEqual("ipa");
+    expect(j.nbestPhonemeCount).toEqual(5);
+
     done();
 });
 
@@ -170,6 +177,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(pronResult.detailResult).not.toBeUndefined();
                 expect(pronResult.detailResult.Words[0].Word).not.toBeUndefined();
                 expect(pronResult.detailResult.Words[0].Phonemes[0].Phoneme).not.toBeUndefined();
+                expect(pronResult.detailResult.Words[0].Syllables[0].Syllable).not.toBeUndefined();
                 expect(pronResult.pronunciationScore).toBeGreaterThan(0);
                 expect(pronResult.accuracyScore).toBeGreaterThan(0);
                 expect(pronResult.fluencyScore).toBeGreaterThan(0);
@@ -215,6 +223,61 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(pronResult).not.toBeUndefined();
                 expect(pronResult.detailResult).not.toBeUndefined();
                 expect(pronResult.detailResult.Words[0].Word).not.toBeUndefined();
+                expect(pronResult.pronunciationScore).toBeGreaterThan(0);
+                expect(pronResult.accuracyScore).toBeGreaterThan(0);
+                expect(pronResult.fluencyScore).toBeGreaterThan(0);
+                expect(pronResult.completenessScore).toBeGreaterThan(0);
+                done();
+            } catch (error) {
+                done.fail(error);
+            }
+        }, (error: string) => {
+            done.fail(error);
+        });
+    });
+
+    test("test Pronunciation Assessment with ipa phoneme set", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: test Pronunciation Assessment with ipa phoneme set");
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+
+        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s, Settings.WaveFile);
+        objsToClose.push(r);
+
+        const p: sdk.PronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig(Settings.WaveFileText,
+            PronunciationAssessmentGradingSystem.HundredMark, PronunciationAssessmentGranularity.Phoneme, true);
+        objsToClose.push(p);
+        p.phonemeAlphabet = "IPA";
+        p.nbestPhonemeCount = 5;
+        p.applyTo(r);
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            try {
+                expect(result).not.toBeUndefined();
+                expect(result.errorDetails).toBeUndefined();
+                expect(result.text).toEqual(Settings.WaveFileText);
+                expect(result.properties).not.toBeUndefined();
+                const jsonString = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+                expect(jsonString).not.toBeUndefined();
+                const jsonResult = JSON.parse(jsonString);
+                expect(jsonResult.SNR).toBeGreaterThan(0);
+                const pronResult = sdk.PronunciationAssessmentResult.fromResult(result);
+                expect(pronResult).not.toBeUndefined();
+                expect(pronResult.detailResult).not.toBeUndefined();
+                expect(pronResult.detailResult.Words[0].Word).not.toBeUndefined();
+                expect(pronResult.detailResult.Words[0].Phonemes[0].Phoneme).not.toBeUndefined();
+                expect(pronResult.detailResult.Words[0].Phonemes[0].Phoneme).toEqual("w");
+                expect(pronResult.detailResult.Words[0].Phonemes[0].PronunciationAssessment.NBestPhonemes[0].Phoneme).not.toBeUndefined();
+                expect(pronResult.detailResult.Words[0].Syllables[0].Syllable).not.toBeUndefined();
                 expect(pronResult.pronunciationScore).toBeGreaterThan(0);
                 expect(pronResult.accuracyScore).toBeGreaterThan(0);
                 expect(pronResult.fluencyScore).toBeGreaterThan(0);

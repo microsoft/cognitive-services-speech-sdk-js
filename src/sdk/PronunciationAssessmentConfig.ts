@@ -18,6 +18,8 @@ import {
  */
 export class PronunciationAssessmentConfig {
     private privProperties: PropertyCollection;
+    private privPhonemeAlphabet: string;
+    private privNBestPhonemeCount: number;
 
     /**
      * PronunciationAssessmentConfig constructor.
@@ -90,6 +92,32 @@ export class PronunciationAssessmentConfig {
     }
 
     /**
+     * Sets the phoneme alphabet.
+     * The valid values are "SAPI" (default) and "IPA".
+     * Added in version 1.20.0
+     * @member PronunciationAssessmentConfig.prototype.phonemeAlphabet
+     * @function
+     * @public
+     * @param {string} phonemeAlphabet - Phoneme alphabet.
+     */
+    public set phonemeAlphabet(phonemeAlphabet: string) {
+        Contracts.throwIfNullOrWhitespace(phonemeAlphabet, "phonemeAlphabet");
+        this.privPhonemeAlphabet = phonemeAlphabet;
+    }
+
+    /**
+     * Sets the nbest phoneme count
+     * Added in version 1.20.0
+     * @member PronunciationAssessmentConfig.prototype.nbestPhonemeCount
+     * @function
+     * @public
+     * @param {number} nbestPhonemeCount - NBest phoneme count.
+     */
+    public set nbestPhonemeCount(nbestPhonemeCount: number) {
+        this.privNBestPhonemeCount = nbestPhonemeCount;
+    }
+
+    /**
      * @member PronunciationAssessmentConfig.prototype.properties
      * @function
      * @public
@@ -117,6 +145,14 @@ export class PronunciationAssessmentConfig {
         const granularity = this.privProperties.getProperty(PropertyId.PronunciationAssessment_Granularity);
         if (granularity) {
             paramsJson.granularity = granularity;
+        }
+
+        if (this.privPhonemeAlphabet) {
+            paramsJson.phonemeAlphabet = this.privPhonemeAlphabet;
+        }
+
+        if (this.privNBestPhonemeCount) {
+            paramsJson.nbestPhonemeCount = this.privNBestPhonemeCount;
         }
 
         // always set dimension to Comprehensive
