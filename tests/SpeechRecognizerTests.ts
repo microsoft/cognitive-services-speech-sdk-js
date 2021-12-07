@@ -1113,53 +1113,65 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         r.startContinuousRecognitionAsync();
     }, 15000);
 
-    test("PushStream44K file", (done: jest.DoneCallback) => {
+    test("PushStream44K, muLaw, Alaw files", async (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
-        console.info("Name: PushStream44K file");
+        console.info("Name: PushStream44K, muLaw, Alaw files");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
-        const format: sdk.AudioStreamFormat = sdk.AudioStreamFormat.getWaveFormatPCM(44100, 16, 1);
-        const f: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile44k);
-        const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream(format);
-        const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+        let success: number = 0;
 
-        p.write(f);
-        p.close();
+        const formatTestFiles: { file: string, sampleRate: number, bitRate: number, channels: number, formatTag: sdk.AudioFormatTag }[] = [
+            { file: Settings.WaveFile44k, sampleRate: 44100, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.PCM },
+            { file: Settings.WaveFileAlaw, sampleRate: 16000, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.ALaw },
+            { file: Settings.WaveFileMulaw, sampleRate: 16000, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.MuLaw },
+        ];
 
-        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
-        objsToClose.push(r);
+        for (const testFile of formatTestFiles) {
+            const format: sdk.AudioStreamFormat = sdk.AudioStreamFormat.getWaveFormat(testFile.sampleRate, testFile.bitRate, testFile.channels, testFile.formatTag);
+            const f: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(testFile.file);
+            const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream(format);
+            const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
-        expect(r).not.toBeUndefined();
-        expect(r instanceof sdk.Recognizer);
+            p.write(f);
+            p.close();
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-            try {
-                expect(e.errorDetails).toBeUndefined();
-            } catch (error) {
-                done.fail(error);
-            }
-        };
+            const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+            objsToClose.push(r);
 
-        r.recognizeOnceAsync(
-            (p2: sdk.SpeechRecognitionResult) => {
-                const res: sdk.SpeechRecognitionResult = p2;
+            expect(r).not.toBeUndefined();
+            expect(r instanceof sdk.Recognizer);
+
+            r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
                 try {
-                    expect(res).not.toBeUndefined();
-                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                    expect(res.text).toEqual("What's the weather like?");
-                    expect(res.properties).not.toBeUndefined();
-                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
-
-                    done();
+                    expect(e.errorDetails).toBeUndefined();
                 } catch (error) {
                     done.fail(error);
                 }
+            };
 
-            },
-            (error: string) => {
-                done.fail(error);
-            });
+            r.recognizeOnceAsync(
+                (p2: sdk.SpeechRecognitionResult) => {
+                    const res: sdk.SpeechRecognitionResult = p2;
+                    try {
+                        expect(res).not.toBeUndefined();
+                        expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                        expect(res.text).toEqual("What's the weather like?");
+                        expect(res.properties).not.toBeUndefined();
+                        expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                        success++;
+                    } catch (error) {
+                        done.fail(error);
+                    }
+
+                },
+                (error: string) => {
+                    done.fail(error);
+                });
+
+        }
+        WaitForCondition(() => success === 3, done);
     });
 
     test("PushStream4KPostRecognizePush", (done: jest.DoneCallback) => {

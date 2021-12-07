@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 export { AudioConfig } from "./Audio/AudioConfig";
-export { AudioStreamFormat } from "./Audio/AudioStreamFormat";
+export { AudioStreamFormat, AudioFormatTag } from "./Audio/AudioStreamFormat";
 export { AudioInputStream, PullAudioInputStream, PushAudioInputStream } from "./Audio/AudioInputStream";
 export { AudioOutputStream, PullAudioOutputStream, PushAudioOutputStream} from "./Audio/AudioOutputStream";
 export { CancellationReason } from "./CancellationReason";
