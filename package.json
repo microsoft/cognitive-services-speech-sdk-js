@@ -110,7 +110,7 @@
     "simple-lru-cache": "0.0.2",
     "url-parse": "^1.4.7",
     "uuid": "^8.3.0",
-    "ws": "^7.4.2"
+    "ws": "^7.5.6"
   },
   "resolutions": {
     "extend": "3.0.2",
