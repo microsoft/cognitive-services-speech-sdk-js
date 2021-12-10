@@ -52,7 +52,7 @@
   ],
   "devDependencies": {
     "@types/bent": "^7.3.2",
-    "@types/jest": "^27.0.3",
+    "@types/jest": "^25.2.2",
     "@types/node": "^12.12.30",
     "@types/request": "^2.48.3",
     "@types/rimraf": "^3.0.0",
@@ -67,14 +67,14 @@
     "gulp-terser": "^1.2.0",
     "gulp-tslint": "^8.1.4",
     "gulp-typescript": "^5.0.1",
-    "jest": "^27.4.3",
-    "jest-junit": "^13.0.0",
+    "jest": "^26.0.1",
+    "jest-junit": "^12.0.0",
     "ocsp": "^1.2.0",
     "request": "^2.88.0",
     "rimraf": "^3.0.2",
     "semver": "^6.3.0",
     "source-map-loader": "^0.2.4",
-    "ts-jest": "^27.1.1",
+    "ts-jest": "^26.4.4",
     "tslint": "^5.20.1",
     "typescript": "^3.5.3",
     "webpack-stream": "^5.2.1"
@@ -116,7 +116,8 @@
     "extend": "3.0.2",
     "set-value": "^4.0.1",
     "glob-parent": "^5.1.2",
-    "minimist": "1.2.5"
+    "minimist": "1.2.5",
+    "strip-ansi": "7.0.1"
   },
   "sideEffects": false
 }
