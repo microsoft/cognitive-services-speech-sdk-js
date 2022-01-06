@@ -175,19 +175,19 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
 
     public get volume(): number {
         return this.privAudio.volume;
-    };
+    }
 
     public set volume(volume: number) {
         this.privAudio.volume = volume;
-    };
+    }
 
     public mute(): void {
         this.privAudio.muted = true;
-    };
+    }
 
     public unmute(): void {
         this.privAudio.muted = false;
-    };
+    }
 
     public get isClosed(): boolean {
         return this.privIsClosed;
