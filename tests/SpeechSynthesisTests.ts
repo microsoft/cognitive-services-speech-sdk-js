@@ -132,9 +132,9 @@ class PushAudioOutputStreamTestCallback extends sdk.PushAudioOutputStreamCallbac
     }
 }
 
-test("testGetVoicesAsyncError", async () => {
+test("testGetVoicesAsyncAuthError", async () => {
     // tslint:disable-next-line:no-console
-    console.info("Name: testGetVoicesAsyncError");
+    console.info("Name: testGetVoicesAsyncAuthError");
     const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("foo", Settings.SpeechRegion);
 
     const r: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig);
