@@ -4,6 +4,7 @@
 import * as fs from "fs";
 import * as request from "request";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
+import { ResultReason } from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
@@ -130,6 +131,57 @@ class PushAudioOutputStreamTestCallback extends sdk.PushAudioOutputStreamCallbac
         this.isClosed = true;
     }
 }
+
+test("testGetVoicesAsyncError", async () => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: testGetVoicesAsyncError");
+    const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("foo", Settings.SpeechRegion);
+
+    const r: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig);
+    objsToClose.push(r);
+    expect(r).not.toBeUndefined();
+
+    const voicesResult: sdk.SynthesisVoicesResult = await r.getVoicesAsync();
+    expect(voicesResult).not.toBeUndefined();
+    expect(voicesResult.resultId).not.toBeUndefined();
+    expect(voicesResult.reason).toEqual(ResultReason.Canceled);
+    expect(voicesResult.errorDetails).not.toBeUndefined();
+    expect(voicesResult.errorDetails.endsWith("401: Unauthorized"));
+});
+
+test("testGetVoicesAsyncDefault", async () => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: testGetVoicesAsyncDefault");
+    const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+
+    const r: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig);
+    objsToClose.push(r);
+    expect(r).not.toBeUndefined();
+
+    const voicesResult: sdk.SynthesisVoicesResult = await r.getVoicesAsync();
+    expect(voicesResult).not.toBeUndefined();
+    expect(voicesResult.resultId).not.toBeUndefined();
+    expect(voicesResult.voices.length).toBeGreaterThan(0);
+    expect(voicesResult.reason).toEqual(ResultReason.VoicesListRetrieved);
+});
+
+test("testGetVoicesAsyncUS", async () => {
+    // tslint:disable-next-line:no-console
+    console.info("Name: testGetVoicesAsyncUS");
+    const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+
+    const r: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig);
+    objsToClose.push(r);
+    expect(r).not.toBeUndefined();
+    const locale = "en-US";
+
+    const voicesResult: sdk.SynthesisVoicesResult = await r.getVoicesAsync(locale);
+    expect(voicesResult).not.toBeUndefined();
+    expect(voicesResult.resultId).not.toBeUndefined();
+    expect(voicesResult.voices.length).toBeGreaterThan(0);
+    expect(voicesResult.reason).toEqual(ResultReason.VoicesListRetrieved);
+    expect(voicesResult.voices.filter((item: any) => item.locale !== locale).length).toEqual(0);
+});
 
 Settings.testIfDOMCondition("testSpeechSynthesizer1", () => {
     // tslint:disable-next-line:no-console

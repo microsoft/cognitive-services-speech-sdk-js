@@ -119,4 +119,10 @@ export enum ResultReason {
      * @member ResultReason.DeletedVoiceProfile
      */
     DeletedVoiceProfile,
+
+    /**
+     * Indicates synthesis voices list has been successfully retrieved.
+     * @member ResultReason.VoicesListRetrieved
+     */
+    VoicesListRetrieved,
 }

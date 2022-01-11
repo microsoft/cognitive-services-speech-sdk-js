@@ -85,11 +85,14 @@ export { Conversation,
     } from "./Transcription/Exports";
 export { SpeechSynthesisOutputFormat } from "./SpeechSynthesisOutputFormat";
 export { SpeechSynthesizer } from "./SpeechSynthesizer";
+export { SynthesisResult } from "./SynthesisResult";
 export { SpeechSynthesisResult } from "./SpeechSynthesisResult";
 export { SpeechSynthesisEventArgs } from "./SpeechSynthesisEventArgs";
 export { SpeechSynthesisWordBoundaryEventArgs } from "./SpeechSynthesisWordBoundaryEventArgs";
 export { SpeechSynthesisBookmarkEventArgs } from "./SpeechSynthesisBookmarkEventArgs";
 export { SpeechSynthesisVisemeEventArgs } from "./SpeechSynthesisVisemeEventArgs";
+export { SynthesisVoicesResult } from "./SynthesisVoicesResult";
+export { VoiceInfo } from "./VoiceInfo";
 export { IPlayer } from "./Audio/IPlayer";
 export { SpeakerAudioDestination } from "./Audio/SpeakerAudioDestination";
 export { CancellationEventArgs } from "./CancellationEventArgs";
