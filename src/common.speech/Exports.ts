@@ -44,6 +44,7 @@ export * from "./Transcription/Exports";
 export * from "./ServiceMessages/SynthesisAudioMetadata";
 export * from "./SynthesisTurn";
 export * from "./SynthesisAdapterBase";
+export * from "./SynthesisRestAdapter";
 export * from "./SynthesizerConfig";
 export * from "./SynthesisContext";
 export * from "./SpeakerRecognitionConfig";

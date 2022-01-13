@@ -69,7 +69,7 @@ export class RestMessageAdapter {
         this.privIgnoreCache = configParams.ignoreCache;
     }
 
-    public setHeaders(key: string, value: string ): void {
+    public setHeaders(key: string, value: string): void {
         this.privHeaders[key] = value;
     }
 
@@ -114,8 +114,12 @@ export class RestMessageAdapter {
                     // No JSON from Delete and reset (204) operations
                     responseReceivedDeferral.resolve(handleRestResponse(data));
                 } else {
-                    const j: any = await data.json();
-                    responseReceivedDeferral.resolve(handleRestResponse(data, j));
+                    try {
+                        const j: any = await data.json();
+                        responseReceivedDeferral.resolve(handleRestResponse(data, j));
+                    } catch {
+                        responseReceivedDeferral.resolve(handleRestResponse(data));
+                    }
                 }
             }).catch((error: string) => {
                 responseReceivedDeferral.reject(error);

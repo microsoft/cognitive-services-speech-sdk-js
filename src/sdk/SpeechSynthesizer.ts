@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { PathLike } from "fs";
+import { IRestResponse } from "../common.browser/RestMessageAdapter";
 import {
     AutoDetectSourceLanguagesOpenRangeOptionName,
     CognitiveSubscriptionKeyAuthentication,
@@ -13,6 +14,7 @@ import {
     SpeechServiceConfig,
     SpeechSynthesisConnectionFactory,
     SynthesisAdapterBase,
+    SynthesisRestAdapter,
     SynthesizerConfig,
 } from "../common.speech/Exports";
 import {
@@ -45,6 +47,7 @@ import {
     SpeechSynthesisResult,
     SpeechSynthesisVisemeEventArgs,
     SpeechSynthesisWordBoundaryEventArgs,
+    SynthesisVoicesResult,
 } from "./Exports";
 import { SpeechConfigImpl } from "./SpeechConfig";
 
@@ -56,6 +59,7 @@ import { SpeechConfigImpl } from "./SpeechConfig";
 export class SpeechSynthesizer {
     protected audioConfig: AudioConfig;
     protected privAdapter: SynthesisAdapterBase;
+    protected privRestAdapter: SynthesisRestAdapter;
     protected privProperties: PropertyCollection;
     protected synthesisRequestQueue: Queue<SynthesisRequest>;
 
@@ -374,6 +378,20 @@ export class SpeechSynthesizer {
     }
 
     /**
+     * Get list of synthesis voices available.
+     * The task returns the synthesis voice result.
+     * @member SpeechSynthesizer.prototype.getVoicesAsync
+     * @function
+     * @async
+     * @public
+     * @param locale - Locale of voices in BCP-47 format; if left empty, get all available voices.
+     * @return {Promise<SynthesisVoicesResult>} - Promise of a SynthesisVoicesResult.
+     */
+    public async getVoicesAsync(locale: string = ""): Promise<SynthesisVoicesResult> {
+        return this.getVoices(locale);
+    }
+
+    /**
      * Dispose of associated resources.
      * @member SpeechSynthesizer.prototype.close
      * @function
@@ -477,6 +495,8 @@ export class SpeechSynthesizer {
         this.privAdapter.audioOutputFormat = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(
             (SpeechSynthesisOutputFormat as any)[this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]
         );
+
+        this.privRestAdapter = new SynthesisRestAdapter(synthesizerConfig);
     }
 
     protected speakImpl(text: string, IsSsml: boolean, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, dataStream?: AudioOutputStream | PushAudioOutputStreamCallback | PathLike): void {
@@ -532,6 +552,20 @@ export class SpeechSynthesizer {
             this.dispose(true).catch(() => { });
         }
     }
+
+    protected async getVoices(locale: string): Promise<SynthesisVoicesResult> {
+        const requestId = createNoDashGuid();
+        const response: IRestResponse = await this.privRestAdapter.getVoicesList(requestId);
+        if (response.ok && Array.isArray(response.json)) {
+            let json = response.json;
+            if (!!locale && locale.length > 0) {
+                json = json.filter((item: any) => !!item.Locale && item.Locale.toLowerCase() === locale.toLowerCase() );
+            }
+            return new SynthesisVoicesResult(requestId, json);
+        } else {
+            return new SynthesisVoicesResult(requestId, { errorDetails: `Error: ${response.status}: ${response.statusText}`});
+        }
+   }
 
     protected async adapterSpeak(): Promise<void> {
         if (!this.privDisposed && !this.privSynthesizing) {
