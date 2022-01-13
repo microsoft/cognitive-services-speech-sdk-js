@@ -42,9 +42,15 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
     }
 
     public getJsonWithCorrectedOffsets(baseOffset: number): string {
-        if (!!this.privDetailedSpeechPhrase.NBest && !!this.privDetailedSpeechPhrase.NBest[0].Words) {
-            const firstWordOffset: number = this.privDetailedSpeechPhrase.NBest[0].Words[0].Offset;
-            if (firstWordOffset && firstWordOffset < baseOffset) {
+        if (!!this.privDetailedSpeechPhrase.NBest) {
+            let firstWordOffset: number;
+            for (const phrase of this.privDetailedSpeechPhrase.NBest) {
+                if (!!phrase.Words && !!phrase.Words[0]) {
+                    firstWordOffset = phrase.Words[0].Offset;
+                    break;
+                }
+            }
+            if (!!firstWordOffset && firstWordOffset < baseOffset) {
                 const offset: number = baseOffset - firstWordOffset;
                 for (const details of this.privDetailedSpeechPhrase.NBest) {
                     if (!!details.Words) {
