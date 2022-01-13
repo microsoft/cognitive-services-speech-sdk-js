@@ -118,6 +118,18 @@ export class WebsocketMessageAdapter {
                 const checkAgent: CertCheckAgent = new CertCheckAgent(this.proxyInfo);
 
                 options.agent = checkAgent.GetAgent();
+
+                // Workaround for https://github.com/microsoft/cognitive-services-speech-sdk-js/issues/465
+                // Which is root caused by https://github.com/TooTallNate/node-agent-base/issues/61
+                const uri = new URL(this.privUri);
+                let protocol: string = uri.protocol;
+
+                if (protocol?.toLocaleLowerCase() === "wss:") {
+                    protocol = "https:";
+                } else if (protocol?.toLocaleLowerCase() === "ws:") {
+                    protocol = "http:";
+                }
+                (options.agent as any).protocol = protocol;
                 this.privWebsocketClient = new ws(this.privUri, options);
             }
 
