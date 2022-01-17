@@ -196,4 +196,28 @@ export enum SpeechSynthesisOutputFormat {
      * @member SpeechSynthesisOutputFormat.Webm24Khz16Bit24KbpsMonoOpus
      */
     Webm24Khz16Bit24KbpsMonoOpus,
+
+    /**
+     * audio-16khz-16bit-32kbps-mono-opus
+     * Audio compressed by OPUS codec without container, with bitrate of 32kbps.
+     * Added in version 1.20.0
+     * @member SpeechSynthesisOutputFormat.Audio16Khz16Bit32KbpsMonoOpus
+     */
+    Audio16Khz16Bit32KbpsMonoOpus,
+
+    /**
+     * audio-24khz-16bit-48kbps-mono-opus
+     * Audio compressed by OPUS codec without container, with bitrate of 48kbps.
+     * Added in version 1.20.0
+     * @member SpeechSynthesisOutputFormat.Audio24Khz16Bit48KbpsMonoOpus
+     */
+    Audio24Khz16Bit48KbpsMonoOpus,
+
+    /**
+     * audio-24khz-16bit-24kbps-mono-opus
+     * Audio compressed by OPUS codec without container, with bitrate of 24kbps.
+     * Added in version 1.20.0
+     * @member SpeechSynthesisOutputFormat.Audio24Khz16Bit24KbpsMonoOpus
+     */
+    Audio24Khz16Bit24KbpsMonoOpus
 }

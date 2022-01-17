@@ -43,6 +43,9 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         [SpeechSynthesisOutputFormat.Raw24Khz16BitMonoTrueSilk]: "raw-24khz-16bit-mono-truesilk",
         [SpeechSynthesisOutputFormat.Raw8Khz8BitMonoALaw]: "raw-8khz-8bit-mono-alaw",
         [SpeechSynthesisOutputFormat.Riff8Khz8BitMonoALaw]: "riff-8khz-8bit-mono-alaw",
+        [SpeechSynthesisOutputFormat.Audio16Khz16Bit32KbpsMonoOpus]: "audio-16khz-16bit-32kbps-mono-opus",
+        [SpeechSynthesisOutputFormat.Audio24Khz16Bit48KbpsMonoOpus]: "audio-24khz-16bit-48kbps-mono-opus",
+        [SpeechSynthesisOutputFormat.Audio24Khz16Bit24KbpsMonoOpus]: "audio-24khz-16bit-24kbps-mono-opus",
     };
     private priAudioFormatString: string;
     /**
@@ -352,7 +355,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     AudioFormatTag.WEBM_OPUS,
                     1,
                     16000,
-                    8000,
+                    4000,
                     2,
                     16,
                     speechSynthesisOutputFormatString,
@@ -363,7 +366,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     AudioFormatTag.WEBM_OPUS,
                     1,
                     24000,
-                    8000,
+                    6000,
                     2,
                     16,
                     speechSynthesisOutputFormatString,
@@ -372,6 +375,39 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
             case "webm-24khz-16bit-24kbps-mono-opus":
                 return new AudioOutputFormatImpl(
                     AudioFormatTag.WEBM_OPUS,
+                    1,
+                    24000,
+                    3000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "audio-16khz-16bit-32kbps-mono-opus":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.OPUS,
+                    1,
+                    16000,
+                    4000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "audio-24khz-16bit-48kbps-mono-opus":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.OPUS,
+                    1,
+                    24000,
+                    6000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "audio-24khz-16bit-24kbps-mono-opus":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.OPUS,
                     1,
                     24000,
                     3000,
