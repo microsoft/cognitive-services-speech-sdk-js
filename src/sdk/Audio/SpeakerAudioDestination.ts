@@ -126,7 +126,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     }
 
     set format(format: AudioStreamFormat) {
-        if (typeof (AudioContext) !== "undefined" || typeof ((window as any).webkitAudioContext) !== "undefined") {
+        if (typeof (window) !== "undefined" && (typeof (AudioContext) !== "undefined" || typeof ((window as any).webkitAudioContext) !== "undefined")) {
             this.privFormat = format as AudioOutputFormatImpl;
             const mimeType: string = AudioFormatToMimeType[this.privFormat.formatTag];
             if (mimeType === undefined) {
