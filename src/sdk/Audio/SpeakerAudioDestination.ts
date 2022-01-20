@@ -88,7 +88,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                     err(error);
                 }
             });
-        } else if (this.privAudioOutputStream !== undefined) {
+        } else if (this.privAudioOutputStream !== undefined && typeof window !== "undefined") {
             if ((this.privFormat.formatTag === AudioFormatTag.PCM || this.privFormat.formatTag === AudioFormatTag.MuLaw
                 || this.privFormat.formatTag === AudioFormatTag.ALaw) && this.privFormat.hasHeader === false) {
                 // tslint:disable-next-line:no-console
@@ -126,7 +126,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     }
 
     set format(format: AudioStreamFormat) {
-        if (typeof (AudioContext) !== "undefined" || typeof ((window as any).webkitAudioContext) !== "undefined") {
+        if (typeof window !== "undefined" && (typeof (AudioContext) !== "undefined" || typeof ((window as any).webkitAudioContext) !== "undefined")) {
             this.privFormat = format as AudioOutputFormatImpl;
             const mimeType: string = AudioFormatToMimeType[this.privFormat.formatTag];
             if (mimeType === undefined) {

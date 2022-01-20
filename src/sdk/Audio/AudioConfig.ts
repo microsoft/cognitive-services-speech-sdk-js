@@ -116,9 +116,6 @@ export abstract class AudioConfig {
      * Added in version 1.11.0
      */
     public static fromDefaultSpeakerOutput(): AudioConfig {
-        if (typeof (window) === "undefined") {
-            return undefined;
-        }
         return new AudioOutputConfigImpl(new SpeakerAudioDestination());
     }
 
