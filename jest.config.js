@@ -7,7 +7,7 @@ module.exports = {
             transform: {
                 "^.+\\.ts$": "ts-jest",
             },
-            testRegex: "tests/.*Tests\\.ts$",
+            testRegex: "tests/SpeechRecognizerTests.ts",
             testPathIgnorePatterns: ["/lib/", "/es2015/", "/node_modules/", "/src/"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "jsdom",
@@ -20,7 +20,7 @@ module.exports = {
             transform: {
                 "^.+\\.ts$": "ts-jest",
             },
-            testRegex: "tests/.*Tests\\.ts$",
+            testRegex: "tests/SpeechRecognizerTests.ts",
             testPathIgnorePatterns: ["/lib/", "/es2015/", "/node_modules/", "/src/"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "node",

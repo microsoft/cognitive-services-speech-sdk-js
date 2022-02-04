@@ -1,6 +1,31 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/*
+// Mandatory settings for this test. These do not have default values. You must define them
+// in your secrets\TestConfiguration.ts file for the test below to pass:
+Settings.SpeechSubscriptionKey
+Settings.SpeechRegion
+Settings.SpeechTestEndpointId
+
+// Mandatory settings. These have defaults in Settings.ts. You do not need to define them.
+Settings.WaveFile
+Settings.WaveFile44k
+Settings.WaveFileText
+Settings.WaveFileLanguage
+Settings.AmbiguousWaveFile
+Settings.VoiceSignatureEnrollmentEndpoint
+Settings.VoiceSignatureWaveFile
+
+// Optional settings for this test. They do not have default values.
+Settings.SpeechEndpoint
+Settings.proxyServer
+Settings.proxyPort
+
+// This once is used it a test that is commented out:
+Settings.VoiceSignatureEnrollmentKey
+*/
+
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { ServiceRecognizerBase } from "../src/common.speech/Exports";

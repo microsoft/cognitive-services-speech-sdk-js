@@ -53,6 +53,16 @@ Run the build:
 npm run build
 ```
 
+## Testing
+
+To run all tests:
+
+TODO: talk about BuildTestConfig.cmd & RunTests.cmd
+
+```
+
+```
+
 ## Data / Telemetry
 
 This project collects data and sends it to Microsoft to help monitor our service performance and improve our products and services. Read the [Microsoft

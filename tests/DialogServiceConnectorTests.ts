@@ -1,6 +1,25 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/*
+// Mandatory settings for this test. These do not have default values. You must define them
+// in your secrets\TestConfiguration.ts file for the tests below to pass:
+Settings.BotSecret
+Settings.SpeechSubscriptionKey
+Settings.SpeechRegion
+Settings.BotSubscription
+Settings.BotRegion
+
+// Mandatory settings. These have defaults in Settings.ts. You do not need to define them.
+Settings.WaveFile
+Settings.WaveFileLanguage
+Settings.InputDir
+
+// Optional settings for this test. They do not have default values.
+Settings.proxyServer
+Settings.proxyPort
+*/
+
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener,
