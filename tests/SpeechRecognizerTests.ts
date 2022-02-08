@@ -5,26 +5,26 @@
 // Test Settings
 //
 // Mandatory settings that do not have default values in Settings.ts. You must define them
-// in your secrets\TestConfiguration.ts file for the test below to pass:
-// Settings.SpeechSubscriptionKey
-// Settings.SpeechRegion
-// Settings.SpeechTestEndpointId
+// before running the test (see README.md).
+//   Settings.SpeechSubscriptionKey
+//   Settings.SpeechRegion
+//   Settings.SpeechTestEndpointId
 //
 // Mandatory settings that have defaults in Settings.ts. You do not need to define them.
-// Settings.WaveFile
-// Settings.WaveFile44k
-// Settings.WaveFileText
-// Settings.WaveFileLanguage
-// Settings.AmbiguousWaveFile
-// Settings.VoiceSignatureEnrollmentEndpoint
-// Settings.VoiceSignatureWaveFile
+//   Settings.WaveFile
+//   Settings.WaveFile44k
+//   Settings.WaveFileText
+//   Settings.WaveFileLanguage
+//   Settings.AmbiguousWaveFile
+//   Settings.VoiceSignatureEnrollmentEndpoint
+//   Settings.VoiceSignatureWaveFile
 //
 // Optional settings for this test. They do not have default values.
-// Settings.SpeechEndpoint
-// Settings.proxyServer
-// Settings.proxyPort
+//   Settings.SpeechEndpoint
+//   Settings.proxyServer
+//   Settings.proxyPort
 //
-// This once is used it a test that is commented out:
+// This one is used for a test that is commented out:
 // Settings.VoiceSignatureEnrollmentKey
 //
 

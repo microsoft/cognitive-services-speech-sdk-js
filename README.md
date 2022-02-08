@@ -91,7 +91,7 @@ you want to run. For example, to only run tests defined in `AutoSourceLangDetect
     ```
     RunTests.cmd SpeechSubscriptionKey:0123456789abcdef0123456789abcdef SpeechRegion:westcentralus
     ```
-* Option 3: Edit the file `tests\Settings.ts` directly and enter values for you need to run the test.
+* Option 3: Edit the file `tests\Settings.ts` directly and enter values needed to run the test.
 
 * See summary of the test results in `test-javascript-junit.xml`.
 
