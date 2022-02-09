@@ -53,6 +53,10 @@ Run the build:
 npm run build
 ```
 
+## Testing
+
+### Run all tests
+
 Run tests (see [ci/build.yml](ci/build.yml)) -- complete results require several specifically-configured subscriptions, but incomplete results can be obtained with a subset (expect and ignore failures involving missing assignments).
 
 At a minimum, invoking `npm run test` will compile/lint the test files to catch early problems in test code changes.
@@ -69,6 +73,27 @@ At a minimum, invoking `npm run test` will compile/lint the test files to catch 
         SpeakerIDRegion:SPEAKER_ID_SUBSCRIPTION_REGION ^
         CustomVoiceSubscriptionKey:CUSTOM_VOICE_KEY ^
         CustomVoiceRegion:CUSTOM_VOICE_REGION
+
+### Run a subset of tests
+
+* Edit the file `jest.config.js`. Replace the regex expressions in `testRegex: "tests/.*Tests\\.ts$"` with one that defines the test file (or files)
+you want to run. For example, to only run tests defined in `AutoSourceLangDetectionTests.ts`, replace it with `testRegex: "tests/AutoSourceLangDetectionTests.ts"`. Do this is for the two project `jsdom` and `node`.
+
+* Option 1: Use a secrets file. Create the file `secrets\TestConfiguration.ts`. It should import the default configuration settings and define the values of the mandatory ones for this test, as well as and any additional optional settings. For example, to run the `AutoSourceLangDetectionTests.ts` tests, the required mandatory values are the speech key and region (using a fake key here as an example):
+    ```javascript
+    import { Settings } from "../tests/Settings";
+    Settings.SpeechSubscriptionKey = "0123456789abcdef0123456789abcdef";
+    Settings.SpeechRegion = "westcentralus"; 
+    ```
+    Then to run the tests type `RunTests.cmd` in the root of the repo.
+
+* Option 2: Use command line arguments. Instead of creating `secrets\TestConfiguration.ts`, pass the values directly to `RunTests.cmd`. For the above example, this would be:
+    ```
+    RunTests.cmd SpeechSubscriptionKey:0123456789abcdef0123456789abcdef SpeechRegion:westcentralus
+    ```
+* Option 3: Edit the file `tests\Settings.ts` directly and enter values needed to run the test.
+
+* See summary of the test results in `test-javascript-junit.xml`.
 
 ## Data / Telemetry
 
