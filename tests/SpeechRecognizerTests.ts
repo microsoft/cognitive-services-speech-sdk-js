@@ -1,6 +1,33 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+//
+// Test Settings
+//
+// Mandatory settings that do not have default values in Settings.ts. You must define them
+// before running the test (see README.md).
+//   Settings.SpeechSubscriptionKey
+//   Settings.SpeechRegion
+//   Settings.SpeechTestEndpointId
+//
+// Mandatory settings that have defaults in Settings.ts. You do not need to define them.
+//   Settings.WaveFile
+//   Settings.WaveFile44k
+//   Settings.WaveFileText
+//   Settings.WaveFileLanguage
+//   Settings.AmbiguousWaveFile
+//   Settings.VoiceSignatureEnrollmentEndpoint
+//   Settings.VoiceSignatureWaveFile
+//
+// Optional settings for this test. They do not have default values.
+//   Settings.SpeechEndpoint
+//   Settings.proxyServer
+//   Settings.proxyPort
+//
+// This one is used for a test that is commented out:
+// Settings.VoiceSignatureEnrollmentKey
+//
+
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { DetailedSpeechPhrase, ServiceRecognizerBase } from "../src/common.speech/Exports";
