@@ -117,7 +117,9 @@
     "set-value": "^4.0.1",
     "glob-parent": "^5.1.2",
     "minimist": "1.2.5",
-    "strip-ansi": "7.0.1"
+    "strip-ansi": "7.0.1",
+    "ansi-regex": "6.0.1",
+    "string-width": "5.1.0"
   },
   "sideEffects": false
 }
