@@ -49,10 +49,10 @@ export class SpeechContext {
                 format: {}
             };
         }
-        if (this.privContext.phraseOutput.detailed === undefined) { 
+        if (this.privContext.phraseOutput.detailed === undefined) {
             this.privContext.phraseOutput.detailed = {
                 options: []
-            },
+            };
         }
         this.privContext.phraseOutput.format = "Detailed";
         this.privContext.phraseOutput.detailed.options.push("PronunciationAssessment");
