@@ -1,14 +1,14 @@
 (function () {
   'use strict';
-  var gulp = require('gulp');
-  var ts = require('gulp-typescript');
-  var sourcemaps = require('gulp-sourcemaps');
-  var tslint = require('gulp-tslint');
-  var terser = require('gulp-terser');
-  var rename = require('gulp-rename');
-  var pump = require('pump');
-  var webpack = require('webpack-stream');
-  var dtsBundleWebpack = require('dts-bundle-webpack');
+  import {gulp} from 'gulp';
+  import * as ts from 'gulp-typescript';
+  import * as sourcemaps from 'gulp-sourcemaps';
+  import * as tslint from 'gulp-tslint';
+  import * as terser from 'gulp-terser';
+  import * as rename from 'gulp-rename';
+  import {pump} from 'pump';
+  import * as webpack from 'webpack-stream';
+  import * as dtsBundleWebpack from 'dts-bundle-webpack';
   var tsProject = ts.createProject('tsconfig.json');
   var tsProject2015 = ts.createProject('tsconfig.json', {
     target: 'es2015',
