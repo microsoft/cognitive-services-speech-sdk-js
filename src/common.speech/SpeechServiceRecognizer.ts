@@ -57,6 +57,14 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     resultType: "Always"
                 }
             });
+            const customModels: { language: string, endpoint: string }[] = recognizerConfig.sourceLanguageModels;
+            if (customModels !== undefined) {
+                this.privSpeechContext.setSection("phraseDetection", {
+                    customModels,
+                    onInterim: { action: "None" },
+                    onSuccess: { action: "None" },
+                });
+            }
         }
     }
 

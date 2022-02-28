@@ -310,4 +310,68 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 done.fail(err);
             });
     }, 30000);
+
+    test("testAddLIDCustomModels", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testAddLIDCustomModels");
+
+        const configs: sdk.SourceLanguageConfig[] = BuildSourceLanguageConfigs();
+        configs.forEach((c: sdk.SourceLanguageConfig) => { objsToClose.push(c); });
+
+        const a: sdk.AutoDetectSourceLanguageConfig = BuildAutoConfig(configs);
+        objsToClose.push(a);
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+        const r: sdk.SpeechRecognizer = BuildRecognizer(s, a);
+        objsToClose.push(r);
+
+        const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+        con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
+            if (args.message.path === "speech.context" && args.message.isTextMessage) {
+                const message = JSON.parse(args.message.TextMessage);
+                try {
+                    expect(message.phraseDetection).not.toBeUndefined();
+                    expect(message.phraseDetection.onInterim).not.toBeUndefined();
+                    expect(message.phraseDetection.onSuccess).not.toBeUndefined();
+                    expect(message.phraseDetection.onInterim.action).not.toBeUndefined();
+                    expect(message.phraseDetection.onSuccess.action).not.toBeUndefined();
+                    expect(message.phraseDetection.onInterim.action).toEqual("None");
+                    expect(message.phraseDetection.onSuccess.action).toEqual("None");
+                    expect(message.phraseDetection.onSuccess.action).toEqual("None");
+                    expect(message.phraseDetection.customModels).not.toBeUndefined();
+                    expect(message.phraseDetection.customModels[0]).not.toBeUndefined();
+                    expect(message.phraseDetection.customModels[0].language).toEqual("en-US");
+                    expect(message.phraseDetection.customModels[0].endpoint).toEqual("");
+                    expect(message.phraseDetection.customModels[1]).not.toBeUndefined();
+                    expect(message.phraseDetection.customModels[1].language).toEqual("de-DE");
+                    expect(message.phraseDetection.customModels[1].endpoint).toEqual("otherEndpointId");
+                    done();
+                } catch (error) {
+                    done.fail(error);
+                }
+            }
+        };
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            try {
+                expect(result).not.toBeUndefined();
+                expect(result.text).toEqual(Settings.WaveFileText);
+                expect(result.properties).not.toBeUndefined();
+                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        }, (error: string) => {
+            done.fail(error);
+        });
+    }, 10000);
 });
