@@ -246,6 +246,13 @@ export enum PropertyId {
     SpeechServiceConnection_EnableAudioLogging,
 
     /**
+     * A string value representing the language id mode for language detection.
+     * Allowed values are "Continuous", "Segments", and "AtStart".
+     * Added in version 1.21.0
+     */
+    SpeechServiceConnection_LanguageIdMode,
+
+    /**
      * A string value representing the desired endpoint version to target for Speech Recognition.
      * Added in version 1.21.0
      */

@@ -46,6 +46,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
             const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
             this.privSpeechContext.setSection("languageId", {
                 languages: sourceLanguages,
+                mode: recognizerConfig.languageIdMode,
                 onSuccess: { action: "Recognize" },
                 onUnknown: { action: "None" }
             });

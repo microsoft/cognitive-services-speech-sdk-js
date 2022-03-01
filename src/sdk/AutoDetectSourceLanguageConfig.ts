@@ -88,4 +88,20 @@ export class AutoDetectSourceLanguageConfig {
         return this.privProperties;
     }
 
+    /**
+     * @member AutoDetectSourceLanguageConfig.prototype.continuousMode
+     * @function
+     * @public
+     * @param {boolean} true if continuous mode LID desired.
+     * @summary Sets LID operation to continuous mode
+     */
+    public set continuousMode(isContinuous: boolean) {
+        if (isContinuous) {
+            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "2");
+            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_LanguageIdMode, "DetectContinuous");
+        } else {
+            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_LanguageIdMode, "DetectAtAudioStart");
+        }
+    }
+
 }

@@ -17,7 +17,8 @@ export enum SpeechResultFormat {
 }
 
 export class RecognizerConfig {
-    private privRecognitionMode: RecognitionMode = RecognitionMode.Interactive;
+    private privRecognitionMode: RecognitionMode;
+    private privLanguageIdMode: string;
     private privSpeechServiceConfig: SpeechServiceConfig;
     private privRecognitionActivityTimeout: number;
     private privParameters: PropertyCollection;
@@ -29,6 +30,7 @@ export class RecognizerConfig {
         this.privSpeechServiceConfig = speechServiceConfig ? speechServiceConfig : new SpeechServiceConfig(new Context(null));
         this.privParameters = parameters;
         this.privMaxRetryCount = parseInt(parameters.getProperty("SPEECH-Error-MaxRetryCount", "4"), 10);
+        this.privLanguageIdMode = parameters.getProperty(PropertyId.SpeechServiceConnection_LanguageIdMode, "DetectAtAudioStart");
     }
 
     public get parameters(): PropertyCollection {
@@ -55,6 +57,10 @@ export class RecognizerConfig {
 
     public get isContinuousRecognition(): boolean {
         return this.privRecognitionMode !== RecognitionMode.Interactive;
+    }
+
+    public get languageIdMode(): string {
+        return this.privLanguageIdMode;
     }
 
     public get autoDetectSourceLanguages(): string {
