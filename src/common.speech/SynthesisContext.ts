@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
-import { SpeechSynthesizer } from "../sdk/Exports";
+import { PropertyId, SpeechSynthesizer } from "../sdk/Exports";
 
 /**
  * Represents the JSON used in the synthesis.context message sent to the speech service.
@@ -47,16 +47,21 @@ export class SynthesisContext {
             audio: {
                 metadataOptions: {
                     bookmarkEnabled: (!!this.privSpeechSynthesizer.bookmarkReached),
-                    sentenceBoundaryEnabled: false,
+                    punctuationBoundaryEnabled: this.privSpeechSynthesizer.properties.getProperty(
+                        PropertyId.SpeechServiceResponse_RequestPunctuationBoundary, (!!this.privSpeechSynthesizer.wordBoundary)),
+                    sentenceBoundaryEnabled: this.privSpeechSynthesizer.properties.getProperty(
+                        PropertyId.SpeechServiceResponse_RequestSentenceBoundary, false),
+                    sessionEndEnabled: true,
                     visemeEnabled: (!!this.privSpeechSynthesizer.visemeReceived),
-                    wordBoundaryEnabled: (!!this.privSpeechSynthesizer.wordBoundary),
+                    wordBoundaryEnabled: this.privSpeechSynthesizer.properties.getProperty(
+                        PropertyId.SpeechServiceResponse_RequestWordBoundary, (!!this.privSpeechSynthesizer.wordBoundary)),
                 },
                 outputFormat: this.privAudioOutputFormat.requestAudioFormatString,
             },
             language: {
                 autoDetection: this.privSpeechSynthesizer.autoDetectSourceLanguage
             }
-        };
+        } as ISynthesisSection;
     }
 }
 
@@ -65,9 +70,11 @@ interface ISynthesisSection {
         outputFormat: string,
         metadataOptions: {
             bookmarkEnabled: boolean,
-            wordBoundaryEnabled: boolean,
+            wordBoundaryEnabled: string,
+            punctuationBoundaryEnabled: string,
             visemeEnabled: boolean,
-            sentenceBoundaryEnabled: boolean,
+            sentenceBoundaryEnabled: string,
+            sessionEndEnabled: boolean
         }
     };
     language: {

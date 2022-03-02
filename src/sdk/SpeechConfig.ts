@@ -196,10 +196,10 @@ export abstract class SpeechConfig {
      * @member SpeechConfig.prototype.setProperty
      * @function
      * @public
-     * @param {string} name - The name of the property to set.
+     * @param {string | PropertyId} name - The name of the property to set.
      * @param {string} value - The new value of the property.
      */
-    public abstract setProperty(name: string, value: string): void;
+    public abstract setProperty(name: string | PropertyId, value: string): void;
 
     /**
      * Returns the current value of an arbitrary property.

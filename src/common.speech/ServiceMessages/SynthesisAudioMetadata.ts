@@ -1,19 +1,25 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { SpeechSynthesisBoundaryType } from "../../sdk/Exports";
+
 export enum MetadataType {
     WordBoundary = "WordBoundary",
     Bookmark = "Bookmark",
-    Viseme = "Viseme"
+    Viseme = "Viseme",
+    SentenceBoundary = "SentenceBoundary",
+    SessionEnd = "SessionEnd",
 }
 
 export interface ISynthesisMetadata {
     Type: MetadataType;
     Data: {
         Offset: number;
+        Duration: number;
         text: {
             Text: string;
             Length: number;
+            BoundaryType: SpeechSynthesisBoundaryType;
         };
         Bookmark: string;
         VisemeId: number;

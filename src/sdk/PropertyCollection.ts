@@ -12,18 +12,18 @@ export class PropertyCollection {
     private privValues: string[] = [] as string[];
 
     /**
-     * Returns the property value in type String. The parameter must have the same type as String.
+     * Returns the property value in type String.
      * Currently only String, int and bool are allowed.
      * If the name is not available, the specified defaultValue is returned.
      * @member PropertyCollection.prototype.getProperty
      * @function
      * @public
      * @param {string} key - The parameter name.
-     * @param {string} def - The default value which is returned if the parameter
+     * @param {string | number | boolean} def - The default value which is returned if the parameter
      *        is not available in the collection.
      * @returns {string} value of the parameter.
      */
-    public getProperty(key: PropertyId | string, def?: string): string {
+    public getProperty(key: PropertyId | string, def?: string | number | boolean): string {
         let keyToUse: string;
 
         if (typeof key === "string") {
@@ -38,7 +38,11 @@ export class PropertyCollection {
             }
         }
 
-        return def;
+        if (def === undefined) {
+            return undefined;
+        }
+
+        return String(def);
     }
 
     /**
@@ -92,7 +96,7 @@ export class PropertyCollection {
      * @member PropertyCollection.prototype.mergeTo
      * @function
      * @public
-     * @param {PropertyCollection} The collection to merge into.
+     * @param {PropertyCollection}  destinationCollection - The collection to merge into.
      */
     public mergeTo(destinationCollection: PropertyCollection): void {
         this.privKeys.forEach((key: string | PropertyId) => {

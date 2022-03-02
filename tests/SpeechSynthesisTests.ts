@@ -4,7 +4,6 @@
 import * as fs from "fs";
 import * as request from "request";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
-import { ResultReason } from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
@@ -144,7 +143,7 @@ test("testGetVoicesAsyncAuthError", async () => {
     const voicesResult: sdk.SynthesisVoicesResult = await r.getVoicesAsync();
     expect(voicesResult).not.toBeUndefined();
     expect(voicesResult.resultId).not.toBeUndefined();
-    expect(voicesResult.reason).toEqual(ResultReason.Canceled);
+    expect(voicesResult.reason).toEqual(sdk.ResultReason.Canceled);
     expect(voicesResult.errorDetails).not.toBeUndefined();
     expect(voicesResult.errorDetails.endsWith("401: Unauthorized"));
 });
@@ -162,7 +161,7 @@ test("testGetVoicesAsyncDefault", async () => {
     expect(voicesResult).not.toBeUndefined();
     expect(voicesResult.resultId).not.toBeUndefined();
     expect(voicesResult.voices.length).toBeGreaterThan(0);
-    expect(voicesResult.reason).toEqual(ResultReason.VoicesListRetrieved);
+    expect(voicesResult.reason).toEqual(sdk.ResultReason.VoicesListRetrieved);
 });
 
 test("testGetVoicesAsyncUS", async () => {
@@ -179,7 +178,7 @@ test("testGetVoicesAsyncUS", async () => {
     expect(voicesResult).not.toBeUndefined();
     expect(voicesResult.resultId).not.toBeUndefined();
     expect(voicesResult.voices.length).toBeGreaterThan(0);
-    expect(voicesResult.reason).toEqual(ResultReason.VoicesListRetrieved);
+    expect(voicesResult.reason).toEqual(sdk.ResultReason.VoicesListRetrieved);
     expect(voicesResult.voices.filter((item: any) => item.locale !== locale).length).toEqual(0);
 });
 
@@ -307,6 +306,7 @@ describe("Service based tests", () => {
             // tslint:disable-next-line:no-console
             console.info("speaking finished, turn 1");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            expect(result.audioDuration.asSeconds()).toBeCloseTo(result.audioData.byteLength / 32000, 2);
         }, (e: string): void => {
             done.fail(e);
         });
@@ -315,6 +315,7 @@ describe("Service based tests", () => {
             // tslint:disable-next-line:no-console
             console.info("speaking finished, turn 2");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            expect(result.audioDuration.asSeconds()).toBeCloseTo(result.audioData.byteLength / 32000, 2);
             done();
         }, (e: string): void => {
             done.fail(e);
@@ -414,6 +415,107 @@ describe("Service based tests", () => {
         };
 
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            expect(wordBoundaryCount).toBeGreaterThan(0);
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizerWordBoundaryMathXml", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizerWordBoundaryMathXml");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        objsToClose.push(s);
+
+        expect(s).not.toBeUndefined();
+
+        let wordBoundaryCount: number = 0;
+        const expectedSsmlOffsets: number[] = [ 206, 211, 214, 217, 225, 227 ];
+        const expectedBoundary: sdk.SpeechSynthesisBoundaryType[] =
+            [sdk.SpeechSynthesisBoundaryType.Word,
+                sdk.SpeechSynthesisBoundaryType.Word,
+                sdk.SpeechSynthesisBoundaryType.Word,
+                sdk.SpeechSynthesisBoundaryType.Word,
+                sdk.SpeechSynthesisBoundaryType.Punctuation,
+                sdk.SpeechSynthesisBoundaryType.Word];
+
+        s.wordBoundary = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisWordBoundaryEventArgs): void => {
+            try {
+                expect(e).not.toBeUndefined();
+                expect(e.audioOffset).not.toBeUndefined();
+                expect(e.text).not.toBeUndefined();
+                expect(e.textOffset).not.toBeUndefined();
+                expect(e.wordLength).not.toBeUndefined();
+                expect(e.textOffset).toEqual(expectedSsmlOffsets[wordBoundaryCount]);
+                expect(e.boundaryType).toEqual(expectedBoundary[wordBoundaryCount]);
+            } catch (e) {
+                done.fail(e);
+            }
+            wordBoundaryCount += 1;
+        };
+
+        const ssml: string =
+            `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xmlns:emo='http://www.w3.org/2009/10/emotionml' xml:lang='en-US'>
+<voice name='en-US-JennyNeural'>This is an equation: <math xmlns="http://www.w3.org/1998/Math/MathML"><msqrt><mn>2</mn></msqrt></math></voice></speak>`;
+
+        s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
+            expect(wordBoundaryCount).toBeGreaterThan(0);
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            done();
+        }, (e: string): void => {
+            done.fail(e);
+        });
+    });
+
+    test("testSpeechSynthesizerSentenceBoundary", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testSpeechSynthesizerWordBoundaryMathXml");
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(speechConfig);
+        speechConfig.setProperty(sdk.PropertyId.SpeechServiceResponse_RequestSentenceBoundary, "true");
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        objsToClose.push(s);
+
+        expect(s).not.toBeUndefined();
+
+        let wordBoundaryCount: number = 0;
+        const expectedSsmlOffsets: number[] = [ 206, 212, 216, 206, 257, 261, 268, 257, 310, 314, 320, 310, 359, 365, 372, 359, 412, 418, 425, 412, 467, 473, 477, 467 ];
+        const expectedBoundary: sdk.SpeechSynthesisBoundaryType[] =
+            [sdk.SpeechSynthesisBoundaryType.Word,
+                sdk.SpeechSynthesisBoundaryType.Word,
+                sdk.SpeechSynthesisBoundaryType.Word,
+                sdk.SpeechSynthesisBoundaryType.Word,
+                sdk.SpeechSynthesisBoundaryType.Punctuation,
+                sdk.SpeechSynthesisBoundaryType.Word];
+
+        s.wordBoundary = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisWordBoundaryEventArgs): void => {
+            try {
+                expect(e).not.toBeUndefined();
+                expect(e.audioOffset).not.toBeUndefined();
+                expect(e.text).not.toBeUndefined();
+                expect(e.textOffset).not.toBeUndefined();
+                expect(e.wordLength).not.toBeUndefined();
+                expect(e.textOffset).toEqual(expectedSsmlOffsets[wordBoundaryCount]);
+                // expect(e.boundaryType).toEqual(expectedBoundary[wordBoundaryCount]);
+            } catch (e) {
+                done.fail(e);
+            }
+            wordBoundaryCount += 1;
+        };
+
+        const ssml: string =
+            `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xmlns:emo='http://www.w3.org/2009/10/emotionml' xml:lang='en-US'>
+<voice name='de-DE-ConradNeural'>Hallo Welt.</voice><voice name='da-DK-JeppeNeural'>Hei maailma.</voice>
+<voice name='nb-NO-IselinNeural'>Hei Verden.</voice><voice name='lt-LT-OnaNeural'>Labas pasauli.</voice>
+<voice name='ar-QA-MoazNeural'>مرحبا بالعالم.</voice><voice name='de-DE-ConradNeural'>Hallo Welt.</voice></speak>`;
+
+        s.speakSsmlAsync(ssml.split("\n").join(""), (result: sdk.SpeechSynthesisResult): void => {
             expect(wordBoundaryCount).toBeGreaterThan(0);
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             done();
@@ -739,9 +841,9 @@ describe("Service based tests", () => {
         });
     });
 
-    test("test Speech Synthesiser: Language Auto Detection", (done: jest.DoneCallback) => {
+    test("test Speech Synthesizer: Language Auto Detection", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
-        console.info("Name: test Speech Synthesiser, Language Auto Detection");
+        console.info("Name: test Speech Synthesizer, Language Auto Detection");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
         const autoDetectSourceLanguageConfig: sdk.AutoDetectSourceLanguageConfig = sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
