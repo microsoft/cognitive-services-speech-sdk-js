@@ -61,6 +61,28 @@ export class RecognizerConfig {
         return this.parameters.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, undefined);
     }
 
+    public get recognitionEndpointVersion(): string {
+        return this.parameters.getProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, undefined);
+    }
+
+    public get sourceLanguageModels(): { language: string, endpoint: string }[] {
+        const models: { language: string, endpoint: string }[] = [];
+        let modelsExist: boolean = false;
+        if (this.autoDetectSourceLanguages !== undefined) {
+            for (const language of this.autoDetectSourceLanguages.split(",")) {
+                const customProperty = language + PropertyId.SpeechServiceConnection_EndpointId.toString();
+                const modelId: string = this.parameters.getProperty(customProperty, undefined);
+                if (modelId !== undefined) {
+                    models.push( { language, endpoint: modelId });
+                    modelsExist = true;
+                } else {
+                    models.push( { language, endpoint: "" } );
+                }
+            }
+        }
+        return modelsExist ? models : undefined;
+    }
+
     public get maxRetryCount(): number {
         return this.privMaxRetryCount;
     }

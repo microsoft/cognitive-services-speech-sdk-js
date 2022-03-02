@@ -246,6 +246,12 @@ export enum PropertyId {
     SpeechServiceConnection_EnableAudioLogging,
 
     /**
+     * A string value representing the desired endpoint version to target for Speech Recognition.
+     * Added in version 1.21.0
+     */
+    SpeechServiceConnection_RecognitionEndpointVersion,
+
+    /**
      * The requested Cognitive Services Speech Service response output profanity setting.
      * Allowed values are "masked", "removed", and "raw".
      * Added in version 1.7.0.
