@@ -78,7 +78,11 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
                     if (config.parameters.getProperty(ForceDictationPropertyName, "false") === "true") {
                         endpoint = host + this.dictationRelativeUri;
                     } else {
-                        endpoint = host + this.conversationRelativeUri;
+                        if (config.recognitionEndpointVersion !== undefined) {
+                            endpoint = host + `/speech/recognition/conversation/cognitiveservices/v${config.recognitionEndpointVersion}`;
+                        } else {
+                            endpoint = host + this.conversationRelativeUri;
+                        }
                     }
                     break;
                 case RecognitionMode.Dictation:
