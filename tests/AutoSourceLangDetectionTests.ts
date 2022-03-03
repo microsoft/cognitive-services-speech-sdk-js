@@ -402,6 +402,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(message.languageId).not.toBeUndefined();
                     expect(message.languageId.mode).not.toBeUndefined();
                     expect(message.languageId.mode).toEqual("DetectContinuous");
+                    expect(message.languageId.Priority).not.toBeUndefined();
+                    expect(message.languageId.Priority).toEqual("PrioritizeLatency");
                     speechContextSent = true;
                 } catch (error) {
                     done.fail(error);

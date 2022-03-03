@@ -246,11 +246,11 @@ export enum PropertyId {
     SpeechServiceConnection_EnableAudioLogging,
 
     /**
-     * A string value representing the language id mode for language detection.
-     * Allowed values are "Continuous", "Segments", and "AtStart".
+     * A string value representing the priority for continuous language detection.
+     * Allowed values are "Latency", and "" (for no continous language detection). "Accuracy" is currently unsupported for Continuous LID.
      * Added in version 1.21.0
      */
-    SpeechServiceConnection_LanguageIdMode,
+    SpeechServiceConnection_ContinuousLanguageIdPriority,
 
     /**
      * A string value representing the desired endpoint version to target for Speech Recognition.

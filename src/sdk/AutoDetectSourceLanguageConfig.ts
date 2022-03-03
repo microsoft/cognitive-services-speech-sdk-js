@@ -98,10 +98,10 @@ export class AutoDetectSourceLanguageConfig {
     public set continuousMode(isContinuous: boolean) {
         if (isContinuous) {
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "2");
-            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_LanguageIdMode, "DetectContinuous");
+            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, "Latency");
         } else {
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "1");
-            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_LanguageIdMode, "DetectAtAudioStart");
+            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, undefined);
         }
     }
 
