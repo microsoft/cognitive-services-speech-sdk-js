@@ -296,6 +296,7 @@ describe("Service based tests", () => {
         console.info("Name: testSpeechSynthesizerSpeakTwice");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
+        speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, undefined);
         objsToClose.push(s);
