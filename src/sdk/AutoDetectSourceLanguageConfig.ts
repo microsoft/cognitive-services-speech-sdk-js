@@ -100,6 +100,7 @@ export class AutoDetectSourceLanguageConfig {
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "2");
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_LanguageIdMode, "DetectContinuous");
         } else {
+            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "1");
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_LanguageIdMode, "DetectAtAudioStart");
         }
     }
