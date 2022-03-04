@@ -33,6 +33,9 @@ export class RecognizerConfig {
         this.privMaxRetryCount = parseInt(parameters.getProperty("SPEECH-Error-MaxRetryCount", "4"), 10);
         this.privLanguageIdPriority = parameters.getProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, undefined);
         this.privLanguageIdMode = this.privLanguageIdPriority === "Latency" ? "DetectContinuous" : "DetectAtAudioStart";
+        if (this.privLanguageIdMode === "DetectAtAudioStart") {
+            this.privLanguageIdPriority = parameters.getProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, undefined);
+        }
     }
 
     public get parameters(): PropertyCollection {

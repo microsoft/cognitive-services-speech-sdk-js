@@ -101,3 +101,5 @@ export { PronunciationAssessmentGradingSystem } from "./PronunciationAssessmentG
 export { PronunciationAssessmentGranularity } from "./PronunciationAssessmentGranularity";
 export { PronunciationAssessmentConfig } from "./PronunciationAssessmentConfig";
 export { PronunciationAssessmentResult } from "./PronunciationAssessmentResult";
+export { LanguageIdMode } from "./LanguageIdMode";
+export { LanguageIdPriority } from "./LanguageIdPriority";

@@ -383,7 +383,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         configs.forEach((c: sdk.SourceLanguageConfig) => { objsToClose.push(c); });
 
         const a: sdk.AutoDetectSourceLanguageConfig = BuildAutoConfig(configs);
-        a.continuousMode = true;
+        a.mode = sdk.LanguageIdMode.Continuous;
         objsToClose.push(a);
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);

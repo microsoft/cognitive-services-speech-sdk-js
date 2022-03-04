@@ -8,6 +8,8 @@ import {
     PropertyId,
     SourceLanguageConfig,
 } from "./Exports";
+import { LanguageIdMode } from "./LanguageIdMode";
+import { LanguageIdPriority } from "./LanguageIdPriority";
 
 /**
  * Language auto detect configuration.
@@ -16,9 +18,12 @@ import {
  */
 export class AutoDetectSourceLanguageConfig {
     private privProperties: PropertyCollection;
+    private privLanguageIdMode: LanguageIdMode;
 
     private constructor() {
         this.privProperties = new PropertyCollection();
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, "Latency");
+        this.privLanguageIdMode = LanguageIdMode.AtStart;
     }
 
     /**
@@ -89,19 +94,39 @@ export class AutoDetectSourceLanguageConfig {
     }
 
     /**
-     * @member AutoDetectSourceLanguageConfig.prototype.continuousMode
+     * @member AutoDetectSourceLanguageConfig.prototype.mode
      * @function
      * @public
-     * @param {boolean} true if continuous mode LID desired.
-     * @summary Sets LID operation to continuous mode
+     * @param {LanguageIdMode} mode LID mode desired.
+     * @summary Sets LID operation to desired mode
      */
-    public set continuousMode(isContinuous: boolean) {
-        if (isContinuous) {
+    public set mode(mode: LanguageIdMode) {
+        if (mode === LanguageIdMode.Continuous) {
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "2");
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, "Latency");
         } else {
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "1");
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, undefined);
+        }
+        this.privLanguageIdMode = mode;
+    }
+
+    /**
+     * @member AutoDetectSourceLanguageConfig.prototype.priority
+     * @function
+     * @public
+     * @param {LanguageIdPriority} priority LID priority desired.
+     * @summary Sets LID operation to desired priority
+     */
+    public set priority(priority: LanguageIdPriority) {
+        if (priority === LanguageIdPriority.Accuracy) {
+            if (this.privLanguageIdMode !== LanguageIdMode.Continuous) {
+                // Accuracy not allowed for continuous mode
+                this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, "Accuracy");
+            }
+        } else {
+            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, "Latency");
+            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, "Latency");
         }
     }
 

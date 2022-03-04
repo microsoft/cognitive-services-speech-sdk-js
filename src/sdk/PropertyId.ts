@@ -246,8 +246,14 @@ export enum PropertyId {
     SpeechServiceConnection_EnableAudioLogging,
 
     /**
+     * A string value representing the priority for single language detection.
+     * Allowed values include "Latency" and "Accuracy"
+     * Added in version 1.21.0
+     */
+    SpeechServiceConnection_SingleLanguageIdPriority,
+
+    /**
      * A string value representing the priority for continuous language detection.
-     * Allowed values are "Latency", and "" (for no continous language detection). "Accuracy" is currently unsupported for Continuous LID.
      * Added in version 1.21.0
      */
     SpeechServiceConnection_ContinuousLanguageIdPriority,
