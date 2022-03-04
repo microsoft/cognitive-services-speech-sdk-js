@@ -257,14 +257,22 @@ export class SynthesisTurn {
         Events.instance.onEvent(event);
     }
 
+    /**
+     * Check if the text is an XML(SSML) tag
+     * @param text
+     * @private
+     */
+    private static isXmlTag(text: string): boolean {
+        return text.length >= 2 && text[0] === "<" && text[text.length - 1] === ">";
+    }
+
     private updateTextOffset(text: string, type: MetadataType): void {
         if (type === MetadataType.WordBoundary) {
             this.privTextOffset = this.privRawText.indexOf(text, this.privNextSearchTextIndex);
             if (this.privTextOffset >= 0) {
                 this.privNextSearchTextIndex = this.privTextOffset + text.length;
                 if (this.privIsSSML) {
-                    if (this.privRawText.indexOf("<", this.privTextOffset + 1) > this.privRawText.indexOf(">", this.privTextOffset + 1)
-                        && !(text.length >= 2 && text[0] === "<" && text[text.length - 1] === ">")) {
+                    if (this.withinXmlTag(this.privTextOffset) && !SynthesisTurn.isXmlTag(text)) {
                         this.updateTextOffset(text, type);
                     }
                 }
@@ -274,8 +282,7 @@ export class SynthesisTurn {
             if (this.privSentenceOffset >= 0) {
                 this.privNextSearchSentenceIndex = this.privSentenceOffset + text.length;
                 if (this.privIsSSML) {
-                    if (this.privRawText.indexOf("<", this.privSentenceOffset + 1) > this.privRawText.indexOf(">", this.privSentenceOffset + 1)
-                        && !(text.length >= 2 && text[0] === "<" && text[text.length - 1] === ">")) {
+                    if (this.withinXmlTag(this.privSentenceOffset) && !SynthesisTurn.isXmlTag(text)) {
                         this.updateTextOffset(text, type);
                     }
                 }
@@ -305,5 +312,14 @@ export class SynthesisTurn {
                 this.privReceivedAudio = new ArrayBuffer(0);
             }
         }
+    }
+
+    /**
+     * Check if current idx is in XML(SSML) tag
+     * @param idx
+     * @private
+     */
+    private withinXmlTag(idx: number): boolean {
+        return this.privRawText.indexOf("<", idx + 1) > this.privRawText.indexOf(">", idx + 1);
     }
 }
