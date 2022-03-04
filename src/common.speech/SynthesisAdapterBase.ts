@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { duration } from "moment";
 import {
     ArgumentNullError,
     ConnectionClosedEvent,
@@ -367,7 +366,7 @@ export class SynthesisAdapterBase implements IDisposable {
 
                                     const wordBoundaryEventArgs: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
                                         metadata.Data.Offset,
-                                        duration(metadata.Data.Duration / 10000, "milliseconds"),
+                                        metadata.Data.Duration,
                                         metadata.Data.text.Text,
                                         metadata.Data.text.Length,
                                         metadata.Type === MetadataType.WordBoundary

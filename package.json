@@ -107,7 +107,6 @@
     "async-disk-cache": "^2.1.0",
     "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",
-    "moment": "^2.29.1",
     "simple-lru-cache": "0.0.2",
     "url-parse": "^1.5.10",
     "uuid": "^8.3.0",

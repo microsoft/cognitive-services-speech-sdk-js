@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Duration, duration } from "moment";
 import {
     createNoDashGuid,
     Deferred,
@@ -80,7 +79,7 @@ export class SynthesisTurn {
         return this.privBytesReceived;
     }
 
-    public get audioDuration(): Duration {
+    public get audioDuration(): number {
         return this.privAudioDuration;
     }
 
@@ -105,7 +104,7 @@ export class SynthesisTurn {
     private privRawText: string;
     private privIsSSML: boolean;
     private privTurnAudioDestination: IAudioDestination;
-    private privAudioDuration: Duration;
+    private privAudioDuration: number;
 
     constructor() {
         this.privRequestId = createNoDashGuid();
@@ -230,7 +229,7 @@ export class SynthesisTurn {
     }
 
     public onSessionEnd(metadata: ISynthesisMetadata): void {
-        this.privAudioDuration = duration(metadata.Data.Offset / 10000, "milliseconds");
+        this.privAudioDuration = metadata.Data.Offset;
     }
 
     public dispose = (error?: string): void => {

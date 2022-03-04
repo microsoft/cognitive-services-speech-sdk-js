@@ -1,8 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Duration } from "moment";
-import { PropertyCollection, ResultReason, SynthesisResult } from "./Exports";
+import {
+    PropertyCollection,
+    ResultReason,
+    SynthesisResult
+} from "./Exports";
 
 /**
  * Defines result of speech synthesis.
@@ -11,20 +14,20 @@ import { PropertyCollection, ResultReason, SynthesisResult } from "./Exports";
  */
 export class SpeechSynthesisResult extends SynthesisResult {
     private readonly privAudioData: ArrayBuffer;
-    private readonly privAudioDuration: Duration;
+    private readonly privAudioDuration: number;
 
     /**
      * Creates and initializes an instance of this class.
      * @constructor
      * @param {string} resultId - The result id.
      * @param {ResultReason} reason - The reason.
-     * @param {number} audioData - The offset into the stream.
+     * @param {ArrayBuffer} audioData - The synthesized audio binary.
      * @param {string} errorDetails - Error details, if provided.
      * @param {PropertyCollection} properties - Additional properties, if provided.
-     * @param {Duration} audioDuration - The audio duration.
+     * @param {number} audioDuration - The audio duration.
      */
     constructor(resultId?: string, reason?: ResultReason, audioData?: ArrayBuffer,
-                errorDetails?: string, properties?: PropertyCollection, audioDuration?: Duration) {
+                errorDetails?: string, properties?: PropertyCollection, audioDuration?: number) {
         super(resultId, reason, errorDetails, properties);
         this.privAudioData = audioData;
         this.privAudioDuration = audioDuration;
@@ -42,13 +45,13 @@ export class SpeechSynthesisResult extends SynthesisResult {
     }
 
     /**
-     * The time duration of synthesized audio.
+     * The time duration of synthesized audio, in ticks (100 nanoseconds).
      * @member SpeechSynthesisResult.prototype.audioDuration
      * @function
      * @public
-     * @returns {Duration} The time duration of synthesized audio.
+     * @returns {number} The time duration of synthesized audio.
      */
-    public get audioDuration(): Duration {
+    public get audioDuration(): number {
         return this.privAudioDuration;
     }
 }
