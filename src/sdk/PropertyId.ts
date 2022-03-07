@@ -250,10 +250,11 @@ export enum PropertyId {
      * Allowed values include "Latency" and "Accuracy"
      * Added in version 1.21.0
      */
-    SpeechServiceConnection_SingleLanguageIdPriority,
+    SpeechServiceConnection_AtStartLanguageIdPriority,
 
     /**
      * A string value representing the priority for continuous language detection.
+     * "Latency" is default, "Accuracy" is currently not allowed for continuous LID
      * Added in version 1.21.0
      */
     SpeechServiceConnection_ContinuousLanguageIdPriority,

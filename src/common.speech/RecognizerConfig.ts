@@ -34,7 +34,7 @@ export class RecognizerConfig {
         this.privLanguageIdPriority = parameters.getProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, undefined);
         this.privLanguageIdMode = this.privLanguageIdPriority === "Latency" ? "DetectContinuous" : "DetectAtAudioStart";
         if (this.privLanguageIdMode === "DetectAtAudioStart") {
-            this.privLanguageIdPriority = parameters.getProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, undefined);
+            this.privLanguageIdPriority = parameters.getProperty(PropertyId.SpeechServiceConnection_AtStartLanguageIdPriority, undefined);
         }
     }
 

@@ -22,7 +22,7 @@ export class AutoDetectSourceLanguageConfig {
 
     private constructor() {
         this.privProperties = new PropertyCollection();
-        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, "Latency");
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_AtStartLanguageIdPriority, "Latency");
         this.privLanguageIdMode = LanguageIdMode.AtStart;
     }
 
@@ -122,11 +122,11 @@ export class AutoDetectSourceLanguageConfig {
         if (priority === LanguageIdPriority.Accuracy) {
             if (this.privLanguageIdMode !== LanguageIdMode.Continuous) {
                 // Accuracy not allowed for continuous mode
-                this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, "Accuracy");
+                this.privProperties.setProperty(PropertyId.SpeechServiceConnection_AtStartLanguageIdPriority, "Accuracy");
             }
         } else {
             this.privProperties.setProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, "Latency");
-            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, "Latency");
+            this.privProperties.setProperty(PropertyId.SpeechServiceConnection_AtStartLanguageIdPriority, "Latency");
         }
     }
 
