@@ -14,7 +14,7 @@ const CRLF: string = "\r\n";
 
 export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
 
-    public toConnectionMessage = (message: RawWebsocketMessage): Promise<ConnectionMessage> => {
+    public toConnectionMessage(message: RawWebsocketMessage): Promise<ConnectionMessage> {
         const deferral = new Deferred<ConnectionMessage>();
 
         try {
@@ -64,13 +64,13 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
                 deferral.resolve(new ConnectionMessage(message.messageType, body, headers, message.id));
             }
         } catch (e) {
-            deferral.reject(`Error formatting the message. Error: ${e}`);
+            deferral.reject(`Error formatting the message. Error: ${e as string}`);
         }
 
         return deferral.promise;
     }
 
-    public fromConnectionMessage = (message: ConnectionMessage): Promise<RawWebsocketMessage> => {
+    public fromConnectionMessage(message: ConnectionMessage): Promise<RawWebsocketMessage> {
         const deferral = new Deferred<RawWebsocketMessage>();
 
         try {
@@ -102,7 +102,7 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
                 deferral.resolve(new RawWebsocketMessage(MessageType.Binary, payload, message.id));
             }
         } catch (e) {
-            deferral.reject(`Error formatting the message. ${e}`);
+            deferral.reject(`Error formatting the message. ${e as string}`);
         }
 
         return deferral.promise;

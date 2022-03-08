@@ -154,17 +154,17 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private privProperties: PropertyCollection;
     private privLanguage: string;
     private privToken: string;
-    private privIsDisposed: boolean = false;
+    private privIsDisposed: boolean;
     private privRoom: IInternalConversation;
     private privManager: ConversationManager;
     private privConversationRecognizer: ConversationRecognizer;
-    private privIsConnected: boolean = false;
+    private privIsConnected: boolean;
     private privParticipants: InternalParticipants;
     private privIsReady: boolean;
     private privConversationTranslator: ConversationTranslator;
     private privTranscriberRecognizer: TranscriberRecognizer;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
-    private privConversationId: string = "";
+    private privConversationId: string;
     private readonly privTextMessageMaxLength: number;
 
     /**
@@ -174,6 +174,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
      */
     public constructor(speechConfig: SpeechTranslationConfig, id?: string) {
         super();
+        this.privIsConnected = false;
+        this.privIsDisposed = false;
+        this.privConversationId = "";
         this.privProperties = new PropertyCollection();
         this.privManager = new ConversationManager();
 
@@ -271,7 +274,40 @@ export class ConversationImpl extends Conversation implements IDisposable {
         return this.toParticipant(this.privParticipants.host);
     }
 
+    public get transcriberRecognizer(): TranscriberRecognizer {
+        return this.privTranscriberRecognizer;
+    }
+
+    public get conversationInfo(): ConversationInfo {
+        const convId: string = this.conversationId;
+        const p: TranscriptionParticipant[] = this.participants.map((part: Participant): TranscriptionParticipant => {
+            return {
+                id: part.id,
+                preferredLanguage: part.preferredLanguage,
+                voice: part.voice
+            };
+        });
+        const props: { [id: string]: string } = {};
+        for (const key of ConversationConnectionConfig.transcriptionEventKeys) {
+            const val: string = this.properties.getProperty(key, "");
+            if (val !== "") {
+                props[key] = val;
+            }
+        }
+        const info: ConversationInfo = { id: convId, participants: p, conversationProperties: props };
+        return info;
+    }
+
+    private get canSend(): boolean {
+        return this.privIsConnected && !this.privParticipants.me?.isMuted;
+    }
+
+    private get canSendAsHost(): boolean {
+        return this.privIsConnected && this.privParticipants.me?.isHost;
+    }
+
     // get / set the speech auth token
+    // eslint-disable-next-line @typescript-eslint/member-ordering
     public get authorizationToken(): string {
         return this.privToken;
     }
@@ -539,9 +575,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 if (!this.canSendAsHost) {
                     this.handleError(new Error(this.privErrors.permissionDeniedParticipant.replace("{command}", "remove")), err);
                 }
-                let participantId: string = "";
+                let participantId = "";
                 if (typeof userId === "string") {
-                    participantId = userId as string;
+                    participantId = userId;
                 } else if (userId.hasOwnProperty("id")) {
                     const participant: IParticipant = userId as IParticipant;
                     participantId = participant.id;
@@ -711,7 +747,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         return this.privIsDisposed;
     }
 
-    public dispose(reason?: string): void {
+    public dispose(): void {
         if (this.isDisposed) {
             return;
         }
@@ -728,36 +764,12 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privParticipants = undefined;
     }
 
-    public get transcriberRecognizer(): TranscriberRecognizer {
-        return this.privTranscriberRecognizer;
-    }
-
     public async connectTranscriberRecognizer(recognizer: TranscriberRecognizer): Promise<void> {
         if (!!this.privTranscriberRecognizer) {
             await this.privTranscriberRecognizer.close();
         }
         this.privTranscriberRecognizer = recognizer;
         this.privTranscriberRecognizer.conversation = this;
-    }
-
-    public get conversationInfo(): ConversationInfo {
-        const convId: string = this.conversationId;
-        const p: TranscriptionParticipant[] = this.participants.map((part: Participant) => {
-            return {
-                id: part.id,
-                preferredLanguage: part.preferredLanguage,
-                voice: part.voice
-            };
-        });
-        const props: { [id: string]: string } = {};
-        for (const key of ConversationConnectionConfig.transcriptionEventKeys) {
-            const val: string = this.properties.getProperty(key, "");
-            if (val !== "") {
-                props[key] = val;
-            }
-        }
-        const info: ConversationInfo = { id: convId, participants: p, conversationProperties: props };
-        return info;
     }
 
     public getKeepAlive(): string {
@@ -788,7 +800,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         }
     };
 
-    private onDisconnected = async (e: ConnectionEventArgs): Promise<void> => {
+    private onDisconnected = (e: ConnectionEventArgs): void => {
         try {
             if (!!this.privConversationTranslator?.sessionStopped) {
                 this.privConversationTranslator.sessionStopped(this.privConversationTranslator, e);
@@ -799,11 +811,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         } finally {
-            await this.close(false);
+            void this.close(false);
         }
     };
 
-    private onCanceled = async (r: ConversationRecognizer, e: ConversationTranslationCanceledEventArgs): Promise<void> => {
+    private onCanceled = (r: ConversationRecognizer, e: ConversationTranslationCanceledEventArgs): void => {
         try {
             if (!!this.privConversationTranslator?.canceled) {
                 this.privConversationTranslator.canceled(this.privConversationTranslator, e);
@@ -818,24 +830,24 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     private onParticipantUpdateCommandReceived = (r: ConversationRecognizer, e: ParticipantAttributeEventArgs): void => {
         try {
-            const updatedParticipant: any = this.privParticipants.getParticipant(e.id);
+            const updatedParticipant: IInternalParticipant = this.privParticipants.getParticipant(e.id);
             if (updatedParticipant !== undefined) {
 
                 switch (e.key) {
                     case ConversationTranslatorCommandTypes.changeNickname:
-                        updatedParticipant.displayName = e.value;
+                        updatedParticipant.displayName = e.value as string;
                         break;
                     case ConversationTranslatorCommandTypes.setUseTTS:
-                        updatedParticipant.useTts = e.value;
+                        updatedParticipant.isUsingTts = e.value as boolean;
                         break;
                     case ConversationTranslatorCommandTypes.setProfanityFiltering:
-                        updatedParticipant.profanity = e.value;
+                        updatedParticipant.profanity = e.value as boolean;
                         break;
                     case ConversationTranslatorCommandTypes.setMute:
-                        updatedParticipant.isMuted = e.value;
+                        updatedParticipant.isMuted = e.value as boolean;
                         break;
                     case ConversationTranslatorCommandTypes.setTranslateToLanguages:
-                        updatedParticipant.translateToLanguages = e.value;
+                        updatedParticipant.translateToLanguages = e.value as string[];
                         break;
                 }
                 this.privParticipants.addOrUpdateParticipant(updatedParticipant);
@@ -1012,14 +1024,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     /** Helpers */
-    private get canSend(): boolean {
-        return this.privIsConnected && !this.privParticipants.me?.isMuted;
-    }
-
-    private get canSendAsHost(): boolean {
-        return this.privIsConnected && this.privParticipants.me?.isHost;
-    }
-
     private handleCallback(cb: any, err: any): void {
         if (!!cb) {
             try {
@@ -1036,7 +1040,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private handleError(error: any, err: any): void {
         if (!!err) {
             if (error instanceof Error) {
-                const typedError: Error = error as Error;
+                const typedError: Error = error;
                 err(typedError.name + ": " + typedError.message);
 
             } else {
@@ -1048,11 +1052,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
     /** Participant Helpers */
     private toParticipants(includeHost: boolean): Participant[] {
 
-        const participants: Participant[] = this.privParticipants.participants.map((p: IInternalParticipant) => {
+        const participants: Participant[] = this.privParticipants.participants.map((p: IInternalParticipant): Participant => {
             return this.toParticipant(p);
         });
         if (!includeHost) {
-            return participants.filter((p: Participant) => p.isHost === false);
+            return participants.filter((p: Participant): boolean => p.isHost === false);
         } else {
             return participants;
         }

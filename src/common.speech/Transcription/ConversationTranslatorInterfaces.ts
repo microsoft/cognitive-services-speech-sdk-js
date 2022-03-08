@@ -61,7 +61,9 @@ export interface IInternalParticipant {
     isHost?: boolean;
     isMuted?: boolean;
     isUsingTts?: boolean;
+    profanity?: boolean;
     preferredLanguage?: string;
+    translateToLanguages?: string[];
     voice?: string;
 }
 
