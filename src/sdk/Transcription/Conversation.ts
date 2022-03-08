@@ -167,70 +167,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private privConversationId: string = "";
     private readonly privTextMessageMaxLength: number;
 
-    public set conversationTranslator(conversationTranslator: ConversationTranslator) {
-        this.privConversationTranslator = conversationTranslator;
-    }
-
-    // get the internal data about a conversation
-    public get room(): IInternalConversation {
-        return this.privRoom;
-    }
-
-    // get the wrapper for connecting to the websockets
-    public get connection(): ConversationRecognizer {
-        return this.privConversationRecognizer; // this.privConnection;
-    }
-
-    // get / set the speech auth token
-    public get authorizationToken(): string {
-        return this.privToken;
-    }
-
-    public set authorizationToken(value: string) {
-        Contracts.throwIfNullOrWhitespace(value, "authorizationToken");
-        this.privToken = value;
-    }
-
-    // get the config
-    public get config(): SpeechTranslationConfig {
-        return this.privConfig;
-    }
-
-    // get the conversation Id
-    public get conversationId(): string {
-        return this.privRoom ? this.privRoom.roomId : this.privConversationId;
-    }
-
-    // get the properties
-    public get properties(): PropertyCollection {
-        return this.privProperties;
-    }
-
-    // get the speech language
-    public get speechRecognitionLanguage(): string {
-        return this.privLanguage;
-    }
-
-    public get isMutedByHost(): boolean {
-        return this.privParticipants.me?.isHost ? false : this.privParticipants.me?.isMuted;
-    }
-
-    public get isConnected(): boolean {
-        return this.privIsConnected && this.privIsReady;
-    }
-
-    public get participants(): Participant[] {
-        return this.toParticipants(true);
-    }
-
-    public get me(): Participant {
-        return this.toParticipant(this.privParticipants.me);
-    }
-
-    public get host(): Participant {
-        return this.toParticipant(this.privParticipants.host);
-    }
-
     /**
      * Create a conversation impl
      * @param speechConfig
@@ -285,6 +221,71 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privTextMessageMaxLength = 1000;
     }
 
+    // get the internal data about a conversation
+    public get room(): IInternalConversation {
+        return this.privRoom;
+    }
+
+    // get the wrapper for connecting to the websockets
+    public get connection(): ConversationRecognizer {
+        return this.privConversationRecognizer; // this.privConnection;
+    }
+
+    // get the config
+    public get config(): SpeechTranslationConfig {
+        return this.privConfig;
+    }
+
+    // get the conversation Id
+    public get conversationId(): string {
+        return this.privRoom ? this.privRoom.roomId : this.privConversationId;
+    }
+
+    // get the properties
+    public get properties(): PropertyCollection {
+        return this.privProperties;
+    }
+
+    // get the speech language
+    public get speechRecognitionLanguage(): string {
+        return this.privLanguage;
+    }
+
+    public get isMutedByHost(): boolean {
+        return this.privParticipants.me?.isHost ? false : this.privParticipants.me?.isMuted;
+    }
+
+    public get isConnected(): boolean {
+        return this.privIsConnected && this.privIsReady;
+    }
+
+    public get participants(): Participant[] {
+        return this.toParticipants(true);
+    }
+
+    public get me(): Participant {
+        return this.toParticipant(this.privParticipants.me);
+    }
+
+    public get host(): Participant {
+        return this.toParticipant(this.privParticipants.host);
+    }
+
+    // get / set the speech auth token
+    public get authorizationToken(): string {
+        return this.privToken;
+    }
+
+    public set authorizationToken(value: string) {
+        Contracts.throwIfNullOrWhitespace(value, "authorizationToken");
+        this.privToken = value;
+    }
+
+    public set conversationTranslator(conversationTranslator: ConversationTranslator) {
+        this.privConversationTranslator = conversationTranslator;
+    }
+
+
     /**
      * Create a new conversation as Host
      * @param cb
@@ -296,7 +297,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 this.handleError(new Error(this.privErrors.permissionDeniedStart), err);
             }
             this.privManager.createOrJoin(this.privProperties, undefined,
-                ((room: IInternalConversation) => {
+                ((room: IInternalConversation): void => {
                     if (!room) {
                         this.handleError(new Error(this.privErrors.permissionDeniedConnect), err);
                     }
@@ -385,7 +386,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
             Contracts.throwIfNullOrWhitespace(lang, this.privErrors.invalidArgs.replace("{arg}", "language"));
             // join the conversation
             this.privManager.createOrJoin(this.privProperties, conversationId,
-                ((room: IInternalConversation) => {
+                ((room: IInternalConversation): void => {
                     Contracts.throwIfNullOrUndefined(room, this.privErrors.permissionDeniedConnect);
                     this.privRoom = room;
                     this.privConfig.authorizationToken = room.cognitiveSpeechAuthToken;
@@ -550,7 +551,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 }
                 Contracts.throwIfNullOrWhitespace(participantId, this.privErrors.invalidArgs.replace("{arg}", "userId"));
                 // check the participant exists
-                const index: number = this.participants.findIndex((p: Participant) => p.id === participantId);
+                const index: number = this.participants.findIndex((p: Participant): boolean => p.id === participantId);
                 if (index === -1) {
                     this.handleError(new Error(this.privErrors.invalidParticipantRequest), err);
                 }

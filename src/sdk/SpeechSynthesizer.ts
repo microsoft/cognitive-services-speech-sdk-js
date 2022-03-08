@@ -571,9 +571,9 @@ export class SpeechSynthesizer {
             if (!!locale && locale.length > 0) {
                 json = json.filter((item: any) => !!item.Locale && item.Locale.toLowerCase() === locale.toLowerCase() );
             }
-            return new SynthesisVoicesResult(requestId, json);
+            return new SynthesisVoicesResult(requestId, json, undefined);
         } else {
-            return new SynthesisVoicesResult(requestId, { errorDetails: `Error: ${response.status}: ${response.statusText}`});
+            return new SynthesisVoicesResult(requestId, undefined, `Error: ${response.status}: ${response.statusText}`);
         }
    }
 

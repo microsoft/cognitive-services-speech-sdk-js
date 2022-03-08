@@ -62,7 +62,7 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
 
                 // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
                 if (e.result?.errorDetails) {
-                    this.cancelSpeech();
+                    void this.cancelSpeech();
                     // TODO: format the error message contained in 'errorDetails'
                     this.fireCancelEvent(e.result.errorDetails);
                 }
@@ -71,7 +71,7 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
             this.canceled = (): void => {
                 if (this.privSpeechState !== SpeechState.Inactive) {
                     try {
-                        this.cancelSpeech();
+                        void this.cancelSpeech();
                     } catch (error) {
                         this.privSpeechState = SpeechState.Inactive;
                     }
