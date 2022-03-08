@@ -57,21 +57,21 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
                 this.privSpeechState = SpeechState.Inactive;
             };
 
-            this.recognized = async (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs): Promise<void> => {
+            this.recognized = (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs): void => {
                 // TODO: add support for getting recognitions from here if own speech
 
                 // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
                 if (e.result?.errorDetails) {
-                    await this.cancelSpeech();
+                    this.cancelSpeech();
                     // TODO: format the error message contained in 'errorDetails'
                     this.fireCancelEvent(e.result.errorDetails);
                 }
             };
 
-            this.canceled = async (): Promise<void> => {
+            this.canceled = (): void => {
                 if (this.privSpeechState !== SpeechState.Inactive) {
                     try {
-                        await this.cancelSpeech();
+                        this.cancelSpeech();
                     } catch (error) {
                         this.privSpeechState = SpeechState.Inactive;
                     }

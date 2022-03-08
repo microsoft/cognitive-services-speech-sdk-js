@@ -46,7 +46,7 @@ export class TranslationRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public recognized: (sender: TranslationRecognizer, event: TranslationRecognitionEventArgs) => Promise<void>;
+    public recognized: (sender: TranslationRecognizer, event: TranslationRecognitionEventArgs) => void;
 
     /**
      * The event canceled signals that an error occurred during recognition.
@@ -54,7 +54,7 @@ export class TranslationRecognizer extends Recognizer {
      * @function
      * @public
      */
-    public canceled: (sender: TranslationRecognizer, event: TranslationRecognitionCanceledEventArgs) => Promise<void>;
+    public canceled: (sender: TranslationRecognizer, event: TranslationRecognitionCanceledEventArgs) => void;
 
     /**
      * The event synthesizing signals that a translation synthesis result is received.

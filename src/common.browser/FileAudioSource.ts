@@ -96,7 +96,7 @@ export class FileAudioSource implements IAudioSource {
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                 await this.turnOff();
             },
-            id: () => {
+            id: (): string => {
                 return audioNodeId;
             },
             read: (): Promise<IStreamChunk<ArrayBuffer>> => {
