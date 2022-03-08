@@ -12,6 +12,17 @@ export class Translations {
     private privMap: PropertyCollection = new PropertyCollection();
 
     /**
+     * Get the languages in the object in a String array.
+     * @member Translations.prototype.languages
+     * @function
+     * @public
+     * @returns {string[]} languages in translations object.
+     */
+    public get languages(): string[] {
+        return this.privMap.keys;
+    }
+
+    /**
      * Returns the parameter value in type String. The parameter must have the same type as String.
      * Currently only String, int and bool are allowed.
      * If the name is not available, the specified defaultValue is returned.
@@ -36,16 +47,5 @@ export class Translations {
      */
     public set(key: string, value: string): void {
         this.privMap.setProperty(key, value);
-    }
-
-    /**
-     * Get the languages in the object in a String array.
-     * @member Translations.prototype.languages
-     * @function
-     * @public
-     * @returns {string[]} languages in translations object.
-     */
-    public get languages(): string[] {
-        return this.privMap.keys;
     }
 }

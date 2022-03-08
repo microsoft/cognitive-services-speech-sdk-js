@@ -3,9 +3,9 @@
 
 import {
     AudioConfig,
-    SpeechTranslationConfig,
+    SpeechTranslationConfig
 } from "../Exports";
-import { Callback, IConversation } from "./IConversation";
+import { Callback } from "./IConversation";
 
 export class ConversationCommon {
 
@@ -32,7 +32,7 @@ export class ConversationCommon {
     protected handleError(error: any, err: Callback): void {
         if (!!err) {
             if (error instanceof Error) {
-                const typedError: Error = error as Error;
+                const typedError: Error = error;
                 err(typedError.name + ": " + typedError.message);
 
             } else {

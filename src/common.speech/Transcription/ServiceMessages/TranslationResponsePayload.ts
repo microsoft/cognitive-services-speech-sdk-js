@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 /**
  * Defines the payload for incoming translation messages
  */
@@ -29,16 +30,15 @@ export interface ITextResponsePayload extends ITranslationCommandMessage {
     originalText: string;
 }
 
+const parseSpeechResponse = (json: string): ISpeechResponsePayload => JSON.parse(json) as ISpeechResponsePayload;
+const parseTextResponse = (json: string): ITextResponsePayload => JSON.parse(json) as ITextResponsePayload;
+
 export class SpeechResponsePayload implements ISpeechResponsePayload {
 
     private privSpeechResponse: ISpeechResponsePayload;
 
     private constructor(json: string) {
-        this.privSpeechResponse = JSON.parse(json);
-    }
-
-    public static fromJSON(json: string): SpeechResponsePayload {
-        return new SpeechResponsePayload(json);
+        this.privSpeechResponse = parseSpeechResponse(json);
     }
 
     public get recognition(): string {
@@ -80,19 +80,19 @@ export class SpeechResponsePayload implements ISpeechResponsePayload {
     public get isFinal(): boolean {
         return this.privSpeechResponse.type === "final";
     }
+
+    public static fromJSON(json: string): SpeechResponsePayload {
+        return new SpeechResponsePayload(json);
+    }
+
 }
 
-// tslint:disable-next-line: max-classes-per-file
 export class TextResponsePayload implements ITextResponsePayload {
 
     private privTextResponse: ITextResponsePayload;
 
     private constructor(json: string) {
-        this.privTextResponse = JSON.parse(json);
-    }
-
-    public static fromJSON(json: string): TextResponsePayload {
-        return new TextResponsePayload(json);
+        this.privTextResponse = parseTextResponse(json);
     }
 
     public get originalText(): string {
@@ -130,4 +130,9 @@ export class TextResponsePayload implements ITextResponsePayload {
     public get type(): string {
         return this.privTextResponse.type;
     }
+
+    public static fromJSON(json: string): TextResponsePayload {
+        return new TextResponsePayload(json);
+    }
+
 }

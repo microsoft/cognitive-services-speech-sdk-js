@@ -16,23 +16,23 @@ export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
 
             switch (event.eventType) {
                 case EventType.Debug:
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.debug(log);
                     break;
                 case EventType.Info:
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info(log);
                     break;
                 case EventType.Warning:
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.warn(log);
                     break;
                 case EventType.Error:
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.error(log);
                     break;
                 default:
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.log(log);
                     break;
             }

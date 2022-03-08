@@ -1,9 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// tslint:disable:max-classes-per-file
-
-import { ArgumentNullError } from "./Error";
+/* eslint-disable max-classes-per-file */
 
 export enum PromiseState {
     None,

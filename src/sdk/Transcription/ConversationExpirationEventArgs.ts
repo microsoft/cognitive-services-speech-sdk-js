@@ -7,13 +7,13 @@ import { SessionEventArgs } from "../Exports";
 export class ConversationExpirationEventArgs extends SessionEventArgs {
     private privExpirationTime: number;
 
-    constructor(expirationTime: number, sessionId?: string) {
+    public constructor(expirationTime: number, sessionId?: string) {
         super(sessionId);
         this.privExpirationTime = expirationTime;
     }
 
     /** How much longer until the conversation expires (in minutes). */
-    get expirationTime(): number {
+    public get expirationTime(): number {
         return this.privExpirationTime;
     }
 }

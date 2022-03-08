@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
+/* eslint-disable max-classes-per-file */
+
 import {
     ConversationConnectionConfig,
     ConversationManager,
@@ -13,7 +15,6 @@ import {
     IInternalConversation,
     IInternalParticipant,
     InternalParticipants,
-    LockRoomEventArgs,
     MuteAllEventArgs,
     ParticipantAttributeEventArgs,
     ParticipantEventArgs,
@@ -27,7 +28,6 @@ import {
 } from "../../common/Exports";
 import { Contracts } from "../Contracts";
 import {
-    Connection,
     ConnectionEventArgs,
     ConversationExpirationEventArgs,
     ConversationParticipantsChangedEventArgs,
@@ -47,8 +47,11 @@ import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
 
 export abstract class Conversation implements IConversation {
 
+    protected constructor() {
+        return;
+    }
+
     public abstract get authorizationToken(): string;
-    public abstract set authorizationToken(value: string);
 
     public abstract get config(): SpeechTranslationConfig;
 
@@ -58,8 +61,7 @@ export abstract class Conversation implements IConversation {
     public abstract get speechRecognitionLanguage(): string;
     public abstract get participants(): Participant[];
     public abstract get isConnected(): boolean;
-
-    protected constructor() { }
+    public abstract set authorizationToken(value: string);
 
     /**
      * Create a conversation
@@ -86,12 +88,12 @@ export abstract class Conversation implements IConversation {
             err = arg3;
         }
         conversationImpl.createConversationAsync(
-            (() => {
+            ((): void => {
                 if (!!cb) {
                     cb();
                 }
             }),
-            (error: any) => {
+            (error: any): void => {
                 if (!!err) {
                     err(error);
                 }
@@ -146,7 +148,6 @@ export abstract class Conversation implements IConversation {
     public abstract unmuteParticipantAsync(userId: string, cb?: Callback, err?: Callback): void;
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConversationImpl extends Conversation implements IDisposable {
 
     private privConfig: SpeechTranslationConfig;
@@ -302,7 +303,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                     this.privRoom = room;
                     this.handleCallback(cb, err);
                 }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -343,10 +344,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privConversationRecognizer.conversationExpiration = this.onConversationExpiration;
 
             this.privConversationRecognizer.connect(this.privRoom.token,
-                (() => {
+                ((): void => {
                     this.handleCallback(cb, err);
                 }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -393,7 +394,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                         cb(room.cognitiveSpeechAuthToken);
                     }
                 }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -445,10 +446,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 this.handleError(new Error(this.privErrors.permissionDeniedConversation.replace("{command}", "lock")), err);
             }
             this.privConversationRecognizer?.sendRequest(this.getLockCommand(true),
-                (() => {
+                ((): void => {
                     this.handleCallback(cb, err);
                 }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -472,10 +473,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 this.handleError(new Error(this.privErrors.permissionDeniedConversation.replace("{command}", "mute")), err);
             }
             this.privConversationRecognizer?.sendRequest(this.getMuteAllCommand(true),
-                (() => {
+                ((): void => {
                     this.handleCallback(cb, err);
                 }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -508,10 +509,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (exists === -1) {
                 this.handleError(new Error(this.privErrors.invalidParticipantRequest), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getMuteCommand(userId, true), (() => {
+            this.privConversationRecognizer?.sendRequest(this.getMuteCommand(userId, true), ((): void => {
                 this.handleCallback(cb, err);
             }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -553,10 +554,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 if (index === -1) {
                     this.handleError(new Error(this.privErrors.invalidParticipantRequest), err);
                 }
-                this.privConversationRecognizer?.sendRequest(this.getEjectCommand(participantId), (() => {
+                this.privConversationRecognizer?.sendRequest(this.getEjectCommand(participantId), ((): void => {
                     this.handleCallback(cb, err);
                 }),
-                    ((error: any) => {
+                    ((error: any): void => {
                         this.handleError(error, err);
                     }));
             }
@@ -578,10 +579,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!this.canSendAsHost) {
                 this.handleError(new Error(this.privErrors.permissionDeniedConversation.replace("{command}", "unlock")), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getLockCommand(false), (() => {
+            this.privConversationRecognizer?.sendRequest(this.getLockCommand(false), ((): void => {
                 this.handleCallback(cb, err);
             }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -602,10 +603,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!this.canSendAsHost) {
                 this.handleError(new Error(this.privErrors.permissionDeniedConversation.replace("{command}", "unmute all")), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getMuteAllCommand(false), (() => {
+            this.privConversationRecognizer?.sendRequest(this.getMuteAllCommand(false), ((): void => {
                 this.handleCallback(cb, err);
             }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -638,10 +639,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (exists === -1) {
                 this.handleError(new Error(this.privErrors.invalidParticipantRequest), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getMuteCommand(userId, false), (() => {
+            this.privConversationRecognizer?.sendRequest(this.getMuteCommand(userId, false), ((): void => {
                 this.handleCallback(cb, err);
             }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -668,10 +669,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (message.length > this.privTextMessageMaxLength) {
                 this.handleError(new Error(this.privErrors.invalidArgs.replace("{arg}", "message length")), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getMessageCommand(message), (() => {
+            this.privConversationRecognizer?.sendRequest(this.getMessageCommand(message), ((): void => {
                 this.handleCallback(cb, err);
             }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -694,10 +695,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!this.canSend) {
                 this.handleError(new Error(this.privErrors.permissionDeniedSend), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getChangeNicknameCommand(nickname), (() => {
+            this.privConversationRecognizer?.sendRequest(this.getChangeNicknameCommand(nickname), ((): void => {
                 this.handleCallback(cb, err);
             }),
-                ((error: any) => {
+                ((error: any): void => {
                     this.handleError(error, err);
                 }));
         } catch (error) {
@@ -771,6 +772,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     /** websocket callbacks */
+    /* eslint-disable @typescript-eslint/typedef */
     private onConnected = (e: ConnectionEventArgs): void => {
         this.privIsConnected = true;
         try {
@@ -783,7 +785,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-    }
+    };
 
     private onDisconnected = async (e: ConnectionEventArgs): Promise<void> => {
         try {
@@ -798,7 +800,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } finally {
             await this.close(false);
         }
-    }
+    };
 
     private onCanceled = async (r: ConversationRecognizer, e: ConversationTranslationCanceledEventArgs): Promise<void> => {
         try {
@@ -811,7 +813,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-    }
+    };
 
     private onParticipantUpdateCommandReceived = (r: ConversationRecognizer, e: ParticipantAttributeEventArgs): void => {
         try {
@@ -847,11 +849,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-    }
+    };
 
-    private onLockRoomCommandReceived = (r: ConversationRecognizer, e: LockRoomEventArgs): void => {
+    private onLockRoomCommandReceived = (): void => {
         // TODO
-    }
+    };
 
     private onMuteAllCommandReceived = (r: ConversationRecognizer, e: MuteAllEventArgs): void => {
         try {
@@ -865,7 +867,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-    }
+    };
 
     private onParticipantJoinCommandReceived = (r: ConversationRecognizer, e: ParticipantEventArgs): void => {
         try {
@@ -881,7 +883,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-    }
+    };
 
     private onParticipantLeaveCommandReceived = (r: ConversationRecognizer, e: ParticipantEventArgs): void => {
         try {
@@ -900,7 +902,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-    }
+    };
 
     private onTranslationReceived = (r: ConversationRecognizer, e: ConversationReceivedTranslationEventArgs): void => {
         try {
@@ -930,7 +932,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-    }
+    };
 
     private onParticipantsListReceived = (r: ConversationRecognizer, e: ParticipantsListEventArgs): void => {
         try {
@@ -960,7 +962,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-    }
+    };
 
     private onConversationExpiration = (r: ConversationRecognizer, e: ConversationExpirationEventArgs): void => {
         try {
@@ -972,7 +974,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
         } catch (e) {
             //
         }
-    }
+    };
+    /* eslint-enable @typescript-eslint/typedef */
 
     private addParticipantImplAsync(participant: IParticipant): Promise<void> {
         const newParticipant: IInternalParticipant = this.privParticipants.addOrUpdateParticipant(participant);
@@ -1078,7 +1081,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
         return JSON.stringify({
             command: ConversationTranslatorCommandTypes.setMute,
-            // tslint:disable-next-line: object-literal-shorthand
+            // eslint-disable-next-line object-shorthand
             participantId: participantId, // the id of the host
             roomid: this.privRoom.roomId,
             type: ConversationTranslatorMessageTypes.participantCommand,
@@ -1106,7 +1109,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
         return JSON.stringify({
             command: ConversationTranslatorCommandTypes.ejectParticipant,
-            // tslint:disable-next-line: object-literal-shorthand
+            // eslint-disable-next-line object-shorthand
             participantId: participantId,
             roomid: this.privRoom.roomId,
             type: ConversationTranslatorMessageTypes.participantCommand,

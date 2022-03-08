@@ -3,7 +3,7 @@
   var gulp = require('gulp');
   var ts = require('gulp-typescript');
   var sourcemaps = require('gulp-sourcemaps');
-  var tslint = require('gulp-tslint');
+  var eslint = require('gulp-eslint');
   var terser = require('gulp-terser');
   var rename = require('gulp-rename');
   var pump = require('pump');
@@ -20,13 +20,13 @@
       'src/**/*.ts',
       'microsoft.cognitiveservices.speech.sdk.ts'],
       { base: '.' })
-      .pipe(tslint({
+      .pipe(eslint({
         formatter: 'prose',
-        configuration: 'tslint.json'
+        configuration: 'eslint.json'
       }))
-      .pipe(tslint.report({
-        summarizeFailureOutput: true
-      }))
+      .pipe(eslint.format())
+      // UNCOMMENT BELOW BEFORE CHECKIN
+      //.pipe(eslint.failAfterError())
       .pipe(sourcemaps.init())
       .pipe(tsProject())
       .pipe(sourcemaps.write('.'))
@@ -41,13 +41,13 @@
       'src/**/*.ts',
       'microsoft.cognitiveservices.speech.sdk.ts'],
       { base: '.' })
-      .pipe(tslint({
+      .pipe(eslint({
         formatter: 'prose',
-        configuration: 'tslint.json'
+        configuration: 'eslint.json'
       }))
-      .pipe(tslint.report({
-        summarizeFailureOutput: true
-      }))
+      .pipe(eslint.format())
+      // UNCOMMENT BELOW BEFORE CHECKIN
+      //.pipe(eslint.failAfterError())
       .pipe(sourcemaps.init())
       .pipe(tsProject2015())
       .pipe(sourcemaps.write('.'))

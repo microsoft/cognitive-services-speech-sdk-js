@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 /**
  * Defines the payload for incoming list of participants
  */
@@ -31,15 +32,14 @@ export interface IParticipantPayloadResponse {
     avatar?: string;
 }
 
+const parseListResponse = (json: string): IParticipantsListPayloadResponse => JSON.parse(json) as IParticipantsListPayloadResponse;
+const parseParticipantResponse = (json: string): IParticipantPayloadResponse => JSON.parse(json) as IParticipantPayloadResponse;
+
 export class ParticipantsListPayloadResponse implements IParticipantsListPayloadResponse {
     private privParticipantsPayloadResponse: IParticipantsListPayloadResponse;
 
     private constructor(json: string) {
-        this.privParticipantsPayloadResponse = JSON.parse(json);
-    }
-
-    public static fromJSON(json: string): ParticipantsListPayloadResponse {
-        return new ParticipantsListPayloadResponse(json);
+        this.privParticipantsPayloadResponse = parseListResponse(json);
     }
 
     public get roomid(): string {
@@ -86,19 +86,18 @@ export class ParticipantsListPayloadResponse implements IParticipantsListPayload
         return this.privParticipantsPayloadResponse.type;
     }
 
+    public static fromJSON(json: string): ParticipantsListPayloadResponse {
+        return new ParticipantsListPayloadResponse(json);
+    }
+
 }
 
-// tslint:disable-next-line: max-classes-per-file
 export class ParticipantPayloadResponse implements IParticipantPayloadResponse {
 
     private privParticipantPayloadResponse: IParticipantPayloadResponse;
 
     private constructor(json: string) {
-        this.privParticipantPayloadResponse = JSON.parse(json);
-    }
-
-    public static fromJSON(json: string): ParticipantPayloadResponse {
-        return new ParticipantPayloadResponse(json);
+        this.privParticipantPayloadResponse = parseParticipantResponse(json);
     }
 
     public get nickname(): string {
@@ -128,4 +127,9 @@ export class ParticipantPayloadResponse implements IParticipantPayloadResponse {
     public get avatar(): string {
         return this.privParticipantPayloadResponse.avatar;
     }
+
+    public static fromJSON(json: string): ParticipantPayloadResponse {
+        return new ParticipantPayloadResponse(json);
+    }
+
 }
