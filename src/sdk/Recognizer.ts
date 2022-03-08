@@ -22,7 +22,6 @@ import {
 } from "./Contracts";
 import {
     AudioConfig,
-    Connection,
     PropertyCollection,
     PropertyId,
     RecognitionEventArgs,
@@ -233,11 +232,11 @@ export abstract class Recognizer {
         const authentication = (subscriptionKey && subscriptionKey !== "") ?
             new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
             new CognitiveTokenAuthentication(
-                (authFetchEventId: string): Promise<string> => {
+                (): Promise<string> => {
                     const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return Promise.resolve(authorizationToken);
                 },
-                (authFetchEventId: string): Promise<string> => {
+                (): Promise<string> => {
                     const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return Promise.resolve(authorizationToken);
                 });

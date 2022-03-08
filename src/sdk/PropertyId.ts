@@ -266,7 +266,7 @@ export enum PropertyId {
     SpeechServiceResponse_PostProcessingOption,
 
     /**
-     *  A boolean value specifying whether to include word-level timestamps in the response result.
+     * A boolean value specifying whether to include word-level timestamps in the response result.
      * Added in version 1.7.0
      */
     SpeechServiceResponse_RequestWordLevelTimestamps,
