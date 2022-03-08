@@ -45,7 +45,9 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
             const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
             this.privSpeechContext.setSection("languageId", {
+                Priority: recognizerConfig.languageIdPriority, // will only be set if continuous LID enabled
                 languages: sourceLanguages,
+                mode: recognizerConfig.languageIdMode,
                 onSuccess: { action: "Recognize" },
                 onUnknown: { action: "None" }
             });
