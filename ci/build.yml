@@ -16,8 +16,7 @@ resources:
 jobs:
 - job: Build
   pool:
-    vmImage: 'windows-2019'
-    demands: npm
+    name: SkymanWS2019Compliant
   timeoutInMinutes: 60
   variables:
     ArtifactOut: $(Build.ArtifactStagingDirectory)/Out/JavaScript
