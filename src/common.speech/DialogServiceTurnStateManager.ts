@@ -2,9 +2,7 @@
 // Licensed under the MIT license.
 
 import { InvalidOperationError } from "../common/Error";
-import { AudioOutputStream, PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
 import { DialogServiceTurnState } from "./DialogServiceTurnState";
-import { ActivityPayloadResponse } from "./ServiceMessages/ActivityResponsePayload";
 
 export class DialogServiceTurnStateManager {
     private privTurnMap: Map<string, DialogServiceTurnState>;

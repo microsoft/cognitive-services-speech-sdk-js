@@ -499,7 +499,7 @@ export class SynthesisAdapterBase implements IDisposable {
         this.privAuthFetchEventId = createNoDashGuid();
         this.privConnectionId = createNoDashGuid();
 
-        this.privSynthesisTurn.onPreConnectionStart(this.privAuthFetchEventId, this.privConnectionId);
+        this.privSynthesisTurn.onPreConnectionStart(this.privAuthFetchEventId);
 
         const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
 
@@ -520,11 +520,11 @@ export class SynthesisAdapterBase implements IDisposable {
             } else if (response.statusCode === 403 && !isUnAuthorized) {
                 return this.connectImpl(true);
             } else {
-                await this.privSynthesisTurn.onConnectionEstablishCompleted(response.statusCode, response.reason);
+                await this.privSynthesisTurn.onConnectionEstablishCompleted(response.statusCode);
                 return Promise.reject(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privSynthesizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
             }
         }, async (error: string): Promise<IConnection> => {
-            await this.privSynthesisTurn.onAuthCompleted(true, error);
+            await this.privSynthesisTurn.onAuthCompleted(true);
             throw new Error(error);
         });
 

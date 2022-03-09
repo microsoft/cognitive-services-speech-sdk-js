@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 import {
     ProxyInfo,
     WebsocketConnection,
@@ -20,10 +21,10 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         private static BaseUrl: string = "convai.speech";
     };
 
-    public create = (
+    public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection => {
+        connectionId?: string): IConnection {
 
         const applicationId: string = config.parameters.getProperty(PropertyId.Conversation_ApplicationId, "");
         const dialogType: string = config.parameters.getProperty(PropertyId.Conversation_DialogType);

@@ -238,7 +238,7 @@ export abstract class PushAudioOutputStream extends AudioOutputStream {
      * @function
      * @public
      * @param {PushAudioOutputStreamCallback} callback - The custom audio output object,
-     *        derived from PushAudioOutputStreamCallback
+     * derived from PushAudioOutputStreamCallback
      * @returns {PushAudioOutputStream} The push audio output stream being created.
      */
     public static create(callback: PushAudioOutputStreamCallback): PushAudioOutputStream {
@@ -269,7 +269,7 @@ export class PushAudioOutputStreamImpl extends PushAudioOutputStream implements 
      * read() and close() methods.
      * @constructor
      * @param {PushAudioOutputStreamCallback} callback - The custom audio output object,
-     *        derived from PushAudioOutputStreamCallback
+     * derived from PushAudioOutputStreamCallback
      */
     public constructor(callback: PushAudioOutputStreamCallback) {
         super();

@@ -24,7 +24,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
         this.privBytesPerSecond = bytesPerSecond;
     }
 
-    public id = (): string => {
+    public id(): string {
         return this.privAudioNode.id();
     }
 
@@ -70,7 +70,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
         }
 
         return this.privAudioNode.read()
-            .then((result: IStreamChunk<ArrayBuffer>) => {
+            .then((result: IStreamChunk<ArrayBuffer>): IStreamChunk<ArrayBuffer> => {
                 if (result && result.buffer) {
                     this.privBuffers.push(new BufferEntry(result, this.privBufferSerial++, this.privBufferedBytes));
                     this.privBufferedBytes += result.buffer.byteLength;

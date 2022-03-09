@@ -99,10 +99,12 @@ export abstract class DialogServiceConfig {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     public set applicationId(value: string) { }
 
-    public static DialogTypes: any = class {
-        public static BotFramework: string = "bot_framework";
-        public static CustomCommands: string = "custom_commands";
-    };
+    public static get DialogTypes(): { BotFramework: string; CustomCommands: string } {
+        return {
+            BotFramework: "bot_framework",
+            CustomCommands: "custom_commands"
+        };
+    }
 }
 
 /**
@@ -209,7 +211,7 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
     }
 
     public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
-        this.privSpeechConfig.setServiceProperty(name, value, channel);
+        this.privSpeechConfig.setServiceProperty(name, value);
     }
 
     /**

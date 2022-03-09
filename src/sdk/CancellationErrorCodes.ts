@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 
 /**
- *  Defines error code in case that CancellationReason is Error.
- *  Added in version 1.1.0.
+ * Defines error code in case that CancellationReason is Error.
+ * Added in version 1.1.0.
  */
 export enum CancellationErrorCode {
     /**
