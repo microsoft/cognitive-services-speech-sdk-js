@@ -279,7 +279,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
                         }
                     } catch (e) {
                         if (!!err) {
-                            err(`'Unhandled error on promise callback: ${e}'`);
+                            err(`'Unhandled error on promise callback: ${e as string}'`);
                         }
                     }
                 }, (reason: any) => {

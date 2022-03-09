@@ -474,10 +474,10 @@ export class SpeechConfigImpl extends SpeechConfig {
     public setProxy(proxyHostName: string, proxyPort: number): void;
     public setProxy(proxyHostName: string, proxyPort: number, proxyUserName: string, proxyPassword: string): void;
     public setProxy(proxyHostName: any, proxyPort: any, proxyUserName?: any, proxyPassword?: any): void {
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyHostName], proxyHostName);
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPort], proxyPort);
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyUserName], proxyUserName);
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyHostName], proxyHostName as string);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPort], proxyPort as string);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyUserName], proxyUserName as string);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword as string);
     }
 
     public setServiceProperty(name: string, value: string): void {

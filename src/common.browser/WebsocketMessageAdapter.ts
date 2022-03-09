@@ -280,7 +280,7 @@ export class WebsocketMessageAdapter {
             return Promise.resolve();
 
         } catch (e) {
-            return Promise.reject(`websocket send error: ${e}`);
+            return Promise.reject(`websocket send error: ${e as string}`);
         }
     }
 

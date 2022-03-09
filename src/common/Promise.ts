@@ -185,7 +185,7 @@ export class Sink<T> {
         try {
             successCallback(result);
         } catch (e) {
-            this.executeErrorCallback(`'Unhandled callback error: ${e}'`, errorCallback);
+            this.executeErrorCallback(`'Unhandled callback error: ${e as string}'`, errorCallback);
         }
     }
 
@@ -194,7 +194,7 @@ export class Sink<T> {
             try {
                 errorCallback(error);
             } catch (e) {
-                throw new Error(`'Unhandled callback error: ${e}. InnerError: ${error}'`);
+                throw new Error(`'Unhandled callback error: ${e as string}. InnerError: ${error}'`);
             }
         } else {
             throw new Error(`'Unhandled error: ${error}'`);

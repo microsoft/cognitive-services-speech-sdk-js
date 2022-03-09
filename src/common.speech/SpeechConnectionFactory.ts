@@ -37,10 +37,10 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
     private readonly conversationRelativeUri: string = "/speech/recognition/conversation/cognitiveservices/v1";
     private readonly dictationRelativeUri: string = "/speech/recognition/dictation/cognitiveservices/v1";
 
-    public create = (
+    public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection => {
+        connectionId?: string): IConnection {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
