@@ -280,13 +280,13 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     public get conversationInfo(): ConversationInfo {
         const convId: string = this.conversationId;
-        const p: TranscriptionParticipant[] = this.participants.map((part: Participant): TranscriptionParticipant => {
-            return {
+        const p: TranscriptionParticipant[] = this.participants.map((part: Participant): TranscriptionParticipant => (
+            {
                 id: part.id,
                 preferredLanguage: part.preferredLanguage,
                 voice: part.voice
-            };
-        });
+            }
+        ));
         const props: { [id: string]: string } = {};
         for (const key of ConversationConnectionConfig.transcriptionEventKeys) {
             const val: string = this.properties.getProperty(key, "");
@@ -732,12 +732,15 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!this.canSend) {
                 this.handleError(new Error(this.privErrors.permissionDeniedSend), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getChangeNicknameCommand(nickname), ((): void => {
-                this.handleCallback(cb, err);
-            }),
-                ((error: any): void => {
-                    this.handleError(error, err);
-                }));
+            if (!!this.privConversationRecognizer) {
+                this.privConversationRecognizer.sendRequest(this.getChangeNicknameCommand(nickname),
+                    ((): void => {
+                        this.handleCallback(cb, err);
+                    }),
+                    ((error: any): void => {
+                        this.handleError(error, err);
+                    }));
+            }
         } catch (error) {
             this.handleError(error, err);
         }
@@ -752,7 +755,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             return;
         }
         this.privIsDisposed = true;
-        this.config?.close();
+        if (!!this.config) {
+            this.config.close();
+        }
         this.privConfig = undefined;
         this.privLanguage = undefined;
         this.privProperties = undefined;
@@ -852,8 +857,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 }
                 this.privParticipants.addOrUpdateParticipant(updatedParticipant);
 
-                if (!!this.privConversationTranslator?.participantsChanged) {
-                    this.privConversationTranslator?.participantsChanged(
+                if (!!this.privConversationTranslator) {
+                    this.privConversationTranslator.participantsChanged(
                         this.privConversationTranslator,
                         new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.Updated,
                             [this.toParticipant(updatedParticipant)], e.sessionId));
@@ -870,9 +875,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     private onMuteAllCommandReceived = (r: ConversationRecognizer, e: MuteAllEventArgs): void => {
         try {
-            this.privParticipants.participants.forEach((p: IInternalParticipant) => p.isMuted = (p.isHost ? false : e.isMuted));
-            if (!!this.privConversationTranslator?.participantsChanged) {
-                this.privConversationTranslator?.participantsChanged(
+            this.privParticipants.participants.forEach((p: IInternalParticipant): boolean => p.isMuted = (p.isHost ? false : e.isMuted));
+            if (!!this.privConversationTranslator) {
+                this.privConversationTranslator.participantsChanged(
                     this.privConversationTranslator,
                     new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.Updated,
                         this.toParticipants(false), e.sessionId));
@@ -886,8 +891,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
         try {
             const newParticipant: IInternalParticipant = this.privParticipants.addOrUpdateParticipant(e.participant);
             if (newParticipant !== undefined) {
-                if (!!this.privConversationTranslator?.participantsChanged) {
-                    this.privConversationTranslator?.participantsChanged(
+                if (!!this.privConversationTranslator) {
+                    this.privConversationTranslator.participantsChanged(
                         this.privConversationTranslator,
                         new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.JoinedConversation,
                             [this.toParticipant(newParticipant)], e.sessionId));
@@ -904,9 +909,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (ejectedParticipant !== undefined) {
                 // remove the participant from the internal participants list
                 this.privParticipants.deleteParticipant(e.participant.id);
-                if (!!this.privConversationTranslator?.participantsChanged) {
+                if (!!this.privConversationTranslator) {
                     // notify subscribers that the participant has left the conversation
-                    this.privConversationTranslator?.participantsChanged(
+                    this.privConversationTranslator.participantsChanged(
                         this.privConversationTranslator,
                         new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.LeftConversation,
                             [this.toParticipant(ejectedParticipant)], e.sessionId));
@@ -921,22 +926,22 @@ export class ConversationImpl extends Conversation implements IDisposable {
         try {
             switch (e.command) {
                 case ConversationTranslatorMessageTypes.final:
-                    if (!!this.privConversationTranslator?.transcribed) {
-                        this.privConversationTranslator?.transcribed(
+                    if (!!this.privConversationTranslator) {
+                        this.privConversationTranslator.transcribed(
                             this.privConversationTranslator,
                             new ConversationTranslationEventArgs(e.payload, undefined, e.sessionId));
                     }
                     break;
                 case ConversationTranslatorMessageTypes.partial:
-                    if (!!this.privConversationTranslator?.transcribing) {
-                        this.privConversationTranslator?.transcribing(
+                    if (!!this.privConversationTranslator) {
+                        this.privConversationTranslator.transcribing(
                             this.privConversationTranslator,
                             new ConversationTranslationEventArgs(e.payload, undefined, e.sessionId));
                     }
                     break;
                 case ConversationTranslatorMessageTypes.instantMessage:
-                    if (!!this.privConversationTranslator?.textMessageReceived) {
-                        this.privConversationTranslator?.textMessageReceived(
+                    if (!!this.privConversationTranslator) {
+                        this.privConversationTranslator.textMessageReceived(
                             this.privConversationTranslator,
                             new ConversationTranslationEventArgs(e.payload, undefined, e.sessionId));
                     }
@@ -959,8 +964,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (this.privParticipants.me !== undefined) {
                 this.privIsReady = true;
             }
-            if (!!this.privConversationTranslator?.participantsChanged) {
-                this.privConversationTranslator?.participantsChanged(
+            if (!!this.privConversationTranslator) {
+                this.privConversationTranslator.participantsChanged(
                     this.privConversationTranslator,
                     new ConversationParticipantsChangedEventArgs(ParticipantChangedReason.JoinedConversation, this.toParticipants(true), e.sessionId));
             }
@@ -979,10 +984,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     private onConversationExpiration = (r: ConversationRecognizer, e: ConversationExpirationEventArgs): void => {
         try {
-            if (!!this.privConversationTranslator?.conversationExpiration) {
-                this.privConversationTranslator?.conversationExpiration(
-                    this.privConversationTranslator,
-                    e);
+            if (!!this.privConversationTranslator) {
+                this.privConversationTranslator.conversationExpiration(this.privConversationTranslator, e);
             }
         } catch (e) {
             //
@@ -1013,7 +1016,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privIsConnected = false;
             await this.privConversationRecognizer?.close();
             this.privConversationRecognizer = undefined;
-            this.privConversationTranslator?.dispose();
+            if (!!this.privConversationTranslator) {
+                this.privConversationTranslator.dispose();
+            }
         } catch (e) {
             // ignore error
             throw e;
@@ -1024,27 +1029,27 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     /** Helpers */
-    private handleCallback(cb: any, err: any): void {
+    private handleCallback(cb: () => void, err: (message: string) => void): void {
         if (!!cb) {
             try {
                 cb();
             } catch (e) {
                 if (!!err) {
-                    err(e);
+                    err(e as string);
                 }
             }
             cb = undefined;
         }
     }
 
-    private handleError(error: any, err: any): void {
+    private handleError(error: any, err: (message: string) => void): void {
         if (!!err) {
             if (error instanceof Error) {
                 const typedError: Error = error;
                 err(typedError.name + ": " + typedError.message);
 
             } else {
-                err(error);
+                err(error as string);
             }
         }
     }
@@ -1052,9 +1057,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
     /** Participant Helpers */
     private toParticipants(includeHost: boolean): Participant[] {
 
-        const participants: Participant[] = this.privParticipants.participants.map((p: IInternalParticipant): Participant => {
-            return this.toParticipant(p);
-        });
+        const participants: Participant[] = this.privParticipants.participants.map((p: IInternalParticipant): Participant => ( this.toParticipant(p) ) );
         if (!includeHost) {
             return participants.filter((p: Participant): boolean => p.isHost === false);
         } else {

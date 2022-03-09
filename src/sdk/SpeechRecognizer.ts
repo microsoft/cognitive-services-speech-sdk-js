@@ -173,8 +173,8 @@ export class SpeechRecognizer extends Recognizer {
      * Starts speech recognition, and stops after the first utterance is recognized.
      * The task returns the recognition text as result.
      * Note: RecognizeOnceAsync() returns when the first utterance has been recognized,
-     *       so it is suitable only for single shot recognition
-     *       like command or query. For long-running recognition, use StartContinuousRecognitionAsync() instead.
+     * so it is suitable only for single shot recognition
+     * like command or query. For long-running recognition, use StartContinuousRecognitionAsync() instead.
      * @member SpeechRecognizer.prototype.recognizeOnceAsync
      * @function
      * @public
@@ -242,7 +242,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param cb - Callback invoked once the recognition has stopped.
      * @param err - Callback invoked in case of an error.
      */
-    public stopKeywordRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
+    public stopKeywordRecognitionAsync(cb?: () => void): void {
         if (!!cb) {
             cb();
         }

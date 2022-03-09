@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
+
 import { PathLike } from "fs";
 import { IRestResponse } from "../common.browser/RestMessageAdapter";
 import {
@@ -397,7 +399,7 @@ export class SpeechSynthesizer {
      * @param locale - Locale of voices in BCP-47 format; if left empty, get all available voices.
      * @return {Promise<SynthesisVoicesResult>} - Promise of a SynthesisVoicesResult.
      */
-    public async getVoicesAsync(locale: string = ""): Promise<SynthesisVoicesResult> {
+    public async getVoicesAsync(locale = ""): Promise<SynthesisVoicesResult> {
         return this.getVoices(locale);
     }
 

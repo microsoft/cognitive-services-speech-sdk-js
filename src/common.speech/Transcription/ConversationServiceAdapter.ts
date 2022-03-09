@@ -52,7 +52,7 @@ import {
     TextResponsePayload
 } from "./ServiceMessages/Exports";
 
-/***
+/**
  * The service adapter handles sending and receiving messages to the Conversation Translator websocket.
  */
 export class ConversationServiceAdapter extends ServiceRecognizerBase {
@@ -64,7 +64,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     private privConnectionConfigPromise: Promise<IConnection>;
     private privConnectionLoop: Promise<void>;
     private terminateMessageLoop: boolean;
-    private privLastPartialUtteranceId: string = "";
+    private privLastPartialUtteranceId: string;
     private privConversationIsDisposed: boolean;
 
     public constructor(
@@ -76,6 +76,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
 
         super(authentication, connectionFactory, audioSource, recognizerConfig, conversationServiceConnector);
 
+        this.privLastPartialUtteranceId = "";
         this.privConversationServiceConnector = conversationServiceConnector;
         this.privConversationAuthentication = authentication;
         this.receiveMessageOverride = this.receiveConversationMessageOverride;
@@ -109,8 +110,6 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     }
 
     public async sendMessageAsync(message: string): Promise<void> {
-        const sink: Deferred<void> = new Deferred<void>();
-
         const connection: IConnection = await this.fetchConnection();
 
         await connection.send(new ConversationConnectionMessage(MessageType.Text, message));
@@ -130,10 +129,8 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         return Promise.resolve();
     }
 
-    protected async processTypeSpecificMessages(
-        connectionMessage: ConnectionMessage,
-        successCallback?: (e: any) => void,
-        errorCallBack?: (e: string) => void): Promise<boolean> {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    protected async processTypeSpecificMessages(): Promise<boolean> {
         return true;
     }
 

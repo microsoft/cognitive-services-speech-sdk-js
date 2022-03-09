@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-import { SessionEventArgs } from "../../sdk/Exports";
+/* eslint-disable max-classes-per-file */
+import { ConversationTranslationResult, SessionEventArgs } from "../../sdk/Exports";
 import { IInternalParticipant } from "./ConversationTranslatorInterfaces";
 
 export class MuteAllEventArgs extends SessionEventArgs {
@@ -17,7 +18,6 @@ export class MuteAllEventArgs extends SessionEventArgs {
     }
 }
 
-// tslint:disable-next-line: max-classes-per-file
 export class LockRoomEventArgs extends SessionEventArgs {
     private privIsLocked: boolean;
 
@@ -32,7 +32,6 @@ export class LockRoomEventArgs extends SessionEventArgs {
     }
 }
 
-// tslint:disable-next-line: max-classes-per-file
 export class ParticipantEventArgs extends SessionEventArgs {
     private privParticipant: IInternalParticipant;
 
@@ -46,7 +45,6 @@ export class ParticipantEventArgs extends SessionEventArgs {
     }
 }
 
-// tslint:disable-next-line: max-classes-per-file
 export class ParticipantAttributeEventArgs extends SessionEventArgs {
     private privValue: boolean | number | string | string[];
     private privKey: string;
@@ -72,7 +70,6 @@ export class ParticipantAttributeEventArgs extends SessionEventArgs {
     }
 }
 
-// tslint:disable-next-line: max-classes-per-file
 export class ParticipantsListEventArgs extends SessionEventArgs {
 
     private privRoomId: string;
@@ -129,19 +126,18 @@ export class ParticipantsListEventArgs extends SessionEventArgs {
     }
 }
 
-// tslint:disable-next-line: max-classes-per-file
 export class ConversationReceivedTranslationEventArgs {
-    private privPayload: any;
+    private privPayload: ConversationTranslationResult;
     private privCommand: string;
     private privSessionId: string;
 
-    public constructor(command: string, payload: any,  sessionId?: string) {
+    public constructor(command: string, payload: ConversationTranslationResult,  sessionId?: string) {
         this.privPayload = payload;
         this.privCommand = command;
         this.privSessionId = sessionId;
     }
 
-    public get payload(): any {
+    public get payload(): ConversationTranslationResult {
         return this.privPayload;
     }
 

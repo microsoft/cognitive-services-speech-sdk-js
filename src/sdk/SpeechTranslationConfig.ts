@@ -14,8 +14,8 @@ import {
     ProfanityOption,
     PropertyCollection,
     PropertyId,
-    ServicePropertyChannel,
-    SpeechConfig, SpeechSynthesisOutputFormat,
+    SpeechConfig,
+    SpeechSynthesisOutputFormat,
 } from "./Exports";
 
 /**
@@ -274,6 +274,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @public
      */
     public get outputFormat(): OutputFormat {
+        // eslint-disable-next-line
         return (OutputFormat as any)[this.privSpeechProperties.getProperty(OutputFormatPropertyName, undefined)];
     }
 
@@ -376,10 +377,10 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     public setProxy(proxyHostName: string, proxyPort: number): void;
     public setProxy(proxyHostName: string, proxyPort: number, proxyUserName: string, proxyPassword: string): void;
     public setProxy(proxyHostName: any, proxyPort: any, proxyUserName?: any, proxyPassword?: any): void {
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyHostName], proxyHostName);
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPort], proxyPort);
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyUserName], proxyUserName);
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyHostName], proxyHostName as string);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPort], proxyPort as string);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyUserName], proxyUserName as string);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword as string);
     }
 
     /**
@@ -429,7 +430,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     public setServiceProperty(name: string, value: string): void {
-        const currentProperties: IStringDictionary<string> = JSON.parse(this.privSpeechProperties.getProperty(ServicePropertiesPropertyName, "{}"));
+        const currentProperties: IStringDictionary<string> = JSON.parse(this.privSpeechProperties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
 
         currentProperties[name] = value;
 
@@ -467,6 +468,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     public get speechSynthesisOutputFormat(): SpeechSynthesisOutputFormat {
+        // eslint-disable-next-line
         return (SpeechSynthesisOutputFormat as any)[this.privSpeechProperties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)];
     }
 
