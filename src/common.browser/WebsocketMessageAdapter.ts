@@ -49,7 +49,7 @@ export class WebsocketMessageAdapter {
     private privConnectionId: string;
     private privUri: string;
     private proxyInfo: ProxyInfo;
-    private privHeaders: { [key: string]: string; };
+    private privHeaders: { [key: string]: string };
     private privLastErrorReceived: string;
     private privEnableCompression: boolean;
 
@@ -60,7 +60,7 @@ export class WebsocketMessageAdapter {
         connectionId: string,
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
-        headers: { [key: string]: string; },
+        headers: { [key: string]: string },
         enableCompression: boolean) {
 
         if (!uri) {
@@ -90,7 +90,7 @@ export class WebsocketMessageAdapter {
         return this.privConnectionState;
     }
 
-    public open = (): Promise<ConnectionOpenResponse> => {
+    public open(): Promise<ConnectionOpenResponse> {
         if (this.privConnectionState === ConnectionState.Disconnected) {
             return Promise.reject<ConnectionOpenResponse>(`Cannot open a connection that is in ${this.privConnectionState} state`);
         }

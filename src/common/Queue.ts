@@ -25,7 +25,7 @@ export class Queue<TItem> implements IQueue<TItem> {
     private privPromiseStore: List<Promise<TItem>> = new List<Promise<TItem>>();
     private privList: List<TItem>;
     private privDetachables: IDetachable[];
-    private privSubscribers: List<{ type: SubscriberType, deferral: Deferred<TItem> }>;
+    private privSubscribers: List<{ type: SubscriberType; deferral: Deferred<TItem> }>;
     private privIsDrainInProgress: boolean = false;
     private privIsDisposing: boolean = false;
     private privDisposeReason: string = null;
@@ -33,24 +33,24 @@ export class Queue<TItem> implements IQueue<TItem> {
     public constructor(list?: List<TItem>) {
         this.privList = list ? list : new List<TItem>();
         this.privDetachables = [];
-        this.privSubscribers = new List<{ type: SubscriberType, deferral: Deferred<TItem> }>();
-        this.privDetachables.push(this.privList.onAdded(this.drain));
+        this.privSubscribers = new List<{ type: SubscriberType; deferral: Deferred<TItem> }>();
+        this.privDetachables.push(this.privList.onAdded((): void => this.drain()));
     }
 
-    public enqueue = (item: TItem): void => {
+    public enqueue(item: TItem): void {
         this.throwIfDispose();
         this.enqueueFromPromise(new Promise<TItem>((resolve: (value: TItem) => void, reject: (reason: any) => void) => { resolve(item); }));
     }
 
-    public enqueueFromPromise = (promise: Promise<TItem>): void => {
+    public enqueueFromPromise(promise: Promise<TItem>): void {
         this.throwIfDispose();
         promise.then((val: TItem): void => {
             this.privList.add(val);
-             /* eslint-disable no-empty */
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         }, (error: string): void => { });
     }
 
-    public dequeue = (): Promise<TItem> => {
+    public dequeue(): Promise<TItem> {
         this.throwIfDispose();
         const deferredSubscriber = new Deferred<TItem>();
 
@@ -62,7 +62,7 @@ export class Queue<TItem> implements IQueue<TItem> {
         return deferredSubscriber.promise;
     }
 
-    public peek = (): Promise<TItem> => {
+    public peek(): Promise<TItem> {
         this.throwIfDispose();
         const deferredSubscriber = new Deferred<TItem>();
 
@@ -75,12 +75,12 @@ export class Queue<TItem> implements IQueue<TItem> {
         return deferredSubscriber.promise;
     }
 
-    public length = (): number => {
+    public length(): number {
         this.throwIfDispose();
         return this.privList.length();
     }
 
-    public isDisposed = (): boolean => {
+    public isDisposed(): boolean {
         return this.privSubscribers == null;
     }
 
@@ -119,10 +119,10 @@ export class Queue<TItem> implements IQueue<TItem> {
             if (this.privPromiseStore.length() > 0 && pendingItemProcessor) {
                 const promiseArray: Promise<TItem>[] = [];
 
-                this.privPromiseStore.toArray().forEach((wrapper: Promise<TItem>) => {
+                this.privPromiseStore.toArray().forEach((wrapper: Promise<TItem>): void => {
                     promiseArray.push(wrapper);
                 });
-                return Promise.all(promiseArray).finally(() => {
+                return Promise.all(promiseArray).finally((): void => {
                     this.privSubscribers = null;
                     this.privList.forEach((item: TItem, index: number): void => {
                         pendingItemProcessor(item);
@@ -141,7 +141,7 @@ export class Queue<TItem> implements IQueue<TItem> {
         await this.drainAndDispose(null, reason);
     }
 
-    private drain = (): void => {
+    private drain(): void {
         if (!this.privIsDrainInProgress && !this.privIsDisposing) {
             this.privIsDrainInProgress = true;
 
@@ -189,7 +189,7 @@ export class Queue<TItem> implements IQueue<TItem> {
         }
     }
 
-    private throwIfDispose = (): void => {
+    private throwIfDispose(): void {
         if (this.isDisposed()) {
             if (this.privDisposeReason) {
                 throw new InvalidOperationError(this.privDisposeReason);

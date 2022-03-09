@@ -10,7 +10,7 @@ import { EventType, PlatformEvent } from "./PlatformEvent";
 export class ServiceEvent extends PlatformEvent {
     private privJsonResult: string;
 
-    constructor(eventName: string, jsonstring: string, eventType: EventType = EventType.Info) {
+    public constructor(eventName: string, jsonstring: string, eventType: EventType = EventType.Info) {
       super(eventName, eventType);
       this.privJsonResult = jsonstring;
     }
@@ -23,7 +23,7 @@ export class ServiceEvent extends PlatformEvent {
 export class ConnectionEvent extends PlatformEvent {
     private privConnectionId: string;
 
-    constructor(eventName: string, connectionId: string, eventType: EventType = EventType.Info) {
+    public constructor(eventName: string, connectionId: string, eventType: EventType = EventType.Info) {
         super(eventName, eventType);
         this.privConnectionId = connectionId;
     }
@@ -37,7 +37,7 @@ export class ConnectionStartEvent extends ConnectionEvent {
     private privUri: string;
     private privHeaders: IStringDictionary<string>;
 
-    constructor(connectionId: string, uri: string, headers?: IStringDictionary<string>) {
+    public constructor(connectionId: string, uri: string, headers?: IStringDictionary<string>) {
         super("ConnectionStartEvent", connectionId);
         this.privUri = uri;
         this.privHeaders = headers;
@@ -53,7 +53,7 @@ export class ConnectionStartEvent extends ConnectionEvent {
 }
 
 export class ConnectionEstablishedEvent extends ConnectionEvent {
-    constructor(connectionId: string, metadata?: IStringDictionary<string>) {
+    public constructor(connectionId: string, metadata?: IStringDictionary<string>) {
         super("ConnectionEstablishedEvent", connectionId);
     }
 }
@@ -62,7 +62,7 @@ export class ConnectionClosedEvent extends ConnectionEvent {
     private privReason: string;
     private privStatusCode: number;
 
-    constructor(connectionId: string, statusCode: number, reason: string) {
+    public constructor(connectionId: string, statusCode: number, reason: string) {
         super("ConnectionClosedEvent", connectionId, EventType.Debug);
         this.privReason = reason;
         this.privStatusCode = statusCode;
@@ -81,7 +81,7 @@ export class ConnectionErrorEvent extends ConnectionEvent {
     private readonly privMessage: string;
     private readonly privType: string;
 
-    constructor(connectionId: string, message: string, type: string) {
+    public constructor(connectionId: string, message: string, type: string) {
         super("ConnectionErrorEvent", connectionId, EventType.Debug);
         this.privMessage = message;
         this.privType = type;
@@ -100,7 +100,7 @@ export class ConnectionEstablishErrorEvent extends ConnectionEvent {
     private privStatusCode: number;
     private privReason: string;
 
-    constructor(connectionId: string, statuscode: number, reason: string) {
+    public constructor(connectionId: string, statuscode: number, reason: string) {
         super("ConnectionEstablishErrorEvent", connectionId, EventType.Error);
         this.privStatusCode = statuscode;
         this.privReason = reason;
@@ -119,7 +119,7 @@ export class ConnectionMessageReceivedEvent extends ConnectionEvent {
     private privNetworkReceivedTime: string;
     private privMessage: ConnectionMessage;
 
-    constructor(connectionId: string, networkReceivedTimeISO: string, message: ConnectionMessage) {
+    public constructor(connectionId: string, networkReceivedTimeISO: string, message: ConnectionMessage) {
         super("ConnectionMessageReceivedEvent", connectionId);
         this.privNetworkReceivedTime = networkReceivedTimeISO;
         this.privMessage = message;
@@ -138,7 +138,7 @@ export class ConnectionMessageSentEvent extends ConnectionEvent {
     private privNetworkSentTime: string;
     private privMessage: ConnectionMessage;
 
-    constructor(connectionId: string, networkSentTimeISO: string, message: ConnectionMessage) {
+    public constructor(connectionId: string, networkSentTimeISO: string, message: ConnectionMessage) {
         super("ConnectionMessageSentEvent", connectionId);
         this.privNetworkSentTime = networkSentTimeISO;
         this.privMessage = message;
