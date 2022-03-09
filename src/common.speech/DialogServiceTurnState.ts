@@ -13,7 +13,7 @@ export class DialogServiceTurnState {
     private privTimeoutToken: any;
     private privTurnManager: DialogServiceTurnStateManager;
 
-    constructor(manager: DialogServiceTurnStateManager, requestId: string) {
+    public constructor(manager: DialogServiceTurnStateManager, requestId: string) {
         this.privRequestId = requestId;
         this.privIsCompleted = false;
         this.privAudioStream = null;

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioStreamFormatImpl } from "../../src/sdk/Audio/AudioStreamFormat";
+// eslint-disable-next-line max-classes-per-file
 import {
     IAudioStreamNode,
     IStreamChunk,
@@ -139,7 +139,6 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 // Primary use of this class is to help debugging problems with the replay
 // code. If the memory cost of alloc / dealloc gets too much, drop it and just use
 // the ArrayBuffer directly.
-// eslint-disable-next-line max-classes-per-file
 class BufferEntry {
     public chunk: IStreamChunk<ArrayBuffer>;
     public serial: number;

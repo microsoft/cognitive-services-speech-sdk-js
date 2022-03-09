@@ -94,7 +94,7 @@ export class SynthesisTurn {
     private privIsSSML: boolean;
     private privTurnAudioDestination: IAudioDestination;
 
-    constructor() {
+    public constructor() {
         this.privRequestId = createNoDashGuid();
         this.privTurnDeferral = new Deferred<void>();
 
@@ -150,18 +150,18 @@ export class SynthesisTurn {
         this.onEvent(new SynthesisTriggeredEvent(this.requestId, undefined, audioDestination === undefined ? undefined : audioDestination.id()));
     }
 
-    public onPreConnectionStart = (authFetchEventId: string, connectionId: string): void => {
+    public onPreConnectionStart(authFetchEventId: string): void {
         this.privAuthFetchEventId = authFetchEventId;
         this.onEvent(new ConnectingToSynthesisServiceEvent(this.privRequestId, this.privAuthFetchEventId));
     }
 
-    public onAuthCompleted = (isError: boolean, error?: string): void => {
+    public onAuthCompleted(isError: boolean): void {
         if (isError) {
             this.onComplete();
         }
     }
 
-    public onConnectionEstablishCompleted = (statusCode: number, reason?: string): void => {
+    public onConnectionEstablishCompleted(statusCode: number): void {
         if (statusCode === 200) {
             this.onEvent(new SynthesisStartedEvent(this.requestId, this.privAuthFetchEventId));
             this.privBytesReceived = 0;

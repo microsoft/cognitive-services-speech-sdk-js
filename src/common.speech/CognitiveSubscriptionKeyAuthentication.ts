@@ -21,7 +21,7 @@ export class CognitiveSubscriptionKeyAuthentication implements IAuthentication {
      * @constructor
      * @param {string} subscriptionKey - The subscription key
      */
-    constructor(subscriptionKey: string) {
+    public constructor(subscriptionKey: string) {
         if (!subscriptionKey) {
             throw new ArgumentNullError("subscriptionKey");
         }

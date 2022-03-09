@@ -97,7 +97,7 @@ export class Connection {
         if (this.privInternalData instanceof SynthesisAdapterBase) {
             throw new Error("Disconnecting a synthesizer's connection is currently not supported");
         } else {
-            marshalPromiseToCallbacks((this.privInternalData as ServiceRecognizerBase).disconnect(), cb, err);
+            marshalPromiseToCallbacks(this.privInternalData.disconnect(), cb, err);
         }
     }
 
@@ -115,13 +115,13 @@ export class Connection {
             if (path.toLowerCase() !== "speech.context") {
                 throw new Error("Only speech.context message property sets are currently supported for recognizer");
             } else {
-                (this.privInternalData as ServiceRecognizerBase).speechContext.setSection(propertyName, propertyValue);
+                this.privInternalData.speechContext.setSection(propertyName, propertyValue);
             }
         } else if (this.privInternalData instanceof SynthesisAdapterBase) {
             if (path.toLowerCase() !== "synthesis.context") {
                 throw new Error("Only synthesis.context message property sets are currently supported for synthesizer");
             } else {
-                (this.privInternalData as SynthesisAdapterBase).synthesisContext.setSection(propertyName, propertyValue);
+                this.privInternalData.synthesisContext.setSection(propertyName, propertyValue);
             }
         }
     }

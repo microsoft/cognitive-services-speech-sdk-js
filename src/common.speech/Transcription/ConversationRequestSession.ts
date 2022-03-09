@@ -18,7 +18,7 @@ export class ConversationRequestSession {
     private privRequestCompletionDeferral: Deferred<void>;
     private privSessionId: string;
 
-    constructor(sessionId: string) {
+    public constructor(sessionId: string) {
         this.privSessionId = sessionId;
         this.privRequestId = createNoDashGuid();
         this.privRequestCompletionDeferral = new Deferred<void>();

@@ -13,7 +13,7 @@ export class EventSource<TEvent extends PlatformEvent> implements IEventSource<T
     private privMetadata: IStringDictionary<string>;
     private privIsDisposed: boolean = false;
 
-    constructor(metadata?: IStringDictionary<string>) {
+    public constructor(metadata?: IStringDictionary<string>) {
         this.privMetadata = metadata;
     }
 

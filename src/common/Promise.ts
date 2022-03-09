@@ -129,7 +129,7 @@ export class Sink<T> {
         return this.privPromiseResult;
     }
 
-    public resolve = (result: T): void => {
+    public resolve(result: T): void {
         if (this.privState !== PromiseState.None) {
             throw new Error("'Cannot resolve a completed promise'");
         }
@@ -144,7 +144,7 @@ export class Sink<T> {
         this.detachHandlers();
     }
 
-    public reject = (error: string): void => {
+    public reject(error: string): void {
         if (this.privState !== PromiseState.None) {
             throw new Error("'Cannot reject a completed promise'");
         }
@@ -159,9 +159,9 @@ export class Sink<T> {
         this.detachHandlers();
     }
 
-    public on = (
+    public on(
         successCallback: (result: T) => void,
-        errorCallback: (error: string) => void): void => {
+        errorCallback: (error: string) => void): void {
 
         if (successCallback == null) {
             successCallback = (r: T) => { return; };
@@ -181,7 +181,7 @@ export class Sink<T> {
         }
     }
 
-    private executeSuccessCallback = (result: T, successCallback: (result: T) => void, errorCallback: (error: string) => void): void => {
+    private executeSuccessCallback(result: T, successCallback: (result: T) => void, errorCallback: (error: string) => void): void {
         try {
             successCallback(result);
         } catch (e) {
@@ -189,7 +189,7 @@ export class Sink<T> {
         }
     }
 
-    private executeErrorCallback = (error: string, errorCallback: (error: string) => void): void => {
+    private executeErrorCallback(error: string, errorCallback: (error: string) => void): void {
         if (errorCallback) {
             try {
                 errorCallback(error);
@@ -201,7 +201,7 @@ export class Sink<T> {
         }
     }
 
-    private detachHandlers = (): void => {
+    private detachHandlers(): void {
         this.privErrorHandlers = [];
         this.privSuccessHandlers = [];
     }

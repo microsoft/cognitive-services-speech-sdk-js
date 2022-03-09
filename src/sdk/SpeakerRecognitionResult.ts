@@ -62,7 +62,7 @@ export class SpeakerRecognitionResult {
                 }
             }
         } else {
-            const json: { statusText: string } = JSON.parse(data);
+            const json: { statusText: string } = JSON.parse(data) as { statusText: string };
             Contracts.throwIfNullOrUndefined(json, "JSON");
             this.privErrorDetails = json.statusText;
             this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
@@ -113,7 +113,7 @@ export class SpeakerRecognitionCancellationDetails extends CancellationDetailsBa
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
 
         if (!!result.properties) {
-            errorCode = (CancellationErrorCode as any)[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError])];
+            errorCode = CancellationErrorCode[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError]) as keyof typeof CancellationErrorCode];
         }
 
         return new SpeakerRecognitionCancellationDetails(reason, result.errorDetails, errorCode);

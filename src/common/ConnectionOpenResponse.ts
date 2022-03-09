@@ -5,7 +5,7 @@ export class ConnectionOpenResponse {
     private privStatusCode: number;
     private privReason: string;
 
-    constructor(statusCode: number, reason: string) {
+    public constructor(statusCode: number, reason: string) {
         this.privStatusCode = statusCode;
         this.privReason = reason;
     }

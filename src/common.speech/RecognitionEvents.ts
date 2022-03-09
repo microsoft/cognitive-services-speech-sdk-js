@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-
-// eslint-disable max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 import { EventType, PlatformEvent } from "../common/Exports";
 
@@ -9,7 +8,7 @@ export class SpeechRecognitionEvent extends PlatformEvent {
     private privRequestId: string;
     private privSessionId: string;
 
-    constructor(eventName: string, requestId: string, sessionId: string, eventType: EventType = EventType.Info) {
+    public constructor(eventName: string, requestId: string, sessionId: string, eventType: EventType = EventType.Info) {
         super(eventName, eventType);
 
         this.privRequestId = requestId;
@@ -29,7 +28,7 @@ export class RecognitionTriggeredEvent extends SpeechRecognitionEvent {
     private privAudioSourceId: string;
     private privAudioNodeId: string;
 
-    constructor(requestId: string, sessionId: string, audioSourceId: string, audioNodeId: string) {
+    public constructor(requestId: string, sessionId: string, audioSourceId: string, audioNodeId: string) {
         super("RecognitionTriggeredEvent", requestId, sessionId);
 
         this.privAudioSourceId = audioSourceId;
@@ -49,7 +48,7 @@ export class ListeningStartedEvent extends SpeechRecognitionEvent {
     private privAudioSourceId: string;
     private privAudioNodeId: string;
 
-    constructor(requestId: string, sessionId: string, audioSourceId: string, audioNodeId: string) {
+    public constructor(requestId: string, sessionId: string, audioSourceId: string, audioNodeId: string) {
         super("ListeningStartedEvent", requestId, sessionId);
         this.privAudioSourceId = audioSourceId;
         this.privAudioNodeId = audioNodeId;
@@ -67,7 +66,7 @@ export class ListeningStartedEvent extends SpeechRecognitionEvent {
 export class ConnectingToServiceEvent extends SpeechRecognitionEvent {
     private privAuthFetchEventid: string;
 
-    constructor(requestId: string, authFetchEventid: string, sessionId: string) {
+    public constructor(requestId: string, authFetchEventid: string, sessionId: string) {
         super("ConnectingToServiceEvent", requestId, sessionId);
         this.privAuthFetchEventid = authFetchEventid;
     }
@@ -82,7 +81,7 @@ export class RecognitionStartedEvent extends SpeechRecognitionEvent {
     private privAudioNodeId: string;
     private privAuthFetchEventId: string;
 
-    constructor(requestId: string, audioSourceId: string, audioNodeId: string, authFetchEventId: string, sessionId: string) {
+    public constructor(requestId: string, audioSourceId: string, audioNodeId: string, authFetchEventId: string, sessionId: string) {
         super("RecognitionStartedEvent", requestId, sessionId);
 
         this.privAudioSourceId = audioSourceId;
@@ -124,7 +123,7 @@ export class RecognitionEndedEvent extends SpeechRecognitionEvent {
     private privStatus: RecognitionCompletionStatus;
     private privError: string;
 
-    constructor(
+    public constructor(
         requestId: string,
         audioSourceId: string,
         audioNodeId: string,

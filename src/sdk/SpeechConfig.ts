@@ -391,7 +391,6 @@ export abstract class SpeechConfig {
  * @public
  * @class SpeechConfigImpl
  */
-// tslint:disable-next-line:max-classes-per-file
 export class SpeechConfigImpl extends SpeechConfig {
 
     private privProperties: PropertyCollection;
@@ -444,8 +443,7 @@ export class SpeechConfigImpl extends SpeechConfig {
     }
 
     public get outputFormat(): OutputFormat {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        return (OutputFormat as any)[this.privProperties.getProperty(OutputFormatPropertyName, undefined)];
+        return OutputFormat[this.privProperties.getProperty(OutputFormatPropertyName, undefined) as keyof typeof OutputFormat];
     }
 
     public set outputFormat(value: OutputFormat) {
@@ -525,8 +523,7 @@ export class SpeechConfigImpl extends SpeechConfig {
     }
 
     public get speechSynthesisOutputFormat(): SpeechSynthesisOutputFormat {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        return (SpeechSynthesisOutputFormat as any)[this.privProperties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)];
+        return SpeechSynthesisOutputFormat[this.privProperties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined) as keyof typeof SpeechSynthesisOutputFormat];
     }
 
     public set speechSynthesisOutputFormat(format: SpeechSynthesisOutputFormat) {

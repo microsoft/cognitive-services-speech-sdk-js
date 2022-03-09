@@ -23,7 +23,7 @@ export class RecognizerConfig {
     private privParameters: PropertyCollection;
     private privMaxRetryCount: number;
 
-    constructor(
+    public constructor(
         speechServiceConfig: SpeechServiceConfig,
         parameters: PropertyCollection) {
         this.privSpeechServiceConfig = speechServiceConfig ? speechServiceConfig : new SpeechServiceConfig(new Context(null));
@@ -93,7 +93,7 @@ export class SpeechServiceConfig {
     private context: Context;
     private recognition: string;
 
-    constructor(context: Context) {
+    public constructor(context: Context) {
         this.context = context;
     }
 
@@ -130,7 +130,7 @@ export class Context {
     public os: OS;
     public audio: ISpeechConfigAudio;
 
-    constructor(os: OS) {
+    public constructor(os: OS) {
         this.system = new System();
         this.os = os;
     }
@@ -142,7 +142,7 @@ export class System {
     public build: string;
     public lang: string;
 
-    constructor() {
+    public constructor() {
         // Note: below will be patched for official builds.
         const SPEECHSDK_CLIENTSDK_VERSION = "1.15.0-alpha.0.1";
 
@@ -158,7 +158,7 @@ export class OS {
     public name: string;
     public version: string;
 
-    constructor(platform: string, name: string, version: string) {
+    public constructor(platform: string, name: string, version: string) {
         this.platform = platform;
         this.name = name;
         this.version = version;
@@ -170,7 +170,7 @@ export class Device {
     public model: string;
     public version: string;
 
-    constructor(manufacturer: string, model: string, version: string) {
+    public constructor(manufacturer: string, model: string, version: string) {
         this.manufacturer = manufacturer;
         this.model = model;
         this.version = version;

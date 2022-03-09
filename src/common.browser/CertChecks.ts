@@ -50,7 +50,7 @@ export class CertCheckAgent {
 
     private privProxyInfo: ProxyInfo;
 
-    constructor(proxyInfo?: ProxyInfo) {
+    public constructor(proxyInfo?: ProxyInfo) {
         if (!!proxyInfo) {
             this.privProxyInfo = proxyInfo;
         }

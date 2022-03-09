@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// eslint-disable-next-line max-classes-per-file
 import {
     IAuthentication,
     IConnectionFactory,
@@ -55,7 +56,6 @@ export class ConversationRecognizerFactory {
  * Sends messages to the Conversation Translator websocket and listens for incoming events containing websocket messages.
  * Based off the recognizers in the SDK folder.
  */
-// eslint-disable-next-line max-classes-per-file
 export class ConversationTranslatorRecognizer extends Recognizer implements ConversationRecognizer {
 
     private privIsDisposed: boolean;

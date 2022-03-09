@@ -3,6 +3,7 @@
 // Licensed under the MIT license. See LICENSE.md file in the project root for full license information.
 //
 
+// eslint-disable-next-line max-classes-per-file
 import { HeaderNames } from "../common.speech/HeaderNames";
 import {
     ConnectionMessage as IntConnectionMessage,
@@ -63,20 +64,19 @@ export abstract class ConnectionMessage {
     public abstract toString(): string;
 }
 
-// eslint-disable-next-line max-classes-per-file
 export class ConnectionMessageImpl {
 
     private privConnectionMessage: IntConnectionMessage;
     private privProperties: PropertyCollection;
 
-    constructor(message: IntConnectionMessage) {
+    public constructor(message: IntConnectionMessage) {
         this.privConnectionMessage = message;
         this.privProperties = new PropertyCollection();
         if (!!this.privConnectionMessage.headers[HeaderNames.ConnectionId]) {
             this.privProperties.setProperty(PropertyId.Speech_SessionId, this.privConnectionMessage.headers[HeaderNames.ConnectionId]);
         }
 
-        Object.keys(this.privConnectionMessage.headers).forEach((header: string, index: number, array: string[]): void => {
+        Object.keys(this.privConnectionMessage.headers).forEach((header: string): void => {
             this.privProperties.setProperty(header, this.privConnectionMessage.headers[header]);
         });
     }
@@ -85,7 +85,7 @@ export class ConnectionMessageImpl {
      * The message path.
      */
     public get path(): string {
-        return this.privConnectionMessage.headers[Object.keys(this.privConnectionMessage.headers).find((key: string) => key.toLowerCase() === "path".toLowerCase())];
+        return this.privConnectionMessage.headers[Object.keys(this.privConnectionMessage.headers).find((key: string): boolean => key.toLowerCase() === "path".toLowerCase())];
     }
 
     /**

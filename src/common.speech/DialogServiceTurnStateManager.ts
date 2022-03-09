@@ -9,7 +9,7 @@ import { ActivityPayloadResponse } from "./ServiceMessages/ActivityResponsePaylo
 export class DialogServiceTurnStateManager {
     private privTurnMap: Map<string, DialogServiceTurnState>;
 
-    constructor() {
+    public constructor() {
         this.privTurnMap = new Map<string, DialogServiceTurnState>();
         return;
     }

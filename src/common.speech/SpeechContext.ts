@@ -14,7 +14,7 @@ export class SpeechContext {
     private privContext: { [section: string]: any } = {};
     private privDynamicGrammar: DynamicGrammarBuilder;
 
-    constructor(dynamicGrammar: DynamicGrammarBuilder) {
+    public constructor(dynamicGrammar: DynamicGrammarBuilder) {
         this.privDynamicGrammar = dynamicGrammar;
     }
 

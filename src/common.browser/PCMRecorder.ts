@@ -22,7 +22,7 @@ export class PcmRecorder implements IRecorder {
         const micInput = context.createMediaStreamSource(mediaStream);
         if (!this.privSpeechProcessorScript) {
             const workletScript = `class SP extends AudioWorkletProcessor {
-                constructor(options) {
+                public constructor(options) {
                   super(options);
                 }
                 process(inputs, outputs) {

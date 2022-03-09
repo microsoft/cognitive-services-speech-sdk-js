@@ -8,7 +8,7 @@ import { EventType, PlatformEvent } from "./PlatformEvent";
 
 export class DialogEvent extends PlatformEvent {
 
-    constructor(eventName: string, eventType: EventType = EventType.Info) {
+    public constructor(eventName: string, eventType: EventType = EventType.Info) {
         super(eventName, eventType);
     }
 }
@@ -16,7 +16,7 @@ export class DialogEvent extends PlatformEvent {
 export class SendingAgentContextMessageEvent extends DialogEvent {
     private privAgentConfig: AgentConfig;
 
-    constructor(agentConfig: AgentConfig) {
+    public constructor(agentConfig: AgentConfig) {
         super("SendingAgentContextMessageEvent");
         this.privAgentConfig = agentConfig;
     }

@@ -9,7 +9,7 @@ export class ChunkedArrayBufferStream extends Stream<ArrayBuffer> {
     private privNextBufferStartTime: number;
     private privNextBufferReadyBytes: number;
 
-    constructor(targetChunkSize: number, streamId?: string) {
+    public constructor(targetChunkSize: number, streamId?: string) {
         super(streamId);
         this.privTargetChunkSize = targetChunkSize;
         this.privNextBufferReadyBytes = 0;

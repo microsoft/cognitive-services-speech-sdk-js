@@ -70,7 +70,7 @@ export interface IInternalParticipant {
 /** Users participating in the conversation */
 export class InternalParticipants {
 
-    constructor(public participants: IInternalParticipant[] = [], public meId?: string) {
+    public constructor(public participants: IInternalParticipant[] = [], public meId?: string) {
 
     }
 

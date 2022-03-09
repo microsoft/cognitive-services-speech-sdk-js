@@ -8,7 +8,7 @@ import { EventType, PlatformEvent } from "./PlatformEvent";
 export class AudioSourceEvent extends PlatformEvent {
     private privAudioSourceId: string;
 
-    constructor(eventName: string, audioSourceId: string, eventType: EventType = EventType.Info) {
+    public constructor(eventName: string, audioSourceId: string, eventType: EventType = EventType.Info) {
         super(eventName, eventType);
         this.privAudioSourceId = audioSourceId;
     }
@@ -19,19 +19,19 @@ export class AudioSourceEvent extends PlatformEvent {
 }
 
 export class AudioSourceInitializingEvent extends AudioSourceEvent {
-    constructor(audioSourceId: string) {
+    public constructor(audioSourceId: string) {
         super("AudioSourceInitializingEvent", audioSourceId);
     }
 }
 
 export class AudioSourceReadyEvent extends AudioSourceEvent {
-    constructor(audioSourceId: string) {
+    public constructor(audioSourceId: string) {
         super("AudioSourceReadyEvent", audioSourceId);
     }
 }
 
 export class AudioSourceOffEvent extends AudioSourceEvent {
-    constructor(audioSourceId: string) {
+    public constructor(audioSourceId: string) {
         super("AudioSourceOffEvent", audioSourceId);
     }
 }
@@ -39,7 +39,7 @@ export class AudioSourceOffEvent extends AudioSourceEvent {
 export class AudioSourceErrorEvent extends AudioSourceEvent {
     private privError: string;
 
-    constructor(audioSourceId: string, error: string) {
+    public constructor(audioSourceId: string, error: string) {
         super("AudioSourceErrorEvent", audioSourceId, EventType.Error);
         this.privError = error;
     }
@@ -52,7 +52,7 @@ export class AudioSourceErrorEvent extends AudioSourceEvent {
 export class AudioStreamNodeEvent extends AudioSourceEvent {
     private privAudioNodeId: string;
 
-    constructor(eventName: string, audioSourceId: string, audioNodeId: string) {
+    public constructor(eventName: string, audioSourceId: string, audioNodeId: string) {
         super(eventName, audioSourceId);
         this.privAudioNodeId = audioNodeId;
     }
@@ -63,19 +63,19 @@ export class AudioStreamNodeEvent extends AudioSourceEvent {
 }
 
 export class AudioStreamNodeAttachingEvent extends AudioStreamNodeEvent {
-    constructor(audioSourceId: string, audioNodeId: string) {
+    public constructor(audioSourceId: string, audioNodeId: string) {
         super("AudioStreamNodeAttachingEvent", audioSourceId, audioNodeId);
     }
 }
 
 export class AudioStreamNodeAttachedEvent extends AudioStreamNodeEvent {
-    constructor(audioSourceId: string, audioNodeId: string) {
+    public constructor(audioSourceId: string, audioNodeId: string) {
         super("AudioStreamNodeAttachedEvent", audioSourceId, audioNodeId);
     }
 }
 
 export class AudioStreamNodeDetachedEvent extends AudioStreamNodeEvent {
-    constructor(audioSourceId: string, audioNodeId: string) {
+    public constructor(audioSourceId: string, audioNodeId: string) {
         super("AudioStreamNodeDetachedEvent", audioSourceId, audioNodeId);
     }
 }
@@ -83,7 +83,7 @@ export class AudioStreamNodeDetachedEvent extends AudioStreamNodeEvent {
 export class AudioStreamNodeErrorEvent extends AudioStreamNodeEvent {
     private privError: string;
 
-    constructor(audioSourceId: string, audioNodeId: string, error: string) {
+    public constructor(audioSourceId: string, audioNodeId: string, error: string) {
         super("AudioStreamNodeErrorEvent", audioSourceId, audioNodeId);
         this.privError = error;
     }

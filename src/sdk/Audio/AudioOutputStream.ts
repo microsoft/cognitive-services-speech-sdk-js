@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// eslint-disable max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 import {
     createNoDashGuid,
-    Deferred,
     IAudioDestination,
     IStreamChunk,
     Stream,

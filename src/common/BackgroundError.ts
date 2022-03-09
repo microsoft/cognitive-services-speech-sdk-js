@@ -10,7 +10,7 @@ import {
 export class BackgroundEvent extends PlatformEvent {
     private privError: string;
 
-    constructor(error: string) {
+    public constructor(error: string) {
         super("BackgroundEvent", EventType.Error);
         this.privError = error;
     }
