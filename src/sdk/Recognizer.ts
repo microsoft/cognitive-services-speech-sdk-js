@@ -151,7 +151,6 @@ export abstract class Recognizer {
      * recognition errors are collected and sent to Microsoft.
      * If set to false, no telemetry is sent to Microsoft.
      */
-    /* tslint:disable:member-ordering */
     public static enableTelemetry(enabled: boolean): void {
         ServiceRecognizerBase.telemetryDataEnabled = enabled;
     }

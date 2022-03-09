@@ -160,7 +160,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     if (!!this.privDialogServiceConnector.recognized) {
                         try {
                             this.privDialogServiceConnector.recognized(this.privDialogServiceConnector, args);
-                            /* tslint:disable:no-empty */
+                            /* eslint-disable no-empty */
                         } catch (error) {
                             // Not going to let errors in the event handler
                             // trip things up.
@@ -193,7 +193,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 if (!!this.privDialogServiceConnector.recognizing) {
                     try {
                         this.privDialogServiceConnector.recognizing(this.privDialogServiceConnector, ev);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -226,7 +226,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 if (!!this.privDialogServiceConnector.recognized) {
                     try {
                         this.privDialogServiceConnector.recognized(this.privDialogServiceConnector, event);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -294,7 +294,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             try {
                 this.privDialogServiceConnector.canceled(this.privDialogServiceConnector, cancelEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
 
             if (!!this.privSuccessCallback) {
@@ -313,7 +313,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 try {
                     this.privSuccessCallback(result);
                     this.privSuccessCallback = undefined;
-                    /* tslint:disable:no-empty */
+                    /* eslint-disable no-empty */
                 } catch { }
             }
         }
@@ -364,7 +364,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         const audioSendPromise = this.sendAudio(audioNode);
 
-        // /* tslint:disable:no-empty */
+        // /* eslint-disable no-empty */
         audioSendPromise.then(() => { /*add? return true;*/ }, async (error: string) => {
             await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
         });
@@ -643,7 +643,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 if (!!this.privDialogServiceConnector.activityReceived) {
                     try {
                         this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -657,7 +657,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         this.privDialogServiceConnector.turnStatusReceived(
                             this.privDialogServiceConnector,
                             new TurnStatusReceivedEventArgs(responseMessage.textBody));
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.

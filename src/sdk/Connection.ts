@@ -169,7 +169,7 @@ export class Connection {
      * Dispose of associated resources.
      */
     public close(): void {
-        /* tslint:disable:no-empty */
+        /* eslint-disable no-empty */
     }
 
     private setupEvents(): void {

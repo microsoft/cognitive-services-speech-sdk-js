@@ -287,7 +287,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 if (!!err) {
                     err(reason);
                 }
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch (error) {
             }
         });
@@ -347,7 +347,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (!!ServiceRecognizerBase.telemetryData) {
             try {
                 ServiceRecognizerBase.telemetryData(telemetryData);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
 
@@ -764,7 +764,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 out += readView[i].toString(16).padStart(2, "0") + " ";
             }
         }
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info(out);
     }
 

@@ -29,7 +29,7 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
     private privSpeechRecognizer: SpeechRecognizer;
@@ -101,7 +101,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 if (!!this.privSpeechRecognizer.recognizing) {
                     try {
                         this.privSpeechRecognizer.recognizing(this.privSpeechRecognizer, ev);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -163,7 +163,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                         if (!!this.privSpeechRecognizer.recognized) {
                             try {
                                 this.privSpeechRecognizer.recognized(this.privSpeechRecognizer, event);
-                                /* tslint:disable:no-empty */
+                                /* eslint-disable no-empty */
                             } catch (error) {
                                 // Not going to let errors in the event handler
                                 // trip things up.
@@ -214,7 +214,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 sessionId);
             try {
                 this.privSpeechRecognizer.canceled(this.privSpeechRecognizer, cancelEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
 
@@ -234,7 +234,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
             try {
                 this.privSuccessCallback(result);
                 this.privSuccessCallback = undefined;
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
     }

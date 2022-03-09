@@ -780,7 +780,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
     public getKeepAlive(): string {
         const nickname: string = (!!this.me) ? this.me.displayName : "default_nickname";
         return JSON.stringify({
-            // tslint:disable-next-line: object-literal-shorthand
             id: "0",
             nickname,
             participantId: this.privRoom.participantId,
@@ -1075,7 +1074,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
         return JSON.stringify({
             command: ConversationTranslatorCommandTypes.setMuteAll,
-            // tslint:disable-next-line: object-literal-shorthand
             participantId: this.privRoom.participantId, // the id of the host
             roomid: this.privRoom.roomId,
             type: ConversationTranslatorMessageTypes.participantCommand,
@@ -1103,7 +1101,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
         return JSON.stringify({
             command: ConversationTranslatorCommandTypes.setLockState,
-            // tslint:disable-next-line: object-literal-shorthand
             participantId: this.privRoom.participantId,
             roomid: this.privRoom.roomId,
             type: ConversationTranslatorMessageTypes.participantCommand,
@@ -1132,7 +1129,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
         return JSON.stringify({
             command: ConversationTranslatorCommandTypes.changeNickname,
             nickname,
-            // tslint:disable-next-line: object-literal-shorthand
             participantId: this.privRoom.participantId, // the id of the host
             roomid: this.privRoom.roomId,
             type: ConversationTranslatorMessageTypes.participantCommand,
@@ -1146,7 +1142,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
         Contracts.throwIfNullOrWhitespace(message, "message");
 
         return JSON.stringify({
-            // tslint:disable-next-line: object-literal-shorthand
             participantId: this.privRoom.participantId,
             roomId: this.privRoom.roomId,
             text: message,

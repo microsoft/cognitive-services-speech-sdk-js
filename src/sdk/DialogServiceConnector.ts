@@ -207,7 +207,7 @@ export class DialogServiceConnector extends Recognizer {
 
             retPromise.catch(() => {
                 // Destroy the recognizer.
-                /* tslint:disable:no-empty */ // We've done all we can here.
+                /* eslint-disable no-empty */ // We've done all we can here.
                 this.dispose(true).catch(() => { });
             });
 

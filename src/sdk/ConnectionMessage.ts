@@ -63,7 +63,7 @@ export abstract class ConnectionMessage {
     public abstract toString(): string;
 }
 
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class ConnectionMessageImpl {
 
     private privConnectionMessage: IntConnectionMessage;

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// tslint:disable:max-classes-per-file
+// eslint-disable max-classes-per-file
 
 import {
     createNoDashGuid,
@@ -278,7 +278,7 @@ export class PushAudioOutputStreamImpl extends PushAudioOutputStream implements 
         this.privCallback = callback;
     }
 
-    // tslint:disable-next-line:no-empty
+    // eslint-disable-next-line no-empty
     public set format(format: AudioStreamFormat) { }
 
     public write(buffer: ArrayBuffer): void {

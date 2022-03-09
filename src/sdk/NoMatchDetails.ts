@@ -26,7 +26,7 @@ export class NoMatchDetails {
      * @function
      * @public
      * @param {SpeechRecognitionResult | IntentRecognitionResult | TranslationRecognitionResult}
-     *        result - The recognition result that was not recognized.
+     * result - The recognition result that was not recognized.
      * @returns {NoMatchDetails} The no match details object being created.
      */
     public static fromResult(result: SpeechRecognitionResult | IntentRecognitionResult | TranslationRecognitionResult): NoMatchDetails {

@@ -13,7 +13,7 @@ export class PcmRecorder implements IRecorder {
         this.privStopInputOnRelease = stopInputOnRelease;
     }
 
-    public record = (context: AudioContext, mediaStream: MediaStream, outputStream: Stream<ArrayBuffer>): void => {
+    public record(context: AudioContext, mediaStream: MediaStream, outputStream: Stream<ArrayBuffer>): void {
         const desiredSampleRate = 16000;
 
         const waveStreamEncoder = new RiffPcmEncoder(context.sampleRate, desiredSampleRate);
@@ -35,7 +35,7 @@ export class PcmRecorder implements IRecorder {
                   return true;
                 }
               }
-              registerProcessor('speech-processor', SP);`; // tslint:disable-line:max-line-length
+              registerProcessor('speech-processor', SP);`;
             const blob = new Blob([workletScript], { type: "application/javascript; charset=utf-8" });
             this.privSpeechProcessorScript = URL.createObjectURL(blob);
         }

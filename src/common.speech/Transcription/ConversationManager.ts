@@ -127,7 +127,7 @@ export class ConversationManager {
                     }
                     cb = undefined;
                 }
-            /* tslint:disable:no-empty */
+            /* eslint-disable no-empty */
             }).catch( (e: any) => {});
 
         } catch (error) {
@@ -182,7 +182,7 @@ export class ConversationManager {
                     }
 
                     resolve();
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
                 }).catch( (e: any) => {});
 
             } catch (error) {

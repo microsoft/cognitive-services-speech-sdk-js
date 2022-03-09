@@ -55,7 +55,7 @@ export class ConversationRecognizerFactory {
  * Sends messages to the Conversation Translator websocket and listens for incoming events containing websocket messages.
  * Based off the recognizers in the SDK folder.
  */
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class ConversationTranslatorRecognizer extends Recognizer implements ConversationRecognizer {
 
     private privIsDisposed: boolean;
@@ -287,7 +287,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
                         if (!!err) {
                             err(reason);
                         }
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                     }
                 });

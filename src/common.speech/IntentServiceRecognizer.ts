@@ -31,7 +31,7 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class IntentServiceRecognizer extends ServiceRecognizerBase {
     private privIntentRecognizer: IntentRecognizer;
     private privAddedLmIntents: { [id: string]: AddedLmIntent; };
@@ -91,7 +91,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 if (!!this.privIntentRecognizer.recognizing) {
                     try {
                         this.privIntentRecognizer.recognizing(this.privIntentRecognizer, ev);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -120,7 +120,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     if (!!this.privIntentRecognizer.recognized) {
                         try {
                             this.privIntentRecognizer.recognized(this.privIntentRecognizer, ev);
-                            /* tslint:disable:no-empty */
+                            /* eslint-disable no-empty */
                         } catch (error) {
                             // Not going to let errors in the event handler
                             // trip things up.
@@ -219,7 +219,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 if (!!this.privIntentRecognizer.recognized) {
                     try {
                         this.privIntentRecognizer.recognized(this.privIntentRecognizer, ev);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -271,7 +271,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 sessionId);
             try {
                 this.privIntentRecognizer.canceled(this.privIntentRecognizer, cancelEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
 
@@ -291,7 +291,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
             try {
                 this.privSuccessCallback(result);
                 this.privSuccessCallback = undefined;
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
     }

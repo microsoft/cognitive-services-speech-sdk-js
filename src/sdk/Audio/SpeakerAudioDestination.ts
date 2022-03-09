@@ -91,7 +91,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         } else if (this.privAudioOutputStream !== undefined && typeof window !== "undefined") {
             if ((this.privFormat.formatTag === AudioFormatTag.PCM || this.privFormat.formatTag === AudioFormatTag.MuLaw
                 || this.privFormat.formatTag === AudioFormatTag.ALaw) && this.privFormat.hasHeader === false) {
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 console.warn(`Play back is not supported for raw PCM, mulaw or alaw format without header.`);
                 if (!!this.onAudioEnd) {
                     this.onAudioEnd(this);
@@ -130,7 +130,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
             this.privFormat = format as AudioOutputFormatImpl;
             const mimeType: string = AudioFormatToMimeType[this.privFormat.formatTag];
             if (mimeType === undefined) {
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 console.warn(
                     `Unknown mimeType for format ${AudioFormatTag[this.privFormat.formatTag]}; playback is not supported.`);
 
@@ -163,7 +163,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 });
 
             } else {
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 console.warn(
                     `Format ${AudioFormatTag[this.privFormat.formatTag]} could not be played by MSE, streaming playback is not enabled.`);
                 this.privAudioOutputStream = new PullAudioOutputStreamImpl();
@@ -244,7 +244,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 this.privSourceBuffer.appendBuffer(binary);
             } catch (error) {
                 this.privAudioBuffer.unshift(binary);
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 console.log(
                     "buffer filled, pausing addition of binaries until space is made");
                 return;

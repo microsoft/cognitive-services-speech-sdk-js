@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+/* eslint-disable max-classes-per-file */
 
 import {
     ForceDictationPropertyName,
@@ -26,7 +27,9 @@ export abstract class SpeechConfig {
      * Creates and initializes an instance.
      * @constructor
      */
-    protected constructor() { }
+    protected constructor() {
+        return;
+    }
 
     /**
      * Static instance of SpeechConfig returned by passing subscriptionKey and service region.
@@ -56,12 +59,12 @@ export abstract class SpeechConfig {
      * Note: Please use your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
      * Note: The query parameters specified in the endpoint URL are not changed, even if they are set by any other APIs.
      * For example, if language is defined in the uri as query parameter "language=de-DE", and also set by
-     *              SpeechConfig.speechRecognitionLanguage = "en-US", the language setting in uri takes precedence,
-     *              and the effective language is "de-DE". Only the parameters that are not specified in the
-     *              endpoint URL can be set by other APIs.
+     * SpeechConfig.speechRecognitionLanguage = "en-US", the language setting in uri takes precedence,
+     * and the effective language is "de-DE". Only the parameters that are not specified in the
+     * endpoint URL can be set by other APIs.
      * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the
-     *       fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to
-     *       use the authorization token.
+     * fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to
+     * use the authorization token.
      * @member SpeechConfig.fromEndpoint
      * @function
      * @public
@@ -111,12 +114,12 @@ export abstract class SpeechConfig {
     /**
      * Creates an instance of the speech factory with specified initial authorization token and region.
      * Note: The caller needs to ensure that the authorization token is valid. Before the authorization token
-     *       expires, the caller needs to refresh it by calling this setter with a new valid token.
+     * expires, the caller needs to refresh it by calling this setter with a new valid token.
      * Note: Please use a token derived from your LanguageUnderstanding subscription key in case you want
-     *       to use the Intent recognizer. As configuration values are copied when creating a new recognizer,
-     *       the new token value will not apply to recognizers that have already been created. For recognizers
-     *       that have been created before, you need to set authorization token of the corresponding recognizer
-     *       to refresh the token. Otherwise, the recognizers will encounter errors during recognition.
+     * to use the Intent recognizer. As configuration values are copied when creating a new recognizer,
+     * the new token value will not apply to recognizers that have already been created. For recognizers
+     * that have been created before, you need to set authorization token of the corresponding recognizer
+     * to refresh the token. Otherwise, the recognizers will encounter errors during recognition.
      * @member SpeechConfig.fromAuthorizationToken
      * @function
      * @public
@@ -257,7 +260,7 @@ export abstract class SpeechConfig {
      * @function
      * @public
      */
-    /* tslint:disable:no-empty */
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public close(): void { }
 
     /**
@@ -441,6 +444,7 @@ export class SpeechConfigImpl extends SpeechConfig {
     }
 
     public get outputFormat(): OutputFormat {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
         return (OutputFormat as any)[this.privProperties.getProperty(OutputFormatPropertyName, undefined)];
     }
 
@@ -476,8 +480,8 @@ export class SpeechConfigImpl extends SpeechConfig {
         this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword);
     }
 
-    public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
-        const currentProperties: IStringDictionary<string> = JSON.parse(this.privProperties.getProperty(ServicePropertiesPropertyName, "{}"));
+    public setServiceProperty(name: string, value: string): void {
+        const currentProperties: IStringDictionary<string> = JSON.parse(this.privProperties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
 
         currentProperties[name] = value;
 
@@ -521,6 +525,7 @@ export class SpeechConfigImpl extends SpeechConfig {
     }
 
     public get speechSynthesisOutputFormat(): SpeechSynthesisOutputFormat {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
         return (SpeechSynthesisOutputFormat as any)[this.privProperties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)];
     }
 

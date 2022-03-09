@@ -46,7 +46,7 @@ export class Queue<TItem> implements IQueue<TItem> {
         this.throwIfDispose();
         promise.then((val: TItem): void => {
             this.privList.add(val);
-             /* tslint:disable:no-empty */
+             /* eslint-disable no-empty */
         }, (error: string): void => { });
     }
 

@@ -34,7 +34,7 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
 
     private privTranscriberRecognizer: TranscriberRecognizer;
@@ -90,7 +90,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                 if (!!this.privTranscriberRecognizer.recognizing) {
                     try {
                         this.privTranscriberRecognizer.recognizing(this.privTranscriberRecognizer, ev);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -152,7 +152,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                         if (!!this.privTranscriberRecognizer.recognized) {
                             try {
                                 this.privTranscriberRecognizer.recognized(this.privTranscriberRecognizer, event);
-                                /* tslint:disable:no-empty */
+                                /* eslint-disable no-empty */
                             } catch (error) {
                                 // Not going to let errors in the event handler
                                 // trip things up.
@@ -203,7 +203,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                 sessionId);
             try {
                 this.privTranscriberRecognizer.canceled(this.privTranscriberRecognizer, cancelEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
 
@@ -223,7 +223,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
             try {
                 this.privSuccessCallback(result);
                 this.privSuccessCallback = undefined;
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
     }

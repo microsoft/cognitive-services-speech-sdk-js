@@ -263,14 +263,14 @@ export class SynthesisAdapterBase implements IDisposable {
             const cancelEvent: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(result);
             try {
                 this.privSpeechSynthesizer.SynthesisCanceled(this.privSpeechSynthesizer, cancelEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
 
         if (!!this.privSuccessCallback) {
             try {
                 this.privSuccessCallback(result);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
     }

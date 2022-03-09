@@ -537,7 +537,7 @@ export class SpeechSynthesizer {
                     }
                 }
                 cb = undefined;
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
                 this.adapterSpeak().catch(() => { });
 
             }, (e: string): void => {
@@ -546,7 +546,7 @@ export class SpeechSynthesizer {
                 }
             }, audioDestination));
 
-            /* tslint:disable:no-empty */
+            /* eslint-disable no-empty */
             this.adapterSpeak().catch(() => { });
 
         } catch (error) {
@@ -560,7 +560,7 @@ export class SpeechSynthesizer {
             }
 
             // Destroy the synthesizer.
-            /* tslint:disable:no-empty */
+            /* eslint-disable no-empty */
             this.dispose(true).catch(() => { });
         }
     }
@@ -596,7 +596,7 @@ export class SpeechSynthesizer {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class SynthesisRequest {
     public requestId: string;
     public text: string;

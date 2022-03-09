@@ -168,7 +168,7 @@ export class RequestSession {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
             // Avoid UnhandledPromiseRejection if privTurnDeferral is not being awaited
-            /* tslint:disable:no-empty */
+            /* eslint-disable no-empty */
             this.privTurnDeferral.promise.then().catch(() => { });
         }
         this.privInTurn = true;

@@ -75,7 +75,7 @@ export abstract class AudioStreamFormat {
  * @private
  * @class AudioStreamFormatImpl
  */
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class AudioStreamFormatImpl extends AudioStreamFormat {
     protected privHeader: ArrayBuffer;
 

@@ -19,7 +19,7 @@ export class DialogServiceTurnState {
         this.privAudioStream = null;
         this.privTurnManager = manager;
         this.resetTurnEndTimeout();
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         // console.info("DialogServiceTurnState debugturn start:" + this.privRequestId);
     }
 
@@ -33,7 +33,7 @@ export class DialogServiceTurnState {
         if (payload.messageDataStreamType === MessageDataStreamType.TextToSpeechAudio) {
             this.privAudioStream = AudioOutputStream.createPullStream() as PullAudioOutputStreamImpl;
             this.privAudioStream.format = (audioFormat !== undefined) ? audioFormat : AudioOutputFormatImpl.getDefaultOutputFormat();
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             // console.info("Audio start debugturn:" + this.privRequestId);
         }
         return this.privAudioStream;
@@ -56,11 +56,11 @@ export class DialogServiceTurnState {
         if (this.privTimeoutToken !== undefined) {
             clearTimeout(this.privTimeoutToken);
         }
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         // console.info("Timeout reset debugturn:" + this.privRequestId);
 
         this.privTimeoutToken = setTimeout((): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             // console.info("Timeout complete debugturn:" + this.privRequestId);
 
             this.privTurnManager.CompleteTurn(this.privRequestId);
