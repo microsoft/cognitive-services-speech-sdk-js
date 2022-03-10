@@ -759,7 +759,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             out += "null";
         } else {
             const readView: Uint8Array = new Uint8Array(buffer);
-            out += buffer.byteLength + "\r\n";
+            out += `${buffer.byteLength}\r\n`;
             for (let i: number = 0; i < buffer.byteLength; i++) {
                 out += readView[i].toString(16).padStart(2, "0") + " ";
             }

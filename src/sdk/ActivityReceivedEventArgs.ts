@@ -1,14 +1,20 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 import { PullAudioOutputStream } from "./Audio/AudioOutputStream";
+
+export interface IActivity {
+    type: string;
+    speak?: string;
+}
 
 /**
  * Defines contents of received message/events.
  * @class ActivityReceivedEventArgs
  */
 export class ActivityReceivedEventArgs {
-    private privActivity: any;
+    private privActivity: IActivity;
     private privAudioStream: PullAudioOutputStream;
 
     /**
@@ -17,7 +23,7 @@ export class ActivityReceivedEventArgs {
      * @param {any} activity - The activity..
      */
     public constructor(activity: any, audioStream?: PullAudioOutputStream) {
-        this.privActivity = activity;
+        this.privActivity = activity as IActivity;
         this.privAudioStream = audioStream;
     }
 
@@ -28,7 +34,7 @@ export class ActivityReceivedEventArgs {
      * @public
      * @returns {any} the received activity.
      */
-    public get activity(): any {
+    public get activity(): IActivity {
         return this.privActivity;
     }
 

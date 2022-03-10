@@ -129,6 +129,7 @@ export class WebsocketMessageAdapter {
                 } else if (protocol?.toLocaleLowerCase() === "ws:") {
                     protocol = "http:";
                 }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 (options.agent as any).protocol = protocol;
                 this.privWebsocketClient = new ws(this.privUri, options);
             }

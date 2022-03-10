@@ -88,7 +88,7 @@ export class WebsocketConnection implements IConnection {
         }
     }
 
-    public isDisposed = (): boolean => {
+    public isDisposed(): boolean {
         return this.privIsDisposed;
     }
 
@@ -96,19 +96,19 @@ export class WebsocketConnection implements IConnection {
         return this.privId;
     }
 
-    public state = (): ConnectionState => {
+    public state(): ConnectionState {
         return this.privConnectionMessageAdapter.state;
     }
 
-    public open = (): Promise<ConnectionOpenResponse> => {
+    public open(): Promise<ConnectionOpenResponse> {
         return this.privConnectionMessageAdapter.open();
     }
 
-    public send = (message: ConnectionMessage): Promise<void> => {
+    public send(message: ConnectionMessage): Promise<void> {
         return this.privConnectionMessageAdapter.send(message);
     }
 
-    public read = (): Promise<ConnectionMessage> => {
+    public read(): Promise<ConnectionMessage> {
         return this.privConnectionMessageAdapter.read();
     }
 
