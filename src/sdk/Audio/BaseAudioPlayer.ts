@@ -2,8 +2,7 @@
 // Licensed under the MIT license.
 
 import { InvalidOperationError } from "../../common/Error";
-import { marshalPromiseToCallbacks } from "../../common/Promise";
-import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
+import { AudioStreamFormat } from "../Exports";
 import { AudioStreamFormatImpl } from "./AudioStreamFormat";
 
 type AudioDataTypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array;
@@ -38,14 +37,21 @@ export class BaseAudioPlayer {
      * @param newAudioData audio data to be played.
      */
     public playAudioSample(newAudioData: ArrayBuffer, cb?: () => void, err?: (error: string) => void): void {
-        marshalPromiseToCallbacks((async (): Promise<void> => {
-                this.ensureInitializedContext();
-                const audioData = this.formatAudioData(newAudioData);
-                const newSamplesData = new Float32Array(this.samples.length + audioData.length);
-                newSamplesData.set(this.samples, 0);
-                newSamplesData.set(audioData, this.samples.length);
-                this.samples = newSamplesData;
-        })(), cb, err);
+        try {
+            this.ensureInitializedContext();
+            const audioData = this.formatAudioData(newAudioData);
+            const newSamplesData = new Float32Array(this.samples.length + audioData.length);
+            newSamplesData.set(this.samples, 0);
+            newSamplesData.set(audioData, this.samples.length);
+            this.samples = newSamplesData;
+            if (!!cb) {
+                cb();
+            }
+        } catch (e) {
+            if (!!err) {
+                err(e as string);
+            }
+        }
     }
 
     /**
@@ -54,12 +60,13 @@ export class BaseAudioPlayer {
     public stopAudio(cb?: () => void, err?: (error: string) => void): void {
         if (this.audioContext !== null) {
             this.samples = new Float32Array();
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             clearInterval(this.autoUpdateBufferTimer);
-            this.audioContext.close().then(() => {
+            this.audioContext.close().then((): void => {
                 if (!!cb) {
                     cb();
                 }
-            }, (error: string) => {
+            }, (error: string): void => {
                 if (!!err) {
                     err(error);
                 }
@@ -77,7 +84,7 @@ export class BaseAudioPlayer {
         if (this.audioContext === null) {
             this.createAudioContext();
             const timerPeriod = 200;
-            this.autoUpdateBufferTimer = setInterval(() => {
+            this.autoUpdateBufferTimer = setInterval((): void => {
                 this.updateAudioBuffer();
             }, timerPeriod);
         }

@@ -60,25 +60,25 @@ export class List<TItem> implements IList<TItem>  {
         }
     }
 
-    public get = (itemIndex: number): TItem => {
+    public get(itemIndex: number): TItem {
         this.throwIfDisposed();
         return this.privList[itemIndex];
     }
 
-    public first = (): TItem => {
+    public first(): TItem {
         return this.get(0);
     }
 
-    public last = (): TItem => {
+    public last(): TItem {
         return this.get(this.length() - 1);
     }
 
-    public add = (item: TItem): void => {
+    public add(item: TItem): void {
         this.throwIfDisposed();
         this.insertAt(this.privList.length, item);
     }
 
-    public insertAt = (index: number, item: TItem): void => {
+    public insertAt(index: number, item: TItem): void {
         this.throwIfDisposed();
         if (index === 0) {
             this.privList.unshift(item);
@@ -90,60 +90,60 @@ export class List<TItem> implements IList<TItem>  {
         this.triggerSubscriptions(this.privAddSubscriptions);
     }
 
-    public removeFirst = (): TItem => {
+    public removeFirst(): TItem {
         this.throwIfDisposed();
         return this.removeAt(0);
     }
 
-    public removeLast = (): TItem => {
+    public removeLast(): TItem {
         this.throwIfDisposed();
         return this.removeAt(this.length() - 1);
     }
 
-    public removeAt = (index: number): TItem => {
+    public removeAt(index: number): TItem {
         this.throwIfDisposed();
         return this.remove(index, 1)[0];
     }
 
-    public remove = (index: number, count: number): TItem[] => {
+    public remove(index: number, count: number): TItem[] {
         this.throwIfDisposed();
         const removedElements = this.privList.splice(index, count);
         this.triggerSubscriptions(this.privRemoveSubscriptions);
         return removedElements;
     }
 
-    public clear = (): void => {
+    public clear(): void {
         this.throwIfDisposed();
         this.remove(0, this.length());
     }
 
-    public length = (): number => {
+    public length(): number {
         this.throwIfDisposed();
         return this.privList.length;
     }
 
-    public onAdded = (addedCallback: () => void): IDetachable => {
+    public onAdded(addedCallback: () => void): IDetachable {
         this.throwIfDisposed();
         const subscriptionId = this.privSubscriptionIdCounter++;
 
         this.privAddSubscriptions[subscriptionId] = addedCallback;
 
         return {
-            detach: () => {
+            detach: (): Promise<void> => {
                 delete this.privAddSubscriptions[subscriptionId];
                 return Promise.resolve();
             },
         };
     }
 
-    public onRemoved = (removedCallback: () => void): IDetachable => {
+    public onRemoved(removedCallback: () => void): IDetachable {
         this.throwIfDisposed();
         const subscriptionId = this.privSubscriptionIdCounter++;
 
         this.privRemoveSubscriptions[subscriptionId] = removedCallback;
 
         return {
-            detach: () => {
+            detach: (): Promise<void> => {
                 delete this.privRemoveSubscriptions[subscriptionId];
                 return Promise.resolve();
             },

@@ -17,12 +17,11 @@ export class PcmRecorder implements IRecorder {
         const desiredSampleRate = 16000;
 
         const waveStreamEncoder = new RiffPcmEncoder(context.sampleRate, desiredSampleRate);
-        let needHeader: boolean = true;
 
         const micInput = context.createMediaStreamSource(mediaStream);
         if (!this.privSpeechProcessorScript) {
             const workletScript = `class SP extends AudioWorkletProcessor {
-                public constructor(options) {
+                constructor(options) {
                   super(options);
                 }
                 process(inputs, outputs) {
@@ -41,7 +40,8 @@ export class PcmRecorder implements IRecorder {
         }
 
         const attachScriptProcessor = (): void => {
-            const scriptNode = ((): ScriptProcessorNode => {
+            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+            const scriptNode = (() => {
                 let bufferSize = 0;
                 try {
                     return context.createScriptProcessor(bufferSize, 1, 1);
@@ -67,7 +67,6 @@ export class PcmRecorder implements IRecorder {
                             isEnd: false,
                             timeReceived: Date.now(),
                         });
-                        needHeader = false;
                     }
                 }
             };

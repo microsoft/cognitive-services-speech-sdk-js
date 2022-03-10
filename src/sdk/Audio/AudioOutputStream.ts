@@ -26,7 +26,9 @@ export abstract class AudioOutputStream {
      * Creates and initializes an instance.
      * @constructor
      */
-    protected constructor() { }
+    protected constructor() {
+        return;
+    }
 
     /**
      * Sets the format of the AudioOutputStream
@@ -187,7 +189,7 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
                 intView.set(new Int8Array(tmpBuffer), totalBytes);
                 totalBytes += tmpBuffer.byteLength;
             } else {
-                await this.privStream.readEnded();
+                this.privStream.readEnded();
             }
         }
         return totalBytes;
@@ -229,7 +231,9 @@ export abstract class PushAudioOutputStream extends AudioOutputStream {
      * Creates and initializes and instance.
      * @constructor
      */
-    protected constructor() { super(); }
+    protected constructor() {
+        super();
+    }
 
     /**
      * Creates a PushAudioOutputStream that delegates to the specified callback interface for
@@ -277,7 +281,7 @@ export class PushAudioOutputStreamImpl extends PushAudioOutputStream implements 
         this.privCallback = callback;
     }
 
-    // eslint-disable-next-line no-empty
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public set format(format: AudioStreamFormat) { }
 
     public write(buffer: ArrayBuffer): void {
