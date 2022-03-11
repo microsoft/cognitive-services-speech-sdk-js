@@ -81,7 +81,7 @@ export class RestMessageAdapter {
     public request(
         method: RestRequestType,
         uri: string,
-        queryParams: { [key: string]: string } = {},
+        queryParams: { [key: string]: any } = {},
         body: bent.RequestBody = null,
         binaryBody: Blob | Buffer = null,
         ): Promise<IRestResponse> {

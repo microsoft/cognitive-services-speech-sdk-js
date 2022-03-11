@@ -53,7 +53,7 @@ export class ConnectionStartEvent extends ConnectionEvent {
 }
 
 export class ConnectionEstablishedEvent extends ConnectionEvent {
-    public constructor(connectionId: string, metadata?: IStringDictionary<string>) {
+    public constructor(connectionId: string) {
         super("ConnectionEstablishedEvent", connectionId);
     }
 }

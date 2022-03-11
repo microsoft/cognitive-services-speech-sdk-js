@@ -6,12 +6,30 @@ import {
     IDynamicGrammar,
 } from "./Exports";
 
+interface Context {
+    [section: string]: any;
+}
+
+interface PhraseContext {
+    [section: string]: any;
+    phraseDetection?: {
+        enrichment?: {
+            pronunciationAssessment: any;
+        };
+    };
+    phraseOutput?: {
+        detailed?: {
+            options?: string[];
+        };
+        format?: any;
+    };
+}
 /**
  * Represents the JSON used in the speech.context message sent to the speech service.
  * The dynamic grammar is always refreshed from the encapsulated dynamic grammar object.
  */
 export class SpeechContext {
-    private privContext: { [section: string]: any } = {};
+    private privContext: PhraseContext = {};
     private privDynamicGrammar: DynamicGrammarBuilder;
 
     public constructor(dynamicGrammar: DynamicGrammarBuilder) {
@@ -23,7 +41,7 @@ export class SpeechContext {
      * @param sectionName Name of the section to add.
      * @param value JSON serializable object that represents the value.
      */
-    public setSection(sectionName: string, value: any): void {
+    public setSection(sectionName: string, value: Context): void {
         this.privContext[sectionName] = value;
     }
 
@@ -40,7 +58,7 @@ export class SpeechContext {
                 }
             };
         }
-        this.privContext.phraseDetection.enrichment.pronunciationAssessment = JSON.parse(params);
+        this.privContext.phraseDetection.enrichment.pronunciationAssessment = JSON.parse(params) as Context;
         if (this.privContext.phraseOutput === undefined) {
             this.privContext.phraseOutput = {
                 detailed: {

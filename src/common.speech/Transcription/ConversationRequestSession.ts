@@ -40,13 +40,13 @@ export class ConversationRequestSession {
         this.privSessionId = connectionId;
     }
 
-    public onAuthCompleted(isError: boolean, error?: string): void {
+    public onAuthCompleted(isError: boolean): void {
         if (isError) {
             this.onComplete();
         }
     }
 
-    public onConnectionEstablishCompleted(statusCode: number, reason?: string): void {
+    public onConnectionEstablishCompleted(statusCode: number): void {
         if (statusCode === 200) {
             return;
         } else if (statusCode === 403) {

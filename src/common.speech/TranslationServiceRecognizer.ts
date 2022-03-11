@@ -13,7 +13,6 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
-    SpeechRecognitionResult,
     TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
     TranslationRecognitionResult,
@@ -51,11 +50,11 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
         super(authentication, connectionFactory, audioSource, recognizerConfig, translationRecognizer);
         this.privTranslationRecognizer = translationRecognizer;
-        this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
+        this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
             if (connectionEvent.name === "ConnectionEstablishedEvent") {
                 this.privTranslationRecognizer.onConnection();
             } else if (connectionEvent.name === "ConnectionClosedEvent") {
-                await this.privTranslationRecognizer.onDisconnection();
+                void this.privTranslationRecognizer.onDisconnection();
             }
         });
 
@@ -89,7 +88,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         this.privSuccessCallback(result.result);
                     } catch (e) {
                         if (!!this.privErrorCallback) {
-                            this.privErrorCallback(e);
+                            this.privErrorCallback(e as string);
                         }
                     }
                     // Only invoke the call back once.
@@ -142,7 +141,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                             this.privSuccessCallback(result);
                         } catch (e) {
                             if (!!this.privErrorCallback) {
-                                this.privErrorCallback(e);
+                                this.privErrorCallback(e as string);
                             }
                         }
                         // Only invoke the call back once.
@@ -180,7 +179,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 break;
 
             case "translation.response":
-                const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody);
+                const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody) as { SpeechPhrase: ITranslationPhrase };
                 if (!!phrase.SpeechPhrase) {
                     await handleTranslationPhrase(TranslationPhrase.fromTranslationResponse(phrase));
                 }

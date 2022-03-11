@@ -172,7 +172,7 @@ export class SynthesisTurn {
     }
 
     public onServiceResponseMessage(responseJson: string): void {
-        const response: ISynthesisResponse = JSON.parse(responseJson);
+        const response: ISynthesisResponse = JSON.parse(responseJson) as ISynthesisResponse;
         this.streamId = response.audio.streamId;
     }
 
@@ -214,7 +214,7 @@ export class SynthesisTurn {
         }
     }
 
-    public dispose(error?: string): void {
+    public dispose(): void {
         if (!this.privIsDisposed) {
             // we should have completed by now. If we did not its an unknown error.
             this.privIsDisposed = true;

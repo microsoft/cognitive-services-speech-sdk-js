@@ -3,7 +3,7 @@
 
 import {
     ProxyInfo,
-    WebsocketConnection, WebsocketMessageAdapter,
+    WebsocketConnection
 } from "../common.browser/Exports";
 import {
     IConnection,
@@ -26,10 +26,10 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
 
     private readonly synthesisUri: string = "/cognitiveservices/websocket/v1";
 
-    public create = (
+    public create(
         config: SynthesizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection => {
+        connectionId?: string): IConnection {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);

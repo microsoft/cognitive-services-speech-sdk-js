@@ -108,7 +108,7 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
         return deferral.promise;
     }
 
-    private makeHeaders = (message: ConnectionMessage): string => {
+    private makeHeaders(message: ConnectionMessage): string {
         let headersString: string = "";
 
         if (message.headers) {
@@ -122,7 +122,7 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
         return headersString;
     }
 
-    private parseHeaders = (headersString: string): IStringDictionary<string> => {
+    private parseHeaders(headersString: string): IStringDictionary<string> {
         const headers: IStringDictionary<string> = {};
 
         if (headersString) {
@@ -146,7 +146,7 @@ export class WebsocketMessageFormatter implements IWebsocketMessageFormatter {
         return headers;
     }
 
-    private stringToArrayBuffer = (str: string): ArrayBuffer => {
+    private stringToArrayBuffer(str: string): ArrayBuffer {
         const buffer = new ArrayBuffer(str.length);
         const view = new DataView(buffer);
         for (let i = 0; i < str.length; i++) {

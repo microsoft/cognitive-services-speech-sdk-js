@@ -12,7 +12,7 @@ import { IErrorMessages, IStringDictionary } from "../../common/Exports";
 import { Contracts } from "../../sdk/Contracts";
 import { PropertyCollection, PropertyId } from "../../sdk/Exports";
 import { ConversationConnectionConfig } from "./ConversationConnectionConfig";
-import { IConversationResponseError, IInternalConversation, IResponse } from "./ConversationTranslatorInterfaces";
+import { IConversationResponseError, IInternalConversation } from "./ConversationTranslatorInterfaces";
 
 export class ConversationManager {
 
@@ -40,7 +40,7 @@ export class ConversationManager {
      * @param callback
      * @param errorCallback
      */
-    public createOrJoin(args: PropertyCollection, conversationCode: string, cb?: any, err?: any): void {
+    public createOrJoin(args: PropertyCollection, conversationCode: string, cb?: (c: any) => void, err?: (e: string) => void): void {
 
         try {
 
@@ -90,7 +90,7 @@ export class ConversationManager {
             const endpoint: string = `https://${endpointHost}${this.privRestPath}`;
 
             // TODO: support a proxy and certificate validation
-            this.privRestAdapter.request(RestRequestType.Post, endpoint, queryParams, null).then((response: IRestResponse) => {
+            this.privRestAdapter.request(RestRequestType.Post, endpoint, queryParams, null).then((response: IRestResponse): void => {
 
                 const requestId: string = RestMessageAdapter.extractHeaderValue(this.privRequestParams.requestId, response.headers);
 
@@ -122,22 +122,22 @@ export class ConversationManager {
                         cb(conversation);
                     } catch (e) {
                         if (!!err) {
-                            err(e);
+                            err(e as string);
                         }
                     }
                     cb = undefined;
                 }
-            /* eslint-disable no-empty */
-            }).catch( (e: any) => {});
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            }).catch( (): void => { });
 
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     err(typedError.name + ": " + typedError.message);
 
                 } else {
-                    err(error);
+                    err(error as string);
                 }
             }
         }
@@ -175,23 +175,23 @@ export class ConversationManager {
                 const endpoint: string = `https://${endpointHost}${this.privRestPath}`;
 
                 // TODO: support a proxy and certificate validation
-                this.privRestAdapter.request(RestRequestType.Delete, endpoint, queryParams, null).then((response: IRestResponse) => {
+                this.privRestAdapter.request(RestRequestType.Delete, endpoint, queryParams, null).then((response: IRestResponse): void => {
 
                     if (!response.ok) {
                         // ignore errors on delete
                     }
 
                     resolve();
-                /* eslint-disable no-empty */
-                }).catch( (e: any) => {});
+                // eslint-disable-next-line @typescript-eslint/no-empty-function
+                }).catch( (): void => {});
 
             } catch (error) {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     reject(typedError.name + ": " + typedError.message);
 
                 } else {
-                    reject(error);
+                    reject(error as string);
                 }
             }
         });

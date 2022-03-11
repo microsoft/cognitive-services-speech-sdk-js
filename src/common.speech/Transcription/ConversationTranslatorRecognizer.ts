@@ -43,7 +43,6 @@ import {
 } from "./ConversationTranslatorEventArgs";
 import {
     ConversationRecognizer,
-    ConversationTranslatorMessageTypes
 } from "./ConversationTranslatorInterfaces";
 
 export class ConversationRecognizerFactory {
