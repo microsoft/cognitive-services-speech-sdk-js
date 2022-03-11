@@ -151,6 +151,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             if (this.privTimeoutToken !== undefined) {
+               // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                this.privClearTimeout(this.privTimeoutToken);
             }
             this.privReco.disconnect().then((): void => {
@@ -229,6 +230,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         }
         if (disposing) {
             if (this.privTimeoutToken !== undefined) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 this.privClearTimeout(this.privTimeoutToken);
             }
             this.privIsDisposed = true;
@@ -270,8 +272,8 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
 
     private sendMessage(msg: string, cb?: Callback, err?: Callback): void {
         const withAsync = this.privReco as ConversationServiceAdapter;
-        function PromiseToEmptyCallback<T>(promise: Promise<T>, cb?: Callback, err?: Callback): void {
-            if (!!promise) {
+        const PromiseToEmptyCallback = <T>(promise: Promise<T>, cb?: Callback, err?: Callback): void => {
+            if (promise !== undefined) {
                 promise.then((): void => {
                     try {
                         if (!!cb) {
@@ -295,7 +297,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
                     err("Null promise");
                 }
             }
-        }
+        };
 
         PromiseToEmptyCallback(withAsync.sendMessageAsync(msg), cb, err);
         this.resetConversationTimeout();
@@ -303,6 +305,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
 
     private resetConversationTimeout(): void {
         if (this.privTimeoutToken !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             this.privClearTimeout(this.privTimeoutToken);
         }
 

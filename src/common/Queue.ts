@@ -39,7 +39,7 @@ export class Queue<TItem> implements IQueue<TItem> {
 
     public enqueue(item: TItem): void {
         this.throwIfDispose();
-        this.enqueueFromPromise(new Promise<TItem>((resolve: (value: TItem) => void, reject: (reason: any) => void) => { resolve(item); }));
+        this.enqueueFromPromise(new Promise<TItem>((resolve: (value: TItem) => void): void => resolve(item)));
     }
 
     public enqueueFromPromise(promise: Promise<TItem>): void {
@@ -47,7 +47,7 @@ export class Queue<TItem> implements IQueue<TItem> {
         promise.then((val: TItem): void => {
             this.privList.add(val);
         // eslint-disable-next-line @typescript-eslint/no-empty-function
-        }, (error: string): void => { });
+        }, (): void => { });
     }
 
     public dequeue(): Promise<TItem> {
@@ -124,7 +124,7 @@ export class Queue<TItem> implements IQueue<TItem> {
                 });
                 return Promise.all(promiseArray).finally((): void => {
                     this.privSubscribers = null;
-                    this.privList.forEach((item: TItem, index: number): void => {
+                    this.privList.forEach((item: TItem): void => {
                         pendingItemProcessor(item);
                     });
                     this.privList = null;
