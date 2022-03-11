@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-/* eslint-disable max-classes-per-file */
+/* eslint-disable max-classes-per-file, @typescript-eslint/typedef */
 
 export enum PromiseState {
     None,
@@ -24,13 +24,13 @@ export class PromiseResult<T> {
     protected privResult: T;
 
     public constructor(promiseResultEventSource: PromiseResultEventSource<T>) {
-        promiseResultEventSource.on((result: T) => {
+        promiseResultEventSource.on((result: T): void => {
             if (!this.privIsCompleted) {
                 this.privIsCompleted = true;
                 this.privIsError = false;
                 this.privResult = result;
             }
-        }, (error: string) => {
+        }, (error: string): void => {
             if (!this.privIsCompleted) {
                 this.privIsCompleted = true;
                 this.privIsError = true;
@@ -59,7 +59,7 @@ export class PromiseResult<T> {
         if (this.isError) {
             throw this.error;
         }
-    }
+    };
 }
 
 export class PromiseResultEventSource<T>  {
@@ -69,16 +69,16 @@ export class PromiseResultEventSource<T>  {
 
     public setResult = (result: T): void => {
         this.privOnSetResult(result);
-    }
+    };
 
     public setError = (error: string): void => {
         this.privOnSetError(error);
-    }
+    };
 
     public on = (onSetResult: (result: T) => void, onSetError: (error: string) => void): void => {
         this.privOnSetResult = onSetResult;
         this.privOnSetError = onSetError;
-    }
+    };
 }
 
 export class Deferred<T> implements IDeferred<T> {
@@ -87,6 +87,7 @@ export class Deferred<T> implements IDeferred<T> {
     private privReject: (reason?: any) => void;
 
     public constructor() {
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         this.privPromise = new Promise<T>((resolve: (value: T) => void, reject: (reason: any) => void) => {
             this.privResolve = resolve;
             this.privReject = reject;
@@ -100,12 +101,12 @@ export class Deferred<T> implements IDeferred<T> {
     public resolve = (result: T | Promise<T>): Deferred<T> => {
         this.privResolve(result);
         return this;
-    }
+    };
 
     public reject = (error: string): Deferred<T> => {
         this.privReject(error);
         return this;
-    }
+    };
 }
 
 export class Sink<T> {
@@ -164,7 +165,8 @@ export class Sink<T> {
         errorCallback: (error: string) => void): void {
 
         if (successCallback == null) {
-            successCallback = (r: T) => { return; };
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            successCallback = (): void => { };
         }
 
         if (this.privState === PromiseState.None) {
@@ -207,6 +209,7 @@ export class Sink<T> {
     }
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function marshalPromiseToCallbacks<T>(
     promise: Promise<T>,
     cb?: (value: T) => void,
@@ -220,12 +223,12 @@ export function marshalPromiseToCallbacks<T>(
             if (!!err) {
                 try {
                     if (error instanceof Error) {
-                        const typedError: Error = error as Error;
+                        const typedError: Error = error ;
                         err(typedError.name + ": " + typedError.message);
                     } else {
-                        err(error);
+                        err(error as string);
                     }
-                    /* tslint:disable:no-empty */
+                // eslint-disable-next-line no-empty
                 } catch (error) { }
             }
         }
@@ -233,12 +236,12 @@ export function marshalPromiseToCallbacks<T>(
         if (!!err) {
             try {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     err(typedError.name + ": " + typedError.message);
                 } else {
-                    err(error);
+                    err(error as string);
                 }
-                /* tslint:disable:no-empty */
+            // eslint-disable-next-line no-empty
             } catch (error) { }
         }
     });

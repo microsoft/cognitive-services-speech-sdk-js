@@ -7,16 +7,36 @@ import {
     RecognitionResult
 } from "./Exports";
 
+interface AssessmentResult {
+    NBest: DetailResult[];
+}
+
+interface DetailResult {
+    Words: WordResult[];
+    PronunciationAssessment: {
+        AccuracyScore: number;
+        CompletenessScore: number;
+        FluencyScore: number;
+        PronScore: number;
+    };
+}
+
+interface WordResult {
+    Word: string;
+    Phonemes: { Phoneme: string }[];
+    Syllables: { Syllable: string }[];
+}
+
 /**
  * Pronunciation assessment results.
  * @class PronunciationAssessmentResult
  * Added in version 1.15.0.
  */
 export class PronunciationAssessmentResult {
-    private privPronJson: any;
+    private privPronJson: DetailResult;
 
     private constructor(jsonString: string) {
-        const j = JSON.parse(jsonString);
+        const j = JSON.parse(jsonString) as AssessmentResult;
         Contracts.throwIfNullOrUndefined(j.NBest[0], "NBest");
         this.privPronJson = j.NBest[0];
     }
@@ -41,9 +61,9 @@ export class PronunciationAssessmentResult {
      * @member PronunciationAssessmentConfig.prototype.detailResult
      * @function
      * @public
-     * @returns {any} detail result.
+     * @returns {DetailResult} detail result.
      */
-    public get detailResult(): any {
+    public get detailResult(): DetailResult {
         return this.privPronJson;
     }
 

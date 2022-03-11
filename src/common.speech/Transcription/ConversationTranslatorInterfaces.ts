@@ -99,7 +99,7 @@ export class InternalParticipants {
      * @param id
      */
     public getParticipantIndex(id: string): number {
-        return this.participants.findIndex((p: IInternalParticipant) => p.id === id);
+        return this.participants.findIndex((p: IInternalParticipant): boolean => p.id === id);
     }
 
     /**
@@ -107,21 +107,21 @@ export class InternalParticipants {
      * @param id
      */
     public getParticipant(id: string): IInternalParticipant {
-        return this.participants.find((p: IInternalParticipant) => p.id === id);
+        return this.participants.find((p: IInternalParticipant): boolean => p.id === id);
     }
 
-    /***
+    /**
      * Remove a participant from the participants list.
      */
     public deleteParticipant(id: string): void {
-        this.participants = this.participants.filter((p: IInternalParticipant) => p.id !== id);
+        this.participants = this.participants.filter((p: IInternalParticipant): boolean => p.id !== id);
     }
 
-    /***
+    /**
      * Helper to return the conversation host.
      */
     public get host(): IInternalParticipant {
-        return this.participants.find((p: IInternalParticipant) => p.isHost === true );
+        return this.participants.find((p: IInternalParticipant): boolean => p.isHost === true );
     }
 
     /**

@@ -10,7 +10,7 @@ export class SpeechDetected implements ISpeechDetected {
     private privSpeechStartDetected: ISpeechDetected;
 
     private constructor(json: string) {
-        this.privSpeechStartDetected = JSON.parse(json);
+        this.privSpeechStartDetected = JSON.parse(json) as ISpeechDetected;
     }
 
     public static fromJSON(json: string): SpeechDetected {

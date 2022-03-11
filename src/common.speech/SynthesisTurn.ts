@@ -171,24 +171,24 @@ export class SynthesisTurn {
         }
     }
 
-    public onServiceResponseMessage = (responseJson: string): void => {
+    public onServiceResponseMessage(responseJson: string): void {
         const response: ISynthesisResponse = JSON.parse(responseJson);
         this.streamId = response.audio.streamId;
     }
 
-    public onServiceTurnEndResponse = (): void => {
+    public onServiceTurnEndResponse(): void {
         this.privInTurn = false;
         this.privTurnDeferral.resolve();
         this.onComplete();
     }
 
-    public onServiceTurnStartResponse = (): void => {
+    public onServiceTurnStartResponse(): void {
         if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
             // Avoid UnhandledPromiseRejection if privTurnDeferral is not being awaited
-            /* eslint-disable no-empty */
-            this.privTurnDeferral.promise.then().catch(() => { });
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            this.privTurnDeferral.promise.then().catch((): void => { });
         }
         this.privInTurn = true;
         this.privTurnDeferral = new Deferred<void>();
@@ -214,7 +214,7 @@ export class SynthesisTurn {
         }
     }
 
-    public dispose = (error?: string): void => {
+    public dispose(error?: string): void {
         if (!this.privIsDisposed) {
             // we should have completed by now. If we did not its an unknown error.
             this.privIsDisposed = true;
@@ -235,7 +235,7 @@ export class SynthesisTurn {
         return animation;
     }
 
-    protected onEvent = (event: SpeechSynthesisEvent): void => {
+    protected onEvent(event: SpeechSynthesisEvent): void {
         Events.instance.onEvent(event);
     }
 
@@ -253,7 +253,7 @@ export class SynthesisTurn {
         }
     }
 
-    private onComplete = (): void => {
+    private onComplete(): void {
         if (this.privIsSynthesizing) {
             this.privIsSynthesizing = false;
             this.privIsSynthesisEnded = true;

@@ -16,10 +16,8 @@ import { QueryParameterNames } from "./QueryParameterNames";
 
 export class DialogConnectionFactory extends ConnectionFactoryBase {
 
-    private static Constants: any = class {
-        private static ApiKey: string = "api";
-        private static BaseUrl: string = "convai.speech";
-    };
+    private static readonly ApiKey: string = "api";
+    private static readonly BaseUrl: string = "convai.speech";
 
     public create(
         config: RecognizerConfig,
@@ -67,9 +65,9 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
             const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
             const host: string = config.parameters.getProperty(
                 PropertyId.SpeechServiceConnection_Host,
-                `wss://${region}.${DialogConnectionFactory.Constants.BaseUrl}${hostSuffix}`);
+                `wss://${region}.${DialogConnectionFactory.BaseUrl}${hostSuffix}`);
             const standardizedHost: string = host.endsWith("/") ? host : host + "/";
-            endpoint = `${standardizedHost}${resourceInfix}${DialogConnectionFactory.Constants.ApiKey}/${version}`;
+            endpoint = `${standardizedHost}${resourceInfix}${DialogConnectionFactory.ApiKey}/${version}`;
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);

@@ -135,10 +135,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     err(typedError.name + ": " + typedError.message);
                 } else {
-                    err(error);
+                    err(error as string);
                 }
             }
         }
@@ -153,11 +153,11 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
             if (this.privTimeoutToken !== undefined) {
                this.privClearTimeout(this.privTimeoutToken);
             }
-            this.privReco.disconnect().then(() => {
+            this.privReco.disconnect().then((): void => {
                 if (!!cb) {
                     cb();
                 }
-            }, (error: string) => {
+            }, (error: string): void => {
                 if (!!err) {
                     err(error);
                 }
@@ -165,10 +165,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     err(typedError.name + ": " + typedError.message);
                 } else {
-                    err(error);
+                    err(error as string);
                 }
             }
             // Destroy the recognizer.
@@ -192,10 +192,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     err(typedError.name + ": " + typedError.message);
                 } else {
-                    err(error);
+                    err(error as string);
                 }
             }
 
@@ -272,7 +272,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         const withAsync = this.privReco as ConversationServiceAdapter;
         function PromiseToEmptyCallback<T>(promise: Promise<T>, cb?: Callback, err?: Callback): void {
             if (!!promise) {
-                promise.then((result: T): void => {
+                promise.then((): void => {
                     try {
                         if (!!cb) {
                             cb();
@@ -282,14 +282,13 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
                             err(`'Unhandled error on promise callback: ${e as string}'`);
                         }
                     }
-                }, (reason: any) => {
+                }, (reason: any): void => {
                     try {
                         if (!!err) {
                             err(reason);
                         }
-                        /* eslint-disable no-empty */
-                    } catch (error) {
-                    }
+                        // eslint-disable-next-line no-empty
+                    } catch (error) { }
                 });
             } else {
                 if (!!err) {

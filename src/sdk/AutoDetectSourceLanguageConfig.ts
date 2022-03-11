@@ -65,7 +65,7 @@ export class AutoDetectSourceLanguageConfig {
         }
         const autoConfig = new AutoDetectSourceLanguageConfig();
         const langs: string[] = [];
-        configs.forEach((config: SourceLanguageConfig) => {
+        configs.forEach((config: SourceLanguageConfig): void => {
             langs.push(config.language);
             if (config.endpointId !== undefined && config.endpointId !== "") {
                 const customProperty = config.language + PropertyId.SpeechServiceConnection_EndpointId.toString();
