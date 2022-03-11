@@ -18,7 +18,6 @@ import {
 } from "../common/Exports";
 import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
-import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat";
 import { Contracts } from "./Contracts";
 import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
 import {
@@ -205,10 +204,11 @@ export class DialogServiceConnector extends Recognizer {
 
             const retPromise: Promise<SpeechRecognitionResult> = callbackHolder();
 
-            retPromise.catch(() => {
+            retPromise.catch((): void => {
                 // Destroy the recognizer.
-                /* eslint-disable no-empty */ // We've done all we can here.
-                this.dispose(true).catch(() => { });
+                // We've done all we can here.
+                // eslint-disable-next-line @typescript-eslint/no-empty-function
+                this.dispose(true).catch((): void => { });
             });
 
             marshalPromiseToCallbacks(retPromise.finally((): void => {

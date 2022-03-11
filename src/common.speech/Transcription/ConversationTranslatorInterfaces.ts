@@ -6,7 +6,6 @@ import {
     ConversationExpirationEventArgs,
     ConversationTranslationCanceledEventArgs,
     SessionEventArgs,
-    VoiceSignature,
     } from "../../sdk/Exports";
 // import { ConversationClient } from "./ConversationConnection";
 import {

@@ -84,8 +84,8 @@ export class RestMessageAdapter {
         const responseReceivedDeferral = new Deferred<IRestResponse>();
 
         const requestCommand = method === RestRequestType.File ? "POST" : method;
-        const handleRestResponse = (data: BentResponse, j: any = {}): IRestResponse => {
-            const d: { statusText?: string, statusMessage?: string } = data;
+        const handleRestResponse = (data: BentResponse, j: { error?: { message: string } } = {}): IRestResponse => {
+            const d: { statusText?: string; statusMessage?: string } = data;
             return {
                 data: JSON.stringify(j),
                 headers: JSON.stringify(data.headers),
@@ -96,11 +96,11 @@ export class RestMessageAdapter {
             };
         };
 
-        const blobToArrayBuffer = (blob: Blob) => {
+        const blobToArrayBuffer = (blob: Blob): Promise<unknown> => {
             const reader = new FileReader();
             reader.readAsArrayBuffer(blob);
-            return new Promise((resolve: (value: unknown) => void) => {
-                reader.onloadend = () => {
+            return new Promise((resolve: (value: unknown) => void): void => {
+                reader.onloadend = (): void => {
                 resolve(reader.result);
                 };
             });
@@ -108,7 +108,7 @@ export class RestMessageAdapter {
 
         const send = (postData: any): void => {
             const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 204, 400, 401, 402, 403, 404);
-            const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
+            const params = this.queryParams(queryParams) === "" ? "" : `?${this.queryParams(queryParams)}`;
             sendRequest(params, postData).then( async (data: any) => {
                 if (method === RestRequestType.Delete || data.statusCode === 204) {
                     // No JSON from Delete and reset (204) operations
@@ -121,7 +121,7 @@ export class RestMessageAdapter {
                         responseReceivedDeferral.resolve(handleRestResponse(data));
                     }
                 }
-            }).catch((error: string) => {
+            }).catch((error: string): void => {
                 responseReceivedDeferral.reject(error);
             });
         };
@@ -158,9 +158,9 @@ export class RestMessageAdapter {
         return queryString ? url + (url.indexOf("?") === -1 ? "?" : "&") + queryString : url;
     }
 
-    private queryParams(params: any = {}): any {
+    private queryParams(params: any = {}): string {
         return Object.keys(params)
-            .map((k: any) => encodeURIComponent(k) + "=" + encodeURIComponent(params[k]))
+            .map((k: string): string => encodeURIComponent(k) + "=" + encodeURIComponent(params[k]))
             .join("&");
     }
 }

@@ -36,17 +36,17 @@ export class ConversationRequestSession {
         return this.privRequestCompletionDeferral.promise;
     }
 
-    public onPreConnectionStart = (authFetchEventId: string, connectionId: string): void => {
+    public onPreConnectionStart(authFetchEventId: string, connectionId: string): void {
         this.privSessionId = connectionId;
     }
 
-    public onAuthCompleted = (isError: boolean, error?: string): void => {
+    public onAuthCompleted(isError: boolean, error?: string): void {
         if (isError) {
             this.onComplete();
         }
     }
 
-    public onConnectionEstablishCompleted = (statusCode: number, reason?: string): void => {
+    public onConnectionEstablishCompleted(statusCode: number, reason?: string): void {
         if (statusCode === 200) {
             return;
         } else if (statusCode === 403) {
@@ -54,7 +54,7 @@ export class ConversationRequestSession {
         }
     }
 
-    public onServiceTurnEndResponse = (continuousRecognition: boolean): void => {
+    public onServiceTurnEndResponse(continuousRecognition: boolean): void {
         if (!continuousRecognition) {
             this.onComplete();
         } else {
@@ -62,7 +62,7 @@ export class ConversationRequestSession {
         }
     }
 
-    public async dispose(error?: string): Promise<void> {
+    public async dispose(): Promise<void> {
         if (!this.privIsDisposed) {
             // we should have completed by now. If we did not its an unknown error.
             this.privIsDisposed = true;
@@ -72,7 +72,7 @@ export class ConversationRequestSession {
         }
     }
 
-    private onComplete = (): void => {
+    private onComplete(): void {
         //
     }
 

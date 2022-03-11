@@ -110,6 +110,7 @@ export class BotFrameworkConfig extends DialogServiceConfigImpl {
         subscriptionKey?: string,
         botId?: string): BotFrameworkConfig {
 
+        void botId;
         Contracts.throwIfNullOrUndefined(host, "host");
         const resolvedHost: URL = host instanceof URL ? host : new URL(`wss://${host}.convai.speech.azure.us`);
         Contracts.throwIfNullOrUndefined(resolvedHost, "resolvedHost");
