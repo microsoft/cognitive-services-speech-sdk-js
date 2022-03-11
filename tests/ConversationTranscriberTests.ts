@@ -431,7 +431,7 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
 
 });
 
-test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
+test.skip("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Create Conversation and force disconnect");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
