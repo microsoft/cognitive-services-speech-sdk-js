@@ -11,7 +11,7 @@ export class TurnStatusResponsePayload implements ITurnStatusResponsePayload {
     private privMessageStatusResponse: ITurnStatusResponsePayload;
 
     private constructor(json: string) {
-        this.privMessageStatusResponse = JSON.parse(json);
+        this.privMessageStatusResponse = JSON.parse(json) as ITurnStatusResponsePayload;
     }
 
     public static fromJSON(json: string): TurnStatusResponsePayload {
@@ -37,6 +37,7 @@ export class TurnStatusResponsePayload implements ITurnStatusResponsePayload {
             case "TimedOut":
                 return 429;
             default:
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return this.privMessageStatusResponse.statusCode;
         }
     }

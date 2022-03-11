@@ -27,7 +27,7 @@ export class TranslationPhrase implements ITranslationPhrase {
     }
 
     public static fromJSON(json: string): TranslationPhrase {
-        return new TranslationPhrase(JSON.parse(json));
+        return new TranslationPhrase(JSON.parse(json) as ITranslationPhrase);
     }
 
     public static fromTranslationResponse(translationResponse: { SpeechPhrase: ITranslationPhrase }): TranslationPhrase {

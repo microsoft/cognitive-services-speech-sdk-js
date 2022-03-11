@@ -54,7 +54,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     // A promise for a configured connection.
     // Do not consume directly, call fetchConnection instead.
-    private privConnectionConfigurationPromise: Promise<IConnection>;
+    private privConnectionConfigurationPromise: Promise<IConnection> = undefined;
 
     // A promise for a connection, but one that has not had the speech context sent yet.
     // Do not consume directly, call fetchConnection instead.
@@ -119,7 +119,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             this.privSetTimeout = Timeout.setTimeout;
         }
 
-        this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
+        this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
             if (connectionEvent.name === "ConnectionClosedEvent") {
                 const connectionClosedEvent = connectionEvent as ConnectionClosedEvent;
                 if (connectionClosedEvent.statusCode === 1003 ||
@@ -128,9 +128,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     connectionClosedEvent.statusCode === 4000 ||
                     this.privRequestSession.numConnectionAttempts > this.privRecognizerConfig.maxRetryCount
                 ) {
-                    await this.cancelRecognitionLocal(CancellationReason.Error,
+                    void this.cancelRecognitionLocal(CancellationReason.Error,
                         connectionClosedEvent.statusCode === 1007 ? CancellationErrorCode.BadRequestParameters : CancellationErrorCode.ConnectionFailure,
-                        connectionClosedEvent.reason + " websocket error code: " + connectionClosedEvent.statusCode);
+                        `${connectionClosedEvent.reason} websocket error code: ${connectionClosedEvent.statusCode}`);
                 }
             }
         });
@@ -166,7 +166,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public async dispose(reason?: string): Promise<void> {
         this.privIsDisposed = true;
-        if (this.privConnectionConfigurationPromise) {
+        if (this.privConnectionConfigurationPromise !== undefined) {
             try {
                 const connection: IConnection = await this.privConnectionConfigurationPromise;
                 await connection.dispose(reason);
@@ -201,7 +201,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             return this.recognizeOverride(recoMode, successCallback, errorCallBack);
         }
         // Clear the existing configuration promise to force a re-transmission of config and context.
-        this.privConnectionConfigurationPromise = null;
+        this.privConnectionConfigurationPromise = undefined;
         this.privRecognizerConfig.recognitionMode = recoMode;
 
         this.privSuccessCallback = successCallback;
@@ -318,7 +318,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public static telemetryData: (json: string) => void;
     public static telemetryDataEnabled: boolean = true;
 
-    public sendMessage(message: string): void { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    public sendMessage(): void { }
 
     public async sendNetworkMessage(path: string, payload: string | ArrayBuffer): Promise<void> {
         const type: MessageType = typeof payload === "string" ? MessageType.Text : MessageType.Binary;
@@ -328,8 +329,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return connection.send(new SpeechConnectionMessage(type, path, this.privRequestSession.requestId, contentType, payload));
     }
 
-    public set activityTemplate(messagePayload: string) { this.privActivityTemplate = messagePayload; }
-    public get activityTemplate(): string { return this.privActivityTemplate; }
+    public set activityTemplate(messagePayload: string) {
+        this.privActivityTemplate = messagePayload;
+    }
+
+    public get activityTemplate(): string {
+        return this.privActivityTemplate;
+    }
 
     protected abstract processTypeSpecificMessages(
         connectionMessage: SpeechConnectionMessage,
@@ -483,7 +489,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
-    protected sendSpeechContext = (connection: IConnection): Promise<void> => {
+    protected sendSpeechContext(connection: IConnection): Promise<void> {
         const speechContextJson = this.speechContext.toJSON();
         this.privRequestSession.onSpeechContext();
 
@@ -548,7 +554,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         // Attach an empty handler to allow the promise to run in the background while
         // other startup events happen. It'll eventually be awaited on.
-        this.privConnectionPromise.catch(() => { });
+        this.privConnectionPromise.catch((): void => { });
 
         if (this.postConnectImplOverride !== undefined) {
             return this.postConnectImplOverride(this.privConnectionPromise);
@@ -559,7 +565,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected configConnectionOverride: (connection: IConnection) => Promise<IConnection> = undefined;
 
-    protected sendSpeechServiceConfig = (connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<void> => {
+    protected sendSpeechServiceConfig(connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<void> {
         // filter out anything that is not required for the service to work.
         if (ServiceRecognizerBase.telemetryDataEnabled !== true) {
             const withTelemetry = JSON.parse(SpeechServiceConfigJson);
@@ -593,18 +599,18 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected async fetchConnection(): Promise<IConnection> {
-        if (this.privConnectionConfigurationPromise) {
+        if (this.privConnectionConfigurationPromise !== undefined) {
             return this.privConnectionConfigurationPromise.then((connection: IConnection): Promise<IConnection> => {
                 if (connection.state() === ConnectionState.Disconnected) {
                     this.privConnectionId = null;
-                    this.privConnectionConfigurationPromise = null;
+                    this.privConnectionConfigurationPromise = undefined;
                     this.privServiceHasSentMessage = false;
                     return this.fetchConnection();
                 }
                 return this.privConnectionConfigurationPromise;
-            }, (error: string): Promise<IConnection> => {
+            }, (): Promise<IConnection> => {
                 this.privConnectionId = null;
-                this.privConnectionConfigurationPromise = null;
+                this.privConnectionConfigurationPromise = undefined;
                 this.privServiceHasSentMessage = false;
                 return this.fetchConnection();
             });

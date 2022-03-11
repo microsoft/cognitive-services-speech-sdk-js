@@ -67,7 +67,7 @@ export class FileAudioSource implements IAudioSource {
         return Promise.resolve(this.privSource);
     }
 
-    public turnOn = (): Promise<void> => {
+    public turnOn(): Promise<void> {
         if (this.privFilename.lastIndexOf(".wav") !== this.privFilename.length - 4) {
             const errorMsg = this.privFilename + " is not supported. Only WAVE files are allowed at the moment.";
             this.onEvent(new AudioSourceErrorEvent(errorMsg, ""));
@@ -79,11 +79,11 @@ export class FileAudioSource implements IAudioSource {
         return;
     }
 
-    public id = (): string => {
+    public id(): string {
         return this.privId;
     }
 
-    public attach = async (audioNodeId: string): Promise<IAudioStreamNode> => {
+    public async attach(audioNodeId: string): Promise<IAudioStreamNode> {
         this.onEvent(new AudioStreamNodeAttachingEvent(this.privId, audioNodeId));
 
         const stream: Stream<ArrayBuffer> = await this.upload(audioNodeId);
@@ -96,16 +96,12 @@ export class FileAudioSource implements IAudioSource {
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                 await this.turnOff();
             },
-            id: (): string => {
-                return audioNodeId;
-            },
-            read: (): Promise<IStreamChunk<ArrayBuffer>> => {
-                return stream.read();
-            },
+            id: (): string => audioNodeId,
+            read: (): Promise<IStreamChunk<ArrayBuffer>> => stream.read(),
         });
     }
 
-    public detach = (audioNodeId: string): void => {
+    public detach(audioNodeId: string): void {
         if (audioNodeId && this.privStreams[audioNodeId]) {
             this.privStreams[audioNodeId].close();
             delete this.privStreams[audioNodeId];
@@ -113,7 +109,7 @@ export class FileAudioSource implements IAudioSource {
         }
     }
 
-    public turnOff = (): Promise<void> => {
+    public turnOff(): Promise<void> {
         for (const streamId in this.privStreams) {
             if (streamId) {
                 const stream = this.privStreams[streamId];
@@ -132,8 +128,15 @@ export class FileAudioSource implements IAudioSource {
     }
 
     public get deviceInfo(): Promise<ISpeechConfigAudioDevice> {
-        return this.privAudioFormatPromise.then<ISpeechConfigAudioDevice>((result: AudioStreamFormatImpl) => {
-            return Promise.resolve({
+        return this.privAudioFormatPromise.then<ISpeechConfigAudioDevice>((result: AudioStreamFormatImpl): Promise<{
+            bitspersample: number;
+            channelcount: number;
+            connectivity: connectivity.Unknown;
+            manufacturer: string;
+            model: string;
+            samplerate: number;
+            type: type.File;
+        }> => ( Promise.resolve({
                 bitspersample: result.bitsPerSample,
                 channelcount: result.channels,
                 connectivity: connectivity.Unknown,
@@ -141,8 +144,8 @@ export class FileAudioSource implements IAudioSource {
                 model: "File",
                 samplerate: result.samplesPerSec,
                 type: type.File,
-            });
-        });
+            })
+        ));
     }
 
     private readHeader(): Promise<AudioStreamFormatImpl> {
@@ -250,11 +253,11 @@ export class FileAudioSource implements IAudioSource {
 
             return stream;
         } catch (e) {
-            onerror(e);
+            onerror(e as string);
         }
     }
 
-    private onEvent = (event: AudioSourceEvent): void => {
+    private onEvent(event: AudioSourceEvent): void {
         this.privEvents.onEvent(event);
         Events.instance.onEvent(event);
     }
