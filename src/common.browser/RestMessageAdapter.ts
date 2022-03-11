@@ -24,6 +24,12 @@ export interface IRestResponse {
     headers: string;
 }
 
+interface JsonError {
+    error?: {
+        message: string;
+    };
+}
+
 // accept rest operations via request method and return abstracted objects from server response
 export class RestMessageAdapter {
 
@@ -83,7 +89,7 @@ export class RestMessageAdapter {
         const responseReceivedDeferral = new Deferred<IRestResponse>();
 
         const requestCommand = method === RestRequestType.File ? "POST" : method;
-        const handleRestResponse = (data: BentResponse, j: { error?: { message: string } } = {}): IRestResponse => {
+        const handleRestResponse = (data: BentResponse, j: JsonError = {}): IRestResponse => {
             const d: { statusText?: string; statusMessage?: string } = data;
             return {
                 data: JSON.stringify(j),
@@ -114,7 +120,7 @@ export class RestMessageAdapter {
                     responseReceivedDeferral.resolve(handleRestResponse(data));
                 } else {
                     try {
-                        const j: any = await data.json();
+                        const j: JsonError = await data.json() as JsonError;
                         responseReceivedDeferral.resolve(handleRestResponse(data, j));
                     } catch {
                         responseReceivedDeferral.resolve(handleRestResponse(data));

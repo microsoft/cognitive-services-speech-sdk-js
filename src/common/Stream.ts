@@ -63,7 +63,7 @@ export class Stream<TBuffer> {
 
         return this.privReaderQueue
             .dequeue()
-            .then(async (streamChunk: IStreamChunk<TBuffer>) => {
+            .then(async (streamChunk: IStreamChunk<TBuffer>): Promise<IStreamChunk<TBuffer>> => {
                 if (streamChunk === undefined || streamChunk.isEnd) {
                     await this.privReaderQueue.dispose("End of stream reached");
                 }

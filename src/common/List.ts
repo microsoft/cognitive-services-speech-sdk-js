@@ -171,7 +171,7 @@ export class List<TItem> implements IList<TItem>  {
 
     public toArray(): TItem[] {
         const cloneCopy = Array<TItem>();
-        this.privList.forEach((val: TItem) => {
+        this.privList.forEach((val: TItem): void => {
             cloneCopy.push(val);
         });
         return cloneCopy;
@@ -228,7 +228,7 @@ export class List<TItem> implements IList<TItem>  {
 
     public orderByDesc(compareFn: (a: TItem, b: TItem) => number): List<TItem> {
         this.throwIfDisposed();
-        return this.orderBy((a: TItem, b: TItem) => compareFn(b, a));
+        return this.orderBy((a: TItem, b: TItem): number => compareFn(b, a));
     }
 
     public clone(): List<TItem> {
