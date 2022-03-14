@@ -36,7 +36,8 @@ export class CognitiveSubscriptionKeyAuthentication implements IAuthentication {
      * @public
      * @param {string} authFetchEventId - The id to fetch.
      */
-    public fetch = (authFetchEventId: string): Promise<AuthInfo> => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public fetch(authFetchEventId: string): Promise<AuthInfo> {
         return Promise.resolve(this.privAuthInfo);
     }
 
@@ -47,7 +48,8 @@ export class CognitiveSubscriptionKeyAuthentication implements IAuthentication {
      * @public
      * @param {string} authFetchEventId - The id to fetch.
      */
-    public fetchOnExpiry = (authFetchEventId: string): Promise<AuthInfo> => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public fetchOnExpiry(authFetchEventId: string): Promise<AuthInfo> {
         return Promise.resolve(this.privAuthInfo);
     }
 }

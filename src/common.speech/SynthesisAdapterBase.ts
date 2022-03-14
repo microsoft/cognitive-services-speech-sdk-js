@@ -295,10 +295,8 @@ export class SynthesisAdapterBase implements IDisposable {
         }
     }
 
-    protected processTypeSpecificMessages(
-        connectionMessage: SpeechConnectionMessage,
-        successCallback?: (e: SpeechSynthesisResult) => void,
-        errorCallBack?: (e: string) => void): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
         return true;
     }
 

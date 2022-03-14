@@ -5,8 +5,8 @@ import {
     ServicePropertiesPropertyName,
 } from "../common.speech/Exports";
 import { IConnection, IStringDictionary } from "../common/Exports";
-import { OutputFormat, PropertyId } from "../sdk/Exports";
-import { AuthInfo, IConnectionFactory, RecognitionMode, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
+import { PropertyId } from "../sdk/Exports";
+import { AuthInfo, IConnectionFactory, RecognizerConfig } from "./Exports";
 import { QueryParameterNames } from "./QueryParameterNames";
 
 export abstract class ConnectionFactoryBase implements IConnectionFactory {
@@ -69,9 +69,9 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
             queryParams,
             endpoint);
 
-        const serviceProperties: IStringDictionary<string> = JSON.parse(config.parameters.getProperty(ServicePropertiesPropertyName, "{}"));
+        const serviceProperties: IStringDictionary<string> = JSON.parse(config.parameters.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
 
-        Object.keys(serviceProperties).forEach((value: string, num: number, array: string[]) => {
+        Object.keys(serviceProperties).forEach((value: string): void => {
             queryParams[value] = serviceProperties[value];
         });
     }
