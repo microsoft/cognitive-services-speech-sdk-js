@@ -1,6 +1,6 @@
-/* eslint-disable import/order */
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+/* eslint-disable */
 
 import * as http from "http";
 import * as tls from "tls";
@@ -29,24 +29,11 @@ import { ProxyInfo } from "./ProxyInfo";
 
 import Agent from "agent-base";
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import Cache from "async-disk-cache";
 import HttpsProxyAgent from "https-proxy-agent";
 import * as net from "net";
 import { OCSPCacheUpdateErrorEvent } from "../common/OCSPEvents";
-
-
-interface tbsUpdateResponse {
-    thisUpdate: number;
-    nextUpdate: number;
-}
-
-interface tbsResponse {
-    tbsResponseData: {
-        responses: tbsUpdateResponse[];
-    };
-}
 
 export class CertCheckAgent {
 
@@ -64,14 +51,13 @@ export class CertCheckAgent {
 
     private privProxyInfo: ProxyInfo;
 
-    public constructor(proxyInfo?: ProxyInfo) {
+    constructor(proxyInfo?: ProxyInfo) {
         if (!!proxyInfo) {
             this.privProxyInfo = proxyInfo;
         }
 
         // Initialize this here to allow tests to set the env variable before the cache is constructed.
         if (!CertCheckAgent.privDiskCache) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
             CertCheckAgent.privDiskCache = new Cache("microsoft-cognitiveservices-speech-sdk-cache", { supportBuffer: true, location: (typeof process !== "undefined" && !!process.env.SPEECH_OCSP_CACHE_ROOT) ? process.env.SPEECH_OCSP_CACHE_ROOT : undefined });
         }
     }
@@ -82,20 +68,17 @@ export class CertCheckAgent {
         CertCheckAgent.privMemCache = {};
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public GetAgent(disableStapling?: boolean): http.Agent {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         const agent: any = new Agent.Agent(this.CreateConnection);
 
         if (this.privProxyInfo !== undefined &&
             this.privProxyInfo.HostName !== undefined &&
             this.privProxyInfo.Port > 0) {
             const proxyName: string = "privProxyInfo";
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             agent[proxyName] = this.privProxyInfo;
         }
 
-        return agent as http.Agent;
+        return agent;
     }
 
     private static GetProxyAgent(proxyInfo: ProxyInfo): HttpsProxyAgent {
@@ -106,7 +89,7 @@ export class CertCheckAgent {
 
         if (!!proxyInfo.UserName) {
             httpProxyOptions.headers = {
-                "Proxy-Authentication": "Basic " + new Buffer(`${proxyInfo.UserName}:${(proxyInfo.Password === undefined) ? "" : proxyInfo.Password}`).toString("base64"),
+                "Proxy-Authentication": "Basic " + new Buffer(proxyInfo.UserName + ":" + (proxyInfo.Password === undefined) ? "" : proxyInfo.Password).toString("base64"),
             };
         } else {
             httpProxyOptions.headers = {};
@@ -128,7 +111,7 @@ export class CertCheckAgent {
 
         const tlsSocket: tls.TLSSocket = socket as tls.TLSSocket;
 
-        return new Promise<net.Socket>((resolve: (value: net.Socket) => void, reject: (error: string | Error) => void): void => {
+        return new Promise<net.Socket>((resolve: (value: net.Socket) => void, reject: (error: string | Error) => void) => {
             socket.on("OCSPResponse", (data: Buffer): void => {
                 if (!!data) {
                     this.onEvent(new OCSPStapleReceivedEvent());
@@ -136,7 +119,7 @@ export class CertCheckAgent {
                 }
             });
 
-            socket.on("error", (error: Error): void => {
+            socket.on("error", (error: Error) => {
                 if (!resolved) {
                     resolved = true;
                     socket.destroy();
@@ -144,7 +127,6 @@ export class CertCheckAgent {
                 }
             });
 
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises, @typescript-eslint/explicit-function-return-type
             tlsSocket.on("secure", async () => {
                 const peer: tls.DetailedPeerCertificate = tlsSocket.getPeerCertificate(true);
                 try {
@@ -170,7 +152,7 @@ export class CertCheckAgent {
                 } catch (e) {
                     socket.destroy();
                     resolved = true;
-                    reject(e as string);
+                    reject(e);
                 }
             });
         });
@@ -181,7 +163,7 @@ export class CertCheckAgent {
             return Promise.resolve(peer.issuerCertificate);
         }
 
-        return new Promise<tls.DetailedPeerCertificate>((resolve: (value: tls.DetailedPeerCertificate) => void, reject: (reason: string) => void): void => {
+        return new Promise<tls.DetailedPeerCertificate>((resolve: (value: tls.DetailedPeerCertificate) => void, reject: (reason: string) => void) => {
             const ocspAgent: ocsp.Agent = new ocsp.Agent({});
             ocspAgent.fetchIssuer(peer, null, (error: string, value: tls.DetailedPeerCertificate): void => {
                 if (!!error) {
@@ -204,8 +186,7 @@ export class CertCheckAgent {
         // Do we have a result for this certificate on disk in %TMP%?
         if (!cachedResponse) {
             try {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-                const diskCacheResponse: { value: Buffer; isCached?: any } = await CertCheckAgent.privDiskCache.get(signature) as { value: Buffer; isCached?: any };
+                const diskCacheResponse: any = await CertCheckAgent.privDiskCache.get(signature);
                 if (!!diskCacheResponse.isCached) {
                     CertCheckAgent.onEvent(new OCSPDiskCacheHitEvent(signature));
                     CertCheckAgent.StoreMemoryCacheEntry(signature, diskCacheResponse.value);
@@ -222,8 +203,7 @@ export class CertCheckAgent {
 
         try {
             const cachedOcspResponse: ocsp.Response = ocsp.utils.parseResponse(cachedResponse);
-            const responseValue: tbsResponse = cachedOcspResponse.value as tbsResponse;
-            const tbsData: { responses: tbsUpdateResponse[] } = responseValue.tbsResponseData;
+            const tbsData = cachedOcspResponse.value.tbsResponseData;
             if (tbsData.responses.length < 1) {
                 this.onEvent(new OCSPCacheFetchErrorEvent(signature, "Not enough data in cached response"));
                 return;
@@ -244,7 +224,7 @@ export class CertCheckAgent {
 
                 if ((cachedNextTime - (Date.now() + this.testTimeOffset)) < minUpdate) {
                     this.onEvent(new OCSPCacheEntryNeedsRefreshEvent(signature, cachedStartTime, cachedNextTime));
-                    this.UpdateCache(ocspRequest, proxyInfo).catch((error: string): void => {
+                    this.UpdateCache(ocspRequest, proxyInfo).catch((error: string) => {
                         // Well, not much we can do here.
                         this.onEvent(new OCSPCacheUpdateErrorEvent(signature, error.toString()));
                     });
@@ -253,7 +233,7 @@ export class CertCheckAgent {
                 }
             }
         } catch (error) {
-            this.onEvent(new OCSPCacheFetchErrorEvent(signature, error as string));
+            this.onEvent(new OCSPCacheFetchErrorEvent(signature, error));
             cachedResponse = null;
         }
         if (!cachedResponse) {
@@ -264,22 +244,23 @@ export class CertCheckAgent {
 
     private static async VerifyOCSPResponse(cacheValue: Buffer, ocspRequest: ocsp.Request, proxyInfo: ProxyInfo): Promise<void> {
         let ocspResponse: Buffer = cacheValue;
+        const sig: string = ocspRequest.certID.toString("hex");
 
         // Do we have a valid response?
         if (!ocspResponse) {
             ocspResponse = await CertCheckAgent.GetOCSPResponse(ocspRequest, proxyInfo);
         }
 
-        return new Promise<void>((resolve: () => void, reject: (error: string | Error) => void): void => {
-            ocsp.verify({ request: ocspRequest, response: ocspResponse }, (error: string): void => {
+        return new Promise<void>((resolve: () => void, reject: (error: string | Error) => void) => {
+            ocsp.verify({ request: ocspRequest, response: ocspResponse }, (error: string, result: any): void => {
                 if (!!error) {
                     CertCheckAgent.onEvent(new OCSPVerificationFailedEvent(ocspRequest.id.toString("hex"), error));
 
                     // Bad Cached Value? One more try without the cache.
                     if (!!cacheValue) {
-                        this.VerifyOCSPResponse(null, ocspRequest, proxyInfo).then((): void => {
+                        this.VerifyOCSPResponse(null, ocspRequest, proxyInfo).then(() => {
                             resolve();
-                        }, (error: Error): void => {
+                        }, (error: Error) => {
                             reject(error);
                         });
                     } else {
@@ -316,8 +297,7 @@ export class CertCheckAgent {
     }
 
     private static StoreDiskCacheEntry(sig: string, rawResponse: Buffer): void {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        this.privDiskCache.set(sig, rawResponse).then((): void => {
+        this.privDiskCache.set(sig, rawResponse).then(() => {
             this.onEvent(new OCSPDiskCacheStoreEvent(sig));
         });
     }
@@ -332,15 +312,14 @@ export class CertCheckAgent {
             options.agent = agent;
         }
 
-        return new Promise<Buffer>((resolve: (value: Buffer) => void, reject: (error: string | Error) => void): void => {
-            ocsp.utils.getAuthorityInfo(req.cert as tls.DetailedPeerCertificate, ocspMethod, (error: string, uri: string): void => {
+        return new Promise<Buffer>((resolve: (value: Buffer) => void, reject: (error: string | Error) => void) => {
+            ocsp.utils.getAuthorityInfo(req.cert, ocspMethod, (error: string, uri: string): void => {
                 if (error) {
                     reject(error);
                     return;
                 }
 
                 const parsedUri: {[k: string]: any} = parse.default(uri);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 parsedUri.path = parsedUri.pathname;
                 options = { ...options, ...parsedUri };
 
@@ -350,15 +329,14 @@ export class CertCheckAgent {
                         return;
                     }
 
-                    const certID: Buffer = req.certID as Buffer;
-                    this.onEvent(new OCSPResponseRetrievedEvent(certID.toString("hex")));
+                    this.onEvent(new OCSPResponseRetrievedEvent(req.certID.toString("hex")));
                     resolve(raw);
                 });
             });
         });
     }
 
-    private static onEvent(event: OCSPEvent): void {
+    private static onEvent = (event: OCSPEvent): void => {
         Events.instance.onEvent(event);
     }
 
@@ -378,8 +356,8 @@ export class CertCheckAgent {
             const httpProxyAgent: HttpsProxyAgent = CertCheckAgent.GetProxyAgent(this.privProxyInfo);
             const baseAgent: Agent.Agent = httpProxyAgent as unknown as Agent.Agent;
 
-            socketPromise = new Promise<net.Socket>((resolve: (value: net.Socket) => void, reject: (error: string | Error) => void): void => {
-                baseAgent.callback(request, options, (error: Error, socket: net.Socket): void => {
+            socketPromise = new Promise<net.Socket>((resolve: (value: net.Socket) => void, reject: (error: string | Error) => void) => {
+                baseAgent.callback(request, options, (error: Error, socket: net.Socket) => {
                     if (!!error) {
                         reject(error);
                     } else {
