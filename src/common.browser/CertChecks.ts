@@ -1,18 +1,11 @@
+/* eslint-disable import/order */
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 import * as http from "http";
 import * as tls from "tls";
-import * as net from "net";
 import * as parse from "url-parse";
-import Agent from "agent-base";
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import Cache from "async-disk-cache";
-
-import HttpsProxyAgent from "https-proxy-agent";
-import { OCSPCacheUpdateErrorEvent } from "../common/OCSPEvents";
+import * as ocsp from "../../external/ocsp/ocsp";
 import {
     Events,
     OCSPCacheEntryExpiredEvent,
@@ -32,8 +25,17 @@ import {
     OCSPVerificationFailedEvent,
 } from "../common/Exports";
 import { IStringDictionary } from "../common/IDictionary";
-import * as ocsp from "../../external/ocsp/ocsp";
 import { ProxyInfo } from "./ProxyInfo";
+
+import Agent from "agent-base";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import Cache from "async-disk-cache";
+import HttpsProxyAgent from "https-proxy-agent";
+import * as net from "net";
+import { OCSPCacheUpdateErrorEvent } from "../common/OCSPEvents";
+
 
 interface tbsUpdateResponse {
     thisUpdate: number;
