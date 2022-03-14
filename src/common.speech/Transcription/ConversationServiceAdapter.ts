@@ -79,7 +79,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         this.privConversationServiceConnector = conversationServiceConnector;
         this.privConversationAuthentication = authentication;
         this.receiveMessageOverride = (): Promise<void> => this.receiveConversationMessageOverride();
-        this.recognizeOverride = (): any => this.noOp();
+        this.recognizeOverride = (): Promise<void> => this.noOp();
         this.postConnectImplOverride = (connection: Promise<IConnection>): Promise<IConnection> => this.conversationConnectImpl(connection);
         this.configConnectionOverride = (): Promise<IConnection> => this.configConnection();
         this.disconnectOverride = (): Promise<void> => this.privDisconnect();
@@ -159,8 +159,9 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    protected noOp(): any {
+    protected noOp(): Promise<void> {
         // operation not supported
+        return;
     }
 
     /**

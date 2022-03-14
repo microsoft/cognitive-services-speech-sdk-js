@@ -158,9 +158,7 @@ export class FileAudioSource implements IAudioSource {
         const processHeader = (header: ArrayBuffer): void => {
             const view: DataView = new DataView(header);
 
-            const getWord = (index: number): string => {
-                return String.fromCharCode(view.getUint8(index), view.getUint8(index + 1), view.getUint8(index + 2), view.getUint8(index + 3));
-            };
+            const getWord = (index: number): string => String.fromCharCode(view.getUint8(index), view.getUint8(index + 1), view.getUint8(index + 2), view.getUint8(index + 3));
 
             // RIFF 4 bytes.
             if ("RIFF" !== getWord(0)) {
@@ -194,7 +192,7 @@ export class FileAudioSource implements IAudioSource {
         if (typeof window !== "undefined" && typeof Blob !== "undefined" && header instanceof Blob) {
             const reader: FileReader = new FileReader();
 
-            reader.onload = (event: Event) => {
+            reader.onload = (event: Event): void => {
                 const header: ArrayBuffer = (event.target as FileReader).result as ArrayBuffer;
                 processHeader(header);
             };
@@ -208,7 +206,7 @@ export class FileAudioSource implements IAudioSource {
     }
 
     private async upload(audioNodeId: string): Promise<Stream<ArrayBuffer>> {
-        const onerror = (error: string) => {
+        const onerror = (error: string): void => {
             const errorMsg = `Error occurred while processing '${this.privFilename}'. ${error}`;
             this.onEvent(new AudioStreamNodeErrorEvent(this.privId, audioNodeId, errorMsg));
             throw new Error(errorMsg);
@@ -238,9 +236,9 @@ export class FileAudioSource implements IAudioSource {
 
             if (typeof window !== "undefined" && typeof Blob !== "undefined" && chunk instanceof Blob) {
                 const reader: FileReader = new FileReader();
-                reader.onerror = (ev: ProgressEvent<FileReader>) => { onerror(ev.toString()); };
+                reader.onerror = (ev: ProgressEvent<FileReader>): void  =>  onerror(ev.toString());
 
-                reader.onload = (event: Event) => {
+                reader.onload = (event: Event): void => {
                     const fileBuffer: ArrayBuffer = (event.target as FileReader).result as ArrayBuffer;
                     processFile(fileBuffer);
                 };

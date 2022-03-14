@@ -13,7 +13,7 @@ export class SpeechKeyword implements ISpeechKeyword {
     private privSpeechKeyword: ISpeechKeyword;
 
     private constructor(json: string) {
-        this.privSpeechKeyword = JSON.parse(json);
+        this.privSpeechKeyword = JSON.parse(json) as ISpeechKeyword;
     }
 
     public static fromJSON(json: string): SpeechKeyword {

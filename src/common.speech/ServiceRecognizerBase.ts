@@ -58,7 +58,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     // A promise for a connection, but one that has not had the speech context sent yet.
     // Do not consume directly, call fetchConnection instead.
-    private privConnectionPromise: Promise<IConnection>;
+    private privConnectionPromise: Promise<IConnection> = undefined;
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
     private privMustReportEndOfStream: boolean;
@@ -189,7 +189,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privRecognizerConfig.recognitionMode;
     }
 
-    protected recognizeOverride: (recoMode: RecognitionMode, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => any = undefined;
+    protected recognizeOverride: (recoMode: RecognitionMode, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => Promise<void> = undefined;
 
     public async recognize(
         recoMode: RecognitionMode,
@@ -198,7 +198,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     ): Promise<void> {
 
         if (this.recognizeOverride !== undefined) {
-            return this.recognizeOverride(recoMode, successCallback, errorCallBack);
+            await this.recognizeOverride(recoMode, successCallback, errorCallBack);
+            return;
         }
         // Clear the existing configuration promise to force a re-transmission of config and context.
         this.privConnectionConfigurationPromise = undefined;
@@ -232,7 +233,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         try {
             await conPromise;
         } catch (error) {
-            await this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error);
+            await this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error as string);
             return;
         }
 
@@ -242,10 +243,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
         }
 
-        const messageRetrievalPromise = this.receiveMessage();
+        void this.receiveMessage();
         const audioSendPromise = this.sendAudio(audioNode);
 
-        audioSendPromise.catch(async (error: string) => {
+        audioSendPromise.catch(async (error: string): Promise<void> => {
             await this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
         });
 
@@ -272,7 +273,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     public connectAsync(cb?: Callback, err?: Callback): void {
-        this.connectImpl().then((connection: IConnection): void => {
+        this.connectImpl().then((): void => {
             try {
                 if (!!cb) {
                     cb();
@@ -304,13 +305,14 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             await this.disconnectOverride();
         }
 
-        try {
-            await (await this.privConnectionPromise).dispose();
-        } catch (error) {
+        if (this.privConnectionPromise !== undefined) {
+            try {
+                await (await this.privConnectionPromise).dispose();
+            } catch (error) {
 
+            }
         }
-
-        this.privConnectionPromise = null;
+        this.privConnectionPromise = undefined;
     }
 
     // Called when telemetry data is sent to the service.
@@ -318,8 +320,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     public static telemetryData: (json: string) => void;
     public static telemetryDataEnabled: boolean = true;
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    public sendMessage(): void { }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public sendMessage(message: string): Promise<void> {
+        return;
+    }
 
     public async sendNetworkMessage(path: string, payload: string | ArrayBuffer): Promise<void> {
         const type: MessageType = typeof payload === "string" ? MessageType.Text : MessageType.Binary;
@@ -533,18 +537,18 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     // Establishes a websocket connection to the end point.
     protected connectImpl(): Promise<IConnection> {
-        if (this.privConnectionPromise) {
+        if (this.privConnectionPromise !== undefined) {
             return this.privConnectionPromise.then((connection: IConnection): Promise<IConnection> => {
                 if (connection.state() === ConnectionState.Disconnected) {
                     this.privConnectionId = null;
-                    this.privConnectionPromise = null;
+                    this.privConnectionPromise = undefined;
                     this.privServiceHasSentMessage = false;
                     return this.connectImpl();
                 }
                 return this.privConnectionPromise;
-            }, (error: string): Promise<IConnection> => {
+            }, (): Promise<IConnection> => {
                 this.privConnectionId = null;
-                this.privConnectionPromise = null;
+                this.privConnectionPromise = undefined;
                 this.privServiceHasSentMessage = false;
                 return this.connectImpl();
             });
@@ -554,6 +558,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         // Attach an empty handler to allow the promise to run in the background while
         // other startup events happen. It'll eventually be awaited on.
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.privConnectionPromise.catch((): void => { });
 
         if (this.postConnectImplOverride !== undefined) {
@@ -568,7 +573,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected sendSpeechServiceConfig(connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<void> {
         // filter out anything that is not required for the service to work.
         if (ServiceRecognizerBase.telemetryDataEnabled !== true) {
-            const withTelemetry = JSON.parse(SpeechServiceConfigJson);
+            const withTelemetry: { context: { system: string } } = JSON.parse(SpeechServiceConfigJson) as { context: { system: string } } ;
 
             const replacement: any = {
                 context: {
@@ -580,7 +585,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         if (this.privRecognizerConfig.parameters.getProperty("TranscriptionService_SingleChannel", "false").toLowerCase() === "true") {
-            const json: { context: any } = JSON.parse(SpeechServiceConfigJson);
+            const json: { context: { DisableReferenceChannel: string; MicSpec: string } } = JSON.parse(SpeechServiceConfigJson) as { context: { DisableReferenceChannel: string; MicSpec: string } } ;
             json.context.DisableReferenceChannel = "True";
             json.context.MicSpec = "1_0_0";
             SpeechServiceConfigJson = JSON.stringify(json);
@@ -679,8 +684,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     this.privRequestSession.recogNumber === startRecogNumber) {
                     connection.send(
                         new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload)
-                    ).catch(() => {
-                        this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition).catch(() => { });
+                    ).catch((): void => {
+                        // eslint-disable-next-line @typescript-eslint/no-empty-function
+                        this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition).catch((): void => { });
                     });
 
                     if (!audioStreamChunk?.isEnd) {
@@ -730,7 +736,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
             // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
             // it'll stop sending events.
-            connection.events.attach((event: ConnectionEvent) => {
+            connection.events.attach((event: ConnectionEvent): void => {
                 this.connectionEvents.onEvent(event);
             });
 
@@ -754,9 +760,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     private delay(delayMs: number): Promise<void> {
-        return new Promise((resolve: () => void, reject: (error: string) => void) => {
-            this.privSetTimeout(resolve, delayMs);
-        });
+        return new Promise((resolve: () => void): number => this.privSetTimeout(resolve, delayMs));
     }
 
     private writeBufferToConsole(buffer: ArrayBuffer): void {

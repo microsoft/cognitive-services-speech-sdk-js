@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// eslint-disable max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 import { PropertyCollection, PropertyId } from "../sdk/Exports";
 
@@ -65,8 +65,8 @@ export class RecognizerConfig {
         return this.parameters.getProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, undefined);
     }
 
-    public get sourceLanguageModels(): { language: string, endpoint: string }[] {
-        const models: { language: string, endpoint: string }[] = [];
+    public get sourceLanguageModels(): { language: string; endpoint: string }[] {
+        const models: { language: string; endpoint: string }[] = [];
         let modelsExist: boolean = false;
         if (this.autoDetectSourceLanguages !== undefined) {
             for (const language of this.autoDetectSourceLanguages.split(",")) {
@@ -97,12 +97,13 @@ export class SpeechServiceConfig {
         this.context = context;
     }
 
-    public serialize = (): string => {
-        return JSON.stringify(this, (key: any, value: any): any => {
+    public serialize(): string {
+        return JSON.stringify(this, (key: any, value: { [k: string]: any }): any => {
             if (value && typeof value === "object") {
-                const replacement: any = {};
+                const replacement: { [k: string ]: any } = {};
                 for (const k in value) {
                     if (Object.hasOwnProperty.call(value, k)) {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         replacement[k && k.charAt(0).toLowerCase() + k.substring(1)] = value[k];
                     }
                 }
