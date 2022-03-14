@@ -42,7 +42,7 @@ import {
     SpeechTranslationConfig,
 } from "../Exports";
 import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig";
-import { Callback, ConversationInfo, IConversation } from "./IConversation";
+import { Callback, ConversationInfo, ConversationProperties, IConversation } from "./IConversation";
 import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
 
 export abstract class Conversation implements IConversation {
@@ -287,7 +287,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 voice: part.voice
             }
         ));
-        const props: { [id: string]: string } = {};
+        const props: ConversationProperties = {};
         for (const key of ConversationConnectionConfig.transcriptionEventKeys) {
             const val: string = this.properties.getProperty(key, "");
             if (val !== "") {
@@ -482,13 +482,15 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!this.canSendAsHost) {
                 this.handleError(new Error(this.privErrors.permissionDeniedConversation.replace("{command}", "lock")), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getLockCommand(true),
-                ((): void => {
-                    this.handleCallback(cb, err);
-                }),
-                ((error: any): void => {
-                    this.handleError(error, err);
-                }));
+            if (!!this.privConversationRecognizer) {
+                this.privConversationRecognizer.sendRequest(this.getLockCommand(true),
+                    ((): void => {
+                        this.handleCallback(cb, err);
+                    }),
+                    ((error: any): void => {
+                        this.handleError(error, err);
+                    }));
+            }
         } catch (error) {
             this.handleError(error, err);
         }
@@ -509,13 +511,15 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!this.canSendAsHost) {
                 this.handleError(new Error(this.privErrors.permissionDeniedConversation.replace("{command}", "mute")), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getMuteAllCommand(true),
-                ((): void => {
-                    this.handleCallback(cb, err);
-                }),
-                ((error: any): void => {
-                    this.handleError(error, err);
-                }));
+            if (!!this.privConversationRecognizer) {
+                this.privConversationRecognizer.sendRequest(this.getMuteAllCommand(true),
+                    ((): void => {
+                        this.handleCallback(cb, err);
+                    }),
+                    ((error: any): void => {
+                        this.handleError(error, err);
+                    }));
+            }
         } catch (error) {
             this.handleError(error, err);
         }
@@ -546,12 +550,14 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (exists === -1) {
                 this.handleError(new Error(this.privErrors.invalidParticipantRequest), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getMuteCommand(userId, true), ((): void => {
-                this.handleCallback(cb, err);
-            }),
-                ((error: any): void => {
-                    this.handleError(error, err);
-                }));
+            if (!!this.privConversationRecognizer) {
+                this.privConversationRecognizer.sendRequest(this.getMuteCommand(userId, true), ((): void => {
+                        this.handleCallback(cb, err);
+                    }),
+                    ((error: any): void => {
+                        this.handleError(error, err);
+                    }));
+            }
         } catch (error) {
             this.handleError(error, err);
         }
@@ -591,12 +597,14 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 if (index === -1) {
                     this.handleError(new Error(this.privErrors.invalidParticipantRequest), err);
                 }
-                this.privConversationRecognizer?.sendRequest(this.getEjectCommand(participantId), ((): void => {
-                    this.handleCallback(cb, err);
-                }),
-                    ((error: any): void => {
-                        this.handleError(error, err);
-                    }));
+                if (!!this.privConversationRecognizer) {
+                    this.privConversationRecognizer.sendRequest(this.getEjectCommand(participantId), ((): void => {
+                        this.handleCallback(cb, err);
+                    }),
+                        ((error: any): void => {
+                            this.handleError(error, err);
+                        }));
+                }
             }
         } catch (error) {
             this.handleError(error, err);
@@ -616,12 +624,14 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!this.canSendAsHost) {
                 this.handleError(new Error(this.privErrors.permissionDeniedConversation.replace("{command}", "unlock")), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getLockCommand(false), ((): void => {
-                this.handleCallback(cb, err);
-            }),
-                ((error: any): void => {
-                    this.handleError(error, err);
-                }));
+            if (!!this.privConversationRecognizer) {
+                this.privConversationRecognizer.sendRequest(this.getLockCommand(false), ((): void => {
+                    this.handleCallback(cb, err);
+                }),
+                    ((error: any): void => {
+                        this.handleError(error, err);
+                    }));
+                }
         } catch (error) {
             this.handleError(error, err);
         }
@@ -640,12 +650,14 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!this.canSendAsHost) {
                 this.handleError(new Error(this.privErrors.permissionDeniedConversation.replace("{command}", "unmute all")), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getMuteAllCommand(false), ((): void => {
-                this.handleCallback(cb, err);
-            }),
-                ((error: any): void => {
-                    this.handleError(error, err);
-                }));
+            if (!!this.privConversationRecognizer) {
+                this.privConversationRecognizer.sendRequest(this.getMuteAllCommand(false), ((): void => {
+                    this.handleCallback(cb, err);
+                }),
+                    ((error: any): void => {
+                        this.handleError(error, err);
+                    }));
+            }
         } catch (error) {
             this.handleError(error, err);
         }
@@ -676,12 +688,14 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (exists === -1) {
                 this.handleError(new Error(this.privErrors.invalidParticipantRequest), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getMuteCommand(userId, false), ((): void => {
-                this.handleCallback(cb, err);
-            }),
-                ((error: any): void => {
-                    this.handleError(error, err);
-                }));
+            if (!!this.privConversationRecognizer) {
+                this.privConversationRecognizer.sendRequest(this.getMuteCommand(userId, false), ((): void => {
+                    this.handleCallback(cb, err);
+                }),
+                    ((error: any): void => {
+                        this.handleError(error, err);
+                    }));
+            }
         } catch (error) {
             this.handleError(error, err);
         }
@@ -706,12 +720,14 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (message.length > this.privTextMessageMaxLength) {
                 this.handleError(new Error(this.privErrors.invalidArgs.replace("{arg}", "message length")), err);
             }
-            this.privConversationRecognizer?.sendRequest(this.getMessageCommand(message), ((): void => {
-                this.handleCallback(cb, err);
-            }),
-                ((error: any): void => {
-                    this.handleError(error, err);
-                }));
+            if (!!this.privConversationRecognizer) {
+                this.privConversationRecognizer.sendRequest(this.getMessageCommand(message), ((): void => {
+                    this.handleCallback(cb, err);
+                }),
+                    ((error: any): void => {
+                        this.handleError(error, err);
+                    }));
+            }
         } catch (error) {
             this.handleError(error, err);
         }

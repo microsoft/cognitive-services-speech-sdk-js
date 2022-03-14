@@ -212,8 +212,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
      */
     public async close(): Promise<void> {
         if (!this.privIsDisposed) {
-            this.privConnection?.closeConnection();
-            this.privConnection?.close();
+            if (!!this.privConnection) {
+                this.privConnection.closeConnection();
+                this.privConnection.close();
+            }
             this.privConnection = undefined;
             await this.dispose(true);
         }

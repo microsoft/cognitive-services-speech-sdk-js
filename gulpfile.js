@@ -25,8 +25,7 @@
         configuration: 'eslint.json'
       }))
       .pipe(eslint.format())
-      // UNCOMMENT BELOW BEFORE CHECKIN
-      //.pipe(eslint.failAfterError())
+      .pipe(eslint.failAfterError())
       .pipe(sourcemaps.init())
       .pipe(tsProject())
       .pipe(sourcemaps.write('.'))
@@ -46,8 +45,7 @@
         configuration: 'eslint.json'
       }))
       .pipe(eslint.format())
-      // UNCOMMENT BELOW BEFORE CHECKIN
-      //.pipe(eslint.failAfterError())
+      .pipe(eslint.failAfterError())
       .pipe(sourcemaps.init())
       .pipe(tsProject2015())
       .pipe(sourcemaps.write('.'))

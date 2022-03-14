@@ -80,9 +80,9 @@ export interface IConversation {
 
 export interface ConversationProperties {
     [key: string]: any;
-    id: string;
-    attendees: TranscriptionParticipant[];
-    record: string;
+    id?: string;
+    attendees?: TranscriptionParticipant[];
+    record?: string;
 }
 
 export interface ConversationInfo {

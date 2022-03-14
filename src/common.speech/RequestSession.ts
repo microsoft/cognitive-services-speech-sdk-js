@@ -210,7 +210,9 @@ export class RequestSession {
                 await detachable.detach();
             }
 
-            this.privServiceTelemetryListener?.dispose();
+            if (!!this.privServiceTelemetryListener) {
+                this.privServiceTelemetryListener.dispose();
+            }
             this.privIsRecognizing = false;
         }
     }
