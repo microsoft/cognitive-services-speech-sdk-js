@@ -374,4 +374,83 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             done.fail(error);
         });
     }, 10000);
+
+    test("testContinuousLIDSpeechReco", (done: jest.DoneCallback) => {
+        // tslint:disable-next-line:no-console
+        console.info("Name: testContinuousLIDSpeechReco");
+
+        const configs: sdk.SourceLanguageConfig[] = BuildSourceLanguageConfigs();
+        configs.forEach((c: sdk.SourceLanguageConfig) => { objsToClose.push(c); });
+
+        const a: sdk.AutoDetectSourceLanguageConfig = BuildAutoConfig(configs);
+        a.mode = sdk.LanguageIdMode.Continuous;
+        objsToClose.push(a);
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+        const r: sdk.SpeechRecognizer = BuildRecognizer(s, a);
+        objsToClose.push(r);
+
+        let speechRecognized: boolean = false;
+        let speechContextSent: boolean = false;
+
+        const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
+
+        con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
+            if (args.message.path === "speech.context" && args.message.isTextMessage) {
+                const message = JSON.parse(args.message.TextMessage);
+                try {
+                    expect(message.languageId).not.toBeUndefined();
+                    expect(message.languageId.mode).not.toBeUndefined();
+                    expect(message.languageId.mode).toEqual("DetectContinuous");
+                    expect(message.languageId.Priority).not.toBeUndefined();
+                    expect(message.languageId.Priority).toEqual("PrioritizeLatency");
+                    speechContextSent = true;
+                } catch (error) {
+                    done.fail(error);
+                }
+            }
+        };
+
+        r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
+            try {
+                if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
+                    expect(speechRecognized).toEqual(false);
+                    speechRecognized = true;
+                    expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(e.result.text).toEqual("What's the weather like?");
+                    expect(e.result.properties).not.toBeUndefined();
+                    expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                } else if (e.result.reason === sdk.ResultReason.NoMatch) {
+                    expect(speechRecognized).toEqual(true);
+                }
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.fail(error);
+            }
+        };
+
+        r.startContinuousRecognitionAsync(() => {
+            WaitForCondition(() => (speechContextSent), () => {
+                r.stopContinuousRecognitionAsync(() => {
+                    try {
+                        done();
+                    } catch (error) {
+                        done.fail(error);
+                    }
+                }, (error: string) => {
+                    done.fail(error);
+                });
+            });
+        },
+            (err: string) => {
+                done.fail(err);
+            });
+    }, 30000);
 });
