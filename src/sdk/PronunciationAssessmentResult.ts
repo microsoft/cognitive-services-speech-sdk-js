@@ -23,7 +23,13 @@ interface DetailResult {
 
 interface WordResult {
     Word: string;
-    Phonemes: { Phoneme: string }[];
+    Phonemes: {
+        Phoneme?: string;
+        PronunciationAssessment?: {
+            NBestPhonemes: { Phoneme: string }[];
+        };
+     }[];
+
     Syllables: { Syllable: string }[];
 }
 
