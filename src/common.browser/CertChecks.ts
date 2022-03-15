@@ -339,7 +339,7 @@ export class CertCheckAgent {
                 }
 
                 const url = new URL(uri);
-                options = { ...options, host: url.host, protocol: url.protocol, port: url.port, path: url.pathname};
+                options = { ...options, host: url.host, protocol: url.protocol, port: url.port, path: url.pathname, hostname: url.host };
 
                 ocsp.utils.getResponse(options, req.data, (error: string, raw: Buffer): void => {
                     if (error) {
