@@ -339,8 +339,7 @@ export class CertCheckAgent {
                 }
 
                 const url = new URL(uri);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                options = { ...options, ...url, path: url.pathname };
+                options = { ...options, host: url.host, protocol: url.protocol, port: url.port, path: url.pathname};
 
                 ocsp.utils.getResponse(options, req.data, (error: string, raw: Buffer): void => {
                     if (error) {
