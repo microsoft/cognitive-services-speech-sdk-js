@@ -9,7 +9,7 @@ import {
     ServiceRecognizerBase,
     SpeechServiceConfig,
     TranslationConnectionFactory,
-    TranslationServiceRecognizer,
+    TranslationServiceRecognizer
 } from "../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
@@ -23,7 +23,7 @@ import {
     TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
     TranslationRecognitionResult,
-    TranslationSynthesisEventArgs,
+    TranslationSynthesisEventArgs
 } from "./Exports";
 import { SpeechTranslationConfig, SpeechTranslationConfigImpl } from "./SpeechTranslationConfig";
 
@@ -32,38 +32,6 @@ import { SpeechTranslationConfig, SpeechTranslationConfigImpl } from "./SpeechTr
  * @class TranslationRecognizer
  */
 export class TranslationRecognizer extends Recognizer {
-    private privDisposedTranslationRecognizer: boolean;
-
-    /**
-     * Initializes an instance of the TranslationRecognizer.
-     * @constructor
-     * @param {SpeechTranslationConfig} speechConfig - Set of properties to configure this recognizer.
-     * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
-     */
-    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
-        const configImpl = speechConfig as SpeechTranslationConfigImpl;
-        Contracts.throwIfNull(configImpl, "speechConfig");
-
-        super(audioConfig, configImpl.properties, new TranslationConnectionFactory());
-
-        this.privDisposedTranslationRecognizer = false;
-
-        if (this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined) !== undefined) {
-            Contracts.throwIfNullOrWhitespace(
-                this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice),
-                PropertyId[PropertyId.SpeechServiceConnection_TranslationVoice]);
-        }
-
-        Contracts.throwIfNullOrWhitespace(
-            this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages),
-            PropertyId[PropertyId.SpeechServiceConnection_TranslationToLanguages]);
-
-        Contracts.throwIfNullOrWhitespace(this.properties.getProperty(
-            PropertyId.SpeechServiceConnection_RecoLanguage),
-            PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
-
-    }
-
     /**
      * The event recognizing signals that an intermediate recognition result is received.
      * @member TranslationRecognizer.prototype.recognizing
@@ -95,6 +63,38 @@ export class TranslationRecognizer extends Recognizer {
      * @public
      */
     public synthesizing: (sender: TranslationRecognizer, event: TranslationSynthesisEventArgs) => void;
+
+    private privDisposedTranslationRecognizer: boolean;
+
+    /**
+     * Initializes an instance of the TranslationRecognizer.
+     * @constructor
+     * @param {SpeechTranslationConfig} speechConfig - Set of properties to configure this recognizer.
+     * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
+     */
+    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+        const configImpl = speechConfig as SpeechTranslationConfigImpl;
+        Contracts.throwIfNull(configImpl, "speechConfig");
+
+        super(audioConfig, configImpl.properties, new TranslationConnectionFactory());
+
+        this.privDisposedTranslationRecognizer = false;
+
+        if (this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined) !== undefined) {
+            Contracts.throwIfNullOrWhitespace(
+                this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice),
+                PropertyId[PropertyId.SpeechServiceConnection_TranslationVoice]);
+        }
+
+        Contracts.throwIfNullOrWhitespace(
+            this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages),
+            PropertyId[PropertyId.SpeechServiceConnection_TranslationToLanguages]);
+
+        Contracts.throwIfNullOrWhitespace(this.properties.getProperty(
+            PropertyId.SpeechServiceConnection_RecoLanguage),
+            PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
+
+    }
 
     /**
      * Gets the language name that was set when the recognizer was created.
@@ -137,6 +137,17 @@ export class TranslationRecognizer extends Recognizer {
     }
 
     /**
+     * The collection of properties and their values defined for this TranslationRecognizer.
+     * @member TranslationRecognizer.prototype.properties
+     * @function
+     * @public
+     * @returns {PropertyCollection} The collection of properties and their values defined for this TranslationRecognizer.
+     */
+    public get properties(): PropertyCollection {
+        return this.privProperties;
+    }
+
+    /**
      * Gets the authorization token used to communicate with the service.
      * @member TranslationRecognizer.prototype.authorizationToken
      * @function
@@ -159,22 +170,11 @@ export class TranslationRecognizer extends Recognizer {
     }
 
     /**
-     * The collection of properties and their values defined for this TranslationRecognizer.
-     * @member TranslationRecognizer.prototype.properties
-     * @function
-     * @public
-     * @returns {PropertyCollection} The collection of properties and their values defined for this TranslationRecognizer.
-     */
-    public get properties(): PropertyCollection {
-        return this.privProperties;
-    }
-
-    /**
      * Starts recognition and translation, and stops after the first utterance is recognized.
      * The task returns the translation text as result.
-     * Note: recognizeOnceAsync returns when the first utterance has been recognized, so it is suitableonly
-     *       for single shot recognition like command or query. For long-running recognition,
-     *       use startContinuousRecognitionAsync() instead.
+     * Note: recognizeOnceAsync returns when the first utterance has been recognized, so it is suitable only
+     * for single shot recognition like command or query. For long-running recognition,
+     * use startContinuousRecognitionAsync() instead.
      * @member TranslationRecognizer.prototype.recognizeOnceAsync
      * @function
      * @public
@@ -273,7 +273,7 @@ export class TranslationRecognizer extends Recognizer {
      * @function
      * @public
      */
-    /* tslint:disable:no-empty */
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public onConnection(): void { }
 
     /**
@@ -282,7 +282,7 @@ export class TranslationRecognizer extends Recognizer {
      * @function
      * @public
      */
-    /* tslint:disable:no-empty */
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public async onDisconnection(): Promise<void> { }
 
     protected async dispose(disposing: boolean): Promise<void> {

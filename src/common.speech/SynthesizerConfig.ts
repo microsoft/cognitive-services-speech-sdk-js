@@ -14,7 +14,7 @@ export class SynthesizerConfig {
     private privSpeechServiceConfig: SpeechServiceConfig;
     private privParameters: PropertyCollection;
 
-    constructor(
+    public constructor(
         speechServiceConfig: SpeechServiceConfig,
         parameters: PropertyCollection) {
         this.privSpeechServiceConfig = speechServiceConfig ? speechServiceConfig : new SpeechServiceConfig(new Context(null));

@@ -5,7 +5,7 @@
 // for dynamic grammars.
 
 /**
- *  Top level grammar node
+ * Top level grammar node
  */
 export interface IDynamicGrammar {
     ReferenceGrammars?: string[];

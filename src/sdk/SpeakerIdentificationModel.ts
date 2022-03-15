@@ -20,7 +20,7 @@ export class SpeakerIdentificationModel {
         if (profiles.length === 0) {
             throw new Error("Empty Voice Profiles array");
         }
-        profiles.forEach((profile: VoiceProfile) => {
+        profiles.forEach((profile: VoiceProfile): void => {
             if (profile.profileType !== VoiceProfileType.TextIndependentIdentification) {
                 throw new Error("Identification model can only be created from Identification profile: " + profile.profileId);
             }
@@ -32,7 +32,7 @@ export class SpeakerIdentificationModel {
     }
 
     public get voiceProfileIds(): string {
-        return this.privVoiceProfiles.map((profile: VoiceProfile) => profile.profileId).join(",");
+        return this.privVoiceProfiles.map((profile: VoiceProfile): string => profile.profileId).join(",");
     }
 
 }

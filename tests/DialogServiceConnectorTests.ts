@@ -22,10 +22,10 @@
 //   Settings.proxyPort
 //
 
+import { Callback } from "../distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener,
-    WebsocketMessageAdapter,
 } from "../src/common.browser/Exports";
 import { AgentConfig } from "../src/common.speech/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
@@ -38,7 +38,7 @@ import {
     PlatformEvent,
     SendingAgentContextMessageEvent,
 } from "../src/common/Exports";
-import { BotFrameworkConfig, OutputFormat, PropertyId, PullAudioOutputStream, ResultReason } from "../src/sdk/Exports";
+import { OutputFormat, PropertyId, PullAudioOutputStream, ResultReason } from "../src/sdk/Exports";
 import { Settings } from "./Settings";
 import {
     closeAsyncObjects,
@@ -46,11 +46,11 @@ import {
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 const consoleInfo = console.info;
 const simpleMessageObj = { speak: "This is speech", text: "This is text", type: "message" };
 
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 console.info = (...args: any[]): void => {
 
     const formatConsoleDate = (): string => {
@@ -84,13 +84,13 @@ beforeAll(() => {
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
 });
 
 afterEach(async (done: jest.DoneCallback) => {
     await closeAsyncObjects(objsToClose);
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     done();
 });
@@ -153,23 +153,21 @@ function PostFailTest(done: jest.DoneCallback, ms: number, error?: string): any 
     }, ms);
 }
 
-function sleep(milliseconds: number): Promise<any> {
-    return new Promise((resolve: any) => setTimeout(resolve, milliseconds));
-}
+const sleep = (milliseconds: number): Promise<any> => new Promise((resolve: Callback): NodeJS.Timeout => setTimeout(resolve, milliseconds));
 
 // DialogServiceConfig tests: begin
 test("Create BotFrameworkConfig from subscription, null params", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create BotFrameworkConfig from subscription, null params");
-    expect(() => sdk.BotFrameworkConfig.fromSubscription(null, null)).toThrowError();
+    expect((): sdk.BotFrameworkConfig => sdk.BotFrameworkConfig.fromSubscription(null, null)).toThrowError();
 });
 
 test("Create BotFrameworkConfig from subscription, null Region", () => {
-    expect(() => sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, null)).toThrowError();
+    expect((): sdk.BotFrameworkConfig => sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, null)).toThrowError();
 });
 
 test("Create BotFrameworkConfig from subscription, null subscription", () => {
-    expect(() => sdk.BotFrameworkConfig.fromSubscription(null, Settings.BotRegion)).toThrowError();
+    expect((): sdk.BotFrameworkConfig => sdk.BotFrameworkConfig.fromSubscription(null, Settings.BotRegion)).toThrowError();
 });
 
 test("Create BotFrameworkConfig, null optional botId", () => {
@@ -263,9 +261,7 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
         done.fail(error);
     });
 
-    WaitForCondition(() => {
-        return connected;
-    }, () => {
+    WaitForCondition(() => connected, () => {
         connection.closeConnection(() => {
             if (!!disconnected) {
                 done();
@@ -419,13 +415,13 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
                 }
 
             } catch (error) {
-                done.fail(error);
+                done.fail(error as string);
             }
 
             if (bytesRead > 0) {
                 audioReadLoop(audioStream, done);
             }
-        }, (error: string) => {
+        }, (error: string): void => {
             done.fail(error);
         });
     };
@@ -543,9 +539,7 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
             done.fail(error);
         });
 
-    WaitForCondition(() => {
-        return firstReco;
-    }, () => {
+    WaitForCondition(() => firstReco, () => {
         connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
             expect(result).not.toBeUndefined();
             expect(result.errorDetails).toBeUndefined();
@@ -612,9 +606,7 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
             done.fail(error);
         });
 
-    WaitForCondition(() => {
-        return firstReco;
-    }, () => {
+    WaitForCondition(() => firstReco, () => {
         connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult) => {
             try {
                 const recoResult: sdk.SpeechRecognitionResult = result2;
@@ -685,9 +677,7 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
             done.fail(error);
         });
 
-    WaitForCondition(() => {
-        return firstReco;
-    }, () => {
+    WaitForCondition(() => firstReco, () => {
         connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult) => {
             try {
                 expect(connected).toEqual(1);
@@ -866,8 +856,10 @@ test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) =>
     const connector: sdk.DialogServiceConnector = BuildConnectorFromWaveFile(dialogConfig);
     objsToClose.push(connector);
 
-    const malformedJSON: string = '{speak: "This is speech", "text" : "This is JSON is malformed", "type": "message" };';
-    connector.sendActivityAsync(malformedJSON, () => { done.fail("Should have failed"); }, (error: string) => {
+    const malformedJSON: string = "{speak: \"This is speech\", \"text\" : \"This is JSON is malformed\", \"type\": \"message\" };";
+    connector.sendActivityAsync(malformedJSON, () => {
+ done.fail("Should have failed");
+}, (error: string) => {
         expect(error).toContain("Unexpected token");
         done();
     });
@@ -881,7 +873,7 @@ describe("Agent config message tests", () => {
         eventListener = Events.instance.attachListener({
             onEvent: (event: PlatformEvent) => {
                 if (event instanceof SendingAgentContextMessageEvent) {
-                    const agentContextEvent = event as SendingAgentContextMessageEvent;
+                    const agentContextEvent = event ;
                     observedAgentConfig = agentContextEvent.agentConfig;
                 }
             },
@@ -1045,7 +1037,7 @@ describe.each([
         eventListener = Events.instance.attachListener({
             onEvent: (event: PlatformEvent) => {
                 if (event instanceof ConnectionStartEvent) {
-                    const connectionEvent = event as ConnectionStartEvent;
+                    const connectionEvent = event ;
                     observedUri = connectionEvent.uri;
                 }
             },

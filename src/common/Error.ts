@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// tslint:disable:max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 /**
  * The error that is thrown when an argument passed in is null.
@@ -56,7 +56,6 @@ export class InvalidOperationError extends Error {
  * @class ObjectDisposedError
  * @extends {Error}
  */
-// tslint:disable-next-line:max-classes-per-file
 export class ObjectDisposedError extends Error {
 
     /**

@@ -33,7 +33,7 @@ export interface IConversation {
     readonly speechRecognitionLanguage: string;
 
     /** Start a conversation.
-     *  The host must connect to the websocket within a minute for the conversation to remain open.
+     * The host must connect to the websocket within a minute for the conversation to remain open.
      */
     startConversationAsync(cb?: () => void, err?: (e: string) => void): void;
 
@@ -78,8 +78,15 @@ export interface IConversation {
 
 }
 
+export interface ConversationProperties {
+    [key: string]: any;
+    id?: string;
+    attendees?: TranscriptionParticipant[];
+    record?: string;
+}
+
 export interface ConversationInfo {
     id: string;
     participants: TranscriptionParticipant[];
-    conversationProperties: any;
+    conversationProperties: ConversationProperties;
 }

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
@@ -13,8 +14,8 @@ import {
     ProfanityOption,
     PropertyCollection,
     PropertyId,
-    ServicePropertyChannel,
-    SpeechConfig, SpeechSynthesisOutputFormat,
+    SpeechConfig,
+    SpeechSynthesisOutputFormat,
 } from "./Exports";
 
 /**
@@ -52,9 +53,9 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
     /**
      * Static instance of SpeechTranslationConfig returned by passing authorization token and service region.
      * Note: The caller needs to ensure that the authorization token is valid. Before the authorization token
-     *       expires, the caller needs to refresh it by setting the property authorizationToken with a new
-     *       valid token. Otherwise, all the recognizers created by this SpeechTranslationConfig instance
-     *       will encounter errors during recognition.
+     * expires, the caller needs to refresh it by setting the property authorizationToken with a new
+     * valid token. Otherwise, all the recognizers created by this SpeechTranslationConfig instance
+     * will encounter errors during recognition.
      * As configuration values are copied when creating a new recognizer, the new token value will not apply
      * to recognizers that have already been created.
      * For recognizers that have been created before, you need to set authorization token of the corresponding recognizer
@@ -107,13 +108,13 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
      * Creates an instance of the speech translation config with specified endpoint and subscription key.
      * This method is intended only for users who use a non-standard service endpoint or paramters.
      * Note: The query properties specified in the endpoint URL are not changed, even if they are
-     *       set by any other APIs. For example, if language is defined in the uri as query parameter
-     *       "language=de-DE", and also set by the speechRecognitionLanguage property, the language
-     *       setting in uri takes precedence, and the effective language is "de-DE".
+     * set by any other APIs. For example, if language is defined in the uri as query parameter
+     * "language=de-DE", and also set by the speechRecognitionLanguage property, the language
+     * setting in uri takes precedence, and the effective language is "de-DE".
      * Only the properties that are not specified in the endpoint URL can be set by other APIs.
      * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the
-     *       fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to
-     *       use the authorization token.
+     * fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to
+     * use the authorization token.
      * @member SpeechTranslationConfig.fromEndpoint
      * @function
      * @public
@@ -210,7 +211,6 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
  * @private
  * @class SpeechTranslationConfigImpl
  */
-// tslint:disable-next-line:max-classes-per-file
 export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
 
     private privSpeechProperties: PropertyCollection;
@@ -274,6 +274,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @public
      */
     public get outputFormat(): OutputFormat {
+        // eslint-disable-next-line
         return (OutputFormat as any)[this.privSpeechProperties.getProperty(OutputFormatPropertyName, undefined)];
     }
 
@@ -376,10 +377,10 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     public setProxy(proxyHostName: string, proxyPort: number): void;
     public setProxy(proxyHostName: string, proxyPort: number, proxyUserName: string, proxyPassword: string): void;
     public setProxy(proxyHostName: any, proxyPort: any, proxyUserName?: any, proxyPassword?: any): void {
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyHostName], proxyHostName);
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPort], proxyPort);
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyUserName], proxyUserName);
-        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyHostName], proxyHostName as string);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPort], proxyPort as string);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyUserName], proxyUserName as string);
+        this.setProperty(PropertyId[PropertyId.SpeechServiceConnection_ProxyPassword], proxyPassword as string);
     }
 
     /**
@@ -428,8 +429,8 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
         return;
     }
 
-    public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
-        const currentProperties: IStringDictionary<string> = JSON.parse(this.privSpeechProperties.getProperty(ServicePropertiesPropertyName, "{}"));
+    public setServiceProperty(name: string, value: string): void {
+        const currentProperties: IStringDictionary<string> = JSON.parse(this.privSpeechProperties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
 
         currentProperties[name] = value;
 
@@ -467,6 +468,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
     }
 
     public get speechSynthesisOutputFormat(): SpeechSynthesisOutputFormat {
+        // eslint-disable-next-line
         return (SpeechSynthesisOutputFormat as any)[this.privSpeechProperties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)];
     }
 

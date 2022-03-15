@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {
+    Deferred,
     IAudioSource,
     MessageType,
 } from "../common/Exports";
@@ -15,7 +16,6 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
-    SpeechRecognitionResult,
 } from "../sdk/Exports";
 import {
     AddedLmIntent,
@@ -31,10 +31,10 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class IntentServiceRecognizer extends ServiceRecognizerBase {
     private privIntentRecognizer: IntentRecognizer;
-    private privAddedLmIntents: { [id: string]: AddedLmIntent; };
+    private privAddedLmIntents: { [id: string]: AddedLmIntent };
     private privIntentDataSent: boolean;
     private privUmbrellaIntent: AddedLmIntent;
     private privPendingIntentArgs: IntentRecognitionEventArgs;
@@ -50,13 +50,13 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
         this.privIntentDataSent = false;
     }
 
-    public setIntents(addedIntents: { [id: string]: AddedLmIntent; }, umbrellaIntent: AddedLmIntent): void {
+    public setIntents(addedIntents: { [id: string]: AddedLmIntent }, umbrellaIntent: AddedLmIntent): void {
         this.privAddedLmIntents = addedIntents;
         this.privUmbrellaIntent = umbrellaIntent;
         this.privIntentDataSent = true;
     }
 
-    protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         let result: IntentRecognitionResult;
         let ev: IntentRecognitionEventArgs;
@@ -91,7 +91,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 if (!!this.privIntentRecognizer.recognizing) {
                     try {
                         this.privIntentRecognizer.recognizing(this.privIntentRecognizer, ev);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -116,11 +116,11 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
 
                 ev = new IntentRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
 
-                const sendEvent: () => void = () => {
+                const sendEvent: () => void = (): void => {
                     if (!!this.privIntentRecognizer.recognized) {
                         try {
                             this.privIntentRecognizer.recognized(this.privIntentRecognizer, ev);
-                            /* tslint:disable:no-empty */
+                            /* eslint-disable no-empty */
                         } catch (error) {
                             // Not going to let errors in the event handler
                             // trip things up.
@@ -133,7 +133,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                             this.privSuccessCallback(result);
                         } catch (e) {
                             if (!!this.privErrorCallback) {
-                                this.privErrorCallback(e);
+                                this.privErrorCallback(e as string);
                             }
                         }
                         // Only invoke the call back once.
@@ -170,7 +170,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     }
 
                     // Odd... Not sure this can happen
-                    ev = new IntentRecognitionEventArgs(new IntentRecognitionResult(), 0 /*TODO*/, this.privRequestSession.sessionId);
+                    ev = new IntentRecognitionEventArgs(new IntentRecognitionResult(), 0, this.privRequestSession.sessionId);
                 }
 
                 const intentResponse: IntentResponse = IntentResponse.fromJSON(connectionMessage.textBody);
@@ -219,7 +219,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 if (!!this.privIntentRecognizer.recognized) {
                     try {
                         this.privIntentRecognizer.recognized(this.privIntentRecognizer, ev);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -232,7 +232,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                         this.privSuccessCallback(ev.result);
                     } catch (e) {
                         if (!!this.privErrorCallback) {
-                            this.privErrorCallback(e);
+                            this.privErrorCallback(e as string);
                         }
                     }
                     // Only invoke the call back once.
@@ -246,7 +246,9 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
             default:
                 break;
         }
-        return processed;
+        const defferal = new Deferred<boolean>();
+        defferal.resolve(processed);
+        return defferal.promise;
     }
 
     // Cancels recognition.
@@ -271,7 +273,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 sessionId);
             try {
                 this.privIntentRecognizer.canceled(this.privIntentRecognizer, cancelEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
 
@@ -291,7 +293,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
             try {
                 this.privSuccessCallback(result);
                 this.privSuccessCallback = undefined;
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
     }

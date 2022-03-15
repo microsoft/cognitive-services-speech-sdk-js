@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// tslint:disable:max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 import {
     createNoDashGuid,
-    Deferred,
     IAudioDestination,
     IStreamChunk,
     Stream,
@@ -27,7 +26,9 @@ export abstract class AudioOutputStream {
      * Creates and initializes an instance.
      * @constructor
      */
-    protected constructor() { }
+    protected constructor() {
+        return;
+    }
 
     /**
      * Sets the format of the AudioOutputStream
@@ -188,7 +189,7 @@ export class PullAudioOutputStreamImpl extends PullAudioOutputStream implements 
                 intView.set(new Int8Array(tmpBuffer), totalBytes);
                 totalBytes += tmpBuffer.byteLength;
             } else {
-                await this.privStream.readEnded();
+                this.privStream.readEnded();
             }
         }
         return totalBytes;
@@ -230,7 +231,9 @@ export abstract class PushAudioOutputStream extends AudioOutputStream {
      * Creates and initializes and instance.
      * @constructor
      */
-    protected constructor() { super(); }
+    protected constructor() {
+        super();
+    }
 
     /**
      * Creates a PushAudioOutputStream that delegates to the specified callback interface for
@@ -239,7 +242,7 @@ export abstract class PushAudioOutputStream extends AudioOutputStream {
      * @function
      * @public
      * @param {PushAudioOutputStreamCallback} callback - The custom audio output object,
-     *        derived from PushAudioOutputStreamCallback
+     * derived from PushAudioOutputStreamCallback
      * @returns {PushAudioOutputStream} The push audio output stream being created.
      */
     public static create(callback: PushAudioOutputStreamCallback): PushAudioOutputStream {
@@ -270,7 +273,7 @@ export class PushAudioOutputStreamImpl extends PushAudioOutputStream implements 
      * read() and close() methods.
      * @constructor
      * @param {PushAudioOutputStreamCallback} callback - The custom audio output object,
-     *        derived from PushAudioOutputStreamCallback
+     * derived from PushAudioOutputStreamCallback
      */
     public constructor(callback: PushAudioOutputStreamCallback) {
         super();
@@ -278,7 +281,7 @@ export class PushAudioOutputStreamImpl extends PushAudioOutputStream implements 
         this.privCallback = callback;
     }
 
-    // tslint:disable-next-line:no-empty
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public set format(format: AudioStreamFormat) { }
 
     public write(buffer: ArrayBuffer): void {

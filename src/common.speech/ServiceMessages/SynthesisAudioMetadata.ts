@@ -31,7 +31,7 @@ export class SynthesisAudioMetadata implements ISynthesisAudioMetadata {
     private privSynthesisAudioMetadata: ISynthesisAudioMetadata;
 
     private constructor(json: string) {
-        this.privSynthesisAudioMetadata = JSON.parse(json);
+        this.privSynthesisAudioMetadata = JSON.parse(json) as ISynthesisAudioMetadata;
     }
 
     public static fromJSON(json: string): SynthesisAudioMetadata {

@@ -11,6 +11,16 @@ import {
     Recognizer
 } from "./Exports";
 
+interface PronunciationAssessmentJSON {
+    referenceText: string;
+    gradingSystem: string;
+    granularity: string;
+    phonemeAlphabet: string;
+    nbestPhonemeCount: number;
+    dimension: string;
+    enableMiscue: boolean;
+}
+
 /**
  * Pronunciation assessment configuration.
  * @class PronunciationAssessmentConfig
@@ -130,7 +140,7 @@ export class PronunciationAssessmentConfig {
 
     private updateJson(): void {
         const jsonString = this.privProperties.getProperty(PropertyId.PronunciationAssessment_Json, "{}");
-        const paramsJson = JSON.parse(jsonString);
+        const paramsJson: PronunciationAssessmentJSON = JSON.parse(jsonString) as PronunciationAssessmentJSON;
 
         const referenceText = this.privProperties.getProperty(PropertyId.PronunciationAssessment_ReferenceText);
         if (referenceText) {

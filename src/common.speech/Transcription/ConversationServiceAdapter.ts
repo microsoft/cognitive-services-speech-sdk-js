@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import {
-    ConnectionMessage,
     ConnectionState,
     createNoDashGuid,
     Deferred,
@@ -52,7 +51,7 @@ import {
     TextResponsePayload
 } from "./ServiceMessages/Exports";
 
-/***
+/**
  * The service adapter handles sending and receiving messages to the Conversation Translator websocket.
  */
 export class ConversationServiceAdapter extends ServiceRecognizerBase {
@@ -61,10 +60,10 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     private privConversationAuthFetchEventId: string;
     private privConversationAuthentication: IAuthentication;
     private privConversationRequestSession: ConversationRequestSession;
-    private privConnectionConfigPromise: Promise<IConnection>;
+    private privConnectionConfigPromise: Promise<IConnection> = undefined;
     private privConnectionLoop: Promise<void>;
     private terminateMessageLoop: boolean;
-    private privLastPartialUtteranceId: string = "";
+    private privLastPartialUtteranceId: string;
     private privConversationIsDisposed: boolean;
 
     public constructor(
@@ -76,13 +75,14 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
 
         super(authentication, connectionFactory, audioSource, recognizerConfig, conversationServiceConnector);
 
+        this.privLastPartialUtteranceId = "";
         this.privConversationServiceConnector = conversationServiceConnector;
         this.privConversationAuthentication = authentication;
-        this.receiveMessageOverride = this.receiveConversationMessageOverride;
-        this.recognizeOverride = this.noOp;
-        this.postConnectImplOverride = this.conversationConnectImpl;
-        this.configConnectionOverride = this.configConnection;
-        this.disconnectOverride = this.privDisconnect;
+        this.receiveMessageOverride = (): Promise<void> => this.receiveConversationMessageOverride();
+        this.recognizeOverride = (): Promise<void> => this.noOp();
+        this.postConnectImplOverride = (connection: Promise<IConnection>): Promise<IConnection> => this.conversationConnectImpl(connection);
+        this.configConnectionOverride = (): Promise<IConnection> => this.configConnection();
+        this.disconnectOverride = (): Promise<void> => this.privDisconnect();
         this.privConversationRequestSession = new ConversationRequestSession(createNoDashGuid());
         this.privConversationConnectionFactory = connectionFactory;
         this.privConversationIsDisposed = false;
@@ -94,7 +94,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
 
     public async dispose(reason?: string): Promise<void> {
         this.privConversationIsDisposed = true;
-        if (this.privConnectionConfigPromise) {
+        if (this.privConnectionConfigPromise !== undefined) {
             const connection: IConnection = await this.privConnectionConfigPromise;
             await connection.dispose(reason);
         }
@@ -109,8 +109,6 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
     }
 
     public async sendMessageAsync(message: string): Promise<void> {
-        const sink: Deferred<void> = new Deferred<void>();
-
         const connection: IConnection = await this.fetchConnection();
 
         await connection.send(new ConversationConnectionMessage(MessageType.Text, message));
@@ -130,10 +128,8 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         return Promise.resolve();
     }
 
-    protected async processTypeSpecificMessages(
-        connectionMessage: ConnectionMessage,
-        successCallback?: (e: any) => void,
-        errorCallBack?: (e: string) => void): Promise<boolean> {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    protected async processTypeSpecificMessages(): Promise<boolean> {
         return true;
     }
 
@@ -163,8 +159,9 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    protected noOp = (): any => {
+    protected noOp(): Promise<void> {
         // operation not supported
+        return;
     }
 
     /**
@@ -218,7 +215,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
 
                                 const participantsPayload: IParticipantsListPayloadResponse = ParticipantsListPayloadResponse.fromJSON(message.textBody);
 
-                                const participantsResult: IInternalParticipant[] = participantsPayload.participants.map((p: IParticipantPayloadResponse) => {
+                                const participantsResult: IInternalParticipant[] = participantsPayload.participants.map((p: IParticipantPayloadResponse): IInternalParticipant => {
                                     const participant: IInternalParticipant = {
                                         avatar: p.avatar,
                                         displayName: p.nickname,
@@ -400,6 +397,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                              */
                             case "disconnectsession":
 
+                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                 const disconnectParticipant: IInternalParticipant = {
                                     id: commandPayload.participantId
                                 };
@@ -408,11 +406,11 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
 
                             case "token":
                                 const token = new CognitiveTokenAuthentication(
-                                    (authFetchEventId: string): Promise<string> => {
+                                    (): Promise<string> => {
                                         const authorizationToken = commandPayload.token;
                                         return Promise.resolve(authorizationToken);
                                     },
-                                    (authFetchEventId: string): Promise<string> => {
+                                    (): Promise<string> => {
                                         const authorizationToken = commandPayload.token;
                                         return Promise.resolve(authorizationToken);
                                     });
@@ -531,7 +529,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
             const r = await messageRetrievalPromise;
             return r;
         } catch (error) {
-            this.cancelRecognition(this.privRequestSession ? this.privRequestSession.sessionId : "", this.privRequestSession ? this.privRequestSession.requestId : "", CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
+            this.cancelRecognition(this.privRequestSession ? this.privRequestSession.sessionId : "", this.privRequestSession ? this.privRequestSession.requestId : "", CancellationReason.Error, CancellationErrorCode.RuntimeError, error as string);
             return null;
         }
     }
@@ -541,17 +539,17 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         if (this.isDisposed()) {
             return Promise.resolve<IConnection>(undefined);
         }
-        if (this.privConnectionConfigPromise) {
+        if (this.privConnectionConfigPromise !== undefined) {
             return this.privConnectionConfigPromise.then((connection: IConnection): Promise<IConnection> => {
                 if (connection.state() === ConnectionState.Disconnected) {
                     this.privConnectionId = null;
-                    this.privConnectionConfigPromise = null;
+                    this.privConnectionConfigPromise = undefined;
                     return this.configConnection();
                 }
                 return this.privConnectionConfigPromise;
-            }, (error: string): Promise<IConnection> => {
+            }, (): Promise<IConnection> => {
                 this.privConnectionId = null;
-                this.privConnectionConfigPromise = null;
+                this.privConnectionConfigPromise = undefined;
                 return this.configConnection();
             });
         }
@@ -559,9 +557,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
             return Promise.resolve<IConnection>(undefined);
         }
 
-        this.privConnectionConfigPromise = this.connectImpl().then((connection: IConnection): any => {
-            return connection;
-        });
+        this.privConnectionConfigPromise = this.connectImpl().then((connection: IConnection): IConnection => connection);
 
         return this.privConnectionConfigPromise;
     }

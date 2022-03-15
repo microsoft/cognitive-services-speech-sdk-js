@@ -39,7 +39,7 @@ export class AudioFileWriter implements IAudioDestination {
 
     public close(): void {
         if (this.privFd !== undefined) {
-            this.privWriteStream.on("finish", () => {
+            this.privWriteStream.on("finish", (): void => {
                 if (this.privAudioFormat.hasHeader) {
                     this.privAudioFormat.updateHeader(this.privWriteStream.bytesWritten);
                     fs.writeSync(this.privFd,
@@ -55,7 +55,7 @@ export class AudioFileWriter implements IAudioDestination {
         }
     }
 
-    public id = (): string => {
+    public id(): string {
         return this.privId;
     }
 }

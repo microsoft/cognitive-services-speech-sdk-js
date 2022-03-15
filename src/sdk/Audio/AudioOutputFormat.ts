@@ -10,7 +10,7 @@ import { AudioFormatTag, AudioStreamFormatImpl } from "./AudioStreamFormat";
  * @class AudioOutputFormatImpl
  * Updated in version 1.17.0
  */
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
     public static SpeechSynthesisOutputFormatToString: INumberDictionary<string> = {
         [SpeechSynthesisOutputFormat.Raw8Khz8BitMonoMULaw]: "raw-8khz-8bit-mono-mulaw",

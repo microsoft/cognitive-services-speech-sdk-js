@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
+/* eslint-disable max-classes-per-file */
 import { PropertyCollection } from "../Exports";
 
 /**
@@ -16,7 +17,7 @@ export interface IUser {
 export class User implements IUser {
     private privUserId: string;
 
-    constructor(userId: string) {
+    public constructor(userId: string) {
         this.privUserId = userId;
     }
 
@@ -62,7 +63,6 @@ export interface IParticipant extends TranscriptionParticipant {
     readonly properties: PropertyCollection;
 }
 
-// tslint:disable-next-line: max-classes-per-file
 export class Participant implements IParticipant {
     private privAvatar: string;
     private privDisplayName: string;
@@ -74,7 +74,7 @@ export class Participant implements IParticipant {
     private privVoice: string;
     private privProperties: PropertyCollection;
 
-    constructor(id: string, avatar: string, displayName: string, isHost: boolean, isMuted: boolean, isUsingTts: boolean, preferredLanguage: string, voice?: string) {
+    public constructor(id: string, avatar: string, displayName: string, isHost: boolean, isMuted: boolean, isUsingTts: boolean, preferredLanguage: string, voice?: string) {
         this.privId = id;
         this.privAvatar = avatar;
         this.privDisplayName = displayName;
@@ -84,10 +84,6 @@ export class Participant implements IParticipant {
         this.privPreferredLanguage = preferredLanguage;
         this.privVoice = voice;
         this.privProperties = new PropertyCollection();
-    }
-
-    public static From(id: string, language: string, voice: string): IParticipant {
-        return new Participant(id, "", id, false, false, false, language, voice);
     }
 
     public get avatar(): string {
@@ -124,5 +120,9 @@ export class Participant implements IParticipant {
 
     public get properties(): PropertyCollection {
         return this.privProperties;
+    }
+
+    public static From(id: string, language: string, voice: string): IParticipant {
+        return new Participant(id, "", id, false, false, false, language, voice);
     }
 }

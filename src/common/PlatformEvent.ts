@@ -18,7 +18,7 @@ export class PlatformEvent {
     private privEventType: EventType;
     private privMetadata: IStringDictionary<string>;
 
-    constructor(eventName: string, eventType: EventType) {
+    public constructor(eventName: string, eventType: EventType) {
         this.privName = eventName;
         this.privEventId = createNoDashGuid();
         this.privEventTime = new Date().toISOString();

@@ -9,7 +9,7 @@ import { PlatformEvent } from "./PlatformEvent";
 export class Events {
     private static privInstance: IEventSource<PlatformEvent> = new EventSource<PlatformEvent>();
 
-    public static setEventSource = (eventSource: IEventSource<PlatformEvent>): void => {
+    public static setEventSource(eventSource: IEventSource<PlatformEvent>): void {
         if (!eventSource) {
             throw new ArgumentNullError("eventSource");
         }

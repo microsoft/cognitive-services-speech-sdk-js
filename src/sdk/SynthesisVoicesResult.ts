@@ -17,15 +17,15 @@ export class SynthesisVoicesResult extends SynthesisResult {
      * @param requestId - result id for request.
      * @param json - json payload from endpoint.
      */
-    constructor(requestId: string, json: any) {
+    public constructor(requestId: string, json: any, errorDetails: string ) {
         if (Array.isArray(json)) {
             super(requestId, ResultReason.VoicesListRetrieved, undefined, new PropertyCollection());
             this.privVoices = [];
             for (const item of json) {
-                this.privVoices.push(new VoiceInfo(item));
+                this.privVoices.push(new VoiceInfo(item as { Name: string; LocalName: string; ShortName: string; Gender: string; VoiceType: string; Locale: string; StyleList: string[] }));
             }
         } else {
-            super(requestId, ResultReason.Canceled, !!json.errorDetails ? json.errorDetails : "Error information unavailable", new PropertyCollection());
+            super(requestId, ResultReason.Canceled, errorDetails ? errorDetails : "Error information unavailable", new PropertyCollection());
         }
     }
 

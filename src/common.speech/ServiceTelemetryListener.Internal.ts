@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// tslint:disable:max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 import {
     AudioSourceErrorEvent,
@@ -54,7 +54,7 @@ export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
     private privPhraseLatencies: number[];
     private privHypothesisLatencies: number[];
 
-    constructor(requestId: string, audioSourceId: string, audioNodeId: string) {
+    public constructor(requestId: string, audioSourceId: string, audioNodeId: string) {
         this.privRequestId = requestId;
         this.privAudioSourceId = audioSourceId;
         this.privAudioNodeId = audioNodeId;
@@ -76,7 +76,7 @@ export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
         }
     }
 
-    public onEvent = (e: PlatformEvent): void => {
+    public onEvent(e: PlatformEvent): void {
         if (this.privIsDisposed) {
             return;
         }
@@ -173,7 +173,7 @@ export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
         }
     }
 
-    public getTelemetry = (): string => {
+    public getTelemetry(): string {
         const metrics = new Array<IMetric>();
 
         if (this.privListeningTriggerMetric) {
@@ -227,11 +227,11 @@ export class ServiceTelemetryListener implements IEventListener<PlatformEvent> {
             this.privHypothesisLatencies.length !== 0);
     }
 
-    public dispose = (): void => {
+    public dispose(): void {
         this.privIsDisposed = true;
     }
 
-    private getConnectionError = (statusCode: number): string => {
+    private getConnectionError(statusCode: number): string {
         /*
         -- Websocket status codes --
         NormalClosure = 1000,

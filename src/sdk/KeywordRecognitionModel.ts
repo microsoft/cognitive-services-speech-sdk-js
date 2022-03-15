@@ -16,6 +16,7 @@ export class KeywordRecognitionModel {
      * @constructor
      */
     private constructor() {
+        return;
     }
 
     /**
@@ -24,8 +25,8 @@ export class KeywordRecognitionModel {
      * @function
      * @public
      * @param {string} fileName - A string that represents file name for the keyword recognition model.
-     *        Note, the file can point to a zip file in which case the model
-     *        will be extracted from the zip.
+     * Note, the file can point to a zip file in which case the model
+     * will be extracted from the zip.
      * @returns {KeywordRecognitionModel} The keyword recognition model being created.
      */
     public static fromFile(fileName: string): KeywordRecognitionModel {
@@ -40,7 +41,7 @@ export class KeywordRecognitionModel {
      * @function
      * @public
      * @param {string} file - A File that represents file for the keyword recognition model.
-     *        Note, the file can point to a zip file in which case the model will be extracted from the zip.
+     * Note, the file can point to a zip file in which case the model will be extracted from the zip.
      * @returns {KeywordRecognitionModel} The keyword recognition model being created.
      */
     public static fromStream(file: File): KeywordRecognitionModel {

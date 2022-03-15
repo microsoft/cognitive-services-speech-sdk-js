@@ -94,7 +94,7 @@ export class SynthesisTurn {
     private privIsSSML: boolean;
     private privTurnAudioDestination: IAudioDestination;
 
-    constructor() {
+    public constructor() {
         this.privRequestId = createNoDashGuid();
         this.privTurnDeferral = new Deferred<void>();
 
@@ -150,18 +150,18 @@ export class SynthesisTurn {
         this.onEvent(new SynthesisTriggeredEvent(this.requestId, undefined, audioDestination === undefined ? undefined : audioDestination.id()));
     }
 
-    public onPreConnectionStart = (authFetchEventId: string, connectionId: string): void => {
+    public onPreConnectionStart(authFetchEventId: string): void {
         this.privAuthFetchEventId = authFetchEventId;
         this.onEvent(new ConnectingToSynthesisServiceEvent(this.privRequestId, this.privAuthFetchEventId));
     }
 
-    public onAuthCompleted = (isError: boolean, error?: string): void => {
+    public onAuthCompleted(isError: boolean): void {
         if (isError) {
             this.onComplete();
         }
     }
 
-    public onConnectionEstablishCompleted = (statusCode: number, reason?: string): void => {
+    public onConnectionEstablishCompleted(statusCode: number): void {
         if (statusCode === 200) {
             this.onEvent(new SynthesisStartedEvent(this.requestId, this.privAuthFetchEventId));
             this.privBytesReceived = 0;
@@ -171,24 +171,24 @@ export class SynthesisTurn {
         }
     }
 
-    public onServiceResponseMessage = (responseJson: string): void => {
-        const response: ISynthesisResponse = JSON.parse(responseJson);
+    public onServiceResponseMessage(responseJson: string): void {
+        const response: ISynthesisResponse = JSON.parse(responseJson) as ISynthesisResponse;
         this.streamId = response.audio.streamId;
     }
 
-    public onServiceTurnEndResponse = (): void => {
+    public onServiceTurnEndResponse(): void {
         this.privInTurn = false;
         this.privTurnDeferral.resolve();
         this.onComplete();
     }
 
-    public onServiceTurnStartResponse = (): void => {
+    public onServiceTurnStartResponse(): void {
         if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
             // Avoid UnhandledPromiseRejection if privTurnDeferral is not being awaited
-            /* tslint:disable:no-empty */
-            this.privTurnDeferral.promise.then().catch(() => { });
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            this.privTurnDeferral.promise.then().catch((): void => { });
         }
         this.privInTurn = true;
         this.privTurnDeferral = new Deferred<void>();
@@ -214,7 +214,7 @@ export class SynthesisTurn {
         }
     }
 
-    public dispose = (error?: string): void => {
+    public dispose(): void {
         if (!this.privIsDisposed) {
             // we should have completed by now. If we did not its an unknown error.
             this.privIsDisposed = true;
@@ -235,7 +235,7 @@ export class SynthesisTurn {
         return animation;
     }
 
-    protected onEvent = (event: SpeechSynthesisEvent): void => {
+    protected onEvent(event: SpeechSynthesisEvent): void {
         Events.instance.onEvent(event);
     }
 
@@ -253,7 +253,7 @@ export class SynthesisTurn {
         }
     }
 
-    private onComplete = (): void => {
+    private onComplete(): void {
         if (this.privIsSynthesizing) {
             this.privIsSynthesizing = false;
             this.privIsSynthesisEnded = true;

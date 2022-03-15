@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 
 /**
- *  Defines the gender of synthesis voices.
- *  Added in version 1.20.0.
+ * Defines the gender of synthesis voices.
+ * Added in version 1.20.0.
  */
 export enum SynthesisVoiceGender {
 
@@ -37,9 +37,10 @@ export class VoiceInfo {
     private privGender: SynthesisVoiceGender;
     private privVoiceType: SynthesisVoiceType;
     private privStyleList: string[] = [];
-    private privVoicePath: string = "";
+    private privVoicePath: string;
 
-    public constructor(json: { Name: string, LocalName: string, ShortName: string, Gender: string, VoiceType: string, Locale: string, StyleList: any }) {
+    public constructor(json: { Name: string; LocalName: string; ShortName: string; Gender: string; VoiceType: string; Locale: string; StyleList: string[] }) {
+        this.privVoicePath = "";
         if (!!json) {
             this.privName = json.Name;
             this.privLocale = json.Locale;

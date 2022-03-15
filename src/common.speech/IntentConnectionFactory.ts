@@ -24,10 +24,10 @@ import { HeaderNames } from "./HeaderNames";
 
 export class IntentConnectionFactory extends ConnectionFactoryBase {
 
-    public create = (
+    public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection => {
+        connectionId?: string): IConnection {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
         if (!endpoint) {

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// tslint:disable:max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 import { PathLike } from "fs";
 import {
@@ -12,7 +12,6 @@ import {
 import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
 import {
     AudioSourceEvent,
-    Deferred,
     EventSource,
     IAudioDestination,
     IAudioSource,
@@ -24,8 +23,6 @@ import {
     AudioOutputStream,
     AudioStreamFormat,
     IPlayer,
-    PropertyCollection,
-    PropertyId,
     PullAudioInputStreamCallback,
     PullAudioOutputStream,
     PushAudioOutputStream,
@@ -61,7 +58,7 @@ export abstract class AudioConfig {
      * @function
      * @public
      * @param {string | undefined} deviceId - Specifies the device ID of the microphone to be used.
-     *        Default microphone is used the value is omitted.
+     * Default microphone is used the value is omitted.
      * @returns {AudioConfig} The audio input configuration being created.
      */
     public static fromMicrophoneInput(deviceId?: string): AudioConfig {
@@ -87,13 +84,13 @@ export abstract class AudioConfig {
      * @function
      * @public
      * @param {AudioInputStream | PullAudioInputStreamCallback | MediaStream} audioStream - Specifies the custom audio input
-     *        stream. Currently, only WAV / PCM is supported.
+     * stream. Currently, only WAV / PCM is supported.
      * @returns {AudioConfig} The audio input configuration being created.
      */
     public static fromStreamInput(audioStream: AudioInputStream | PullAudioInputStreamCallback
         | MediaStream): AudioConfig {
         if (audioStream instanceof PullAudioInputStreamCallback) {
-            return new AudioConfigImpl(new PullAudioInputStreamImpl(audioStream as PullAudioInputStreamCallback));
+            return new AudioConfigImpl(new PullAudioInputStreamImpl(audioStream));
         }
 
         if (audioStream instanceof AudioInputStream) {
@@ -134,7 +131,7 @@ export abstract class AudioConfig {
             return AudioConfig.fromDefaultSpeakerOutput();
         }
         if (player instanceof SpeakerAudioDestination) {
-            return new AudioOutputConfigImpl(player as SpeakerAudioDestination);
+            return new AudioOutputConfigImpl(player);
         }
 
         throw new Error("Not Supported Type");
@@ -159,13 +156,13 @@ export abstract class AudioConfig {
      * @function
      * @public
      * @param {AudioOutputStream | PushAudioOutputStreamCallback} audioStream - Specifies the custom audio output
-     *        stream.
+     * stream.
      * @returns {AudioConfig} The audio output configuration being created.
      * Added in version 1.11.0
      */
     public static fromStreamOutput(audioStream: AudioOutputStream | PushAudioOutputStreamCallback): AudioConfig {
         if (audioStream instanceof PushAudioOutputStreamCallback) {
-            return new AudioOutputConfigImpl(new PushAudioOutputStreamImpl(audioStream as PushAudioOutputStreamCallback));
+            return new AudioOutputConfigImpl(new PushAudioOutputStreamImpl(audioStream));
         }
 
         if (audioStream instanceof PushAudioOutputStream) {
@@ -241,11 +238,11 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
      * @public
      */
     public close(cb?: () => void, err?: (error: string) => void): void {
-        this.privSource.turnOff().then(() => {
+        this.privSource.turnOff().then((): void => {
             if (!!cb) {
                 cb();
             }
-        }, (error: string) => {
+        }, (error: string): void => {
             if (!!err) {
                 err(error);
             }
@@ -376,11 +373,11 @@ export class AudioOutputConfigImpl extends AudioConfig implements IAudioDestinat
         return this.privDestination.id();
     }
 
-    public setProperty(name: string, value: string): void {
+    public setProperty(): void {
         throw new Error("This AudioConfig instance does not support setting properties.");
     }
 
-    public getProperty(name: string, def?: string): string {
+    public getProperty(): string {
         throw new Error("This AudioConfig instance does not support getting properties.");
     }
 }

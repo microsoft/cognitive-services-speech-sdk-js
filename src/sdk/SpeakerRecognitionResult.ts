@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 import { CancellationErrorCodePropertyName } from "../common.speech/Exports";
 import { Contracts } from "./Contracts";
 import {
@@ -16,6 +17,19 @@ export enum SpeakerRecognitionResultType {
     Verify,
     Identify
 }
+
+interface IdentifyResult {
+    identifiedProfile: {
+        profileId: string;
+        score: number;
+    };
+}
+
+interface VerifyResult {
+    recognitionResult: string;
+    score: number;
+}
+
 /**
  * Output format
  * @class SpeakerRecognitionResult
@@ -32,12 +46,12 @@ export class SpeakerRecognitionResult {
         this.privReason = resultReason;
         if (this.privReason !== ResultReason.Canceled) {
             if (resultType === SpeakerRecognitionResultType.Identify) {
-                const json: { identifiedProfile: { profileId: string, score: number } } = JSON.parse(data);
+                const json: IdentifyResult = JSON.parse(data) as IdentifyResult;
                 Contracts.throwIfNullOrUndefined(json, "JSON");
                 this.privProfileId = json.identifiedProfile.profileId;
                 this.privScore = json.identifiedProfile.score;
             } else {
-                const json: { recognitionResult: string, score: number } = JSON.parse(data);
+                const json: VerifyResult = JSON.parse(data) as VerifyResult;
                 Contracts.throwIfNullOrUndefined(json, "JSON");
                 this.privScore = json.score;
                 if (json.recognitionResult.toLowerCase() !== "accept") {
@@ -48,7 +62,7 @@ export class SpeakerRecognitionResult {
                 }
             }
         } else {
-            const json: { statusText: string } = JSON.parse(data);
+            const json: { statusText: string } = JSON.parse(data) as { statusText: string };
             Contracts.throwIfNullOrUndefined(json, "JSON");
             this.privErrorDetails = json.statusText;
             this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
@@ -80,7 +94,6 @@ export class SpeakerRecognitionResult {
 /**
  * @class SpeakerRecognitionCancellationDetails
  */
-// tslint:disable-next-line:max-classes-per-file
 export class SpeakerRecognitionCancellationDetails extends CancellationDetailsBase {
 
     private constructor(reason: CancellationReason, errorDetails: string, errorCode: CancellationErrorCode) {
@@ -100,7 +113,7 @@ export class SpeakerRecognitionCancellationDetails extends CancellationDetailsBa
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
 
         if (!!result.properties) {
-            errorCode = (CancellationErrorCode as any)[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError])];
+            errorCode = CancellationErrorCode[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError]) as keyof typeof CancellationErrorCode];
         }
 
         return new SpeakerRecognitionCancellationDetails(reason, result.errorDetails, errorCode);

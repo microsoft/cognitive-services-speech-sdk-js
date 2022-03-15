@@ -6,7 +6,6 @@ import {
     ConversationExpirationEventArgs,
     ConversationTranslationCanceledEventArgs,
     SessionEventArgs,
-    VoiceSignature,
     } from "../../sdk/Exports";
 // import { ConversationClient } from "./ConversationConnection";
 import {
@@ -61,14 +60,16 @@ export interface IInternalParticipant {
     isHost?: boolean;
     isMuted?: boolean;
     isUsingTts?: boolean;
+    profanity?: boolean;
     preferredLanguage?: string;
+    translateToLanguages?: string[];
     voice?: string;
 }
 
 /** Users participating in the conversation */
 export class InternalParticipants {
 
-    constructor(public participants: IInternalParticipant[] = [], public meId?: string) {
+    public constructor(public participants: IInternalParticipant[] = [], public meId?: string) {
 
     }
 
@@ -97,7 +98,7 @@ export class InternalParticipants {
      * @param id
      */
     public getParticipantIndex(id: string): number {
-        return this.participants.findIndex((p: IInternalParticipant) => p.id === id);
+        return this.participants.findIndex((p: IInternalParticipant): boolean => p.id === id);
     }
 
     /**
@@ -105,21 +106,21 @@ export class InternalParticipants {
      * @param id
      */
     public getParticipant(id: string): IInternalParticipant {
-        return this.participants.find((p: IInternalParticipant) => p.id === id);
+        return this.participants.find((p: IInternalParticipant): boolean => p.id === id);
     }
 
-    /***
+    /**
      * Remove a participant from the participants list.
      */
     public deleteParticipant(id: string): void {
-        this.participants = this.participants.filter((p: IInternalParticipant) => p.id !== id);
+        this.participants = this.participants.filter((p: IInternalParticipant): boolean => p.id !== id);
     }
 
-    /***
+    /**
      * Helper to return the conversation host.
      */
     public get host(): IInternalParticipant {
-        return this.participants.find((p: IInternalParticipant) => p.isHost === true );
+        return this.participants.find((p: IInternalParticipant): boolean => p.isHost === true );
     }
 
     /**

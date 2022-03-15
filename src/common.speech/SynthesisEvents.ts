@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// tslint:disable:max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 import { EventType, PlatformEvent } from "../common/Exports";
 
 export class SpeechSynthesisEvent extends PlatformEvent {
     private privRequestId: string;
 
-    constructor(eventName: string, requestId: string, eventType: EventType = EventType.Info) {
+    public constructor(eventName: string, requestId: string, eventType: EventType = EventType.Info) {
         super(eventName, eventType);
 
         this.privRequestId = requestId;
@@ -23,7 +23,7 @@ export class SynthesisTriggeredEvent extends SpeechSynthesisEvent {
     private privSessionAudioDestinationId: string;
     private privTurnAudioDestinationId: string;
 
-    constructor(requestId: string, sessionAudioDestinationId: string, turnAudioDestinationId: string) {
+    public constructor(requestId: string, sessionAudioDestinationId: string, turnAudioDestinationId: string) {
         super("SynthesisTriggeredEvent", requestId);
 
         this.privSessionAudioDestinationId = sessionAudioDestinationId;
@@ -42,7 +42,7 @@ export class SynthesisTriggeredEvent extends SpeechSynthesisEvent {
 export class ConnectingToSynthesisServiceEvent extends SpeechSynthesisEvent {
     private privAuthFetchEventId: string;
 
-    constructor(requestId: string, authFetchEventId: string) {
+    public constructor(requestId: string, authFetchEventId: string) {
         super("ConnectingToSynthesisServiceEvent", requestId);
         this.privAuthFetchEventId = authFetchEventId;
     }
@@ -55,7 +55,7 @@ export class ConnectingToSynthesisServiceEvent extends SpeechSynthesisEvent {
 export class SynthesisStartedEvent extends SpeechSynthesisEvent {
     private privAuthFetchEventId: string;
 
-    constructor(requestId: string, authFetchEventId: string) {
+    public constructor(requestId: string, authFetchEventId: string) {
         super("SynthesisStartedEvent", requestId);
 
         this.privAuthFetchEventId = authFetchEventId;

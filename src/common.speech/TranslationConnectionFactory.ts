@@ -17,7 +17,6 @@ import {
 } from "./ConnectionFactoryBase";
 import {
     AuthInfo,
-    IConnectionFactory,
     RecognizerConfig,
     WebsocketMessageFormatter,
 } from "./Exports";
@@ -26,10 +25,10 @@ import { QueryParameterNames } from "./QueryParameterNames";
 
 export class TranslationConnectionFactory extends ConnectionFactoryBase {
 
-    public create = (
+    public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection => {
+        connectionId?: string): IConnection {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpoint) {

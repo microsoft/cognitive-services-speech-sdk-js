@@ -16,7 +16,7 @@ export class SpeechHypothesis implements ISpeechHypothesis {
     private privSpeechHypothesis: ISpeechHypothesis;
 
     private constructor(json: string) {
-        this.privSpeechHypothesis = JSON.parse(json);
+        this.privSpeechHypothesis = JSON.parse(json) as ISpeechHypothesis;
     }
 
     public static fromJSON(json: string): SpeechHypothesis {

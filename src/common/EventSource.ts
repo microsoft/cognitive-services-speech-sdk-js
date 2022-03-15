@@ -13,11 +13,11 @@ export class EventSource<TEvent extends PlatformEvent> implements IEventSource<T
     private privMetadata: IStringDictionary<string>;
     private privIsDisposed: boolean = false;
 
-    constructor(metadata?: IStringDictionary<string>) {
+    public constructor(metadata?: IStringDictionary<string>) {
         this.privMetadata = metadata;
     }
 
-    public onEvent = (event: TEvent): void => {
+    public onEvent(event: TEvent): void {
         if (this.isDisposed()) {
             throw (new ObjectDisposedError("EventSource"));
         }
@@ -41,26 +41,26 @@ export class EventSource<TEvent extends PlatformEvent> implements IEventSource<T
         }
     }
 
-    public attach = (onEventCallback: (event: TEvent) => void): IDetachable => {
+    public attach(onEventCallback: (event: TEvent) => void): IDetachable {
         const id = createNoDashGuid();
         this.privEventListeners[id] = onEventCallback;
         return {
-            detach: () => {
+            detach: (): Promise<void> => {
                 delete this.privEventListeners[id];
                 return Promise.resolve();
             },
         };
     }
 
-    public attachListener = (listener: IEventListener<TEvent>): IDetachable => {
-        return this.attach(listener.onEvent);
+    public attachListener(listener: IEventListener<TEvent>): IDetachable {
+        return this.attach((e: TEvent): void => listener.onEvent(e));
     }
 
-    public isDisposed = (): boolean => {
+    public isDisposed(): boolean {
         return this.privIsDisposed;
     }
 
-    public dispose = (): void => {
+    public dispose(): void {
         this.privEventListeners = null;
         this.privIsDisposed = true;
     }

@@ -11,7 +11,7 @@ export class CognitiveTokenAuthentication implements IAuthentication {
     private privFetchCallback: (authFetchEventId: string) => Promise<string>;
     private privFetchOnExpiryCallback: (authFetchEventId: string) => Promise<string>;
 
-    constructor(fetchCallback: (authFetchEventId: string) => Promise<string>, fetchOnExpiryCallback: (authFetchEventId: string) => Promise<string>) {
+    public constructor(fetchCallback: (authFetchEventId: string) => Promise<string>, fetchOnExpiryCallback: (authFetchEventId: string) => Promise<string>) {
         if (!fetchCallback) {
             throw new ArgumentNullError("fetchCallback");
         }
@@ -24,11 +24,11 @@ export class CognitiveTokenAuthentication implements IAuthentication {
         this.privFetchOnExpiryCallback = fetchOnExpiryCallback;
     }
 
-    public fetch = (authFetchEventId: string): Promise<AuthInfo> => {
-        return this.privFetchCallback(authFetchEventId).then((token: string) => new AuthInfo(AuthHeader, CognitiveTokenAuthentication.privTokenPrefix + token));
+    public fetch(authFetchEventId: string): Promise<AuthInfo> {
+        return this.privFetchCallback(authFetchEventId).then((token: string): AuthInfo => new AuthInfo(AuthHeader, CognitiveTokenAuthentication.privTokenPrefix + token));
     }
 
-    public fetchOnExpiry = (authFetchEventId: string): Promise<AuthInfo> => {
-        return this.privFetchOnExpiryCallback(authFetchEventId).then((token: string) => new AuthInfo(AuthHeader, CognitiveTokenAuthentication.privTokenPrefix + token));
+    public fetchOnExpiry(authFetchEventId: string): Promise<AuthInfo> {
+        return this.privFetchOnExpiryCallback(authFetchEventId).then((token: string): AuthInfo => new AuthInfo(AuthHeader, CognitiveTokenAuthentication.privTokenPrefix + token));
     }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
@@ -15,6 +16,7 @@ export class RawWebsocketMessage {
             throw new ArgumentNullError("payload");
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (messageType === MessageType.Binary && payload.__proto__.constructor.name !== "ArrayBuffer") {
             throw new InvalidOperationError("Payload must be ArrayBuffer");
         }
@@ -33,6 +35,7 @@ export class RawWebsocketMessage {
     }
 
     public get payload(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.privPayload;
     }
 
@@ -49,7 +52,7 @@ export class RawWebsocketMessage {
             throw new InvalidOperationError("Not supported for text message");
         }
 
-        return this.privPayload;
+        return this.privPayload as ArrayBuffer;
     }
 
     public get id(): string {

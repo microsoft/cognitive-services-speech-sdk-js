@@ -52,6 +52,6 @@ export class TurnStatusReceivedEventArgs {
      * @returns {number} the received turn status.
      */
     public get statusCode(): number {
-        return this.privTurnStatus.statusCode;
+        return this.privTurnStatus.statusCode; // eslint-disable-line @typescript-eslint/no-unsafe-return
     }
 }

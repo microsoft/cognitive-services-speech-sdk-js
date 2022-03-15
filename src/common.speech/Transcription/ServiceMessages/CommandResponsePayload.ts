@@ -15,15 +15,13 @@ export interface ICommandResponsePayload {
     token?: string;
 }
 
+const parseCommandResponse = (json: string): ICommandResponsePayload => JSON.parse(json) as ICommandResponsePayload;
+
 export class CommandResponsePayload implements ICommandResponsePayload {
     private privCommandResponse: ICommandResponsePayload;
 
     public constructor(json: string) {
-        this.privCommandResponse = JSON.parse(json);
-    }
-
-    public static fromJSON(json: string): CommandResponsePayload {
-        return new CommandResponsePayload(json);
+        this.privCommandResponse = parseCommandResponse(json);
     }
 
     public get type(): string {
@@ -50,4 +48,9 @@ export class CommandResponsePayload implements ICommandResponsePayload {
     public get token(): string {
         return this.privCommandResponse.token;
     }
+
+    public static fromJSON(json: string): CommandResponsePayload {
+        return new CommandResponsePayload(json);
+    }
+
 }

@@ -6,7 +6,7 @@ import { LanguageUnderstandingModelImpl } from "../sdk/LanguageUnderstandingMode
 /**
  * @class AddedLmIntent
  */
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class AddedLmIntent {
     public modelImpl: LanguageUnderstandingModelImpl;
     public intentName: string;

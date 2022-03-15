@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// eslint-disable-next-line max-classes-per-file
 import {
     IAuthentication,
     IConnectionFactory,
@@ -42,7 +43,6 @@ import {
 } from "./ConversationTranslatorEventArgs";
 import {
     ConversationRecognizer,
-    ConversationTranslatorMessageTypes
 } from "./ConversationTranslatorInterfaces";
 
 export class ConversationRecognizerFactory {
@@ -55,7 +55,6 @@ export class ConversationRecognizerFactory {
  * Sends messages to the Conversation Translator websocket and listens for incoming events containing websocket messages.
  * Based off the recognizers in the SDK folder.
  */
-// tslint:disable-next-line:max-classes-per-file
 export class ConversationTranslatorRecognizer extends Recognizer implements ConversationRecognizer {
 
     private privIsDisposed: boolean;
@@ -135,10 +134,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     err(typedError.name + ": " + typedError.message);
                 } else {
-                    err(error);
+                    err(error as string);
                 }
             }
         }
@@ -151,13 +150,14 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         try {
             Contracts.throwIfDisposed(this.privIsDisposed);
             if (this.privTimeoutToken !== undefined) {
+               // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                this.privClearTimeout(this.privTimeoutToken);
             }
-            this.privReco.disconnect().then(() => {
+            this.privReco.disconnect().then((): void => {
                 if (!!cb) {
                     cb();
                 }
-            }, (error: string) => {
+            }, (error: string): void => {
                 if (!!err) {
                     err(error);
                 }
@@ -165,10 +165,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     err(typedError.name + ": " + typedError.message);
                 } else {
-                    err(error);
+                    err(error as string);
                 }
             }
             // Destroy the recognizer.
@@ -192,10 +192,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     err(typedError.name + ": " + typedError.message);
                 } else {
-                    err(error);
+                    err(error as string);
                 }
             }
 
@@ -212,8 +212,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
      */
     public async close(): Promise<void> {
         if (!this.privIsDisposed) {
-            this.privConnection?.closeConnection();
-            this.privConnection?.close();
+            if (!!this.privConnection) {
+                this.privConnection.closeConnection();
+                this.privConnection.close();
+            }
             this.privConnection = undefined;
             await this.dispose(true);
         }
@@ -229,6 +231,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         }
         if (disposing) {
             if (this.privTimeoutToken !== undefined) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 this.privClearTimeout(this.privTimeoutToken);
             }
             this.privIsDisposed = true;
@@ -270,33 +273,32 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
 
     private sendMessage(msg: string, cb?: Callback, err?: Callback): void {
         const withAsync = this.privReco as ConversationServiceAdapter;
-        function PromiseToEmptyCallback<T>(promise: Promise<T>, cb?: Callback, err?: Callback): void {
-            if (!!promise) {
-                promise.then((result: T): void => {
+        const PromiseToEmptyCallback = <T>(promise: Promise<T>, cb?: Callback, err?: Callback): void => {
+            if (promise !== undefined) {
+                promise.then((): void => {
                     try {
                         if (!!cb) {
                             cb();
                         }
                     } catch (e) {
                         if (!!err) {
-                            err(`'Unhandled error on promise callback: ${e}'`);
+                            err(`'Unhandled error on promise callback: ${e as string}'`);
                         }
                     }
-                }, (reason: any) => {
+                }, (reason: any): void => {
                     try {
                         if (!!err) {
                             err(reason);
                         }
-                        /* tslint:disable:no-empty */
-                    } catch (error) {
-                    }
+                        // eslint-disable-next-line no-empty
+                    } catch (error) { }
                 });
             } else {
                 if (!!err) {
                     err("Null promise");
                 }
             }
-        }
+        };
 
         PromiseToEmptyCallback(withAsync.sendMessageAsync(msg), cb, err);
         this.resetConversationTimeout();
@@ -304,6 +306,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
 
     private resetConversationTimeout(): void {
         if (this.privTimeoutToken !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             this.privClearTimeout(this.privTimeoutToken);
         }
 

@@ -85,17 +85,19 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.privEvents = new EventSource<DialogEvent>();
         this.privDialogServiceConnector = dialogServiceConnector;
-        this.receiveMessageOverride = this.receiveDialogMessageOverride;
+        this.receiveMessageOverride = (): Promise<void> => this.receiveDialogMessageOverride();
         this.privTurnStateManager = new DialogServiceTurnStateManager();
-        this.recognizeOverride = this.listenOnce;
-        this.postConnectImplOverride = this.dialogConnectImpl;
-        this.configConnectionOverride = this.configConnection;
-        this.disconnectOverride = this.privDisconnect;
+        this.recognizeOverride =
+            (recoMode: RecognitionMode, successCallback: (e: SpeechRecognitionResult) => void, errorCallback: (e: string) => void): Promise<void> =>
+            this.listenOnce(recoMode, successCallback, errorCallback);
+        this.postConnectImplOverride = (connection: Promise<IConnection>): Promise<IConnection> => this.dialogConnectImpl(connection);
+        this.configConnectionOverride = (connection: IConnection): Promise<IConnection> => this.configConnection(connection);
+        this.disconnectOverride = (): Promise<void> => this.privDisconnect();
         this.privDialogAudioSource = audioSource;
 
         this.agentConfigSent = false;
         this.privLastResult = null;
-        this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
+        this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
             if (connectionEvent.name === "ConnectionClosedEvent") {
                 this.terminateMessageLoop = true;
             }
@@ -110,6 +112,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             context: {
                 interactionId: interactionGuid
             },
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             messagePayload: JSON.parse(message),
             version: 0.5
         };
@@ -137,7 +140,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return;
     }
 
-    protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         const resultProps: PropertyCollection = new PropertyCollection();
         if (connectionMessage.messageType === MessageType.Text) {
@@ -160,7 +163,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     if (!!this.privDialogServiceConnector.recognized) {
                         try {
                             this.privDialogServiceConnector.recognized(this.privDialogServiceConnector, args);
-                            /* tslint:disable:no-empty */
+                            /* eslint-disable no-empty */
                         } catch (error) {
                             // Not going to let errors in the event handler
                             // trip things up.
@@ -193,7 +196,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 if (!!this.privDialogServiceConnector.recognizing) {
                     try {
                         this.privDialogServiceConnector.recognizing(this.privDialogServiceConnector, ev);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -226,7 +229,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 if (!!this.privDialogServiceConnector.recognized) {
                     try {
                         this.privDialogServiceConnector.recognized(this.privDialogServiceConnector, event);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -264,7 +267,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             default:
                 break;
         }
-        return processed;
+        const defferal = new Deferred<boolean>();
+        defferal.resolve(processed);
+        return defferal.promise;
     }
 
     // Cancels recognition.
@@ -294,7 +299,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
             try {
                 this.privDialogServiceConnector.canceled(this.privDialogServiceConnector, cancelEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
 
             if (!!this.privSuccessCallback) {
@@ -313,7 +318,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 try {
                     this.privSuccessCallback(result);
                     this.privSuccessCallback = undefined;
-                    /* tslint:disable:no-empty */
+                    /* eslint-disable no-empty */
                 } catch { }
             }
         }
@@ -352,7 +357,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             await conPromise;
             await preAudioPromise;
         } catch (error) {
-            await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error);
+            await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error as string);
             return Promise.resolve();
         }
 
@@ -364,8 +369,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         const audioSendPromise = this.sendAudio(audioNode);
 
-        // /* tslint:disable:no-empty */
-        audioSendPromise.then(() => { /*add? return true;*/ }, async (error: string) => {
+        // /* eslint-disable no-empty */
+        audioSendPromise.then((): void => { /* add? return true;*/ }, async (error: string): Promise<void> => {
             await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
         });
     }
@@ -476,7 +481,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                         this.privLastResult = null;
                                     } catch (e) {
                                         if (!!this.privErrorCallback) {
-                                            this.privErrorCallback(e);
+                                            this.privErrorCallback(e as string);
                                         }
                                     }
                                     // Only invoke the call back once.
@@ -490,10 +495,15 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         break;
 
                     default:
-                        if (!this.processTypeSpecificMessages(connectionMessage)) {
-                            if (!!this.serviceEvents) {
-                                this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
+                        try {
+                            const processed = await this.processTypeSpecificMessages(connectionMessage);
+                            if (!processed) {
+                                if (!!this.serviceEvents) {
+                                    this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
+                                }
                             }
+                        } catch (e) {
+                            //
                         }
                 }
                 const ret: Promise<void> = loop();
@@ -519,7 +529,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         try {
             await this.receiveDialogMessageOverride();
         } catch (error) {
-            await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
+            await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error as string);
         }
 
         return Promise.resolve();
@@ -529,7 +539,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private async configConnection(connection: IConnection): Promise<IConnection> {
         if (this.terminateMessageLoop) {
             this.terminateMessageLoop = false;
-            return Promise.reject(`Connection to service terminated.`);
+            return Promise.reject("Connection to service terminated.");
         }
 
         await this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
@@ -545,7 +555,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         await this.sendWaveHeader(connection);
     }
 
-    private sendAgentConfig = (connection: IConnection): Promise<void> => {
+    private sendAgentConfig(connection: IConnection): Promise<void> {
         if (this.agentConfig && !this.agentConfigSent) {
 
             if (this.privRecognizerConfig
@@ -573,7 +583,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return;
     }
 
-    private sendAgentContext = (connection: IConnection): Promise<void> => {
+    private sendAgentContext(connection: IConnection): Promise<void> {
         const guid: string = createGuid();
 
         const speechActivityTemplate = this.privDialogServiceConnector.properties.getProperty(PropertyId.Conversation_Speech_Activity_Template);
@@ -619,10 +629,10 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         return ev;
     }
 
-    private handleResponseMessage = (responseMessage: SpeechConnectionMessage): void => {
+    private handleResponseMessage(responseMessage: SpeechConnectionMessage): void {
         // "response" messages can contain either "message" (activity) or "MessageStatus" data. Fire the appropriate
         // event according to the message type that's specified.
-        const responsePayload = JSON.parse(responseMessage.textBody);
+        const responsePayload: { messageType: string } = JSON.parse(responseMessage.textBody) as { messageType: string };
         switch (responsePayload.messageType.toLowerCase()) {
             case "message":
                 const responseRequestId = responseMessage.requestId.toUpperCase();
@@ -643,7 +653,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 if (!!this.privDialogServiceConnector.activityReceived) {
                     try {
                         this.privDialogServiceConnector.activityReceived(this.privDialogServiceConnector, activity);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable-next-line no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -657,7 +667,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         this.privDialogServiceConnector.turnStatusReceived(
                             this.privDialogServiceConnector,
                             new TurnStatusReceivedEventArgs(responseMessage.textBody));
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable-next-line no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.

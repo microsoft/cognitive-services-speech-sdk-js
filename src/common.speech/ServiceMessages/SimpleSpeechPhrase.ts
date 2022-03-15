@@ -22,8 +22,8 @@ export class SimpleSpeechPhrase implements ISimpleSpeechPhrase {
     private privSimpleSpeechPhrase: ISimpleSpeechPhrase;
 
     private constructor(json: string) {
-        this.privSimpleSpeechPhrase = JSON.parse(json);
-        this.privSimpleSpeechPhrase.RecognitionStatus = (RecognitionStatus as any)[this.privSimpleSpeechPhrase.RecognitionStatus];
+        this.privSimpleSpeechPhrase = JSON.parse(json) as ISimpleSpeechPhrase;
+        this.privSimpleSpeechPhrase.RecognitionStatus = RecognitionStatus[this.privSimpleSpeechPhrase.RecognitionStatus as unknown as keyof typeof RecognitionStatus];
     }
 
     public static fromJSON(json: string): SimpleSpeechPhrase {

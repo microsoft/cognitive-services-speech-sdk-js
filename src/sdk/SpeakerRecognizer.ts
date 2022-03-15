@@ -10,7 +10,6 @@ import {
     SpeakerIdMessageAdapter,
     SpeakerRecognitionConfig,
 } from "../common.speech/Exports";
-import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {

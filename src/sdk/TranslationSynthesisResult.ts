@@ -18,7 +18,7 @@ export class TranslationSynthesisResult {
      * @param {ResultReason} reason - The synthesis reason.
      * @param {ArrayBuffer} audio - The audio data.
      */
-    constructor(reason: ResultReason, audio: ArrayBuffer) {
+    public constructor(reason: ResultReason, audio: ArrayBuffer) {
         this.privReason = reason;
         this.privAudio = audio;
     }

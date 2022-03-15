@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// eslint-disable-next-line max-classes-per-file
 export enum AudioFormatTag {
     PCM = 1,
     MuLaw,
@@ -39,7 +40,7 @@ export abstract class AudioStreamFormat {
      * @param {number} samplesPerSecond - Sample rate, in samples per second (Hertz).
      * @param {number} bitsPerSample - Bits per sample, typically 16.
      * @param {number} channels - Number of channels in the waveform-audio data. Monaural data
-     *        uses one channel and stereo data uses two channels.
+     * uses one channel and stereo data uses two channels.
      * @param {AudioFormatTag} format - Audio format (PCM, alaw or mulaw).
      * @returns {AudioStreamFormat} The audio stream format being created.
      */
@@ -55,7 +56,7 @@ export abstract class AudioStreamFormat {
      * @param {number} samplesPerSecond - Sample rate, in samples per second (Hertz).
      * @param {number} bitsPerSample - Bits per sample, typically 16.
      * @param {number} channels - Number of channels in the waveform-audio data. Monaural data
-     *        uses one channel and stereo data uses two channels.
+     * uses one channel and stereo data uses two channels.
      * @returns {AudioStreamFormat} The audio stream format being created.
      */
     public static getWaveFormatPCM(samplesPerSecond: number, bitsPerSample: number, channels: number): AudioStreamFormat {
@@ -75,7 +76,6 @@ export abstract class AudioStreamFormat {
  * @private
  * @class AudioStreamFormatImpl
  */
-// tslint:disable-next-line:max-classes-per-file
 export class AudioStreamFormatImpl extends AudioStreamFormat {
     protected privHeader: ArrayBuffer;
 
@@ -162,6 +162,7 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
      * @public
      * @returns {AudioContext} An audio context instance
      */
+    /* eslint-disable */
     public static getAudioContext(sampleRate?: number): AudioContext {
         // Workaround for Speech SDK bug in Safari.
         const AudioContext = (window as any).AudioContext // our preferred impl
@@ -179,6 +180,7 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
             throw new Error("Browser does not support Web Audio API (AudioContext is not available).");
         }
     }
+    /* eslint-enable */
 
     /**
      * Closes the configuration object.
@@ -186,7 +188,9 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
      * @function
      * @public
      */
-    public close(): void { return; }
+    public close(): void {
+        return;
+    }
 
     /**
      * The format of the audio, valid values: 1 (PCM)
@@ -240,7 +244,7 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
         return this.privHeader;
     }
 
-    protected setString = (view: DataView, offset: number, str: string): void => {
+    protected setString(view: DataView, offset: number, str: string): void {
         for (let i = 0; i < str.length; i++) {
             view.setUint8(offset + i, str.charCodeAt(i));
         }

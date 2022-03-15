@@ -11,8 +11,7 @@ export class RiffPcmEncoder {
         this.privDesiredSampleRate = desiredSampleRate;
     }
 
-    public encode = (
-        actualAudioFrame: Float32Array): ArrayBuffer => {
+    public encode(actualAudioFrame: Float32Array): ArrayBuffer {
 
         const audioFrame = this.downSampleAudioFrame(actualAudioFrame, this.privActualSampleRate, this.privDesiredSampleRate);
 
@@ -29,23 +28,23 @@ export class RiffPcmEncoder {
         return buffer;
     }
 
-    private setString = (view: DataView, offset: number, str: string): void => {
+    private setString(view: DataView, offset: number, str: string): void {
         for (let i = 0; i < str.length; i++) {
             view.setUint8(offset + i, str.charCodeAt(i));
         }
     }
 
-    private floatTo16BitPCM = (view: DataView, offset: number, input: Float32Array): void => {
+    private floatTo16BitPCM(view: DataView, offset: number, input: Float32Array): void {
         for (let i = 0; i < input.length; i++ , offset += 2) {
             const s = Math.max(-1, Math.min(1, input[i]));
             view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
         }
     }
 
-    private downSampleAudioFrame = (
+    private downSampleAudioFrame(
         srcFrame: Float32Array,
         srcRate: number,
-        dstRate: number): Float32Array => {
+        dstRate: number): Float32Array {
 
         if (!srcFrame) {
             return null;

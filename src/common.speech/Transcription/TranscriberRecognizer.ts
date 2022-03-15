@@ -30,6 +30,19 @@ import {
 } from "../Exports";
 
 export class TranscriberRecognizer extends Recognizer {
+
+    public recognizing: (sender: Recognizer, event: SpeechRecognitionEventArgs) => void;
+
+    public recognized: (sender: Recognizer, event: SpeechRecognitionEventArgs) => void;
+
+    public canceled: (sender: Recognizer, event: CancellationEventArgs) => void;
+
+    public conversationCanceled: (sender: Recognizer, event: CancellationEventArgs) => void;
+
+    public conversationStarted: (sender: Recognizer, event: SessionEventArgs) => void;
+
+    public conversationStopped: (sender: Recognizer, event: SessionEventArgs) => void;
+
     private privDisposedRecognizer: boolean;
     private privConversation: Conversation;
 
@@ -50,21 +63,14 @@ export class TranscriberRecognizer extends Recognizer {
         this.privDisposedRecognizer = false;
     }
 
-    public recognizing: (sender: Recognizer, event: SpeechRecognitionEventArgs) => void;
+    public get speechRecognitionLanguage(): string {
+        Contracts.throwIfDisposed(this.privDisposedRecognizer);
 
-    public recognized: (sender: Recognizer, event: SpeechRecognitionEventArgs) => void;
+        return this.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
+    }
 
-    public canceled: (sender: Recognizer, event: CancellationEventArgs) => void;
-
-    public conversationCanceled: (sender: Recognizer, event: CancellationEventArgs) => void;
-
-    public conversationStarted: (sender: Recognizer, event: SessionEventArgs) => void;
-
-    public conversationStopped: (sender: Recognizer, event: SessionEventArgs) => void;
-
-    public getConversationInfo(): ConversationInfo {
-        Contracts.throwIfNullOrUndefined(this.privConversation, "Conversation");
-        return this.privConversation.conversationInfo;
+    public get properties(): PropertyCollection {
+        return this.privProperties;
     }
 
     public get authorizationToken(): string {
@@ -81,14 +87,9 @@ export class TranscriberRecognizer extends Recognizer {
         this.privConversation = c;
     }
 
-    public get speechRecognitionLanguage(): string {
-        Contracts.throwIfDisposed(this.privDisposedRecognizer);
-
-        return this.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
-    }
-
-    public get properties(): PropertyCollection {
-        return this.privProperties;
+    public getConversationInfo(): ConversationInfo {
+        Contracts.throwIfNullOrUndefined(this.privConversation, "Conversation");
+        return this.privConversation.conversationInfo;
     }
 
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {

@@ -17,7 +17,7 @@ export class VoiceProfile {
      * @param {string} profileId - profileId of this Voice Profile.
      * @param {VoiceProfileType} profileType - profileType of this Voice Profile.
      */
-    constructor(profileId: string, profileType: VoiceProfileType) {
+    public constructor(profileId: string, profileType: VoiceProfileType) {
         this.privId = profileId;
         this.privProfileType = profileType;
     }

@@ -20,7 +20,7 @@ export class SpeechSynthesisResult extends SynthesisResult {
      * @param {string} errorDetails - Error details, if provided.
      * @param {PropertyCollection} properties - Additional properties, if provided.
      */
-    constructor(resultId?: string, reason?: ResultReason,  audioData?: ArrayBuffer,
+    public constructor(resultId?: string, reason?: ResultReason,  audioData?: ArrayBuffer,
                 errorDetails?: string, properties?: PropertyCollection) {
         super(resultId, reason, errorDetails, properties);
         this.privAudioData = audioData;
