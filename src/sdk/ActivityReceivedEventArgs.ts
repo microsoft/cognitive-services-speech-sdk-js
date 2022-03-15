@@ -5,8 +5,8 @@
 import { PullAudioOutputStream } from "./Audio/AudioOutputStream";
 
 export interface IActivity {
-    type: string;
-    speak?: string;
+    type?: string;
+    speak?: any;
 }
 
 /**
