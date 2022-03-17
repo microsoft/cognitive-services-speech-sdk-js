@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 import {
     ProxyInfo,
     WebsocketConnection,
@@ -15,15 +16,13 @@ import { QueryParameterNames } from "./QueryParameterNames";
 
 export class DialogConnectionFactory extends ConnectionFactoryBase {
 
-    private static Constants: any = class {
-        private static ApiKey: string = "api";
-        private static BaseUrl: string = "convai.speech";
-    };
+    private static readonly ApiKey: string = "api";
+    private static readonly BaseUrl: string = "convai.speech";
 
-    public create = (
+    public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection => {
+        connectionId?: string): IConnection {
 
         const applicationId: string = config.parameters.getProperty(PropertyId.Conversation_ApplicationId, "");
         const dialogType: string = config.parameters.getProperty(PropertyId.Conversation_DialogType);
@@ -66,9 +65,9 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
             const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
             const host: string = config.parameters.getProperty(
                 PropertyId.SpeechServiceConnection_Host,
-                `wss://${region}.${DialogConnectionFactory.Constants.BaseUrl}${hostSuffix}`);
+                `wss://${region}.${DialogConnectionFactory.BaseUrl}${hostSuffix}`);
             const standardizedHost: string = host.endsWith("/") ? host : host + "/";
-            endpoint = `${standardizedHost}${resourceInfix}${DialogConnectionFactory.Constants.ApiKey}/${version}`;
+            endpoint = `${standardizedHost}${resourceInfix}${DialogConnectionFactory.ApiKey}/${version}`;
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);

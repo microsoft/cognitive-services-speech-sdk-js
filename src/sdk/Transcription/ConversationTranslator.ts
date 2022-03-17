@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
+/* eslint-disable max-classes-per-file */
+
 import { ConversationConnectionConfig } from "../../common.speech/Exports";
 import {
     IDisposable,
@@ -18,7 +20,6 @@ import {
     PropertyId,
     SessionEventArgs,
     SpeechTranslationConfig,
-    TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
     TranslationRecognizer
 } from "../Exports";
@@ -31,15 +32,13 @@ import {
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
     IConversationTranslator,
-    Participant,
+    Participant
 } from "./Exports";
 import { Callback, IConversation } from "./IConversation";
 
 export enum SpeechState {
     Inactive, Connecting, Connected
 }
-
-// tslint:disable:max-classes-per-file
 
 // child class of TranslationRecognizer meant only for use with ConversationTranslator
 class ConversationTranslationRecognizer extends TranslationRecognizer {
@@ -50,15 +49,16 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
         this.privSpeechState = SpeechState.Inactive;
         if (!!translator) {
             this.privTranslator = translator;
-            this.sessionStarted = () => {
+            this.sessionStarted = (): void => {
                 this.privSpeechState = SpeechState.Connected;
             };
 
-            this.sessionStopped = () => {
+            this.sessionStopped = (): void => {
                 this.privSpeechState = SpeechState.Inactive;
             };
 
-            this.recognized = async (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs) => {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            this.recognized = async (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs): Promise<void> => {
                 // TODO: add support for getting recognitions from here if own speech
 
                 // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
@@ -69,7 +69,8 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
                 }
             };
 
-            this.canceled = async (r: TranslationRecognizer, e: TranslationRecognitionCanceledEventArgs) => {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            this.canceled = async (): Promise<void> => {
                 if (this.privSpeechState !== SpeechState.Inactive) {
                     try {
                         await this.cancelSpeech();
@@ -101,15 +102,14 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
      * Fire a cancel event
      * @param error
      */
-    private fireCancelEvent(error: any): void {
+    private fireCancelEvent(error: string): void {
         try {
             if (!!this.privTranslator.canceled) {
                 const cancelEvent: ConversationTranslationCanceledEventArgs = new ConversationTranslationCanceledEventArgs(
-                    error?.reason ?? CancellationReason.Error,
-                    error?.errorDetails ?? error,
-                    error?.errorCode ?? CancellationErrorCode.RuntimeError,
-                    undefined,
-                    error?.sessionId);
+                    CancellationReason.Error,
+                    error,
+                    CancellationErrorCode.RuntimeError
+                    );
 
                 this.privTranslator.canceled(this.privTranslator, cancelEvent);
             }
@@ -130,23 +130,36 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
 
 }
 
-/***
+/**
  * Join, leave or connect to a conversation.
  */
 export class ConversationTranslator extends ConversationCommon implements IConversationTranslator, IDisposable {
 
+    public canceled: (sender: ConversationHandler, event: ConversationTranslationCanceledEventArgs) => void;
+    public conversationExpiration: (sender: IConversationTranslator, event: ConversationExpirationEventArgs) => void;
+    public participantsChanged: (sender: IConversationTranslator, event: ConversationParticipantsChangedEventArgs) => void;
+    public sessionStarted: (sender: ConversationHandler, event: SessionEventArgs) => void;
+    public sessionStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
+    public textMessageReceived: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+    public transcribed: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+    public transcribing: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+
     private privSpeechRecognitionLanguage: string;
     private privProperties: PropertyCollection;
-    private privIsDisposed: boolean = false;
+    private privIsDisposed: boolean;
     private privCTRecognizer: ConversationTranslationRecognizer;
-    private privIsSpeaking: boolean = false;
+    private privIsSpeaking: boolean;
     private privConversation: ConversationImpl;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
-    private privPlaceholderKey: string = "abcdefghijklmnopqrstuvwxyz012345";
-    private privPlaceholderRegion: string = "westus";
+    private privPlaceholderKey: string;
+    private privPlaceholderRegion: string;
 
     public constructor(audioConfig?: AudioConfig) {
         super(audioConfig);
+        this.privIsDisposed = false;
+        this.privIsSpeaking = false;
+        this.privPlaceholderKey = "abcdefghijklmnopqrstuvwxyz012345";
+        this.privPlaceholderRegion = "westus";
         this.privProperties = new PropertyCollection();
     }
 
@@ -162,14 +175,25 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         return this.privConversation?.participants;
     }
 
-    public canceled: (sender: ConversationHandler, event: ConversationTranslationCanceledEventArgs) => void;
-    public conversationExpiration: (sender: IConversationTranslator, event: ConversationExpirationEventArgs) => void;
-    public participantsChanged: (sender: IConversationTranslator, event: ConversationParticipantsChangedEventArgs) => void;
-    public sessionStarted: (sender: ConversationHandler, event: SessionEventArgs) => void;
-    public sessionStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
-    public textMessageReceived: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
-    public transcribed: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
-    public transcribing: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+    private get canSpeak(): boolean {
+
+        // is there a Conversation websocket available and has the Recognizer been set up
+        if (!this.privConversation.isConnected || !this.privCTRecognizer) {
+            return false;
+        }
+
+        // is the user already speaking
+        if (this.privIsSpeaking || this.privCTRecognizer.state === SpeechState.Connected || this.privCTRecognizer.state === SpeechState.Connecting) {
+            return false;
+        }
+
+        // is the user muted
+        if (this.privConversation.isMutedByHost) {
+            return false;
+        }
+
+        return true;
+    }
 
     /**
      * Join a conversation. If this is the host, pass in the previously created Conversation object.
@@ -181,7 +205,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
      */
     public joinConversationAsync(conversation: IConversation, nickname: string, cb?: Callback, err?: Callback): void;
     public joinConversationAsync(conversationId: string, nickname: string, lang: string, cb?: Callback, err?: Callback): void;
-    public joinConversationAsync(conversation: any, nickname: string, param1?: string | Callback, param2?: Callback, param3?: Callback): void {
+    public joinConversationAsync(conversation: string | { config: SpeechTranslationConfig }, nickname: string, param1?: string | Callback, param2?: Callback, param3?: Callback): void {
 
         try {
 
@@ -195,7 +219,9 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 }
 
                 let lang: string = param1 as string;
-                if (lang === undefined || lang === null || lang === "") { lang = ConversationConnectionConfig.defaultLanguageCode; }
+                if (lang === undefined || lang === null || lang === "") {
+                    lang = ConversationConnectionConfig.defaultLanguageCode;
+                }
 
                 // create a placeholder config
                 this.privSpeechTranslationConfig = SpeechTranslationConfig.fromSubscription(
@@ -223,7 +249,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                     conversation,
                     nickname,
                     lang,
-                    ((result: string) => {
+                    ((result: string): void => {
 
                         if (!result) {
                             this.handleError(new Error(this.privErrors.permissionDeniedConnect), param3);
@@ -233,15 +259,15 @@ export class ConversationTranslator extends ConversationCommon implements IConve
 
                         // connect to the ws
                         this.privConversation.startConversationAsync(
-                            (() => {
+                            ((): void => {
                                 this.handleCallback(param2, param3);
                             }),
-                            ((error: any) => {
+                            ((error: any): void => {
                                 this.handleError(error, param3);
                             }));
 
                     }),
-                    ((error: any) => {
+                    ((error: any): void => {
                         this.handleError(error, param3);
                     }));
 
@@ -306,7 +332,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
             Contracts.throwIfNullOrUndefined(this.privConversation, this.privErrors.permissionDeniedSend);
             Contracts.throwIfNullOrWhitespace(message, this.privErrors.invalidArgs.replace("{arg}", message));
 
-            this.privConversation?.sendTextMessageAsync(message, cb, err);
+            this.privConversation.sendTextMessageAsync(message, cb, err);
         } catch (error) {
 
             this.handleError(error, err);
@@ -361,7 +387,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 // stop the recognition but leave the websocket open
                 this.privIsSpeaking = false;
                 await new Promise((resolve: () => void, reject: (error: string) => void): void => {
-                    this.privCTRecognizer?.stopContinuousRecognitionAsync(resolve, reject);
+                    this.privCTRecognizer.stopContinuousRecognitionAsync(resolve, reject);
                 });
 
             } catch (error) {
@@ -381,12 +407,12 @@ export class ConversationTranslator extends ConversationCommon implements IConve
             }
             await this.cancelSpeech();
             this.privIsDisposed = true;
-            this.privSpeechTranslationConfig?.close();
+            this.privSpeechTranslationConfig.close();
             this.privSpeechRecognitionLanguage = undefined;
             this.privProperties = undefined;
             this.privAudioConfig = undefined;
             this.privSpeechTranslationConfig = undefined;
-            this.privConversation?.dispose();
+            this.privConversation.dispose();
             this.privConversation = undefined;
         })(), success, err);
     }
@@ -430,7 +456,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationConnectionConfig.speechHost);
             endpointHost = endpointHost.replace("{region}", this.privConversation.room.cognitiveSpeechRegion);
 
-            const url: string = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}?${ConversationConnectionConfig.configParams.token}=${token}`;
+            const url = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}?${ConversationConnectionConfig.configParams.token}=${token}`;
 
             this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], url);
 
@@ -449,25 +475,4 @@ export class ConversationTranslator extends ConversationCommon implements IConve
             this.privCTRecognizer.startContinuousRecognitionAsync(resolve, reject);
         });
     }
-
-    private get canSpeak(): boolean {
-
-        // is there a Conversation websocket available and has the Recognizer been set up
-        if (!this.privConversation.isConnected || !this.privCTRecognizer) {
-            return false;
-        }
-
-        // is the user already speaking
-        if (this.privIsSpeaking || this.privCTRecognizer.state === SpeechState.Connected || this.privCTRecognizer.state === SpeechState.Connecting) {
-            return false;
-        }
-
-        // is the user muted
-        if (this.privConversation.isMutedByHost) {
-            return false;
-        }
-
-        return true;
-    }
-
 }

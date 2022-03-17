@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+
+/* eslint-disable max-classes-per-file */
 
 import { PathLike } from "fs";
 import { IRestResponse } from "../common.browser/RestMessageAdapter";
@@ -487,11 +490,11 @@ export class SpeechSynthesizer {
         const authentication = (subscriptionKey && subscriptionKey !== "") ?
             new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
             new CognitiveTokenAuthentication(
-                (authFetchEventId: string): Promise<string> => {
+                (): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return Promise.resolve(authorizationToken);
                 },
-                (authFetchEventId: string): Promise<string> => {
+                (): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return Promise.resolve(authorizationToken);
                 });
@@ -503,7 +506,7 @@ export class SpeechSynthesizer {
             synthesizerConfig);
 
         this.privAdapter.audioOutputFormat = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(
-            (SpeechSynthesisOutputFormat as any)[this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined)]
+            SpeechSynthesisOutputFormat[this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined) as keyof typeof SpeechSynthesisOutputFormat]
         );
 
         this.privRestAdapter = new SynthesisRestAdapter(synthesizerConfig);
@@ -530,13 +533,13 @@ export class SpeechSynthesizer {
                         cb(e);
                     } catch (e) {
                         if (!!err) {
-                            err(e);
+                            err(e as string);
                         }
                     }
                 }
                 cb = undefined;
-                /* tslint:disable:no-empty */
-                this.adapterSpeak().catch(() => { });
+                /* eslint-disable no-empty */
+                this.adapterSpeak().catch((): void => { });
 
             }, (e: string): void => {
                 if (!!err) {
@@ -544,22 +547,22 @@ export class SpeechSynthesizer {
                 }
             }, audioDestination));
 
-            /* tslint:disable:no-empty */
-            this.adapterSpeak().catch(() => { });
+            /* eslint-disable no-empty-function */
+            this.adapterSpeak().catch((): void => { });
 
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
-                    const typedError: Error = error as Error;
+                    const typedError: Error = error;
                     err(typedError.name + ": " + typedError.message);
                 } else {
-                    err(error);
+                    err(error as string);
                 }
             }
 
             // Destroy the synthesizer.
-            /* tslint:disable:no-empty */
-            this.dispose(true).catch(() => { });
+            /* eslint-disable no-empty */
+            this.dispose(true).catch((): void => { });
         }
     }
 
@@ -569,11 +572,11 @@ export class SpeechSynthesizer {
         if (response.ok && Array.isArray(response.json)) {
             let json = response.json;
             if (!!locale && locale.length > 0) {
-                json = json.filter((item: any) => !!item.Locale && item.Locale.toLowerCase() === locale.toLowerCase() );
+                json = json.filter((item: { Locale: string }): boolean => !!item.Locale && item.Locale.toLowerCase() === locale.toLowerCase() );
             }
-            return new SynthesisVoicesResult(requestId, json);
+            return new SynthesisVoicesResult(requestId, json, undefined);
         } else {
-            return new SynthesisVoicesResult(requestId, { errorDetails: `Error: ${response.status}: ${response.statusText}`});
+            return new SynthesisVoicesResult(requestId, undefined, `Error: ${response.status}: ${response.statusText}`);
         }
    }
 
@@ -594,7 +597,6 @@ export class SpeechSynthesizer {
     }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class SynthesisRequest {
     public requestId: string;
     public text: string;
@@ -603,7 +605,7 @@ export class SynthesisRequest {
     public err: (e: string) => void;
     public dataStream: IAudioDestination;
 
-    constructor(requestId: string, text: string, isSSML: boolean, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, dataStream?: IAudioDestination) {
+    public constructor(requestId: string, text: string, isSSML: boolean, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, dataStream?: IAudioDestination) {
         this.requestId = requestId;
         this.text = text;
         this.isSSML = isSSML;

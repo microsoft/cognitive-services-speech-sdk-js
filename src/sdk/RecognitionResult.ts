@@ -33,7 +33,7 @@ export class RecognitionResult {
      * @param {string} json - Additional Json, if provided.
      * @param {PropertyCollection} properties - Additional properties, if provided.
      */
-    constructor(resultId?: string, reason?: ResultReason, text?: string, duration?: number,
+    public constructor(resultId?: string, reason?: ResultReason, text?: string, duration?: number,
                 offset?: number, language?: string, languageDetectionConfidence?: string, errorDetails?: string, json?: string, properties?: PropertyCollection) {
         this.privResultId = resultId;
         this.privReason = reason;
@@ -147,7 +147,7 @@ export class RecognitionResult {
     }
 
     /**
-     *  The set of properties exposed in the result.
+     * The set of properties exposed in the result.
      * @member RecognitionResult.prototype.properties
      * @function
      * @public

@@ -246,6 +246,20 @@ export enum PropertyId {
     SpeechServiceConnection_EnableAudioLogging,
 
     /**
+     * A string value representing the priority for single language detection.
+     * Allowed values include "Latency" and "Accuracy"
+     * Added in version 1.21.0
+     */
+    SpeechServiceConnection_AtStartLanguageIdPriority,
+
+    /**
+     * A string value representing the priority for continuous language detection.
+     * "Latency" is default, "Accuracy" is currently not allowed for continuous LID
+     * Added in version 1.21.0
+     */
+    SpeechServiceConnection_ContinuousLanguageIdPriority,
+
+    /**
      * A string value representing the desired endpoint version to target for Speech Recognition.
      * Added in version 1.21.0
      */
@@ -266,7 +280,7 @@ export enum PropertyId {
     SpeechServiceResponse_PostProcessingOption,
 
     /**
-     *  A boolean value specifying whether to include word-level timestamps in the response result.
+     * A boolean value specifying whether to include word-level timestamps in the response result.
      * Added in version 1.7.0
      */
     SpeechServiceResponse_RequestWordLevelTimestamps,

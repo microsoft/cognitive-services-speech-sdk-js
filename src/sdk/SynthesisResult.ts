@@ -22,7 +22,7 @@ export class SynthesisResult {
      * @param {string} errorDetails - Error details, if provided.
      * @param {PropertyCollection} properties - Additional properties, if provided.
      */
-    constructor(resultId?: string, reason?: ResultReason, errorDetails?: string, properties?: PropertyCollection) {
+    public constructor(resultId?: string, reason?: ResultReason, errorDetails?: string, properties?: PropertyCollection) {
         this.privResultId = resultId;
         this.privReason = reason;
         this.privErrorDetails = errorDetails;
@@ -63,7 +63,7 @@ export class SynthesisResult {
     }
 
     /**
-     *  The set of properties exposed in the result.
+     * The set of properties exposed in the result.
      * @member SynthesisResult.prototype.properties
      * @function
      * @public

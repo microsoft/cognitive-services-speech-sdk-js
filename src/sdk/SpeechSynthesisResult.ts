@@ -26,7 +26,7 @@ export class SpeechSynthesisResult extends SynthesisResult {
      * @param {PropertyCollection} properties - Additional properties, if provided.
      * @param {number} audioDuration - The audio duration.
      */
-    constructor(resultId?: string, reason?: ResultReason, audioData?: ArrayBuffer,
+    public constructor(resultId?: string, reason?: ResultReason, audioData?: ArrayBuffer,
                 errorDetails?: string, properties?: PropertyCollection, audioDuration?: number) {
         super(resultId, reason, errorDetails, properties);
         this.privAudioData = audioData;

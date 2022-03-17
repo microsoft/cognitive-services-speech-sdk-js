@@ -37,7 +37,7 @@ import { SpeechConfigImpl } from "./SpeechConfig";
 export class IntentRecognizer extends Recognizer {
     private privDisposedIntentRecognizer: boolean;
     private privAddedIntents: string[][];
-    private privAddedLmIntents: { [id: string]: AddedLmIntent; };
+    private privAddedLmIntents: { [id: string]: AddedLmIntent };
     private privUmbrellaIntent: AddedLmIntent;
 
     /**
@@ -127,7 +127,7 @@ export class IntentRecognizer extends Recognizer {
      * @function
      * @public
      * @returns {PropertyCollection} The collection of properties and their
-     *          values defined for this IntentRecognizer.
+     * values defined for this IntentRecognizer.
      */
     public get properties(): PropertyCollection {
         return this.privProperties;
@@ -137,8 +137,8 @@ export class IntentRecognizer extends Recognizer {
      * Starts intent recognition, and stops after the first utterance is recognized.
      * The task returns the recognition text and intent as result.
      * Note: RecognizeOnceAsync() returns when the first utterance has been recognized,
-     *       so it is suitable only for single shot recognition like command or query.
-     *       For long-running recognition, use StartContinuousRecognitionAsync() instead.
+     * so it is suitable only for single shot recognition like command or query.
+     * For long-running recognition, use StartContinuousRecognitionAsync() instead.
      * @member IntentRecognizer.prototype.recognizeOnceAsync
      * @function
      * @public
@@ -200,7 +200,7 @@ export class IntentRecognizer extends Recognizer {
      * Starts speech recognition with keyword spotting, until stopKeywordRecognitionAsync() is called.
      * User must subscribe to events to receive recognition results.
      * Note: Key word spotting functionality is only available on the Speech Devices SDK.
-     *       This functionality is currently not included in the SDK itself.
+     * This functionality is currently not included in the SDK itself.
      * @member IntentRecognizer.prototype.startKeywordRecognitionAsync
      * @function
      * @public
@@ -219,7 +219,7 @@ export class IntentRecognizer extends Recognizer {
     /**
      * Stops continuous speech recognition.
      * Note: Key word spotting functionality is only available on the Speech Devices SDK.
-     *       This functionality is currently not included in the SDK itself.
+     * This functionality is currently not included in the SDK itself.
      * @member IntentRecognizer.prototype.stopKeywordRecognitionAsync
      * @function
      * @public
@@ -228,7 +228,13 @@ export class IntentRecognizer extends Recognizer {
      */
     public stopKeywordRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
         if (!!cb) {
-            cb();
+            try {
+                cb();
+            } catch (e) {
+                if (!!err) {
+                    err(e as string);
+                }
+            }
         }
     }
 
@@ -254,10 +260,10 @@ export class IntentRecognizer extends Recognizer {
      * @function
      * @public
      * @param {string} intentId - A String that represents the identifier of the intent
-     *        to be recognized. Ignored if intentName is empty.
+     * to be recognized. Ignored if intentName is empty.
      * @param {string} model - The intent model from Language Understanding service.
      * @param {string} intentName - The intent name defined in the intent model. If it
-     *        is empty, all intent names defined in the model will be added.
+     * is empty, all intent names defined in the model will be added.
      */
     public addIntentWithLanguageModel(intentId: string, model: LanguageUnderstandingModel, intentName?: string): void {
         Contracts.throwIfDisposed(this.privDisposedIntentRecognizer);
@@ -379,9 +385,9 @@ export class IntentRecognizer extends Recognizer {
 
 interface IIntentContext {
     Intent: {
-        id: string,
-        key: string,
-        provider: string,
+        id: string;
+        key: string;
+        provider: string;
     };
     ReferenceGrammars: string[];
 }

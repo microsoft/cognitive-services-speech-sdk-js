@@ -23,9 +23,9 @@ export class DynamicGrammarBuilder {
         }
 
         if (phrase instanceof Array) {
-            this.privPhrases = this.privPhrases.concat(phrase as string[]);
+            this.privPhrases = this.privPhrases.concat(phrase);
         } else {
-            this.privPhrases.push(phrase as string);
+            this.privPhrases.push(phrase);
         }
     }
 
@@ -41,9 +41,9 @@ export class DynamicGrammarBuilder {
         }
 
         if (grammar instanceof Array) {
-            this.privGrammars = this.privGrammars.concat(grammar as string[]);
+            this.privGrammars = this.privGrammars.concat(grammar);
         } else {
-            this.privGrammars.push(grammar as string);
+            this.privGrammars.push(grammar);
         }
     }
 
@@ -66,7 +66,7 @@ export class DynamicGrammarBuilder {
         if (undefined !== this.privPhrases && 0 !== this.privPhrases.length) {
             const retPhrases: IDynamicGrammarGeneric[] = [];
 
-            this.privPhrases.forEach((value: string, index: number, array: string[]): void => {
+            this.privPhrases.forEach((value: string): void => {
                 retPhrases.push({
                     Text: value,
                 });

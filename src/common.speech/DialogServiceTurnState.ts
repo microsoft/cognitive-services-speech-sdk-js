@@ -13,14 +13,12 @@ export class DialogServiceTurnState {
     private privTimeoutToken: any;
     private privTurnManager: DialogServiceTurnStateManager;
 
-    constructor(manager: DialogServiceTurnStateManager, requestId: string) {
+    public constructor(manager: DialogServiceTurnStateManager, requestId: string) {
         this.privRequestId = requestId;
         this.privIsCompleted = false;
         this.privAudioStream = null;
         this.privTurnManager = manager;
         this.resetTurnEndTimeout();
-        // tslint:disable-next-line:no-console
-        // console.info("DialogServiceTurnState debugturn start:" + this.privRequestId);
     }
 
     public get audioStream(): PullAudioOutputStreamImpl {
@@ -33,8 +31,6 @@ export class DialogServiceTurnState {
         if (payload.messageDataStreamType === MessageDataStreamType.TextToSpeechAudio) {
             this.privAudioStream = AudioOutputStream.createPullStream() as PullAudioOutputStreamImpl;
             this.privAudioStream.format = (audioFormat !== undefined) ? audioFormat : AudioOutputFormatImpl.getDefaultOutputFormat();
-            // tslint:disable-next-line:no-console
-            // console.info("Audio start debugturn:" + this.privRequestId);
         }
         return this.privAudioStream;
     }
@@ -47,6 +43,7 @@ export class DialogServiceTurnState {
 
     public complete(): void {
         if (this.privTimeoutToken !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             clearTimeout(this.privTimeoutToken);
         }
         this.endAudioStream();
@@ -54,15 +51,10 @@ export class DialogServiceTurnState {
 
     private resetTurnEndTimeout(): void {
         if (this.privTimeoutToken !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             clearTimeout(this.privTimeoutToken);
         }
-        // tslint:disable-next-line:no-console
-        // console.info("Timeout reset debugturn:" + this.privRequestId);
-
         this.privTimeoutToken = setTimeout((): void => {
-            // tslint:disable-next-line:no-console
-            // console.info("Timeout complete debugturn:" + this.privRequestId);
-
             this.privTurnManager.CompleteTurn(this.privRequestId);
             return;
         }, 2000);

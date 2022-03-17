@@ -20,14 +20,14 @@ export class TranslationPhrase implements ITranslationPhrase {
 
     private constructor(phrase: ITranslationPhrase) {
         this.privTranslationPhrase = phrase;
-        this.privTranslationPhrase.RecognitionStatus = (RecognitionStatus as any)[this.privTranslationPhrase.RecognitionStatus];
+        this.privTranslationPhrase.RecognitionStatus = RecognitionStatus[this.privTranslationPhrase.RecognitionStatus as unknown as keyof typeof RecognitionStatus];
         if (this.privTranslationPhrase.Translation !== undefined) {
-            this.privTranslationPhrase.Translation.TranslationStatus = (TranslationStatus as any)[this.privTranslationPhrase.Translation.TranslationStatus];
+            this.privTranslationPhrase.Translation.TranslationStatus = TranslationStatus[this.privTranslationPhrase.Translation.TranslationStatus as unknown as keyof typeof TranslationStatus];
         }
     }
 
     public static fromJSON(json: string): TranslationPhrase {
-        return new TranslationPhrase(JSON.parse(json));
+        return new TranslationPhrase(JSON.parse(json) as ITranslationPhrase);
     }
 
     public static fromTranslationResponse(translationResponse: { SpeechPhrase: ITranslationPhrase }): TranslationPhrase {

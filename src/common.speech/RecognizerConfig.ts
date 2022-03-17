@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// tslint:disable:max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 import { PropertyCollection, PropertyId } from "../sdk/Exports";
 
@@ -17,18 +17,25 @@ export enum SpeechResultFormat {
 }
 
 export class RecognizerConfig {
-    private privRecognitionMode: RecognitionMode = RecognitionMode.Interactive;
+    private privRecognitionMode: RecognitionMode;
+    private privLanguageIdMode: string;
+    private privLanguageIdPriority: string;
     private privSpeechServiceConfig: SpeechServiceConfig;
     private privRecognitionActivityTimeout: number;
     private privParameters: PropertyCollection;
     private privMaxRetryCount: number;
 
-    constructor(
+    public constructor(
         speechServiceConfig: SpeechServiceConfig,
         parameters: PropertyCollection) {
         this.privSpeechServiceConfig = speechServiceConfig ? speechServiceConfig : new SpeechServiceConfig(new Context(null));
         this.privParameters = parameters;
         this.privMaxRetryCount = parseInt(parameters.getProperty("SPEECH-Error-MaxRetryCount", "4"), 10);
+        this.privLanguageIdPriority = parameters.getProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, undefined);
+        this.privLanguageIdMode = this.privLanguageIdPriority === "Latency" ? "DetectContinuous" : "DetectAtAudioStart";
+        if (this.privLanguageIdMode === "DetectAtAudioStart") {
+            this.privLanguageIdPriority = parameters.getProperty(PropertyId.SpeechServiceConnection_AtStartLanguageIdPriority, undefined);
+        }
     }
 
     public get parameters(): PropertyCollection {
@@ -57,6 +64,14 @@ export class RecognizerConfig {
         return this.privRecognitionMode !== RecognitionMode.Interactive;
     }
 
+    public get languageIdPriority(): string {
+        return !!this.privLanguageIdPriority ? `Prioritize${this.privLanguageIdPriority}` : "";
+    }
+
+    public get languageIdMode(): string {
+        return this.privLanguageIdMode;
+    }
+
     public get autoDetectSourceLanguages(): string {
         return this.parameters.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, undefined);
     }
@@ -65,8 +80,8 @@ export class RecognizerConfig {
         return this.parameters.getProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, undefined);
     }
 
-    public get sourceLanguageModels(): { language: string, endpoint: string }[] {
-        const models: { language: string, endpoint: string }[] = [];
+    public get sourceLanguageModels(): { language: string; endpoint: string }[] {
+        const models: { language: string; endpoint: string }[] = [];
         let modelsExist: boolean = false;
         if (this.autoDetectSourceLanguages !== undefined) {
             for (const language of this.autoDetectSourceLanguages.split(",")) {
@@ -93,16 +108,17 @@ export class SpeechServiceConfig {
     private context: Context;
     private recognition: string;
 
-    constructor(context: Context) {
+    public constructor(context: Context) {
         this.context = context;
     }
 
-    public serialize = (): string => {
-        return JSON.stringify(this, (key: any, value: any): any => {
+    public serialize(): string {
+        return JSON.stringify(this, (key: any, value: { [k: string]: any }): any => {
             if (value && typeof value === "object") {
-                const replacement: any = {};
+                const replacement: { [k: string ]: any } = {};
                 for (const k in value) {
                     if (Object.hasOwnProperty.call(value, k)) {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         replacement[k && k.charAt(0).toLowerCase() + k.substring(1)] = value[k];
                     }
                 }
@@ -130,7 +146,7 @@ export class Context {
     public os: OS;
     public audio: ISpeechConfigAudio;
 
-    constructor(os: OS) {
+    public constructor(os: OS) {
         this.system = new System();
         this.os = os;
     }
@@ -142,7 +158,7 @@ export class System {
     public build: string;
     public lang: string;
 
-    constructor() {
+    public constructor() {
         // Note: below will be patched for official builds.
         const SPEECHSDK_CLIENTSDK_VERSION = "1.15.0-alpha.0.1";
 
@@ -158,7 +174,7 @@ export class OS {
     public name: string;
     public version: string;
 
-    constructor(platform: string, name: string, version: string) {
+    public constructor(platform: string, name: string, version: string) {
         this.platform = platform;
         this.name = name;
         this.version = version;
@@ -170,7 +186,7 @@ export class Device {
     public model: string;
     public version: string;
 
-    constructor(manufacturer: string, model: string, version: string) {
+    public constructor(manufacturer: string, model: string, version: string) {
         this.manufacturer = manufacturer;
         this.model = model;
         this.version = version;

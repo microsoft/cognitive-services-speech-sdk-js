@@ -3,12 +3,8 @@
 
 import { v4 as uuid } from "uuid";
 
-const createGuid: () => string = (): string => {
-    return uuid();
-};
+const createGuid: () => string = (): string => uuid();
 
-const createNoDashGuid: () => string = (): string => {
-    return createGuid().replace(new RegExp("-", "g"), "").toUpperCase();
-};
+const createNoDashGuid: () => string = (): string => createGuid().replace(new RegExp("-", "g"), "").toUpperCase();
 
 export { createGuid, createNoDashGuid };

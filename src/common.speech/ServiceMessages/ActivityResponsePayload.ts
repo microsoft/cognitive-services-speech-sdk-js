@@ -5,7 +5,7 @@
 export interface IActivityPayloadResponse {
     conversationId: string;
     messageDataStreamType: number;
-    messagePayload: any;
+    messagePayload: string | object;
     version: number;
 }
 
@@ -13,7 +13,7 @@ export class ActivityPayloadResponse implements IActivityPayloadResponse {
     private privActivityResponse: IActivityPayloadResponse;
 
     private constructor(json: string) {
-        this.privActivityResponse = JSON.parse(json);
+        this.privActivityResponse = JSON.parse(json) as IActivityPayloadResponse;
     }
 
     public static fromJSON(json: string): ActivityPayloadResponse {
@@ -28,7 +28,7 @@ export class ActivityPayloadResponse implements IActivityPayloadResponse {
         return this.privActivityResponse.messageDataStreamType;
     }
 
-    public get messagePayload(): any {
+    public get messagePayload(): string | object {
         return this.privActivityResponse.messagePayload;
     }
 

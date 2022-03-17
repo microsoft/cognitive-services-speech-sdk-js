@@ -25,7 +25,7 @@ export class IntentResponse implements IIntentResponse {
     private privIntentResponse: IIntentResponse;
 
     private constructor(json: string) {
-        this.privIntentResponse = JSON.parse(json);
+        this.privIntentResponse = JSON.parse(json) as IIntentResponse;
     }
 
     public static fromJSON(json: string): IntentResponse {

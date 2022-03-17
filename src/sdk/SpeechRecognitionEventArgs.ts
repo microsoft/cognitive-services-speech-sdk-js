@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 import { RecognitionEventArgs, SpeechRecognitionResult } from "./Exports";
 
 /**
@@ -39,6 +40,5 @@ export class SpeechRecognitionEventArgs extends RecognitionEventArgs {
  * Defines contents of conversation transcribed/transcribing event.
  * @class ConversationTranscriptionEventArgs
  */
-// tslint:disable-next-line:max-classes-per-file
 export class ConversationTranscriptionEventArgs extends SpeechRecognitionEventArgs {
 }

@@ -33,8 +33,8 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
     private privDetailedSpeechPhrase: IDetailedSpeechPhrase;
 
     private constructor(json: string) {
-        this.privDetailedSpeechPhrase = JSON.parse(json);
-        this.privDetailedSpeechPhrase.RecognitionStatus = (RecognitionStatus as any)[this.privDetailedSpeechPhrase.RecognitionStatus];
+        this.privDetailedSpeechPhrase = JSON.parse(json) as IDetailedSpeechPhrase;
+        this.privDetailedSpeechPhrase.RecognitionStatus = RecognitionStatus[this.privDetailedSpeechPhrase.RecognitionStatus as unknown as keyof typeof RecognitionStatus];
     }
 
     public static fromJSON(json: string): DetailedSpeechPhrase {

@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import bent, { BentResponse } from "bent";
 import {
     ArgumentNullError,
     Deferred
 } from "../common/Exports";
 import { IRequestOptions } from "./Exports";
-
-import bent, { BentResponse } from "bent";
 
 export enum RestRequestType {
     Get = "GET",
@@ -25,11 +24,17 @@ export interface IRestResponse {
     headers: string;
 }
 
+interface JsonError {
+    error?: {
+        message: string;
+    };
+}
+
 // accept rest operations via request method and return abstracted objects from server response
 export class RestMessageAdapter {
 
     private privIgnoreCache: boolean;
-    private privHeaders: { [key: string]: string; };
+    private privHeaders: { [key: string]: string };
 
     public constructor(
         configParams: IRequestOptions
@@ -48,8 +53,8 @@ export class RestMessageAdapter {
 
         try {
             const arr = headers.trim().split(/[\r\n]+/);
-            const headerMap: any = {};
-            arr.forEach((line: any) => {
+            const headerMap: { [key: string]: string } = {};
+            arr.forEach((line: string): void => {
                 const parts = line.split(": ");
                 const header = parts.shift().toLowerCase();
                 const value = parts.join(": ");
@@ -76,16 +81,16 @@ export class RestMessageAdapter {
     public request(
         method: RestRequestType,
         uri: string,
-        queryParams: any = {},
-        body: any = null,
+        queryParams: { [key: string]: any } = {},
+        body: bent.RequestBody = null,
         binaryBody: Blob | Buffer = null,
         ): Promise<IRestResponse> {
 
         const responseReceivedDeferral = new Deferred<IRestResponse>();
 
         const requestCommand = method === RestRequestType.File ? "POST" : method;
-        const handleRestResponse = (data: BentResponse, j: any = {}): IRestResponse => {
-            const d: { statusText?: string, statusMessage?: string } = data;
+        const handleRestResponse = (data: BentResponse, j: JsonError = {}): IRestResponse => {
+            const d: { statusText?: string; statusMessage?: string } = data;
             return {
                 data: JSON.stringify(j),
                 headers: JSON.stringify(data.headers),
@@ -96,32 +101,32 @@ export class RestMessageAdapter {
             };
         };
 
-        const blobToArrayBuffer = (blob: Blob) => {
+        const blobToArrayBuffer = (blob: Blob): Promise<unknown> => {
             const reader = new FileReader();
             reader.readAsArrayBuffer(blob);
-            return new Promise((resolve: (value: unknown) => void) => {
-                reader.onloadend = () => {
+            return new Promise((resolve: (value: unknown) => void): void => {
+                reader.onloadend = (): void => {
                 resolve(reader.result);
                 };
             });
         };
 
-        const send = (postData: any): void => {
+        const send = (postData: bent.RequestBody): void => {
             const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 204, 400, 401, 402, 403, 404);
-            const params = this.queryParams(queryParams) === "" ? "" : "?" + this.queryParams(queryParams);
-            sendRequest(params, postData).then( async (data: any) => {
+            const params = this.queryParams(queryParams) === "" ? "" : `?${this.queryParams(queryParams)}`;
+            sendRequest(params, postData).then( async (data: BentResponse): Promise<void> => {
                 if (method === RestRequestType.Delete || data.statusCode === 204) {
                     // No JSON from Delete and reset (204) operations
                     responseReceivedDeferral.resolve(handleRestResponse(data));
                 } else {
                     try {
-                        const j: any = await data.json();
+                        const j: JsonError = await data.json() as JsonError;
                         responseReceivedDeferral.resolve(handleRestResponse(data, j));
                     } catch {
                         responseReceivedDeferral.resolve(handleRestResponse(data));
                     }
                 }
-            }).catch((error: string) => {
+            }).catch((error: string): void => {
                 responseReceivedDeferral.reject(error);
             });
         };
@@ -135,10 +140,10 @@ export class RestMessageAdapter {
             this.privHeaders["content-type"] = contentType;
             this.privHeaders["Content-Type"] = contentType;
             if (typeof (Blob) !== "undefined" && binaryBody instanceof Blob) {
-                blobToArrayBuffer(binaryBody as Blob).then( (res: any) => {
+                blobToArrayBuffer(binaryBody).then( (res: bent.RequestBody): void => {
                     send(res);
-                }).catch((error: any) => {
-                    responseReceivedDeferral.reject(error);
+                }).catch((error: any): void => {
+                    responseReceivedDeferral.reject(error as string);
                 });
             } else {
                 send(binaryBody as Buffer);
@@ -153,14 +158,14 @@ export class RestMessageAdapter {
         return responseReceivedDeferral.promise;
     }
 
-    private withQuery(url: string, params: any = {}): any {
+    private withQuery(url: string, params: { [key: string]: string } = {}): any {
         const queryString = this.queryParams(params);
         return queryString ? url + (url.indexOf("?") === -1 ? "?" : "&") + queryString : url;
     }
 
-    private queryParams(params: any = {}): any {
+    private queryParams(params: { [key: string]: string } = {}): string {
         return Object.keys(params)
-            .map((k: any) => encodeURIComponent(k) + "=" + encodeURIComponent(params[k]))
+            .map((k: string): string => encodeURIComponent(k) + "=" + encodeURIComponent(params[k]))
             .join("&");
     }
 }

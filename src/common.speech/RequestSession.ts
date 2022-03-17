@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Z_NO_COMPRESSION } from "zlib";
 import { ReplayableAudioNode } from "../common.browser/Exports";
 import {
     createNoDashGuid,
@@ -42,7 +41,7 @@ export class RequestSession {
     private privInTurn: boolean = false;
     private privConnectionAttempts: number = 0;
 
-    constructor(audioSourceId: string) {
+    public constructor(audioSourceId: string) {
         this.privAudioSourceId = audioSourceId;
         this.privRequestId = createNoDashGuid();
         this.privAudioNodeId = createNoDashGuid();
@@ -109,7 +108,7 @@ export class RequestSession {
         this.onEvent(new RecognitionTriggeredEvent(this.requestId, this.privSessionId, this.privAudioSourceId, this.privAudioNodeId));
     }
 
-    public async onAudioSourceAttachCompleted(audioNode: ReplayableAudioNode, isError: boolean, error?: string): Promise<void> {
+    public async onAudioSourceAttachCompleted(audioNode: ReplayableAudioNode, isError: boolean): Promise<void> {
         this.privAudioNode = audioNode;
         this.privIsAudioNodeDetached = false;
 
@@ -120,18 +119,19 @@ export class RequestSession {
         }
     }
 
-    public onPreConnectionStart = (authFetchEventId: string, connectionId: string): void => {
+    public onPreConnectionStart(authFetchEventId: string, connectionId: string): void {
         this.privAuthFetchEventId = authFetchEventId;
         this.privSessionId = connectionId;
         this.onEvent(new ConnectingToServiceEvent(this.privRequestId, this.privAuthFetchEventId, this.privSessionId));
     }
 
-    public async onAuthCompleted(isError: boolean, error?: string): Promise<void> {
+    public async onAuthCompleted(isError: boolean): Promise<void> {
         if (isError) {
             await this.onComplete();
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async onConnectionEstablishCompleted(statusCode: number, reason?: string): Promise<void> {
         if (statusCode === 200) {
             this.onEvent(new RecognitionStartedEvent(this.requestId, this.privAudioSourceId, this.privAudioNodeId, this.privAuthFetchEventId, this.privSessionId));
@@ -159,17 +159,17 @@ export class RequestSession {
         }
     }
 
-    public onSpeechContext = (): void => {
+    public onSpeechContext(): void {
         this.privRequestId = createNoDashGuid();
     }
 
-    public onServiceTurnStartResponse = (): void => {
+    public onServiceTurnStartResponse(): void {
         if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
             // Avoid UnhandledPromiseRejection if privTurnDeferral is not being awaited
-            /* tslint:disable:no-empty */
-            this.privTurnDeferral.promise.then().catch(() => { });
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            this.privTurnDeferral.promise.then().catch((): void => { });
         }
         this.privInTurn = true;
         this.privTurnDeferral = new Deferred<void>();
@@ -202,7 +202,7 @@ export class RequestSession {
         this.privConnectionAttempts++;
     }
 
-    public async dispose(error?: string): Promise<void> {
+    public async dispose(): Promise<void> {
         if (!this.privIsDisposed) {
             // we should have completed by now. If we did not its an unknown error.
             this.privIsDisposed = true;
@@ -210,12 +210,14 @@ export class RequestSession {
                 await detachable.detach();
             }
 
-            this.privServiceTelemetryListener?.dispose();
+            if (!!this.privServiceTelemetryListener) {
+                this.privServiceTelemetryListener.dispose();
+            }
             this.privIsRecognizing = false;
         }
     }
 
-    public getTelemetry = (): string => {
+    public getTelemetry(): string {
         if (this.privServiceTelemetryListener.hasTelemetry) {
             return this.privServiceTelemetryListener.getTelemetry();
         } else {
@@ -232,7 +234,7 @@ export class RequestSession {
         this.privIsSpeechEnded = true;
     }
 
-    protected onEvent = (event: SpeechRecognitionEvent): void => {
+    protected onEvent(event: SpeechRecognitionEvent): void {
         if (!!this.privServiceTelemetryListener) {
             this.privServiceTelemetryListener.onEvent(event);
         }

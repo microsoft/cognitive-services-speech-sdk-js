@@ -29,7 +29,7 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
     private privSpeechRecognizer: SpeechRecognizer;
@@ -45,7 +45,9 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
             const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
             this.privSpeechContext.setSection("languageId", {
+                Priority: recognizerConfig.languageIdPriority, // will only be set if continuous LID enabled
                 languages: sourceLanguages,
+                mode: recognizerConfig.languageIdMode,
                 onSuccess: { action: "Recognize" },
                 onUnknown: { action: "None" }
             });
@@ -57,7 +59,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     resultType: "Always"
                 }
             });
-            const customModels: { language: string, endpoint: string }[] = recognizerConfig.sourceLanguageModels;
+            const customModels: { language: string; endpoint: string }[] = recognizerConfig.sourceLanguageModels;
             if (customModels !== undefined) {
                 this.privSpeechContext.setSection("phraseDetection", {
                     customModels,
@@ -101,7 +103,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 if (!!this.privSpeechRecognizer.recognizing) {
                     try {
                         this.privSpeechRecognizer.recognizing(this.privSpeechRecognizer, ev);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -163,7 +165,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                         if (!!this.privSpeechRecognizer.recognized) {
                             try {
                                 this.privSpeechRecognizer.recognized(this.privSpeechRecognizer, event);
-                                /* tslint:disable:no-empty */
+                                /* eslint-disable no-empty */
                             } catch (error) {
                                 // Not going to let errors in the event handler
                                 // trip things up.
@@ -176,7 +178,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                             this.privSuccessCallback(result);
                         } catch (e) {
                             if (!!this.privErrorCallback) {
-                                this.privErrorCallback(e);
+                                this.privErrorCallback(e as string);
                             }
                         }
                         // Only invoke the call back once.
@@ -214,7 +216,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 sessionId);
             try {
                 this.privSpeechRecognizer.canceled(this.privSpeechRecognizer, cancelEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
 
@@ -234,7 +236,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
             try {
                 this.privSuccessCallback(result);
                 this.privSuccessCallback = undefined;
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
     }

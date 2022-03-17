@@ -4,15 +4,14 @@
 //
 
 import {
-    ConnectionMessage,
-    SessionEventArgs
+    ConnectionMessage
 } from "./Exports";
 
 export class ConnectionMessageEventArgs {
 
     private privConnectionMessage: ConnectionMessage;
 
-    constructor(message: ConnectionMessage) {
+    public constructor(message: ConnectionMessage) {
         this.privConnectionMessage = message;
     }
 

@@ -20,7 +20,7 @@ export class PropertyCollection {
      * @public
      * @param {string} key - The parameter name.
      * @param {string | number | boolean} def - The default value which is returned if the parameter
-     *        is not available in the collection.
+     * is not available in the collection.
      * @returns {string} value of the parameter.
      */
     public getProperty(key: PropertyId | string, def?: string | number | boolean): string {
@@ -99,7 +99,7 @@ export class PropertyCollection {
      * @param {PropertyCollection}  destinationCollection - The collection to merge into.
      */
     public mergeTo(destinationCollection: PropertyCollection): void {
-        this.privKeys.forEach((key: string | PropertyId) => {
+        this.privKeys.forEach((key: string | PropertyId): void => {
             if (destinationCollection.getProperty(key, undefined) === undefined) {
                 const value = this.getProperty(key);
                 destinationCollection.setProperty(key, value);

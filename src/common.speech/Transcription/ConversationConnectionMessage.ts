@@ -12,7 +12,7 @@ export class ConversationConnectionMessage extends ConnectionMessage {
         headers?: IStringDictionary<string>,
         id?: string) {
             super(messageType, body, headers, id);
-            const json = JSON.parse(this.textBody);
+            const json: { type: string } = JSON.parse(this.textBody) as { type: string };
             if (json.type !== undefined) {
                 this.privConversationMessageType = json.type;
             }

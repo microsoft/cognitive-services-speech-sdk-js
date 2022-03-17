@@ -56,14 +56,14 @@ export class Stream<TBuffer> {
         }
     }
 
-    public read = (): Promise<IStreamChunk<TBuffer>> => {
+    public read(): Promise<IStreamChunk<TBuffer>> {
         if (this.privIsReadEnded) {
             throw new InvalidOperationError("Stream read has already finished");
         }
 
         return this.privReaderQueue
             .dequeue()
-            .then(async (streamChunk: IStreamChunk<TBuffer>) => {
+            .then(async (streamChunk: IStreamChunk<TBuffer>): Promise<IStreamChunk<TBuffer>> => {
                 if (streamChunk === undefined || streamChunk.isEnd) {
                     await this.privReaderQueue.dispose("End of stream reached");
                 }
@@ -71,14 +71,14 @@ export class Stream<TBuffer> {
                 return streamChunk;
             });
     }
-    public readEnded = (): void => {
+    public readEnded(): void {
         if (!this.privIsReadEnded) {
             this.privIsReadEnded = true;
             this.privReaderQueue = new Queue<IStreamChunk<TBuffer>>();
         }
     }
 
-    private throwIfClosed = (): void => {
+    private throwIfClosed(): void {
         if (this.privIsWriteEnded) {
             throw new InvalidOperationError("Stream closed");
         }

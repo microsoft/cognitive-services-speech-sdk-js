@@ -13,7 +13,6 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
-    SpeechRecognitionResult,
     TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
     TranslationRecognitionResult,
@@ -38,7 +37,7 @@ import { RecognizerConfig } from "./RecognizerConfig";
 import { ITranslationPhrase } from "./ServiceMessages/TranslationPhrase";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
-// tslint:disable-next-line:max-classes-per-file
+// eslint-disable-next-line max-classes-per-file
 export class TranslationServiceRecognizer extends ServiceRecognizerBase {
     private privTranslationRecognizer: TranslationRecognizer;
 
@@ -51,11 +50,11 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
         super(authentication, connectionFactory, audioSource, recognizerConfig, translationRecognizer);
         this.privTranslationRecognizer = translationRecognizer;
-        this.connectionEvents.attach(async (connectionEvent: ConnectionEvent): Promise<void> => {
+        this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
             if (connectionEvent.name === "ConnectionEstablishedEvent") {
                 this.privTranslationRecognizer.onConnection();
             } else if (connectionEvent.name === "ConnectionClosedEvent") {
-                await this.privTranslationRecognizer.onDisconnection();
+                void this.privTranslationRecognizer.onDisconnection();
             }
         });
 
@@ -76,7 +75,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 if (!!this.privTranslationRecognizer.recognized) {
                     try {
                         this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, result);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -89,7 +88,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         this.privSuccessCallback(result.result);
                     } catch (e) {
                         if (!!this.privErrorCallback) {
-                            this.privErrorCallback(e);
+                            this.privErrorCallback(e as string);
                         }
                     }
                     // Only invoke the call back once.
@@ -128,7 +127,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         if (!!this.privTranslationRecognizer.recognized) {
                             try {
                                 this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, ev);
-                                /* tslint:disable:no-empty */
+                                /* eslint-disable no-empty */
                             } catch (error) {
                                 // Not going to let errors in the event handler
                                 // trip things up.
@@ -142,7 +141,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                             this.privSuccessCallback(result);
                         } catch (e) {
                             if (!!this.privErrorCallback) {
-                                this.privErrorCallback(e);
+                                this.privErrorCallback(e as string);
                             }
                         }
                         // Only invoke the call back once.
@@ -170,7 +169,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 if (!!this.privTranslationRecognizer.recognizing) {
                     try {
                         this.privTranslationRecognizer.recognizing(this.privTranslationRecognizer, result);
-                        /* tslint:disable:no-empty */
+                        /* eslint-disable no-empty */
                     } catch (error) {
                         // Not going to let errors in the event handler
                         // trip things up.
@@ -180,7 +179,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 break;
 
             case "translation.response":
-                const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody);
+                const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody) as { SpeechPhrase: ITranslationPhrase };
                 if (!!phrase.SpeechPhrase) {
                     await handleTranslationPhrase(TranslationPhrase.fromTranslationResponse(phrase));
                 }
@@ -205,7 +204,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
                             try {
                                 this.privTranslationRecognizer.synthesizing(this.privTranslationRecognizer, retEvent);
-                                /* tslint:disable:no-empty */
+                                /* eslint-disable no-empty */
                             } catch (error) {
                                 // Not going to let errors in the event handler
                                 // trip things up.
@@ -223,7 +222,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
                             try {
                                 this.privTranslationRecognizer.canceled(this.privTranslationRecognizer, canceledResult);
-                                /* tslint:disable:no-empty */
+                                /* eslint-disable no-empty */
                             } catch (error) {
                                 // Not going to let errors in the event handler
                                 // trip things up.
@@ -266,7 +265,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
             try {
                 this.privTranslationRecognizer.canceled(this.privTranslationRecognizer, cancelEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch { }
         }
 
@@ -283,7 +282,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 properties);
             try {
                 this.privSuccessCallback(result);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
                 this.privSuccessCallback = undefined;
             } catch { }
         }
@@ -335,7 +334,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         if (!!this.privTranslationRecognizer.synthesizing) {
             try {
                 this.privTranslationRecognizer.synthesizing(this.privTranslationRecognizer, retEvent);
-                /* tslint:disable:no-empty */
+                /* eslint-disable no-empty */
             } catch (error) {
                 // Not going to let errors in the event handler
                 // trip things up.

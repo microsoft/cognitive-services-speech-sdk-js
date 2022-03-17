@@ -10,32 +10,16 @@ import {
     ConversationTranscriptionEventArgs,
     PropertyCollection,
     PropertyId,
-    SessionEventArgs,
+    SessionEventArgs
 } from "../Exports";
 import {
     ConversationHandler,
     ConversationImpl,
-    ConversationTranscriptionHandler,
+    ConversationTranscriptionHandler
 } from "./Exports";
 import { Callback, IConversation } from "./IConversation";
 
 export class ConversationTranscriber implements ConversationTranscriptionHandler {
-    private privDisposedRecognizer: boolean;
-    private privRecognizer: TranscriberRecognizer;
-    private privProperties: PropertyCollection;
-    protected privAudioConfig: AudioConfig;
-
-    /**
-     * ConversationTranscriber constructor.
-     * @constructor
-     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
-     */
-    public constructor(audioConfig?: AudioConfig) {
-        this.privAudioConfig = audioConfig;
-        this.privProperties = new PropertyCollection();
-        this.privRecognizer = undefined;
-        this.privDisposedRecognizer = false;
-    }
 
     /**
      * The event canceled signals that an error occurred during the conversation.
@@ -52,22 +36,6 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @public
      */
     public canceled: (sender: ConversationHandler, event: CancellationEventArgs) => void;
-
-    /**
-     * @param {Conversation} converation - conversation to be recognized
-     */
-    public joinConversationAsync(conversation: IConversation, cb?: Callback, err?: Callback): void {
-        const conversationImpl = conversation as ConversationImpl;
-        Contracts.throwIfNullOrUndefined(conversationImpl, "Conversation");
-
-        // ref the conversation object
-        // create recognizer and subscribe to recognizer events
-        this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
-        Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
-        this.privRecognizer.connectCallbacks(this);
-
-        marshalPromiseToCallbacks(conversationImpl.connectTranscriberRecognizer(this.privRecognizer), cb, err);
-    }
 
      /**
       * The event recognized signals that a final conversation transcription result is received.
@@ -117,27 +85,21 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      */
     public conversationStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
 
-    /**
-     * Gets the authorization token used to communicate with the service.
-     * @member ConversationTranscriber.prototype.authorizationToken
-     * @function
-     * @public
-     * @returns {string} Authorization token.
-     */
-    public get authorizationToken(): string {
-        return this.properties.getProperty(PropertyId.SpeechServiceAuthorization_Token);
-    }
+    protected privAudioConfig: AudioConfig;
+    private privDisposedRecognizer: boolean;
+    private privRecognizer: TranscriberRecognizer;
+    private privProperties: PropertyCollection;
 
     /**
-     * Gets/Sets the authorization token used to communicate with the service.
-     * @member ConversationTranscriber.prototype.authorizationToken
-     * @function
-     * @public
-     * @param {string} token - Authorization token.
+     * ConversationTranscriber constructor.
+     * @constructor
+     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
      */
-    public set authorizationToken(token: string) {
-        Contracts.throwIfNullOrWhitespace(token, "token");
-        this.properties.setProperty(PropertyId.SpeechServiceAuthorization_Token, token);
+    public constructor(audioConfig?: AudioConfig) {
+        this.privAudioConfig = audioConfig;
+        this.privProperties = new PropertyCollection();
+        this.privRecognizer = undefined;
+        this.privDisposedRecognizer = false;
     }
 
     /**
@@ -162,6 +124,45 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      */
     public get properties(): PropertyCollection {
         return this.privProperties;
+    }
+
+    /**
+     * Gets the authorization token used to communicate with the service.
+     * @member ConversationTranscriber.prototype.authorizationToken
+     * @function
+     * @public
+     * @returns {string} Authorization token.
+     */
+    public get authorizationToken(): string {
+        return this.properties.getProperty(PropertyId.SpeechServiceAuthorization_Token);
+    }
+
+    /**
+     * Gets/Sets the authorization token used to communicate with the service.
+     * @member ConversationTranscriber.prototype.authorizationToken
+     * @function
+     * @public
+     * @param {string} token - Authorization token.
+     */
+    public set authorizationToken(token: string) {
+        Contracts.throwIfNullOrWhitespace(token, "token");
+        this.properties.setProperty(PropertyId.SpeechServiceAuthorization_Token, token);
+    }
+
+    /**
+     * @param {Conversation} converation - conversation to be recognized
+     */
+    public joinConversationAsync(conversation: IConversation, cb?: Callback, err?: Callback): void {
+        const conversationImpl = conversation as ConversationImpl;
+        Contracts.throwIfNullOrUndefined(conversationImpl, "Conversation");
+
+        // ref the conversation object
+        // create recognizer and subscribe to recognizer events
+        this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
+        Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
+        this.privRecognizer.connectCallbacks(this);
+
+        marshalPromiseToCallbacks(conversationImpl.connectTranscriberRecognizer(this.privRecognizer), cb, err);
     }
 
     /**
@@ -195,6 +196,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      */
     public leaveConversationAsync(cb?: Callback, err?: Callback): void {
         this.privRecognizer.disconnectCallbacks();
+        // eslint-disable-next-line
         marshalPromiseToCallbacks((async (): Promise<void> => { return; })(), cb, err);
     }
 

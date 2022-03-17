@@ -44,7 +44,7 @@ export class Contracts {
         }
     }
 
-    public static throwIfFileDoesNotExist(param: any, name: string): void {
+    public static throwIfFileDoesNotExist(param: string, name: string): void {
         Contracts.throwIfNullOrWhitespace(param, name);
 
         // TODO check for file existence.

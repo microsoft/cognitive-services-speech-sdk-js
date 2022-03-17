@@ -13,8 +13,8 @@ export class TranslationSynthesisEnd implements ITranslationSynthesisEnd {
     private privSynthesisEnd: ITranslationSynthesisEnd;
 
     private constructor(json: string) {
-        this.privSynthesisEnd = JSON.parse(json);
-        this.privSynthesisEnd.SynthesisStatus = (SynthesisStatus as any)[this.privSynthesisEnd.SynthesisStatus];
+        this.privSynthesisEnd = JSON.parse(json) as ITranslationSynthesisEnd;
+        this.privSynthesisEnd.SynthesisStatus = SynthesisStatus[this.privSynthesisEnd.SynthesisStatus as unknown as keyof typeof SynthesisStatus];
     }
 
     public static fromJSON(json: string): TranslationSynthesisEnd {

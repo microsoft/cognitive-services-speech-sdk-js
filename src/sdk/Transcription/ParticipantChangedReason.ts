@@ -7,7 +7,7 @@ export enum ParticipantChangedReason {
     JoinedConversation,
 
     /** Participant has left the conversation. This could be voluntary, or involuntary
-     *  (e.g. they are experiencing networking issues).
+     * (e.g. they are experiencing networking issues).
      */
     LeftConversation,
 

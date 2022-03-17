@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 import { Contracts } from "./Contracts";
 import { PropertyCollection, PropertyId, ServicePropertyChannel, SpeechConfigImpl } from "./Exports";
 import { OutputFormat } from "./OutputFormat";
@@ -15,7 +16,9 @@ export abstract class DialogServiceConfig {
      * Creates an instance of DialogService config.
      * @constructor
      */
-    protected constructor() { }
+    protected constructor() {
+        return;
+    }
 
     /**
      * Sets an arbitrary property.
@@ -93,20 +96,21 @@ export abstract class DialogServiceConfig {
      * @public
      * @param {string} value - The application identifier to set.
      */
-    // tslint:disable-next-line: no-empty
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public set applicationId(value: string) { }
 
-    public static DialogTypes: any = class {
-        public static BotFramework: string = "bot_framework";
-        public static CustomCommands: string = "custom_commands";
-    };
+    public static get DialogTypes(): { BotFramework: string; CustomCommands: string } {
+        return {
+            BotFramework: "bot_framework",
+            CustomCommands: "custom_commands"
+        };
+    }
 }
 
 /**
  * Dialog Service configuration.
  * @class DialogServiceConfigImpl
  */
-// tslint:disable-next-line:max-classes-per-file
 export class DialogServiceConfigImpl extends DialogServiceConfig {
 
     private privSpeechConfig: SpeechConfigImpl;
@@ -182,6 +186,7 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      * @returns {string} The current value, or provided default, of the given property.
      */
     public getProperty(name: string | PropertyId, def?: string): string {
+        void def;
         return this.privSpeechConfig.getProperty(name);
     }
 
@@ -206,7 +211,8 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
     }
 
     public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
-        this.privSpeechConfig.setServiceProperty(name, value, channel);
+        void channel;
+        this.privSpeechConfig.setServiceProperty(name, value);
     }
 
     /**

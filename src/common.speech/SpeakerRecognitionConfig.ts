@@ -8,7 +8,7 @@ export class SpeakerRecognitionConfig {
     private privParameters: PropertyCollection;
     private privContext: Context;
 
-    constructor(
+    public constructor(
         context: Context,
         parameters: PropertyCollection) {
         this.privContext = context ? context : new Context(null);

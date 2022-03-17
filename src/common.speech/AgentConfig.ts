@@ -26,12 +26,12 @@ export class AgentConfig {
 
 export interface IAgentConfig {
     botInfo: {
-        commType: string,
-        connectionId: string,
-        conversationId: string,
-        fromId: string
-        commandsCulture: string,
-        ttsAudioFormat: string
+        commType: string;
+        connectionId: string;
+        conversationId: string;
+        fromId: string;
+        commandsCulture: string;
+        ttsAudioFormat: string;
     };
     version: number;
 }

@@ -13,11 +13,10 @@ export class PcmRecorder implements IRecorder {
         this.privStopInputOnRelease = stopInputOnRelease;
     }
 
-    public record = (context: AudioContext, mediaStream: MediaStream, outputStream: Stream<ArrayBuffer>): void => {
+    public record(context: AudioContext, mediaStream: MediaStream, outputStream: Stream<ArrayBuffer>): void {
         const desiredSampleRate = 16000;
 
         const waveStreamEncoder = new RiffPcmEncoder(context.sampleRate, desiredSampleRate);
-        let needHeader: boolean = true;
 
         const micInput = context.createMediaStreamSource(mediaStream);
         if (!this.privSpeechProcessorScript) {
@@ -35,12 +34,13 @@ export class PcmRecorder implements IRecorder {
                   return true;
                 }
               }
-              registerProcessor('speech-processor', SP);`; // tslint:disable-line:max-line-length
+              registerProcessor('speech-processor', SP);`;
             const blob = new Blob([workletScript], { type: "application/javascript; charset=utf-8" });
             this.privSpeechProcessorScript = URL.createObjectURL(blob);
         }
 
-        const attachScriptProcessor = () => {
+        const attachScriptProcessor = (): void => {
+            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
             const scriptNode = (() => {
                 let bufferSize = 0;
                 try {
@@ -56,7 +56,7 @@ export class PcmRecorder implements IRecorder {
                     return context.createScriptProcessor(bufferSize, 1, 1);
                 }
             })();
-            scriptNode.onaudioprocess = (event: AudioProcessingEvent) => {
+            scriptNode.onaudioprocess = (event: AudioProcessingEvent): void => {
                 const inputFrame = event.inputBuffer.getChannelData(0);
 
                 if (outputStream && !outputStream.isClosed) {
@@ -67,7 +67,6 @@ export class PcmRecorder implements IRecorder {
                             isEnd: false,
                             timeReceived: Date.now(),
                         });
-                        needHeader = false;
                     }
                 }
             };
@@ -86,9 +85,9 @@ export class PcmRecorder implements IRecorder {
         if (!!this.privSpeechProcessorScript && !!context.audioWorklet) {
             context.audioWorklet
                 .addModule(this.privSpeechProcessorScript)
-                .then(() => {
+                .then((): void => {
                     const workletNode = new AudioWorkletNode(context, "speech-processor");
-                    workletNode.port.onmessage = (ev: MessageEvent) => {
+                    workletNode.port.onmessage = (ev: MessageEvent): void => {
                         const inputFrame: Float32Array = ev.data as Float32Array;
 
                         if (outputStream && !outputStream.isClosed) {
@@ -99,7 +98,6 @@ export class PcmRecorder implements IRecorder {
                                     isEnd: false,
                                     timeReceived: Date.now(),
                                 });
-                                needHeader = false;
                             }
                         }
                     };
@@ -111,19 +109,19 @@ export class PcmRecorder implements IRecorder {
                         stream: mediaStream,
                     };
                 })
-                .catch(() => {
+                .catch((): void => {
                     attachScriptProcessor();
                 });
         } else {
             try {
                 attachScriptProcessor();
             } catch (err) {
-                throw new Error(`Unable to start audio worklet node for PCMRecorder: ${err}`);
+                throw new Error(`Unable to start audio worklet node for PCMRecorder: ${err as string}`);
             }
         }
     }
 
-    public releaseMediaResources = (context: AudioContext): void => {
+    public releaseMediaResources(context: AudioContext): void {
         if (this.privMediaResources) {
             if (this.privMediaResources.scriptProcessorNode) {
                 this.privMediaResources.scriptProcessorNode.disconnect(context.destination);
@@ -132,7 +130,7 @@ export class PcmRecorder implements IRecorder {
             if (this.privMediaResources.source) {
                 this.privMediaResources.source.disconnect();
                 if (this.privStopInputOnRelease) {
-                    this.privMediaResources.stream.getTracks().forEach((track: any) => track.stop());
+                    this.privMediaResources.stream.getTracks().forEach((track: MediaStreamTrack): void => track.stop());
                 }
                 this.privMediaResources.source = null;
             }

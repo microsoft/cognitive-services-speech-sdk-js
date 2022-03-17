@@ -61,7 +61,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     public write(buffer: ArrayBuffer, cb?: () => void, err?: (error: string) => void): void {
         if (this.privAudioBuffer !== undefined) {
             this.privAudioBuffer.push(buffer);
-            this.updateSourceBuffer().then(() => {
+            this.updateSourceBuffer().then((): void => {
                 if (!!cb) {
                     cb();
                 }
@@ -79,7 +79,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     public close(cb?: () => void, err?: (error: string) => void): void {
         this.privIsClosed = true;
         if (this.privSourceBuffer !== undefined) {
-            this.handleSourceBufferUpdateEnd().then(() => {
+            this.handleSourceBufferUpdateEnd().then((): void => {
                 if (!!cb) {
                     cb();
                 }
@@ -91,18 +91,18 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         } else if (this.privAudioOutputStream !== undefined && typeof window !== "undefined") {
             if ((this.privFormat.formatTag === AudioFormatTag.PCM || this.privFormat.formatTag === AudioFormatTag.MuLaw
                 || this.privFormat.formatTag === AudioFormatTag.ALaw) && this.privFormat.hasHeader === false) {
-                // tslint:disable-next-line:no-console
-                console.warn(`Play back is not supported for raw PCM, mulaw or alaw format without header.`);
+                // eslint-disable-next-line no-console
+                console.warn("Play back is not supported for raw PCM, mulaw or alaw format without header.");
                 if (!!this.onAudioEnd) {
                     this.onAudioEnd(this);
                 }
             } else {
                 let receivedAudio = new ArrayBuffer(this.privBytesReceived);
-                this.privAudioOutputStream.read(receivedAudio).then((_: number): void => {
+                this.privAudioOutputStream.read(receivedAudio).then((): void => {
                     receivedAudio = SynthesisAdapterBase.addHeader(receivedAudio, this.privFormat);
                     const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.formatTag] });
                     this.privAudio.src = window.URL.createObjectURL(audioBlob);
-                    this.notifyPlayback().then(() => {
+                    this.notifyPlayback().then((): void => {
                         if (!!cb) {
                             cb();
                         }
@@ -125,12 +125,13 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         }
     }
 
-    set format(format: AudioStreamFormat) {
+    public set format(format: AudioStreamFormat) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (typeof (AudioContext) !== "undefined" || (typeof (window) !== "undefined" && typeof ((window as any).webkitAudioContext) !== "undefined")) {
             this.privFormat = format as AudioOutputFormatImpl;
             const mimeType: string = AudioFormatToMimeType[this.privFormat.formatTag];
             if (mimeType === undefined) {
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 console.warn(
                     `Unknown mimeType for format ${AudioFormatTag[this.privFormat.formatTag]}; playback is not supported.`);
 
@@ -140,21 +141,21 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 this.privMediaSource = new MediaSource();
                 this.privAudio.src = URL.createObjectURL(this.privMediaSource);
                 this.privAudio.load();
-                this.privMediaSource.onsourceopen = (event: Event): void => {
+                this.privMediaSource.onsourceopen = (): void => {
                     this.privMediaSourceOpened = true;
                     this.privMediaSource.duration = MediaDurationPlaceholderSeconds;
                     this.privSourceBuffer = this.privMediaSource.addSourceBuffer(mimeType);
-                    this.privSourceBuffer.onupdate = (_: Event) => {
+                    this.privSourceBuffer.onupdate = (): void => {
                         this.updateSourceBuffer().catch((reason: string): void => {
                             Events.instance.onEvent(new BackgroundEvent(reason));
                         });
                     };
-                    this.privSourceBuffer.onupdateend = (_: Event) => {
+                    this.privSourceBuffer.onupdateend = (): void => {
                         this.handleSourceBufferUpdateEnd().catch((reason: string): void => {
                             Events.instance.onEvent(new BackgroundEvent(reason));
                         });
                     };
-                    this.privSourceBuffer.onupdatestart = (_: Event) => {
+                    this.privSourceBuffer.onupdatestart = (): void => {
                         this.privAppendingToBuffer = false;
                     };
                 };
@@ -163,7 +164,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 });
 
             } else {
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 console.warn(
                     `Format ${AudioFormatTag[this.privFormat.formatTag]} could not be played by MSE, streaming playback is not enabled.`);
                 this.privAudioOutputStream = new PullAudioOutputStreamImpl();
@@ -215,7 +216,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
 
     public resume(cb?: () => void, err?: (error: string) => void): void {
         if (this.privIsPaused && this.privAudio !== undefined) {
-            this.privAudio.play().then(() => {
+            this.privAudio.play().then((): void => {
                 if (!!cb) {
                     cb();
                 }
@@ -244,7 +245,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 this.privSourceBuffer.appendBuffer(binary);
             } catch (error) {
                 this.privAudioBuffer.unshift(binary);
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 console.log(
                     "buffer filled, pausing addition of binaries until space is made");
                 return;

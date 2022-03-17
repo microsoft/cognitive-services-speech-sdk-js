@@ -16,8 +16,8 @@ export class TranslationHypothesis implements ITranslationHypothesis {
     private privTranslationHypothesis: ITranslationHypothesis;
 
     private constructor(json: string) {
-        this.privTranslationHypothesis = JSON.parse(json);
-        this.privTranslationHypothesis.Translation.TranslationStatus = (TranslationStatus as any)[this.privTranslationHypothesis.Translation.TranslationStatus];
+        this.privTranslationHypothesis = JSON.parse(json) as ITranslationHypothesis;
+        this.privTranslationHypothesis.Translation.TranslationStatus = TranslationStatus[this.privTranslationHypothesis.Translation.TranslationStatus as unknown as keyof typeof TranslationStatus];
     }
 
     public static fromJSON(json: string): TranslationHypothesis {

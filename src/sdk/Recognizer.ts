@@ -22,7 +22,6 @@ import {
 } from "./Contracts";
 import {
     AudioConfig,
-    Connection,
     PropertyCollection,
     PropertyId,
     RecognitionEventArgs,
@@ -152,7 +151,6 @@ export abstract class Recognizer {
      * recognition errors are collected and sent to Microsoft.
      * If set to false, no telemetry is sent to Microsoft.
      */
-    /* tslint:disable:member-ordering */
     public static enableTelemetry(enabled: boolean): void {
         ServiceRecognizerBase.telemetryDataEnabled = enabled;
     }
@@ -233,11 +231,11 @@ export abstract class Recognizer {
         const authentication = (subscriptionKey && subscriptionKey !== "") ?
             new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
             new CognitiveTokenAuthentication(
-                (authFetchEventId: string): Promise<string> => {
+                (): Promise<string> => {
                     const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return Promise.resolve(authorizationToken);
                 },
-                (authFetchEventId: string): Promise<string> => {
+                (): Promise<string> => {
                     const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return Promise.resolve(authorizationToken);
                 });

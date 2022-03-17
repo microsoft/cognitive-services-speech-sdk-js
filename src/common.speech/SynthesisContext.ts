@@ -13,7 +13,7 @@ export class SynthesisContext {
     private privSpeechSynthesizer: SpeechSynthesizer;
     private privAudioOutputFormat: AudioOutputFormatImpl;
 
-    constructor(speechSynthesizer: SpeechSynthesizer) {
+    public constructor(speechSynthesizer: SpeechSynthesizer) {
         this.privSpeechSynthesizer = speechSynthesizer;
     }
 
@@ -22,7 +22,7 @@ export class SynthesisContext {
      * @param sectionName Name of the section to add.
      * @param value JSON serializable object that represents the value.
      */
-    public setSection(sectionName: string, value: any): void {
+    public setSection(sectionName: string, value: string | object): void {
         this.privContext[sectionName] = value;
     }
 
@@ -67,17 +67,17 @@ export class SynthesisContext {
 
 interface ISynthesisSection {
     audio: {
-        outputFormat: string,
+        outputFormat: string;
         metadataOptions: {
-            bookmarkEnabled: boolean,
-            wordBoundaryEnabled: string,
-            punctuationBoundaryEnabled: string,
-            visemeEnabled: boolean,
-            sentenceBoundaryEnabled: string,
+            bookmarkEnabled: boolean;
+            wordBoundaryEnabled: string;
+            punctuationBoundaryEnabled: string;
+            visemeEnabled: boolean;
+            sentenceBoundaryEnabled: string;
             sessionEndEnabled: boolean
         }
     };
     language: {
-        autoDetection: boolean
+        autoDetection: boolean;
     };
 }

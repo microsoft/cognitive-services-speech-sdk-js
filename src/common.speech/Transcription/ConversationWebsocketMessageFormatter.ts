@@ -4,7 +4,6 @@
 import {
     ConnectionMessage,
     Deferred,
-    IStringDictionary,
     IWebsocketMessageFormatter,
     MessageType,
     RawWebsocketMessage,
@@ -19,7 +18,7 @@ export class ConversationWebsocketMessageFormatter implements IWebsocketMessageF
     /**
      * Format incoming messages: text (speech partial/final, IM) or binary (tts)
      */
-    public toConnectionMessage = (message: RawWebsocketMessage): Promise<ConversationConnectionMessage> => {
+    public toConnectionMessage(message: RawWebsocketMessage): Promise<ConversationConnectionMessage> {
         const deferral = new Deferred<ConversationConnectionMessage>();
 
         try {
@@ -30,7 +29,7 @@ export class ConversationWebsocketMessageFormatter implements IWebsocketMessageF
                 deferral.resolve(new ConversationConnectionMessage(message.messageType, message.binaryContent, undefined, message.id));
             }
         } catch (e) {
-            deferral.reject(`Error formatting the message. Error: ${e}`);
+            deferral.reject(`Error formatting the message. Error: ${e as string}`);
         }
 
         return deferral.promise;
@@ -39,7 +38,7 @@ export class ConversationWebsocketMessageFormatter implements IWebsocketMessageF
     /**
      * Format outgoing messages: text (commands or IM)
      */
-    public fromConnectionMessage = (message: ConnectionMessage): Promise<RawWebsocketMessage> => {
+    public fromConnectionMessage(message: ConnectionMessage): Promise<RawWebsocketMessage> {
 
         const deferral = new Deferred<RawWebsocketMessage>();
 
@@ -49,7 +48,7 @@ export class ConversationWebsocketMessageFormatter implements IWebsocketMessageF
                 deferral.resolve(new RawWebsocketMessage(MessageType.Text, payload, message.id));
             }
         } catch (e) {
-            deferral.reject(`Error formatting the message. ${e}`);
+            deferral.reject(`Error formatting the message. ${e as string}`);
         }
 
         return deferral.promise;

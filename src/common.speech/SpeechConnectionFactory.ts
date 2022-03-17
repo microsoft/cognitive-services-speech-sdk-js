@@ -36,11 +36,12 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
     private readonly interactiveRelativeUri: string = "/speech/recognition/interactive/cognitiveservices/v1";
     private readonly conversationRelativeUri: string = "/speech/recognition/conversation/cognitiveservices/v1";
     private readonly dictationRelativeUri: string = "/speech/recognition/dictation/cognitiveservices/v1";
+    private readonly universalUri: string = "/speech/universal/v";
 
-    public create = (
+    public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection => {
+        connectionId?: string): IConnection {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
@@ -78,8 +79,8 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
                     if (config.parameters.getProperty(ForceDictationPropertyName, "false") === "true") {
                         endpoint = host + this.dictationRelativeUri;
                     } else {
-                        if (config.recognitionEndpointVersion !== undefined) {
-                            endpoint = host + `/speech/recognition/conversation/cognitiveservices/v${config.recognitionEndpointVersion}`;
+                        if (config.recognitionEndpointVersion !== undefined && parseInt(config.recognitionEndpointVersion, 10) > 1) {
+                            endpoint = `${host}${this.universalUri}${config.recognitionEndpointVersion}`;
                         } else {
                             endpoint = host + this.conversationRelativeUri;
                         }
@@ -89,7 +90,11 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
                     endpoint = host + this.dictationRelativeUri;
                     break;
                 default:
-                    endpoint = host + this.interactiveRelativeUri; // default is interactive
+                    if (config.recognitionEndpointVersion !== undefined && parseInt(config.recognitionEndpointVersion, 10) > 1) {
+                        endpoint = `${host}${this.universalUri}${config.recognitionEndpointVersion}`;
+                    } else {
+                        endpoint = host + this.interactiveRelativeUri; // default is interactive
+                    }
                     break;
             }
         }

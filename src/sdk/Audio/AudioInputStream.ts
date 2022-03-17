@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// tslint:disable:max-classes-per-file
+/* eslint-disable max-classes-per-file */
 
 import {
     connectivity,
@@ -16,7 +16,6 @@ import {
     AudioStreamNodeAttachingEvent,
     AudioStreamNodeDetachedEvent,
     ChunkedArrayBufferStream,
-    Deferred,
     Events,
     EventSource,
     IAudioSource,
@@ -38,7 +37,9 @@ export abstract class AudioInputStream {
      * Creates and initializes an instance.
      * @constructor
      */
-    protected constructor() { }
+    protected constructor() {
+        return;
+    }
 
     /**
      * Creates a memory backed PushAudioInputStream with the specified audio format.
@@ -46,7 +47,7 @@ export abstract class AudioInputStream {
      * @function
      * @public
      * @param {AudioStreamFormat} format - The audio data format in which audio will be
-     *        written to the push audio stream's write() method (Required if format is not 16 kHz 16bit mono PCM).
+     * written to the push audio stream's write() method (Required if format is not 16 kHz 16bit mono PCM).
      * @returns {PushAudioInputStream} The audio input stream being created.
      */
     public static createPushStream(format?: AudioStreamFormat): PushAudioInputStream {
@@ -60,9 +61,9 @@ export abstract class AudioInputStream {
      * @function
      * @public
      * @param {PullAudioInputStreamCallback} callback - The custom audio input object, derived from
-     *        PullAudioInputStreamCallback
+     * PullAudioInputStreamCallback
      * @param {AudioStreamFormat} format - The audio data format in which audio will be returned from
-     *        the callback's read() method (Required if format is not 16 kHz 16bit mono PCM).
+     * the callback's read() method (Required if format is not 16 kHz 16bit mono PCM).
      * @returns {PullAudioInputStream} The audio input stream being created.
      */
     public static createPullStream(callback: PullAudioInputStreamCallback, format?: AudioStreamFormat): PullAudioInputStream {
@@ -91,7 +92,7 @@ export abstract class PushAudioInputStream extends AudioInputStream {
      * @function
      * @public
      * @param {AudioStreamFormat} format - The audio data format in which audio will be written to the
-     *        push audio stream's write() method (Required if format is not 16 kHz 16bit mono PCM).
+     * push audio stream's write() method (Required if format is not 16 kHz 16bit mono PCM).
      * @returns {PushAudioInputStream} The push audio input stream being created.
      */
     public static create(format?: AudioStreamFormat): PushAudioInputStream {
@@ -182,11 +183,11 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     }
 
     public get blob(): Promise<Blob | Buffer> {
-        return this.attach("id").then<Blob | Buffer>((audioNode: IAudioStreamNode) => {
+        return this.attach("id").then<Blob | Buffer>((audioNode: IAudioStreamNode): Promise<Blob | Buffer> => {
             const data: ArrayBuffer[] = [];
             let bufferData = Buffer.from("");
-            const readCycle = (): Promise<Blob | Buffer> => {
-                return audioNode.read().then<Blob | Buffer>((audioStreamChunk: IStreamChunk<ArrayBuffer>) => {
+            const readCycle = (): Promise<Blob | Buffer> =>
+                audioNode.read().then<Blob | Buffer>((audioStreamChunk: IStreamChunk<ArrayBuffer>): Promise<Blob | Buffer> => {
                     if (!audioStreamChunk || audioStreamChunk.isEnd) {
                         if (typeof (XMLHttpRequest) !== "undefined" && typeof (Blob) !== "undefined") {
                             return Promise.resolve(new Blob(data));
@@ -202,7 +203,6 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
                         return readCycle();
                     }
                 });
-            };
             return readCycle();
         });
     }
@@ -220,16 +220,12 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         const stream = this.privStream;
         this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
         return {
-            detach: async () => {
+            detach: async (): Promise<void> => {
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                 return this.turnOff();
             },
-            id: () => {
-                return audioNodeId;
-            },
-            read: () => {
-                return stream.read();
-            },
+            id: (): string => audioNodeId,
+            read: (): Promise<IStreamChunk<ArrayBuffer>> => stream.read(),
         };
     }
 
@@ -257,7 +253,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         });
     }
 
-    private onEvent = (event: AudioSourceEvent): void => {
+    private onEvent(event: AudioSourceEvent): void {
         this.privEvents.onEvent(event);
         Events.instance.onEvent(event);
     }
@@ -281,7 +277,9 @@ export abstract class PullAudioInputStream extends AudioInputStream {
      * Creates and initializes and instance.
      * @constructor
      */
-    protected constructor() { super(); }
+    protected constructor() {
+ super();
+}
 
     /**
      * Creates a PullAudioInputStream that delegates to the specified callback interface for
@@ -290,9 +288,9 @@ export abstract class PullAudioInputStream extends AudioInputStream {
      * @function
      * @public
      * @param {PullAudioInputStreamCallback} callback - The custom audio input object,
-     *        derived from PullAudioInputStreamCustomCallback
+     * derived from PullAudioInputStreamCustomCallback
      * @param {AudioStreamFormat} format - The audio data format in which audio will be
-     *        returned from the callback's read() method (Required if format is not 16 kHz 16bit mono PCM).
+     * returned from the callback's read() method (Required if format is not 16 kHz 16bit mono PCM).
      * @returns {PullAudioInputStream} The push audio input stream being created.
      */
     public static create(callback: PullAudioInputStreamCallback, format?: AudioStreamFormat): PullAudioInputStream {
@@ -328,9 +326,9 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
      * read() and close() methods, using the default format (16 kHz 16bit mono PCM).
      * @constructor
      * @param {PullAudioInputStreamCallback} callback - The custom audio input object,
-     *        derived from PullAudioInputStreamCustomCallback
+     * derived from PullAudioInputStreamCustomCallback
      * @param {AudioStreamFormat} format - The audio data format in which audio will be
-     *        returned from the callback's read() method (Required if format is not 16 kHz 16bit mono PCM).
+     * returned from the callback's read() method (Required if format is not 16 kHz 16bit mono PCM).
      */
     public constructor(callback: PullAudioInputStreamCallback, format?: AudioStreamFormatImpl) {
         super();
@@ -384,14 +382,12 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
         await this.turnOn();
         this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
         return {
-            detach: () => {
+            detach: (): Promise<void> => {
                 this.privCallback.close();
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                 return this.turnOff();
             },
-            id: () => {
-                return audioNodeId;
-            },
+            id: (): string => audioNodeId,
             read: (): Promise<IStreamChunk<ArrayBuffer>> => {
                 let totalBytes: number = 0;
                 let transmitBuff: ArrayBuffer;
@@ -450,7 +446,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
         });
     }
 
-    private onEvent = (event: AudioSourceEvent): void => {
+    private onEvent(event: AudioSourceEvent): void {
         this.privEvents.onEvent(event);
         Events.instance.onEvent(event);
     }

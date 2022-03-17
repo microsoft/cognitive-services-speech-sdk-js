@@ -55,7 +55,7 @@ export class SpeakerIdMessageAdapter {
         Promise<IRestResponse> {
 
         const uri = this.getOperationUri(profileType);
-        return this.privRestAdapter.request(RestRequestType.Post, uri, this.getQueryParams(), { locale: lang });
+        return this.privRestAdapter.request(RestRequestType.Post, uri, this.getQueryParams({}), { locale: lang });
     }
 
     /**
@@ -70,9 +70,8 @@ export class SpeakerIdMessageAdapter {
         Promise<IRestResponse> {
 
         const uri = this.getOperationUri(profile.profileType) + "/" + profile.profileId + "/enrollments";
-        return audioSource.blob.then<IRestResponse>((result: Blob | Buffer): Promise<IRestResponse> => {
-            return this.privRestAdapter.request(RestRequestType.File, uri, this.getQueryParams({ ignoreMinLength: "true" }), null, result);
-        });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        return audioSource.blob.then<IRestResponse>((result: Blob | Buffer): Promise<IRestResponse> => this.privRestAdapter.request(RestRequestType.File, uri, this.getQueryParams({ ignoreMinLength: "true" }), null, result));
     }
 
     /**
@@ -91,7 +90,7 @@ export class SpeakerIdMessageAdapter {
             const result: Blob | Buffer = await audioSource.blob;
             return this.privRestAdapter.request(RestRequestType.File, uri, this.getQueryParams({ ignoreMinLength: "true" }), null, result);
         } catch (e) {
-            return Promise.resolve({ data: e } as IRestResponse);
+            return Promise.resolve({ data: e as string } as IRestResponse);
         }
     }
 
@@ -111,7 +110,7 @@ export class SpeakerIdMessageAdapter {
             const result: Blob | Buffer = await audioSource.blob;
             return this.privRestAdapter.request(RestRequestType.File, uri, this.getQueryParams({ profileIds: model.voiceProfileIds, ignoreMinLength: "true" }), null, result);
         } catch (e) {
-            return Promise.resolve({ data: e } as IRestResponse);
+            return Promise.resolve({ data: e as string } as IRestResponse);
         }
     }
 
@@ -149,7 +148,7 @@ export class SpeakerIdMessageAdapter {
      * @returns {Promise<IRestResponse>} promised rest response containing list of valid phrases
      */
     public getPhrases(profileType: VoiceProfileType, lang: string): Promise<IRestResponse> {
-        const uri = `${this.getOperationUri(profileType)}`.replace(`profiles`, `phrases`) + "/" + lang;
+        const uri = `${this.getOperationUri(profileType)}`.replace("profiles", "phrases") + "/" + lang;
         return this.privRestAdapter.request(RestRequestType.Get, uri, this.getQueryParams());
     }
 
@@ -186,7 +185,7 @@ export class SpeakerIdMessageAdapter {
         return this.privUri.replace("{mode}", mode).replace("{dependency}", dependency);
     }
 
-    private getQueryParams(params: any = {}): any {
+    private getQueryParams(params: { [key: string]: any } = {}): { [key: string]: any } {
 
         params[RestConfigBase.configParams.apiVersion] = this.privApiVersion;
         return params;

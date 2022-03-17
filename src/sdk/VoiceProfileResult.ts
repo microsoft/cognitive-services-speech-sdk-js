@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 import { CancellationErrorCodePropertyName } from "../common.speech/Exports";
 import { Contracts } from "./Contracts";
 import {
@@ -8,7 +9,7 @@ import {
     CancellationErrorCode,
     CancellationReason,
     PropertyCollection,
-    ResultReason,
+    ResultReason
 } from "./Exports";
 
 /**
@@ -46,7 +47,6 @@ export class VoiceProfileResult {
 /**
  * @class VoiceProfileCancellationDetails
  */
-// tslint:disable-next-line:max-classes-per-file
 export class VoiceProfileCancellationDetails extends CancellationDetailsBase {
 
     private constructor(reason: CancellationReason, errorDetails: string, errorCode: CancellationErrorCode) {
@@ -66,7 +66,7 @@ export class VoiceProfileCancellationDetails extends CancellationDetailsBase {
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
 
         if (!!result.properties) {
-            errorCode = (CancellationErrorCode as any)[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError])];
+            errorCode = (CancellationErrorCode as any)[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError])]; //eslint-disable-line
         }
 
         return new VoiceProfileCancellationDetails(reason, result.errorDetails, errorCode);

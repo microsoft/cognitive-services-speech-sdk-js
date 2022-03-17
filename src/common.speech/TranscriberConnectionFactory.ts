@@ -6,16 +6,10 @@ import {
     WebsocketConnection,
 } from "../common.browser/Exports";
 import {
-    OutputFormatPropertyName,
-} from "../common.speech/Exports";
-import {
     IConnection,
     IStringDictionary
 } from "../common/Exports";
-import {
-    OutputFormat,
-    PropertyId
-} from "../sdk/Exports";
+import { PropertyId } from "../sdk/Exports";
 import {
     ConnectionFactoryBase
 } from "./ConnectionFactoryBase";
@@ -33,10 +27,10 @@ export class TranscriberConnectionFactory extends ConnectionFactoryBase {
 
     private readonly multiaudioRelativeUri: string = "/speech/recognition/multiaudio";
 
-    public create = (
+    public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection => {
+        connectionId?: string): IConnection {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "centralus");

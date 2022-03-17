@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
 import { CancellationErrorCodePropertyName } from "../common.speech/Exports";
-import { Contracts } from "./Contracts";
 import {
     CancellationDetailsBase,
     CancellationErrorCode,
     CancellationReason,
     PropertyCollection,
-    ResultReason,
+    ResultReason
 } from "./Exports";
 
 export interface EnrollmentResultDetails {
@@ -22,6 +22,23 @@ export interface EnrollmentResultDetails {
     audioSpeechLengthInSec: number;
     enrollmentStatus: string;
 }
+
+export interface EnrollmentResultJSON {
+    profileId: string;
+    enrollmentsCount: number;
+    enrollmentsLengthInSec: string;
+    enrollmentsSpeechLengthInSec: string;
+    remainingEnrollmentsCount: number;
+    remainingEnrollmentsSpeechLengthInSec: string;
+    audioLengthInSec: string;
+    audioSpeechLengthInSec: string;
+    enrollmentStatus: string;
+    remainingEnrollments?: number;
+    identificationProfileId?: string;
+    verificationProfileId?: string;
+}
+
+const parse = (json: string): EnrollmentResultDetails => JSON.parse(json) as EnrollmentResultDetails;
 
 /**
  * Output format
@@ -38,7 +55,7 @@ export class VoiceProfileEnrollmentResult {
         this.privProperties = new PropertyCollection();
         if (this.privReason !== ResultReason.Canceled) {
             if (!!json) {
-                this.privDetails = JSON.parse(json);
+                this.privDetails = parse(json);
                 if (this.privDetails.enrollmentStatus.toLowerCase() === "enrolling") {
                     this.privReason = ResultReason.EnrollingVoiceProfile;
                 }
@@ -47,32 +64,6 @@ export class VoiceProfileEnrollmentResult {
             this.privErrorDetails = statusText;
             this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
         }
-    }
-
-    public static FromIdentificationProfileList(json: { value: any[] }): VoiceProfileEnrollmentResult[] {
-        const results: VoiceProfileEnrollmentResult[] = [];
-        for (const item of json.value) {
-            const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
-                ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
-                ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
-            const result = new VoiceProfileEnrollmentResult(reason, null, null);
-            result.privDetails = this.getIdentificationDetails(item);
-            results.push(result);
-        }
-        return results;
-    }
-
-    public static FromVerificationProfileList(json: { value: any[] }): VoiceProfileEnrollmentResult[] {
-        const results: VoiceProfileEnrollmentResult[] = [];
-        for (const item of json.value) {
-            const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
-                ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
-                ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
-            const result = new VoiceProfileEnrollmentResult(reason, null, null);
-            result.privDetails = this.getVerificationDetails(item);
-            results.push(result);
-        }
-        return results;
     }
 
     public get reason(): ResultReason {
@@ -99,7 +90,33 @@ export class VoiceProfileEnrollmentResult {
         return this.privErrorDetails;
     }
 
-    private static getIdentificationDetails(json: any): any {
+    public static FromIdentificationProfileList(json: { value: EnrollmentResultJSON[] }): VoiceProfileEnrollmentResult[] {
+        const results: VoiceProfileEnrollmentResult[] = [];
+        for (const item of json.value) {
+            const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
+                ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
+                ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
+            const result = new VoiceProfileEnrollmentResult(reason, null, null);
+            result.privDetails = this.getIdentificationDetails(item) as EnrollmentResultDetails;
+            results.push(result);
+        }
+        return results;
+    }
+
+    public static FromVerificationProfileList(json: { value: EnrollmentResultJSON[] }): VoiceProfileEnrollmentResult[] {
+        const results: VoiceProfileEnrollmentResult[] = [];
+        for (const item of json.value) {
+            const reason: ResultReason = item.enrollmentStatus.toLowerCase() === "enrolling" ?
+                ResultReason.EnrollingVoiceProfile : item.enrollmentStatus.toLowerCase() === "enrolled" ?
+                ResultReason.EnrolledVoiceProfile : ResultReason.Canceled;
+            const result = new VoiceProfileEnrollmentResult(reason, null, null);
+            result.privDetails = this.getVerificationDetails(item) as EnrollmentResultDetails;
+            results.push(result);
+        }
+        return results;
+    }
+
+    private static getIdentificationDetails(json: EnrollmentResultJSON): unknown {
         return {
             audioLengthInSec: json.audioLengthInSec ? parseFloat(json.audioLengthInSec) : 0,
             audioSpeechLengthInSec: json.audioSpeechLengthInSec ? parseFloat(json.audioSpeechLengthInSec) : 0,
@@ -112,7 +129,7 @@ export class VoiceProfileEnrollmentResult {
         };
     }
 
-    private static getVerificationDetails(json: any): any {
+    private static getVerificationDetails(json: EnrollmentResultJSON): unknown {
         return {
             audioLengthInSec: json.audioLengthInSec ? parseFloat(json.audioLengthInSec) : 0,
             audioSpeechLengthInSec: json.audioSpeechLengthInSec ? parseFloat(json.audioSpeechLengthInSec) : 0,
@@ -130,7 +147,6 @@ export class VoiceProfileEnrollmentResult {
 /**
  * @class VoiceProfileEnrollmentCancellationDetails
  */
-// tslint:disable-next-line:max-classes-per-file
 export class VoiceProfileEnrollmentCancellationDetails extends CancellationDetailsBase {
 
     private constructor(reason: CancellationReason, errorDetails: string, errorCode: CancellationErrorCode) {
@@ -150,7 +166,7 @@ export class VoiceProfileEnrollmentCancellationDetails extends CancellationDetai
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
 
         if (!!result.properties) {
-            errorCode = (CancellationErrorCode as any)[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError])];
+            errorCode = (CancellationErrorCode as any)[result.properties.getProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.NoError])]; //eslint-disable-line
         }
 
         return new VoiceProfileEnrollmentCancellationDetails(reason, result.errorDetails, errorCode);

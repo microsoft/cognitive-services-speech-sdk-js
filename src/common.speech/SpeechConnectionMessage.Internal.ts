@@ -84,11 +84,11 @@ export class SpeechConnectionMessage extends ConnectionMessage {
         return this.privAdditionalHeaders;
     }
 
-    public static fromConnectionMessage = (message: ConnectionMessage): SpeechConnectionMessage => {
+    public static fromConnectionMessage(message: ConnectionMessage): SpeechConnectionMessage {
         let path = null;
         let requestId = null;
         let contentType = null;
-        let requestTimestamp = null;
+        // let requestTimestamp = null;
         let streamId = null;
         const additionalHeaders: IStringDictionary<string> = {};
 
@@ -99,8 +99,8 @@ export class SpeechConnectionMessage extends ConnectionMessage {
                         path = message.headers[headerName];
                     } else if (headerName.toLowerCase() === HeaderNames.RequestId.toLowerCase()) {
                         requestId = message.headers[headerName];
-                    } else if (headerName.toLowerCase() === HeaderNames.RequestTimestamp.toLowerCase()) {
-                        requestTimestamp = message.headers[headerName];
+                    // } else if (headerName.toLowerCase() === HeaderNames.RequestTimestamp.toLowerCase()) {
+                       //  requestTimestamp = message.headers[headerName];
                     } else if (headerName.toLowerCase() === HeaderNames.ContentType.toLowerCase()) {
                         contentType = message.headers[headerName];
                     } else if (headerName.toLowerCase() === HeaderNames.RequestStreamId.toLowerCase()) {

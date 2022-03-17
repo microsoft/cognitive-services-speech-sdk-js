@@ -173,8 +173,8 @@ export class SpeechRecognizer extends Recognizer {
      * Starts speech recognition, and stops after the first utterance is recognized.
      * The task returns the recognition text as result.
      * Note: RecognizeOnceAsync() returns when the first utterance has been recognized,
-     *       so it is suitable only for single shot recognition
-     *       like command or query. For long-running recognition, use StartContinuousRecognitionAsync() instead.
+     * so it is suitable only for single shot recognition
+     * like command or query. For long-running recognition, use StartContinuousRecognitionAsync() instead.
      * @member SpeechRecognizer.prototype.recognizeOnceAsync
      * @function
      * @public
@@ -215,12 +215,12 @@ export class SpeechRecognizer extends Recognizer {
      * stopKeywordRecognitionAsync() is called.
      * User must subscribe to events to receive recognition results.
      * Note: Key word spotting functionality is only available on the
-     *      Speech Devices SDK. This functionality is currently not included in the SDK itself.
+     * Speech Devices SDK. This functionality is currently not included in the SDK itself.
      * @member SpeechRecognizer.prototype.startKeywordRecognitionAsync
      * @function
      * @public
      * @param {KeywordRecognitionModel} model The keyword recognition model that
-     *        specifies the keyword to be recognized.
+     * specifies the keyword to be recognized.
      * @param cb - Callback invoked once the recognition has started.
      * @param err - Callback invoked in case of an error.
      */
@@ -235,14 +235,14 @@ export class SpeechRecognizer extends Recognizer {
     /**
      * Stops continuous speech recognition.
      * Note: Key word spotting functionality is only available on the
-     *       Speech Devices SDK. This functionality is currently not included in the SDK itself.
+     * Speech Devices SDK. This functionality is currently not included in the SDK itself.
      * @member SpeechRecognizer.prototype.stopKeywordRecognitionAsync
      * @function
      * @public
      * @param cb - Callback invoked once the recognition has stopped.
      * @param err - Callback invoked in case of an error.
      */
-    public stopKeywordRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
+    public stopKeywordRecognitionAsync(cb?: () => void): void {
         if (!!cb) {
             cb();
         }
