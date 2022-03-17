@@ -74,8 +74,8 @@ interface ISynthesisSection {
             punctuationBoundaryEnabled: string;
             visemeEnabled: boolean;
             sentenceBoundaryEnabled: string;
-            sessionEndEnabled: boolean
-        }
+            sessionEndEnabled: boolean;
+        };
     };
     language: {
         autoDetection: boolean;
