@@ -52,6 +52,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         this.privId = audioDestinationId ? audioDestinationId : createNoDashGuid();
         this.privIsPaused = false;
         this.privIsClosed = false;
+        this.privAudio = new Audio();
     }
 
     public id(): string {
@@ -175,25 +176,31 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     }
 
     public get volume(): number {
-        return this.privAudio?.volume ?? -1;
+        return this.privAudio.volume;
     }
 
     public set volume(volume: number) {
-        if (!!this.privAudio) {
-            this.privAudio.volume = volume;
-        }
+        this.privAudio.volume = volume;
+    }
+    
+    public get rate(): number {
+        return this.privAudio.playbackRate;
+    }
+
+    public set rate(speed: number) {
+        this.privAudio.playbackRate = speed;
+    }
+    
+    public set seek(time: number) {
+        this.privAudio.currentTime = time;
     }
 
     public mute(): void {
-        if (!!this.privAudio) {
-            this.privAudio.muted = true;
-        }
+        this.privAudio.muted = true;
     }
 
     public unmute(): void {
-        if (!!this.privAudio) {
-            this.privAudio.muted = false;
-        }
+        this.privAudio.muted = false;
     }
 
     public get isClosed(): boolean {
@@ -201,10 +208,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     }
 
     public get currentTime(): number {
-        if (this.privAudio !== undefined) {
-            return this.privAudio.currentTime;
-        }
-        return -1;
+        return this.privAudio.currentTime;
     }
 
     public pause(): void {
