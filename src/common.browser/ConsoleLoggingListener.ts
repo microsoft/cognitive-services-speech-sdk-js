@@ -2,12 +2,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { EventType, IEventListener, PlatformEvent } from "../common/Exports";
+import { IEventListener, PlatformEvent } from "../common/Exports";
+import { EventType } from "../sdk/Exports";
 
 export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
     private privLogLevelFilter: EventType;
 
-    public constructor(logLevelFilter: EventType = EventType.Warning) {
+    public constructor(logLevelFilter: EventType = EventType.None) { // Console output disabled by default
         this.privLogLevelFilter = logLevelFilter;
     }
 

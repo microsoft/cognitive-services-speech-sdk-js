@@ -1,15 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { EventType } from "../sdk/Exports";
 import { createNoDashGuid } from "./Guid";
 import { IStringDictionary } from "./IDictionary";
-
-export enum EventType {
-    Debug,
-    Info,
-    Warning,
-    Error,
-}
 
 export class PlatformEvent {
     private privName: string;

@@ -12,6 +12,8 @@ export { KeywordRecognitionModel } from "./KeywordRecognitionModel";
 export { SessionEventArgs } from "./SessionEventArgs";
 export { RecognitionEventArgs } from "./RecognitionEventArgs";
 export { OutputFormat } from "./OutputFormat";
+export { EventType } from "./EventType";
+export { Diagnostics } from "./Diagnostics";
 export { IntentRecognitionEventArgs } from "./IntentRecognitionEventArgs";
 export { RecognitionResult } from "./RecognitionResult";
 export { SpeechRecognitionResult } from "./SpeechRecognitionResult";

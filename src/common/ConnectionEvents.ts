@@ -3,9 +3,10 @@
 
 /* eslint-disable max-classes-per-file */
 
+import { EventType } from "../sdk/Exports";
 import { ConnectionMessage } from "./ConnectionMessage";
 import { IStringDictionary } from "./IDictionary";
-import { EventType, PlatformEvent } from "./PlatformEvent";
+import { PlatformEvent } from "./PlatformEvent";
 
 export class ServiceEvent extends PlatformEvent {
     private privJsonResult: string;
