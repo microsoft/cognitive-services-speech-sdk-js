@@ -2,19 +2,30 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as fs from "fs";
 import { IEventListener, PlatformEvent } from "../common/Exports";
 import { EventType } from "../sdk/Exports";
+import { Contracts } from "../sdk/Contracts";
 
 export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
     private privLogLevelFilter: EventType;
+    private privLogPath: fs.PathLike = undefined;
 
     public constructor(logLevelFilter: EventType = EventType.None) { // Console output disabled by default
         this.privLogLevelFilter = logLevelFilter;
     }
 
+    public set logPath(path: fs.PathLike) {
+        Contracts.throwIfNullOrUndefined(fs.openSync, "\nFile System access not available");
+        this.privLogPath = path;
+    }
+
     public onEvent(event: PlatformEvent): void {
         if (event.eventType >= this.privLogLevelFilter) {
             const log = this.toString(event);
+            if (!!this.privLogPath) {
+                fs.writeFileSync(this.privLogPath, log);
+            }
 
             switch (event.eventType) {
                 case EventType.Debug:

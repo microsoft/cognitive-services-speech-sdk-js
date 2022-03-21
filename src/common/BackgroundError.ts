@@ -2,10 +2,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {
-    EventType,
-    PlatformEvent
-} from "./Exports";
+import { EventType } from "../sdk/Exports";
+import { PlatformEvent } from "./Exports";
 
 export class BackgroundEvent extends PlatformEvent {
     private privError: string;

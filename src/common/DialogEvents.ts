@@ -4,7 +4,8 @@
 /* eslint-disable max-classes-per-file */
 
 import { AgentConfig } from "../common.speech/Exports";
-import { EventType, PlatformEvent } from "./PlatformEvent";
+import { EventType } from "../sdk/Exports";
+import { PlatformEvent } from "./PlatformEvent";
 
 export class DialogEvent extends PlatformEvent {
 

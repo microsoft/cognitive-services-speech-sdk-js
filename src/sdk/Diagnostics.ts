@@ -12,9 +12,21 @@ import { EventType } from "./Exports";
  * Added in version 1.21.0
  */
 export class Diagnostics {
+    private static privListener: ConsoleLoggingListener = undefined;
 
     public static SetLoggingLevel(eventType: EventType): void {
-        Events.instance.attachConsoleListener(new ConsoleLoggingListener(eventType));
+        this.privListener =  new ConsoleLoggingListener(eventType);
+        Events.instance.attachConsoleListener(this.privListener);
+    }
+
+    public static SetLogOutputPath(path: string): void {
+        if (typeof window === "undefined") {
+            if (!!this.privListener) {
+                this.privListener.logPath = path;
+            }
+        } else {
+            throw new Error("File system logging not available in browser.");
+        }
     }
 
 }

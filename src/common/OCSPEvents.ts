@@ -3,7 +3,8 @@
 
 /* eslint-disable max-classes-per-file */
 
-import { EventType, PlatformEvent } from "./PlatformEvent";
+import { EventType } from "../sdk/Exports";
+import { PlatformEvent } from "./PlatformEvent";
 
 export class OCSPEvent extends PlatformEvent {
     private privSignature: string;

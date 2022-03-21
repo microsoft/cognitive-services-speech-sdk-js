@@ -3,7 +3,8 @@
 
 /* eslint-disable max-classes-per-file */
 
-import { EventType, PlatformEvent } from "../common/Exports";
+import { EventType } from "../sdk/Exports";
+import { PlatformEvent } from "../common/Exports";
 
 export class SpeechSynthesisEvent extends PlatformEvent {
     private privRequestId: string;
