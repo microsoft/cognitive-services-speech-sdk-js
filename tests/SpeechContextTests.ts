@@ -15,7 +15,7 @@ beforeAll(() => {
     Settings.LoadSettings();
 });
 
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 beforeEach(() => console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------"));
 
 test("Emtpy returns empty", () => {

@@ -22,7 +22,7 @@ beforeAll(() => {
     bufferSize = (AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl).avgBytesPerSec / 10;
 });
 
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 beforeEach(() => console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------"));
 
 test("PullStream correctly reports bytes read", async (done: jest.DoneCallback) => {

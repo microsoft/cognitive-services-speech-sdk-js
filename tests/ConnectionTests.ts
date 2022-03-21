@@ -28,19 +28,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -86,7 +86,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 };
 
 test("Connect / Disconnect", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Connect / Disconnect");
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -116,7 +116,7 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
 });
 
 test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Disconnect during reco cancels.");
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -208,7 +208,7 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
 }, 10000);
 
 test("Open during reco has no effect.", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Open during reco has no effect.");
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -307,7 +307,7 @@ test("Open during reco has no effect.", (done: jest.DoneCallback) => {
 }, 10000);
 
 test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Connecting before reco works for cont");
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -418,7 +418,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
 }, 10000);
 
 test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Switch RecoModes during a connection (cont->single)");
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -525,7 +525,7 @@ test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.Don
 }, 20000);
 
 test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Switch RecoModes during a connection (single->cont)");
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -632,7 +632,7 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
 }, 20000);
 
 test("testAudioMessagesSent", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: testAudioMessagesSent");
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -707,7 +707,7 @@ test("testAudioMessagesSent", (done: jest.DoneCallback) => {
 }, 10000);
 
 test("testModifySpeechContext", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: testModifySpeechContext");
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -760,7 +760,7 @@ test("testModifySpeechContext", (done: jest.DoneCallback) => {
 }, 10000);
 
 test("testModifySynthesisContext", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: testModifySynthesisContext");
 
     const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
@@ -808,7 +808,7 @@ test("testModifySynthesisContext", (done: jest.DoneCallback) => {
 }, 10000);
 
 test("Test SendMessage Basic", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Test SendMessage Basic");
 
     const r = BuildRecognizerFromWaveFile();
@@ -834,7 +834,7 @@ test("Test SendMessage Basic", (done: jest.DoneCallback) => {
 });
 
 test("Test SendMessage Binary", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Test SendMessage Binary");
 
     const r = BuildRecognizerFromWaveFile();
@@ -858,7 +858,7 @@ test("Test SendMessage Binary", (done: jest.DoneCallback) => {
 });
 
 test("Test InjectMessage", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Test InjectMessage");
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();

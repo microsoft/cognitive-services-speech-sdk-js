@@ -23,17 +23,17 @@ let objsToClose: any[];
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -617,7 +617,7 @@ describe("Connection URL Tests", () => {
         sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
 
         test("Simple Host and protocol", (done: jest.DoneCallback) => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Name: Simple Host and protocol");
 
             testHostConnection(createMethod,
@@ -628,7 +628,7 @@ describe("Connection URL Tests", () => {
         }, 30000);
 
         test("Simple Host, protocol, and port", (done: jest.DoneCallback) => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Name: Simple Host, protocol, and port");
 
             testHostConnection(createMethod,
@@ -696,7 +696,7 @@ describe("Connection URL Tests", () => {
             (createMethod: any, recognizerCreateMethod: (
                 config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
                 test("setServiceProperty (single)", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info("Name: setServiceProperty (single)");
 
                     const propName: string = "someProperty";
@@ -712,7 +712,7 @@ describe("Connection URL Tests", () => {
                 });
 
                 test("setServiceProperty (change)", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info("Name: setServiceProperty (change)");
 
                     const propName: string = "someProperty";
@@ -729,7 +729,7 @@ describe("Connection URL Tests", () => {
                 });
 
                 test("setServiceProperty (multiple)", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info("Name: setServiceProperty (multiple)");
 
                     const propName: string = "someProperty";
@@ -748,7 +748,7 @@ describe("Connection URL Tests", () => {
                 });
 
                 test("setProfanity", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info("Name: setProfanity");
 
                     const propName: string = "profanity";
@@ -765,7 +765,7 @@ describe("Connection URL Tests", () => {
                 });
 
                 test("enableAudioLogging", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info("Name: enableAudioLogging");
 
                     const propName: string = "storeAudio";
@@ -782,7 +782,7 @@ describe("Connection URL Tests", () => {
                 });
 
                 test("requestWordLevelTimestamps", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info("Name: requestWordLevelTimestamps");
 
                     const propName: string = "wordLevelTimestamps";
@@ -799,7 +799,7 @@ describe("Connection URL Tests", () => {
                 });
 
                 test("initialSilenceTimeoutMs", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info("Name: initialSilenceTimeoutMs");
 
                     const propName: string = "initialSilenceTimeoutMs";
@@ -816,7 +816,7 @@ describe("Connection URL Tests", () => {
                 });
 
                 test("endSilenceTimeoutMs", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info("Name: endSilenceTimeoutMs");
 
                     const propName: string = "endSilenceTimeoutMs";
@@ -833,7 +833,7 @@ describe("Connection URL Tests", () => {
                 });
 
                 test("stableIntermediateThreshold", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.info("Name: stableIntermediateThreshold");
 
                     const propName: string = "stableIntermediateThreshold";
@@ -851,7 +851,7 @@ describe("Connection URL Tests", () => {
             });
 
     test("enableDictation (Speech)", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: enableDictation");
 
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);

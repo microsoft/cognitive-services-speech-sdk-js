@@ -15,19 +15,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(() => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     objsToClose.forEach((value: any, index: number, array: any[]) => {
         if (typeof value.close === "function") {
@@ -44,11 +44,11 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
 
 // Tests client reconnect after speech timeouts.
 test("Reconnect After timeout", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Reconnect After timeout");
 
     if (!Settings.ExecuteLongRunningTestsBool) {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Skipping test.");
         done();
         return;
@@ -62,7 +62,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
     let p: sdk.PullAudioInputStream;
     let s: sdk.SpeechTranslationConfig;
     if (undefined === Settings.SpeechTimeoutEndpoint || undefined === Settings.SpeechTimeoutKey) {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.warn("Running timeout test against production, this will be very slow...");
         s = BuildSpeechConfig();
     } else {
@@ -197,18 +197,18 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
 }, 1000 * 60 * 12);
 
 test("Test new connection on empty push stream for translator", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Test new connection on empty push stream for translator");
 
     let s: sdk.SpeechTranslationConfig;
     if (!Settings.ExecuteLongRunningTestsBool) {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Skipping test.");
         done();
         return;
     }
 
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.warn("Running timeout test against production, this will be very slow...");
     s = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-US";

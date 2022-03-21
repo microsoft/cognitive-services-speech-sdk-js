@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 import * as sdk from "../../microsoft.cognitiveservices.speech.sdk";
-import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../../src/common.browser/Exports";
-import { Events, EventType, PlatformEvent } from "../../src/common/Exports";
+import { ConsoleLoggingListener } from "../../src/common.browser/Exports";
+import { Events } from "../../src/common/Exports";
 
 import { Settings } from "../Settings";
 import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
@@ -11,24 +11,24 @@ import { WaitForCondition } from "../Utilities";
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(() => {
-    // tslint:disable-next-line:no-console
+afterEach((): void => {
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
+    objsToClose.forEach((value: { close: () => any }): void => {
         if (typeof value.close === "function") {
             value.close();
         }
@@ -49,8 +49,8 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 };
 
 // Tests client reconnect after speech timeouts.
-test("Reconnect After timeout", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+test("Reconnect After timeout", (done: jest.DoneCallback): void => {
+    // eslint-disable-next-line no-console
     console.info("Name: Reconnect After timeout");
 
     // Pump valid speech and then silence until at least one speech end cycle hits.
@@ -58,17 +58,16 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
 
     const alternatePhraseFileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.LuisWaveFile);
 
-    let p: sdk.PullAudioInputStream;
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechTimeoutEndpoint || undefined === Settings.SpeechTimeoutKey) {
         if (!Settings.ExecuteLongRunningTestsBool) {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Skipping test.");
             done();
             return;
         }
 
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.warn("Running timeout test against production, this will be very slow...");
         s = BuildSpeechConfig();
     } else {
@@ -89,9 +88,10 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
     const targetLoops: number = 500;
 
     // Pump the audio from the wave file specified with 1 second silence between iterations indefinetly.
-    p = sdk.AudioInputStream.createPullStream(
+    const p = sdk.AudioInputStream.createPullStream(
         {
-            close: () => { return; },
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            close: (): void => { },
             read: (buffer: ArrayBuffer): number => {
                 if (pumpSilence) {
                     bytesSent += buffer.byteLength;
@@ -139,7 +139,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
 
     const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
-    r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
+    r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
         try {
             // If the target number of loops has been seen already, don't check as the audio being sent could have been clipped randomly during a phrase,
             // and failing because of that isn't warranted.
@@ -173,7 +173,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
                 }
             }
         } catch (error) {
-            done.fail(error);
+            done.fail(error as string);
         }
     };
 
@@ -182,34 +182,34 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
             expect(e.errorDetails).toBeUndefined();
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
         } catch (error) {
-            done.fail(error);
+            done.fail(error as string);
         }
     };
 
-    connection.disconnected = (e: sdk.SessionEventArgs) => {
+    connection.disconnected = (): void => {
         disconnects++;
     };
 
-    connection.connected = (e: sdk.SessionEventArgs) => {
+    connection.connected = (): void => {
         connections++;
     };
 
-    r.startContinuousRecognitionAsync(() => {
-        WaitForCondition(() => (!!postDisconnectReco), () => {
-            r.stopContinuousRecognitionAsync(() => {
+    r.startContinuousRecognitionAsync((): void => {
+        WaitForCondition((): boolean => (!!postDisconnectReco), (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
                 try {
                     expect(connections).toEqual(2);
                     expect(disconnects).toEqual(1);
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done.fail(error as string);
                 }
-            }, (error: string) => {
+            }, (error: string): void => {
                 done.fail(error);
             });
         });
     },
-        (err: string) => {
+        (err: string): void => {
             done.fail(err);
         });
 }, 1000 * 60 * 35);
