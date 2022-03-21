@@ -12,7 +12,6 @@ import {
 } from "../src/common.browser/Exports";
 import {
     Events,
-    EventType
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import { closeAsyncObjects } from "./Utilities";
@@ -20,13 +19,13 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // override inputs, if necessary
     Settings.LoadSettings();
     Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
     // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
@@ -34,7 +33,7 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+afterEach(async (done: jest.DoneCallback): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
@@ -81,7 +80,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     return s;
 };
 
-test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback) => {
+test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: testPronunciationAssessmentConfig:::normal");
     let pronConfig: sdk.PronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig("reference");
@@ -121,7 +120,7 @@ test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback) => {
     done();
 });
 
-test("testPronunciationAssessmentConfig::fromJson", (done: jest.DoneCallback) => {
+test("testPronunciationAssessmentConfig::fromJson", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: testPronunciationAssessmentConfig::fromJson");
     const jsonString = `{"dimension": "Comprehensive", "enableMiscue": false, "key": "value"}`;
@@ -130,13 +129,13 @@ test("testPronunciationAssessmentConfig::fromJson", (done: jest.DoneCallback) =>
     done();
 });
 
-describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean) => {
+describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean): void => {
 
-    beforeAll(() => {
+    beforeAll((): void => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
     });
 
-    afterAll(() => {
+    afterAll((): void => {
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
