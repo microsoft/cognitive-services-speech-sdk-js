@@ -24,7 +24,7 @@ export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
         if (event.eventType >= this.privLogLevelFilter) {
             const log = this.toString(event);
             if (!!this.privLogPath) {
-                fs.writeFileSync(this.privLogPath, log);
+                fs.writeFileSync(this.privLogPath, log + "\n", { flag: "a+" });
             }
 
             switch (event.eventType) {
