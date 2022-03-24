@@ -550,7 +550,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private async sendPreAudioMessages(): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
         this.addKeywordContextData();
-        await this.sendSpeechContext(connection);
+        await this.sendSpeechContext(connection, true);
         await this.sendAgentContext(connection);
         await this.sendWaveHeader(connection);
     }
