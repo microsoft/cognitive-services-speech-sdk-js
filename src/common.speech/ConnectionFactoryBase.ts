@@ -33,41 +33,19 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
         queryParams: IStringDictionary<string>,
         endpoint: string): void {
 
-        this.setUrlParameter(PropertyId.SpeechServiceConnection_EnableAudioLogging,
-            QueryParameterNames.EnableAudioLogging,
-            config,
-            queryParams,
-            endpoint);
+        const propertyIdToParameterMap: Map<number, string> = new Map([
+            [PropertyId.SpeechServiceConnection_EnableAudioLogging, QueryParameterNames.EnableAudioLogging],
+            [PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, QueryParameterNames.EnableWordLevelTimestamps],
+            [PropertyId.SpeechServiceResponse_ProfanityOption, QueryParameterNames.Profanity],
+            [PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, QueryParameterNames.InitialSilenceTimeoutMs],
+            [PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, QueryParameterNames.EndSilenceTimeoutMs],
+            [PropertyId.Speech_SegmentationSilenceTimeoutMs, QueryParameterNames.SegmentationSilenceTimeoutMs],
+            [PropertyId.SpeechServiceResponse_StablePartialResultThreshold, QueryParameterNames.StableIntermediateThreshold],
+        ]);
 
-        this.setUrlParameter(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps,
-            QueryParameterNames.EnableWordLevelTimestamps,
-            config,
-            queryParams,
-            endpoint);
-
-        this.setUrlParameter(PropertyId.SpeechServiceResponse_ProfanityOption,
-            QueryParameterNames.Profanity,
-            config,
-            queryParams,
-            endpoint);
-
-        this.setUrlParameter(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
-            QueryParameterNames.InitialSilenceTimeoutMs,
-            config,
-            queryParams,
-            endpoint);
-
-        this.setUrlParameter(PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
-            QueryParameterNames.EndSilenceTimeoutMs,
-            config,
-            queryParams,
-            endpoint);
-
-        this.setUrlParameter(PropertyId.SpeechServiceResponse_StablePartialResultThreshold,
-            QueryParameterNames.StableIntermediateThreshold,
-            config,
-            queryParams,
-            endpoint);
+        propertyIdToParameterMap.forEach((parameterName: string, propertyId: PropertyId): void => {
+            this.setUrlParameter(propertyId, parameterName, config, queryParams, endpoint);
+        });
 
         const serviceProperties: IStringDictionary<string> = JSON.parse(config.parameters.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
 

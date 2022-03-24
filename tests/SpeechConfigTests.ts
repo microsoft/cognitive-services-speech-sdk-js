@@ -832,6 +832,23 @@ describe("Connection URL Tests", () => {
                     );
                 });
 
+                test("segmentationSilenceTimeoutMs", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: segmentationSilenceTimeoutMs");
+
+                    const propName: string = "segmentationSilenceTimeoutMs";
+                    const val: string = "452";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProperty(sdk.PropertyId[sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs], val);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                })
+
                 test("stableIntermediateThreshold", (done: jest.DoneCallback) => {
                     // tslint:disable-next-line:no-console
                     console.info("Name: stableIntermediateThreshold");
