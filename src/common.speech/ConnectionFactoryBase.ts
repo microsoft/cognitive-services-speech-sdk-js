@@ -34,12 +34,13 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
         endpoint: string): void {
 
         const propertyIdToParameterMap: Map<number, string> = new Map([
-            [PropertyId.SpeechServiceConnection_EnableAudioLogging, QueryParameterNames.EnableAudioLogging],
-            [PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, QueryParameterNames.EnableWordLevelTimestamps],
-            [PropertyId.SpeechServiceResponse_ProfanityOption, QueryParameterNames.Profanity],
-            [PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, QueryParameterNames.InitialSilenceTimeoutMs],
-            [PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, QueryParameterNames.EndSilenceTimeoutMs],
             [PropertyId.Speech_SegmentationSilenceTimeoutMs, QueryParameterNames.SegmentationSilenceTimeoutMs],
+            [PropertyId.SpeechServiceConnection_EnableAudioLogging, QueryParameterNames.EnableAudioLogging],
+            [PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, QueryParameterNames.EndSilenceTimeoutMs],
+            [PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, QueryParameterNames.InitialSilenceTimeoutMs],
+            [PropertyId.SpeechServiceResponse_PostProcessingOption, QueryParameterNames.Postprocessing],
+            [PropertyId.SpeechServiceResponse_ProfanityOption, QueryParameterNames.Profanity],
+            [PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, QueryParameterNames.EnableWordLevelTimestamps],
             [PropertyId.SpeechServiceResponse_StablePartialResultThreshold, QueryParameterNames.StableIntermediateThreshold],
         ]);
 
@@ -47,11 +48,6 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
             this.setUrlParameter(propertyId, parameterName, config, queryParams, endpoint);
         });
 
-        this.setUrlParameter(PropertyId.SpeechServiceResponse_PostProcessingOption,
-            QueryParameterNames.Postprocessing,
-            config,
-            queryParams,
-            endpoint);
 
         const serviceProperties: IStringDictionary<string> = JSON.parse(config.parameters.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
 
