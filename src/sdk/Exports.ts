@@ -91,6 +91,7 @@ export { SpeechSynthesisEventArgs } from "./SpeechSynthesisEventArgs";
 export { SpeechSynthesisWordBoundaryEventArgs } from "./SpeechSynthesisWordBoundaryEventArgs";
 export { SpeechSynthesisBookmarkEventArgs } from "./SpeechSynthesisBookmarkEventArgs";
 export { SpeechSynthesisVisemeEventArgs } from "./SpeechSynthesisVisemeEventArgs";
+export { SpeechSynthesisBoundaryType } from "./SpeechSynthesisBoundaryType";
 export { SynthesisVoicesResult } from "./SynthesisVoicesResult";
 export { VoiceInfo } from "./VoiceInfo";
 export { IPlayer } from "./Audio/IPlayer";
