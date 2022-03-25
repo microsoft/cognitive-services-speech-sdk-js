@@ -8,6 +8,7 @@ export class QueryParameterNames {
     public static EnableAudioLogging: string = "storeAudio";
     public static EnableLanguageId: string = "lidEnabled";
     public static EnableWordLevelTimestamps: string = "wordLevelTimestamps";
+    public static EnableWordLevelConfidence: string = "wordLevelConfidence";
     public static EndSilenceTimeoutMs: string = "endSilenceTimeoutMs";
     public static Format: string = "format";
     public static InitialSilenceTimeoutMs: string = "initialSilenceTimeoutMs";

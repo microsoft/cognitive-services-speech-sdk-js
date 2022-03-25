@@ -75,6 +75,16 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
             queryParams,
             endpoint);
 
+        if (queryParams[QueryParameterNames.Format].toLowerCase() === "detailed") {
+            // If not otherwise specified, automatically enable word-level timestamps for detailed results
+            if (!(QueryParameterNames.EnableWordLevelTimestamps in queryParams)) {
+                queryParams[QueryParameterNames.EnableWordLevelTimestamps] = "true";
+            }
+
+            // Match enablement/disablement of word-level confidence to enablement/disablement of word-level timestamps
+            queryParams[QueryParameterNames.EnableWordLevelConfidence] = queryParams[QueryParameterNames.EnableWordLevelTimestamps];
+        }
+
         const serviceProperties: IStringDictionary<string> = JSON.parse(config.parameters.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
 
         Object.keys(serviceProperties).forEach((value: string): void => {
