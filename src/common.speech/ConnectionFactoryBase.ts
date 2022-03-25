@@ -47,6 +47,12 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
             this.setUrlParameter(propertyId, parameterName, config, queryParams, endpoint);
         });
 
+        this.setUrlParameter(PropertyId.SpeechServiceResponse_PostProcessingOption,
+            QueryParameterNames.Postprocessing,
+            config,
+            queryParams,
+            endpoint);
+
         const serviceProperties: IStringDictionary<string> = JSON.parse(config.parameters.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
 
         Object.keys(serviceProperties).forEach((value: string): void => {

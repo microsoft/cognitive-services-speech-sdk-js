@@ -361,13 +361,17 @@ export class SynthesisAdapterBase implements IDisposable {
                         for (const metadata of metadataList) {
                             switch (metadata.Type) {
                                 case MetadataType.WordBoundary:
-                                    this.privSynthesisTurn.onWordBoundaryEvent(metadata.Data.text.Text);
+                                case MetadataType.SentenceBoundary:
+                                    this.privSynthesisTurn.onTextBoundaryEvent(metadata);
 
                                     const wordBoundaryEventArgs: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
                                         metadata.Data.Offset,
+                                        metadata.Data.Duration,
                                         metadata.Data.text.Text,
                                         metadata.Data.text.Length,
-                                        this.privSynthesisTurn.currentTextOffset);
+                                        metadata.Type === MetadataType.WordBoundary
+                                            ? this.privSynthesisTurn.currentTextOffset : this.privSynthesisTurn.currentSentenceOffset,
+                                        metadata.Data.text.BoundaryType);
 
                                     if (!!this.privSpeechSynthesizer.wordBoundary) {
                                         try {
@@ -393,9 +397,7 @@ export class SynthesisAdapterBase implements IDisposable {
                                     }
                                     break;
                                 case MetadataType.Viseme:
-
                                     this.privSynthesisTurn.onVisemeMetadataReceived(metadata);
-
                                     if (metadata.Data.IsLastAnimation) {
                                         const visemeEventArgs: SpeechSynthesisVisemeEventArgs = new SpeechSynthesisVisemeEventArgs(
                                             metadata.Data.Offset,
@@ -412,6 +414,9 @@ export class SynthesisAdapterBase implements IDisposable {
                                         }
                                     }
                                     break;
+                                case MetadataType.SessionEnd:
+                                    this.privSynthesisTurn.onSessionEnd(metadata);
+                                    break;
                             }
                         }
                         break;
@@ -423,7 +428,10 @@ export class SynthesisAdapterBase implements IDisposable {
                             result = new SpeechSynthesisResult(
                                 this.privSynthesisTurn.requestId,
                                 ResultReason.SynthesizingAudioCompleted,
-                                audioBuffer
+                                audioBuffer,
+                                undefined,
+                                undefined,
+                                this.privSynthesisTurn.audioDuration
                             );
                             if (!!this.privSuccessCallback) {
                                 this.privSuccessCallback(result);

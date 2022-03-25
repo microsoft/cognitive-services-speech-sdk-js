@@ -8,8 +8,8 @@
 export enum PropertyId {
 
     /**
-     * The Cognitive Services Speech Service subscription Key. If you are using an intent recognizer, you need to specify
-     * to specify the LUIS endpoint key for your particular LUIS app. Under normal circumstances, you shouldn't
+     * The Cognitive Services Speech Service subscription Key. If you are using an intent recognizer, you need to
+     * specify the LUIS endpoint key for your particular LUIS app. Under normal circumstances, you shouldn't
      * have to use this property directly.
      * Instead, use [[SpeechConfig.fromSubscription]].
      * @member PropertyId.SpeechServiceConnection_Key
@@ -317,6 +317,27 @@ export enum PropertyId {
      * Added in version 1.7.0.
      */
     SpeechServiceResponse_TranslationRequestStablePartialResult,
+
+    /**
+     * A boolean value specifying whether to request WordBoundary events.
+     * @member PropertyId.SpeechServiceResponse_RequestWordBoundary
+     * Added in version 1.21.0.
+     */
+    SpeechServiceResponse_RequestWordBoundary,
+
+    /**
+     * A boolean value specifying whether to request punctuation boundary in WordBoundary Events. Default is true.
+     * @member PropertyId.SpeechServiceResponse_RequestPunctuationBoundary
+     * Added in version 1.21.0.
+     */
+    SpeechServiceResponse_RequestPunctuationBoundary,
+
+    /**
+     * A boolean value specifying whether to request sentence boundary in WordBoundary Events. Default is false.
+     * @member PropertyId.SpeechServiceResponse_RequestSentenceBoundary
+     * Added in version 1.21.0.
+     */
+    SpeechServiceResponse_RequestSentenceBoundary,
 
     /**
      * Identifier used to connect to the backend service.

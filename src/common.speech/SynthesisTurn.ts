@@ -4,11 +4,12 @@
 import {
     createNoDashGuid,
     Deferred,
-    Events, IAudioDestination
+    Events,
+    IAudioDestination
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
-import { ISynthesisMetadata } from "./ServiceMessages/SynthesisAudioMetadata";
+import { ISynthesisMetadata, MetadataType } from "./ServiceMessages/SynthesisAudioMetadata";
 import { SynthesisAdapterBase } from "./SynthesisAdapterBase";
 import {
     ConnectingToSynthesisServiceEvent,
@@ -69,9 +70,17 @@ export class SynthesisTurn {
         return this.privTextOffset;
     }
 
+    public get currentSentenceOffset(): number {
+        return this.privSentenceOffset;
+    }
+
     // The number of bytes received for current turn
     public get bytesReceived(): number {
         return this.privBytesReceived;
+    }
+
+    public get audioDuration(): number {
+        return this.privAudioDuration;
     }
 
     private privIsDisposed: boolean = false;
@@ -89,10 +98,13 @@ export class SynthesisTurn {
     private privReceivedAudioWithHeader: ArrayBuffer;
     private privTextOffset: number = 0;
     private privNextSearchTextIndex: number = 0;
+    private privSentenceOffset: number = 0;
+    private privNextSearchSentenceIndex: number = 0;
     private privPartialVisemeAnimation: string;
     private privRawText: string;
     private privIsSSML: boolean;
     private privTurnAudioDestination: IAudioDestination;
+    private privAudioDuration: number;
 
     public constructor() {
         this.privRequestId = createNoDashGuid();
@@ -142,6 +154,8 @@ export class SynthesisTurn {
         this.privBytesReceived = 0;
         this.privTextOffset = 0;
         this.privNextSearchTextIndex = 0;
+        this.privSentenceOffset = 0;
+        this.privNextSearchSentenceIndex = 0;
         this.privPartialVisemeAnimation = "";
         if (audioDestination !== undefined) {
             this.privTurnAudioDestination = audioDestination;
@@ -204,14 +218,18 @@ export class SynthesisTurn {
         }
     }
 
-    public onWordBoundaryEvent(text: string): void {
-        this.updateTextOffset(text);
+    public onTextBoundaryEvent(metadata: ISynthesisMetadata): void {
+        this.updateTextOffset(metadata.Data.text.Text, metadata.Type);
     }
 
     public onVisemeMetadataReceived(metadata: ISynthesisMetadata): void {
         if (metadata.Data.AnimationChunk !== undefined) {
             this.privPartialVisemeAnimation += metadata.Data.AnimationChunk;
         }
+    }
+
+    public onSessionEnd(metadata: ISynthesisMetadata): void {
+        this.privAudioDuration = metadata.Data.Offset;
     }
 
     public dispose(): void {
@@ -239,15 +257,34 @@ export class SynthesisTurn {
         Events.instance.onEvent(event);
     }
 
-    private updateTextOffset(text: string): void {
-        if (this.privTextOffset >= 0) {
+    /**
+     * Check if the text is an XML(SSML) tag
+     * @param text
+     * @private
+     */
+    private static isXmlTag(text: string): boolean {
+        return text.length >= 2 && text[0] === "<" && text[text.length - 1] === ">";
+    }
+
+    private updateTextOffset(text: string, type: MetadataType): void {
+        if (type === MetadataType.WordBoundary) {
             this.privTextOffset = this.privRawText.indexOf(text, this.privNextSearchTextIndex);
             if (this.privTextOffset >= 0) {
                 this.privNextSearchTextIndex = this.privTextOffset + text.length;
+                if (this.privIsSSML) {
+                    if (this.withinXmlTag(this.privTextOffset) && !SynthesisTurn.isXmlTag(text)) {
+                        this.updateTextOffset(text, type);
+                    }
+                }
             }
-            if (this.privIsSSML) {
-                if (this.privRawText.indexOf("<", this.privTextOffset + 1) > this.privRawText.indexOf(">", this.privTextOffset + 1)) {
-                    this.updateTextOffset(text);
+        } else {
+            this.privSentenceOffset = this.privRawText.indexOf(text, this.privNextSearchSentenceIndex);
+            if (this.privSentenceOffset >= 0) {
+                this.privNextSearchSentenceIndex = this.privSentenceOffset + text.length;
+                if (this.privIsSSML) {
+                    if (this.withinXmlTag(this.privSentenceOffset) && !SynthesisTurn.isXmlTag(text)) {
+                        this.updateTextOffset(text, type);
+                    }
                 }
             }
         }
@@ -275,5 +312,14 @@ export class SynthesisTurn {
                 this.privReceivedAudio = new ArrayBuffer(0);
             }
         }
+    }
+
+    /**
+     * Check if current idx is in XML(SSML) tag
+     * @param idx
+     * @private
+     */
+    private withinXmlTag(idx: number): boolean {
+        return this.privRawText.indexOf("<", idx + 1) > this.privRawText.indexOf(">", idx + 1);
     }
 }

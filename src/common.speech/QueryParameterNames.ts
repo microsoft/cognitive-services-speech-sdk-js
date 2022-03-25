@@ -18,4 +18,5 @@ export class QueryParameterNames {
     public static StableIntermediateThreshold: string = "stableIntermediateThreshold";
     public static StableTranslation: string = "stableTranslation";
     public static TestHooks: string = "testhooks";
+    public static Postprocessing: string = "postprocessing";
 }
