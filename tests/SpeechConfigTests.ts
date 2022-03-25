@@ -814,6 +814,30 @@ describe("Connection URL Tests", () => {
                         "wordLevelConfidence=true"
                     );
 
+                    // enabling via requestWordLevelTimestamps should work the same way
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.requestWordLevelTimestamps();
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        "format=detailed",
+                        "wordLevelTimestamps=true",
+                        "wordLevelConfidence=true"
+                    );
+
+                    // ditto for the property
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProperty(sdk.PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, 'true');
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        "format=detailed",
+                        "wordLevelTimestamps=true",
+                        "wordLevelConfidence=true"
+                    );
+
                     // explicit disablement of word-level details (via timestamp) should work
                     testUrlParameter(createMethod,
                         (s: sdk.SpeechConfig): void => {
