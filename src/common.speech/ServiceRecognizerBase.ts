@@ -493,9 +493,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
-    protected sendSpeechContext(connection: IConnection): Promise<void> {
+    protected sendSpeechContext(connection: IConnection, generateNewRequestId: boolean): Promise<void> {
         const speechContextJson = this.speechContext.toJSON();
-        this.privRequestSession.onSpeechContext();
+        if (generateNewRequestId) {
+            this.privRequestSession.onSpeechContext();
+        }
 
         if (speechContextJson) {
             return connection.send(new SpeechConnectionMessage(
@@ -511,12 +513,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected sendPrePayloadJSONOverride: (connection: IConnection) => Promise<void> = undefined;
 
     // Encapsulated for derived service recognizers that need to send additional JSON
-    protected async sendPrePayloadJSON(connection: IConnection): Promise<void> {
+    protected async sendPrePayloadJSON(connection: IConnection, generateNewRequestId: boolean = true): Promise<void> {
         if (this.sendPrePayloadJSONOverride !== undefined) {
             return this.sendPrePayloadJSONOverride(connection);
         }
 
-        await this.sendSpeechContext(connection);
+        await this.sendSpeechContext(connection, generateNewRequestId);
         await this.sendWaveHeader(connection);
         return;
     }
@@ -571,6 +573,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected configConnectionOverride: (connection: IConnection) => Promise<IConnection> = undefined;
 
     protected sendSpeechServiceConfig(connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<void> {
+        requestSession.onSpeechContext();
         // filter out anything that is not required for the service to work.
         if (ServiceRecognizerBase.telemetryDataEnabled !== true) {
             const withTelemetry: { context: { system: string } } = JSON.parse(SpeechServiceConfigJson) as { context: { system: string } } ;
@@ -791,7 +794,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             return this.configConnectionOverride(connection);
         }
         await this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
-        await this.sendPrePayloadJSON(connection);
+        await this.sendPrePayloadJSON(connection, false);
         return connection;
     }
 }
