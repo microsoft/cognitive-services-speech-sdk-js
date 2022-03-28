@@ -46,9 +46,9 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     return s;
 };
 
-Settings.testIfNode("Connect / Disconnect", (done: jest.DoneCallback): void => {
+Settings.testIfNode("Debug Console output writes to log file", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
-    console.info("Name: Connect / Disconnect");
+    console.info("Name: Debug Console output writes to log file");
 
     sdk.Diagnostics.SetLoggingLevel(sdk.LogLevel.Debug);
     sdk.Diagnostics.SetLogOutputPath(Settings.TestLogPath);
@@ -72,7 +72,7 @@ Settings.testIfNode("Connect / Disconnect", (done: jest.DoneCallback): void => {
             expect(fileContents.length).toBeGreaterThan(0);
             const firstLine = fileContents.toString().split("\n")[0];
             expect(firstLine.length).toBeGreaterThan(0);
-            expect(firstLine.split(" | ")[1]).toEqual("ConnectionClosedEvent");
+            expect(firstLine.split(" | ")[1].endsWith("Event")).toEqual(true);
             fs.unlinkSync(Settings.TestLogPath);
         }
         done();
