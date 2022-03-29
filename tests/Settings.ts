@@ -40,6 +40,7 @@ export class Settings {
     public static InputDir: string = "tests/input/audio/";
 
     public static ExecuteLongRunningTests: string = "false";
+    public static TestLogPath: string = "./TEST_LOG.txt";
 
     public static get ExecuteLongRunningTestsBool(): boolean {
         return "false" !== this.ExecuteLongRunningTests;
@@ -101,6 +102,7 @@ export class Settings {
     public static CustomVoiceEndpointId: string = "6b231818-6b8c-4452-9a69-2009355d5d7a";
     public static CustomVoiceVoiceName: string = "sdk-test";
     public static testIfDOMCondition: jest.It = (typeof window === "undefined") ? test.skip : test;
+    public static testIfNode: jest.It = (typeof window !== "undefined") ? test.skip : test;
 
     public static initialize(): void {
         Settings.SettingsClassLock = new Settings();

@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 import * as fs from "fs";
 import * as sdk from "../../microsoft.cognitiveservices.speech.sdk";
-import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../../src/common.browser/Exports";
-import { Events, EventType, PlatformEvent } from "../../src/common/Exports";
+import { ConsoleLoggingListener } from "../../src/common.browser/Exports";
+import { Events, EventType } from "../../src/common/Exports";
 
 import { Settings } from "../Settings";
 import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
@@ -12,13 +12,14 @@ import { WaitForCondition } from "../Utilities";
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
     // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
@@ -26,10 +27,10 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(() => {
+afterEach((): void => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    objsToClose.forEach((value: any, index: number, array: any[]) => {
+    objsToClose.forEach((value: { close: () => any }): void => {
         if (typeof value.close === "function") {
             value.close();
         }
@@ -43,7 +44,7 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
 };
 
 // Tests client reconnect after speech timeouts.
-test("Reconnect After timeout", (done: jest.DoneCallback) => {
+test("Reconnect After timeout", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Reconnect After timeout");
 
@@ -59,7 +60,6 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
 
     const alternatePhraseFileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.LuisWaveFile);
 
-    let p: sdk.PullAudioInputStream;
     let s: sdk.SpeechTranslationConfig;
     if (undefined === Settings.SpeechTimeoutEndpoint || undefined === Settings.SpeechTimeoutKey) {
         // eslint-disable-next-line no-console
@@ -80,9 +80,10 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
     const targetLoops: number = 250;
 
     // Pump the audio from the wave file specified with 1 second silence between iterations indefinetly.
-    p = sdk.AudioInputStream.createPullStream(
+    const p = sdk.AudioInputStream.createPullStream(
         {
-            close: () => { return; },
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            close: (): void => { },
             read: (buffer: ArrayBuffer): number => {
                 if (pumpSilence) {
                     bytesSent += buffer.byteLength;
@@ -126,7 +127,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
     let inTurn: boolean = false;
     let alternatePhrase: boolean = false;
 
-    r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs) => {
+    r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
         try {
             // If the target number of loops has been seen already, don't check as the audio being sent could have been clipped randomly during a phrase,
             // and failing because of that isn't warranted.
@@ -151,7 +152,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
                 }
             }
         } catch (error) {
-            done.fail(error);
+            done.fail(error as string);
         }
     };
 
@@ -161,7 +162,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
             canceled = true;
         } catch (error) {
-            done.fail(error);
+            done.fail(error as string);
         }
     };
 
@@ -177,30 +178,29 @@ test("Reconnect After timeout", (done: jest.DoneCallback) => {
         speechEnded++;
     };
 
-    r.startContinuousRecognitionAsync(() => {
-        WaitForCondition(() => (canceled && !inTurn), () => {
-            r.stopContinuousRecognitionAsync(() => {
+    r.startContinuousRecognitionAsync((): void => {
+        WaitForCondition((): boolean => (canceled && !inTurn), (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
                 try {
                     expect(speechEnded).toEqual(1);
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done.fail(error as string);
                 }
-            }, (error: string) => {
+            }, (error: string): void => {
                 done.fail(error);
             });
         });
     },
-        (err: string) => {
+        (err: string): void => {
             done.fail(err);
         });
 }, 1000 * 60 * 12);
 
-test("Test new connection on empty push stream for translator", (done: jest.DoneCallback) => {
+test("Test new connection on empty push stream for translator", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Test new connection on empty push stream for translator");
 
-    let s: sdk.SpeechTranslationConfig;
     if (!Settings.ExecuteLongRunningTestsBool) {
         // eslint-disable-next-line no-console
         console.info("Skipping test.");
@@ -210,7 +210,7 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
 
     // eslint-disable-next-line no-console
     console.warn("Running timeout test against production, this will be very slow...");
-    s = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-US";
     s.addTargetLanguage("de-DE");
     let disconnected: boolean = false;
@@ -234,7 +234,7 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
                 const pauseInSeconds = Math.random();
                 // set timeout for resume
                 setTimeout(
-                    () => {
+                    (): void => {
                         stream.resume();
                     },
                     pauseInSeconds * 1000);
@@ -254,7 +254,7 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
     const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, config);
     objsToClose.push(r);
 
-    r.recognizing = (s: sdk.TranslationRecognizer, event: sdk.TranslationRecognitionEventArgs) => {
+    r.recognizing = (s: sdk.TranslationRecognizer, event: sdk.TranslationRecognitionEventArgs): void => {
         if (reconnected) {
             if (Date.now() < reconnectTime + (1000 * 60 * 4)) {
                 done();
@@ -263,7 +263,7 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
             }
         }
     };
-    r.canceled = (s: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
+    r.canceled = (s: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
         if (e.errorCode === sdk.CancellationErrorCode.BadRequestParameters) {
             done.fail("Bad Request received from service, rerun test");
         }
@@ -271,20 +271,20 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
 
     const conn: sdk.Connection = sdk.Connection.fromRecognizer(r);
     objsToClose.push(conn);
-    conn.disconnected = (args: sdk.ConnectionEventArgs): void => {
+    conn.disconnected = (): void => {
         disconnected = true;
     };
-    conn.connected = (args: sdk.ConnectionEventArgs): void => {
+    conn.connected = (): void => {
         if (disconnected) {
             reconnected = true;
             reconnectTime = Date.now();
         }
     };
 
-    r.startContinuousRecognitionAsync(() => {
+    r.startContinuousRecognitionAsync((): void => {
         // empty block
     },
-    (err: string) => {
+    (err: string): void => {
         done.fail(err);
     });
 }, 1000 * 60 * 70); // 70 minutes.
