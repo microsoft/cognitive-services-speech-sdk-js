@@ -2,12 +2,12 @@
 // Licensed under the MIT license.
 
 import { CertCheckAgent } from "../src/common.browser/CertChecks";
-import { LogLevel } from "../src/sdk/LogLevel";
 import {
     ConsoleLoggingListener
 } from "../src/common.browser/Exports";
 import {
     Events,
+    EventType,
     IDetachable,
     OCSPEvent,
     PlatformEvent
@@ -26,16 +26,16 @@ let cacheDir: string;
 let events: OCSPEvent[];
 let currentListener: IDetachable;
 
-beforeAll((): void => {
+beforeAll(() => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(LogLevel.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
-beforeEach((): void => {
-    // eslint-disable-next-line no-console
+beforeEach(() => {
+    // tslint:disable-next-line:no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // eslint-disable-next-line no-console
+    // tslint:disable-next-line:no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
     cacheDir = path.join(os.tmpdir(), Math.random().toString(36).substr(2, 15));
     process.env.SPEECH_OCSP_CACHE_ROOT = cacheDir;
@@ -50,20 +50,18 @@ beforeEach((): void => {
     CertCheckAgent.testTimeOffset = 0;
 });
 
-afterEach((): void => {
-    // eslint-disable-next-line no-console
+afterEach(() => {
+    // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     rimraf(cacheDir, (error: Error): void => {
-        if (!!error) {
-            // eslint-disable-next-line no-console
-            console.info("Error " + error.toString() + " cleaning up.");
-        }
+        // tslint:disable-next-line:no-console
+        console.info("Error " + Error.toString() + " cleaning up.");
     });
     currentListener.detach().catch();
     currentListener = null;
 });
 
-afterAll((): void => {
+afterAll(() => {
     process.env.SPEECH_OSCP_CACHE_ROOT = origCacehDir;
 });
 
@@ -109,7 +107,7 @@ function makeRequest(disableOCSPStapling: boolean = true): Promise<void> {
 
 // https://github.com/chromium/badssl.com/issues/477
 test.skip("Test OCSP Revoked", (done: jest.DoneCallback) => {
-    // eslint-disable-next-line no-console
+    // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP Revoked");
 
     const testUrl: string = "https://revoked.badssl.com/";
@@ -135,7 +133,7 @@ test.skip("Test OCSP Revoked", (done: jest.DoneCallback) => {
 });
 
 test("Test OCSP Staple", async (done: jest.DoneCallback) => {
-    // eslint-disable-next-line no-console
+    // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP Staple");
 
     await makeRequest(false);
@@ -145,7 +143,7 @@ test("Test OCSP Staple", async (done: jest.DoneCallback) => {
 });
 
 test("Test OCSP Basic", async (done: jest.DoneCallback) => {
-    // eslint-disable-next-line no-console
+    // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP Basic");
 
     await makeRequest();
@@ -156,7 +154,7 @@ test("Test OCSP Basic", async (done: jest.DoneCallback) => {
 });
 
 test("Test OCSP 2nd request mem cache hit.", async (done: jest.DoneCallback) => {
-    // eslint-disable-next-line no-console
+    // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP 2nd request mem cache hit.");
 
     await makeRequest();
@@ -177,7 +175,7 @@ test("Test OCSP 2nd request mem cache hit.", async (done: jest.DoneCallback) => 
 });
 
 test("Test OCSP expirey refreshes.", async (done: jest.DoneCallback) => {
-    // eslint-disable-next-line no-console
+    // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP expirey refreshes.");
 
     await makeRequest();
@@ -198,7 +196,7 @@ test("Test OCSP expirey refreshes.", async (done: jest.DoneCallback) => {
 });
 
 test.skip("Test OCSP expirey approaching refreshes.", async (done: jest.DoneCallback) => {
-    // eslint-disable-next-line no-console
+    // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP expirey approaching  refreshes.");
 
     await makeRequest();
@@ -219,7 +217,7 @@ test.skip("Test OCSP expirey approaching refreshes.", async (done: jest.DoneCall
 });
 
 test("Test OCSP invalid cert refreshes.", async (done: jest.DoneCallback) => {
-    // eslint-disable-next-line no-console
+    // tslint:disable-next-line:no-console
     console.info("Name:  invalid cert refreshes.");
 
     await makeRequest();
