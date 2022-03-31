@@ -21,7 +21,7 @@
 
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
-import { Events, EventType } from "../src/common/Exports";
+import { Events } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
 import { closeAsyncObjects, WaitForCondition } from "./Utilities";
@@ -32,7 +32,7 @@ let objsToClose: any[];
 beforeAll((): void => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach((): void => {
@@ -44,7 +44,7 @@ beforeEach((): void => {
     jest.setTimeout(12000);
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+afterEach(async (done: jest.DoneCallback): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
@@ -127,16 +127,16 @@ const BuildSourceLanguageConfigs: () => sdk.SourceLanguageConfig[] = (): sdk.Sou
 
 describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
-    beforeAll(() => {
+    beforeAll((): void => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
     });
 
-    afterAll(() => {
+    afterAll((): void => {
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
-    test("testGetAutoDetectSourceLanguage", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+    test("testGetAutoDetectSourceLanguage", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
         console.info("Name: testGetAutoDetectSourceLanguage");
 
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -153,7 +153,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             }
         };
 
-        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult): void => {
             try {
                 expect(result).not.toBeUndefined();
                 expect(result.errorDetails).toBeUndefined();
@@ -167,15 +167,15 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
                 done();
             } catch (error) {
-                done.fail(error);
+                done.fail(error as string);
             }
-        }, (error: string) => {
+        }, (error: string): void => {
             done.fail(error);
         });
     });
 
-    test("testRecognizeFromSourceLanguageConfig", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+    test("testRecognizeFromSourceLanguageConfig", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
         console.info("Name: testRecognizeFromSourceLanguageConfig");
 
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -222,7 +222,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     });
 
     test("Silence After Speech - AutoDetect set", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Silence After Speech - AutoDetect set");
         // Pump valid speech and then silence until at least one speech end cycle hits.
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -312,7 +312,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     }, 30000);
 
     test("testAddLIDCustomModels", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testAddLIDCustomModels");
 
         const configs: sdk.SourceLanguageConfig[] = BuildSourceLanguageConfigs();
@@ -376,7 +376,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     }, 10000);
 
     test("testContinuousLIDSpeechReco", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testContinuousLIDSpeechReco");
 
         const configs: sdk.SourceLanguageConfig[] = BuildSourceLanguageConfigs();

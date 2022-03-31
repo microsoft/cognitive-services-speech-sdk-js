@@ -23,19 +23,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -71,7 +71,7 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
 };
 
 test("GetOutputVoiceName", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: GetOutputVoiceName");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -86,7 +86,7 @@ test("GetOutputVoiceName", () => {
 });
 
 test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: TranslateVoiceRoundTrip");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -196,7 +196,7 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
 }, 10000);
 
 test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: TranslateVoiceInvalidVoice");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -245,7 +245,7 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
 });
 
 test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: TranslateVoiceUSToGerman");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -360,7 +360,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
 }, 10000);
 
 test("MultiPhrase", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: MultiPhrase");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -515,7 +515,7 @@ test("MultiPhrase", (done: jest.DoneCallback) => {
 }, 45000);
 
 test("Config is copied on construction", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Config is copied on construction");
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     expect(s).not.toBeUndefined();

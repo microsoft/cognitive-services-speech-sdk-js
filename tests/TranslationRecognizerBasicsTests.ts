@@ -28,19 +28,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Sart Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -83,7 +83,7 @@ const Canceled: string = "Canceled";
 let eventIdentifier: number;
 
 test("TranslationRecognizerMicrophone", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: TranslationRecognizerMicrophone");
 
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
@@ -99,14 +99,14 @@ test("TranslationRecognizerMicrophone", () => {
 });
 
 test("TranslationRecognizerWavFile", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: TranslationRecognizerWavFile");
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
     objsToClose.push(r);
 });
 
 test("GetSourceLanguage", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: GetSourceLanguage");
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
     objsToClose.push(r);
@@ -116,7 +116,7 @@ test("GetSourceLanguage", () => {
 });
 
 test("GetParameters", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: GetParameters");
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
     objsToClose.push(r);
@@ -132,7 +132,7 @@ test("GetParameters", () => {
 describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     beforeEach(() => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("forceNodeWebSocket: " + forceNodeWebSocket);
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
     });
@@ -146,7 +146,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
 
         test("RecognizeOnceAsync1", (done: jest.DoneCallback) => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Name: RecognizeOnceAsync1");
             const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
             objsToClose.push(r);
@@ -211,7 +211,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("Validate Event Ordering", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Validate Event Ordering");
         const SpeechStartDetectedEvent = "SpeechStartDetectedEvent";
         const SpeechEndDetectedEvent = "SpeechEndDetectedEvent";
@@ -331,7 +331,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("StartContinuousRecognitionAsync", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: StartContinuousRecognitionAsync");
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
         objsToClose.push(r);
@@ -360,7 +360,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("StopContinuousRecognitionAsync", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: StopContinuousRecognitionAsync");
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
         objsToClose.push(r);
@@ -385,7 +385,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("StartStopContinuousRecognitionAsync", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: StartStopContinuousRecognitionAsync");
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
         objsToClose.push(r);
@@ -426,7 +426,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("InitialSilenceTimeout (pull)", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (pull)");
         let p: sdk.PullAudioInputStream;
         let bytesSent: number = 0;
@@ -457,7 +457,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 15000);
 
     test("InitialSilenceTimeout (push)", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (push)");
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
         const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
@@ -470,7 +470,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 15000);
 
     Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (File)");
         const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
         const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
@@ -547,7 +547,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     };
 
     test.skip("emptyFile", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: emptyFile");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
         objsToClose.push(s);
@@ -594,7 +594,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("Audio Config is optional", () => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Audio Config is optional");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
         objsToClose.push(s);
@@ -609,7 +609,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     Settings.testIfDOMCondition("Default mic is used when audio config is not specified. (once)", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Default mic is used when audio config is not specified. (once)");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         expect(s).not.toBeUndefined();
@@ -632,7 +632,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     Settings.testIfDOMCondition("Default mic is used when audio config is not specified. (Cont)", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Default mic is used when audio config is not specified. (Cont)");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         expect(s).not.toBeUndefined();
@@ -655,7 +655,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("Connection Errors Propogate Async", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Connection Errors Propogate Async");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription("badKey", Settings.SpeechRegion);
         objsToClose.push(s);
@@ -677,7 +677,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("Connection Errors Propogate Sync", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Connection Errors Propogate Sync");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription("badKey", Settings.SpeechRegion);
         objsToClose.push(s);
@@ -714,7 +714,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("Silence After Speech", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Silence After Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -798,7 +798,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 35000);
 
     test("Silence Then Speech", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Silence Then Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -891,7 +891,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 });
 
 test("Multiple Phrase Latency Reporting", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Multiple Phrase Latency Reporting");
 
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();

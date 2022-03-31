@@ -6,7 +6,7 @@ import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 beforeEach(() => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("-------------------Starting test case: " + expect.getState().currentTestName + "---------------");
     // Override inputs, if necessary
     Settings.LoadSettings();

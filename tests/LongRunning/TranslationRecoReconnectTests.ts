@@ -15,6 +15,7 @@ let objsToClose: any[];
 beforeAll((): void => {
     // override inputs, if necessary
     Settings.LoadSettings();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
 });
 
@@ -81,6 +82,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
     // Pump the audio from the wave file specified with 1 second silence between iterations indefinetly.
     const p = sdk.AudioInputStream.createPullStream(
         {
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             close: (): void => { },
             read: (buffer: ArrayBuffer): number => {
                 if (pumpSilence) {

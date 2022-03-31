@@ -51,7 +51,7 @@ const writeBufferToConsole: (buffer: ArrayBuffer) => void = (buffer: ArrayBuffer
         out += readView[i] + " ";
     }
 
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info(out);
 };
 

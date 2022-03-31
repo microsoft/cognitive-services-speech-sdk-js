@@ -79,7 +79,7 @@ let objsToClose: any[];
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
@@ -176,7 +176,7 @@ test("Create BotFrameworkConfig, null optional botId", () => {
 });
 
 test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create DialogServiceConnector, BotFrameworkConfig.fromSubscription");
 
     const connectorConfig: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, Settings.BotRegion);
@@ -192,7 +192,7 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
 });
 
 test("Output format, default", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Output format, default");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -202,7 +202,7 @@ test("Output format, default", () => {
 });
 
 test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Create BotFrameworkConfig, invalid optional botId");
 
     const botConfig: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, Settings.BotRegion, "potato");
@@ -229,7 +229,7 @@ test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallba
 }, 15000);
 
 test("Connect / Disconnect", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Connect / Disconnect");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -245,7 +245,7 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
     expect(connector).not.toBeUndefined();
 
     connector.canceled = (sender: sdk.DialogServiceConnector, args: sdk.SpeechRecognitionCanceledEventArgs) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Error code: %d, error details: %s, error reason: %d", args.errorCode, args.errorDetails, args.reason);
     };
 
@@ -273,7 +273,7 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
 });
 
 test("GetDetailedOutputFormat", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: GetDetailedOutputFormat");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -299,7 +299,7 @@ test("GetDetailedOutputFormat", (done: jest.DoneCallback) => {
 });
 
 test("ListenOnceAsync", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: ListenOnceAsync");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -371,7 +371,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
 });
 
 Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: ListenOnceAsync with audio response");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -463,7 +463,7 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
 }, 15000);
 
 Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Successive ListenOnceAsync with audio response");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -552,7 +552,7 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
 }, 15000);
 
 test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Successive ListenOnceAsync calls");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -624,7 +624,7 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
 }, 15000);
 
 test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: ListenOnceAsync with silence returned");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -693,7 +693,7 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
 }, 15000);
 
 test("Send/Receive messages", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Send/Receive messages");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -737,7 +737,7 @@ test("Send/Receive messages", (done: jest.DoneCallback) => {
 });
 
 test("Send multiple messages", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Send multiple messages");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -786,7 +786,7 @@ test("Send multiple messages", (done: jest.DoneCallback) => {
 });
 
 test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Send/Receive messages during ListenOnce");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
@@ -847,7 +847,7 @@ test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
 });
 
 test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: SendActivity fails with invalid JSON object");
 
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();

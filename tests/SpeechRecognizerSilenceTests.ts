@@ -32,19 +32,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -100,7 +100,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     describe("Intiial Silence Tests", () => {
         test("InitialSilenceTimeout (pull)", (done: jest.DoneCallback) => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (pull)");
             let p: sdk.PullAudioInputStream;
             let bytesSent: number = 0;
@@ -131,7 +131,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         }, 15000);
 
         test("InitialSilenceTimeout (push)", (done: jest.DoneCallback) => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (push)");
             const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
             const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
@@ -144,7 +144,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         }, 15000);
 
         Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (File)");
             const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
             const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
@@ -226,7 +226,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         test.skip("InitialBabbleTimeout", (done: jest.DoneCallback) => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Name: InitialBabbleTimeout");
 
             const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
@@ -272,7 +272,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("burst of silence", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: burst of silence");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
@@ -322,7 +322,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("InitialSilenceTimeout Continuous", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout Continuous");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
@@ -380,7 +380,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 30000);
 
     test("Silence After Speech", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Silence After Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -461,7 +461,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 30000);
 
     test("Silence Then Speech", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Silence Then Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
