@@ -532,7 +532,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
     public updateHeader(audioLength: number): void {
         if (this.priHasHeader) {
             const view = new DataView(this.privHeader);
-            view.setUint32(4, audioLength + this.privHeader.byteLength, true);
+            view.setUint32(4, audioLength + this.privHeader.byteLength - 8, true);
             view.setUint32(40, audioLength, true);
         }
     }
