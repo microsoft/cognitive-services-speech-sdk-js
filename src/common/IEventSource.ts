@@ -18,4 +18,6 @@ export interface IEventSource<TEvent extends PlatformEvent> extends IDisposable 
     attach(onEventCallback: (event: TEvent) => void): IDetachable;
 
     attachListener(listener: IEventListener<TEvent>): IDetachable;
+
+    attachConsoleListener(listener: IEventListener<TEvent>): IDetachable;
 }

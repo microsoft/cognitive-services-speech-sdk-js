@@ -28,19 +28,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Sart Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -81,7 +81,7 @@ const Recognized: string = "Recognized";
 const Canceled: string = "Canceled";
 
 test("GetTargetLanguages", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: GetTargetLanguages");
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
     objsToClose.push(r);
@@ -93,7 +93,7 @@ test("GetTargetLanguages", () => {
 });
 
 test.skip("GetOutputVoiceNameNoSetting", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: GetOutputVoiceNameNoSetting");
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
     objsToClose.push(r);
@@ -101,7 +101,7 @@ test.skip("GetOutputVoiceNameNoSetting", () => {
 });
 
 test("GetParameters", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: GetParameters");
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
     objsToClose.push(r);
@@ -117,7 +117,7 @@ test("GetParameters", () => {
 describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     beforeEach(() => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("forceNodeWebSocket: " + forceNodeWebSocket);
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
     });
@@ -126,7 +126,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("Translate Multiple Targets", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Translate Multiple Targets");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
         objsToClose.push(s);
@@ -178,7 +178,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 15000);
 
     test("Translate Bad Language", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: Translate Bad Language");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
         objsToClose.push(s);
@@ -217,7 +217,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("RecognizeOnce Bad Language", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: RecognizeOnce Bad Language");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
         objsToClose.push(s);
@@ -255,7 +255,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: fromEndPoint with Subscription key");
 
         const endpoint = "wss://" + Settings.SpeechRegion + ".s2s.speech.microsoft.com/speech/translation/cognitiveservices/v1";
@@ -291,7 +291,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 12000);
 
     test("fromV2EndPoint with Subscription key", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: fromV2EndPoint with Subscription key");
 
         const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/universal/v2?SpeechContext-translation.targetLanguages=[\"de-de\"]";

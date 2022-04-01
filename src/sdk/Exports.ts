@@ -104,3 +104,5 @@ export { PronunciationAssessmentConfig } from "./PronunciationAssessmentConfig";
 export { PronunciationAssessmentResult } from "./PronunciationAssessmentResult";
 export { LanguageIdMode } from "./LanguageIdMode";
 export { LanguageIdPriority } from "./LanguageIdPriority";
+export { Diagnostics } from "./Diagnostics";
+export { LogLevel } from "./LogLevel";

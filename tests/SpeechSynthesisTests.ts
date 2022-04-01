@@ -25,19 +25,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -132,7 +132,7 @@ class PushAudioOutputStreamTestCallback extends sdk.PushAudioOutputStreamCallbac
 }
 
 test("testGetVoicesAsyncAuthError", async () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: testGetVoicesAsyncAuthError");
     const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("foo", Settings.SpeechRegion);
 
@@ -149,7 +149,7 @@ test("testGetVoicesAsyncAuthError", async () => {
 });
 
 test("testGetVoicesAsyncDefault", async () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: testGetVoicesAsyncDefault");
     const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
 
@@ -165,7 +165,7 @@ test("testGetVoicesAsyncDefault", async () => {
 });
 
 test("testGetVoicesAsyncUS", async () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: testGetVoicesAsyncUS");
     const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
 
@@ -183,7 +183,7 @@ test("testGetVoicesAsyncUS", async () => {
 });
 
 Settings.testIfDOMCondition("testSpeechSynthesizer1", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: testSpeechSynthesizer1");
     const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
 
@@ -198,7 +198,7 @@ Settings.testIfDOMCondition("testSpeechSynthesizer1", () => {
 });
 
 test("testSetAndGetParameters", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: testSetAndGetParameters");
     const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
     speechConfig.speechSynthesisLanguage = "zh-CN";
@@ -219,7 +219,7 @@ test("testSetAndGetParameters", () => {
 describe("Service based tests", () => {
 
     test("testSpeechSynthesizerEvent1", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerEvent1");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -236,7 +236,7 @@ describe("Service based tests", () => {
         let completeEventCount: number = 0;
 
         s.synthesisStarted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Synthesis started.");
             try {
                 CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudioStarted);
@@ -247,7 +247,7 @@ describe("Service based tests", () => {
         };
 
         s.synthesizing = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Audio received with length of " + e.result.audioData.byteLength);
             audioLength += e.result.audioData.byteLength - 44;
             try {
@@ -259,7 +259,7 @@ describe("Service based tests", () => {
         };
 
         s.synthesisCompleted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("Audio received with length of " + e.result.audioData.byteLength);
             try {
                 CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudioCompleted);
@@ -292,7 +292,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizerSpeakTwice", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerSpeakTwice");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -304,7 +304,7 @@ describe("Service based tests", () => {
         expect(s).not.toBeUndefined();
 
         s.speakTextAsync("hello world 1.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking finished, turn 1");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             // To seconds
@@ -314,7 +314,7 @@ describe("Service based tests", () => {
         });
 
         s.speakTextAsync("hello world 2.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking finished, turn 2");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             expect(result.audioDuration / 1000 / 1000 / 10).toBeCloseTo(result.audioData.byteLength / 32000, 2);
@@ -325,7 +325,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizerToFile", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerToFile");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -341,7 +341,7 @@ describe("Service based tests", () => {
         let audioLength: number = 0;
 
         s.speakTextAsync("hello world 1.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking finished, turn 1");
             audioLength += result.audioData.byteLength;
         }, (e: string): void => {
@@ -349,7 +349,7 @@ describe("Service based tests", () => {
         });
 
         s.speakTextAsync("hello world 2.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking finished, turn 2");
             audioLength += result.audioData.byteLength;
             s.close();
@@ -365,7 +365,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizer: synthesis to file in turn.", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer synthesis to file in turn.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
@@ -376,7 +376,7 @@ describe("Service based tests", () => {
         objsToClose.push(s);
 
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             // wait 2 seconds before checking file size, as the async file writing might not be finished right now.
@@ -391,7 +391,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizerWordBoundary", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerWordBoundary");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -527,7 +527,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizerBookmark", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerBookmark");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -565,7 +565,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizerViseme", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerViseme");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -602,7 +602,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizer: synthesis with SSML.", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer synthesis with SSML.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -614,7 +614,7 @@ describe("Service based tests", () => {
 
         let r: sdk.SpeechSynthesisResult;
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking text finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             r = result;
@@ -626,7 +626,7 @@ describe("Service based tests", () => {
             `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
 <voice name='Microsoft Server Speech Text to Speech Voice (en-US, AriaRUS)'>hello world.</voice></speak>`;
         s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking ssml finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             CheckBinaryEqual(r.audioData, result.audioData);
@@ -637,7 +637,7 @@ describe("Service based tests", () => {
     });
 
     Settings.testIfDOMCondition("testSpeechSynthesizer: synthesis with invalid key.", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer synthesis with invalid key.");
         const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("invalidKey", Settings.SpeechRegion);
         expect(speechConfig).not.toBeUndefined();
@@ -672,7 +672,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizer: synthesis with invalid voice name.", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer synthesis with invalid voice name.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -720,7 +720,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizer: synthesis to pull audio output stream.", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer synthesis to pull audio output stream.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -737,7 +737,7 @@ describe("Service based tests", () => {
         expect(s).not.toBeUndefined();
 
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking text finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             s.close();
@@ -747,7 +747,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizer: synthesis to pull audio output stream 2.", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer synthesis to pull audio output stream 2.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -761,7 +761,7 @@ describe("Service based tests", () => {
         expect(s).not.toBeUndefined();
 
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking text finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             s.close();
@@ -772,7 +772,7 @@ describe("Service based tests", () => {
     });
 
     Settings.testIfDOMCondition("testSpeechSynthesizer: synthesis to push audio output stream.", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer synthesis to push audio output stream.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -785,7 +785,7 @@ describe("Service based tests", () => {
         expect(s).not.toBeUndefined();
 
         s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking text finished.");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             s.close();
@@ -798,7 +798,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizer: authentication with authorization token", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer authentication with authorization token");
 
         const req = {
@@ -833,7 +833,7 @@ describe("Service based tests", () => {
             objsToClose.push(s);
 
             s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 console.info("speaking text finished.");
                 CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
                 done();
@@ -843,9 +843,10 @@ describe("Service based tests", () => {
         });
     });
 
-    test("test Speech Synthesizer: Language Auto Detection", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
-        console.info("Name: test Speech Synthesizer, Language Auto Detection");
+    test("test Speech Synthesiser: Language Auto Detection", (done: jest.DoneCallback) => {
+        // eslint-disable-next-line no-console
+        console.info("Name: test Speech Synthesiser, Language Auto Detection");
+
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
         const autoDetectSourceLanguageConfig: sdk.AutoDetectSourceLanguageConfig = sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
@@ -873,7 +874,7 @@ describe("Service based tests", () => {
 
         // we will get very short audio as the en-US voices are not mix-lingual.
         s.speakTextAsync("你好世界。", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking finished, turn 1");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             expect(result.audioData.byteLength).toBeGreaterThan(64 << 7); // longer than 1s
@@ -882,7 +883,7 @@ describe("Service based tests", () => {
         });
 
         s.speakTextAsync("今天天气很好。", (result: sdk.SpeechSynthesisResult): void => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.info("speaking finished, turn 2");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             expect(result.audioData.byteLength).toBeGreaterThan(64 << 7); // longer than 1s
@@ -893,7 +894,7 @@ describe("Service based tests", () => {
     });
 
     test("testSpeechSynthesizerUsingCustomVoice", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerUsingCustomVoice");
 
         let uri: string;

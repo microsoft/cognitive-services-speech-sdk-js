@@ -20,19 +20,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -76,14 +76,14 @@ const BuildRecognizer: (speechConfig?: sdk.SpeechConfig) => sdk.SpeakerRecognize
 };
 
 test("VoiceProfileClient", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: VoiceProfileClient");
     const r: sdk.VoiceProfileClient = BuildClient();
     objsToClose.push(r);
 });
 
 test("VoiceProfileClient with Bad credentials throws meaningful error", async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: VoiceProfileClient with Bad credentials throws meaningful error");
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("BADKEY", Settings.SpeakerIDRegion);
     objsToClose.push(s);
@@ -103,7 +103,7 @@ test("VoiceProfileClient with Bad credentials throws meaningful error", async (d
 });
 
 test("GetParameters", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: GetParameters");
     const r: sdk.VoiceProfileClient = BuildClient();
     objsToClose.push(r);
@@ -112,7 +112,7 @@ test("GetParameters", () => {
 });
 
 test("Get Authorization Phrases for enrollment", async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Get Authorization Phrases for enrollment");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -134,7 +134,7 @@ test("Get Authorization Phrases for enrollment", async (done: jest.DoneCallback)
 }, 20000);
 
 test("Get Activation Phrases for enrollment", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Get Activation Phrases for enrollment");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -160,7 +160,7 @@ test("Get Activation Phrases for enrollment", (done: jest.DoneCallback) => {
 
 test("Create and Delete Voice Profile using push stream - Independent Identification", async (done: jest.DoneCallback) => {
 
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create and Delete Voice Profile using push stream - Independent Identification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -218,7 +218,7 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
 }, 40000);
 
 test("Create and Delete Voice Profile - Independent Identification", async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create and Delete Voice Profile - Independent Identification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -269,7 +269,7 @@ test("Create and Delete Voice Profile - Independent Identification", async (done
 }, 15000);
 
 test("Create and Delete Voice Profile - Independent Verification", async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create and Delete Voice Profile - Independent Verification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -319,7 +319,7 @@ test("Create and Delete Voice Profile - Independent Verification", async (done: 
 }, 15000);
 
 test("Create, Get, and Delete Voice Profile - Independent Verification", async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create, Get, and Delete Voice Profile - Independent Verification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -369,7 +369,7 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", async (
 }, 15000);
 
 test("Create and Delete Voice Profile - Dependent Verification", async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create and Delete Voice Profile - Dependent Verification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);

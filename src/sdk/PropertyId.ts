@@ -240,6 +240,21 @@ export enum PropertyId {
     SpeechServiceConnection_EndSilenceTimeoutMs,
 
     /**
+     * A duration of detected silence, measured in milliseconds, after which speech-to-text will determine a spoken
+     * phrase has ended and generate a final Recognized result. Configuring this timeout may be helpful in situations
+     * where spoken input is significantly faster or slower than usual and default segmentation behavior consistently
+     * yields results that are too long or too short. Segmentation timeout values that are inappropriately high or low
+     * can negatively affect speech-to-text accuracy; this property should be carefully configured and the resulting
+     * behavior should be thoroughly validated as intended.
+     *
+     * For more information about timeout configuration that includes discussion of default behaviors, please visit
+     * https://aka.ms/csspeech/timeouts.
+     *
+     * Added in version 1.21.0.
+     */
+    Speech_SegmentationSilenceTimeoutMs,
+
+    /**
      * A boolean value specifying whether audio logging is enabled in the service or not.
      * Added in version 1.7.0
      */

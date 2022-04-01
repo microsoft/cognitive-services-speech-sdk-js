@@ -12,7 +12,6 @@ import {
 } from "../src/common.browser/Exports";
 import {
     Events,
-    EventType
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import { closeAsyncObjects } from "./Utilities";
@@ -20,22 +19,22 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+afterEach(async (done: jest.DoneCallback): Promise<void> => {
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -81,8 +80,8 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     return s;
 };
 
-test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback): void => {
+    // eslint-disable-next-line no-console
     console.info("Name: testPronunciationAssessmentConfig:::normal");
     let pronConfig: sdk.PronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig("reference");
     let j = JSON.parse(pronConfig.toJSON());
@@ -121,8 +120,8 @@ test("testPronunciationAssessmentConfig::normal", (done: jest.DoneCallback) => {
     done();
 });
 
-test("testPronunciationAssessmentConfig::fromJson", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+test("testPronunciationAssessmentConfig::fromJson", (done: jest.DoneCallback): void => {
+    // eslint-disable-next-line no-console
     console.info("Name: testPronunciationAssessmentConfig::fromJson");
     const jsonString = `{"dimension": "Comprehensive", "enableMiscue": false, "key": "value"}`;
     const pronConfig = sdk.PronunciationAssessmentConfig.fromJSON(jsonString);
@@ -130,18 +129,18 @@ test("testPronunciationAssessmentConfig::fromJson", (done: jest.DoneCallback) =>
     done();
 });
 
-describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean) => {
+describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean): void => {
 
-    beforeAll(() => {
+    beforeAll((): void => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
     });
 
-    afterAll(() => {
+    afterAll((): void => {
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
     test("test Pronunciation Assessment with reference text", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: test Pronunciation Assessment with reference text");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
@@ -192,7 +191,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     });
 
     test("test Pronunciation Assessment without reference text", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: test Pronunciation Assessment without reference text");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
@@ -237,7 +236,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     });
 
     test("test Pronunciation Assessment with ipa phoneme set", (done: jest.DoneCallback) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Name: test Pronunciation Assessment with ipa phoneme set");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);

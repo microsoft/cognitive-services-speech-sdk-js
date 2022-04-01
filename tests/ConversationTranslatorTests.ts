@@ -20,13 +20,13 @@ import {
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 const consoleInfo = console.info;
 
 const endpointHost: string = Settings.ConversationTranslatorHost;
 const speechEndpointHost: string = Settings.ConversationTranslatorSpeechHost;
 
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 console.info = (...args: any[]): void => {
 
     const formatConsoleDate = (): string => {
@@ -55,18 +55,18 @@ let objsToClose: any[];
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
     beforeAll(() => jest.setTimeout(90 * 1000));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -277,7 +277,7 @@ describe("conversation service tests", () => {
 
     test("Start Conversation, join as host and mute participants", (done: jest.DoneCallback) => {
 
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host, mute participants");
 
         let participantsCount: number = 0;
@@ -371,7 +371,7 @@ describe("conversation service tests", () => {
 
     test("Start Conversation, join as host and send message", (done: jest.DoneCallback) => {
 
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host and send message");
 
         let textMessage: string = "";
@@ -394,7 +394,7 @@ describe("conversation service tests", () => {
                 sendMessage(`Hello ${e.participants[0].displayName}`);
             });
             ct.textMessageReceived = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
-                // tslint:disable-next-line: no-console
+                // eslint-disable-next-line  no-console
                 console.log(`text message received: ${e.result.text}`);
                 textMessage = e.result.text;
             });
@@ -408,17 +408,17 @@ describe("conversation service tests", () => {
                     ct.joinConversationAsync(c, "Host",
                         (() => {
                             // continue
-                            // tslint:disable-next-line: no-console
+                            // eslint-disable-next-line  no-console
                             console.log("joined");
                         }),
                         ((error: any) => {
-                            // tslint:disable-next-line: no-console
+                            // eslint-disable-next-line  no-console
                             console.log("error joining: " + error);
                             done.fail();
                         }));
                 }),
                 ((error: any) => {
-                    // tslint:disable-next-line: no-console
+                    // eslint-disable-next-line  no-console
                     console.log("error starting: " + error);
                     done.fail();
                 }));
@@ -433,7 +433,7 @@ describe("conversation service tests", () => {
 
     test("Start Conversation, join as host and eject participant", (done: jest.DoneCallback) => {
 
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host and eject participant");
 
         let participantsCount: number = 0;
@@ -568,7 +568,7 @@ describe("conversation translator service tests", () => {
 
     test("Join Conversation Translator, invalid conversation code [400027]", (done: jest.DoneCallback) => {
 
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Join Conversation Translator, invalid conversation code [400027]");
 
         const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
@@ -601,7 +601,7 @@ describe("conversation translator service tests", () => {
 
     test("Join Conversation Translator, duplicate nickname [400028]", (done: jest.DoneCallback) => {
 
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Join Conversation Translator, duplicate nickname [400028]");
 
         let errorMessage: string = "";
@@ -660,7 +660,7 @@ describe("conversation translator service tests", () => {
 
     test.skip("Join Conversation Translator, locked conversation [400044]", (done: jest.DoneCallback) => {
 
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Join Conversation Translator, locked conversation [400044]");
 
         // start a conversation
@@ -709,7 +709,7 @@ describe("conversation translator service tests", () => {
 
     test("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback) => {
 
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host with speech language and speak");
 
         // audio config

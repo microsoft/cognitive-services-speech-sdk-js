@@ -5,7 +5,7 @@ import { Events } from "./src/common/Exports";
 
 // Common.Storage.SetLocalStorage(new Common.Browser.LocalStorage());
 // Common.Storage.SetSessionStorage(new Common.Browser.SessionStorage());
-Events.instance.attachListener(new ConsoleLoggingListener());
+Events.instance.attachConsoleListener(new ConsoleLoggingListener());
 
 // Speech SDK API
 export * from "./src/sdk/Exports";
