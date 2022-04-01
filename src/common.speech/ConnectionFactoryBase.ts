@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {
+    OutputFormatPropertyName,
     ServicePropertiesPropertyName,
 } from "../common.speech/Exports";
 import { IConnection, IStringDictionary } from "../common/Exports";
@@ -48,16 +49,7 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
             this.setUrlParameter(propertyId, parameterName, config, queryParams, endpoint);
         });
 
-
-        if (queryParams[QueryParameterNames.Format].toLowerCase() === "detailed") {
-            // If not otherwise specified, automatically enable word-level timestamps for detailed results
-            if (!(QueryParameterNames.EnableWordLevelTimestamps in queryParams)) {
-                queryParams[QueryParameterNames.EnableWordLevelTimestamps] = "true";
-            }
-
-            // Match enablement/disablement of word-level confidence to enablement/disablement of word-level timestamps
-            queryParams[QueryParameterNames.EnableWordLevelConfidence] = queryParams[QueryParameterNames.EnableWordLevelTimestamps];
-        }
+        this.setCommonResultFormatOptions(config, queryParams);
 
         const serviceProperties: IStringDictionary<string> = JSON.parse(config.parameters.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
 
@@ -80,4 +72,33 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
         }
     }
 
+    private setCommonResultFormatOptions(
+        config: RecognizerConfig,
+        queryParams: IStringDictionary<string>) : void {
+
+        // Ensure we explicitly set the output format according to the config property *before* evaluating implicit
+        // ways it may be set
+        const outputFormatFromProperty = config.parameters.getProperty(OutputFormatPropertyName, undefined);
+        if (outputFormatFromProperty !== undefined) {
+            queryParams[QueryParameterNames.Format] = outputFormatFromProperty.toLowerCase();
+        }
+
+        // Handle the implicit relationship between output format and word-level timestamps:
+        //  - If format is "detailed" and no explicit value was provided for word-level timestamps, enable timestamps
+        //  - If format *isn't* "detailed" and word-level timestamps were specifically requested, enable detailed
+        //      output format. This will override even explicit "simple" format!
+        if (queryParams[QueryParameterNames.Format] === "detailed") {
+            if (!(QueryParameterNames.EnableWordLevelTimestamps in queryParams)) {
+                queryParams[QueryParameterNames.EnableWordLevelTimestamps] = "true";
+            }
+        } else if (queryParams[QueryParameterNames.EnableWordLevelTimestamps] === "true") {
+            queryParams[QueryParameterNames.Format] = "detailed";
+        }
+
+        // Synchronize enablement of word-level confidence scores to enablement of word-level timestamps:
+        //  - If word-level timestamps are on/off, set word-level confidence to on/off
+        if (QueryParameterNames.EnableWordLevelTimestamps in queryParams && !(QueryParameterNames.EnableWordLevelConfidence in queryParams)) {
+            queryParams[QueryParameterNames.EnableWordLevelConfidence] = queryParams[QueryParameterNames.EnableWordLevelTimestamps];
+        }
+    }
 }

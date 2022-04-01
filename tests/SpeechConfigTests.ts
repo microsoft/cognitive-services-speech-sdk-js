@@ -798,9 +798,9 @@ describe("Connection URL Tests", () => {
                     );
                 });
 
-                test("detailed output format", (done: jest.DoneCallback) => {
+                test("detailed output format (via explicit property)", (done: jest.DoneCallback) => {
                     // tslint:disable-next-line:no-console
-                    console.info("Name: detailed output format");
+                    console.info("Name: detailed output format (via explicit property)");
 
                     // detailed output format should auto-enable word-level details
                     testUrlParameter(createMethod,
@@ -813,6 +813,11 @@ describe("Connection URL Tests", () => {
                         "wordLevelTimestamps=true",
                         "wordLevelConfidence=true"
                     );
+                });
+
+                test("detailed output format (ON via word-level method)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: detailed output format (ON via word-level method)");
 
                     // enabling via requestWordLevelTimestamps should work the same way
                     testUrlParameter(createMethod,
@@ -825,6 +830,11 @@ describe("Connection URL Tests", () => {
                         "wordLevelTimestamps=true",
                         "wordLevelConfidence=true"
                     );
+                });
+                
+                test("detailed output format (ON via word-level property)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: detailed output format (ON via word-level property)");
 
                     // ditto for the property
                     testUrlParameter(createMethod,
@@ -837,6 +847,11 @@ describe("Connection URL Tests", () => {
                         "wordLevelTimestamps=true",
                         "wordLevelConfidence=true"
                     );
+                });
+
+                test("detailed output format (OFF via word-level property)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: detailed output format (OFF via word-level property)");
 
                     // explicit disablement of word-level details (via timestamp) should work
                     testUrlParameter(createMethod,

@@ -383,7 +383,31 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(result.errorDetails).toBeUndefined();
                 expect(result.text).toEqual(Settings.WaveFileText);
                 expect(result.properties).not.toBeUndefined();
-                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                // The result should have its raw response JSON stored as a property (always true, but particularly
+                // important for detailed results)
+                const resultJson: string = result.properties.getProperty(
+                    sdk.PropertyId.SpeechServiceResponse_JsonResult,
+                    undefined);
+                expect(resultJson).not.toBeUndefined();
+
+                // We should be able to create a detailed result helper from the response JSON
+                const detailedResult: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(resultJson);
+                expect(detailedResult).not.toBeUndefined();
+
+                // The detailed result's NBest should have something in it
+                expect(detailedResult.NBest).not.toBeUndefined();
+                expect(detailedResult.NBest.length > 0);
+
+                // By default when requesting detailed results, NBest should include words and those words should
+                // include word-level timestamps and confidence scores. This can be disabled via the property for
+                // requesting word-level timestamps.
+                expect(detailedResult.NBest[0].Words).not.toBeUndefined();
+                expect(detailedResult.NBest[0].Words.length > 0);
+                expect(detailedResult.NBest[0].Words[0].Word).not.toBeUndefined();
+                expect(detailedResult.NBest[0].Words[0].Offset).not.toBeUndefined();
+                expect(detailedResult.NBest[0].Words[0].Duration).not.toBeUndefined();
+                expect(detailedResult.NBest[0].Words[0].Confidence).not.toBeUndefined();
 
                 done();
             } catch (error) {
