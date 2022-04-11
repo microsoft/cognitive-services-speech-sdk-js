@@ -235,7 +235,6 @@ export enum SpeechSynthesisOutputFormat {
      * Added in version 1.20.0
      * @member SpeechSynthesisOutputFormat.Riff22050Hz16BitMonoPcm
      */
-
     Riff22050Hz16BitMonoPcm,
 
     /**
