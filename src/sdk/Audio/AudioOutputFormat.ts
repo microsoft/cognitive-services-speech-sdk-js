@@ -46,6 +46,10 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         [SpeechSynthesisOutputFormat.Audio16Khz16Bit32KbpsMonoOpus]: "audio-16khz-16bit-32kbps-mono-opus",
         [SpeechSynthesisOutputFormat.Audio24Khz16Bit48KbpsMonoOpus]: "audio-24khz-16bit-48kbps-mono-opus",
         [SpeechSynthesisOutputFormat.Audio24Khz16Bit24KbpsMonoOpus]: "audio-24khz-16bit-24kbps-mono-opus",
+        [SpeechSynthesisOutputFormat.Raw22050Hz16BitMonoPcm]: "raw-22050hz-16bit-mono-pcm",
+        [SpeechSynthesisOutputFormat.Riff22050Hz16BitMonoPcm]: "riff-22050hz-16bit-mono-pcm",
+        [SpeechSynthesisOutputFormat.Raw44100Hz16BitMonoPcm]: "raw-44100hz-16bit-mono-pcm",
+        [SpeechSynthesisOutputFormat.Riff44100Hz16BitMonoPcm]: "riff-44100hz-16bit-mono-pcm",
     };
     private priAudioFormatString: string;
     /**
@@ -470,6 +474,50 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     8,
                     speechSynthesisOutputFormatString,
                     "raw-8khz-8bit-mono-alaw",
+                    true);
+            case "raw-22050hz-16bit-mono-pcm":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.PCM,
+                    1,
+                    22050,
+                    44100,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "riff-22050hz-16bit-mono-pcm":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.PCM,
+                    1,
+                    22050,
+                    44100,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    "raw-22050hz-16bit-mono-pcm",
+                    true);
+            case "raw-44100hz-16bit-mono-pcm":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.PCM,
+                    1,
+                    44100,
+                    88200,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "riff-44100hz-16bit-mono-pcm":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.PCM,
+                    1,
+                    44100,
+                    88200,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    "raw-44100hz-16bit-mono-pcm",
                     true);
             case "riff-16khz-16bit-mono-pcm":
             default:
