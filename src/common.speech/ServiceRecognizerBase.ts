@@ -27,6 +27,9 @@ import {
     RecognitionEventArgs,
     Recognizer,
     SessionEventArgs,
+    SpeakerIdentificationModel,
+    SpeakerRecognitionResult,
+    SpeakerVerificationModel,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
 import { Callback } from "../sdk/Transcription/IConversation";
@@ -190,6 +193,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected recognizeOverride: (recoMode: RecognitionMode, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => Promise<void> = undefined;
+
+    public recognizeSpeaker: (model: SpeakerIdentificationModel | SpeakerVerificationModel) => Promise<SpeakerRecognitionResult> = undefined;
 
     public async recognize(
         recoMode: RecognitionMode,

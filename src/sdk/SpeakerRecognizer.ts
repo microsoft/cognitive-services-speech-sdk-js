@@ -1,20 +1,25 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {
-    IRestResponse,
-} from "../common.browser/Exports";
+import { Deferred } from "../common/Exports";
 import {
     Context,
+    IAuthentication,
+    IConnectionFactory,
     OS,
+    RecognizerConfig,
+    ServiceRecognizerBase,
     SpeakerIdMessageAdapter,
     SpeakerRecognitionConfig,
+    SpeakerRecognitionConnectionFactory,
+    SpeechServiceConfig,
 } from "../common.speech/Exports";
 import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
     PropertyCollection,
     PropertyId,
+    Recognizer,
     ResultReason,
     SpeakerIdentificationModel,
     SpeakerRecognitionResult,
@@ -28,10 +33,29 @@ import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
  * Handles operations from user for Voice Profile operations (e.g. createProfile, deleteProfile)
  * @class SpeakerRecognizer
  */
-export class SpeakerRecognizer {
+export class SpeakerRecognizer extends Recognizer {
     protected privProperties: PropertyCollection;
     private privAdapter: SpeakerIdMessageAdapter;
+    private privDisposedSpeakerRecognizer: boolean;
     private privAudioConfigImpl: AudioConfigImpl;
+    /**
+     * Initializes an instance of the SpeakerRecognizer.
+     * @constructor
+     * @param {SpeechConfig} speechConfig - The set of configuration properties.
+     * @param {AudioConfig} audioConfig - An optional audio input config associated with the recognizer
+     */
+    public constructor(speechConfig: SpeechConfig, audioConfig: AudioConfig) {
+        Contracts.throwIfNullOrUndefined(speechConfig, "speechConfig");
+        const configImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
+        Contracts.throwIfNullOrUndefined(configImpl, "speechConfig");
+
+        super(audioConfig, configImpl.properties, new SpeakerRecognitionConnectionFactory());
+        this.privAudioConfigImpl = audioConfig as AudioConfigImpl;
+        Contracts.throwIfNull(this.privAudioConfigImpl, "audioConfig");
+
+        this.privDisposedSpeakerRecognizer = false;
+        this.privProperties = configImpl.properties;
+    }
 
     /**
      * Gets the authorization token used to communicate with the service.
@@ -68,22 +92,6 @@ export class SpeakerRecognizer {
     }
 
     /**
-     * SpeakerRecognizer constructor.
-     * @constructor
-     * @param {SpeechConfig} speechConfig - An set of initial properties for this recognizer (authentication key, region, &c)
-     */
-    public constructor(speechConfig: SpeechConfig, audioConfig: AudioConfig) {
-        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
-        Contracts.throwIfNull(speechConfigImpl, "speechConfig");
-
-        this.privAudioConfigImpl = audioConfig as AudioConfigImpl;
-        Contracts.throwIfNull(this.privAudioConfigImpl, "audioConfig");
-
-        this.privProperties = speechConfigImpl.properties.clone();
-        this.implSRSetup();
-    }
-
-    /**
      * Get recognition result for model using given audio
      * @member SpeakerRecognizer.prototype.recognizeOnceAsync
      * @function
@@ -94,16 +102,9 @@ export class SpeakerRecognizer {
      * @param err - Callback invoked in case of an error.
      */
     public async recognizeOnceAsync(model: SpeakerIdentificationModel | SpeakerVerificationModel): Promise<SpeakerRecognitionResult> {
+        Contracts.throwIfDisposed(this.privDisposedSpeakerRecognizer);
 
-        if (model instanceof SpeakerIdentificationModel) {
-            const responsePromise: Promise<IRestResponse> = this.privAdapter.identifySpeaker(model, this.privAudioConfigImpl);
-            return this.getResult(responsePromise, SpeakerRecognitionResultType.Identify, undefined);
-        } else if (model instanceof SpeakerVerificationModel) {
-            const responsePromise: Promise<IRestResponse> = this.privAdapter.verifySpeaker(model, this.privAudioConfigImpl);
-            return this.getResult(responsePromise, SpeakerRecognitionResultType.Verify, model.voiceProfile.profileId);
-        } else {
-            throw new Error("SpeakerRecognizer.recognizeOnce: Unexpected model type");
-        }
+        return this.recognizeSpeakerOnceAsyncImpl(model);
     }
 
     /**
@@ -111,39 +112,47 @@ export class SpeakerRecognizer {
      * @member SpeakerRecognizer.prototype.close
      * @function
      * @public
+     * @async
      */
-    public close(): void {
+    public async close(): Promise<void> {
+        Contracts.throwIfDisposed(this.privDisposedSpeakerRecognizer);
+        await this.dispose(true);
+    }
+
+    protected async recognizeSpeakerOnceAsyncImpl(model: SpeakerIdentificationModel | SpeakerVerificationModel): Promise<SpeakerRecognitionResult> {
+        Contracts.throwIfDisposed(this.privDisposedSpeakerRecognizer);
+
+        await this.implRecognizerStop();
+        const result: SpeakerRecognitionResult = await this.privReco.recognizeSpeaker(model);
+        await this.implRecognizerStop();
+
+        return result;
+    }
+
+    protected async implRecognizerStop(): Promise<void> {
+        if (this.privReco) {
+            await this.privReco.stopRecognizing();
+        }
         return;
     }
 
-    // Does class setup, swiped from Recognizer.
-    private implSRSetup(): void {
-
-        let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
-        let osName = "unknown";
-        let osVersion = "unknown";
-
-        if (typeof navigator !== "undefined") {
-            osPlatform = osPlatform + "/" + navigator.platform;
-            osName = navigator.userAgent;
-            osVersion = navigator.appVersion;
-        }
-
-        const recognizerConfig =
-            new SpeakerRecognitionConfig(
-                new Context(new OS(osPlatform, osName, osVersion)),
-                this.privProperties);
-
-        this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(speechConfig, this.properties);
     }
 
-    private async getResult(responsePromise: Promise<IRestResponse>, resultType: SpeakerRecognitionResultType, profileId?: string): Promise<SpeakerRecognitionResult> {
-        const response: IRestResponse = await responsePromise;
-        return new SpeakerRecognitionResult(
-            resultType,
-            response.data,
-            profileId,
-            response.ok ? ResultReason.RecognizedSpeaker : ResultReason.Canceled,
-        );
+    protected createServiceRecognizer(authentication: IAuthentication, connectionFactory: IConnectionFactory, audioConfig: AudioConfig, recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
+        const audioImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
+        return new SpeakerServiceRecognizer(authentication, connectionFactory, audioImpl, recognizerConfig, this);
+    }
+
+    protected async dispose(disposing: boolean): Promise<void> {
+        if (this.privDisposedSpeakerRecognizer) {
+            return;
+        }
+
+        if (disposing) {
+            this.privDisposedSpeakerRecognizer = true;
+            await super.dispose(disposing);
+        }
     }
 }

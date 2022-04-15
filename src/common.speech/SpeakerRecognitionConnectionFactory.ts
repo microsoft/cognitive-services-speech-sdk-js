@@ -1,0 +1,75 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+/* eslint-disable max-classes-per-file */
+
+import {
+    ProxyInfo,
+    WebsocketConnection,
+} from "../common.browser/Exports";
+import {
+    IConnection,
+    IStringDictionary
+} from "../common/Exports";
+import {
+    PropertyId
+} from "../sdk/Exports";
+import {
+    ConnectionFactoryBase
+} from "./ConnectionFactoryBase";
+import {
+    AuthInfo,
+    RecognizerConfig,
+    WebsocketMessageFormatter,
+} from "./Exports";
+import { HeaderNames } from "./HeaderNames";
+
+class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
+
+    public create(
+        config: RecognizerConfig,
+        authInfo: AuthInfo,
+        endpointPath: string,
+        connectionId?: string): IConnection {
+
+        let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
+        if (!endpoint) {
+            // const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
+            // const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
+            // const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `wss://${region}.spr-frontend.speech${hostSuffix}`);
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://dev.spr-frontend.speech.microsoft.com");
+            endpoint = `${host}/speaker/ws/${endpointPath}`;
+        }
+
+        const queryParams: IStringDictionary<string> = {
+            format: "simple",
+            language: config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
+        };
+
+        this.setCommonUrlParams(config, queryParams, endpoint);
+
+        const headers: IStringDictionary<string> = {};
+        if (authInfo.token !== undefined && authInfo.token !== "") {
+            headers[authInfo.headerName] = authInfo.token;
+        }
+        headers[HeaderNames.ConnectionId] = connectionId;
+
+        config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
+
+        const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+    }
+}
+
+export class SpeakerRecognitionConnectionFactory extends SpeakerRecognitionConnectionFactoryBase {
+    public create( config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
+        return super.create(config, authInfo, "recognition", connectionId);
+    }
+}
+
+export class VoiceProfileConnectionFactory extends SpeakerRecognitionConnectionFactoryBase {
+    public create( config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
+        return super.create(config, authInfo, "profile", connectionId);
+    }
+}
+
