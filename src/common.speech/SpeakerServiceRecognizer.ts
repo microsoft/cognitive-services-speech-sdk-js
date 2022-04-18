@@ -37,8 +37,8 @@ interface SpeakerContext {
     scenario: string;
     profileIds: string[];
     features: {
-        interimResult: "enabled";
-        progressiveDetection: "disabled";
+        interimResult: string;
+        progressiveDetection: string;
     };
 }
 
@@ -201,9 +201,13 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
     }
 
     private extractSpeakerContext(model: SpeakerRecognitionModel): SpeakerContext {
-        let context: SpeakerContext;
-        context.scenario = model.scenario;
-        context.profileIds = model.profileIds;
-        return context;
+        return {
+            features: {
+                interimResult: "enabled",
+                progressiveDetection: "disabled",
+            },
+            profileIds: model.profileIds,
+            scenario: model.scenario,
+        };
     }
 }
