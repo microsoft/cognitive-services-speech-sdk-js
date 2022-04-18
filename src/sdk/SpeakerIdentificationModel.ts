@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { Contracts } from "./Contracts";
+import { SpeakerRecognitionModel } from "./SpeakerRecognitionModel";
 import {
     VoiceProfile,
     VoiceProfileType,
@@ -12,8 +13,9 @@ import {
  * Model contains a set of profiles against which to identify speaker(s)
  * @class SpeakerIdentificationModel
  */
-export class SpeakerIdentificationModel {
+export class SpeakerIdentificationModel implements SpeakerRecognitionModel {
     private privVoiceProfiles: VoiceProfile[] = [];
+    private privProfileIds: string[];
 
     private constructor(profiles: VoiceProfile[]) {
         Contracts.throwIfNullOrUndefined(profiles, "VoiceProfiles");
@@ -25,6 +27,7 @@ export class SpeakerIdentificationModel {
                 throw new Error("Identification model can only be created from Identification profile: " + profile.profileId);
             }
             this.privVoiceProfiles.push(profile);
+            this.privProfileIds.push(profile.profileId);
         });
     }
     public static fromProfiles(profiles: VoiceProfile[]): SpeakerIdentificationModel {
@@ -32,7 +35,14 @@ export class SpeakerIdentificationModel {
     }
 
     public get voiceProfileIds(): string {
-        return this.privVoiceProfiles.map((profile: VoiceProfile): string => profile.profileId).join(",");
+        return this.privProfileIds.join(",");
     }
 
+    public get profileIds(): string[] {
+        return this.privProfileIds;
+    }
+
+    public get scenario(): string {
+        return "TextIndependentIdentification";
+    }
 }

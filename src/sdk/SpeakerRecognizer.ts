@@ -1,29 +1,24 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Deferred } from "../common/Exports";
 import {
-    Context,
     IAuthentication,
     IConnectionFactory,
-    OS,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SpeakerIdMessageAdapter,
-    SpeakerRecognitionConfig,
     SpeakerRecognitionConnectionFactory,
+    SpeakerServiceRecognizer,
     SpeechServiceConfig,
 } from "../common.speech/Exports";
+import { SpeakerRecognitionModel } from "./SpeakerRecognitionModel";
 import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
     PropertyCollection,
     PropertyId,
     Recognizer,
-    ResultReason,
     SpeakerIdentificationModel,
     SpeakerRecognitionResult,
-    SpeakerRecognitionResultType,
     SpeakerVerificationModel,
 } from "./Exports";
 import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
@@ -35,7 +30,6 @@ import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
  */
 export class SpeakerRecognizer extends Recognizer {
     protected privProperties: PropertyCollection;
-    private privAdapter: SpeakerIdMessageAdapter;
     private privDisposedSpeakerRecognizer: boolean;
     private privAudioConfigImpl: AudioConfigImpl;
     /**
@@ -97,7 +91,7 @@ export class SpeakerRecognizer extends Recognizer {
      * @function
      * @public
      * @async
-     * @param {SpeakerIdentificationModel} model Model containing Voice Profiles to be identified
+     * @param {SpeakerIdentificationModel | SpeakerVerificationModel} model Model containing Voice Profiles to be identified
      * @param cb - Callback invoked once result is returned.
      * @param err - Callback invoked in case of an error.
      */
@@ -119,7 +113,7 @@ export class SpeakerRecognizer extends Recognizer {
         await this.dispose(true);
     }
 
-    protected async recognizeSpeakerOnceAsyncImpl(model: SpeakerIdentificationModel | SpeakerVerificationModel): Promise<SpeakerRecognitionResult> {
+    protected async recognizeSpeakerOnceAsyncImpl(model: SpeakerRecognitionModel): Promise<SpeakerRecognitionResult> {
         Contracts.throwIfDisposed(this.privDisposedSpeakerRecognizer);
 
         await this.implRecognizerStop();

@@ -51,6 +51,7 @@ export * from "./SynthesizerConfig";
 export * from "./SynthesisContext";
 export * from "./SpeakerRecognitionConfig";
 export * from "./SpeakerIdMessageAdapter";
+export * from "./SpeakerServiceRecognizer";
 
 export const OutputFormatPropertyName: string = "OutputFormat";
 export const CancellationErrorCodePropertyName: string = "CancellationErrorCode";
