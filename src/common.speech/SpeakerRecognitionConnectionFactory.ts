@@ -53,6 +53,7 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
             headers[authInfo.headerName] = authInfo.token;
         }
         headers[HeaderNames.ConnectionId] = connectionId;
+        headers[HeaderNames.SpIDAuthKey] = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Key);
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
