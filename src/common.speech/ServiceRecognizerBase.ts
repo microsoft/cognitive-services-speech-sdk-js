@@ -516,6 +516,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected sendPrePayloadJSONOverride: (connection: IConnection) => Promise<void> = undefined;
 
+    protected noOp(): Promise<void> {
+        // operation not supported
+        return;
+    }
+
     // Encapsulated for derived service recognizers that need to send additional JSON
     protected async sendPrePayloadJSON(connection: IConnection, generateNewRequestId: boolean = true): Promise<void> {
         if (this.sendPrePayloadJSONOverride !== undefined) {

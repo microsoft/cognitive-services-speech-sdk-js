@@ -58,6 +58,7 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
         this.privSpeakerRecognizer = recognizer;
         this.privSpeakerAudioSource = audioSource;
         this.recognizeSpeaker = (model: SpeakerRecognitionModel): Promise<SpeakerRecognitionResult> => this.recognizeSpeakerOnce(model);
+        this.sendPrePayloadJSONOverride = (): Promise<void> => this.noOp();
     }
 
     protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
@@ -163,9 +164,8 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
         try {
             await conPromise;
             await preAudioPromise;
-        } catch (error) {
-            this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error as string);
-            this.privResultDeferral.reject(error as string);
+        } catch (err) {
+            this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, err as string);
         }
 
         const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
@@ -174,6 +174,7 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
             this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
         }
 
+        void this.receiveMessage();
         const audioSendPromise = this.sendAudio(audioNode);
 
         // /* eslint-disable no-empty */
