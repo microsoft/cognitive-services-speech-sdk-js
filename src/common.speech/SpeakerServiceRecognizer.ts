@@ -47,6 +47,7 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
     private privSpeakerRecognizer: SpeakerRecognizer;
     private privSpeakerAudioSource: IAudioSource;
     private privResultDeferral: Deferred<SpeakerRecognitionResult>;
+    private privSpeakerModel: SpeakerRecognitionModel;
 
     public constructor(
         authentication: IAuthentication,
@@ -120,7 +121,6 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
                 this.privSpeakerRecognizer.canceled(this.privIntentRecognizer, cancelEvent);
             } catch { }
         }
-        */
 
         if (!!this.privResultDeferral) {
             const result: SpeakerRecognitionResult = new SpeakerRecognitionResult(
@@ -136,9 +136,27 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
                 this.privResultDeferral.reject(error as string);
             }
         }
+        */
+
+        if (!!this.privResultDeferral) {
+            const resultType = this.privSpeakerModel.scenario === "TextIndependentIdentification" ? SpeakerRecognitionResultType.Identify : SpeakerRecognitionResultType.Verify;
+            const result: SpeakerRecognitionResult = new SpeakerRecognitionResult(
+                resultType,
+                error,
+                this.privSpeakerModel.profileIds[0],
+                ResultReason.Canceled,
+                errorCode,
+                );
+            try {
+                this.privResultDeferral.resolve(result);
+            } catch (error) {
+                this.privResultDeferral.reject(error as string);
+            }
+        }
     }
 
     public async recognizeSpeakerOnce(model: SpeakerRecognitionModel): Promise<SpeakerRecognitionResult> {
+        this.privSpeakerModel = model;
         if (!this.privResultDeferral) {
             this.privResultDeferral = new Deferred<SpeakerRecognitionResult>();
         }

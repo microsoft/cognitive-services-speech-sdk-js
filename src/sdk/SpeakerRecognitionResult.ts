@@ -41,7 +41,7 @@ export class SpeakerRecognitionResult {
     private privScore: number;
     private privErrorDetails: string;
 
-    public constructor(resultType: SpeakerRecognitionResultType, data: string, profileId: string, resultReason: ResultReason = ResultReason.RecognizedSpeaker) {
+    public constructor(resultType: SpeakerRecognitionResultType, data: string, profileId: string, resultReason: ResultReason = ResultReason.RecognizedSpeaker, cancellationErrorCode: CancellationErrorCode = CancellationErrorCode.NoError) {
         this.privProperties = new PropertyCollection();
         this.privReason = resultReason;
         if (this.privReason !== ResultReason.Canceled) {
@@ -62,10 +62,8 @@ export class SpeakerRecognitionResult {
                 }
             }
         } else {
-            const json: { statusText: string } = JSON.parse(data) as { statusText: string };
-            Contracts.throwIfNullOrUndefined(json, "JSON");
-            this.privErrorDetails = json.statusText;
-            this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
+            this.privErrorDetails = data;
+            this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[cancellationErrorCode]);
         }
         this.privProperties.setProperty(PropertyId.SpeechServiceResponse_JsonResult, data);
     }
