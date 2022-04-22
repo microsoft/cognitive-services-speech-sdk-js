@@ -102,10 +102,10 @@ export class VoiceProfileClient extends Client {
      * @return {Promise<VoiceProfile>} - Promise of a VoiceProfile.
      */
     public async createProfileAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfile> {
-        const profileId: string = await this.privReco.createProfile(profileType, lang);
-        const profile = new VoiceProfile(profileId, profileType);
-        return profile;
+        const profileIds: string[] = await (this.privReco as VoiceServiceRecognizer).createProfile(profileType, lang);
+        return new VoiceProfile(profileIds[0], profileType);
     }
+
     /**
      * Get current information of a voice profile
      * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync

@@ -25,6 +25,7 @@ import {
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
+    IProfile,
     ISpeechConfigAudioDevice,
     ProfileResponse,
     ServiceRecognizerBase,
@@ -270,7 +271,17 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     private handleCreateResponse(response: ProfileResponse, requestId: string): void {
-
+        if (response.status.statusCode.toLowerCase() !== "success") {
+            throw new Error(`Voice Profile create failed, message: ${response.status.reason}`);
+        }
+        if (!response.profiles || response.profiles.length < 1) {
+            throw new Error("Voice Profile create failed, no profiles received");
+        }
+        if (!!this.privCreateProfileDeferralMap[requestId]) {
+            this.privCreateProfileDeferralMap[requestId].resolve(response.profiles.map( (profile: IProfile): string => profile.profileId ));
+        } else {
+            throw new Error(`Voice Profile create request for requestID ${requestId} not found`);
+        }
     }
 
 }
