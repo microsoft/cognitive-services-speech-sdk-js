@@ -6,12 +6,19 @@ import {
 } from "../common.browser/Exports";
 import {
     Context,
+    IAuthentication,
+    IConnectionFactory,
     OS,
+    RecognizerConfig,
+    ServiceRecognizerBase,
     SpeakerIdMessageAdapter,
-    SpeakerRecognitionConfig
+    SpeakerRecognitionConfig,
+    VoiceProfileConnectionFactory,
+    VoiceServiceRecognizer
 } from "../common.speech/Exports";
 import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
+import { Client } from "./Client";
 import {
     PropertyCollection,
     PropertyId,
@@ -30,7 +37,7 @@ import { EnrollmentResultJSON } from "./VoiceProfileEnrollmentResult";
  * Handles operations from user for Voice Profile operations (e.g. createProfile, deleteProfile)
  * @class VoiceProfileClient
  */
-export class VoiceProfileClient {
+export class VoiceProfileClient extends Client {
     protected privProperties: PropertyCollection;
     private privAdapter: SpeakerIdMessageAdapter;
 
@@ -39,9 +46,12 @@ export class VoiceProfileClient {
      * @constructor
      * @param {SpeechConfig} speechConfig - An set of initial properties for this synthesizer (authentication key, region, &c)
      */
-    public constructor(speechConfig: SpeechConfig) {
+    public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
+        Contracts.throwIfNullOrUndefined(speechConfig, "speechConfig");
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         Contracts.throwIfNull(speechConfigImpl, "speechConfig");
+
+        super(audioConfig, speechConfigImpl.properties, new VoiceProfileConnectionFactory());
 
         this.privProperties = speechConfigImpl.properties.clone();
         this.implClientSetup();
@@ -92,12 +102,8 @@ export class VoiceProfileClient {
      * @return {Promise<VoiceProfile>} - Promise of a VoiceProfile.
      */
     public async createProfileAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfile> {
-        const result: { ok: boolean; status: number; statusText: string; json: { profileId?: string } } = await this.privAdapter.createProfile(profileType, lang);
-        if (!result.ok) {
-            throw new Error(`createProfileAsync failed with code: ${result.status}, message: ${result.statusText}`);
-        }
-        const response: { profileId?: string } = result.json;
-        const profile = new VoiceProfile(response.profileId, profileType);
+        const profileId: string = await this.privReco.createProfile(profileType, lang);
+        const profile = new VoiceProfile(profileId, profileType);
         return profile;
     }
     /**
@@ -232,6 +238,11 @@ export class VoiceProfileClient {
                 this.privProperties);
 
         this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
+    }
+
+    protected createServiceRecognizer(authentication: IAuthentication, connectionFactory: IConnectionFactory, audioConfig: AudioConfig, recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
+        const audioImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
+        return new VoiceServiceRecognizer(authentication, connectionFactory, audioImpl, recognizerConfig, this);
     }
 
     private getResult(result: IRestResponse, successReason: ResultReason): VoiceProfileResult {

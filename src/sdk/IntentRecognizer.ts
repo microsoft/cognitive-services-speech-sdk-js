@@ -307,10 +307,6 @@ export class IntentRecognizer extends Recognizer {
         marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
     }
 
-    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
-        return new RecognizerConfig(speechConfig, this.properties);
-    }
-
     protected createServiceRecognizer(authentication: IAuthentication, connectionFactory: IConnectionFactory, audioConfig: AudioConfig, recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
         const audioImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         return new IntentServiceRecognizer(authentication, connectionFactory, audioImpl, recognizerConfig, this);

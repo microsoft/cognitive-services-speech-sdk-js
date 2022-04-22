@@ -188,8 +188,8 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
 
         const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
 
-        if (!!this.privRecognizer.sessionStarted) {
-            this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
+        if (!!this.privClient.sessionStarted) {
+            this.privClient.sessionStarted(this.privClient, sessionStartEventArgs);
         }
 
         void this.receiveMessage();

@@ -9,7 +9,6 @@ import {
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechConnectionFactory,
-    SpeechServiceConfig,
     SpeechServiceRecognizer,
 } from "../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../common/Exports";
@@ -277,12 +276,6 @@ export class SpeechRecognizer extends Recognizer {
         }
 
         await super.dispose(disposing);
-    }
-
-    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
-        return new RecognizerConfig(
-            speechConfig,
-            this.properties);
     }
 
     protected createServiceRecognizer(

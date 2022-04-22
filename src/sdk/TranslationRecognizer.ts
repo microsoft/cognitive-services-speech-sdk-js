@@ -298,10 +298,6 @@ export class TranslationRecognizer extends Recognizer {
         }
     }
 
-    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
-        return new RecognizerConfig(speechConfig, this.properties);
-    }
-
     protected createServiceRecognizer(
         authentication: IAuthentication,
         connectionFactory: IConnectionFactory,

@@ -245,10 +245,6 @@ export class DialogServiceConnector extends Recognizer {
         }
     }
 
-    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
-        return new RecognizerConfig(speechConfig, this.privProperties);
-    }
-
     protected createServiceRecognizer(
         authentication: IAuthentication,
         connectionFactory: IConnectionFactory,

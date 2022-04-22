@@ -363,8 +363,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
 
-        if (!!this.privRecognizer.sessionStarted) {
-            this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
+        if (!!this.privClient.sessionStarted) {
+            this.privClient.sessionStarted(this.privClient, sessionStartEventArgs);
         }
 
         const audioSendPromise = this.sendAudio(audioNode);
@@ -425,8 +425,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                         const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
 
-                        if (!!this.privRecognizer.speechStartDetected) {
-                            this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
+                        if (!!this.privClient.speechStartDetected) {
+                            this.privClient.speechStartDetected(this.privClient, speechStartEventArgs);
                         }
 
                         break;
@@ -448,8 +448,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
                         const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
 
-                        if (!!this.privRecognizer.speechEndDetected) {
-                            this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
+                        if (!!this.privClient.speechEndDetected) {
+                            this.privClient.speechEndDetected(this.privClient, speechStopEventArgs);
                         }
                         break;
 
@@ -469,8 +469,8 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                                 await this.privRequestSession.onServiceTurnEndResponse(false);
 
                                 if (!this.privRecognizerConfig.isContinuousRecognition || this.privRequestSession.isSpeechEnded || !this.privRequestSession.isRecognizing) {
-                                    if (!!this.privRecognizer.sessionStopped) {
-                                        this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
+                                    if (!!this.privClient.sessionStopped) {
+                                        this.privClient.sessionStopped(this.privClient, sessionStopEventArgs);
                                     }
                                 }
 

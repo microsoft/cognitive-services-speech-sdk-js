@@ -21,17 +21,23 @@ import {
     ResultReason,
     SessionEventArgs,
     SpeakerRecognitionResultType,
+    VoiceProfileType
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
     ISpeechConfigAudioDevice,
-    SpeakerResponse,
+    ProfileResponse,
     ServiceRecognizerBase,
 } from "./Exports";
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+
+interface CreateProfile {
+    scenario: string;
+    locale: string;
+}
 
 interface SpeakerContext {
     scenario: string;
@@ -48,6 +54,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     private privSpeakerAudioSource: IAudioSource;
     private privResultDeferral: Deferred<SpeakerRecognitionResult>;
     private privSpeakerModel: SpeakerRecognitionModel;
+    private  privCreateProfileDeferralMap: { [id: string]: Deferred<string[]> };
 
     public constructor(
         authentication: IAuthentication,
@@ -73,18 +80,16 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         }
 
         switch (connectionMessage.path.toLowerCase()) {
-            case "speaker.response":
-                const response = SpeakerResponse.fromJSON(connectionMessage.textBody);
-                result = new SpeakerRecognitionResult(
-                    SpeakerRecognitionResultType.Identify,
-                    connectionMessage.textBody,
-                    // response.identificationResult ? response.identificationResult.identifiedProfile.profileId : response.verificationResult.profileId,
-                    // response.identificationResult ? response.identificationResult.identifiedProfile.score : response.verificationResult.score,
-                    "foo",
-                    ResultReason.RecognizedSpeaker,
-                    );
-                if (!!this.privResultDeferral) {
-                    this.privResultDeferral.resolve(result);
+            // Profile management response for create, fetch, delete, reset
+            case "speaker.profiles":
+                const response: ProfileResponse = ProfileResponse.fromJSON(connectionMessage.textBody);
+                switch (response.operation.toLowerCase()) {
+                    case "create":
+                        this.handleCreateResponse(response, connectionMessage.requestId);
+                        break;
+
+                    default:
+                        break;
                 }
                 processed = true;
                 break;
@@ -155,6 +160,23 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         }
     }
 
+    public async createProfile(profileType: VoiceProfileType, locale: string): Promise<string[]> {
+        const createProfileDeferral = new Deferred<string[]>();
+
+        // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
+        const conPromise: Promise<IConnection> = this.connectImpl();
+        try {
+            const connection: IConnection = await conPromise;
+            this.privRequestSession.onSpeechContext();
+            this.privCreateProfileDeferralMap[this.privRequestSession.requestId] = createProfileDeferral;
+            await this.sendCreateProfile(connection, profileType, locale);
+        } catch (err) {
+            throw err;
+        }
+        void this.receiveMessage();
+        return createProfileDeferral.promise;
+    }
+
     public async recognizeSpeakerOnce(model: SpeakerRecognitionModel): Promise<SpeakerRecognitionResult> {
         this.privSpeakerModel = model;
         if (!this.privResultDeferral) {
@@ -188,8 +210,8 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
 
         const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
 
-        if (!!this.privRecognizer.sessionStarted) {
-            this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
+        if (!!this.privClient.sessionStarted) {
+            this.privClient.sessionStarted(this.privClient, sessionStartEventArgs);
         }
 
         void this.receiveMessage();
@@ -219,6 +241,23 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             speakerContextJson));
     }
 
+    private async sendCreateProfile(connection: IConnection, profileType: VoiceProfileType, locale: string): Promise<void> {
+
+        const scenario = profileType === VoiceProfileType.TextIndependentIdentification ? "TextIndependentIdentification" :
+            profileType === VoiceProfileType.TextIndependentVerification ? "TextIndependentVerification" : "TextDependentVerification";
+
+        const profileCreateRequest: CreateProfile = {
+            locale,
+            scenario,
+        };
+        return connection.send(new SpeechConnectionMessage(
+            MessageType.Text,
+            "speaker.profile.create",
+            this.privRequestSession.requestId,
+            "application/json; charset=utf-8",
+            JSON.stringify(profileCreateRequest)));
+    }
+
     private extractSpeakerContext(model: SpeakerRecognitionModel): SpeakerContext {
         return {
             features: {
@@ -229,4 +268,9 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             scenario: model.scenario,
         };
     }
+
+    private handleCreateResponse(response: ProfileResponse, requestId: string): void {
+
+    }
+
 }
