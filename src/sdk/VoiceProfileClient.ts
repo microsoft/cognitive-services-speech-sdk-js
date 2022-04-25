@@ -20,6 +20,7 @@ import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import { Client } from "./Client";
 import {
+    AudioInputStream,
     PropertyCollection,
     PropertyId,
     ResultReason,
@@ -47,12 +48,12 @@ export class VoiceProfileClient extends Client {
      * @constructor
      * @param {SpeechConfig} speechConfig - An set of initial properties for this synthesizer (authentication key, region, &c)
      */
-    public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
+    public constructor(speechConfig: SpeechConfig) {
         Contracts.throwIfNullOrUndefined(speechConfig, "speechConfig");
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         Contracts.throwIfNull(speechConfigImpl, "speechConfig");
 
-        super(audioConfig, speechConfigImpl.properties, new VoiceProfileConnectionFactory());
+        super(AudioConfig.fromStreamInput(AudioInputStream.createPushStream()), speechConfigImpl.properties, new VoiceProfileConnectionFactory());
 
         this.privProperties = speechConfigImpl.properties.clone();
         this.implClientSetup();

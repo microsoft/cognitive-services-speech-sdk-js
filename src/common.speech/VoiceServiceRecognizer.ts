@@ -14,13 +14,11 @@ import { SpeakerRecognitionModel } from "../sdk/SpeakerRecognitionModel";
 import {
     CancellationErrorCode,
     CancellationReason,
-    SpeakerRecognitionResult,
     VoiceProfileClient,
     PropertyCollection,
     PropertyId,
     ResultReason,
     SessionEventArgs,
-    SpeakerRecognitionResultType,
     VoiceProfileEnrollmentResult,
     VoiceProfilePhraseResult,
     VoiceProfileResult,
@@ -29,6 +27,7 @@ import {
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
+    EnrollmentResponse,
     ISpeechConfigAudioDevice,
     ProfilePhraseResponse,
     ProfileResponse,
@@ -63,7 +62,6 @@ interface SpeakerContext {
 export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     private privVoiceProfileClient: VoiceProfileClient;
     private privSpeakerAudioSource: IAudioSource;
-    private privSpeakerModel: SpeakerRecognitionModel;
     private  privCreateProfileDeferralMap: { [id: string]: Deferred<string[]> } = {};
     private  privPhraseRequestDeferralMap: { [id: string]: Deferred<VoiceProfilePhraseResult> } = {};
     private  privProfileResultDeferralMap: { [id: string]: Deferred<VoiceProfileResult> } = {};
@@ -125,6 +123,27 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
                 this.handlePhrasesResponse(phraseResponse, connectionMessage.requestId);
                 processed = true;
                 break;
+            // Enrollment response
+            case "speaker.profile.enrollment":
+                const enrollmentResponse: EnrollmentResponse = JSON.parse(connectionMessage.textBody) as EnrollmentResponse;
+                if (enrollmentResponse.status.statusCode.toLowerCase() !== "success") {
+                    throw new Error(`Voice Profile enrollment failed with code: ${enrollmentResponse.status.statusCode}, message: ${enrollmentResponse.status.reason}`);
+                }
+                const reason = enrollmentResponse.enrollment.enrollmentStatus.toLowerCase() === "enrolled" ? ResultReason.EnrolledVoiceProfile : ResultReason.EnrollingVoiceProfile;
+                const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
+                    reason,
+                    JSON.stringify(enrollmentResponse.enrollment),
+                    enrollmentResponse.status.reason,
+                    );
+                if (!!this.privEnrollmentDeferralMap[connectionMessage.requestId]) {
+                    try {
+                        this.privEnrollmentDeferralMap[connectionMessage.requestId].resolve(result);
+                    } catch (error) {
+                        this.privEnrollmentDeferralMap[connectionMessage.requestId].reject(error as string);
+                    }
+                }
+                processed = true;
+                break;
             default:
                 break;
         }
@@ -175,7 +194,6 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         }
         */
 
-            const resultType = this.privSpeakerModel.scenario === "TextIndependentIdentification" ? SpeakerRecognitionResultType.Identify : SpeakerRecognitionResultType.Verify;
             const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
                 ResultReason.Canceled,
                 error,
@@ -228,7 +246,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
 
-        const preAudioPromise: Promise<void> = this.sendPreAudioMessages(profile);
+        const preAudioPromise: Promise<void> = this.sendPreAudioMessages(profile, enrollmentDeferral);
 
         const node: IAudioStreamNode = await this.privSpeakerAudioSource.attach(this.privRequestSession.audioNodeId);
         const format: AudioStreamFormatImpl = await this.privSpeakerAudioSource.format;
@@ -263,14 +281,21 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         return enrollmentDeferral.promise;
     }
 
-    private async sendPreAudioMessages(profile: VoiceProfile): Promise<void> {
+    private async sendPreAudioMessages(profile: VoiceProfile, enrollmentDeferral: Deferred<VoiceProfileEnrollmentResult>): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
+        this.privRequestSession.onSpeechContext();
+        this.privEnrollmentDeferralMap[this.privRequestSession.requestId] = enrollmentDeferral;
         await this.sendEnrollRequest(connection, profile);
         // await this.sendWaveHeader(connection);
     }
 
     private async sendEnrollRequest(connection: IConnection, profile: VoiceProfile): Promise<void> {
-        const profileJson = JSON.stringify(profile);
+        const scenario = profile.profileType === VoiceProfileType.TextIndependentIdentification ? "TextIndependentIdentification" :
+            profile.profileType === VoiceProfileType.TextIndependentVerification ? "TextIndependentVerification" : "TextDependentVerification";
+        const profileJson = JSON.stringify({
+            profileIds: [ profile.profileId ],
+            scenario
+        });
         return connection.send(new SpeechConnectionMessage(
             MessageType.Text,
             "speaker.profile.enroll",

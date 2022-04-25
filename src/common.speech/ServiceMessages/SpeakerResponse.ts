@@ -29,6 +29,12 @@ export interface ProfileScore {
     score: number;
 }
 
+export interface EnrollmentResponse {
+    scenario: string;
+    status: SpeakerStatus;
+    enrollment: EnrollmentStatus;
+}
+
 export interface ProfileResponse {
     scenario: string;
     operation: string;
@@ -56,6 +62,17 @@ export interface IProfile {
     remainingEnrollmentSpeechLength: number;
     locale: string;
     passPhrase: string;
+}
+
+export interface EnrollmentStatus {
+    profileId: string;
+    enrollmentStatus: string;
+    enrollmentLength: number;
+    enrollmentSpeechLength: number;
+    remainingEnrollmentCount: number;
+    remainingEnrollmentSpeechLength: number;
+    audioLength: number;
+    audioSpeechLength: number;
 }
 
 export class SpeakerResponse implements ISpeakerResponse  {
