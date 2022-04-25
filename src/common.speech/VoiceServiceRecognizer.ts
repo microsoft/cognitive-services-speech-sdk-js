@@ -21,9 +21,11 @@ import {
     ResultReason,
     SessionEventArgs,
     SpeakerRecognitionResultType,
+    VoiceProfileEnrollmentResult,
     VoiceProfilePhraseResult,
     VoiceProfileResult,
-    VoiceProfileType
+    VoiceProfileType,
+    VoiceProfile
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
@@ -40,6 +42,7 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 interface CreateProfile {
     scenario: string;
     locale: string;
+    number: string;
 }
 
 interface PhraseRequest {
@@ -60,11 +63,11 @@ interface SpeakerContext {
 export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     private privVoiceProfileClient: VoiceProfileClient;
     private privSpeakerAudioSource: IAudioSource;
-    private privResultDeferral: Deferred<SpeakerRecognitionResult>;
     private privSpeakerModel: SpeakerRecognitionModel;
-    private  privCreateProfileDeferralMap: { [id: string]: Deferred<string> } = {};
+    private  privCreateProfileDeferralMap: { [id: string]: Deferred<string[]> } = {};
     private  privPhraseRequestDeferralMap: { [id: string]: Deferred<VoiceProfilePhraseResult> } = {};
     private  privProfileResultDeferralMap: { [id: string]: Deferred<VoiceProfileResult> } = {};
+    private  privEnrollmentDeferralMap: { [id: string]: Deferred<VoiceProfileEnrollmentResult> } = {};
 
     public constructor(
         authentication: IAuthentication,
@@ -75,7 +78,6 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         super(authentication, connectionFactory, audioSource, recognizerConfig, recognizer);
         this.privVoiceProfileClient = recognizer;
         this.privSpeakerAudioSource = audioSource;
-        this.recognizeSpeaker = (model: SpeakerRecognitionModel): Promise<SpeakerRecognitionResult> => this.recognizeSpeakerOnce(model);
         this.sendPrePayloadJSONOverride = (): Promise<void> => this.noOp();
     }
 
@@ -173,28 +175,26 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         }
         */
 
-        if (!!this.privResultDeferral) {
             const resultType = this.privSpeakerModel.scenario === "TextIndependentIdentification" ? SpeakerRecognitionResultType.Identify : SpeakerRecognitionResultType.Verify;
-            const result: SpeakerRecognitionResult = new SpeakerRecognitionResult(
-                resultType,
-                error,
-                this.privSpeakerModel.profileIds[0],
+            const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
                 ResultReason.Canceled,
-                errorCode,
+                error,
+                error,
                 );
-            try {
-                this.privResultDeferral.resolve(result);
-            } catch (error) {
-                this.privResultDeferral.reject(error as string);
+            if (!!this.privEnrollmentDeferralMap[requestId]) {
+                try {
+                    this.privEnrollmentDeferralMap[requestId].resolve(result);
+                } catch (error) {
+                    this.privEnrollmentDeferralMap[requestId].reject(error as string);
+                }
             }
-        }
     }
 
-    public async createProfile(profileType: VoiceProfileType, locale: string): Promise<string> {
+    public async createProfile(profileType: VoiceProfileType, locale: string): Promise<string[]> {
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
         try {
-            const createProfileDeferral = new Deferred<string>();
+            const createProfileDeferral = new Deferred<string[]>();
             await conPromise;
             await this.sendCreateProfile(createProfileDeferral, profileType, locale);
             void this.receiveMessage();
@@ -218,11 +218,8 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         }
     }
 
-    public async recognizeSpeakerOnce(model: SpeakerRecognitionModel): Promise<SpeakerRecognitionResult> {
-        this.privSpeakerModel = model;
-        if (!this.privResultDeferral) {
-            this.privResultDeferral = new Deferred<SpeakerRecognitionResult>();
-        }
+    public async enrollProfile(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
+        const enrollmentDeferral = new Deferred<VoiceProfileEnrollmentResult>();
         this.privRequestSession.startNewRecognition();
         this.privRequestSession.listenForServiceTelemetry(this.privSpeakerAudioSource.events);
 
@@ -231,7 +228,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
 
-        const preAudioPromise: Promise<void> = this.sendPreAudioMessages(this.extractSpeakerContext(model));
+        const preAudioPromise: Promise<void> = this.sendPreAudioMessages(profile);
 
         const node: IAudioStreamNode = await this.privSpeakerAudioSource.attach(this.privRequestSession.audioNodeId);
         const format: AudioStreamFormatImpl = await this.privSpeakerAudioSource.format;
@@ -263,23 +260,23 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
         });
 
-        return this.privResultDeferral.promise;
+        return enrollmentDeferral.promise;
     }
 
-    private async sendPreAudioMessages(context: SpeakerContext): Promise<void> {
+    private async sendPreAudioMessages(profile: VoiceProfile): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
-        await this.sendSpeakerRecognition(connection, context);
+        await this.sendEnrollRequest(connection, profile);
         // await this.sendWaveHeader(connection);
     }
 
-    private async sendSpeakerRecognition(connection: IConnection, context: SpeakerContext): Promise<void> {
-        const speakerContextJson = JSON.stringify(context);
+    private async sendEnrollRequest(connection: IConnection, profile: VoiceProfile): Promise<void> {
+        const profileJson = JSON.stringify(profile);
         return connection.send(new SpeechConnectionMessage(
             MessageType.Text,
-            "speaker.context",
+            "speaker.profile.enroll",
             this.privRequestSession.requestId,
             "application/json; charset=utf-8",
-            speakerContextJson));
+            profileJson));
     }
 
     private async sendPhrasesRequest(getPhrasesDeferral: Deferred<VoiceProfilePhraseResult>, profileType: VoiceProfileType, locale: string): Promise<void> {
@@ -301,7 +298,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             JSON.stringify(profileCreateRequest)));
     }
 
-    private async sendCreateProfile(createProfileDeferral: Deferred<string>, profileType: VoiceProfileType, locale: string): Promise<void> {
+    private async sendCreateProfile(createProfileDeferral: Deferred<string[]>, profileType: VoiceProfileType, locale: string): Promise<void> {
 
         const connection: IConnection = await this.fetchConnection();
         this.privRequestSession.onSpeechContext();
@@ -311,6 +308,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
 
         const profileCreateRequest: CreateProfile = {
             locale,
+            number: "1",
             scenario,
         };
         return connection.send(new SpeechConnectionMessage(
@@ -348,7 +346,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     private handleCreateResponse(response: ProfileResponse, requestId: string): void {
         if (!!response.profileId) {
             if (!!this.privCreateProfileDeferralMap[requestId]) {
-                this.privCreateProfileDeferralMap[requestId].resolve(response.profileId);
+                this.privCreateProfileDeferralMap[requestId].resolve([response.profileId]);
             } else {
                 throw new Error(`Voice Profile create request for requestID ${requestId} not found`);
             }

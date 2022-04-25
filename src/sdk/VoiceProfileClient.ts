@@ -104,8 +104,8 @@ export class VoiceProfileClient extends Client {
      * @return {Promise<VoiceProfile>} - Promise of a VoiceProfile.
      */
     public async createProfileAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfile> {
-        const profileId: string = await this.privVoiceAdapter.createProfile(profileType, lang);
-        return new VoiceProfile(profileId, profileType);
+        const profileIds: string[] = await this.privVoiceAdapter.createProfile(profileType, lang);
+        return new VoiceProfile(profileIds[0], profileType);
     }
 
     /**
@@ -172,12 +172,15 @@ export class VoiceProfileClient extends Client {
         this.audioConfig = audioConfig;
         this.privVoiceAdapter.SpeakerAudioSource = configImpl;
 
+        return this.privVoiceAdapter.enrollProfile(profile);
+        /*
         const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
         return new VoiceProfileEnrollmentResult(
             result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
             result.data,
             result.statusText
         );
+        */
     }
 
     /**
