@@ -21,6 +21,7 @@ import {
     ResultReason,
     SessionEventArgs,
     SpeakerRecognitionResultType,
+    VoiceProfileResult,
     VoiceProfileType
 } from "../sdk/Exports";
 import {
@@ -56,6 +57,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     private privResultDeferral: Deferred<SpeakerRecognitionResult>;
     private privSpeakerModel: SpeakerRecognitionModel;
     private  privCreateProfileDeferralMap: { [id: string]: Deferred<string[]> };
+    private  privProfileResultDeferralMap: { [id: string]: Deferred<VoiceProfileResult> };
 
     public constructor(
         authentication: IAuthentication,
@@ -72,7 +74,6 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
 
     protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
-        let result: SpeakerRecognitionResult;
         let processed: boolean = false;
 
         const resultProps: PropertyCollection = new PropertyCollection();
@@ -84,9 +85,17 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             // Profile management response for create, fetch, delete, reset
             case "speaker.profiles":
                 const response: ProfileResponse = ProfileResponse.fromJSON(connectionMessage.textBody);
+                if (response.status.statusCode.toLowerCase() !== "success") {
+                    throw new Error(`Voice Profile ${response.operation.toLowerCase()} failed with code: ${response.status.statusCode}, message: ${response.status.reason}`);
+                }
                 switch (response.operation.toLowerCase()) {
                     case "create":
                         this.handleCreateResponse(response, connectionMessage.requestId);
+                        break;
+
+                    case "delete":
+                    case "reset":
+                        this.handleResultResponse(response, connectionMessage.requestId);
                         break;
 
                     default:
@@ -271,14 +280,21 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     private handleCreateResponse(response: ProfileResponse, requestId: string): void {
-        if (response.status.statusCode.toLowerCase() !== "success") {
-            throw new Error(`Voice Profile create failed, message: ${response.status.reason}`);
-        }
         if (!response.profiles || response.profiles.length < 1) {
             throw new Error("Voice Profile create failed, no profiles received");
         }
         if (!!this.privCreateProfileDeferralMap[requestId]) {
             this.privCreateProfileDeferralMap[requestId].resolve(response.profiles.map( (profile: IProfile): string => profile.profileId ));
+        } else {
+            throw new Error(`Voice Profile create request for requestID ${requestId} not found`);
+        }
+    }
+
+    private handleResultResponse(response: ProfileResponse, requestId: string): void {
+        if (!!this.privProfileResultDeferralMap[requestId]) {
+            const successReason: ResultReason = response.operation.toLowerCase() === "delete" ? ResultReason.DeletedVoiceProfile : ResultReason.ResetVoiceProfile;
+            const reason: ResultReason = response.status.statusCode.toLowerCase() === "success" ? successReason : ResultReason.Canceled;
+            this.privProfileResultDeferralMap[requestId].resolve(new VoiceProfileResult(reason, `statusCode: ${response.status.statusCode}, errorDetails: ${response.status.reason}`));
         } else {
             throw new Error(`Voice Profile create request for requestID ${requestId} not found`);
         }
