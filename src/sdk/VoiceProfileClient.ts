@@ -40,6 +40,7 @@ import { EnrollmentResultJSON } from "./VoiceProfileEnrollmentResult";
 export class VoiceProfileClient extends Client {
     protected privProperties: PropertyCollection;
     private privAdapter: SpeakerIdMessageAdapter;
+    private privVoiceAdapter: VoiceServiceRecognizer;
 
     /**
      * VoiceProfileClient constructor.
@@ -55,6 +56,7 @@ export class VoiceProfileClient extends Client {
 
         this.privProperties = speechConfigImpl.properties.clone();
         this.implClientSetup();
+        this.privVoiceAdapter = this.privReco as VoiceServiceRecognizer;
     }
 
     /**
@@ -102,8 +104,8 @@ export class VoiceProfileClient extends Client {
      * @return {Promise<VoiceProfile>} - Promise of a VoiceProfile.
      */
     public async createProfileAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfile> {
-        const profileIds: string[] = await (this.privReco as VoiceServiceRecognizer).createProfile(profileType, lang);
-        return new VoiceProfile(profileIds[0], profileType);
+        const profileId: string = await this.privVoiceAdapter.createProfile(profileType, lang);
+        return new VoiceProfile(profileId, profileType);
     }
 
     /**
@@ -151,12 +153,7 @@ export class VoiceProfileClient extends Client {
      * @param {string} lang Language string (locale) for Voice Profile
      */
     public async getActivationPhrasesAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfilePhraseResult> {
-        const result: { ok: boolean; statusText: string; json: { value: { passPhrase?: string; activationPhrase?: string }[] } } = await this.privAdapter.getPhrases(profileType, lang);
-        return new VoiceProfilePhraseResult(
-            result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
-            result.statusText,
-            result.json
-        );
+        return this.privVoiceAdapter.getActivationPhrases(profileType, lang);
     }
 
     /**
@@ -172,6 +169,8 @@ export class VoiceProfileClient extends Client {
     public async enrollProfileAsync(profile: VoiceProfile, audioConfig: AudioConfig): Promise<VoiceProfileEnrollmentResult> {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
+        this.audioConfig = audioConfig;
+        this.privVoiceAdapter.SpeakerAudioSource = configImpl;
 
         const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
         return new VoiceProfileEnrollmentResult(

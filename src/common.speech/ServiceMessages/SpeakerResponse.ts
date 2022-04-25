@@ -34,6 +34,14 @@ export interface IProfileResponse {
     operation: string;
     status: SpeakerStatus;
     profiles: IProfile[];
+    profileId?: string;
+}
+
+export interface ProfilePhraseResponse {
+    status: SpeakerStatus;
+    passPhraseType: string;
+    locale: string;
+    phrases: string[];
 }
 
 export interface IProfile {
@@ -96,4 +104,9 @@ export class ProfileResponse implements IProfileResponse {
     public get profiles(): IProfile[] {
         return this.privProfileResponse.profiles;
     }
+
+    public get profileId(): string {
+        return this.privProfileResponse.profileId;
+    }
+
 }
