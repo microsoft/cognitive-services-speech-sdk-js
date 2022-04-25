@@ -29,7 +29,7 @@ export interface ProfileScore {
     score: number;
 }
 
-export interface IProfileResponse {
+export interface ProfileResponse {
     scenario: string;
     operation: string;
     status: SpeakerStatus;
@@ -76,37 +76,4 @@ export class SpeakerResponse implements ISpeakerResponse  {
     public get status(): SpeakerStatus {
         return this.privSpeakerResponse.status;
     }
-}
-
-export class ProfileResponse implements IProfileResponse {
-    private privProfileResponse: IProfileResponse;
-
-    private constructor(json: string) {
-        this.privProfileResponse = JSON.parse(json) as IProfileResponse;
-    }
-
-    public static fromJSON(json: string): ProfileResponse {
-        return new ProfileResponse(json);
-    }
-
-    public get scenario(): string {
-        return this.privProfileResponse.scenario;
-    }
-
-    public get operation(): string {
-        return this.privProfileResponse.operation;
-    }
-
-    public get status(): SpeakerStatus {
-        return this.privProfileResponse.status;
-    }
-
-    public get profiles(): IProfile[] {
-        return this.privProfileResponse.profiles;
-    }
-
-    public get profileId(): string {
-        return this.privProfileResponse.profileId;
-    }
-
 }

@@ -95,7 +95,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         switch (connectionMessage.path.toLowerCase()) {
             // Profile management response for create, fetch, delete, reset
             case "speaker.profiles":
-                const response: ProfileResponse = ProfileResponse.fromJSON(connectionMessage.textBody);
+                const response: ProfileResponse = JSON.parse(connectionMessage.textBody) as ProfileResponse;
                 if (response.status.statusCode.toLowerCase() !== "success") {
                     throw new Error(`Voice Profile ${response.operation.toLowerCase()} failed with code: ${response.status.statusCode}, message: ${response.status.reason}`);
                 }
