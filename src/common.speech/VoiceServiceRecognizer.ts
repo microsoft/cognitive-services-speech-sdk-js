@@ -3,6 +3,7 @@
 
 import { ReplayableAudioNode } from "../common.browser/Exports";
 import {
+    DeferralMap,
     Deferred,
     IAudioSource,
     IAudioStreamNode,
@@ -63,10 +64,7 @@ interface SpeakerContext {
 export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     private privVoiceProfileClient: VoiceProfileClient;
     private privSpeakerAudioSource: IAudioSource;
-    private  privCreateProfileDeferralMap: { [id: string]: Deferred<string[]> } = {};
-    private  privPhraseRequestDeferralMap: { [id: string]: Deferred<VoiceProfilePhraseResult> } = {};
-    private  privProfileResultDeferralMap: { [id: string]: Deferred<VoiceProfileResult> } = {};
-    private  privEnrollmentDeferralMap: { [id: string]: Deferred<VoiceProfileEnrollmentResult> } = {};
+    private privDeferralMap: DeferralMap = new DeferralMap();
 
     public constructor(
         authentication: IAuthentication,
@@ -136,14 +134,8 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
                     JSON.stringify(enrollmentResponse.enrollment),
                     enrollmentResponse.status.reason,
                     );
-                if (!!this.privEnrollmentDeferralMap[connectionMessage.requestId]) {
-                    try {
-                        this.privEnrollmentDeferralMap[connectionMessage.requestId].resolve(result);
-                    } catch (error) {
-                        this.privEnrollmentDeferralMap[connectionMessage.requestId].reject(error as string);
-                    } finally {
-                        this.privEnrollmentDeferralMap[connectionMessage.requestId] = undefined;
-                    }
+                if (!!this.privDeferralMap.getId(connectionMessage.requestId)) {
+                    this.privDeferralMap.complete<VoiceProfileEnrollmentResult>(connectionMessage.requestId, result);
                 }
                 processed = true;
                 break;
@@ -202,14 +194,8 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
                 error,
                 error,
                 );
-            if (!!this.privEnrollmentDeferralMap[requestId]) {
-                try {
-                    this.privEnrollmentDeferralMap[requestId].resolve(result);
-                } catch (error) {
-                    this.privEnrollmentDeferralMap[requestId].reject(error as string);
-                } finally {
-                    this.privEnrollmentDeferralMap[requestId] = undefined;
-                }
+            if (!!this.privDeferralMap.getId(requestId)) {
+                this.privDeferralMap.complete<VoiceProfileEnrollmentResult>(requestId, result);
             }
     }
 
@@ -297,14 +283,14 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     private async sendPreAudioMessages(profile: VoiceProfile, enrollmentDeferral: Deferred<VoiceProfileEnrollmentResult>): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
         this.privRequestSession.onSpeechContext();
-        this.privEnrollmentDeferralMap[this.privRequestSession.requestId] = enrollmentDeferral;
+        this.privDeferralMap.add<VoiceProfileEnrollmentResult>(this.privRequestSession.requestId, enrollmentDeferral);
         await this.sendBaseRequest(connection, "enroll", profile);
     }
 
     private async sendPhrasesRequest(getPhrasesDeferral: Deferred<VoiceProfilePhraseResult>, profileType: VoiceProfileType, locale: string): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
         this.privRequestSession.onSpeechContext();
-        this.privPhraseRequestDeferralMap[this.privRequestSession.requestId] = getPhrasesDeferral;
+        this.privDeferralMap.add<VoiceProfilePhraseResult>(this.privRequestSession.requestId, getPhrasesDeferral);
         const scenario = profileType === VoiceProfileType.TextIndependentIdentification ? "TextIndependentIdentification" :
             profileType === VoiceProfileType.TextIndependentVerification ? "TextIndependentVerification" : "TextDependentVerification";
 
@@ -324,7 +310,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
 
         const connection: IConnection = await this.fetchConnection();
         this.privRequestSession.onSpeechContext();
-        this.privCreateProfileDeferralMap[this.privRequestSession.requestId] = createProfileDeferral;
+        this.privDeferralMap.add<string[]>(this.privRequestSession.requestId, createProfileDeferral);
         const scenario = profileType === VoiceProfileType.TextIndependentIdentification ? "TextIndependentIdentification" :
             profileType === VoiceProfileType.TextIndependentVerification ? "TextIndependentVerification" : "TextDependentVerification";
 
@@ -347,7 +333,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         try {
             const deferral = new Deferred<VoiceProfileResult>();
             this.privRequestSession.onSpeechContext();
-            this.privProfileResultDeferralMap[this.privRequestSession.requestId] = deferral;
+            this.privDeferralMap.add<VoiceProfileResult>(this.privRequestSession.requestId, deferral);
             await conPromise;
             await this.sendRequest(operation, profile);
             void this.receiveMessage();
@@ -390,9 +376,10 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
 
     private handlePhrasesResponse(response: ProfilePhraseResponse, requestId: string): void {
         if (!!response.phrases && response.phrases.length > 0) {
-            if (!!this.privPhraseRequestDeferralMap[requestId]) {
+            if (!!this.privDeferralMap.getId(requestId)) {
                 const reason: ResultReason = response.status.statusCode.toLowerCase() === "success" ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled;
-                this.privPhraseRequestDeferralMap[requestId].resolve(new VoiceProfilePhraseResult(reason, response.status.statusCode, response.passPhraseType, response.phrases));
+                const result = new VoiceProfilePhraseResult(reason, response.status.statusCode, response.passPhraseType, response.phrases);
+                this.privDeferralMap.complete<VoiceProfilePhraseResult>(requestId, result);
             } else {
                 throw new Error(`Voice Profile get activation phrases request for requestID ${requestId} not found`);
             }
@@ -403,8 +390,9 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
 
     private handleCreateResponse(response: ProfileResponse, requestId: string): void {
         if (!!response.profiles && response.profiles.length > 0) {
-            if (!!this.privCreateProfileDeferralMap[requestId]) {
-                this.privCreateProfileDeferralMap[requestId].resolve(response.profiles.map((profile: IProfile): string => profile.profileId));
+            if (!!this.privDeferralMap.getId(requestId)) {
+                const profileIds: string[] = response.profiles.map((profile: IProfile): string => profile.profileId);
+                this.privDeferralMap.complete<string[]>(requestId, profileIds);
             } else {
                 throw new Error(`Voice Profile create request for requestID ${requestId} not found`);
             }
@@ -414,10 +402,11 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     private handleResultResponse(response: ProfileResponse, requestId: string): void {
-        if (!!this.privProfileResultDeferralMap[requestId]) {
+        if (!!this.privDeferralMap.getId(requestId)) {
             const successReason: ResultReason = response.operation.toLowerCase() === "delete" ? ResultReason.DeletedVoiceProfile : ResultReason.ResetVoiceProfile;
             const reason: ResultReason = response.status.statusCode.toLowerCase() === "success" ? successReason : ResultReason.Canceled;
-            this.privProfileResultDeferralMap[requestId].resolve(new VoiceProfileResult(reason, `statusCode: ${response.status.statusCode}, errorDetails: ${response.status.reason}`));
+            const result = new VoiceProfileResult(reason, `statusCode: ${response.status.statusCode}, errorDetails: ${response.status.reason}`);
+            this.privDeferralMap.complete<VoiceProfileResult>(requestId, result);
         } else {
             throw new Error(`Voice Profile create request for requestID ${requestId} not found`);
         }
