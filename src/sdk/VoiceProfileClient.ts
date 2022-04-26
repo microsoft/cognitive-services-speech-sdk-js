@@ -194,8 +194,7 @@ export class VoiceProfileClient extends Client {
      * @return {Promise<VoiceProfileResult>} - Promise of a VoiceProfileResult.
      */
     public async deleteProfileAsync(profile: VoiceProfile): Promise<VoiceProfileResult> {
-        const result: IRestResponse = await this.privAdapter.deleteProfile(profile);
-        return this.getResult(result, ResultReason.DeletedVoiceProfile);
+        return this.privVoiceAdapter.deleteProfile(profile);
     }
 
     /**
@@ -208,8 +207,7 @@ export class VoiceProfileClient extends Client {
      * @return {Promise<VoiceProfileResult>} - Promise of a VoiceProfileResult.
      */
     public async resetProfileAsync(profile: VoiceProfile): Promise<VoiceProfileResult> {
-        const result: IRestResponse = await this.privAdapter.resetProfile(profile);
-        return this.getResult(result, ResultReason.ResetVoiceProfile);
+        return this.privVoiceAdapter.resetProfile(profile);
     }
 
     /**

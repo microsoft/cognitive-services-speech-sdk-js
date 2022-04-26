@@ -28,6 +28,7 @@ import {
 import {
     CancellationErrorCodePropertyName,
     EnrollmentResponse,
+    IProfile,
     ISpeechConfigAudioDevice,
     ProfilePhraseResponse,
     ProfileResponse,
@@ -140,6 +141,8 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
                         this.privEnrollmentDeferralMap[connectionMessage.requestId].resolve(result);
                     } catch (error) {
                         this.privEnrollmentDeferralMap[connectionMessage.requestId].reject(error as string);
+                    } finally {
+                        this.privEnrollmentDeferralMap[connectionMessage.requestId] = undefined;
                     }
                 }
                 processed = true;
@@ -204,6 +207,8 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
                     this.privEnrollmentDeferralMap[requestId].resolve(result);
                 } catch (error) {
                     this.privEnrollmentDeferralMap[requestId].reject(error as string);
+                } finally {
+                    this.privEnrollmentDeferralMap[requestId] = undefined;
                 }
             }
     }
@@ -220,6 +225,14 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         } catch (err) {
             throw err;
         }
+    }
+
+    public async resetProfile(profile: VoiceProfile): Promise<VoiceProfileResult> {
+        return this.sendCommonRequest("reset", profile);
+    }
+
+    public async deleteProfile(profile: VoiceProfile): Promise<VoiceProfileResult> {
+        return this.sendCommonRequest("delete", profile);
     }
 
     public async getActivationPhrases(profileType: VoiceProfileType, lang: string): Promise<VoiceProfilePhraseResult> {
@@ -285,23 +298,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         const connection: IConnection = await this.fetchConnection();
         this.privRequestSession.onSpeechContext();
         this.privEnrollmentDeferralMap[this.privRequestSession.requestId] = enrollmentDeferral;
-        await this.sendEnrollRequest(connection, profile);
-        // await this.sendWaveHeader(connection);
-    }
-
-    private async sendEnrollRequest(connection: IConnection, profile: VoiceProfile): Promise<void> {
-        const scenario = profile.profileType === VoiceProfileType.TextIndependentIdentification ? "TextIndependentIdentification" :
-            profile.profileType === VoiceProfileType.TextIndependentVerification ? "TextIndependentVerification" : "TextDependentVerification";
-        const profileJson = JSON.stringify({
-            profileIds: [ profile.profileId ],
-            scenario
-        });
-        return connection.send(new SpeechConnectionMessage(
-            MessageType.Text,
-            "speaker.profile.enroll",
-            this.privRequestSession.requestId,
-            "application/json; charset=utf-8",
-            profileJson));
+        await this.sendBaseRequest(connection, "enroll", profile);
     }
 
     private async sendPhrasesRequest(getPhrasesDeferral: Deferred<VoiceProfilePhraseResult>, profileType: VoiceProfileType, locale: string): Promise<void> {
@@ -344,6 +341,42 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             JSON.stringify(profileCreateRequest)));
     }
 
+    private async sendCommonRequest(operation: string, profile: VoiceProfile): Promise<VoiceProfileResult> {
+        // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
+        const conPromise: Promise<IConnection> = this.connectImpl();
+        try {
+            const deferral = new Deferred<VoiceProfileResult>();
+            this.privRequestSession.onSpeechContext();
+            this.privProfileResultDeferralMap[this.privRequestSession.requestId] = deferral;
+            await conPromise;
+            await this.sendRequest(operation, profile);
+            void this.receiveMessage();
+            return deferral.promise;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    private async sendRequest(operation: string, profile: VoiceProfile): Promise<void> {
+        const connection: IConnection = await this.fetchConnection();
+        return this.sendBaseRequest(connection, operation, profile);
+    }
+
+    private async sendBaseRequest(connection: IConnection, operation: string, profile: VoiceProfile): Promise<void> {
+        const scenario = profile.profileType === VoiceProfileType.TextIndependentIdentification ? "TextIndependentIdentification" :
+            profile.profileType === VoiceProfileType.TextIndependentVerification ? "TextIndependentVerification" : "TextDependentVerification";
+        const profileJson = JSON.stringify({
+            profileIds: [ profile.profileId ],
+            scenario
+        });
+        return connection.send(new SpeechConnectionMessage(
+            MessageType.Text,
+            `speaker.profile.${operation}`,
+            this.privRequestSession.requestId,
+            "application/json; charset=utf-8",
+            profileJson));
+    }
+
     private extractSpeakerContext(model: SpeakerRecognitionModel): SpeakerContext {
         return {
             features: {
@@ -369,9 +402,9 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     private handleCreateResponse(response: ProfileResponse, requestId: string): void {
-        if (!!response.profileId) {
+        if (!!response.profiles && response.profiles.length > 0) {
             if (!!this.privCreateProfileDeferralMap[requestId]) {
-                this.privCreateProfileDeferralMap[requestId].resolve([response.profileId]);
+                this.privCreateProfileDeferralMap[requestId].resolve(response.profiles.map((profile: IProfile): string => profile.profileId));
             } else {
                 throw new Error(`Voice Profile create request for requestID ${requestId} not found`);
             }
