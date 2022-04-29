@@ -40,6 +40,7 @@ export class RequestSession {
     private privTurnDeferral: Deferred<void>;
     private privInTurn: boolean = false;
     private privConnectionAttempts: number = 0;
+    private privProfileRequestMap: {[key: string]: string} = {};
 
     public constructor(audioSourceId: string) {
         this.privAudioSourceId = audioSourceId;
@@ -161,6 +162,16 @@ export class RequestSession {
 
     public onSpeechContext(): void {
         this.privRequestId = createNoDashGuid();
+    }
+
+    public onSpeakerRecognizeStart(id: string): void {
+        this.privProfileRequestMap[this.requestId] = id;
+    }
+
+    public onSpeakerRecognizeEnd(): string {
+        const profileId: string = this.privProfileRequestMap[this.requestId];
+        delete this.privProfileRequestMap[this.requestId];
+        return profileId;
     }
 
     public onServiceTurnStartResponse(): void {

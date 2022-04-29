@@ -156,6 +156,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         error: string): void {
 
         const properties: PropertyCollection = new PropertyCollection();
+        // const enrollmentResponse: EnrollmentResponse = JSON.parse(connectionMessage.textBody) as EnrollmentResponse;
         properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
         /*

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 /* eslint-disable max-classes-per-file */
 
-export interface ISpeakerResponse {
+export interface SpeakerResponse {
     scenario: string;
     status: SpeakerStatus;
     verificationResult?: VerificationResult;
@@ -15,7 +15,7 @@ export interface SpeakerStatus {
 }
 
 export interface VerificationResult {
-    result: string;
+    recognitionResult: string;
     score: number;
 }
 
@@ -73,24 +73,4 @@ export interface EnrollmentStatus {
     remainingEnrollmentSpeechLength: number;
     audioLength: number;
     audioSpeechLength: number;
-}
-
-export class SpeakerResponse implements ISpeakerResponse  {
-    private privSpeakerResponse: ISpeakerResponse;
-
-    private constructor(json: string) {
-        this.privSpeakerResponse = JSON.parse(json) as ISpeakerResponse;
-    }
-
-    public static fromJSON(json: string): SpeakerResponse {
-        return new SpeakerResponse(json);
-    }
-
-    public get scenario(): string {
-        return this.privSpeakerResponse.scenario;
-    }
-
-    public get status(): SpeakerStatus {
-        return this.privSpeakerResponse.status;
-    }
 }

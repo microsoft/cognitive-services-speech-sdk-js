@@ -20,7 +20,6 @@ import {
     PropertyId,
     ResultReason,
     SessionEventArgs,
-    SpeakerRecognitionResultType,
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
@@ -74,13 +73,11 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speaker.response":
-                const response = SpeakerResponse.fromJSON(connectionMessage.textBody);
+                const response: SpeakerResponse = JSON.parse(connectionMessage.textBody) as SpeakerResponse;
+                const profileId = this.privRequestSession.onSpeakerRecognizeEnd();
                 result = new SpeakerRecognitionResult(
-                    SpeakerRecognitionResultType.Identify,
-                    connectionMessage.textBody,
-                    // response.identificationResult ? response.identificationResult.identifiedProfile.profileId : response.verificationResult.profileId,
-                    // response.identificationResult ? response.identificationResult.identifiedProfile.score : response.verificationResult.score,
-                    "foo",
+                    response,
+                    profileId,
                     ResultReason.RecognizedSpeaker,
                     );
                 if (!!this.privResultDeferral) {
@@ -139,13 +136,15 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
         */
 
         if (!!this.privResultDeferral) {
-            const resultType = this.privSpeakerModel.scenario === "TextIndependentIdentification" ? SpeakerRecognitionResultType.Identify : SpeakerRecognitionResultType.Verify;
             const result: SpeakerRecognitionResult = new SpeakerRecognitionResult(
-                resultType,
-                error,
+                {
+                    scenario: this.privSpeakerModel.scenario,
+                    status: { statusCode: error, reason: "" }
+                },
                 this.privSpeakerModel.profileIds[0],
                 ResultReason.Canceled,
                 errorCode,
+                error
                 );
             try {
                 this.privResultDeferral.resolve(result);
@@ -205,6 +204,7 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
 
     private async sendPreAudioMessages(context: SpeakerContext): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
+        this.privRequestSession.onSpeakerRecognizeStart(context.profileIds[0]);
         await this.sendSpeakerRecognition(connection, context);
         // await this.sendWaveHeader(connection);
     }
