@@ -119,12 +119,14 @@ export class VoiceProfileClient extends Client {
      * @return {Promise<VoiceProfileEnrollmentResult>} - Promise of a VoiceProfileEnrollmentResult.
      */
     public async retrieveEnrollmentResultAsync(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
-        const result:  { ok: boolean; data: string; statusText: string; json: { value: EnrollmentResultJSON[] } } = await this.privAdapter.getProfileStatus(profile);
+        return this.privVoiceAdapter.retrieveEnrollmentResult(profile);
+        /*
         return new VoiceProfileEnrollmentResult(
             result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
             result.data,
             result.statusText
         );
+        */
     }
 
     /**

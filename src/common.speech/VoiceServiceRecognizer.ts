@@ -108,6 +108,11 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
                         this.handleResultResponse(response, connectionMessage.requestId);
                         break;
 
+                    case "fetch":
+                        const enrollmentResponse: EnrollmentResponse = JSON.parse(connectionMessage.textBody) as EnrollmentResponse;
+                        this.handleFetchResponse(enrollmentResponse, connectionMessage.requestId);
+                        break;
+
                     default:
                         break;
                 }
@@ -128,9 +133,8 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
                 if (enrollmentResponse.status.statusCode.toLowerCase() !== "success") {
                     throw new Error(`Voice Profile enrollment failed with code: ${enrollmentResponse.status.statusCode}, message: ${enrollmentResponse.status.reason}`);
                 }
-                const reason = enrollmentResponse.enrollment.enrollmentStatus.toLowerCase() === "enrolled" ? ResultReason.EnrolledVoiceProfile : ResultReason.EnrollingVoiceProfile;
                 const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
-                    reason,
+                    this.enrollmentReasonFrom(enrollmentResponse.enrollment.enrollmentStatus),
                     JSON.stringify(enrollmentResponse.enrollment),
                     enrollmentResponse.status.reason,
                     );
@@ -215,11 +219,15 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     public async resetProfile(profile: VoiceProfile): Promise<VoiceProfileResult> {
-        return this.sendCommonRequest("reset", profile);
+        return this.sendCommonRequest<VoiceProfileResult>("reset", profile);
     }
 
     public async deleteProfile(profile: VoiceProfile): Promise<VoiceProfileResult> {
-        return this.sendCommonRequest("delete", profile);
+        return this.sendCommonRequest<VoiceProfileResult>("delete", profile);
+    }
+
+    public async retrieveEnrollmentResult(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
+        return this.sendCommonRequest<VoiceProfileEnrollmentResult>("fetch", profile);
     }
 
     public async getActivationPhrases(profileType: VoiceProfileType, lang: string): Promise<VoiceProfilePhraseResult> {
@@ -328,13 +336,13 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             JSON.stringify(profileCreateRequest)));
     }
 
-    private async sendCommonRequest(operation: string, profile: VoiceProfile): Promise<VoiceProfileResult> {
+    private async sendCommonRequest<T>(operation: string, profile: VoiceProfile): Promise<T> {
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
         try {
-            const deferral = new Deferred<VoiceProfileResult>();
+            const deferral = new Deferred<T>();
             this.privRequestSession.onSpeechContext();
-            this.privDeferralMap.add<VoiceProfileResult>(this.privRequestSession.requestId, deferral);
+            this.privDeferralMap.add<T>(this.privRequestSession.requestId, deferral);
             await conPromise;
             await this.sendRequest(operation, profile);
             void this.receiveMessage();
@@ -413,4 +421,25 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         }
     }
 
+    private handleFetchResponse(enrollmentResponse: EnrollmentResponse, requestId: string): void {
+        if (!!this.privDeferralMap.getId(requestId)) {
+            const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
+                this.enrollmentReasonFrom(enrollmentResponse.enrollment.enrollmentStatus),
+                JSON.stringify(enrollmentResponse.enrollment),
+                enrollmentResponse.status.reason,
+                );
+            this.privDeferralMap.complete<VoiceProfileEnrollmentResult>(requestId, result);
+        } else {
+            throw new Error(`Voice Profile fetch request for requestID ${requestId} not found`);
+        }
+    }
+
+    private enrollmentReasonFrom(statusCode: string): ResultReason {
+        switch (statusCode.toLowerCase()) {
+            case "enrolled":
+                return ResultReason.EnrolledVoiceProfile;
+            default:
+                return ResultReason.EnrollingVoiceProfile;
+        }
+    }
 }
