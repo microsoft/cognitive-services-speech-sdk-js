@@ -74,10 +74,8 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
         switch (connectionMessage.path.toLowerCase()) {
             case "speaker.response":
                 const response: SpeakerResponse = JSON.parse(connectionMessage.textBody) as SpeakerResponse;
-                const profileId = this.privRequestSession.onSpeakerRecognizeEnd();
                 result = new SpeakerRecognitionResult(
                     response,
-                    profileId,
                     ResultReason.RecognizedSpeaker,
                     );
                 if (!!this.privResultDeferral) {
@@ -141,7 +139,6 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
                     scenario: this.privSpeakerModel.scenario,
                     status: { statusCode: error, reason: "" }
                 },
-                this.privSpeakerModel.profileIds[0],
                 ResultReason.Canceled,
                 errorCode,
                 error
@@ -204,7 +201,6 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
 
     private async sendPreAudioMessages(context: SpeakerContext): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
-        this.privRequestSession.onSpeakerRecognizeStart(context.profileIds[0]);
         await this.sendSpeakerRecognition(connection, context);
         // await this.sendWaveHeader(connection);
     }

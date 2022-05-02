@@ -16,6 +16,7 @@ export interface SpeakerStatus {
 
 export interface VerificationResult {
     recognitionResult: string;
+    profileId: string;
     score: number;
 }
 

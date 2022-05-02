@@ -28,7 +28,7 @@ export class SpeakerRecognitionResult {
     private privScore: number;
     private privErrorDetails: string;
 
-    public constructor(response: SpeakerResponse, profileId: string, resultReason: ResultReason = ResultReason.RecognizedSpeaker, cancellationErrorCode: CancellationErrorCode = CancellationErrorCode.NoError, errorDetails: string = "") {
+    public constructor(response: SpeakerResponse, resultReason: ResultReason = ResultReason.RecognizedSpeaker, cancellationErrorCode: CancellationErrorCode = CancellationErrorCode.NoError, errorDetails: string = "") {
         this.privProperties = new PropertyCollection();
         const resultType = response.scenario === "TextIndependentIdentification" ? SpeakerRecognitionResultType.Identify : SpeakerRecognitionResultType.Verify;
         this.privReason = resultReason;
@@ -41,8 +41,8 @@ export class SpeakerRecognitionResult {
                 if (response.verificationResult.recognitionResult.toLowerCase() !== "accept") {
                     this.privReason = ResultReason.NoMatch;
                 }
-                if (profileId !== undefined && profileId !== "") {
-                    this.privProfileId = profileId;
+                if (response.verificationResult.profileId !== undefined && response.verificationResult.profileId !== "") {
+                    this.privProfileId = response.verificationResult.profileId;
                 }
             }
         } else {
