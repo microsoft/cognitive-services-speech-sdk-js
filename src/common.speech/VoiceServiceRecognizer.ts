@@ -361,11 +361,13 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     private async sendBaseRequest(connection: IConnection, operation: string, scenario: string, profile: VoiceProfile): Promise<void> {
-        const profileRequest: { profileIds?: string[]; scenario: string } = {
+        const profileRequest: { maxPageSize?: number; profileIds?: string[]; scenario: string } = {
             scenario
         };
         if (!!profile) {
             profileRequest.profileIds = [ profile.profileId ];
+        } else {
+            profileRequest.maxPageSize = -1;
         }
         return connection.send(new SpeechConnectionMessage(
             MessageType.Text,
