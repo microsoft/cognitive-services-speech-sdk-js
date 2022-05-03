@@ -219,15 +219,19 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     public async resetProfile(profile: VoiceProfile): Promise<VoiceProfileResult> {
-        return this.sendCommonRequest<VoiceProfileResult>("reset", profile);
+        return this.sendCommonRequest<VoiceProfileResult>("reset", profile.profileType, profile);
     }
 
     public async deleteProfile(profile: VoiceProfile): Promise<VoiceProfileResult> {
-        return this.sendCommonRequest<VoiceProfileResult>("delete", profile);
+        return this.sendCommonRequest<VoiceProfileResult>("delete", profile.profileType, profile);
     }
 
     public async retrieveEnrollmentResult(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
-        return this.sendCommonRequest<VoiceProfileEnrollmentResult>("fetch", profile);
+        return this.sendCommonRequest<VoiceProfileEnrollmentResult>("fetch", profile.profileType, profile);
+    }
+
+    public async getAllProfiles(profileType: VoiceProfileType): Promise<VoiceProfileEnrollmentResult[]> {
+        return this.sendCommonRequest<VoiceProfileEnrollmentResult[]>("fetch", profileType);
     }
 
     public async getActivationPhrases(profileType: VoiceProfileType, lang: string): Promise<VoiceProfilePhraseResult> {
@@ -293,15 +297,14 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         const connection: IConnection = await this.fetchConnection();
         this.privRequestSession.onSpeechContext();
         this.privDeferralMap.add<VoiceProfileEnrollmentResult>(this.privRequestSession.requestId, enrollmentDeferral);
-        await this.sendBaseRequest(connection, "enroll", profile);
+        await this.sendBaseRequest(connection, "enroll", this.scenarioFrom(profile.profileType), profile);
     }
 
     private async sendPhrasesRequest(getPhrasesDeferral: Deferred<VoiceProfilePhraseResult>, profileType: VoiceProfileType, locale: string): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
         this.privRequestSession.onSpeechContext();
         this.privDeferralMap.add<VoiceProfilePhraseResult>(this.privRequestSession.requestId, getPhrasesDeferral);
-        const scenario = profileType === VoiceProfileType.TextIndependentIdentification ? "TextIndependentIdentification" :
-            profileType === VoiceProfileType.TextIndependentVerification ? "TextIndependentVerification" : "TextDependentVerification";
+        const scenario = this.scenarioFrom(profileType);
 
         const profileCreateRequest: PhraseRequest = {
             locale,
@@ -336,7 +339,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             JSON.stringify(profileCreateRequest)));
     }
 
-    private async sendCommonRequest<T>(operation: string, profile: VoiceProfile): Promise<T> {
+    private async sendCommonRequest<T>(operation: string, profileType: VoiceProfileType, profile: VoiceProfile = undefined): Promise<T> {
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
         try {
@@ -344,7 +347,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             this.privRequestSession.onSpeechContext();
             this.privDeferralMap.add<T>(this.privRequestSession.requestId, deferral);
             await conPromise;
-            await this.sendRequest(operation, profile);
+            await this.sendRequest(operation, this.scenarioFrom(profileType), profile);
             void this.receiveMessage();
             return deferral.promise;
         } catch (err) {
@@ -352,24 +355,24 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         }
     }
 
-    private async sendRequest(operation: string, profile: VoiceProfile): Promise<void> {
+    private async sendRequest(operation: string, scenario: string, profile: VoiceProfile): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
-        return this.sendBaseRequest(connection, operation, profile);
+        return this.sendBaseRequest(connection, operation, scenario, profile);
     }
 
-    private async sendBaseRequest(connection: IConnection, operation: string, profile: VoiceProfile): Promise<void> {
-        const scenario = profile.profileType === VoiceProfileType.TextIndependentIdentification ? "TextIndependentIdentification" :
-            profile.profileType === VoiceProfileType.TextIndependentVerification ? "TextIndependentVerification" : "TextDependentVerification";
-        const profileJson = JSON.stringify({
-            profileIds: [ profile.profileId ],
+    private async sendBaseRequest(connection: IConnection, operation: string, scenario: string, profile: VoiceProfile): Promise<void> {
+        const profileRequest: { profileIds?: string[]; scenario: string } = {
             scenario
-        });
+        };
+        if (!!profile) {
+            profileRequest.profileIds = [ profile.profileId ];
+        }
         return connection.send(new SpeechConnectionMessage(
             MessageType.Text,
             `speaker.profile.${operation}`,
             this.privRequestSession.requestId,
             "application/json; charset=utf-8",
-            profileJson));
+            JSON.stringify(profileRequest)));
     }
 
     private extractSpeakerContext(model: SpeakerRecognitionModel): SpeakerContext {
@@ -422,10 +425,11 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     private handleFetchResponse(enrollmentResponse: EnrollmentResponse, requestId: string): void {
-        if (!!this.privDeferralMap.getId(requestId)) {
+        if (!!this.privDeferralMap.getId(requestId) && !!enrollmentResponse.profiles[0]) {
+            const profileInfo: IProfile = enrollmentResponse.profiles[0];
             const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
-                this.enrollmentReasonFrom(enrollmentResponse.enrollment.enrollmentStatus),
-                JSON.stringify(enrollmentResponse.enrollment),
+                this.enrollmentReasonFrom(profileInfo.enrollmentStatus),
+                JSON.stringify(profileInfo),
                 enrollmentResponse.status.reason,
                 );
             this.privDeferralMap.complete<VoiceProfileEnrollmentResult>(requestId, result);
@@ -441,5 +445,10 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             default:
                 return ResultReason.EnrollingVoiceProfile;
         }
+    }
+
+    private scenarioFrom(profileType: VoiceProfileType): string {
+        return profileType === VoiceProfileType.TextIndependentIdentification ? "TextIndependentIdentification" :
+            profileType === VoiceProfileType.TextIndependentVerification ? "TextIndependentVerification" : "TextDependentVerification";
     }
 }

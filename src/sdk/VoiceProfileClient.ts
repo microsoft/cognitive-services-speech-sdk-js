@@ -120,13 +120,6 @@ export class VoiceProfileClient extends Client {
      */
     public async retrieveEnrollmentResultAsync(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
         return this.privVoiceAdapter.retrieveEnrollmentResult(profile);
-        /*
-        return new VoiceProfileEnrollmentResult(
-            result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
-            result.data,
-            result.statusText
-        );
-        */
     }
 
     /**
@@ -139,11 +132,14 @@ export class VoiceProfileClient extends Client {
      * @return {Promise<VoiceProfileEnrollmentResult[]>} - Promise of an array of VoiceProfileEnrollmentResults.
      */
     public async getAllProfilesAsync(profileType: VoiceProfileType): Promise<VoiceProfileEnrollmentResult[]> {
+        return this.privVoiceAdapter.getAllProfiles(profileType);
+        /*
         const result: { json: { value: EnrollmentResultJSON[] } } = await this.privAdapter.getProfiles(profileType);
         if (profileType === VoiceProfileType.TextIndependentIdentification) {
             return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json);
         }
         return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json);
+        */
     }
 
     /**

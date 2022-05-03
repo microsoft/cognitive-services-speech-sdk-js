@@ -34,6 +34,7 @@ export interface EnrollmentResponse {
     scenario: string;
     status: SpeakerStatus;
     enrollment: EnrollmentStatus;
+    profiles: IProfile[];
 }
 
 export interface ProfileResponse {
