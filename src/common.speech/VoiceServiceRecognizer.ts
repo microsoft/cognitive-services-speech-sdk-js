@@ -65,6 +65,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     private privVoiceProfileClient: VoiceProfileClient;
     private privSpeakerAudioSource: IAudioSource;
     private privDeferralMap: DeferralMap = new DeferralMap();
+    private privExpectedProfileId: string;
 
     public constructor(
         authentication: IAuthentication,
@@ -227,6 +228,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     public async retrieveEnrollmentResult(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
+        this.privExpectedProfileId = profile.profileId;
         return this.sendCommonRequest<VoiceProfileEnrollmentResult>("fetch", profile.profileType, profile);
     }
 
@@ -428,13 +430,27 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
 
     private handleFetchResponse(enrollmentResponse: EnrollmentResponse, requestId: string): void {
         if (!!this.privDeferralMap.getId(requestId) && !!enrollmentResponse.profiles[0]) {
-            const profileInfo: IProfile = enrollmentResponse.profiles[0];
-            const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
-                this.enrollmentReasonFrom(profileInfo.enrollmentStatus),
-                JSON.stringify(profileInfo),
-                enrollmentResponse.status.reason,
-                );
-            this.privDeferralMap.complete<VoiceProfileEnrollmentResult>(requestId, result);
+            if (!!this.privExpectedProfileId && enrollmentResponse.profiles.length === 1 && enrollmentResponse.profiles[0].profileId === this.privExpectedProfileId) {
+                this.privExpectedProfileId = undefined;
+                const profileInfo: IProfile = enrollmentResponse.profiles[0];
+                const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
+                    this.enrollmentReasonFrom(profileInfo.enrollmentStatus),
+                    JSON.stringify(profileInfo),
+                    enrollmentResponse.status.reason,
+                    );
+                this.privDeferralMap.complete<VoiceProfileEnrollmentResult>(requestId, result);
+            } else if (enrollmentResponse.profiles.length > 0) {
+                const iProfiles: IProfile[] = enrollmentResponse.profiles;
+                const profileResults: VoiceProfileEnrollmentResult[] = [];
+                for (const profile of iProfiles) {
+                    profileResults.push( new VoiceProfileEnrollmentResult(
+                        this.enrollmentReasonFrom(profile.enrollmentStatus),
+                        JSON.stringify(profile),
+                        enrollmentResponse.status.reason,
+                    ));
+                }
+                this.privDeferralMap.complete<VoiceProfileEnrollmentResult[]>(requestId, profileResults);
+            }
         } else {
             throw new Error(`Voice Profile fetch request for requestID ${requestId} not found`);
         }
