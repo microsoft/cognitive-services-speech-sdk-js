@@ -62,7 +62,6 @@ interface SpeakerContext {
 
 // eslint-disable-next-line max-classes-per-file
 export class VoiceServiceRecognizer extends ServiceRecognizerBase {
-    private privVoiceProfileClient: VoiceProfileClient;
     private privSpeakerAudioSource: IAudioSource;
     private privDeferralMap: DeferralMap = new DeferralMap();
     private privExpectedProfileId: string;
@@ -74,7 +73,6 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         recognizerConfig: RecognizerConfig,
         recognizer: VoiceProfileClient) {
         super(authentication, connectionFactory, audioSource, recognizerConfig, recognizer);
-        this.privVoiceProfileClient = recognizer;
         this.privSpeakerAudioSource = audioSource;
         this.sendPrePayloadJSONOverride = (): Promise<void> => this.noOp();
     }
@@ -163,37 +161,6 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         const properties: PropertyCollection = new PropertyCollection();
         // const enrollmentResponse: EnrollmentResponse = JSON.parse(connectionMessage.textBody) as EnrollmentResponse;
         properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
-
-        /*
-        if (!!this.privSpeakerRecognizer.canceled) {
-
-            const cancelEvent: RecognitionCanceledEventArgs = new SpeakerRecognitionCanceledEventArgs(
-                cancellationReason,
-                error,
-                errorCode,
-                undefined,
-                undefined,
-                sessionId);
-            try {
-                this.privSpeakerRecognizer.canceled(this.privIntentRecognizer, cancelEvent);
-            } catch { }
-        }
-
-        if (!!this.privResultDeferral) {
-            const result: SpeakerRecognitionResult = new SpeakerRecognitionResult(
-                SpeakerRecognitionResultType.Identify,
-                error,
-                "",
-                ResultReason.Canceled,
-                );
-            try {
-                this.privResultDeferral.resolve(result);
-                this.privResultDeferral = undefined;
-            } catch (error) {
-                this.privResultDeferral.reject(error as string);
-            }
-        }
-        */
 
             const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
                 ResultReason.Canceled,
