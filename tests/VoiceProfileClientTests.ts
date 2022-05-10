@@ -82,7 +82,7 @@ test("VoiceProfileClient", () => {
     objsToClose.push(r);
 });
 
-test("VoiceProfileClient with Bad credentials throws meaningful error", async (done: jest.DoneCallback) => {
+test.skip("VoiceProfileClient with Bad credentials throws meaningful error", async (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: VoiceProfileClient with Bad credentials throws meaningful error");
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("BADKEY", Settings.SpeakerIDRegion);
@@ -341,7 +341,7 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", async (
             expect(enrollmentRes.enrollmentResultDetails.profileId).not.toBeUndefined();
             expect(enrollmentRes.enrollmentResultDetails.profileId).toEqual(res.profileId);
             expect(enrollmentRes.enrollmentsCount).toEqual(0);
-            expect(enrollmentRes.enrollmentResultDetails.remainingEnrollmentsSpeechLengthInSec).toBeGreaterThan(0);
+            expect(enrollmentRes.enrollmentResultDetails.remainingEnrollmentsSpeechLength).toBeGreaterThan(0);
             try {
                 const results: sdk.VoiceProfileEnrollmentResult[] = await r.getAllProfilesAsync(res.profileType);
                 expect(results).not.toBeUndefined();
@@ -402,6 +402,7 @@ test("Create and Delete Voice Profile - Dependent Verification", async (done: je
         }
         expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
         const reco: sdk.SpeakerRecognizer = BuildRecognizer();
+        objsToClose.push(reco);
         const m: sdk.SpeakerVerificationModel = sdk.SpeakerVerificationModel.fromProfile(res);
         try {
             const recognizeResult: sdk.SpeakerRecognitionResult = await reco.recognizeOnceAsync(m);
