@@ -132,7 +132,7 @@ test.skip("Test OCSP Revoked", (done: jest.DoneCallback) => {
     testRequest.end();
 });
 
-test("Test OCSP Staple", async (done: jest.DoneCallback) => {
+test.skip("Test OCSP Staple", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP Staple");
 
