@@ -57,11 +57,10 @@ export class TranscriberConnectionFactory extends ConnectionFactoryBase {
             }
         }
 
-        const detailed: string = config.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase();
-        if (detailed === "true") {
+        const wordLevelTimings: boolean = config.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase() === "true";
+        const detailed: boolean = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]) !== OutputFormat[OutputFormat.Simple];
+        if (wordLevelTimings || detailed) {
             queryParams[QueryParameterNames.Format] = OutputFormat[OutputFormat.Detailed].toLowerCase();
-        } else {
-            queryParams[QueryParameterNames.Format] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);

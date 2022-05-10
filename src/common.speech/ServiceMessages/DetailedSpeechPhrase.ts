@@ -19,7 +19,8 @@ export interface IPhrase {
     Lexical: string;
     ITN: string;
     MaskedITN: string;
-    Display: string;
+    Display?: string;
+    DisplayText?: string;
     Words?: IWord[];
 }
 
@@ -83,7 +84,10 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
         return this.privDetailedSpeechPhrase.PrimaryLanguage === undefined ? undefined : this.privDetailedSpeechPhrase.PrimaryLanguage.Confidence;
     }
     public get Text(): string {
-        return !!this.privDetailedSpeechPhrase.NBest && this.privDetailedSpeechPhrase.NBest[0] ? this.privDetailedSpeechPhrase.NBest[0].Display : this.privDetailedSpeechPhrase.DisplayText;
+        if (!!this.privDetailedSpeechPhrase.NBest && this.privDetailedSpeechPhrase.NBest[0]) {
+            return this.privDetailedSpeechPhrase.NBest[0].Display || this.privDetailedSpeechPhrase.NBest[0].DisplayText;
+        }
+        return this.privDetailedSpeechPhrase.DisplayText;
     }
     public get SpeakerId(): string {
         return this.privDetailedSpeechPhrase.SpeakerId;
