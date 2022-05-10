@@ -9,12 +9,16 @@ import {
     IConnection,
     IStringDictionary
 } from "../common/Exports";
-import { PropertyId } from "../sdk/Exports";
+import {
+    OutputFormat,
+    PropertyId
+} from "../sdk/Exports";
 import {
     ConnectionFactoryBase
 } from "./ConnectionFactoryBase";
 import {
     AuthInfo,
+    OutputFormatPropertyName,
     RecognizerConfig,
     WebsocketMessageFormatter
 } from "./Exports";
@@ -51,6 +55,12 @@ export class TranscriberConnectionFactory extends ConnectionFactoryBase {
             if (!endpoint || endpoint.search(QueryParameterNames.Language) === -1) {
                 queryParams[QueryParameterNames.Language] = language;
             }
+        }
+
+        const wordLevelTimings: boolean = config.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase() === "true";
+        const detailed: boolean = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]) !== OutputFormat[OutputFormat.Simple];
+        if (wordLevelTimings || detailed) {
+            queryParams[QueryParameterNames.Format] = OutputFormat[OutputFormat.Detailed].toLowerCase();
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);

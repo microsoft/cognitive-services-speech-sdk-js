@@ -7,6 +7,7 @@ import { Contracts } from "../Contracts";
 import {
     AudioConfig,
     CancellationEventArgs,
+    Connection,
     ConversationTranscriptionEventArgs,
     PropertyCollection,
     PropertyId,
@@ -124,6 +125,17 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      */
     public get properties(): PropertyCollection {
         return this.privProperties;
+    }
+
+    /**
+     * Gets the Connection instance from the specified recognizer.
+     * @member ConversationTranscriber.prototype.connection
+     * @function
+     * @public
+     * @return {Connection} The Connection instance of the recognizer.
+     */
+    public get connection(): Connection {
+        return Connection.fromRecognizer(this.privRecognizer);
     }
 
     /**
