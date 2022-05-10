@@ -40,8 +40,8 @@ import { EnrollmentResultJSON } from "./VoiceProfileEnrollmentResult";
  */
 export class VoiceProfileClient extends Client {
     protected privProperties: PropertyCollection;
-    private privAdapter: SpeakerIdMessageAdapter;
     private privVoiceAdapter: VoiceServiceRecognizer;
+    private privDisposedVoiceAdapter: boolean;
 
     /**
      * VoiceProfileClient constructor.
@@ -56,8 +56,8 @@ export class VoiceProfileClient extends Client {
         super(AudioConfig.fromStreamInput(AudioInputStream.createPushStream()), speechConfigImpl.properties, new VoiceProfileConnectionFactory());
 
         this.privProperties = speechConfigImpl.properties.clone();
-        this.implClientSetup();
         this.privVoiceAdapter = this.privReco as VoiceServiceRecognizer;
+        this.privDisposedVoiceAdapter = false;
     }
 
     /**
@@ -172,14 +172,6 @@ export class VoiceProfileClient extends Client {
         this.privVoiceAdapter.SpeakerAudioSource = configImpl;
 
         return this.privVoiceAdapter.enrollProfile(profile);
-        /*
-        const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
-        return new VoiceProfileEnrollmentResult(
-            result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
-            result.data,
-            result.statusText
-        );
-        */
     }
 
     /**
@@ -209,39 +201,31 @@ export class VoiceProfileClient extends Client {
     }
 
     /**
-     * Included for compatibility
+     * Clean up object and close underlying connection
      * @member VoiceProfileClient.prototype.close
      * @function
+     * @async
      * @public
      */
-    public close(): void {
-        return;
-    }
-
-    // Does class setup, swiped from Recognizer.
-    protected implClientSetup(): void {
-
-        let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
-        let osName = "unknown";
-        let osVersion = "unknown";
-
-        if (typeof navigator !== "undefined") {
-            osPlatform = osPlatform + "/" + navigator.platform;
-            osName = navigator.userAgent;
-            osVersion = navigator.appVersion;
-        }
-
-        const recognizerConfig =
-            new SpeakerRecognitionConfig(
-                new Context(new OS(osPlatform, osName, osVersion)),
-                this.privProperties);
-
-        this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
+    public async close(): Promise<void> {
+        await this.dispose(true);
     }
 
     protected createServiceRecognizer(authentication: IAuthentication, connectionFactory: IConnectionFactory, audioConfig: AudioConfig, recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
         const audioImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         return new VoiceServiceRecognizer(authentication, connectionFactory, audioImpl, recognizerConfig, this);
+    }
+
+    protected async dispose(disposing: boolean): Promise<void> {
+        if (this.privDisposedVoiceAdapter) {
+            return;
+        }
+
+        this.privDisposedVoiceAdapter = true;
+
+        if (disposing) {
+            await super.dispose(disposing);
+        }
     }
 
     private getResult(result: IRestResponse, successReason: ResultReason): VoiceProfileResult {
