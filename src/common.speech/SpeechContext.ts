@@ -59,6 +59,14 @@ export class SpeechContext {
             };
         }
         this.privContext.phraseDetection.enrichment.pronunciationAssessment = JSON.parse(params) as Context;
+        this.setWordLevelTimings();
+        this.privContext.phraseOutput.detailed.options.push("PronunciationAssessment");
+        if (this.privContext.phraseOutput.detailed.options.indexOf("SNR") === -1) {
+            this.privContext.phraseOutput.detailed.options.push("SNR");
+        }
+    }
+
+    public setWordLevelTimings(): void {
         if (this.privContext.phraseOutput === undefined) {
             this.privContext.phraseOutput = {
                 detailed: {
@@ -73,12 +81,8 @@ export class SpeechContext {
             };
         }
         this.privContext.phraseOutput.format = "Detailed";
-        this.privContext.phraseOutput.detailed.options.push("PronunciationAssessment");
         if (this.privContext.phraseOutput.detailed.options.indexOf("WordTimings") === -1) {
             this.privContext.phraseOutput.detailed.options.push("WordTimings");
-        }
-        if (this.privContext.phraseOutput.detailed.options.indexOf("SNR") === -1) {
-            this.privContext.phraseOutput.detailed.options.push("SNR");
         }
     }
 
