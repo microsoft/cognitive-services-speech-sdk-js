@@ -37,7 +37,7 @@ export async function closeAsyncObjects(objsToClose: any[]): Promise<void> {
                     current.close(resolve, reject);
                 });
             } else {
-                current.close();
+                await current.close();
             }
         }
     }

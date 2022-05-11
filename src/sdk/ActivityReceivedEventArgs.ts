@@ -4,8 +4,12 @@
 /* eslint-disable max-classes-per-file */
 import { PullAudioOutputStream } from "./Audio/AudioOutputStream";
 
-export interface IActivity {
+interface IActivity {
+    conversation?: any;
+    id?: string;
+    replyToId?: string;
     type?: string;
+    text?: string;
     speak?: any;
 }
 
@@ -34,7 +38,7 @@ export class ActivityReceivedEventArgs {
      * @public
      * @returns {any} the received activity.
      */
-    public get activity(): IActivity {
+    public get activity(): any {
         return this.privActivity;
     }
 
