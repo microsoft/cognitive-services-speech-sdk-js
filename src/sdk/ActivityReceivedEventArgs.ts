@@ -2,9 +2,34 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
+import { IIntentEntity } from "../common.speech/Exports";
 import { PullAudioOutputStream } from "./Audio/AudioOutputStream";
 
+export interface ChannelAccount {
+    aadObjectId?: string;
+    id: string;
+    name: string;
+    role?: string;
+}
+
+export interface ConversationAccount extends ChannelAccount {
+    conversationType: string;
+    isGroup: boolean;
+    properties?: any;
+    tenantId?: string;
+}
+
 export interface IActivity {
+    channelData?: any;
+    channelId: string;
+    conversation: ConversationAccount;
+    entities?: IIntentEntity[];
+    from: ChannelAccount;
+    id?: string;
+    localTimestamp?: Date;
+    replyToId?: string;
+    serviceUrl: string;
+    timestamp?: Date;
     type?: string;
     speak?: any;
 }
@@ -34,7 +59,7 @@ export class ActivityReceivedEventArgs {
      * @public
      * @returns {any} the received activity.
      */
-    public get activity(): IActivity {
+    public get activity(): any {
         return this.privActivity;
     }
 
