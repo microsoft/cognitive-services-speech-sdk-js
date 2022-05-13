@@ -219,5 +219,37 @@ export enum SpeechSynthesisOutputFormat {
      * Added in version 1.20.0
      * @member SpeechSynthesisOutputFormat.Audio24Khz16Bit24KbpsMonoOpus
      */
-    Audio24Khz16Bit24KbpsMonoOpus
+    Audio24Khz16Bit24KbpsMonoOpus,
+
+    /**
+     * raw-22050hz-16bit-mono-pcm
+     * Raw PCM audio at 22050Hz sampling rate and 16-bit depth.
+     * Added in version 1.22.0
+     * @member SpeechSynthesisOutputFormat.Raw22050Hz16BitMonoPcm
+     */
+    Raw22050Hz16BitMonoPcm,
+
+    /**
+     * riff-22050hz-16bit-mono-pcm
+     * PCM audio at 22050Hz sampling rate and 16-bit depth, with RIFF header.
+     * Added in version 1.22.0
+     * @member SpeechSynthesisOutputFormat.Riff22050Hz16BitMonoPcm
+     */
+    Riff22050Hz16BitMonoPcm,
+
+    /**
+     * raw-44100hz-16bit-mono-pcm
+     * Raw PCM audio at 44100Hz sampling rate and 16-bit depth.
+     * Added in version 1.22.0
+     * @member SpeechSynthesisOutputFormat.Raw44100Hz16BitMonoPcm
+     */
+    Raw44100Hz16BitMonoPcm,
+
+    /**
+     * riff-44100hz-16bit-mono-pcm
+     * PCM audio at 44100Hz sampling rate and 16-bit depth, with RIFF header.
+     * Added in version 1.22.0
+     * @member SpeechSynthesisOutputFormat.Riff44100Hz16BitMonoPcm
+     */
+    Riff44100Hz16BitMonoPcm
 }
