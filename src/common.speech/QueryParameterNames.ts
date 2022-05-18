@@ -9,6 +9,7 @@ export class QueryParameterNames {
     public static EnableLanguageId: string = "lidEnabled";
     public static EnableWordLevelTimestamps: string = "wordLevelTimestamps";
     public static EndSilenceTimeoutMs: string = "endSilenceTimeoutMs";
+    public static SegmentationSilenceTimeoutMs: string = "segmentationSilenceTimeoutMs";
     public static Format: string = "format";
     public static InitialSilenceTimeoutMs: string = "initialSilenceTimeoutMs";
     public static Language: string = "language";
@@ -17,4 +18,5 @@ export class QueryParameterNames {
     public static StableIntermediateThreshold: string = "stableIntermediateThreshold";
     public static StableTranslation: string = "stableTranslation";
     public static TestHooks: string = "testhooks";
+    public static Postprocessing: string = "postprocessing";
 }

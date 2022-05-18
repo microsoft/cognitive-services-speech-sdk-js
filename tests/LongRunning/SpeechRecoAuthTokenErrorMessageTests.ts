@@ -14,19 +14,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(() => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     objsToClose.forEach((value: any, index: number, array: any[]) => {
         if (typeof value.close === "function") {
@@ -36,11 +36,11 @@ afterEach(() => {
 });
 
 test("Non-refreshed auth token has sensible error message", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Non-refreshed auth token has sensible error message");
 
     if (!Settings.ExecuteLongRunningTestsBool) {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Skipping test.");
         done();
         return;

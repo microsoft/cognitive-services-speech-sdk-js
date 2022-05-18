@@ -14,19 +14,19 @@ let objsToClose: any[];
 beforeAll(() => {
     // override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
 afterEach(() => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     objsToClose.forEach((value: any, index: number, array: any[]) => {
         if (typeof value.close === "function") {
@@ -36,11 +36,11 @@ afterEach(() => {
 });
 
 test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: AuthToken refresh works correctly");
 
     if (!Settings.ExecuteLongRunningTestsBool) {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Skipping test.");
         done();
         return;
@@ -106,9 +106,8 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
 
         // Close p in 20 minutes.
         const endTime: number = Date.now() + (1000 * 60 * 20); // 20 min.
-        WaitForCondition(() => {
-            return Date.now() >= endTime;
-        }, () => {
+        WaitForCondition((): boolean => Date.now() >= endTime,
+        (): void => {
             streamStopped = true;
             p.close();
         });
@@ -119,16 +118,14 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
         objsToClose.push(r);
 
         // auto refresh the auth token.
-        const refreshAuthToken = () => {
+        const refreshAuthToken = (): void => {
             if (canceled && !inTurn) {
                 return;
             }
 
-            request.post(req, (error: any, response: request.Response, body: any) => {
-                r.authorizationToken = body;
-            });
+            request.post(req, (error: any, response: request.Response, body: any): void => r.authorizationToken = body);
 
-            setTimeout(() => {
+            setTimeout((): void => {
                 refreshAuthToken();
             }, 1000 * 60 * 9); // 9 minutes
         };
@@ -159,7 +156,7 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
                 }
 
             } catch (error) {
-                done.fail(error);
+                done.fail(error as string);
             }
         };
 
@@ -206,11 +203,11 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
 }, 1000 * 60 * 25); // 25 minutes.
 
 test("AuthToken refresh works correctly for Translation Recognizer", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: AuthToken refresh works correctly for Translation Recognizer");
 
     if (!Settings.ExecuteLongRunningTestsBool) {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.info("Skipping test.");
         done();
         return;

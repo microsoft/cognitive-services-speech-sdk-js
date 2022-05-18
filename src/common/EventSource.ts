@@ -12,6 +12,7 @@ export class EventSource<TEvent extends PlatformEvent> implements IEventSource<T
     private privEventListeners: IStringDictionary<(event: TEvent) => void> = {};
     private privMetadata: IStringDictionary<string>;
     private privIsDisposed: boolean = false;
+    private privConsoleListener: IDetachable = undefined;
 
     public constructor(metadata?: IStringDictionary<string>) {
         this.privMetadata = metadata;
@@ -54,6 +55,14 @@ export class EventSource<TEvent extends PlatformEvent> implements IEventSource<T
 
     public attachListener(listener: IEventListener<TEvent>): IDetachable {
         return this.attach((e: TEvent): void => listener.onEvent(e));
+    }
+
+    public attachConsoleListener(listener: IEventListener<TEvent>): IDetachable {
+        if (!!this.privConsoleListener) {
+            void this.privConsoleListener.detach(); // Detach implementation for eventListeners is synchronous
+        }
+        this.privConsoleListener = this.attach((e: TEvent): void => listener.onEvent(e));
+        return this.privConsoleListener;
     }
 
     public isDisposed(): boolean {

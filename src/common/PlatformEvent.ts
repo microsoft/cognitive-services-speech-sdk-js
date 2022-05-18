@@ -9,6 +9,7 @@ export enum EventType {
     Info,
     Warning,
     Error,
+    None,
 }
 
 export class PlatformEvent {

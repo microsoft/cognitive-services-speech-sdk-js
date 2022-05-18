@@ -49,6 +49,9 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
         super(authentication, connectionFactory, audioSource, recognizerConfig, transcriber);
         this.privTranscriberRecognizer = transcriber;
         this.sendPrePayloadJSONOverride = (connection: IConnection): Promise<void> => this.sendTranscriptionStartJSON(connection);
+        if (this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps) === "true") {
+            this.privSpeechContext.setWordLevelTimings();
+        }
     }
 
     public async sendSpeechEventAsync(info: ConversationInfo, command: string): Promise<void> {
@@ -231,7 +234,7 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
 
     // Encapsulated for derived service recognizers that need to send additional JSON
     protected async sendTranscriptionStartJSON(connection: IConnection): Promise<void> {
-        await this.sendSpeechContext(connection);
+        await this.sendSpeechContext(connection, true);
         const info: ConversationInfo = this.privTranscriberRecognizer.getConversationInfo();
         const payload: { [id: string]: any } = this.createSpeechEventPayload(info, "start");
         await this.sendSpeechEvent(connection, payload);

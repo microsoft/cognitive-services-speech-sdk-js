@@ -23,20 +23,20 @@ function sleep(milliseconds: number): Promise<any> {
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
-    Events.instance.attachListener(new ConsoleLoggingListener(EventType.Debug));
+    Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
 beforeEach(() => {
     objsToClose = [];
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
     jest.setTimeout(12000);
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
     done();
@@ -116,7 +116,7 @@ const GetParticipantSteve: () => sdk.IParticipant = (): sdk.IParticipant => {
 };
 
 test("CreateConversation", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: CreateConversation");
     CreateConversation().then( (c: sdk.Conversation) => {
         objsToClose.push(c);
@@ -125,7 +125,7 @@ test("CreateConversation", () => {
 });
 
 test("BuildTranscriber", () => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: BuildTranscriber");
     const t: sdk.ConversationTranscriber = BuildTranscriber();
 
@@ -133,7 +133,7 @@ test("BuildTranscriber", () => {
 });
 
 test("Create Conversation and join to Transcriber", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create Conversation and join to Transcriber");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -165,7 +165,7 @@ test("Create Conversation and join to Transcriber", (done: jest.DoneCallback) =>
 });
 
 test("Create Conversation and add participants", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create Conversation and add participants");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     s.outputFormat = sdk.OutputFormat.Detailed;
@@ -258,7 +258,7 @@ test("Create Conversation and add participants", (done: jest.DoneCallback) => {
 }, 50000);
 
 test("Leave Conversation", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Leave Conversation");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
@@ -343,7 +343,7 @@ test("Leave Conversation", (done: jest.DoneCallback) => {
 });
 
 test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create Conversation with one channel audio (aligned)");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     s.outputFormat = sdk.OutputFormat.Detailed;
@@ -432,7 +432,7 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
 });
 
 test.skip("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Create Conversation and force disconnect");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);

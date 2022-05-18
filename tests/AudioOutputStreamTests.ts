@@ -14,21 +14,21 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
     objsToClose = [];
     const used = process.memoryUsage().heapUsed / 1024 / 1024;
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.log(`Heap memory usage before test: ${Math.round(used * 100) / 100} MB`);
 });
 
 afterEach(async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
 
     const used = process.memoryUsage().heapUsed / 1024 / 1024;
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.log(`Heap memory usage after test: ${Math.round(used * 100) / 100} MB`);
 
     done();
