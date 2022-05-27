@@ -129,17 +129,15 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             // Enrollment response
             case "speaker.profile.enrollment":
                 const enrollmentResponse: EnrollmentResponse = JSON.parse(connectionMessage.textBody) as EnrollmentResponse;
-                if (enrollmentResponse.status.statusCode.toLowerCase() !== "success") {
-                    throw new Error(`Voice Profile enrollment failed with code: ${enrollmentResponse.status.statusCode}, message: ${enrollmentResponse.status.reason}`);
-                }
                 const result: VoiceProfileEnrollmentResult = new VoiceProfileEnrollmentResult(
-                    this.enrollmentReasonFrom(enrollmentResponse.enrollment.enrollmentStatus),
-                    JSON.stringify(enrollmentResponse.enrollment),
+                    this.enrollmentReasonFrom(!!enrollmentResponse.enrollment ? enrollmentResponse.enrollment.enrollmentStatus : enrollmentResponse.status.statusCode),
+                    !!enrollmentResponse.enrollment ? JSON.stringify(enrollmentResponse.enrollment) : undefined,
                     enrollmentResponse.status.reason,
                     );
                 if (!!this.privDeferralMap.getId(connectionMessage.requestId)) {
                     this.privDeferralMap.complete<VoiceProfileEnrollmentResult>(connectionMessage.requestId, result);
                 }
+                this.privRequestSession.onSpeechEnded();
                 processed = true;
                 break;
             default:
@@ -427,6 +425,20 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         switch (statusCode.toLowerCase()) {
             case "enrolled":
                 return ResultReason.EnrolledVoiceProfile;
+            case "invalidlocale":
+            case "invalidphrase":
+            case "invalidaudioformat":
+            case "invalidscenario":
+            case "invalidprofilecount":
+            case "invalidoperation":
+            case "audiotooshort":
+            case "audiotoolong":
+            case "toomanyenrollments":
+            case "storageconflict":
+            case "profilenotfound":
+            case "incompatibleprofiles":
+            case "incompleteenrollment":
+                return ResultReason.Canceled;
             default:
                 return ResultReason.EnrollingVoiceProfile;
         }
