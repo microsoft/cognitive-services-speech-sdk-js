@@ -401,6 +401,7 @@ test("Create and Delete Voice Profile - Dependent Verification", async (done: je
         }
         expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
         const reco: sdk.SpeakerRecognizer = BuildRecognizer();
+        objsToClose.push(reco);
         const m: sdk.SpeakerVerificationModel = sdk.SpeakerVerificationModel.fromProfile(res);
         objsToClose.push(m);
         try {

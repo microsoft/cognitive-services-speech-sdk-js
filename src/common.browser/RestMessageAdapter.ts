@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import bent, { BentResponse } from "bent";
+import bent, { BentResponse, RequestBody } from "bent";
 import {
     ArgumentNullError,
     Deferred
@@ -82,7 +82,7 @@ export class RestMessageAdapter {
         method: RestRequestType,
         uri: string,
         queryParams: { [key: string]: any } = {},
-        body: bent.RequestBody = null,
+        body: any = null,
         binaryBody: Blob | Buffer = null,
         ): Promise<IRestResponse> {
 
@@ -111,7 +111,7 @@ export class RestMessageAdapter {
             });
         };
 
-        const send = (postData: bent.RequestBody): void => {
+        const send = (postData: RequestBody): void => {
             const sendRequest = bent(uri, requestCommand, this.privHeaders, 200, 201, 202, 204, 400, 401, 402, 403, 404);
             const params = this.queryParams(queryParams) === "" ? "" : `?${this.queryParams(queryParams)}`;
             sendRequest(params, postData).then( async (data: BentResponse): Promise<void> => {
@@ -140,7 +140,7 @@ export class RestMessageAdapter {
             this.privHeaders["content-type"] = contentType;
             this.privHeaders["Content-Type"] = contentType;
             if (typeof (Blob) !== "undefined" && binaryBody instanceof Blob) {
-                blobToArrayBuffer(binaryBody).then( (res: bent.RequestBody): void => {
+                blobToArrayBuffer(binaryBody).then( (res: RequestBody): void => {
                     send(res);
                 }).catch((error: any): void => {
                     responseReceivedDeferral.reject(error as string);
@@ -153,7 +153,7 @@ export class RestMessageAdapter {
                 this.privHeaders["content-type"] = "application/json";
                 this.privHeaders["Content-Type"] = "application/json";
             }
-            send(body);
+            send(body as RequestBody);
         }
         return responseReceivedDeferral.promise;
     }

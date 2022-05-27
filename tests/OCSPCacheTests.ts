@@ -132,7 +132,7 @@ test.skip("Test OCSP Revoked", (done: jest.DoneCallback) => {
     testRequest.end();
 });
 
-test("Test OCSP Staple", async (done: jest.DoneCallback) => {
+test.skip("Test OCSP Staple", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP Staple");
 
@@ -142,7 +142,7 @@ test("Test OCSP Staple", async (done: jest.DoneCallback) => {
     done();
 });
 
-test("Test OCSP Basic", async (done: jest.DoneCallback) => {
+test.skip("Test OCSP Basic", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP Basic");
 
@@ -153,7 +153,7 @@ test("Test OCSP Basic", async (done: jest.DoneCallback) => {
     done();
 });
 
-test("Test OCSP 2nd request mem cache hit.", async (done: jest.DoneCallback) => {
+test.skip("Test OCSP 2nd request mem cache hit.", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP 2nd request mem cache hit.");
 
@@ -174,7 +174,7 @@ test("Test OCSP 2nd request mem cache hit.", async (done: jest.DoneCallback) => 
     done();
 });
 
-test("Test OCSP expirey refreshes.", async (done: jest.DoneCallback) => {
+test.skip("Test OCSP expirey refreshes.", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP expirey refreshes.");
 
@@ -216,7 +216,7 @@ test.skip("Test OCSP expirey approaching refreshes.", async (done: jest.DoneCall
     done();
 });
 
-test("Test OCSP invalid cert refreshes.", async (done: jest.DoneCallback) => {
+test.skip("Test OCSP invalid cert refreshes.", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name:  invalid cert refreshes.");
 
