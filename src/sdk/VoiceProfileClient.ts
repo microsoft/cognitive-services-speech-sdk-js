@@ -144,7 +144,7 @@ export class VoiceProfileClient extends Client {
 
     /**
      * Get valid authorization phrases for voice profile enrollment
-     * @member VoiceProfileClient.prototype.getAuthorizationPhrasesAsync
+     * @member VoiceProfileClient.prototype.getActivationPhrasesAsync
      * @function
      * @public
      * @async
