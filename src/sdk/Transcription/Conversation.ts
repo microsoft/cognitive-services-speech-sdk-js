@@ -60,7 +60,6 @@ export abstract class Conversation implements IConversation {
     public abstract get properties(): PropertyCollection;
     public abstract get speechRecognitionLanguage(): string;
     public abstract get participants(): Participant[];
-    public abstract get isConnected(): boolean;
     public abstract set authorizationToken(value: string);
 
     /**
@@ -80,24 +79,24 @@ export abstract class Conversation implements IConversation {
         let err: Callback;
         if (typeof arg2 === "string") {
             conversationImpl = new ConversationImpl(speechConfig, arg2);
-            cb = arg3;
-            err = arg4;
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            marshalPromiseToCallbacks((async (): Promise<void> => {})(), arg3, arg4);
         } else {
             conversationImpl = new ConversationImpl(speechConfig);
             cb = arg2;
             err = arg3;
+            conversationImpl.createConversationAsync(
+                ((): void => {
+                    if (!!cb) {
+                        cb();
+                    }
+                }),
+                (error: any): void => {
+                    if (!!err) {
+                        err(error);
+                    }
+                });
         }
-        conversationImpl.createConversationAsync(
-            ((): void => {
-                if (!!cb) {
-                    cb();
-                }
-            }),
-            (error: any): void => {
-                if (!!err) {
-                    err(error);
-                }
-            });
         return conversationImpl;
 
     }
@@ -256,10 +255,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     public get isMutedByHost(): boolean {
         return this.privParticipants.me?.isHost ? false : this.privParticipants.me?.isMuted;
-    }
-
-    public get isConnected(): boolean {
-        return this.privIsConnected && this.privIsReady;
     }
 
     public get participants(): Participant[] {
@@ -812,9 +807,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (!!this.privConversationTranslator?.sessionStarted) {
                 this.privConversationTranslator.sessionStarted(this.privConversationTranslator, e);
             }
-            if (!!this.privTranscriberRecognizer?.conversationStarted) {
-                this.privTranscriberRecognizer.conversationStarted(this.privTranscriberRecognizer, e);
-            }
         } catch (e) {
             //
         }
@@ -824,9 +816,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
         try {
             if (!!this.privConversationTranslator?.sessionStopped) {
                 this.privConversationTranslator.sessionStopped(this.privConversationTranslator, e);
-            }
-            if (!!this.privTranscriberRecognizer?.conversationStopped) {
-                this.privTranscriberRecognizer.conversationStopped(this.privTranscriberRecognizer, e);
             }
         } catch (e) {
             //
@@ -839,9 +828,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
         try {
             if (!!this.privConversationTranslator?.canceled) {
                 this.privConversationTranslator.canceled(this.privConversationTranslator, e);
-            }
-            if (!!this.privTranscriberRecognizer?.conversationCanceled) {
-                this.privTranscriberRecognizer.conversationCanceled(this.privTranscriberRecognizer, e);
             }
         } catch (e) {
             //
