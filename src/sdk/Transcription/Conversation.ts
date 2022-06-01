@@ -61,6 +61,7 @@ export abstract class Conversation implements IConversation {
     public abstract get speechRecognitionLanguage(): string;
     public abstract get participants(): Participant[];
     public abstract set authorizationToken(value: string);
+    public abstract get isConnected(): boolean;
 
     /**
      * Create a conversation
@@ -255,6 +256,10 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
     public get isMutedByHost(): boolean {
         return this.privParticipants.me?.isHost ? false : this.privParticipants.me?.isMuted;
+    }
+
+    public get isConnected(): boolean {
+        return this.privIsConnected && this.privIsReady;
     }
 
     public get participants(): Participant[] {
