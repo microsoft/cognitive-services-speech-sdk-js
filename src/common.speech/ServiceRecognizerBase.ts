@@ -158,6 +158,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privRecognizerConfig.parameters.setProperty(PropertyId.ConversationTranslator_Token, token);
     }
 
+    public set voiceProfileType(type: string) {
+        this.privRecognizerConfig.parameters.setProperty(PropertyId.SpeechServiceConnection_SpeakerIdMode, type);
+    }
+
     public set authentication(auth: IAuthentication) {
         this.privAuthentication = this.authentication;
     }

@@ -153,6 +153,7 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
 
     public async recognizeSpeakerOnce(model: SpeakerRecognitionModel): Promise<SpeakerRecognitionResult> {
         this.privSpeakerModel = model;
+        this.voiceProfileType = model.scenario;
         if (!this.privResultDeferral) {
             this.privResultDeferral = new Deferred<SpeakerRecognitionResult>();
         }

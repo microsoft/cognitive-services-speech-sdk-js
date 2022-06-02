@@ -37,8 +37,9 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
             // const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
             // const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
             // const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `wss://${region}.spr-frontend.speech${hostSuffix}`);
+            const scenario: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_SpeakerIdMode, "TextIndependentIdentification");
             const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://dev.spr-frontend.speech.microsoft.com");
-            endpoint = `${host}/speaker/ws/${endpointPath}`;
+            endpoint = `${host}/speaker/ws/${this.scenarioToPath(scenario)}/${endpointPath}`;
         }
 
         const queryParams: IStringDictionary<string> = {
@@ -59,6 +60,17 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+    }
+
+    private scenarioToPath(mode: string): string {
+        switch (mode) {
+            case "TextIndependentVerification":
+                return "verification/text-independent";
+            case "TextDependentVerification":
+                return "verification/text-dependent";
+            default:
+                return "identification/text-independent";
+        }
     }
 }
 

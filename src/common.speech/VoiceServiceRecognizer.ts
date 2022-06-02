@@ -172,6 +172,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
 
     public async createProfile(profileType: VoiceProfileType, locale: string): Promise<string[]> {
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
+        this.voiceProfileType = profileType.toString();
         const conPromise: Promise<IConnection> = this.connectImpl();
         try {
             const createProfileDeferral = new Deferred<string[]>();
@@ -185,23 +186,28 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     public async resetProfile(profile: VoiceProfile): Promise<VoiceProfileResult> {
+        this.voiceProfileType = profile.profileType.toString();
         return this.sendCommonRequest<VoiceProfileResult>("reset", profile.profileType, profile);
     }
 
     public async deleteProfile(profile: VoiceProfile): Promise<VoiceProfileResult> {
+        this.voiceProfileType = profile.profileType.toString();
         return this.sendCommonRequest<VoiceProfileResult>("delete", profile.profileType, profile);
     }
 
     public async retrieveEnrollmentResult(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
+        this.voiceProfileType = profile.profileType.toString();
         this.privExpectedProfileId = profile.profileId;
         return this.sendCommonRequest<VoiceProfileEnrollmentResult>("fetch", profile.profileType, profile);
     }
 
     public async getAllProfiles(profileType: VoiceProfileType): Promise<VoiceProfileEnrollmentResult[]> {
+        this.voiceProfileType = profileType.toString();
         return this.sendCommonRequest<VoiceProfileEnrollmentResult[]>("fetch", profileType);
     }
 
     public async getActivationPhrases(profileType: VoiceProfileType, lang: string): Promise<VoiceProfilePhraseResult> {
+        this.voiceProfileType = profileType.toString();
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
         try {
@@ -216,6 +222,7 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     public async enrollProfile(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
+        this.voiceProfileType = profile.profileType.toString();
         const enrollmentDeferral = new Deferred<VoiceProfileEnrollmentResult>();
         this.privRequestSession.startNewRecognition();
         this.privRequestSession.listenForServiceTelemetry(this.privSpeakerAudioSource.events);
