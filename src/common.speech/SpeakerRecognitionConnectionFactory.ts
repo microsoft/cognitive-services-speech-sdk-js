@@ -65,8 +65,10 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
     private scenarioToPath(mode: string): string {
         switch (mode) {
             case "TextIndependentVerification":
+            case "2":
                 return "verification/text-independent";
             case "TextDependentVerification":
+            case "1":
                 return "verification/text-dependent";
             default:
                 return "identification/text-independent";

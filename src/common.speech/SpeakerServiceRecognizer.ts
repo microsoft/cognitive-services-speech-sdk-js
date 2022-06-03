@@ -63,7 +63,6 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
 
     protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
-        let result: SpeakerRecognitionResult;
         let processed: boolean = false;
 
         const resultProps: PropertyCollection = new PropertyCollection();
