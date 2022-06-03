@@ -74,10 +74,20 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
         switch (connectionMessage.path.toLowerCase()) {
             case "speaker.response":
                 const response: SpeakerResponse = JSON.parse(connectionMessage.textBody) as SpeakerResponse;
-                result = new SpeakerRecognitionResult(
-                    response,
-                    ResultReason.RecognizedSpeaker,
-                    );
+                let result: SpeakerRecognitionResult;
+                if (response.status.statusCode.toLowerCase() !== "success") {
+                    result = new SpeakerRecognitionResult(
+                        response,
+                        ResultReason.Canceled,
+                        CancellationErrorCode.ServiceError,
+                        response.status.reason
+                        );
+                } else {
+                    result = new SpeakerRecognitionResult(
+                        response,
+                        ResultReason.RecognizedSpeaker,
+                        );
+                }
                 if (!!this.privResultDeferral) {
                     this.privResultDeferral.resolve(result);
                 }
@@ -137,7 +147,7 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
             const result: SpeakerRecognitionResult = new SpeakerRecognitionResult(
                 {
                     scenario: this.privSpeakerModel.scenario,
-                    status: { statusCode: error, reason: "" }
+                    status: { statusCode: error, reason: error }
                 },
                 ResultReason.Canceled,
                 errorCode,

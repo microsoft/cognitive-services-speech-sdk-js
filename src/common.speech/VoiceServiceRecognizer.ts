@@ -120,9 +120,6 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             // Activation and authorization phrase response
             case "speaker.phrases":
                 const phraseResponse: ProfilePhraseResponse = JSON.parse(connectionMessage.textBody) as ProfilePhraseResponse;
-                if (phraseResponse.status.statusCode.toLowerCase() !== "success") {
-                    throw new Error(`Voice Profile get activation phrases failed with code: ${phraseResponse.status.statusCode}, message: ${phraseResponse.status.reason}`);
-                }
                 this.handlePhrasesResponse(phraseResponse, connectionMessage.requestId);
                 processed = true;
                 break;
@@ -363,16 +360,20 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
     }
 
     private handlePhrasesResponse(response: ProfilePhraseResponse, requestId: string): void {
-        if (!!response.phrases && response.phrases.length > 0) {
-            if (!!this.privDeferralMap.getId(requestId)) {
-                const reason: ResultReason = response.status.statusCode.toLowerCase() === "success" ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled;
+        if (!!this.privDeferralMap.getId(requestId)) {
+            if (response.status.statusCode.toLowerCase() !== "success") {
+                const reason: ResultReason = ResultReason.Canceled;
+                const result = new VoiceProfilePhraseResult(reason, response.status.statusCode, response.passPhraseType, []);
+                this.privDeferralMap.complete<VoiceProfilePhraseResult>(requestId, result);
+            } else if (!!response.phrases && response.phrases.length > 0) {
+                const reason: ResultReason = ResultReason.EnrollingVoiceProfile;
                 const result = new VoiceProfilePhraseResult(reason, response.status.statusCode, response.passPhraseType, response.phrases);
                 this.privDeferralMap.complete<VoiceProfilePhraseResult>(requestId, result);
             } else {
-                throw new Error(`Voice Profile get activation phrases request for requestID ${requestId} not found`);
+                throw new Error("Voice Profile get activation phrases failed, no phrases received");
             }
         } else {
-            throw new Error("Voice Profile get activation phrases failed, no phrases received");
+            throw new Error(`Voice Profile get activation phrases request for requestID ${requestId} not found`);
         }
     }
 
