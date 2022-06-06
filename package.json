@@ -120,9 +120,9 @@
   },
   "resolutions": {
     "extend": "3.0.2",
-    "set-value": "^4.0.1",
-    "glob-parent": "^5.1.2",
-    "minimist": "^1.2.6"
+    "set-value": "4.0.1",
+    "glob-parent": "5.1.2",
+    "minimist": "1.2.6"
   },
   "sideEffects": false
 }
