@@ -734,8 +734,37 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     /**
+     * Set translated to languages
+     * @param {string[]} languages - languages to translate to
+     * @param cb
+     * @param err
+     */
+    public setTranslatedLanguagesAsync(languages: string[], cb?: Callback, err?: Callback): void {
+        try {
+            Contracts.throwIfDisposed(this.privIsDisposed);
+            Contracts.throwIfDisposed(this.privConversationRecognizer.isDisposed());
+            Contracts.throwIfArrayEmptyOrWhitespace(languages, this.privErrors.invalidArgs.replace("{arg}", "languages"));
+            Contracts.throwIfNullOrUndefined(this.privRoom, this.privErrors.permissionDeniedSend);
+            if (!this.canSend) {
+                this.handleError(new Error(this.privErrors.permissionDeniedSend), err);
+            }
+            if (!!this.privConversationRecognizer) {
+                this.privConversationRecognizer.sendRequest(this.getSetTranslateToLanguagesCommand(languages),
+                    ((): void => {
+                        this.handleCallback(cb, err);
+                    }),
+                    ((error: any): void => {
+                        this.handleError(error, err);
+                    }));
+            }
+        } catch (error) {
+            this.handleError(error, err);
+        }
+    }
+
+    /**
      * Change nickname
-     * @param message
+     * @param {string} nickname - new nickname for the room
      * @param cb
      * @param err
      */
@@ -1095,7 +1124,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         return JSON.stringify({
             command: ConversationTranslatorCommandTypes.setMute,
             // eslint-disable-next-line object-shorthand
-            participantId: participantId, // the id of the host
+            participantId: participantId,
             roomid: this.privRoom.roomId,
             type: ConversationTranslatorMessageTypes.participantCommand,
             value: isMuted
@@ -1125,6 +1154,19 @@ export class ConversationImpl extends Conversation implements IDisposable {
             participantId: participantId,
             roomid: this.privRoom.roomId,
             type: ConversationTranslatorMessageTypes.participantCommand,
+        });
+    }
+
+    private getSetTranslateToLanguagesCommand(languages: string[]): string {
+        Contracts.throwIfNullOrWhitespace(this.privRoom.roomId, "conversationId");
+        Contracts.throwIfNullOrWhitespace(this.privRoom.participantId, "participantId");
+
+        return JSON.stringify({
+            command: ConversationTranslatorCommandTypes.setTranslateToLanguages,
+            participantId: this.privRoom.participantId, // the id of the host
+            roomid: this.privRoom.roomId,
+            type: ConversationTranslatorMessageTypes.participantCommand,
+            value: languages
         });
     }
 
