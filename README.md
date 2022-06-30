@@ -23,8 +23,8 @@ npm install microsoft-cognitiveservices-speech-sdk
 
 ## Samples
 
-* Quick-start samples for Node.js: In the [Speech SDK samples repo](https://aka.ms/csspeech/samples) under quickstart/javascript/browser.
-* Quick-start samples for Browser: In the [Speech SDK samples repo](https://aka.ms/csspeech/samples) under quickstart/javascript/node.
+* Quick-start samples for Node.js: In the [Speech SDK samples repo](https://aka.ms/csspeech/samples) under quickstart/javascript/node.
+* Quick-start samples for Browser: In the [Speech SDK samples repo](https://aka.ms/csspeech/samples) under quickstart/javascript/browser.
 * Other Node.js and Browser samples: In the [Speech SDK samples repo](https://aka.ms/csspeech/samples) under samples/js.
 
 ## Building
