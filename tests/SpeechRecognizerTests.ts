@@ -45,9 +45,12 @@ import * as request from "request";
 
 import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
-import { closeAsyncObjects, WaitForCondition } from "./Utilities";
+import { closeAsyncObjects, RepeatingPullStream, WaitForCondition } from "./Utilities";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
+import { Console } from "console";
+import { utils } from "../external/ocsp/ocsp";
+import { PullAudioInputStream } from "../microsoft.cognitiveservices.speech.sdk";
 
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
@@ -1273,15 +1276,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 read: (buffer: ArrayBuffer): number => {
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
                     copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
+                    bytesSent += (end - start);
 
                     if (bytesSent < buffer.byteLength) {
                         setTimeout(() => p.close(), 1000);
                     }
 
-                    return (end - start) + 1;
+                    return (end - start);
                 },
             });
 
@@ -1338,15 +1341,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 read: (buffer: ArrayBuffer): number => {
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
                     copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
+                    bytesSent += (end - start);
 
                     if (bytesSent < buffer.byteLength) {
                         setTimeout(() => p.close(), 1000);
                     }
 
-                    return (end - start) + 1;
+                    return (end - start);
                 },
             },
             sdk.AudioStreamFormat.getWaveFormatPCM(44100, 16, 1));
@@ -1405,15 +1408,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
                     const fillSize: number = Math.round(buffer.byteLength / 2);
-                    const end: number = fillSize > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + fillSize - 1);
+                    const end: number = fillSize > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + fillSize);
                     copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
+                    bytesSent += (end - start);
 
                     if (bytesSent < buffer.byteLength) {
                         setTimeout(() => p.close(), 1000);
                     }
 
-                    return (end - start) + 1;
+                    return (end - start);
                 },
             });
 
@@ -1529,15 +1532,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 read: (buffer: ArrayBuffer): number => {
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
                     copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
+                    bytesSent += (end - start);
 
                     if (bytesSent > (fileBuffer.byteLength / 3)) {
                         p.close();
                     }
 
-                    return (end - start) + 1;
+                    return (end - start);
                 },
             });
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
@@ -1561,7 +1564,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 try {
                     expect(res).not.toBeUndefined();
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                    expect(res.text).toEqual("What's the?");
+                    expect(res.text.startsWith("What's")).toBeTruthy();
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
@@ -1986,35 +1989,8 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
-
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -2056,7 +2032,7 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
                 expect(res.text).toEqual("What's the weather like?");
                 expect(disconnected).toEqual(false);
                 firstReco = true;
-                sendSilence = false;
+                pullStreamSource.StartRepeat();
             } catch (error) {
                 done.fail(error);
             }
@@ -2096,36 +2072,10 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
     let sessionId: string;
 
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: PullAudioInputStream = pullStreamSource.PullStream;;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -2194,7 +2144,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     }, () => {
         r.stopContinuousRecognitionAsync(() => {
 
-            sendSilence = false;
+            pullStreamSource.StartRepeat();
 
             r.startContinuousRecognitionAsync(
                 undefined,
@@ -2220,45 +2170,11 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
     let recognizing: boolean = true;
     let failed: boolean = false;
 
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-
-                try {
-                    expect(recognizing).toEqual(true);
-                } catch (error) {
-                    failed = true;
-                    done.fail(error);
-                }
-
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -2316,7 +2232,7 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
     }, () => {
         r.stopContinuousRecognitionAsync(() => {
             recognizing = false;
-            sendSilence = false;
+            pullStreamSource.StartRepeat();
 
             setTimeout(() => {
                 if (!failed) {
@@ -2480,36 +2396,10 @@ describe("PhraseList tests", () => {
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
-        const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.AmbiguousWaveFile);
-
-        let bytesSent: number = 0;
-        let sendSilence: boolean = false;
         let gotReco: boolean = false;
-        let p: sdk.PullAudioInputStream;
 
-        p = sdk.AudioInputStream.createPullStream(
-            {
-                close: () => { return; },
-                read: (buffer: ArrayBuffer): number => {
-                    if (!!sendSilence) {
-                        return buffer.byteLength;
-                    }
-
-                    const copyArray: Uint8Array = new Uint8Array(buffer);
-                    const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                    copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
-
-                    if (((end - start) + 1) < buffer.byteLength) {
-                        // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                        bytesSent = 0;
-                        sendSilence = true;
-                    }
-
-                    return (end - start) + 1;
-                },
-            });
+        const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.AmbiguousWaveFile);
+        const p: PullAudioInputStream = pullStreamSource.PullStream;
 
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -2563,7 +2453,7 @@ describe("PhraseList tests", () => {
         }, () => {
             dynamicPhrase.clear();
             phraseAdded = false;
-            sendSilence = false;
+            pullStreamSource.StartRepeat();
             gotReco = false;
 
             r.startContinuousRecognitionAsync(

@@ -8,7 +8,6 @@ import {
 import {
     ConnectionErrorEvent,
     Events,
-    EventType,
     IDetachable,
     PlatformEvent
 } from "../src/common/Exports";
@@ -16,7 +15,7 @@ import {
 import {
     Settings
 } from "./Settings";
-import { closeAsyncObjects, WaitForCondition } from "./Utilities";
+import { closeAsyncObjects, RepeatingPullStream, WaitForCondition } from "./Utilities";
 import {
     WaveFileAudioInput
 } from "./WaveFileAudioInputStream";
@@ -122,36 +121,8 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0x0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
-
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.AmbiguousWaveFile);
+    const p: sdk.PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -214,36 +185,8 @@ test("Open during reco has no effect.", (done: jest.DoneCallback) => {
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
-
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: sdk.PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -295,7 +238,7 @@ test("Open during reco has no effect.", (done: jest.DoneCallback) => {
         return recoCount === 1;
     }, () => {
         connection.openConnection();
-        sendSilence = false;
+        pullStreamSource.StartRepeat();
     });
 
     WaitForCondition(() => {
@@ -313,35 +256,8 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
-
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: sdk.PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -424,35 +340,8 @@ test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.Don
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
-
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: sdk.PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -507,7 +396,7 @@ test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.Don
     }, () => {
         r.stopContinuousRecognitionAsync(() => {
 
-            sendSilence = false;
+            pullStreamSource.StartRepeat();
 
             r.recognizeOnceAsync(
                 undefined,
@@ -531,35 +420,8 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
-
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: sdk.PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -609,7 +471,7 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
         return recoCount === 1;
     }, () => {
 
-        sendSilence = false;
+        pullStreamSource.StartRepeat();
 
         r.startContinuousRecognitionAsync(
             undefined,
@@ -621,7 +483,7 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
     WaitForCondition(() => {
         return recoCount === 2;
     }, () => {
-        sendSilence = false;
+        pullStreamSource.StartRepeat();
     });
 
     WaitForCondition(() => {

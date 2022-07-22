@@ -106,9 +106,9 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
 
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (sendBuffer.byteLength - bytesSent) ? (sendBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                    const end: number = buffer.byteLength > (sendBuffer.byteLength - bytesSent) ? (sendBuffer.byteLength) : (bytesSent + buffer.byteLength);
                     copyArray.set(new Uint8Array(sendBuffer.slice(start, end)));
-                    const readyToSend: number = (end - start) + 1;
+                    const readyToSend: number = (end - start);
                     bytesSent += readyToSend;
 
                     if (readyToSend < buffer.byteLength) {
