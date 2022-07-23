@@ -17,6 +17,7 @@ import { Settings } from "./Settings";
 import { validateTelemetry } from "./TelemetryUtil";
 import {
     closeAsyncObjects,
+    RepeatingPullStream,
     WaitForCondition
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
@@ -899,39 +900,11 @@ test("Multiple Phrase Latency Reporting", (done: jest.DoneCallback) => {
     s.addTargetLanguage("de-DE");
     s.speechRecognitionLanguage = "en-US";
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
     let numSilences: number = 0;
     let numSpeech: number = 0;
-    let bytesSent: number = 0;
-
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
-
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                const currentSentBytes: number = (end - start) + 1;
-                bytesSent += currentSentBytes;
-
-                if ((currentSentBytes) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return currentSentBytes;
-            },
-        });
+    
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: sdk.PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -952,7 +925,7 @@ test("Multiple Phrase Latency Reporting", (done: jest.DoneCallback) => {
 
     r.speechEndDetected = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
         if ((++numSilences % 2) === 0) {
-            sendSilence = false;
+            pullStreamSource.StartRepeat()
         }
     };
 
@@ -975,7 +948,7 @@ test("Multiple Phrase Latency Reporting", (done: jest.DoneCallback) => {
             lastOffset = e.offset;
 
             if ((e.result.reason === sdk.ResultReason.TranslatedSpeech) && (++numSpeech % 2 === 0)) {
-                sendSilence = false;
+                pullStreamSource.StartRepeat();
             }
 
             recoCount++;
