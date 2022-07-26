@@ -159,6 +159,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             const s: sdk.SpeechConfig = BuildSpeechConfig();
             objsToClose.push(s);
 
+            s.setProperty(sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "5000");
+
             const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
             objsToClose.push(r);
 
@@ -445,7 +447,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 r.stopContinuousRecognitionAsync(() => {
                     try {
                         expect(speechEnded).toEqual(noMatchCount);
-                        expect(noMatchCount).toEqual(2);
+                        expect(noMatchCount).toBeGreaterThanOrEqual(2);
                         done();
                     } catch (error) {
                         done.fail(error);

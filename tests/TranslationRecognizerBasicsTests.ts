@@ -454,7 +454,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             expect(bytesSent).toBeLessThanOrEqual(expectedBytesSent);
 
         });
-    }, 15000);
+    }, 20000);
 
     test("InitialSilenceTimeout (push)", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
@@ -874,7 +874,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 r.stopContinuousRecognitionAsync(() => {
                     try {
                         expect(speechEnded).toEqual(noMatchCount + 1);
-                        expect(noMatchCount).toEqual(2);
+                        expect(noMatchCount).toBeGreaterThanOrEqual(2);
                         done();
                     } catch (error) {
                         done.fail(error);
