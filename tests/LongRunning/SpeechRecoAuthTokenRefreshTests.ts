@@ -2,12 +2,11 @@
 // Licensed under the MIT license.
 import * as request from "request";
 import * as sdk from "../../microsoft.cognitiveservices.speech.sdk";
-import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../../src/common.browser/Exports";
+import { ConsoleLoggingListener } from "../../src/common.browser/Exports";
 import { HeaderNames } from "../../src/common.speech/HeaderNames";
-import { Events, EventType, PlatformEvent } from "../../src/common/Exports";
+import { Events } from "../../src/common/Exports";
 import { Settings } from "../Settings";
-import { WaitForCondition } from "../Utilities";
-import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
+import { CreateRepeatingPullStream, WaitForCondition } from "../Utilities";
 
 let objsToClose: any[];
 
@@ -63,46 +62,13 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
     WaitForCondition(() => {
         return !!authToken;
     }, () => {
-        // Pump valid speech and then silence until at least one speech end cycle hits.
-        const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
+       
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
         objsToClose.push(s);
 
-        let pumpSilence: boolean = false;
-        let bytesSent: number = 0;
         let streamStopped: boolean = false;
 
-        // Pump the audio from the wave file specified with 1 second silence between iterations infinitely.
-        const p: sdk.PullAudioInputStream = sdk.AudioInputStream.createPullStream(
-            {
-                close: () => { return; },
-                read: (buffer: ArrayBuffer): number => {
-                    if (pumpSilence) {
-                        bytesSent += buffer.byteLength;
-                        if (bytesSent >= 32000) {
-                            bytesSent = 0;
-                            pumpSilence = false;
-                        }
-                        return buffer.byteLength;
-                    } else {
-                        const copyArray: Uint8Array = new Uint8Array(buffer);
-                        const start: number = bytesSent;
-                        const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                        copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                        const readyToSend: number = (end - start) + 1;
-                        bytesSent += readyToSend;
-
-                        if (readyToSend < buffer.byteLength) {
-                            bytesSent = 0;
-                            pumpSilence = true;
-                        }
-
-                        return readyToSend;
-                    }
-
-                },
-            });
+        const p: sdk.PullAudioInputStream = CreateRepeatingPullStream(Settings.WaveFile);
 
         // Close p in 20 minutes.
         const endTime: number = Date.now() + (1000 * 60 * 20); // 20 min.
@@ -230,48 +196,14 @@ test("AuthToken refresh works correctly for Translation Recognizer", (done: jest
     WaitForCondition(() => {
         return !!authToken;
     }, () => {
-        // Pump valid speech and then silence until at least one speech end cycle hits.
-        const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
         s.speechRecognitionLanguage = "en-US";
         s.addTargetLanguage("de-DE");
         objsToClose.push(s);
 
-        let pumpSilence: boolean = false;
-        let bytesSent: number = 0;
         let streamStopped: boolean = false;
 
-        // Pump the audio from the wave file specified with 1 second silence between iterations infinitely.
-        const p: sdk.PullAudioInputStream = sdk.AudioInputStream.createPullStream(
-            {
-                close: () => { return; },
-                read: (buffer: ArrayBuffer): number => {
-                    if (pumpSilence) {
-                        bytesSent += buffer.byteLength;
-                        if (bytesSent >= 32000) {
-                            bytesSent = 0;
-                            pumpSilence = false;
-                        }
-                        return buffer.byteLength;
-                    } else {
-                        const copyArray: Uint8Array = new Uint8Array(buffer);
-                        const start: number = bytesSent;
-                        const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                        copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                        const readyToSend: number = (end - start) + 1;
-                        bytesSent += readyToSend;
-
-                        if (readyToSend < buffer.byteLength) {
-                            bytesSent = 0;
-                            pumpSilence = true;
-                        }
-
-                        return readyToSend;
-                    }
-
-                },
-            });
+        const p: sdk.PullAudioInputStream = CreateRepeatingPullStream(Settings.WaveFile);
 
         // Close p in 20 minutes.
         const endTime: number = Date.now() + (1000 * 60 * 20); // 20 min.

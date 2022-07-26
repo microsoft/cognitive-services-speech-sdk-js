@@ -576,7 +576,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         requestSession.onSpeechContext();
         // filter out anything that is not required for the service to work.
         if (ServiceRecognizerBase.telemetryDataEnabled !== true) {
-            const withTelemetry: { context: { system: string } } = JSON.parse(SpeechServiceConfigJson) as { context: { system: string } } ;
+            const withTelemetry: { context: { system: string } } = JSON.parse(SpeechServiceConfigJson) as { context: { system: string } };
 
             const replacement: any = {
                 context: {
@@ -588,7 +588,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         if (this.privRecognizerConfig.parameters.getProperty("TranscriptionService_SingleChannel", "false").toLowerCase() === "true") {
-            const json: { context: { DisableReferenceChannel: string; MicSpec: string } } = JSON.parse(SpeechServiceConfigJson) as { context: { DisableReferenceChannel: string; MicSpec: string } } ;
+            const json: { context: { DisableReferenceChannel: string; MicSpec: string } } = JSON.parse(SpeechServiceConfigJson) as { context: { DisableReferenceChannel: string; MicSpec: string } };
             json.context.DisableReferenceChannel = "True";
             json.context.MicSpec = "1_0_0";
             SpeechServiceConfigJson = JSON.stringify(json);
@@ -775,6 +775,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             out += `${buffer.byteLength}\r\n`;
             for (let i: number = 0; i < buffer.byteLength; i++) {
                 out += readView[i].toString(16).padStart(2, "0") + " ";
+                if (((i + 1) % 16) === 0) {
+                    // eslint-disable-next-line no-console
+                    console.info(out);
+                    out = "";
+                }
             }
         }
         // eslint-disable-next-line no-console
