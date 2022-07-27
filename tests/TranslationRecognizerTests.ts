@@ -175,7 +175,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             (error: string) => {
                 done.fail(error);
             });
-    }, 15000);
+    }, 30000);
 
     test("Translate Bad Language", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console

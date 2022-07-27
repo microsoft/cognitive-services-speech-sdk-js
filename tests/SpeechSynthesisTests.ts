@@ -439,14 +439,14 @@ describe("Service based tests", () => {
         expect(s).not.toBeUndefined();
 
         let wordBoundaryCount: number = 0;
-        const expectedSsmlOffsets: number[] = [ 206, 211, 214, 217, 225, 227 ];
+        const expectedSsmlOffsets: number[] = [206, 211, 214, 217, 225, 227];
         const expectedBoundary: sdk.SpeechSynthesisBoundaryType[] =
             [sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Punctuation,
-                sdk.SpeechSynthesisBoundaryType.Word];
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Punctuation,
+            sdk.SpeechSynthesisBoundaryType.Word];
 
         s.wordBoundary = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisWordBoundaryEventArgs): void => {
             try {
@@ -489,14 +489,14 @@ describe("Service based tests", () => {
         expect(s).not.toBeUndefined();
 
         let wordBoundaryCount: number = 0;
-        const expectedSsmlOffsets: number[] = [ 206, 212, 216, 206, 257, 261, 268, 257, 310, 314, 320, 310, 359, 365, 372, 359, 412, 418, 425, 412, 467, 473, 477, 467 ];
+        const expectedSsmlOffsets: number[] = [206, 212, 216, 206, 257, 261, 268, 257, 310, 314, 320, 310, 359, 365, 372, 359, 412, 418, 425, 412, 467, 473, 477, 467];
         const expectedBoundary: sdk.SpeechSynthesisBoundaryType[] =
             [sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Punctuation,
-                sdk.SpeechSynthesisBoundaryType.Word];
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Punctuation,
+            sdk.SpeechSynthesisBoundaryType.Word];
 
         s.wordBoundary = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisWordBoundaryEventArgs): void => {
             try {
@@ -520,9 +520,13 @@ describe("Service based tests", () => {
 <voice name='ar-QA-MoazNeural'>مرحبا بالعالم.</voice><voice name='de-DE-ConradNeural'>Hallo Welt.</voice></speak>`;
 
         s.speakSsmlAsync(ssml.split("\n").join(""), (result: sdk.SpeechSynthesisResult): void => {
-            expect(wordBoundaryCount).toBeGreaterThan(0);
-            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
-            done();
+            try {
+                expect(wordBoundaryCount).toBeGreaterThan(0);
+                CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                done();
+            } catch (e) {
+                done.fail(e);
+            }
         }, (e: string): void => {
             done.fail(e);
         });
