@@ -33,11 +33,12 @@ beforeEach((): void => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
 
 const CreateConversation: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.Conversation = (speechConfig?: sdk.SpeechTranslationConfig): sdk.Conversation => {
@@ -145,11 +146,11 @@ test("Create Conversation and join to Transcriber", (done: jest.DoneCallback) =>
                 expect(t.properties).not.toBeUndefined();
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 });
 
@@ -167,7 +168,7 @@ test("Create Conversation and add participants", (done: jest.DoneCallback) => {
         try {
             done();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
     t.canceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
@@ -175,7 +176,7 @@ test("Create Conversation and add participants", (done: jest.DoneCallback) => {
             expect(e.errorDetails).toBeUndefined();
             expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -187,7 +188,7 @@ test("Create Conversation and add participants", (done: jest.DoneCallback) => {
             expect(e.result.text).not.toBeUndefined();
             expect(e.result.speakerId).not.toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -207,7 +208,7 @@ test("Create Conversation and add participants", (done: jest.DoneCallback) => {
                                         expect(c.participants).not.toBeUndefined();
                                         expect(c.participants.length).toEqual(2);
                                     } catch (error) {
-                                        done.fail(error);
+                                        done(error);
                                     }
 
                                     /* eslint-disable:no-empty */
@@ -215,19 +216,19 @@ test("Create Conversation and add participants", (done: jest.DoneCallback) => {
                                         /* eslint-disable:no-empty */
                                         () => {},
                                         (err: string) => {
-                                            done.fail(err);
+                                            done(err);
                                         });
                                 });
                         } catch (error) {
-                            done.fail(error);
+                            done(error);
                         }
                     });
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 }, 50000);
 
@@ -242,15 +243,15 @@ test("Leave Conversation", (done: jest.DoneCallback) => {
 
     const t: sdk.ConversationTranscriber = BuildTranscriber();
     t.canceled = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionCanceledEventArgs) => {
-        done.fail(e.errorDetails);
+        done(e.errorDetails);
     };
 
     t.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
-        done.fail(e.result.text);
+        done(e.result.text);
     };
 
     t.transcribing = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
-        done.fail(e.result.text);
+        done(e.result.text);
     };
 
     t.joinConversationAsync(c,
@@ -281,30 +282,30 @@ test("Leave Conversation", (done: jest.DoneCallback) => {
                                                                 done();
                                                             },
                                                             (err: string): void => {
-                                                                done.fail(err);
+                                                                done(err);
                                                             });
                                                     },
                                                     (err: string): void => {
-                                                        done.fail(err);
+                                                        done(err);
                                                 });
                                             },
                                             (err: string): void => {
-                                                done.fail(err);
+                                                done(err);
                                             });
                                     } catch (error) {
-                                        done.fail(error as string);
+                                        done(error as string);
                                     }
                             });
                         } catch (error) {
-                            done.fail(error as string);
+                            done(error as string);
                         }
                 });
             } catch (error) {
-                done.fail(error as string);
+                done(error as string);
             }
         },
         (error: string): void => {
-            done.fail(error);
+            done(error);
         });
 });
 test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCallback) => {
@@ -325,7 +326,7 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
             expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
             canceled = true;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
     t.sessionStopped = (o: sdk.ConversationTranscriber, e: sdk.SessionEventArgs) => {
@@ -335,7 +336,7 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
             expect(e.sessionId).toEqual(sessionId);
             done();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
     t.sessionStarted = (o: sdk.ConversationTranscriber, e: sdk.SessionEventArgs) => {
@@ -343,7 +344,7 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
             expect(e.sessionId).not.toBeUndefined();
             sessionId = e.sessionId;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -353,12 +354,12 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
             expect(e.result.text).not.toBeUndefined();
             expect(e.result.text).toEqual("");
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     t.transcribing = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
-        done.fail(e.result.errorDetails);
+        done(e.result.errorDetails);
     };
 
     t.joinConversationAsync(c,
@@ -372,18 +373,18 @@ test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCal
                             /* eslint-disable:no-empty */
                             () => { },
                             (err: string) => {
-                                done.fail(err);
+                                done(err);
                             });
                     },
                     (error: string) => {
-                        done.fail(error);
+                        done(error);
                     });
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 });
 test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
@@ -404,7 +405,7 @@ test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
             expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
             done();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -424,25 +425,25 @@ test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
                                         expect(c.participants).not.toBeUndefined();
                                         expect(c.participants.length).toEqual(2);
                                     } catch (error) {
-                                        done.fail(error as string);
+                                        done(error as string);
                                     }
 
                                     t.startTranscribingAsync(
                                         // eslint-disable-next-line @typescript-eslint/no-empty-function
                                         (): void => {},
                                         (err: string): void => {
-                                            done.fail(err);
+                                            done(err);
                                         });
                                 });
                         } catch (error) {
-                            done.fail(error as string);
+                            done(error as string);
                         }
                     });
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 }, 64000);

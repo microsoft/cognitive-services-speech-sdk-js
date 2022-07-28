@@ -122,7 +122,7 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
                 }
 
             } catch (error) {
-                done.fail(error as string);
+                done(error as string);
             }
         };
 
@@ -132,7 +132,7 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
                 canceled = true;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -155,15 +155,15 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
                         expect(speechEnded).toEqual(1);
                         done();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 }, (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
             });
         },
             (err: string) => {
-                done.fail(err);
+                done(err);
             });
     });
 }, 1000 * 60 * 25); // 25 minutes.
@@ -260,7 +260,7 @@ test("AuthToken refresh works correctly for Translation Recognizer", (done: jest
                 }
 
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -270,7 +270,7 @@ test("AuthToken refresh works correctly for Translation Recognizer", (done: jest
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
                 canceled = true;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -293,15 +293,15 @@ test("AuthToken refresh works correctly for Translation Recognizer", (done: jest
                         expect(speechEnded).toEqual(1);
                         done();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 }, (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
             });
         },
             (err: string) => {
-                done.fail(err);
+                done(err);
             });
     });
 }, 1000 * 60 * 25); // 25 minutes.

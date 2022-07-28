@@ -152,7 +152,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
                 }
             }
         } catch (error) {
-            done.fail(error as string);
+            done(error as string);
         }
     };
 
@@ -162,7 +162,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
             canceled = true;
         } catch (error) {
-            done.fail(error as string);
+            done(error as string);
         }
     };
 
@@ -185,15 +185,15 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
                     expect(speechEnded).toEqual(1);
                     done();
                 } catch (error) {
-                    done.fail(error as string);
+                    done(error as string);
                 }
             }, (error: string): void => {
-                done.fail(error);
+                done(error);
             });
         });
     },
         (err: string): void => {
-            done.fail(err);
+            done(err);
         });
 }, 1000 * 60 * 12);
 
@@ -259,13 +259,13 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
             if (Date.now() < reconnectTime + (1000 * 60 * 4)) {
                 done();
             } else {
-                done.fail("Recognizing callback didn't happen within 4 minutes after reconnect");
+                done("Recognizing callback didn't happen within 4 minutes after reconnect");
             }
         }
     };
     r.canceled = (s: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
         if (e.errorCode === sdk.CancellationErrorCode.BadRequestParameters) {
-            done.fail("Bad Request received from service, rerun test");
+            done("Bad Request received from service, rerun test");
         }
     };
 
@@ -285,6 +285,6 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
         // empty block
     },
     (err: string): void => {
-        done.fail(err);
+        done(err);
     });
 }, 1000 * 60 * 70); // 70 minutes.
