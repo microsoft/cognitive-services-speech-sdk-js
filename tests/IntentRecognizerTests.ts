@@ -682,7 +682,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         r.startContinuousRecognitionAsync();
 
-    });
+    }, 15000);
 
     test("Connection Errors Propogate Sync", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
@@ -720,7 +720,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             WaitForCondition(() => (doneCount === 2), done);
 
         });
-    });
+    }, 15000);
 
     // Bing Speech does not behave the same as Unified Speech for a bad language. It closes the connection far more gracefully.
     test.skip("RecognizeOnce Bad Language", (done: jest.DoneCallback) => {
