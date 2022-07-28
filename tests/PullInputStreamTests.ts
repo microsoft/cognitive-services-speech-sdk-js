@@ -25,7 +25,9 @@ beforeAll(() => {
 // eslint-disable-next-line no-console
 beforeEach(() => console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------"));
 
-test("PullStream correctly reports bytes read", async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+
+test("PullStream correctly reports bytes read", async (): Promise<void> => {
 
     let readReturnVal: number = bufferSize;
 
@@ -40,36 +42,27 @@ test("PullStream correctly reports bytes read", async (done: jest.DoneCallback) 
 
     let audioNode: IAudioStreamNode = await stream.attach("id");
     let readBuffer: IStreamChunk<ArrayBuffer> = await audioNode.read();
-    try {
-        expect(readBuffer.buffer.byteLength).toEqual(readReturnVal);
-        expect(readBuffer.isEnd).toEqual(false);
-    } catch (error) {
-        done.fail(error);
-    }
+
+    expect(readBuffer.buffer.byteLength).toEqual(readReturnVal);
+    expect(readBuffer.isEnd).toEqual(false);
 
     readReturnVal = bufferSize;
     audioNode = await stream.attach("id");
     readBuffer = await audioNode.read();
-    try {
-        expect(readBuffer.buffer.byteLength).toEqual(readReturnVal);
-        expect(readBuffer.isEnd).toEqual(false);
-    } catch (error) {
-        done.fail(error);
-    }
+
+    expect(readBuffer.buffer.byteLength).toEqual(readReturnVal);
+    expect(readBuffer.isEnd).toEqual(false);
 
     readReturnVal = bufferSize;
     audioNode = await stream.attach("id");
     readBuffer = await audioNode.read();
-    try {
-        expect(readBuffer.buffer.byteLength).toEqual(readReturnVal);
-        expect(readBuffer.isEnd).toEqual(false);
-        done();
-    } catch (error) {
-        done.fail(error);
-    }
+
+    expect(readBuffer.buffer.byteLength).toEqual(readReturnVal);
+    expect(readBuffer.isEnd).toEqual(false);
+
 });
 
-test("Returning 0 marks end of stream", async (done: jest.DoneCallback) => {
+test("Returning 0 marks end of stream", async (): Promise<void> => {
     const stream: PullAudioInputStreamImpl = new PullAudioInputStreamImpl({
         close: (): void => {
             return;
@@ -81,18 +74,14 @@ test("Returning 0 marks end of stream", async (done: jest.DoneCallback) => {
 
     const audioNode: IAudioStreamNode = await stream.attach("id");
     const readBuffer: IStreamChunk<ArrayBuffer> = await audioNode.read();
-    try {
-        expect(readBuffer.buffer.byteLength).toEqual(0);
-        expect(readBuffer.isEnd).toEqual(true);
-        done();
-    } catch (error) {
-        done.fail(error);
-    }
+
+    expect(readBuffer.buffer.byteLength).toEqual(0);
+    expect(readBuffer.isEnd).toEqual(true);
 });
 
 // Validates that the pull stream will request more bytes until it has been satisfied.
 // Verifies no data is lost.
-test("Pull stream accumulates bytes", async (done: jest.DoneCallback) => {
+test("Pull stream accumulates bytes", async (): Promise<void> => {
     let bytesReturned: number = 0;
     const stream: PullAudioInputStreamImpl = new PullAudioInputStreamImpl({
         close: (): void => {
@@ -107,24 +96,19 @@ test("Pull stream accumulates bytes", async (done: jest.DoneCallback) => {
 
     const audioNode: IAudioStreamNode = await stream.attach("id");
     const readBuffer: IStreamChunk<ArrayBuffer> = await audioNode.read();
-    try {
-        expect(bytesReturned).toEqual(bufferSize);
-        expect(readBuffer.buffer.byteLength).toEqual(bufferSize);
-        const readArray: Uint8Array = new Uint8Array(readBuffer.buffer);
 
-        for (let i: number = 0; i < bytesReturned; i++) {
-            expect(readArray[i]).toEqual(i % 256);
-        }
+    expect(bytesReturned).toEqual(bufferSize);
+    expect(readBuffer.buffer.byteLength).toEqual(bufferSize);
+    const readArray: Uint8Array = new Uint8Array(readBuffer.buffer);
 
-        done();
-    } catch (error) {
-        done.fail(error);
+    for (let i: number = 0; i < bytesReturned; i++) {
+        expect(readArray[i]).toEqual(i % 256);
     }
 });
 
 // Validates that the pull stream will request more bytes until there are no more.
 // Verifies no data is lost.
-test("Pull stream accumulates bytes while available", async (done: jest.DoneCallback) => {
+test("Pull stream accumulates bytes while available", async (): Promise<void> => {
     let bytesReturned: number = 0;
     const stream: PullAudioInputStreamImpl = new PullAudioInputStreamImpl({
         close: (): void => {
@@ -143,17 +127,12 @@ test("Pull stream accumulates bytes while available", async (done: jest.DoneCall
 
     const audioNode: IAudioStreamNode = await stream.attach("id");
     const readBuffer: IStreamChunk<ArrayBuffer> = await audioNode.read();
-    try {
-        expect(bytesReturned).toEqual(bufferSize / 2);
-        expect(readBuffer.buffer.byteLength).toEqual(bufferSize / 2);
-        const readArray: Uint8Array = new Uint8Array(readBuffer.buffer);
 
-        for (let i: number = 0; i < bytesReturned; i++) {
-            expect(readArray[i]).toEqual(i % 256);
-        }
+    expect(bytesReturned).toEqual(bufferSize / 2);
+    expect(readBuffer.buffer.byteLength).toEqual(bufferSize / 2);
+    const readArray: Uint8Array = new Uint8Array(readBuffer.buffer);
 
-        done();
-    } catch (error) {
-        done.fail(error);
+    for (let i: number = 0; i < bytesReturned; i++) {
+        expect(readArray[i]).toEqual(i % 256);
     }
 });

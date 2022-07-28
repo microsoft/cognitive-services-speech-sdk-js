@@ -50,6 +50,8 @@ beforeEach(() => {
     CertCheckAgent.testTimeOffset = 0;
 });
 
+jest.retryTimes(Settings.RetryCount);
+
 afterEach(() => {
     // tslint:disable-next-line:no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
@@ -124,7 +126,7 @@ test.skip("Test OCSP Revoked", (done: jest.DoneCallback) => {
             expect(error.toString()).toContain("revoked");
             done();
         } catch (ex) {
-            done.fail(ex);
+            done(ex);
         }
     });
     testRequest.agent = agent.GetAgent();

@@ -44,12 +44,14 @@ beforeEach((): void => {
     jest.setTimeout(12000);
 });
 
-afterEach(async (done: jest.DoneCallback): Promise<void> => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
+
 
 export const BuildRecognizer: (speechConfig?: sdk.SpeechConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig, fileName?: string): sdk.SpeechRecognizer => {
 
@@ -149,7 +151,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -167,10 +169,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
                 done();
             } catch (error) {
-                done.fail(error as string);
+                done(error as string);
             }
         }, (error: string): void => {
-            done.fail(error);
+            done(error);
         });
     });
 
@@ -194,7 +196,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -214,10 +216,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     });
 
@@ -265,7 +267,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     noMatchCount++;
                 }
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -275,7 +277,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
                 canceled = true;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -299,15 +301,15 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                         expect(noMatchCount).toBeGreaterThanOrEqual(2);
                         done();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 }, (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
             });
         },
             (err: string) => {
-                done.fail(err);
+                done(err);
             });
     }, 30000);
 
@@ -348,7 +350,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(message.phraseDetection.customModels[1].endpoint).toEqual("otherEndpointId");
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             }
         };
@@ -357,7 +359,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -368,10 +370,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(result.properties).not.toBeUndefined();
                 expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     }, 10000);
 
@@ -406,7 +408,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(message.languageId.Priority).toEqual("PrioritizeLatency");
                     speechContextSent = true;
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             }
         };
@@ -424,7 +426,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(speechRecognized).toEqual(true);
                 }
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -432,7 +434,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -442,15 +444,15 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     try {
                         done();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 }, (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
             });
         },
             (err: string) => {
-                done.fail(err);
+                done(err);
             });
     }, 30000);
 });

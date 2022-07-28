@@ -88,11 +88,12 @@ beforeEach(() => {
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
 });
 
-afterEach(async (done: jest.DoneCallback) => {
-    await closeAsyncObjects(objsToClose);
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
-    done();
+    await closeAsyncObjects(objsToClose);
 });
 
 function BuildCommandsServiceConfig(): sdk.DialogServiceConfig {
@@ -149,7 +150,7 @@ function PostDoneTest(done: jest.DoneCallback, ms: number): any {
 
 function PostFailTest(done: jest.DoneCallback, ms: number, error?: string): any {
     return setTimeout((): void => {
-        done.fail(error);
+        done(error);
     }, ms);
 }
 
@@ -214,7 +215,7 @@ test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallba
     connector.listenOnceAsync(
         (successResult: sdk.SpeechRecognitionResult) => {
             if (successResult.reason !== sdk.ResultReason.Canceled) {
-                done.fail(`listenOnceAsync shouldn't have reason '${successResult.reason}' with this config`);
+                done(`listenOnceAsync shouldn't have reason '${successResult.reason}' with this config`);
             } else {
                 expect(successResult.errorDetails).toContain("1006");
             }
@@ -258,7 +259,7 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
     };
 
     connection.openConnection(undefined, (error: string): void => {
-        done.fail(error);
+        done(error);
     });
 
     WaitForCondition(() => connected, () => {
@@ -266,7 +267,7 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
             if (!!disconnected) {
                 done();
             } else {
-                done.fail("Did not disconnect before returning");
+                done("Did not disconnect before returning");
             }
         });
     });
@@ -292,7 +293,7 @@ test("GetDetailedOutputFormat", (done: jest.DoneCallback) => {
         recoCounter++;
     },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => (recoCounter === 1), done);
@@ -325,7 +326,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         try {
             expect(e.activity).not.toBeNull();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -337,7 +338,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -346,7 +347,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         try {
             expect(e.statusCode === 200);
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -363,7 +364,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         recoCounter++;
     },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => (recoCounter === 2), done);
@@ -400,7 +401,7 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
     //             expect(hypoCounter).toBeGreaterThanOrEqual(1);
     //             validateTelemetry(json, 1, hypoCounter);
     //         } catch (error) {
-    //             done.fail(error);
+    //             done(error);
     //         }
     //         telemetryEvents++;
     //     }
@@ -415,14 +416,14 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
                 }
 
             } catch (error) {
-                done.fail(error as string);
+                done(error as string);
             }
 
             if (bytesRead > 0) {
                 audioReadLoop(audioStream, done);
             }
         }, (error: string): void => {
-            done.fail(error);
+            done(error);
         });
     };
 
@@ -436,15 +437,15 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
                 }
             }
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
         try {
-            // done.fail(e.errorDetails);
+            // done(e.errorDetails);
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -458,7 +459,7 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
         expect(result.text).not.toBeUndefined();
     },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 }, 15000);
 
@@ -492,14 +493,14 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
                     PostDoneTest(done, 2000);
                 }
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
 
             if (bytesRead > 0) {
                 audioReadLoop(audioStream, done);
             }
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     };
 
@@ -513,15 +514,15 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
                 }
             }
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
         try {
-            // done.fail(e.errorDetails);
+            // done(e.errorDetails);
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -536,7 +537,7 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
         firstReco = true;
     },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => firstReco, () => {
@@ -546,7 +547,7 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
             expect(result.text).not.toBeUndefined();
         },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 }, 15000);
@@ -580,7 +581,7 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
         try {
             expect(e.activity).not.toBeNull();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -588,7 +589,7 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -603,7 +604,7 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
         firstReco = true;
     },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => firstReco, () => {
@@ -614,11 +615,11 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
                 expect(connected).toEqual(1);
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 }, 15000);
@@ -652,7 +653,7 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
         try {
             expect(e.activity).not.toBeNull();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -660,7 +661,7 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -674,7 +675,7 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
         firstReco = true;
     },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => firstReco, () => {
@@ -683,11 +684,11 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
                 expect(connected).toEqual(1);
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 }, 15000);
@@ -714,7 +715,7 @@ test("Send/Receive messages", (done: jest.DoneCallback) => {
             expect(e.activity).not.toBeNull();
             activityCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -722,7 +723,7 @@ test("Send/Receive messages", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -758,7 +759,7 @@ test("Send multiple messages", (done: jest.DoneCallback) => {
             expect(e.activity).not.toBeNull();
             activityCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -766,7 +767,7 @@ test("Send multiple messages", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -808,7 +809,7 @@ test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
             expect(e.activity).not.toBeNull();
             activityCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -817,7 +818,7 @@ test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
             const message: string = JSON.stringify(simpleMessageObj);
             connector.sendActivityAsync(message);
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -825,7 +826,7 @@ test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -840,7 +841,7 @@ test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
         recoDone = true;
     },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => (activityCount > 1 && recoDone), done);
@@ -858,8 +859,8 @@ test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) =>
 
     const malformedJSON: string = "{speak: \"This is speech\", \"text\" : \"This is JSON is malformed\", \"type\": \"message\" };";
     connector.sendActivityAsync(malformedJSON, () => {
- done.fail("Should have failed");
-}, (error: string) => {
+        done("Should have failed");
+    }, (error: string) => {
         expect(error).toContain("Unexpected token");
         done();
     });
@@ -873,7 +874,7 @@ describe("Agent config message tests", () => {
         eventListener = Events.instance.attachListener({
             onEvent: (event: PlatformEvent) => {
                 if (event instanceof SendingAgentContextMessageEvent) {
-                    const agentContextEvent = event ;
+                    const agentContextEvent = event;
                     observedAgentConfig = agentContextEvent.agentConfig;
                 }
             },
@@ -885,7 +886,7 @@ describe("Agent config message tests", () => {
         observedAgentConfig = undefined;
     });
 
-    test("Agent connection id can be set", async (done: jest.DoneCallback) => {
+    test("Agent connection id can be set", (done: jest.DoneCallback): void => {
         const testConnectionId: string = "thisIsTheTestConnectionId";
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         dialogConfig.setProperty(sdk.PropertyId.Conversation_Agent_Connection_Id, testConnectionId);
@@ -900,11 +901,11 @@ describe("Agent config message tests", () => {
                     expect(observedAgentConfig.get().botInfo.connectionId).toEqual(testConnectionId);
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (failureMessage: string) => {
-                done.fail(`ListenOnceAsync unexpectedly failed: ${failureMessage}`);
+                done(`ListenOnceAsync unexpectedly failed: ${failureMessage}`);
             });
     });
 });
@@ -1037,7 +1038,7 @@ describe.each([
         eventListener = Events.instance.attachListener({
             onEvent: (event: PlatformEvent) => {
                 if (event instanceof ConnectionStartEvent) {
-                    const connectionEvent = event ;
+                    const connectionEvent = event;
                     observedUri = connectionEvent.uri;
                 }
             },
@@ -1094,15 +1095,15 @@ describe.each([
         return result;
     }
 
-    test(`Validate: ${description}`, async (done: jest.DoneCallback) => {
-         try {
+    test(`Validate: ${description}`, (done: jest.DoneCallback) => {
+        try {
             const config = getConfig();
             connector = new sdk.DialogServiceConnector(config);
             expect(connector).not.toBeUndefined();
 
             connector.listenOnceAsync(
                 (successArgs: any) => {
-                    done.fail("Success callback not expected with invalid auth details!");
+                    done("Success callback not expected with invalid auth details!");
                 },
                 async (failureArgs?: string) => {
                     expect(observedUri).not.toBeUndefined();
@@ -1122,9 +1123,9 @@ describe.each([
                     done();
                 },
             );
-         } catch (error) {
-             done.fail(error);
-         }
+        } catch (error) {
+            done(error);
+        }
     }, 30000);
 });
 
@@ -1166,7 +1167,7 @@ describe.each([
     successExpected: boolean,
 ) => {
 
-    test(`${description}`, async (done: jest.DoneCallback) => {
+    test(`${description}`, (done: jest.DoneCallback) => {
         const config: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         config.setProperty("SPEECH-KeywordsToDetect", keywords);
         if (durations !== undefined) {
@@ -1180,7 +1181,7 @@ describe.each([
         let speechRecognizedReceived: number = 0;
 
         connector.recognized = (s: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
-            if  (e.result.reason === ResultReason.RecognizedKeyword) {
+            if (e.result.reason === ResultReason.RecognizedKeyword) {
                 keywordResultReceived++;
                 expect(keywords).toContain(e.result.text);
             } else if (e.result.reason === ResultReason.NoMatch) {
@@ -1201,7 +1202,7 @@ describe.each([
                 done();
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     }, 30000);
 });
