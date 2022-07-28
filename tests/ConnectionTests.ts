@@ -38,11 +38,12 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
 
 export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
@@ -121,7 +122,7 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.AmbiguousWaveFile);
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
     const p: sdk.PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
@@ -150,7 +151,7 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
             expect(disconnected).toEqual(false);
             recoCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -160,14 +161,14 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
             expect(e.errorDetails).toContain("Disconnect");
             done();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     r.startContinuousRecognitionAsync(
         undefined,
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => {
@@ -214,7 +215,7 @@ test("Open during reco has no effect.", (done: jest.DoneCallback) => {
             expect(connectionCount).toEqual(1);
             recoCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -224,14 +225,14 @@ test("Open during reco has no effect.", (done: jest.DoneCallback) => {
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
             done();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     r.startContinuousRecognitionAsync(
         undefined,
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => {
@@ -294,7 +295,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
             expect(disconnected).toEqual(false);
             recoCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -302,7 +303,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -314,7 +315,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
         r.startContinuousRecognitionAsync(
             undefined,
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -326,7 +327,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
                 expect(connected).toEqual(1);
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         });
     });
@@ -373,7 +374,7 @@ test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.Don
             expect(disconnected).toEqual(false);
             recoCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -381,14 +382,14 @@ test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.Don
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     r.startContinuousRecognitionAsync(
         undefined,
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => {
@@ -401,7 +402,7 @@ test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.Don
             r.recognizeOnceAsync(
                 undefined,
                 (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
         });
     });
@@ -435,7 +436,7 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -457,14 +458,14 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
             expect(disconnected).toEqual(false);
             recoCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     r.recognizeOnceAsync(
         undefined,
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => {
@@ -476,7 +477,7 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
         r.startContinuousRecognitionAsync(
             undefined,
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -525,7 +526,7 @@ test("testAudioMessagesSent", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -561,10 +562,10 @@ test("testAudioMessagesSent", (done: jest.DoneCallback) => {
 
             done();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     }, (error: string) => {
-        done.fail(error);
+        done(error);
     });
 }, 10000);
 
@@ -591,7 +592,7 @@ test("testModifySpeechContext", (done: jest.DoneCallback) => {
                 expect(args.message.TextMessage).toContain("Some phrase"); // make sure it's not overwritten...
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }
     };
@@ -603,7 +604,7 @@ test("testModifySpeechContext", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -614,10 +615,10 @@ test("testModifySpeechContext", (done: jest.DoneCallback) => {
             expect(result.properties).not.toBeUndefined();
             expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     }, (error: string) => {
-        done.fail(error);
+        done(error);
     });
 }, 10000);
 
@@ -646,7 +647,7 @@ test("testModifySynthesisContext", (done: jest.DoneCallback) => {
                 expect(args.message.TextMessage).toContain("wordBoundaryEnabled"); // make sure it's not overwritten...
                 doneCount++;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }
     };
@@ -659,10 +660,10 @@ test("testModifySynthesisContext", (done: jest.DoneCallback) => {
             expect(result.audioData.byteLength).toBeGreaterThan(0);
             doneCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     }, (e: string): void => {
-        done.fail(e);
+        done(e);
     });
 
     WaitForCondition(() => doneCount === 2, done);
@@ -686,7 +687,7 @@ test("Test SendMessage Basic", (done: jest.DoneCallback) => {
                 expect(message.message.TextMessage).toEqual("{}");
                 done();
             } catch (err) {
-                done.fail(err);
+                done(err);
             }
         }
     };
@@ -711,7 +712,7 @@ test("Test SendMessage Binary", (done: jest.DoneCallback) => {
                 expect(message.message.isBinaryMessage).toBeTruthy();
                 done();
             } catch (err) {
-                done.fail(err);
+                done(err);
             }
         }
     };
@@ -745,14 +746,14 @@ test("Test InjectMessage", (done: jest.DoneCallback) => {
                 expect(message.message.isBinaryMessage).toBeTruthy();
                 messageSeen = true;
             } catch (err) {
-                done.fail(err);
+                done(err);
             }
         } else if (message.message.path === "audio") {
             try {
                 expect(messageSeen || audioSeen === 0).toBeTruthy();
                 audioSeen++;
             } catch (err) {
-                done.fail(err);
+                done(err);
             }
         }
     };
@@ -803,7 +804,7 @@ describe("Connection errors are retried", () => {
         }
     });
 
-    test.only("Bad Auth", (done: jest.DoneCallback) => {
+    test("Bad Auth", (done: jest.DoneCallback) => {
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("badKey", Settings.SpeechRegion);
         const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
 
@@ -819,10 +820,10 @@ describe("Connection errors are retried", () => {
                 expect(errorCount).toEqual(5);
                 done();
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
         }, (e: string) => {
-            done.fail(e);
+            done(e);
         });
     }, 15000);
 });

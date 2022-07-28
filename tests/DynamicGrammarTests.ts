@@ -17,6 +17,8 @@ beforeAll(() => {
 // eslint-disable-next-line no-console
 beforeEach(() => console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------"));
 
+jest.retryTimes(Settings.RetryCount);
+
 test("Empty Grammar, empty output.", () => {
     const dgi: DynamicGrammarBuilder = new DynamicGrammarBuilder();
 

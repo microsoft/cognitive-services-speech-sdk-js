@@ -92,7 +92,7 @@ test("Non-refreshed auth token has sensible error message", (done: jest.DoneCall
                 }
 
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -102,7 +102,7 @@ test("Non-refreshed auth token has sensible error message", (done: jest.DoneCall
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 canceled = true;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -111,7 +111,7 @@ test("Non-refreshed auth token has sensible error message", (done: jest.DoneCall
                 done();
             });
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     });
 }, 1000 * 60 * 20); // 20 minutes.

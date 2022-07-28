@@ -33,11 +33,12 @@ beforeEach((): void => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback): Promise<void> => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
 
 const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, audioFileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, audioFileName?: string): sdk.SpeechRecognizer => {
@@ -157,7 +158,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -183,10 +184,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(pronResult.completenessScore).toBeGreaterThan(0);
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     });
 
@@ -207,7 +208,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -228,10 +229,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(pronResult.completenessScore).toBeGreaterThan(0);
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     });
 
@@ -255,7 +256,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -283,10 +284,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(pronResult.completenessScore).toBeGreaterThan(0);
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     });
 });

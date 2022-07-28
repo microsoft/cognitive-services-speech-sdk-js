@@ -32,11 +32,12 @@ beforeEach(() => {
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
 
 const BuildSpeechRecognizerFromWaveFile: (speechConfig: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
@@ -465,10 +466,10 @@ describe("NPM proxy test", () => {
                 expect(e.text).toEqual(Settings.WaveFileText);
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }, (error: string): void => {
-            done.fail(error);
+            done(error);
         });
     });
 
@@ -490,7 +491,7 @@ describe("NPM proxy test", () => {
                 expect(e.errorDetails).toContain("1006");
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         });
     }, 30000);
@@ -513,10 +514,10 @@ Settings.testIfDOMCondition("Proxy has no effect on browser WebSocket", (done: j
             expect(e.text).toEqual(Settings.WaveFileText);
             done();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     }, (error: string): void => {
-        done.fail(error);
+        done(error);
     });
 });
 
@@ -602,7 +603,7 @@ describe("Connection URL Tests", () => {
                     expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             });
     }
@@ -685,7 +686,7 @@ describe("Connection URL Tests", () => {
                     expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             });
     }
@@ -891,7 +892,7 @@ describe("Connection URL Tests", () => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             });
     });

@@ -173,7 +173,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
                 }
             }
         } catch (error) {
-            done.fail(error as string);
+            done(error as string);
         }
     };
 
@@ -182,7 +182,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
             expect(e.errorDetails).toBeUndefined();
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
         } catch (error) {
-            done.fail(error as string);
+            done(error as string);
         }
     };
 
@@ -202,14 +202,14 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
                     expect(disconnects).toEqual(1);
                     done();
                 } catch (error) {
-                    done.fail(error as string);
+                    done(error as string);
                 }
             }, (error: string): void => {
-                done.fail(error);
+                done(error);
             });
         });
     },
         (err: string): void => {
-            done.fail(err);
+            done(err);
         });
 }, 1000 * 60 * 35);
