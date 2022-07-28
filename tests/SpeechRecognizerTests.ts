@@ -412,7 +412,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         let authToken: string;
 
+        console.info("Starting fetch of token");
+
         request.post(req, (error: any, response: request.Response, body: any) => {
+            console.info("Got token");
             authToken = body;
         });
 
@@ -458,7 +461,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 done(error);
             });
         });
-    });
+    }, 10000);
 
     test("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
