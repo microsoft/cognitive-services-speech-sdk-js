@@ -32,6 +32,7 @@ beforeEach(() => {
 });
 
 jest.retryTimes(Settings.RetryCount);
+jest.setTimeout(60000);
 
 afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
@@ -127,7 +128,7 @@ test("Get Authorization Phrases for enrollment", async (): Promise<void> => {
     expect(res.phrases.length).toBeGreaterThan(0);
     expect(res.phrases[0]).not.toBeUndefined();
 
-}, 20000);
+});
 
 test("Get Activation Phrases for enrollment", async (): Promise<void> => {
     // eslint-disable-next-line no-console
@@ -148,7 +149,7 @@ test("Get Activation Phrases for enrollment", async (): Promise<void> => {
         expect(res.phrases[0]).not.toBeUndefined();
     }
 
-}, 40000);
+});
 
 test("Create and Delete Voice Profile using push stream - Independent Identification", async (): Promise<void> => {
 
@@ -197,7 +198,7 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
     expect(result2).not.toBeUndefined();
     expect(sdk.ResultReason[result2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
 
-}, 40000);
+});
 
 test("Create and Delete Voice Profile - Independent Identification", async (): Promise<void> => {
     // eslint-disable-next-line no-console
@@ -237,7 +238,7 @@ test("Create and Delete Voice Profile - Independent Identification", async (): P
     expect(result2).not.toBeUndefined();
     expect(sdk.ResultReason[result2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
 
-}, 15000);
+});
 
 test("Create and Delete Voice Profile - Independent Verification", async (): Promise<void> => {
     // eslint-disable-next-line no-console
@@ -276,7 +277,7 @@ test("Create and Delete Voice Profile - Independent Verification", async (): Pro
     expect(result2).not.toBeUndefined();
     expect(sdk.ResultReason[result2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
 
-}, 15000);
+});
 
 test("Create, Get, and Delete Voice Profile - Independent Verification", async (): Promise<void> => {
     // eslint-disable-next-line no-console
@@ -314,7 +315,7 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", async (
     expect(result).not.toBeUndefined();
     // expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
 
-}, 15000);
+});
 
 test("Create and Delete Voice Profile - Dependent Verification", async (): Promise<void> => {
     // eslint-disable-next-line no-console
@@ -360,4 +361,4 @@ test("Create and Delete Voice Profile - Dependent Verification", async (): Promi
     expect(result2).not.toBeUndefined();
     expect(sdk.ResultReason[result2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
 
-}, 15000);
+});

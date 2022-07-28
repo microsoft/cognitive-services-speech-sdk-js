@@ -1940,7 +1940,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             }
             WaitForCondition(() => (doneCount === 2), done);
         });
-    });
+    }, 15000);
 });
 
 Settings.testIfDOMCondition("Push Stream Async", (done: jest.DoneCallback) => {
