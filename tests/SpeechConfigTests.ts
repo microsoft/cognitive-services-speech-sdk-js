@@ -799,6 +799,75 @@ describe("Connection URL Tests", () => {
                     );
                 });
 
+                test("detailed output format (via explicit property)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: detailed output format (via explicit property)");
+
+                    // detailed output format should auto-enable word-level details
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.outputFormat = sdk.OutputFormat.Detailed;
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        "format=detailed",
+                        "wordLevelTimestamps=true",
+                        "wordLevelConfidence=true"
+                    );
+                });
+
+                test("detailed output format (ON via word-level method)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: detailed output format (ON via word-level method)");
+
+                    // enabling via requestWordLevelTimestamps should work the same way
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.requestWordLevelTimestamps();
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        "format=detailed",
+                        "wordLevelTimestamps=true",
+                        "wordLevelConfidence=true"
+                    );
+                });
+                
+                test("detailed output format (ON via word-level property)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: detailed output format (ON via word-level property)");
+
+                    // ditto for the property
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProperty(sdk.PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, 'true');
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        "format=detailed",
+                        "wordLevelTimestamps=true",
+                        "wordLevelConfidence=true"
+                    );
+                });
+
+                test("detailed output format (OFF via word-level property)", (done: jest.DoneCallback) => {
+                    // tslint:disable-next-line:no-console
+                    console.info("Name: detailed output format (OFF via word-level property)");
+
+                    // explicit disablement of word-level details (via timestamp) should work
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.outputFormat = sdk.OutputFormat.Detailed;
+                            s.setProperty(sdk.PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, 'false');
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        "format=detailed",
+                        "wordLevelTimestamps=false",
+                        "wordLevelConfidence=false"
+                    );
+                });
+
                 test("initialSilenceTimeoutMs", (done: jest.DoneCallback) => {
                     // eslint-disable-next-line no-console
                     console.info("Name: initialSilenceTimeoutMs");
