@@ -56,7 +56,6 @@ beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
     Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
-    beforeAll(() => jest.setTimeout(90 * 1000));
 });
 
 beforeEach(() => {
@@ -65,12 +64,15 @@ beforeEach(() => {
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+jest.setTimeout(90 * 1000);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
+
 
 // Conversation tests: begin
 describe("conversation constructor tests", () => {
@@ -196,7 +198,7 @@ describe("conversation service tests", () => {
             try {
                 expect(c.conversationId.length).toEqual(5);
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
         }));
 
@@ -218,7 +220,7 @@ describe("conversation service tests", () => {
             try {
                 expect(error).toContain("400003");
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             errorMessage = error;
         }));
@@ -243,7 +245,7 @@ describe("conversation service tests", () => {
                 expect(error).toContain("400025");
                 errorMessage = error;
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
         }));
         objsToClose.push(c);
@@ -265,7 +267,7 @@ describe("conversation service tests", () => {
             try {
                 expect(error).toContain("401000");
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             errorMessage = error;
         }));
@@ -296,14 +298,14 @@ describe("conversation service tests", () => {
 
             ct.canceled = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs) => {
                 if (e.errorCode !== sdk.CancellationErrorCode.NoError) {
-                    done.fail();
+                    done();
                 } else {
                     ct.leaveConversationAsync(() => {
                         c.endConversationAsync(
                             done,
-                            (e: string) => { done.fail(e); });
+                            (e: string) => { done(e); });
                     },
-                    (e: string) => { done.fail(e); });
+                    (e: string) => { done(e); });
                 }
             });
 
@@ -326,11 +328,11 @@ describe("conversation service tests", () => {
                                 ct.leaveConversationAsync(() => {
                                     c.endConversationAsync(
                                         done,
-                                        (e: string) => { done.fail(e); });
+                                        (e: string) => { done(e); });
                                 },
-                                (e: string) => { done.fail(e); });
+                                (e: string) => { done(e); });
                             } catch (e) {
-                                done.fail(e);
+                                done(e);
                             }
                         }
                     }
@@ -343,12 +345,12 @@ describe("conversation service tests", () => {
                         // continue
                     }),
                     ((error: any) => {
-                        done.fail();
+                        done();
                     }));
             });
         }),
             ((error: any) => {
-                done.fail();
+                done();
             }));
         objsToClose.push(c);
 
@@ -363,7 +365,7 @@ describe("conversation service tests", () => {
                     // continue
                 }),
                 ((error: any) => {
-                    done.fail();
+                    done();
                 }));
         }
 
@@ -414,17 +416,17 @@ describe("conversation service tests", () => {
                         ((error: any) => {
                             // eslint-disable-next-line  no-console
                             console.log("error joining: " + error);
-                            done.fail();
+                            done();
                         }));
                 }),
                 ((error: any) => {
                     // eslint-disable-next-line  no-console
                     console.log("error starting: " + error);
-                    done.fail();
+                    done();
                 }));
         }),
             ((error: any) => {
-                done.fail();
+                done();
             }));
 
         WaitForCondition(() => (textMessage.includes("Hello")), done);
@@ -455,14 +457,14 @@ describe("conversation service tests", () => {
             if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
             ct.canceled = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs) => {
                 if (e.errorCode !== sdk.CancellationErrorCode.NoError) {
-                    done.fail();
+                    done();
                 } else {
                     ct.leaveConversationAsync(() => {
                         c.endConversationAsync(
                             done,
-                            (e: string) => { done.fail(e); });
+                            (e: string) => { done(e); });
                     },
-                    (e: string) => { done.fail(e); });
+                    (e: string) => { done(e); });
                 }
             });
             ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs) => {
@@ -480,15 +482,15 @@ describe("conversation service tests", () => {
                     try {
                         expect(e.participants[0].id).toEqual(participantId);
                     } catch (e) {
-                        done.fail(e);
+                        done(e);
                     }
                     ct.leaveConversationAsync(() => {
                         c.endConversationAsync(() => {
                             ejected++;
                         },
-                        (e: string) => { done.fail(e); });
+                        (e: string) => { done(e); });
                     },
-                    (e: string) => { done.fail(e); });
+                    (e: string) => { done(e); });
                 }
             });
 
@@ -502,12 +504,12 @@ describe("conversation service tests", () => {
                         // continue
                     }),
                     ((error: any) => {
-                        done.fail();
+                        done();
                     }));
             });
         }),
             ((error: any) => {
-                done.fail();
+                done();
             }));
 
         function joinParticipant(code: string): void {
@@ -520,7 +522,7 @@ describe("conversation service tests", () => {
                     // continue
                 }),
                 ((error: any) => {
-                    done.fail();
+                    done();
                 }));
         }
 
@@ -590,7 +592,7 @@ describe("conversation translator service tests", () => {
                 try {
                     expect(error).toContain("400027");
                 } catch (e) {
-                    done.fail(e);
+                    done(e);
                 }
                 errorMessage = error;
             }));
@@ -638,20 +640,20 @@ describe("conversation translator service tests", () => {
                                 errorMessage = error;
                             },
                             (error: any) => {
-                                done.fail();
+                                done();
                             });
                         } catch (e) {
-                            done.fail(e);
+                            done(e);
                         }
                     });
             },
             (error: any) => {
-                done.fail();
+                done();
             });
 
         },
         (error: any) => {
-            done.fail();
+            done();
         });
 
         WaitForCondition(() => (errorMessage !== ""), done);
@@ -695,10 +697,10 @@ describe("conversation translator service tests", () => {
                                 errorMessage = error;
                             },
                             (error: any) => {
-                                done.fail();
+                                done();
                             });
                         } catch (e) {
-                            done.fail(e);
+                            done(e);
                         }
                     }));
             });
@@ -739,7 +741,7 @@ describe("conversation translator service tests", () => {
                     try {
                         ct.startTranscribingAsync();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 });
                 ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
@@ -749,18 +751,18 @@ describe("conversation translator service tests", () => {
                             ct.leaveConversationAsync(() => {
                                 c.endConversationAsync(
                                     done,
-                                    (e: string) => { done.fail(e); });
+                                    (e: string) => { done(e); });
                             },
-                            (e: string) => { done.fail(e); });
+                            (e: string) => { done(e); });
                         },
-                        (e: string) => { done.fail(e); });
+                        (e: string) => { done(e); });
                 });
                 ct.joinConversationAsync(c.conversationId, nickname, lang,
                     (() => {
                         // continue
                     }),
                     ((error: any) => {
-                        done.fail(error);
+                        done(error);
                     }));
             });
         }));

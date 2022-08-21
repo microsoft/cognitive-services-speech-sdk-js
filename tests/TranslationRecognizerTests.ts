@@ -39,11 +39,12 @@ beforeEach(() => {
     console.info("Sart Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
 
 const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig, fileName?: string) => sdk.TranslationRecognizer = (speechConfig?: sdk.SpeechTranslationConfig, fileName?: string): sdk.TranslationRecognizer => {
@@ -139,7 +140,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -169,13 +170,13 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                         done();
                     },
                     (error: string) => {
-                        done.fail(error);
+                        done(error);
                     });
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
-    }, 15000);
+    }, 30000);
 
     test("Translate Bad Language", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
@@ -195,10 +196,10 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs) => {
             try {
                 if (e.result.reason === sdk.ResultReason.Canceled) {
-                    done.fail(sdk.ResultReason[e.result.reason]);
+                    done(sdk.ResultReason[e.result.reason]);
                 }
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         });
 
@@ -212,7 +213,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 done();
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -235,7 +236,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(e.errorDetails).toContain("1006");
                 doneCount++;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -247,12 +248,12 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(e.errorDetails).toContain("1006");
                 doneCount++;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         });
 
         WaitForCondition(() => (doneCount === 2), done);
-    });
+    }, 15000);
 
     test("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
@@ -272,7 +273,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
         r.recognizeOnceAsync(
@@ -286,7 +287,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 done();
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     }, 12000);
 
@@ -317,7 +318,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
         r.recognizeOnceAsync(
@@ -331,7 +332,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 done();
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     }, 12000);
 });

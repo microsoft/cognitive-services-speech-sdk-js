@@ -45,9 +45,12 @@ import * as request from "request";
 
 import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
-import { closeAsyncObjects, WaitForCondition } from "./Utilities";
+import { closeAsyncObjects, RepeatingPullStream, WaitForCondition } from "./Utilities";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
+import { Console } from "console";
+import { utils } from "../external/ocsp/ocsp";
+import { PullAudioInputStream } from "../microsoft.cognitiveservices.speech.sdk";
 
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
@@ -70,11 +73,12 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
 
 export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
@@ -171,7 +175,7 @@ test("speech.event from service", (done: jest.DoneCallback) => {
             expect(e.errorDetails).toBeUndefined();
             expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -180,14 +184,14 @@ test("speech.event from service", (done: jest.DoneCallback) => {
             const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     r.startContinuousRecognitionAsync(
         undefined,
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => (sessionDone), () => {
@@ -209,7 +213,7 @@ test("testDetailedSpeechPhrase1", (done: jest.DoneCallback) => {
         expect(offsetCorrectedJson).not.toBeUndefined();
         done();
     } catch (err) {
-        done.fail(err);
+        done(err);
     }
 });
 
@@ -301,7 +305,7 @@ test("BadWavFileProducesError", (done: jest.DoneCallback) => {
             expect(error).not.toBeUndefined();
             done();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     });
 }, 15000);
@@ -334,7 +338,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -348,10 +352,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     });
 
@@ -373,7 +377,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -387,10 +391,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     });
 
@@ -408,7 +412,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         let authToken: string;
 
+        console.info("Starting fetch of token");
+
         request.post(req, (error: any, response: request.Response, body: any) => {
+            console.info("Got token");
             authToken = body;
         });
 
@@ -435,7 +442,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 try {
                     expect(e.errorDetails).toBeUndefined();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             };
 
@@ -448,13 +455,13 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             }, (error: string) => {
-                done.fail(error);
+                done(error);
             });
         });
-    });
+    }, 10000);
 
     test("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
@@ -477,7 +484,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -490,10 +497,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }, (error: string) => {
-            done.fail(error);
+            done(error);
         });
     });
 
@@ -525,7 +532,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 try {
                     expect(e.errorDetails).toBeUndefined();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             };
 
@@ -537,7 +544,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     try {
                         validateTelemetry(json, 1, hypoCounter);
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                     telemetryEvents++;
                 }
@@ -548,7 +555,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     expect(telemetryEvents).toEqual(1);
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             };
 
@@ -564,12 +571,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
 
                 },
                 (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
         });
 
@@ -615,7 +622,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     try {
                         validateTelemetry(json, 3, hypoCounter);
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 }
             };
@@ -629,7 +636,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             };
 
@@ -643,7 +650,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     expect(e.errorDetails).toBeUndefined();
                     expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             };
 
@@ -653,11 +660,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect(telemetryEvents).toEqual(1);
                         done();
                     } catch (err) {
-                        done.fail(err);
+                        done(err);
                     }
                 }),
                 (err: string) => {
-                    done.fail(err);
+                    done(err);
                 });
         });
 
@@ -691,7 +698,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -775,10 +782,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             }, (error: string) => {
-                done.fail(error);
+                done(error);
             });
 
     });
@@ -815,7 +822,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
                 eventsMap[Canceled] = eventIdentifier++;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -899,7 +906,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         });
     }, 20000);
@@ -933,7 +940,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                     expect(e.result.text).toEqual("What's the weather like?");
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             };
 
@@ -943,7 +950,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     expect(e.errorDetails).toBeUndefined();
                     expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             };
 
@@ -957,11 +964,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                             done();
                         },
                         (err: string) => {
-                            done.fail(err);
+                            done(err);
                         });
                 }),
                 (err: string) => {
-                    done.fail(err);
+                    done(err);
                 });
         });
     });
@@ -1036,7 +1043,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1052,12 +1059,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
 
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -1133,14 +1140,14 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
         r.startContinuousRecognitionAsync();
     }, 15000);
 
-    test("PushStream44K, muLaw, Alaw files", async (done: jest.DoneCallback) => {
+    test("PushStream44K, muLaw, Alaw files", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: PushStream44K, muLaw, Alaw files");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1173,7 +1180,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 try {
                     expect(e.errorDetails).toBeUndefined();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             };
 
@@ -1189,12 +1196,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                         success++;
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
 
                 },
                 (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
 
         }
@@ -1221,7 +1228,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1238,11 +1245,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
 
         const sendSize: number = 4096;
@@ -1273,15 +1280,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 read: (buffer: ArrayBuffer): number => {
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
                     copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
+                    bytesSent += (end - start);
 
                     if (bytesSent < buffer.byteLength) {
                         setTimeout(() => p.close(), 1000);
                     }
 
-                    return (end - start) + 1;
+                    return (end - start);
                 },
             });
 
@@ -1297,7 +1304,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1313,11 +1320,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -1338,15 +1345,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 read: (buffer: ArrayBuffer): number => {
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
                     copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
+                    bytesSent += (end - start);
 
                     if (bytesSent < buffer.byteLength) {
                         setTimeout(() => p.close(), 1000);
                     }
 
-                    return (end - start) + 1;
+                    return (end - start);
                 },
             },
             sdk.AudioStreamFormat.getWaveFormatPCM(44100, 16, 1));
@@ -1363,7 +1370,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1379,11 +1386,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     }, 120000);
 
@@ -1405,15 +1412,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
                     const fillSize: number = Math.round(buffer.byteLength / 2);
-                    const end: number = fillSize > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + fillSize - 1);
+                    const end: number = fillSize > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + fillSize);
                     copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
+                    bytesSent += (end - start);
 
                     if (bytesSent < buffer.byteLength) {
                         setTimeout(() => p.close(), 1000);
                     }
 
-                    return (end - start) + 1;
+                    return (end - start);
                 },
             });
 
@@ -1428,7 +1435,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1445,11 +1452,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -1485,7 +1492,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     oneCalled = true;
                 }
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1504,11 +1511,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         oneCalled = true;
                     }
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -1529,15 +1536,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 read: (buffer: ArrayBuffer): number => {
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
                     copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
+                    bytesSent += (end - start);
 
                     if (bytesSent > (fileBuffer.byteLength / 3)) {
                         p.close();
                     }
 
-                    return (end - start) + 1;
+                    return (end - start);
                 },
             });
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
@@ -1551,7 +1558,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1561,17 +1568,17 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 try {
                     expect(res).not.toBeUndefined();
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                    expect(res.text).toEqual("What's the?");
+                    expect(res.text.startsWith("What's")).toBeTruthy();
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -1601,7 +1608,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     expect(e.result.text).toEqual(Settings.WaveFileText);
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             });
         };
@@ -1610,7 +1617,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1656,7 +1663,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
-    test("Using disposed recognizer invokes error callbacks.", async (done: jest.DoneCallback) => {
+    test("Using disposed recognizer invokes error callbacks.", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Using disposed recognizer invokes error callbacks.");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1667,41 +1674,41 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         let success: number = 0;
 
-        await new Promise<void>((resolve: () => void, reject: (reason: string) => void) => {
-            r.close(resolve, reject);
-        });
 
-        r.recognizeOnceAsync(() => fail("RecognizeOnceAsync on closed recognizer called success callback"),
-            (error: string): void => {
-                try {
-                    expect(error).toEqual("Error: the object is already disposed");
-                    success++;
-                } catch (error) {
-                    done.fail(error);
-                }
-            });
+        r.close(() => {
 
-        r.startContinuousRecognitionAsync(() => fail("startContinuousRecognitionAsync on closed recognizer called success callback"),
-            (error: string): void => {
-                try {
-                    expect(error).toEqual("Error: the object is already disposed");
-                    success++;
-                } catch (error) {
-                    done.fail(error);
-                }
-            });
+            r.recognizeOnceAsync(() => fail("RecognizeOnceAsync on closed recognizer called success callback"),
+                (error: string): void => {
+                    try {
+                        expect(error).toEqual("Error: the object is already disposed");
+                        success++;
+                    } catch (error) {
+                        done(error);
+                    }
+                });
 
-        r.stopContinuousRecognitionAsync(() => fail("stopContinuousRecognitionAsync on closed recognizer called success callback"),
-            (error: string): void => {
-                try {
-                    expect(error).toEqual("Error: the object is already disposed");
-                    success++;
-                } catch (error) {
-                    done.fail(error);
-                }
-            });
+            r.startContinuousRecognitionAsync(() => fail("startContinuousRecognitionAsync on closed recognizer called success callback"),
+                (error: string): void => {
+                    try {
+                        expect(error).toEqual("Error: the object is already disposed");
+                        success++;
+                    } catch (error) {
+                        done(error);
+                    }
+                });
 
-        WaitForCondition(() => success === 3, done);
+            r.stopContinuousRecognitionAsync(() => fail("stopContinuousRecognitionAsync on closed recognizer called success callback"),
+                (error: string): void => {
+                    try {
+                        expect(error).toEqual("Error: the object is already disposed");
+                        success++;
+                    } catch (error) {
+                        done(error);
+                    }
+                });
+
+            WaitForCondition(() => success === 3, done);
+        }, (error: string): void => done(error));
     });
 
     test.skip("Endpoint URL Test", (done: jest.DoneCallback) => {
@@ -1728,7 +1735,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1746,11 +1753,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -1805,7 +1812,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
                         done();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 });
         }, 100000);
@@ -1836,7 +1843,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
                         done();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 });
         }, 100000);
@@ -1856,13 +1863,13 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
                 done();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
         r.startContinuousRecognitionAsync();
 
-    });
+    }, 15000);
 
     test("Connection Errors Propogate Sync", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
@@ -1881,7 +1888,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(e.errorDetails).toContain("1006");
                 doneCount++;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1893,13 +1900,13 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(e.errorDetails).toContain("1006");
                 doneCount++;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         });
 
         WaitForCondition(() => (doneCount === 2), done);
 
-    }, 100000);
+    }, 15000);
 
     test("RecognizeOnce Bad Language", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
@@ -1919,7 +1926,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(e.errorDetails).toContain("1006");
                 doneCount++;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -1932,11 +1939,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                 doneCount++;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
             WaitForCondition(() => (doneCount === 2), done);
         });
-    });
+    }, 15000);
 });
 
 Settings.testIfDOMCondition("Push Stream Async", (done: jest.DoneCallback) => {
@@ -1962,7 +1969,7 @@ Settings.testIfDOMCondition("Push Stream Async", (done: jest.DoneCallback) => {
     expect(r instanceof sdk.Recognizer);
 
     r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
-        done.fail(e.errorDetails);
+        done(e.errorDetails);
     };
 
     r.recognizeOnceAsync(
@@ -1975,7 +1982,7 @@ Settings.testIfDOMCondition("Push Stream Async", (done: jest.DoneCallback) => {
             done();
         },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 }, 10000);
 
@@ -1986,35 +1993,8 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
-
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -2042,7 +2022,7 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -2056,13 +2036,13 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
                 expect(res.text).toEqual("What's the weather like?");
                 expect(disconnected).toEqual(false);
                 firstReco = true;
-                sendSilence = false;
+                pullStreamSource.StartRepeat();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         },
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => {
@@ -2080,11 +2060,11 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
                     expect(connected).toEqual(1);
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 }, 15000);
@@ -2096,36 +2076,10 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
     let sessionId: string;
 
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: PullAudioInputStream = pullStreamSource.PullStream;;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -2145,7 +2099,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
             try {
                 expect(e.sessionId).toEqual(sessionId);
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         }
     };
@@ -2162,7 +2116,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
             console.warn(e);
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -2179,14 +2133,14 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
             }
             recoCount++;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     r.startContinuousRecognitionAsync(
         undefined,
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => {
@@ -2194,12 +2148,12 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     }, () => {
         r.stopContinuousRecognitionAsync(() => {
 
-            sendSilence = false;
+            pullStreamSource.StartRepeat();
 
             r.startContinuousRecognitionAsync(
                 undefined,
                 (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
         });
     });
@@ -2220,45 +2174,11 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
-
-    let bytesSent: number = 0;
-    let sendSilence: boolean = false;
-    let p: sdk.PullAudioInputStream;
     let recognizing: boolean = true;
     let failed: boolean = false;
 
-    p = sdk.AudioInputStream.createPullStream(
-        {
-            close: () => { return; },
-            read: (buffer: ArrayBuffer): number => {
-
-                try {
-                    expect(recognizing).toEqual(true);
-                } catch (error) {
-                    failed = true;
-                    done.fail(error);
-                }
-
-                if (!!sendSilence) {
-                    return buffer.byteLength;
-                }
-
-                const copyArray: Uint8Array = new Uint8Array(buffer);
-                const start: number = bytesSent;
-                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                bytesSent += (end - start) + 1;
-
-                if (((end - start) + 1) < buffer.byteLength) {
-                    // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                    bytesSent = 0;
-                    sendSilence = true;
-                }
-
-                return (end - start) + 1;
-            },
-        });
+    const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+    const p: PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -2293,7 +2213,7 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.NoMatch]);
             }
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -2301,14 +2221,14 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
     r.startContinuousRecognitionAsync(
         undefined,
         (error: string) => {
-            done.fail(error);
+            done(error);
         });
 
     WaitForCondition(() => {
@@ -2316,7 +2236,7 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
     }, () => {
         r.stopContinuousRecognitionAsync(() => {
             recognizing = false;
-            sendSilence = false;
+            pullStreamSource.StartRepeat();
 
             setTimeout(() => {
                 if (!failed) {
@@ -2340,7 +2260,7 @@ describe("PhraseList tests", () => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -2354,11 +2274,11 @@ describe("PhraseList tests", () => {
                     expect(res.text).toEqual("Recognize speech.");
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -2377,7 +2297,7 @@ describe("PhraseList tests", () => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -2391,11 +2311,11 @@ describe("PhraseList tests", () => {
                     expect(res.text).toEqual("Recognize speech.");
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -2413,7 +2333,7 @@ describe("PhraseList tests", () => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -2427,11 +2347,11 @@ describe("PhraseList tests", () => {
                     expect(res.text).toEqual("Wreck a nice beach.");
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -2450,7 +2370,7 @@ describe("PhraseList tests", () => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -2464,11 +2384,11 @@ describe("PhraseList tests", () => {
                     expect(res.text).toEqual("Wreck a nice beach.");
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     }, 10000);
 
@@ -2480,36 +2400,10 @@ describe("PhraseList tests", () => {
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
-        const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.AmbiguousWaveFile);
-
-        let bytesSent: number = 0;
-        let sendSilence: boolean = false;
         let gotReco: boolean = false;
-        let p: sdk.PullAudioInputStream;
 
-        p = sdk.AudioInputStream.createPullStream(
-            {
-                close: () => { return; },
-                read: (buffer: ArrayBuffer): number => {
-                    if (!!sendSilence) {
-                        return buffer.byteLength;
-                    }
-
-                    const copyArray: Uint8Array = new Uint8Array(buffer);
-                    const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
-                    copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-                    bytesSent += (end - start) + 1;
-
-                    if (((end - start) + 1) < buffer.byteLength) {
-                        // Start sending silence, and setup to re-transmit the file when the boolean flips next.
-                        bytesSent = 0;
-                        sendSilence = true;
-                    }
-
-                    return (end - start) + 1;
-                },
-            });
+        const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.AmbiguousWaveFile);
+        const p: PullAudioInputStream = pullStreamSource.PullStream;
 
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -2540,7 +2434,7 @@ describe("PhraseList tests", () => {
                 }
 
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -2548,14 +2442,14 @@ describe("PhraseList tests", () => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
         r.recognizeOnceAsync(
             undefined,
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
 
         WaitForCondition(() => {
@@ -2563,13 +2457,13 @@ describe("PhraseList tests", () => {
         }, () => {
             dynamicPhrase.clear();
             phraseAdded = false;
-            sendSilence = false;
+            pullStreamSource.StartRepeat();
             gotReco = false;
 
             r.startContinuousRecognitionAsync(
                 undefined,
                 (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
         });
 

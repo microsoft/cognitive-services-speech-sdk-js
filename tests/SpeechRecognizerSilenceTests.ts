@@ -43,11 +43,12 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
 
 export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
@@ -159,6 +160,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             const s: sdk.SpeechConfig = BuildSpeechConfig();
             objsToClose.push(s);
 
+            s.setProperty(sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "5000");
+
             const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
             objsToClose.push(r);
 
@@ -168,7 +171,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             let numReports: number = 0;
 
             r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
-                done.fail(e.errorDetails);
+                done(e.errorDetails);
             };
 
             r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
@@ -183,7 +186,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                     expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 } finally {
                     numReports++;
                 }
@@ -206,7 +209,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                         expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 },
                 (error: string) => {
@@ -220,7 +223,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     }
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             });
         };
@@ -244,7 +247,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 try {
                     expect(e.errorDetails).toBeUndefined();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             };
 
@@ -260,13 +263,13 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         s.close();
                         done();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 },
                 (error: string) => {
                     r.close();
                     s.close();
-                    done.fail(error);
+                    done(error);
                 });
         });
     });
@@ -296,7 +299,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.NoError]);
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
         r.recognizeOnceAsync(
@@ -313,11 +316,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                     done();
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
     });
 
@@ -347,7 +350,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
             // Since the pull stream above will always return an empty array, there should be
             // no other reason besides an error for cancel to hit.
-            done.fail(e.errorDetails);
+            done(e.errorDetails);
         };
 
         let passed: boolean = false;
@@ -368,13 +371,13 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         r.startContinuousRecognitionAsync(() => {
         },
             (error: string) => {
-                done.fail(error);
+                done(error);
             });
 
         WaitForCondition(() => passed, () => {
             r.stopContinuousRecognitionAsync(() => {
                 done();
-            }, (error: string) => done.fail(error));
+            }, (error: string) => done(error));
         });
 
     }, 30000);
@@ -414,7 +417,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     noMatchCount++;
                 }
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -424,7 +427,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
                 canceled = true;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -445,18 +448,18 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 r.stopContinuousRecognitionAsync(() => {
                     try {
                         expect(speechEnded).toEqual(noMatchCount);
-                        expect(noMatchCount).toEqual(2);
+                        expect(noMatchCount).toBeGreaterThanOrEqual(2);
                         done();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 }, (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
             });
         },
             (err: string) => {
-                done.fail(err);
+                done(err);
             });
     }, 30000);
 
@@ -496,7 +499,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                     noMatchCount++;
                 }
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -506,7 +509,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
                 canceled = true;
             } catch (error) {
-                done.fail(error);
+                done(error);
             }
         };
 
@@ -530,15 +533,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect(noMatchCount).toEqual(2);
                         done();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 }, (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
             });
         },
             (err: string) => {
-                done.fail(err);
+                done(err);
             });
     }, 35000);
 });
