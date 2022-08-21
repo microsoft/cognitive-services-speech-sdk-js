@@ -46,11 +46,9 @@ export class SynthesisRestAdapter {
      */
     public getVoicesList(connectionId: string): Promise<IRestResponse> {
         this.privRestAdapter.setHeaders(HeaderNames.ConnectionId, connectionId);
-        return this.privAuthentication.fetch(connectionId).then((authInfo: AuthInfo) : Promise<IRestResponse> => {
+        return this.privAuthentication.fetch(connectionId).then((authInfo: AuthInfo): Promise<IRestResponse> => {
             this.privRestAdapter.setHeaders(authInfo.headerName, authInfo.token);
             return this.privRestAdapter.request(RestRequestType.Get, this.privUri);
-        }).catch((error: Error) => {
-            throw error;
         });
     }
 
