@@ -165,6 +165,44 @@ test("testGetVoicesAsyncDefault", async () => {
     expect(voicesResult.reason).toEqual(sdk.ResultReason.VoicesListRetrieved);
 });
 
+test("testGetVoicesAsyncAuthWithToken", async () => {
+    // eslint-disable-next-line no-console
+    console.info("Name: testGetVoicesAsyncAuthWithToken");
+
+    const req = {
+        headers: {
+            "Content-Type": "application/json",
+            [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
+        },
+        url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
+    };
+
+    let authToken: string;
+
+    request.post(req, (error: any, response: request.Response, body: any) => {
+        authToken = body;
+    });
+
+    WaitForCondition(() => {
+        return !!authToken;
+    }, async () => {
+        const config: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
+        objsToClose.push(config);
+
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(config, null);
+        expect(s).not.toBeUndefined();
+
+        objsToClose.push(s);
+
+        const voicesResult: sdk.SynthesisVoicesResult = await s.getVoicesAsync();
+        expect(voicesResult).not.toBeUndefined();
+        expect(voicesResult.resultId).not.toBeUndefined();
+        expect(voicesResult.voices.length).toBeGreaterThan(0);
+        expect(voicesResult.reason).toEqual(sdk.ResultReason.VoicesListRetrieved);
+    });
+});
+
 test("testGetVoicesAsyncUS", async () => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetVoicesAsyncUS");
@@ -309,8 +347,7 @@ describe("Service based tests", () => {
             console.info("speaking finished, turn 1");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             // To seconds
-            // fixme: re-enable this check after service issue fixed.
-            // expect(result.audioDuration / 1000 / 1000 / 10).toBeCloseTo(result.audioData.byteLength / 32000, 2);
+            expect(result.audioDuration / 1000 / 1000 / 10).toBeCloseTo(result.audioData.byteLength / 32000, 2);
         }, (e: string): void => {
             done(e);
         });
@@ -319,8 +356,7 @@ describe("Service based tests", () => {
             // eslint-disable-next-line no-console
             console.info("speaking finished, turn 2");
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
-            // fixme: re-enable this check after service issue fixed.
-            // expect(result.audioDuration / 1000 / 1000 / 10).toBeCloseTo(result.audioData.byteLength / 32000, 2);
+            expect(result.audioDuration / 1000 / 1000 / 10).toBeCloseTo(result.audioData.byteLength / 32000, 2);
             done();
         }, (e: string): void => {
             done(e);
@@ -850,9 +886,9 @@ describe("Service based tests", () => {
         });
     });
 
-    test("test Speech Synthesiser: Language Auto Detection", (done: jest.DoneCallback) => {
+    test("test Speech Synthesizer: Language Auto Detection", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
-        console.info("Name: test Speech Synthesiser, Language Auto Detection");
+        console.info("Name: test Speech Synthesizer, Language Auto Detection");
 
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);

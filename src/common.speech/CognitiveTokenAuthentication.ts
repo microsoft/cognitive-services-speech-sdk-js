@@ -3,8 +3,7 @@
 
 import { ArgumentNullError } from "../common/Exports";
 import { AuthInfo, IAuthentication } from "./IAuthentication";
-
-const AuthHeader: string = "Authorization";
+import { HeaderNames } from "./HeaderNames";
 
 export class CognitiveTokenAuthentication implements IAuthentication {
     private static privTokenPrefix: string = "bearer ";
@@ -25,10 +24,10 @@ export class CognitiveTokenAuthentication implements IAuthentication {
     }
 
     public fetch(authFetchEventId: string): Promise<AuthInfo> {
-        return this.privFetchCallback(authFetchEventId).then((token: string): AuthInfo => new AuthInfo(AuthHeader, CognitiveTokenAuthentication.privTokenPrefix + token));
+        return this.privFetchCallback(authFetchEventId).then((token: string): AuthInfo => new AuthInfo(HeaderNames.Authorization, CognitiveTokenAuthentication.privTokenPrefix + token));
     }
 
     public fetchOnExpiry(authFetchEventId: string): Promise<AuthInfo> {
-        return this.privFetchOnExpiryCallback(authFetchEventId).then((token: string): AuthInfo => new AuthInfo(AuthHeader, CognitiveTokenAuthentication.privTokenPrefix + token));
+        return this.privFetchOnExpiryCallback(authFetchEventId).then((token: string): AuthInfo => new AuthInfo(HeaderNames.Authorization, CognitiveTokenAuthentication.privTokenPrefix + token));
     }
 }
