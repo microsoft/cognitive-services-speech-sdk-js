@@ -509,7 +509,7 @@ export class SpeechSynthesizer {
             SpeechSynthesisOutputFormat[this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined) as keyof typeof SpeechSynthesisOutputFormat]
         );
 
-        this.privRestAdapter = new SynthesisRestAdapter(synthesizerConfig);
+        this.privRestAdapter = new SynthesisRestAdapter(synthesizerConfig, authentication);
     }
 
     protected speakImpl(text: string, IsSsml: boolean, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, dataStream?: AudioOutputStream | PushAudioOutputStreamCallback | PathLike): void {

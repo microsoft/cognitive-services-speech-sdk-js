@@ -9,7 +9,7 @@ import {
     PropertyId,
 } from "../sdk/Exports";
 import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
-import { SynthesizerConfig } from "./Exports";
+import { AuthInfo, IAuthentication, SynthesizerConfig } from "./Exports";
 import { HeaderNames } from "./HeaderNames";
 
 /**
@@ -20,8 +20,9 @@ import { HeaderNames } from "./HeaderNames";
 export class SynthesisRestAdapter {
     private privRestAdapter: RestMessageAdapter;
     private privUri: string;
+    private privAuthentication: IAuthentication;
 
-    public constructor(config: SynthesizerConfig) {
+    public constructor(config: SynthesizerConfig, authentication: IAuthentication) {
 
         let endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpoint) {
@@ -32,9 +33,8 @@ export class SynthesisRestAdapter {
         this.privUri = `${endpoint}/cognitiveservices/voices/list`;
 
         const options: IRequestOptions = RestConfigBase.requestOptions;
-        options.headers[RestConfigBase.configParams.subscriptionKey] = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
-
         this.privRestAdapter = new RestMessageAdapter(options);
+        this.privAuthentication = authentication;
     }
 
     /**
@@ -46,7 +46,10 @@ export class SynthesisRestAdapter {
      */
     public getVoicesList(connectionId: string): Promise<IRestResponse> {
         this.privRestAdapter.setHeaders(HeaderNames.ConnectionId, connectionId);
-        return this.privRestAdapter.request(RestRequestType.Get, this.privUri);
+        return this.privAuthentication.fetch(connectionId).then((authInfo: AuthInfo): Promise<IRestResponse> => {
+            this.privRestAdapter.setHeaders(authInfo.headerName, authInfo.token);
+            return this.privRestAdapter.request(RestRequestType.Get, this.privUri);
+        });
     }
 
 }
