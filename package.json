@@ -52,38 +52,40 @@
   ],
   "devDependencies": {
     "@types/bent": "^7.3.2",
-    "@types/jest": "^25.2.2",
+    "@types/jest": "^27.0.0",
     "@types/node": "^12.12.30",
     "@types/request": "^2.48.3",
     "@types/rimraf": "^3.0.0",
     "@types/uuid": "^3.3.3",
     "@types/ws": "^6.0.4",
-    "@typescript-eslint/eslint-plugin": "^5.13.0",
-    "@typescript-eslint/eslint-plugin-tslint": "^5.13.0",
-    "@typescript-eslint/parser": "^5.13.0",
+    "@types/prettier": "<2.6.0",
+    "@typescript-eslint/eslint-plugin": "^5.26.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^5.27.0",
+    "@typescript-eslint/parser": "^5.27.0",
     "asn1.js": "^5.2.0",
     "dts-bundle-webpack": "^1.0.2",
-    "eslint": "^8.10.0",
-    "eslint-plugin-import": "^2.25.4",
-    "eslint-plugin-jsdoc": "^37.9.7",
+    "eslint": "^8.16.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsdoc": "^39.3.2",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "gulp": "^4.0.2",
-    "gulp-rename": "^2.0.0",
-    "gulp-sourcemaps": "^2.6.5",
-    "gulp-terser": "^1.2.0",
     "gulp-eslint": "^6.0.0",
+    "gulp-rename": "^2.0.0",
+    "gulp-sourcemaps": "^3.0.0",
+    "gulp-terser": "^2.1.0",
     "gulp-typescript": "^5.0.1",
-    "jest": "^26.0.1",
+    "jest": "^27.0.0",
     "jest-junit": "^12.0.0",
     "ocsp": "^1.2.0",
     "request": "^2.88.0",
     "rimraf": "^3.0.2",
     "semver": "^6.3.0",
-    "source-map-loader": "^0.2.4",
-    "ts-jest": "^26.4.4",
+    "source-map-loader": "^3.0.1",
+    "ts-jest": "^27.0.0",
     "tslint": "^5.20.1",
     "typescript": "^3.5.3",
-    "webpack-stream": "^5.2.1"
+    "webpack": "^5.72.1",
+    "webpack-stream": "^7.0.0"
   },
   "scripts": {
     "build": "gulp compress && gulp build2015",
@@ -93,9 +95,6 @@
     "civersion": "node ci/version.js",
     "prepare": "npm run build",
     "preinstall": "npm install --package-lock-only --ignore-scripts --no-audit && npx npm-force-resolutions"
-  },
-  "jest": {
-    "testEnvironment": "node"
   },
   "jest-junit": {
     "suiteName": "jest tests",
@@ -119,9 +118,8 @@
   },
   "resolutions": {
     "extend": "3.0.2",
-    "set-value": "^4.0.1",
-    "glob-parent": "^5.1.2",
-    "minimist": "^1.2.6"
+    "set-value": "4.0.1",
+    "minimist": "1.2.6"
   },
   "sideEffects": false
 }

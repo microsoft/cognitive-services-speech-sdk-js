@@ -34,11 +34,12 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
 
 const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.TranslationRecognizer = (speechConfig?: sdk.SpeechTranslationConfig): sdk.TranslationRecognizer => {
@@ -104,7 +105,7 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
     r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs) => {
         switch (e.result.reason) {
             case sdk.ResultReason.Canceled:
-                done.fail(sdk.ResultReason[e.result.reason]);
+                done(sdk.ResultReason[e.result.reason]);
                 break;
             case sdk.ResultReason.SynthesizingAudio:
                 const result: ArrayBuffer = e.result.audio;
@@ -123,7 +124,7 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
         try {
             switch (e.reason) {
                 case sdk.CancellationReason.Error:
-                    done.fail(e.errorDetails);
+                    done(e.errorDetails);
                     break;
                 case sdk.CancellationReason.EndOfStream:
                     expect(synthCount).toEqual(1);
@@ -131,7 +132,7 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
                     break;
             }
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     });
 
@@ -181,7 +182,7 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
                     try {
                         expect(e.errorDetails).toBeUndefined();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 };
 
@@ -190,8 +191,8 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
                     expect(speech.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
                     expect(speech.text).toEqual("Wie ist das Wetter?");
                     done();
-                }, (error: string) => done.fail(error));
-            }, (error: string) => done.fail(error));
+                }, (error: string) => done(error));
+            }, (error: string) => done(error));
         });
 }, 10000);
 
@@ -210,7 +211,7 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
         try {
             expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
 
     });
@@ -229,7 +230,7 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
 
             pass = true;
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     });
 
@@ -264,7 +265,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
         try {
             switch (e.result.reason) {
                 case sdk.ResultReason.Canceled:
-                    done.fail(sdk.ResultReason[e.result.reason]);
+                    done(sdk.ResultReason[e.result.reason]);
                     break;
                 case sdk.ResultReason.SynthesizingAudio:
                     const result: ArrayBuffer = e.result.audio;
@@ -275,7 +276,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
                     break;
             }
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     });
 
@@ -286,7 +287,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
         try {
             switch (e.reason) {
                 case sdk.CancellationReason.Error:
-                    done.fail(e.errorDetails);
+                    done(e.errorDetails);
                     break;
                 case sdk.CancellationReason.EndOfStream:
                     expect(synthCount).toEqual(1);
@@ -294,7 +295,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
                     break;
             }
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     });
 
@@ -312,7 +313,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
             expect(e.result.properties).not.toBeUndefined();
             expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     };
 
@@ -341,7 +342,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
                     try {
                         expect(e.errorDetails).toBeUndefined();
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 };
 
@@ -351,10 +352,10 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
                     expect(speech.text).toEqual("Wie ist das Wetter?");
                     done();
                 }, (error: string) => {
-                    done.fail(error);
+                    done(error);
                 });
             }, (error: string) => {
-                done.fail(error);
+                done(error);
             });
         });
 }, 10000);
@@ -396,7 +397,7 @@ test("MultiPhrase", (done: jest.DoneCallback) => {
         try {
             switch (e.result.reason) {
                 case sdk.ResultReason.Canceled:
-                    done.fail(sdk.ResultReason[e.result.reason]);
+                    done(sdk.ResultReason[e.result.reason]);
                     break;
                 case sdk.ResultReason.SynthesizingAudio:
                     const result: ArrayBuffer = e.result.audio;
@@ -407,7 +408,7 @@ test("MultiPhrase", (done: jest.DoneCallback) => {
                     break;
             }
         } catch (error) {
-            done.fail(error);
+            done(error);
         }
     });
 
@@ -417,7 +418,7 @@ test("MultiPhrase", (done: jest.DoneCallback) => {
     r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
         switch (e.reason) {
             case sdk.CancellationReason.Error:
-                done.fail(e.errorDetails);
+                done(e.errorDetails);
                 break;
             case sdk.CancellationReason.EndOfStream:
                 canceled = true;
@@ -472,7 +473,7 @@ test("MultiPhrase", (done: jest.DoneCallback) => {
                         expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
                         numEvents++;
                     } catch (error) {
-                        done.fail(error);
+                        done(error);
                     }
                 };
 
@@ -482,7 +483,7 @@ test("MultiPhrase", (done: jest.DoneCallback) => {
                             canceled = true;
                             break;
                         case sdk.CancellationReason.Error:
-                            done.fail(e.errorDetails);
+                            done(e.errorDetails);
                             break;
                     }
                 };
@@ -496,20 +497,20 @@ test("MultiPhrase", (done: jest.DoneCallback) => {
                                     expect(numEvents).toEqual(numPhrases);
                                     done();
                                 } catch (error) {
-                                    done.fail(error);
+                                    done(error);
                                 }
 
                             }, (error: string) => {
-                                done.fail(error);
+                                done(error);
                             });
                         });
                 },
                     (error: string) => {
-                        done.fail(error);
+                        done(error);
                     });
 
             }, (error: string) => {
-                done.fail(error);
+                done(error);
             });
         });
 }, 45000);

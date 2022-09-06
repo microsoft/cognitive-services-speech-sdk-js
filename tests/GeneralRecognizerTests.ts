@@ -12,6 +12,8 @@ beforeEach(() => {
     Settings.LoadSettings();
 });
 
+jest.retryTimes(Settings.RetryCount);
+
 test("testRecognizer1", () => {
     const s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     expect(s).not.toBeUndefined();

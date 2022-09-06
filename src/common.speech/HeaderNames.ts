@@ -3,6 +3,7 @@
 
 export class HeaderNames {
     public static AuthKey: string = "Ocp-Apim-Subscription-Key";
+    public static Authorization: string = "Authorization";
     public static SpIDAuthKey: string = "Apim-Subscription-Id";
     public static ConnectionId: string = "X-ConnectionId";
     public static ContentType: string = "Content-Type";

@@ -55,7 +55,7 @@ test("Push segments into small blocks", (done: jest.DoneCallback) => {
                         expect(readView[i]).toEqual(bytesRead++ % 256);
                     }
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
 
                 if (bytesRead < bufferSize * 4) {
@@ -63,11 +63,11 @@ test("Push segments into small blocks", (done: jest.DoneCallback) => {
                 } else {
                     done();
                 }
-            }, (error: string) => done.fail(error));
+            }, (error: string) => done(error));
         };
 
         readLoop();
-    }, (error: string) => done.fail(error));
+    }, (error: string) => done(error));
 });
 
 test("Stream returns all data when closed", (done: jest.DoneCallback) => {
@@ -111,14 +111,14 @@ test("Stream returns all data when closed", (done: jest.DoneCallback) => {
                     }
 
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
 
-            }, (error: string) => done.fail(error));
+            }, (error: string) => done(error));
         };
 
         readLoop();
-    }, (error: string) => done.fail(error));
+    }, (error: string) => done(error));
 });
 
 test("Stream blocks when not closed", (done: jest.DoneCallback) => {
@@ -167,7 +167,7 @@ test("Stream blocks when not closed", (done: jest.DoneCallback) => {
                                     // Release the blocking read and finish when it does.
                                     ps.close();
                                 } catch (error) {
-                                    done.fail(error);
+                                    done(error);
                                 }
                             }, 2000);
                         }
@@ -179,14 +179,14 @@ test("Stream blocks when not closed", (done: jest.DoneCallback) => {
                         done();
                     }
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
 
-            }, (error: string) => done.fail(error));
+            }, (error: string) => done(error));
         };
 
         readLoop();
-    }, (error: string) => done.fail(error));
+    }, (error: string) => done(error));
 }, 15000);
 
 test("nonAligned data is fine", (done: jest.DoneCallback) => {
@@ -227,12 +227,12 @@ test("nonAligned data is fine", (done: jest.DoneCallback) => {
                     }
 
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
 
-            }, (error: string) => done.fail(error));
+            }, (error: string) => done(error));
         };
 
         readLoop();
-    }, (error: string) => done.fail(error));
+    }, (error: string) => done(error));
 });

@@ -106,9 +106,9 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
 
                     const copyArray: Uint8Array = new Uint8Array(buffer);
                     const start: number = bytesSent;
-                    const end: number = buffer.byteLength > (sendBuffer.byteLength - bytesSent) ? (sendBuffer.byteLength - 1) : (bytesSent + buffer.byteLength - 1);
+                    const end: number = buffer.byteLength > (sendBuffer.byteLength - bytesSent) ? (sendBuffer.byteLength) : (bytesSent + buffer.byteLength);
                     copyArray.set(new Uint8Array(sendBuffer.slice(start, end)));
-                    const readyToSend: number = (end - start) + 1;
+                    const readyToSend: number = (end - start);
                     bytesSent += readyToSend;
 
                     if (readyToSend < buffer.byteLength) {
@@ -173,7 +173,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
                 }
             }
         } catch (error) {
-            done.fail(error as string);
+            done(error as string);
         }
     };
 
@@ -182,7 +182,7 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
             expect(e.errorDetails).toBeUndefined();
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
         } catch (error) {
-            done.fail(error as string);
+            done(error as string);
         }
     };
 
@@ -202,14 +202,14 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
                     expect(disconnects).toEqual(1);
                     done();
                 } catch (error) {
-                    done.fail(error as string);
+                    done(error as string);
                 }
             }, (error: string): void => {
-                done.fail(error);
+                done(error);
             });
         });
     },
         (err: string): void => {
-            done.fail(err);
+            done(err);
         });
 }, 1000 * 60 * 35);

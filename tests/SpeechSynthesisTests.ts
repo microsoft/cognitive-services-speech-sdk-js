@@ -36,11 +36,12 @@ beforeEach(() => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-afterEach(async (done: jest.DoneCallback) => {
+jest.retryTimes(Settings.RetryCount);
+
+afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
-    done();
 });
 
 const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
@@ -100,7 +101,7 @@ const ReadPullAudioOutputStream: (stream: sdk.PullAudioOutputStream, length?: nu
                     try {
                         expect(length).toEqual(0);
                     } catch (e) {
-                        done.fail(e);
+                        done(e);
                     }
                 }
                 if (!!done) {
@@ -162,6 +163,44 @@ test("testGetVoicesAsyncDefault", async () => {
     expect(voicesResult.resultId).not.toBeUndefined();
     expect(voicesResult.voices.length).toBeGreaterThan(0);
     expect(voicesResult.reason).toEqual(sdk.ResultReason.VoicesListRetrieved);
+});
+
+test("testGetVoicesAsyncAuthWithToken", async () => {
+    // eslint-disable-next-line no-console
+    console.info("Name: testGetVoicesAsyncAuthWithToken");
+
+    const req = {
+        headers: {
+            "Content-Type": "application/json",
+            [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
+        },
+        url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
+    };
+
+    let authToken: string;
+
+    request.post(req, (error: any, response: request.Response, body: any) => {
+        authToken = body;
+    });
+
+    WaitForCondition(() => {
+        return !!authToken;
+    }, async () => {
+        const config: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
+        objsToClose.push(config);
+
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(config, null);
+        expect(s).not.toBeUndefined();
+
+        objsToClose.push(s);
+
+        const voicesResult: sdk.SynthesisVoicesResult = await s.getVoicesAsync();
+        expect(voicesResult).not.toBeUndefined();
+        expect(voicesResult.resultId).not.toBeUndefined();
+        expect(voicesResult.voices.length).toBeGreaterThan(0);
+        expect(voicesResult.reason).toEqual(sdk.ResultReason.VoicesListRetrieved);
+    });
 });
 
 test("testGetVoicesAsyncUS", async () => {
@@ -241,7 +280,7 @@ describe("Service based tests", () => {
             try {
                 CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudioStarted);
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             startEventCount += 1;
         };
@@ -253,7 +292,7 @@ describe("Service based tests", () => {
             try {
                 CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudio);
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             synthesizingEventCount += 1;
         };
@@ -265,7 +304,7 @@ describe("Service based tests", () => {
                 CheckSynthesisResult(e.result, sdk.ResultReason.SynthesizingAudioCompleted);
                 expect(e.result.audioData.byteLength - 44).toEqual(audioLength);
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             completeEventCount += 1;
         };
@@ -274,12 +313,12 @@ describe("Service based tests", () => {
             try {
                 expect(e).not.toBeUndefined();
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
         };
 
         s.speakTextAsync("hello world.", undefined, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
 
         WaitForCondition((): boolean => {
@@ -310,7 +349,7 @@ describe("Service based tests", () => {
             // To seconds
             expect(result.audioDuration / 1000 / 1000 / 10).toBeCloseTo(result.audioData.byteLength / 32000, 2);
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
 
         s.speakTextAsync("hello world 2.", (result: sdk.SpeechSynthesisResult): void => {
@@ -320,7 +359,7 @@ describe("Service based tests", () => {
             expect(result.audioDuration / 1000 / 1000 / 10).toBeCloseTo(result.audioData.byteLength / 32000, 2);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -345,7 +384,7 @@ describe("Service based tests", () => {
             console.info("speaking finished, turn 1");
             audioLength += result.audioData.byteLength;
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
 
         s.speakTextAsync("hello world 2.", (result: sdk.SpeechSynthesisResult): void => {
@@ -360,7 +399,7 @@ describe("Service based tests", () => {
                 done();
             }, 2000);
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -386,7 +425,7 @@ describe("Service based tests", () => {
                 done();
             }, 2000);
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         }, "test1.mp3");
     });
 
@@ -411,7 +450,7 @@ describe("Service based tests", () => {
                 expect(e.textOffset).not.toBeUndefined();
                 expect(e.wordLength).not.toBeUndefined();
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             wordBoundaryCount += 1;
         };
@@ -421,7 +460,7 @@ describe("Service based tests", () => {
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -437,14 +476,14 @@ describe("Service based tests", () => {
         expect(s).not.toBeUndefined();
 
         let wordBoundaryCount: number = 0;
-        const expectedSsmlOffsets: number[] = [ 206, 211, 214, 217, 225, 227 ];
+        const expectedSsmlOffsets: number[] = [206, 211, 214, 217, 225, 227];
         const expectedBoundary: sdk.SpeechSynthesisBoundaryType[] =
             [sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Punctuation,
-                sdk.SpeechSynthesisBoundaryType.Word];
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Punctuation,
+            sdk.SpeechSynthesisBoundaryType.Word];
 
         s.wordBoundary = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisWordBoundaryEventArgs): void => {
             try {
@@ -456,7 +495,7 @@ describe("Service based tests", () => {
                 expect(e.textOffset).toEqual(expectedSsmlOffsets[wordBoundaryCount]);
                 expect(e.boundaryType).toEqual(expectedBoundary[wordBoundaryCount]);
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             wordBoundaryCount += 1;
         };
@@ -470,7 +509,7 @@ describe("Service based tests", () => {
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -487,14 +526,14 @@ describe("Service based tests", () => {
         expect(s).not.toBeUndefined();
 
         let wordBoundaryCount: number = 0;
-        const expectedSsmlOffsets: number[] = [ 206, 212, 216, 206, 257, 261, 268, 257, 310, 314, 320, 310, 359, 365, 372, 359, 412, 418, 425, 412, 467, 473, 477, 467 ];
+        const expectedSsmlOffsets: number[] = [206, 212, 216, 206, 257, 261, 268, 257, 310, 314, 320, 310, 359, 365, 372, 359, 412, 418, 425, 412, 467, 473, 477, 467];
         const expectedBoundary: sdk.SpeechSynthesisBoundaryType[] =
             [sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Word,
-                sdk.SpeechSynthesisBoundaryType.Punctuation,
-                sdk.SpeechSynthesisBoundaryType.Word];
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Word,
+            sdk.SpeechSynthesisBoundaryType.Punctuation,
+            sdk.SpeechSynthesisBoundaryType.Word];
 
         s.wordBoundary = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisWordBoundaryEventArgs): void => {
             try {
@@ -506,7 +545,7 @@ describe("Service based tests", () => {
                 expect(e.textOffset).toEqual(expectedSsmlOffsets[wordBoundaryCount]);
                 // expect(e.boundaryType).toEqual(expectedBoundary[wordBoundaryCount]);
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             wordBoundaryCount += 1;
         };
@@ -518,11 +557,15 @@ describe("Service based tests", () => {
 <voice name='ar-QA-MoazNeural'>مرحبا بالعالم.</voice><voice name='de-DE-ConradNeural'>Hallo Welt.</voice></speak>`;
 
         s.speakSsmlAsync(ssml.split("\n").join(""), (result: sdk.SpeechSynthesisResult): void => {
-            expect(wordBoundaryCount).toBeGreaterThan(0);
-            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
-            done();
+            try {
+                expect(wordBoundaryCount).toBeGreaterThan(0);
+                CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                done();
+            } catch (e) {
+                done(e);
+            }
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -547,7 +590,7 @@ describe("Service based tests", () => {
                     expect(e.text).toEqual("bookmark");
                 }
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             bookmarkCount += 1;
         };
@@ -560,7 +603,7 @@ describe("Service based tests", () => {
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -584,7 +627,7 @@ describe("Service based tests", () => {
                 expect(e.visemeId).not.toBeUndefined();
                 expect(e.animation).not.toBeUndefined();
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
             visemeCount += 1;
         };
@@ -597,7 +640,7 @@ describe("Service based tests", () => {
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -619,7 +662,7 @@ describe("Service based tests", () => {
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             r = result;
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
 
         const ssml: string =
@@ -632,7 +675,7 @@ describe("Service based tests", () => {
             CheckBinaryEqual(r.audioData, result.audioData);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -655,7 +698,7 @@ describe("Service based tests", () => {
                 expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
                 expect(cancellationDetail.errorDetails).toEqual(e.result.errorDetails);
             } catch (err) {
-                done.fail(err);
+                done(err);
             }
         };
 
@@ -667,7 +710,7 @@ describe("Service based tests", () => {
             expect(cancellationDetail.errorDetails).toEqual(result.errorDetails);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -691,7 +734,7 @@ describe("Service based tests", () => {
                 expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
                 expect(cancellationDetail.errorDetails).toEqual(e.result.errorDetails);
             } catch (e) {
-                done.fail(e);
+                done(e);
             }
         };
 
@@ -703,7 +746,7 @@ describe("Service based tests", () => {
             expect(cancellationDetail.reason).toEqual(sdk.CancellationReason.Error);
             expect(cancellationDetail.errorDetails).toEqual(result.errorDetails);
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
 
         s.speakTextAsync("today is a nice day.", (result: sdk.SpeechSynthesisResult): void => {
@@ -715,7 +758,7 @@ describe("Service based tests", () => {
             expect(cancellationDetail.errorDetails).toEqual(result.errorDetails);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -742,7 +785,7 @@ describe("Service based tests", () => {
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             s.close();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -767,7 +810,7 @@ describe("Service based tests", () => {
             s.close();
             ReadPullAudioOutputStream(stream, result.audioData.byteLength - 44, done);
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -793,7 +836,7 @@ describe("Service based tests", () => {
             expect(stream.isClosed).toEqual(true);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -838,14 +881,14 @@ describe("Service based tests", () => {
                 CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
                 done();
             }, (e: string): void => {
-                done.fail(e);
+                done(e);
             });
         });
     });
 
-    test("test Speech Synthesiser: Language Auto Detection", (done: jest.DoneCallback) => {
+    test("test Speech Synthesizer: Language Auto Detection", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
-        console.info("Name: test Speech Synthesiser, Language Auto Detection");
+        console.info("Name: test Speech Synthesizer, Language Auto Detection");
 
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
@@ -863,13 +906,13 @@ describe("Service based tests", () => {
                 try {
                     expect(args.message.TextMessage).toContain(`\"autoDetection\":true`);
                 } catch (error) {
-                    done.fail(error);
+                    done(error);
                 }
             }
         };
 
         s.SynthesisCanceled = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
-            done.fail();
+            done();
         };
 
         // we will get very short audio as the en-US voices are not mix-lingual.
@@ -879,7 +922,7 @@ describe("Service based tests", () => {
             CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
             expect(result.audioData.byteLength).toBeGreaterThan(64 << 7); // longer than 1s
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
 
         s.speakTextAsync("今天天气很好。", (result: sdk.SpeechSynthesisResult): void => {
@@ -889,7 +932,7 @@ describe("Service based tests", () => {
             expect(result.audioData.byteLength).toBeGreaterThan(64 << 7); // longer than 1s
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 
@@ -924,7 +967,7 @@ describe("Service based tests", () => {
             expect(uri.search(QueryParameterNames.CustomVoiceDeploymentId + "=" + Settings.CustomVoiceEndpointId)).not.toEqual(-1);
             done();
         }, (e: string): void => {
-            done.fail(e);
+            done(e);
         });
     });
 });
