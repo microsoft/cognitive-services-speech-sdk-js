@@ -29,6 +29,24 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
+interface CustomModel {
+    language: string;
+    endpoint: string;
+}
+
+interface PhraseDetection {
+    customModels?: CustomModel[];
+    onInterim?: { action: string };
+    onSuccess?: { action: string };
+    mode?: string;
+    INTERACTIVE?: {
+        segmentation: {
+            mode: "Custom";
+            segmentationSilenceTimeoutMs: number;
+        };
+    };
+}
+
 // eslint-disable-next-line max-classes-per-file
 export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
@@ -42,6 +60,20 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         speechRecognizer: SpeechRecognizer) {
         super(authentication, connectionFactory, audioSource, recognizerConfig, speechRecognizer);
         this.privSpeechRecognizer = speechRecognizer;
+
+        const phraseDetection: PhraseDetection = {};
+        const speechSegmentationTimeout: string = recognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
+        if (speechSegmentationTimeout !== undefined) {
+            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
+            phraseDetection.mode = "INTERACTIVE";
+            phraseDetection.INTERACTIVE = {
+                segmentation: {
+                    mode: "Custom",
+                    segmentationSilenceTimeoutMs
+                }
+            };
+        }
+
         if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
             const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
             this.privSpeechContext.setSection("languageId", {
@@ -59,14 +91,22 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     resultType: "Always"
                 }
             });
-            const customModels: { language: string; endpoint: string }[] = recognizerConfig.sourceLanguageModels;
+            const customModels: CustomModel[] = recognizerConfig.sourceLanguageModels;
             if (customModels !== undefined) {
-                this.privSpeechContext.setSection("phraseDetection", {
-                    customModels,
-                    onInterim: { action: "None" },
-                    onSuccess: { action: "None" },
-                });
+                phraseDetection.customModels = customModels;
+                phraseDetection.onInterim = { action: "None" };
+                phraseDetection.onSuccess = { action: "None" };
             }
+        }
+
+        const isEmpty = (obj: object): boolean => {
+            // eslint-disable-next-line guard-for-in, brace-style
+            for (const x in obj) { return false; }
+            return true;
+        };
+
+        if (!isEmpty(phraseDetection)) {
+            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
         }
     }
 
