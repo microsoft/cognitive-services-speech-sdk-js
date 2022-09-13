@@ -120,7 +120,7 @@
     "extend": "3.0.2",
     "set-value": "4.0.1",
     "minimist": "1.2.6",
-    "glob-parent": "5.1.2"
+    "glob-parent": "6.0.1"
   },
   "sideEffects": false
 }
