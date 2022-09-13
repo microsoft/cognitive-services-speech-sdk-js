@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import * as fs from "fs";
-import * as request from "request";
+import got from "got";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
@@ -169,23 +169,18 @@ test("testGetVoicesAsyncAuthWithToken", async () => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetVoicesAsyncAuthWithToken");
 
+    const url = "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken";
     const req = {
         headers: {
             "Content-Type": "application/json",
             [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
         },
-        url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
     };
 
-    let authToken: string;
+    const { body } = await got.post(url, req);
+    const authToken = body;
 
-    request.post(req, (error: any, response: request.Response, body: any) => {
-        authToken = body;
-    });
-
-    WaitForCondition(() => {
-        return !!authToken;
-    }, async () => {
+    WaitForCondition((): boolean => !!authToken, async () => {
         const config: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
         objsToClose.push(config);
 
@@ -840,27 +835,25 @@ describe("Service based tests", () => {
         });
     });
 
-    test("testSpeechSynthesizer: authentication with authorization token", (done: jest.DoneCallback) => {
+    test("testSpeechSynthesizer: authentication with authorization token", (done: jest.DoneCallback): void {
         // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer authentication with authorization token");
 
+        const url = "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken";
         const req = {
             headers: {
                 "Content-Type": "application/json",
                 [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
             },
-            url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
         };
 
-        let authToken: string;
+        let authToken: any;
+        got.post(url, req)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+            .then((resp: { body: any }): void => authToken = resp.body)
+            .catch((error: any): void => done(error));
 
-        request.post(req, (error: any, response: request.Response, body: any) => {
-            authToken = body;
-        });
-
-        WaitForCondition(() => {
-            return !!authToken;
-        }, () => {
+        WaitForCondition((): boolean => !!authToken, (): void => {
             const endpoint = "wss://" + Settings.SpeechRegion + ".tts.speech.microsoft.com/cognitiveservices/websocket/v1";
 
             // note: we use an empty subscription key so that we use the authorization token later.

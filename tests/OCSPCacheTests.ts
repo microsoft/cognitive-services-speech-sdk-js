@@ -91,17 +91,18 @@ const makeRequest = (disableOCSPStapling: boolean = true): Promise<void> => {
         const agent: CertCheckAgent = new CertCheckAgent();
         CertCheckAgent.forceDisableOCSPStapling = disableOCSPStapling;
 
-        try {
-            await got(testUrl, {
+        const { statusCode } = await got(testUrl, {
                 agent: { http: agent.GetAgent() },
                 followRedirect: false,
             });
-        } catch (error) {
-            if (error !== null) {
-                reject(error);
+        try {
+            if (statusCode !== 200) {
+                reject(`error: statusCode ${statusCode} received`);
             } else {
                 resolve();
             }
+        } catch (error) {
+            reject(error);
         }
     });
 }
