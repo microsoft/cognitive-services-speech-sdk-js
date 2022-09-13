@@ -412,7 +412,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         console.info("Starting fetch of token");
 
-        let authToken: any;
+        let authToken: string;
         got.post(url, req)
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
             .then((resp: { body: any }): void => authToken = resp.body)

@@ -847,7 +847,7 @@ describe("Service based tests", () => {
             },
         };
 
-        let authToken: any;
+        let authToken: string;
         got.post(url, req)
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
             .then((resp: { body: any }): void => authToken = resp.body)
