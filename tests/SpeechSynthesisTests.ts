@@ -835,7 +835,7 @@ describe("Service based tests", () => {
         });
     });
 
-    test("testSpeechSynthesizer: authentication with authorization token", (done: jest.DoneCallback): void {
+    test("testSpeechSynthesizer: authentication with authorization token", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer authentication with authorization token");
 
