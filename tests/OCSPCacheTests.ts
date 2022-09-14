@@ -18,7 +18,7 @@ import { WaitForPromise } from "./Utilities";
 import * as fs from "fs";
 import * as os from "os";
 import path from "path";
-import request from "request";
+import got from "got";
 import rimraf from "rimraf";
 
 const origCacehDir: string = process.env.SPEECH_OSCP_CACHE_ROOT;
@@ -84,31 +84,31 @@ function waitForEvents(eventName: string, eventCount: number, rejectMessage?: st
     }, rejectMessage === undefined ? eventName : rejectMessage, timeoutMS);
 }
 
-function makeRequest(disableOCSPStapling: boolean = true): Promise<void> {
-    return new Promise((resolve: (value: void) => void, reject: (reason: string) => void): void => {
+const makeRequest = (disableOCSPStapling: boolean = true): Promise<void> => {
+    return new Promise(async (resolve: (value: void) => void, reject: (reason: string) => void): Promise<void> => {
         const testUrl: string = "https://www.microsoft.com/";
 
         const agent: CertCheckAgent = new CertCheckAgent();
+        CertCheckAgent.forceDisableOCSPStapling = disableOCSPStapling;
 
-        const testRequest: request.Request = request({
-            followRedirect: false,
-            url: testUrl
-        }, (error: any, response: request.Response, body: any): void => {
-            if (error !== null) {
-                reject(error);
+        const { statusCode } = await got(testUrl, {
+                agent: { http: agent.GetAgent() },
+                followRedirect: false,
+            });
+        try {
+            if (statusCode !== 200) {
+                reject(`error: statusCode ${statusCode} received`);
             } else {
                 resolve();
             }
-
-        });
-        CertCheckAgent.forceDisableOCSPStapling = disableOCSPStapling;
-        testRequest.agent = agent.GetAgent();
-        testRequest.end();
+        } catch (error) {
+            reject(error);
+        }
     });
 }
 
 // https://github.com/chromium/badssl.com/issues/477
-test.skip("Test OCSP Revoked", (done: jest.DoneCallback) => {
+test.skip("Test OCSP Revoked", async (done: jest.DoneCallback): Promise<void> => {
     // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP Revoked");
 
@@ -116,10 +116,12 @@ test.skip("Test OCSP Revoked", (done: jest.DoneCallback) => {
 
     const agent: CertCheckAgent = new CertCheckAgent();
 
-    const testRequest: request.Request = request({
-        followRedirect: false,
-        url: testUrl
-    }, (error: any, response: request.Response, body: any): void => {
+    try {
+        await got(testUrl, {
+            agent: { http: agent.GetAgent() },
+            followRedirect: false,
+        });
+    } catch (error) {
         try {
             expect(error).not.toBeUndefined();
             expect(error).not.toBeNull();
@@ -128,10 +130,7 @@ test.skip("Test OCSP Revoked", (done: jest.DoneCallback) => {
         } catch (ex) {
             done(ex);
         }
-    });
-    testRequest.agent = agent.GetAgent();
-
-    testRequest.end();
+    }
 });
 
 test.skip("Test OCSP Staple", async (done: jest.DoneCallback) => {

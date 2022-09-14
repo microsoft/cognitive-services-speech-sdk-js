@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-import * as request from "request";
+import got from "got";
 import * as sdk from "../../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener } from "../../src/common.browser/Exports";
 import { HeaderNames } from "../../src/common.speech/HeaderNames";
@@ -45,24 +45,21 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
         return;
     }
 
+    const url = "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken";
     const req = {
         headers: {
             "Content-Type": "application/json",
             [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
         },
-        url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
     };
 
     let authToken: string;
+    got.post(url, req)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+        .then((resp: { body: any }): void => authToken = resp.body)
+        .catch((error: any): void => done(error));
 
-    request.post(req, (error: any, response: request.Response, body: any) => {
-        authToken = body;
-    });
-
-    WaitForCondition(() => {
-        return !!authToken;
-    }, () => {
-       
+    WaitForCondition((): boolean => !!authToken, (): void => {
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
         objsToClose.push(s);
 
@@ -89,7 +86,10 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
                 return;
             }
 
-            request.post(req, (error: any, response: request.Response, body: any): void => r.authorizationToken = body);
+            got.post(url, req)
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+                .then((resp: { body: any }): void => r.authorizationToken = resp.body)
+                .catch((error: any): void => done(error));
 
             setTimeout((): void => {
                 refreshAuthToken();
@@ -184,18 +184,16 @@ test("AuthToken refresh works correctly for Translation Recognizer", (done: jest
             "Content-Type": "application/json",
             [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
         },
-        url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
     };
 
     let authToken: string;
+    const url = "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken";
+    got.post(url, req)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+        .then((resp: { body: any }): void => authToken = resp.body)
+        .catch((error: any): void => done(error));
 
-    request.post(req, (error: any, response: request.Response, body: any) => {
-        authToken = body;
-    });
-
-    WaitForCondition(() => {
-        return !!authToken;
-    }, () => {
+    WaitForCondition((): boolean => !!authToken, (): void => {
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
         s.speechRecognitionLanguage = "en-US";
         s.addTargetLanguage("de-DE");
@@ -220,16 +218,17 @@ test("AuthToken refresh works correctly for Translation Recognizer", (done: jest
         objsToClose.push(r);
 
         // auto refresh the auth token.
-        const refreshAuthToken = () => {
+        const refreshAuthToken = (): void => {
             if (canceled && !inTurn) {
                 return;
             }
 
-            request.post(req, (error: any, response: request.Response, body: any) => {
-                r.authorizationToken = body;
-            });
+            got.post(url, req)
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+                .then((resp: { body: any }): void => r.authorizationToken = resp.body)
+                .catch((error: any): void => done(error));
 
-            setTimeout(() => {
+            setTimeout((): void => {
                 refreshAuthToken();
             }, 1000 * 60 * 9); // 9 minutes
         };
