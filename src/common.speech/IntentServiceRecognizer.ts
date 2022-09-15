@@ -178,13 +178,13 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 // If LUIS didn't return anything, send the existing event, else
                 // modify it to show the match.
                 // See if the intent found is in the list of intents asked for.
-                let addedIntent: AddedLmIntent = this.privAddedLmIntents[intentResponse.topScoringIntent.intent];
 
-                if (this.privUmbrellaIntent !== undefined) {
-                    addedIntent = this.privUmbrellaIntent;
-                }
+                if (null !== intentResponse && !!intentResponse.topScoringIntent && !!intentResponse.topScoringIntent.intent) {
+                    let addedIntent: AddedLmIntent = this.privAddedLmIntents[intentResponse.topScoringIntent.intent];
 
-                if (null !== intentResponse && addedIntent !== undefined) {
+                    if (this.privUmbrellaIntent !== undefined) {
+                        addedIntent = this.privUmbrellaIntent;
+                    }
                     const intentId = addedIntent.intentName === undefined ? intentResponse.topScoringIntent.intent : addedIntent.intentName;
                     let reason = ev.result.reason;
 
