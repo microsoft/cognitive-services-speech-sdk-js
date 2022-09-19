@@ -185,34 +185,38 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     if (this.privUmbrellaIntent !== undefined) {
                         addedIntent = this.privUmbrellaIntent;
                     }
-                    const intentId = addedIntent.intentName === undefined ? intentResponse.topScoringIntent.intent : addedIntent.intentName;
-                    let reason = ev.result.reason;
 
-                    if (undefined !== intentId) {
-                        reason = ResultReason.RecognizedIntent;
+                    if (!!addedIntent) {
+                        const intentId = addedIntent === undefined || addedIntent.intentName === undefined ? intentResponse.topScoringIntent.intent : addedIntent.intentName;
+                        let reason = ev.result.reason;
+
+                        if (undefined !== intentId) {
+                            reason = ResultReason.RecognizedIntent;
+                        }
+
+                        // make sure, properties is set.
+                        const properties = (undefined !== ev.result.properties) ?
+                            ev.result.properties : new PropertyCollection();
+
+                        properties.setProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult, connectionMessage.textBody);
+
+                        ev = new IntentRecognitionEventArgs(
+                            new IntentRecognitionResult(
+                                intentId,
+                                ev.result.resultId,
+                                reason,
+                                ev.result.text,
+                                ev.result.duration,
+                                ev.result.offset,
+                                undefined,
+                                undefined,
+                                ev.result.errorDetails,
+                                ev.result.json,
+                                properties),
+                            ev.offset,
+                            ev.sessionId);
+
                     }
-
-                    // make sure, properties is set.
-                    const properties = (undefined !== ev.result.properties) ?
-                        ev.result.properties : new PropertyCollection();
-
-                    properties.setProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult, connectionMessage.textBody);
-
-                    ev = new IntentRecognitionEventArgs(
-                        new IntentRecognitionResult(
-                            intentId,
-                            ev.result.resultId,
-                            reason,
-                            ev.result.text,
-                            ev.result.duration,
-                            ev.result.offset,
-                            undefined,
-                            undefined,
-                            ev.result.errorDetails,
-                            ev.result.json,
-                            properties),
-                        ev.offset,
-                        ev.sessionId);
                 }
                 this.privRequestSession.onPhraseRecognized(ev.offset + ev.result.duration);
 
