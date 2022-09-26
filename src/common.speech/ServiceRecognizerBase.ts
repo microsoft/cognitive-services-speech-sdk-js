@@ -682,7 +682,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                 // Are we still alive?
                 if (!this.privIsDisposed &&
-                    !this.privRequestSession.isSpeechEnded &&
                     this.privRequestSession.isRecognizing &&
                     this.privRequestSession.recogNumber === startRecogNumber) {
                     connection.send(
@@ -692,17 +691,19 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition).catch((): void => { });
                     });
 
-                    if (!audioStreamChunk?.isEnd) {
-                        // this.writeBufferToConsole(payload);
-                        // Regardless of success or failure, schedule the next upload.
-                        // If the underlying connection was broken, the next cycle will
-                        // get a new connection and re-transmit missing audio automatically.
-                        return readAndUploadCycle();
-                    } else {
-                        // the audio stream has been closed, no need to schedule next
-                        // read-upload cycle.
-                        if (!this.privIsLiveAudio) {
-                            this.privRequestSession.onSpeechEnded();
+                    if (!this.privRequestSession.isSpeechEnded) {
+                        if (!audioStreamChunk?.isEnd) {
+                            // this.writeBufferToConsole(payload);
+                            // Regardless of success or failure, schedule the next upload.
+                            // If the underlying connection was broken, the next cycle will
+                            // get a new connection and re-transmit missing audio automatically.
+                            return readAndUploadCycle();
+                        } else {
+                            // the audio stream has been closed, no need to schedule next
+                            // read-upload cycle.
+                            if (!this.privIsLiveAudio) {
+                                this.privRequestSession.onSpeechEnded();
+                            }
                         }
                     }
                 }
