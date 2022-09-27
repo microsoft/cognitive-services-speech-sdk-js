@@ -71,6 +71,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privSetTimeout: (cb: () => void, delay: number) => number = setTimeout;
     private privAudioSource: IAudioSource;
     private privIsLiveAudio: boolean = false;
+    private privAudioNode: ReplayableAudioNode;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
@@ -223,6 +224,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
             audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
             await this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
+            this.privAudioNode = audioNode;
             this.privRecognizerConfig.SpeechServiceConfig.Context.audio = { source: deviceInfo };
 
         } catch (error) {
@@ -461,6 +463,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                     case "turn.end":
                         await this.sendTelemetryData();
+                        await this.sendAudio(this.privAudioNode, true);
                         if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) {
                             this.privMustReportEndOfStream = false;
                             await this.cancelRecognitionLocal(CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined);
@@ -628,8 +631,32 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return await this.privConnectionConfigurationPromise;
     }
 
-    protected async sendAudio(audioStreamNode: IAudioStreamNode): Promise<void> {
+    protected async sendAudio(audioStreamNode: IAudioStreamNode, forceSend: boolean = false): Promise<void> {
         const audioFormat: AudioStreamFormatImpl = await this.audioSource.format;
+
+        const forceSendAudio = async (): Promise<void> => {
+            const connection: IConnection = await this.fetchConnection();
+            const audioStreamChunk: IStreamChunk<ArrayBuffer> = await audioStreamNode.read();
+
+            if (!audioStreamChunk || audioStreamChunk.isEnd) {
+                return;
+            }
+
+            const payload: ArrayBuffer = audioStreamChunk.buffer;
+
+            if (!!payload) {
+                connection.send(
+                    new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload)
+                    // eslint-disable-next-line @typescript-eslint/no-empty-function
+                ).catch((): void => {});
+            }
+
+            return;
+        };
+
+        if (forceSend) {
+            return forceSendAudio();
+        }
 
         // The time we last sent data to the service.
         let nextSendTime: number = Date.now();
@@ -682,8 +709,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                 // Are we still alive?
                 if (!this.privIsDisposed &&
+                    !this.privRequestSession.isSpeechEnded &&
                     this.privRequestSession.isRecognizing &&
                     this.privRequestSession.recogNumber === startRecogNumber) {
+
                     connection.send(
                         new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload)
                     ).catch((): void => {
@@ -691,19 +720,17 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition).catch((): void => { });
                     });
 
-                    if (!this.privRequestSession.isSpeechEnded) {
-                        if (!audioStreamChunk?.isEnd) {
-                            // this.writeBufferToConsole(payload);
-                            // Regardless of success or failure, schedule the next upload.
-                            // If the underlying connection was broken, the next cycle will
-                            // get a new connection and re-transmit missing audio automatically.
-                            return readAndUploadCycle();
-                        } else {
-                            // the audio stream has been closed, no need to schedule next
-                            // read-upload cycle.
-                            if (!this.privIsLiveAudio) {
-                                this.privRequestSession.onSpeechEnded();
-                            }
+                    if (!audioStreamChunk?.isEnd) {
+                        // this.writeBufferToConsole(payload);
+                        // Regardless of success or failure, schedule the next upload.
+                        // If the underlying connection was broken, the next cycle will
+                        // get a new connection and re-transmit missing audio automatically.
+                        return readAndUploadCycle();
+                    } else {
+                        // the audio stream has been closed, no need to schedule next
+                        // read-upload cycle.
+                        if (!this.privIsLiveAudio) {
+                            this.privRequestSession.onSpeechEnded();
                         }
                     }
                 }
