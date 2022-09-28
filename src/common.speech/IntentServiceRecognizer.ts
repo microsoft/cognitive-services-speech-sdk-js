@@ -178,41 +178,45 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 // If LUIS didn't return anything, send the existing event, else
                 // modify it to show the match.
                 // See if the intent found is in the list of intents asked for.
-                let addedIntent: AddedLmIntent = this.privAddedLmIntents[intentResponse.topScoringIntent.intent];
 
-                if (this.privUmbrellaIntent !== undefined) {
-                    addedIntent = this.privUmbrellaIntent;
-                }
+                if (null !== intentResponse && !!intentResponse.topScoringIntent && !!intentResponse.topScoringIntent.intent) {
+                    let addedIntent: AddedLmIntent = this.privAddedLmIntents[intentResponse.topScoringIntent.intent];
 
-                if (null !== intentResponse && addedIntent !== undefined) {
-                    const intentId = addedIntent.intentName === undefined ? intentResponse.topScoringIntent.intent : addedIntent.intentName;
-                    let reason = ev.result.reason;
-
-                    if (undefined !== intentId) {
-                        reason = ResultReason.RecognizedIntent;
+                    if (this.privUmbrellaIntent !== undefined) {
+                        addedIntent = this.privUmbrellaIntent;
                     }
 
-                    // make sure, properties is set.
-                    const properties = (undefined !== ev.result.properties) ?
-                        ev.result.properties : new PropertyCollection();
+                    if (!!addedIntent) {
+                        const intentId = addedIntent === undefined || addedIntent.intentName === undefined ? intentResponse.topScoringIntent.intent : addedIntent.intentName;
+                        let reason = ev.result.reason;
 
-                    properties.setProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult, connectionMessage.textBody);
+                        if (undefined !== intentId) {
+                            reason = ResultReason.RecognizedIntent;
+                        }
 
-                    ev = new IntentRecognitionEventArgs(
-                        new IntentRecognitionResult(
-                            intentId,
-                            ev.result.resultId,
-                            reason,
-                            ev.result.text,
-                            ev.result.duration,
-                            ev.result.offset,
-                            undefined,
-                            undefined,
-                            ev.result.errorDetails,
-                            ev.result.json,
-                            properties),
-                        ev.offset,
-                        ev.sessionId);
+                        // make sure, properties is set.
+                        const properties = (undefined !== ev.result.properties) ?
+                            ev.result.properties : new PropertyCollection();
+
+                        properties.setProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult, connectionMessage.textBody);
+
+                        ev = new IntentRecognitionEventArgs(
+                            new IntentRecognitionResult(
+                                intentId,
+                                ev.result.resultId,
+                                reason,
+                                ev.result.text,
+                                ev.result.duration,
+                                ev.result.offset,
+                                undefined,
+                                undefined,
+                                ev.result.errorDetails,
+                                ev.result.json,
+                                properties),
+                            ev.offset,
+                            ev.sessionId);
+
+                    }
                 }
                 this.privRequestSession.onPhraseRecognized(ev.offset + ev.result.duration);
 

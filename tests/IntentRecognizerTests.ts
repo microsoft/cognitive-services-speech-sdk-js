@@ -401,6 +401,46 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 ValidateResultMatchesWaveFile(res);
                 done();
             },
+            (error: string): void => {
+                done(error);
+            });
+    }, 20000);
+
+    test("RecognizedReceivedWithValidNonLUISKey", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: RecognizedReceivedWithValidNonLUISKey");
+
+        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeakerIDSubscriptionKey, Settings.SpeakerIDRegion);
+        objsToClose.push(s);
+
+        const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(s, Settings.AmbiguousWaveFile);
+        objsToClose.push(r);
+
+        const lm: sdk.LanguageUnderstandingModel = sdk.LanguageUnderstandingModel.fromAppId(Settings.LuisAppId);
+
+        r.addAllIntents(lm);
+
+        /*
+        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done(error);
+            }
+        };
+        */
+
+        r.recognizeOnceAsync(
+            (p2: sdk.IntentRecognitionResult) => {
+                const res: sdk.IntentRecognitionResult = p2;
+                expect(res).not.toBeUndefined();
+                expect(res.errorDetails).toBeUndefined();
+                expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                expect(res.properties).not.toBeUndefined();
+                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                done();
+            },
             (error: string) => {
                 done(error);
             });
