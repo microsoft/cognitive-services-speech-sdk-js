@@ -637,6 +637,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const forceSendAudio = async (): Promise<void> => {
             const connection: IConnection = await this.fetchConnection();
             const audioStreamChunk: IStreamChunk<ArrayBuffer> = await audioStreamNode.read();
+            this.privAudioNode = undefined;
 
             if (!audioStreamChunk || audioStreamChunk.isEnd) {
                 return;
@@ -655,6 +656,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         };
 
         if (forceSend) {
+            this.privAudioNode = undefined;
             return forceSendAudio();
         }
 
