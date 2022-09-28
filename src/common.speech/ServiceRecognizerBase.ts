@@ -463,7 +463,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                     case "turn.end":
                         await this.sendTelemetryData();
-                        await this.sendAudio(this.privAudioNode, true);
                         if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) {
                             this.privMustReportEndOfStream = false;
                             await this.cancelRecognitionLocal(CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined);
@@ -478,6 +477,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         } else {
                             connection = await this.fetchConnection();
                             await this.sendPrePayloadJSON(connection);
+                            if (!!this.privAudioNode) {
+                                await this.sendAudio(this.privAudioNode, true);
+                            }
                         }
                         break;
 
