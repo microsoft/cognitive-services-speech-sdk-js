@@ -325,7 +325,7 @@ test("Create Conversation with one channel throws", (done: jest.DoneCallback): v
             done.fail("No successful callback expected for single channel CTS");
         },
         (error: string): void => {
-            expect(error).toEqual("Error: Single channel audio configuration for ConversationTranscriber is currently under limited preview, contact us (https://learn.microsoft.com/azure/cognitive-services/cognitive-services-support-options) for more details");
+            expect(error).toEqual("Error: Single channel audio configuration for ConversationTranscriber is currently under private preview, please contact diarizationrequest@microsoft.com for more details");
             done();
         });
 });

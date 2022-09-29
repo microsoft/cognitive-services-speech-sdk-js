@@ -117,7 +117,7 @@ export class TranscriberRecognizer extends Recognizer {
         const format: AudioStreamFormatImpl = await audioConfigImpl.format;
         const channels = format.channels;
         if (channels === 1 && this.properties.getProperty("TranscriptionService_SingleChannel", "false").toLowerCase() !== "true") {
-            throw new Error("Single channel audio configuration for ConversationTranscriber is currently under limited preview, contact us (https://learn.microsoft.com/azure/cognitive-services/cognitive-services-support-options) for more details");
+            throw new Error("Single channel audio configuration for ConversationTranscriber is currently under private preview, please contact diarizationrequest@microsoft.com for more details");
         } else if (channels !== 8) {
             throw new Error(`Unsupported audio configuration: Detected ${channels}-channel audio`);
         }
