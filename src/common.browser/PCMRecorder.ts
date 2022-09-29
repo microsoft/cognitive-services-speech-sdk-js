@@ -19,25 +19,6 @@ export class PcmRecorder implements IRecorder {
         const waveStreamEncoder = new RiffPcmEncoder(context.sampleRate, desiredSampleRate);
 
         const micInput = context.createMediaStreamSource(mediaStream);
-        if (!this.privSpeechProcessorScript) {
-            const workletScript = `class SP extends AudioWorkletProcessor {
-                constructor(options) {
-                  super(options);
-                }
-                process(inputs, outputs) {
-                  const input = inputs[0];
-                  const output = [];
-                  for (let channel = 0; channel < input.length; channel += 1) {
-                    output[channel] = input[channel];
-                  }
-                  this.port.postMessage(output[0]);
-                  return true;
-                }
-              }
-              registerProcessor('speech-processor', SP);`;
-            const blob = new Blob([workletScript], { type: "application/javascript; charset=utf-8" });
-            this.privSpeechProcessorScript = URL.createObjectURL(blob);
-        }
 
         const attachScriptProcessor = (): void => {
             // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -82,7 +63,27 @@ export class PcmRecorder implements IRecorder {
         // https://webaudio.github.io/web-audio-api/#audioworklet
         // Using AudioWorklet to improve audio quality and avoid audio glitches due to blocking the UI thread
 
-        if (!!this.privSpeechProcessorScript && !!context.audioWorklet) {
+        if (!!context.audioWorklet) {
+            if (!this.privSpeechProcessorScript) {
+                const workletScript = `class SP extends AudioWorkletProcessor {
+                    constructor(options) {
+                      super(options);
+                    }
+                    process(inputs, outputs) {
+                      const input = inputs[0];
+                      const output = [];
+                      for (let channel = 0; channel < input.length; channel += 1) {
+                        output[channel] = input[channel];
+                      }
+                      this.port.postMessage(output[0]);
+                      return true;
+                    }
+                  }
+                  registerProcessor('speech-processor', SP);`;
+                const blob = new Blob([workletScript], { type: "application/javascript; charset=utf-8" });
+                this.privSpeechProcessorScript = URL.createObjectURL(blob);
+            }
+
             context.audioWorklet
                 .addModule(this.privSpeechProcessorScript)
                 .then((): void => {
