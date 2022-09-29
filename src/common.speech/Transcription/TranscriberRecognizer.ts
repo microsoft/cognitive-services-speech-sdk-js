@@ -3,6 +3,7 @@
 
 import { marshalPromiseToCallbacks } from "../../common/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
+import { AudioStreamFormatImpl } from "../../sdk/Audio/AudioStreamFormat";
 import { Contracts } from "../../sdk/Contracts";
 import {
     AudioConfig,
@@ -43,15 +44,23 @@ export class TranscriberRecognizer extends Recognizer {
     /**
      * TranscriberRecognizer constructor.
      * @constructor
-     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
+     * @param {SpeechTranslationConfig} speechTranslationConfig - Non-audio configuration associated with the recognizer
+     * @param {AudioConfig} audioConfig - An audio configuration associated with the recognizer
      */
-    public constructor(speechTranslationConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+    public constructor(speechTranslationConfig: SpeechTranslationConfig, audioConfig: AudioConfig) {
         const speechTranslationConfigImpl: SpeechTranslationConfigImpl = speechTranslationConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(speechTranslationConfigImpl, "speechTranslationConfig");
+
+        const audioConfigImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
+        Contracts.throwIfNull(audioConfigImpl, "audioConfigImpl");
 
         Contracts.throwIfNullOrWhitespace(
             speechTranslationConfigImpl.speechRecognitionLanguage,
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
+
+        if (!!audioConfig) {
+
+        }
 
         super(audioConfig, speechTranslationConfigImpl.properties, new TranscriberConnectionFactory());
         this.privDisposedRecognizer = false;
@@ -106,6 +115,18 @@ export class TranscriberRecognizer extends Recognizer {
         Contracts.throwIfNullOrUndefined(reco, "serviceRecognizer");
         await reco.sendSpeechEventAsync(conversationInfo, command);
     }
+
+    public enforceAudioGating(): void {
+        const audioConfigImpl = this.audioConfig as AudioConfigImpl;
+        audioConfigImpl.format.then((format: AudioStreamFormatImpl): void => {
+            const channels = format.channels;
+            if (channels === 1 && this.properties.getProperty("TranscriptionService_SingleChannel", "false").toLowerCase() !== "true") {
+                throw new Error("Single channel audio configuration for ConversationTranscriber is currently under limited preview, contact us (https://learn.microsoft.com/azure/cognitive-services/cognitive-services-support-options) for more details");
+            } else if (channels !== 8) {
+                throw new Error(`Unsupported audio configuration: Detected ${channels}-channel audio`);
+            }
+        }).catch((error) => { throw error; });
+    };
 
     public connectCallbacks(transcriber: ConversationTranscriber): void {
         this.canceled = (s: any, e: CancellationEventArgs): void => {

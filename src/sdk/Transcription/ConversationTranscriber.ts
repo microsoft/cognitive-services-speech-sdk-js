@@ -171,6 +171,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         // ref the conversation object
         // create recognizer and subscribe to recognizer events
         this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
+        this.privRecognizer.enforceAudioGating();
         Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
         this.privRecognizer.connectCallbacks(this);
 
