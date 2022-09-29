@@ -58,10 +58,6 @@ export class TranscriberRecognizer extends Recognizer {
             speechTranslationConfigImpl.speechRecognitionLanguage,
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        if (!!audioConfig) {
-
-        }
-
         super(audioConfig, speechTranslationConfigImpl.properties, new TranscriberConnectionFactory());
         this.privDisposedRecognizer = false;
     }
@@ -116,17 +112,17 @@ export class TranscriberRecognizer extends Recognizer {
         await reco.sendSpeechEventAsync(conversationInfo, command);
     }
 
-    public enforceAudioGating(): void {
+    public async enforceAudioGating(): Promise<void> {
         const audioConfigImpl = this.audioConfig as AudioConfigImpl;
-        audioConfigImpl.format.then((format: AudioStreamFormatImpl): void => {
-            const channels = format.channels;
-            if (channels === 1 && this.properties.getProperty("TranscriptionService_SingleChannel", "false").toLowerCase() !== "true") {
-                throw new Error("Single channel audio configuration for ConversationTranscriber is currently under limited preview, contact us (https://learn.microsoft.com/azure/cognitive-services/cognitive-services-support-options) for more details");
-            } else if (channels !== 8) {
-                throw new Error(`Unsupported audio configuration: Detected ${channels}-channel audio`);
-            }
-        }).catch((error) => { throw error; });
-    };
+        const format: AudioStreamFormatImpl = await audioConfigImpl.format;
+        const channels = format.channels;
+        if (channels === 1 && this.properties.getProperty("TranscriptionService_SingleChannel", "false").toLowerCase() !== "true") {
+            throw new Error("Single channel audio configuration for ConversationTranscriber is currently under limited preview, contact us (https://learn.microsoft.com/azure/cognitive-services/cognitive-services-support-options) for more details");
+        } else if (channels !== 8) {
+            throw new Error(`Unsupported audio configuration: Detected ${channels}-channel audio`);
+        }
+        return;
+    }
 
     public connectCallbacks(transcriber: ConversationTranscriber): void {
         this.canceled = (s: any, e: CancellationEventArgs): void => {
