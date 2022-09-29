@@ -105,6 +105,26 @@ export abstract class AudioConfig {
     }
 
     /**
+     * Creates an AudioConfig object using the specified audio context.
+     * @member AudioConfig.fromAudioContext
+     * @function
+     * @public
+     * @param {AudioContext} audioContext - Specifies the audio context to use
+     * Currently, only a sample rate of 160000 is supported.
+     * @returns {AudioConfig} The audio input configuration being created.
+     */
+    public static fromAudioContext(audioContext: AudioContext): AudioConfig {
+        if (typeof AudioContext !== "undefined" && audioContext instanceof AudioContext) {
+            if (audioContext.sampleRate === 16000) {
+                const pcmRecorder = new PcmRecorder(false);
+                return new AudioConfigImpl(new MicAudioSource(pcmRecorder, null, null, null, audioContext));
+            }
+            throw new Error(`Sample Rate of ${audioContext.sampleRate} not supported for audioContext`);
+        }
+
+        throw new Error("Not Supported Type");
+    }
+    /**
      * Creates an AudioConfig object representing the default speaker.
      * @member AudioConfig.fromDefaultSpeakerOutput
      * @function

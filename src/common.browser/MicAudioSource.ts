@@ -58,6 +58,8 @@ export class MicAudioSource implements IAudioSource {
 
     private privContext: AudioContext;
 
+    private privKeepContextAlive: boolean = false;
+
     private privMicrophoneLabel: string;
 
     private privOutputChunkSize: number;
@@ -68,7 +70,8 @@ export class MicAudioSource implements IAudioSource {
         private readonly privRecorder: IRecorder,
         private readonly deviceId?: string,
         audioSourceId?: string,
-        mediaStream?: MediaStream
+        mediaStream?: MediaStream,
+        audioContext?: AudioContext
         ) {
 
         this.privOutputChunkSize = MicAudioSource.AUDIOFORMAT.avgBytesPerSec / 10;
@@ -76,6 +79,10 @@ export class MicAudioSource implements IAudioSource {
         this.privEvents = new EventSource<AudioSourceEvent>();
         this.privMediaStream = mediaStream || null;
         this.privIsClosing = false;
+        if (!!audioContext) {
+            this.privContext = audioContext;
+            this.privKeepContextAlive = true;
+        }
     }
 
     public get format(): Promise<AudioStreamFormatImpl> {
@@ -214,7 +221,9 @@ export class MicAudioSource implements IAudioSource {
             this.privInitializeDeferral = null;
         }
 
-        await this.destroyAudioContext();
+        if (!this.privKeepContextAlive) {
+            await this.destroyAudioContext();
+        }
 
         return;
     }
