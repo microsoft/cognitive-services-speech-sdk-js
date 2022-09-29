@@ -119,7 +119,7 @@ export abstract class AudioConfig {
                 const pcmRecorder = new PcmRecorder(false);
                 return new AudioConfigImpl(new MicAudioSource(pcmRecorder, null, null, null, audioContext));
             }
-            throw new Error(`Sample Rate of ${audioContext.sampleRate} not supported for audioContext`);
+            throw new Error(`Sample Rate of ${audioContext.sampleRate} not supported for audioContext parameter.`);
         }
 
         throw new Error("Not Supported Type");
