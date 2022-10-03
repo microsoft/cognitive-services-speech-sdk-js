@@ -587,7 +587,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             SpeechServiceConfigJson = JSON.stringify(replacement);
         }
 
-        if (this.privRecognizerConfig.parameters.getProperty("TranscriptionService_SingleChannel", "false").toLowerCase() === "true") {
+        if (this.privRecognizerConfig.parameters.getProperty("f0f5debc-f8c9-4892-ac4b-90a7ab359fd2", "false").toLowerCase() === "true") {
             const json: { context: { DisableReferenceChannel: string; MicSpec: string } } = JSON.parse(SpeechServiceConfigJson) as { context: { DisableReferenceChannel: string; MicSpec: string } };
             json.context.DisableReferenceChannel = "True";
             json.context.MicSpec = "1_0_0";
