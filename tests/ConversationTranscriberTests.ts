@@ -308,7 +308,29 @@ test("Leave Conversation", (done: jest.DoneCallback) => {
             done(error);
         });
 });
-test("Create Conversation with one channel audio (aligned)", (done: jest.DoneCallback) => {
+
+test("Create Conversation with one channel throws", (done: jest.DoneCallback): void => {
+    // eslint-disable-next-line no-console
+    console.info("Name: Create Conversation with one channel audio (aligned)");
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const c: sdk.Conversation = CreateConversation(s);
+    objsToClose.push(c);
+
+    const t: sdk.ConversationTranscriber = BuildMonoWaveTranscriber();
+
+    t.joinConversationAsync(c,
+        (): void => {
+            done.fail("No successful callback expected for single channel CTS");
+        },
+        (error: string): void => {
+            expect(error).toEqual("Error: Single channel audio configuration for ConversationTranscriber is currently under private preview, please contact diarizationrequest@microsoft.com for more details");
+            done();
+        });
+});
+
+test.skip("Create Conversation with one channel audio (aligned)", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Conversation with one channel audio (aligned)");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();

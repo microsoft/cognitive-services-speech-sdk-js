@@ -27,6 +27,7 @@
 // This one is used for a test that is commented out:
 // Settings.VoiceSignatureEnrollmentKey
 //
+/* eslint-disable no-console */
 
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
@@ -41,7 +42,7 @@ import { validateTelemetry } from "./TelemetryUtil";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
-import * as request from "request";
+import got from "got";
 
 import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
@@ -399,29 +400,27 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
     });
 
     test("testGetOutputFormatDetailed with authorization token", (done: jest.DoneCallback) => {
-        // eslint-disable-next-line no-console
         console.info("Name: testGetOutputFormatDetailed");
 
+        const url = "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken";
         const req = {
             headers: {
                 "Content-Type": "application/json",
                 [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
             },
-            url: "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken",
         };
-
-        let authToken: string;
 
         console.info("Starting fetch of token");
 
-        request.post(req, (error: any, response: request.Response, body: any) => {
-            console.info("Got token");
-            authToken = body;
-        });
+        let authToken: string;
+        got.post(url, req)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+            .then((resp: { body: any }): void => authToken = resp.body)
+            .catch((error: any): void => done(error));
 
-        WaitForCondition(() => {
-            return !!authToken;
-        }, () => {
+        console.info("Got token");
+
+        WaitForCondition((): boolean => !!authToken, (): void => {
             const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1";
 
             // note: we use an empty subscription key so that we use the authorization token later.
@@ -461,7 +460,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 done(error);
             });
         });
-    }, 10000);
+    }, 20000);
 
     test("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console

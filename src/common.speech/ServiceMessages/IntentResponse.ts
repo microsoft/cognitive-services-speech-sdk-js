@@ -3,9 +3,9 @@
 // response
 
 export interface IIntentResponse {
-    query: string;
-    topScoringIntent: ISingleIntent;
-    entities: IIntentEntity[];
+    query?: string;
+    topScoringIntent?: ISingleIntent;
+    entities?: IIntentEntity[];
 }
 
 export interface IIntentEntity {
@@ -25,7 +25,11 @@ export class IntentResponse implements IIntentResponse {
     private privIntentResponse: IIntentResponse;
 
     private constructor(json: string) {
-        this.privIntentResponse = JSON.parse(json) as IIntentResponse;
+        if (json === "") {
+            this.privIntentResponse = {};
+        } else {
+            this.privIntentResponse = JSON.parse(json) as IIntentResponse;
+        }
     }
 
     public static fromJSON(json: string): IntentResponse {

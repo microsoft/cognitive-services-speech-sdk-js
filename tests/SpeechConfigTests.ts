@@ -20,13 +20,13 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // Override inputs, if necessary
     Settings.LoadSettings();
     Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
     // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
@@ -95,54 +95,54 @@ const BuildSpeechSynthesizerToFileOutput: (speechConfig: sdk.SpeechConfig, fileN
         return s;
     };
 
-test("Null Param Check, both.", () => {
-    expect(() => sdk.SpeechConfig.fromSubscription(null, null)).toThrowError();
+test("Null Param Check, both.", (): void => {
+    expect((): sdk.SpeechConfig => sdk.SpeechConfig.fromSubscription(null, null)).toThrowError();
 });
 
-test("Null Param Check, Region", () => {
-    expect(() => sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, null)).toThrowError();
+test("Null Param Check, Region", (): void => {
+    expect((): sdk.SpeechConfig => sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, null)).toThrowError();
 });
 
-test("Null Param Check, Key", () => {
-    expect(() => sdk.SpeechConfig.fromSubscription(null, Settings.SpeechRegion)).toThrowError();
+test("Null Param Check, Key", (): void => {
+    expect((): sdk.SpeechConfig => sdk.SpeechConfig.fromSubscription(null, Settings.SpeechRegion)).toThrowError();
 });
 
-test("Valid Params", () => {
+test("Valid Params", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     expect(s).not.toBeUndefined();
     s.close();
 });
 
-test("From Endpoint, but null", () => {
-    expect(() => sdk.SpeechConfig.fromEndpoint(null, null)).toThrowError();
+test("From Endpoint, but null", (): void => {
+    expect((): sdk.SpeechConfig => sdk.SpeechConfig.fromEndpoint(null, null)).toThrowError();
 });
 
-test("From Endpoint, endpoihnt numm null", () => {
-    expect(() => sdk.SpeechConfig.fromEndpoint(null, Settings.SpeechSubscriptionKey)).toThrowError();
+test("From Endpoint, endpoint url null", (): void => {
+    expect((): sdk.SpeechConfig => sdk.SpeechConfig.fromEndpoint(null, Settings.SpeechSubscriptionKey)).toThrowError();
 });
 
-test("From Endpoint, key null", () => {
-    expect(() => sdk.SpeechConfig.fromEndpoint(new URL("http://www.example.com"), null)).toThrowError();
+test("From Endpoint, key null", (): void => {
+    expect((): sdk.SpeechConfig => sdk.SpeechConfig.fromEndpoint(new URL("http://www.example.com"), null)).toThrowError();
 });
 
-test.skip("From endpoint, invalid key format.", () => {
-    expect(() => sdk.SpeechConfig.fromEndpoint(new URL("http://www.example.com"), "illegal-subscription")).toThrowError();
+test.skip("From endpoint, invalid key format.", (): void => {
+    expect((): sdk.SpeechConfig => sdk.SpeechConfig.fromEndpoint(new URL("http://www.example.com"), "illegal-subscription")).toThrowError();
 });
 
 // TODO use an endpoint that we control so the subscription key is not leaked!
-test("From endpoint, valid Params", () => {
+test("From endpoint, valid Params", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL("http://www.example.com"), "Settings.SpeechSubscriptionKey");
     expect(s).not.toBeUndefined();
     s.close();
 });
 
-test("TypedParametersAccessibleViaPropBag", () => {
+test("TypedParametersAccessibleViaPropBag", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
-    TestParam(() => s.authorizationToken, (val: string) => (s.authorizationToken = val), sdk.PropertyId.SpeechServiceAuthorization_Token, s);
-    TestParam(() => s.endpointId, (val: string) => (s.endpointId = val), sdk.PropertyId.SpeechServiceConnection_EndpointId, s);
-    TestParam(() => s.speechRecognitionLanguage, (val: string) => (s.speechRecognitionLanguage = val), sdk.PropertyId.SpeechServiceConnection_RecoLanguage, s);
-    TestParam(() => s.speechSynthesisLanguage, (val: string) => (s.speechSynthesisLanguage = val), sdk.PropertyId.SpeechServiceConnection_SynthLanguage, s);
-    TestParam(() => s.speechSynthesisVoiceName, (val: string) => (s.speechSynthesisVoiceName = val), sdk.PropertyId.SpeechServiceConnection_SynthVoice, s);
+    TestParam((): string => s.authorizationToken, (val: string) => (s.authorizationToken = val), sdk.PropertyId.SpeechServiceAuthorization_Token, s);
+    TestParam((): string => s.endpointId, (val: string) => (s.endpointId = val), sdk.PropertyId.SpeechServiceConnection_EndpointId, s);
+    TestParam((): string => s.speechRecognitionLanguage, (val: string) => (s.speechRecognitionLanguage = val), sdk.PropertyId.SpeechServiceConnection_RecoLanguage, s);
+    TestParam((): string => s.speechSynthesisLanguage, (val: string) => (s.speechSynthesisLanguage = val), sdk.PropertyId.SpeechServiceConnection_SynthLanguage, s);
+    TestParam((): string => s.speechSynthesisVoiceName, (val: string) => (s.speechSynthesisVoiceName = val), sdk.PropertyId.SpeechServiceConnection_SynthVoice, s);
 });
 
 const TestParam = (getAccess: () => string, setAccess: (val: string) => void, propEnum: sdk.PropertyId, config: sdk.SpeechConfig): void => {
@@ -158,7 +158,7 @@ const TestParam = (getAccess: () => string, setAccess: (val: string) => void, pr
     expect(getAccess()).toEqual(testString2);
 };
 
-test("Unset param return default", () => {
+test("Unset param return default", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
     const name: string = createNoDashGuid();
@@ -170,7 +170,7 @@ test("Unset param return default", () => {
     s.close();
 });
 
-test("Create Recognizer", () => {
+test("Create Recognizer", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s);
@@ -182,7 +182,7 @@ test("Create Recognizer", () => {
     s.close();
 });
 
-test("Properties are passed to recognizer", () => {
+test("Properties are passed to recognizer", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = createNoDashGuid();
     s.authorizationToken = createNoDashGuid();
@@ -199,7 +199,7 @@ test("Properties are passed to recognizer", () => {
     s.close();
 });
 
-test("Create SR from AudioConfig", () => {
+test("Create SR from AudioConfig", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
     const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
@@ -213,16 +213,16 @@ test("Create SR from AudioConfig", () => {
     s.close();
 });
 
-test("Null Language Throws", () => {
+test("Null Language Throws", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = null;
 
-    expect(() => new sdk.SpeechRecognizer(s)).toThrowError();
+    expect((): sdk.SpeechRecognizer => new sdk.SpeechRecognizer(s)).toThrowError();
 
     s.close();
 });
 
-test("Create recognizer with language and audioConfig", () => {
+test("Create recognizer with language and audioConfig", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-EN";
 
@@ -235,7 +235,7 @@ test("Create recognizer with language and audioConfig", () => {
     s.close();
 });
 
-test("Create Intent Recognizer", () => {
+test("Create Intent Recognizer", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
     const r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s);
@@ -243,16 +243,16 @@ test("Create Intent Recognizer", () => {
     s.close();
 });
 
-test("testCreateIntentRecognizerLanguage1", () => {
+test("testCreateIntentRecognizerLanguage1", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = null;
 
-    expect(() => new sdk.IntentRecognizer(s)).toThrow();
+    expect((): sdk.IntentRecognizer => new sdk.IntentRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Intent Recognizer Success", () => {
+test("Intent Recognizer Success", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-US";
 
@@ -266,7 +266,7 @@ test("Intent Recognizer Success", () => {
     s.close();
 });
 
-test("Intent Recognizer with Wave File.", () => {
+test("Intent Recognizer with Wave File.", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-US";
 
@@ -282,33 +282,33 @@ test("Intent Recognizer with Wave File.", () => {
     s.close();
 });
 
-test("Intent Recognizer null language Throws", () => {
+test("Intent Recognizer null language Throws", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Translation Recognizer No Target Languages Throws", () => {
+test("Translation Recognizer No Target Languages Throws", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-EN";
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Translation Recognizer No Source Language Throws", () => {
+test("Translation Recognizer No Source Language Throws", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.addTargetLanguage("en-EN");
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Translation Recog success", () => {
+test("Translation Recog success", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-EN";
     s.addTargetLanguage("en-US");
@@ -322,37 +322,37 @@ test("Translation Recog success", () => {
     s.close();
 });
 
-test("Translation Recognizer Null target languages throws", () => {
+test("Translation Recognizer Null target languages throws", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], null);
     s.speechRecognitionLanguage = "illegal";
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Test Translation Recognizer empty target list throws", () => {
+test("Test Translation Recognizer empty target list throws", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.speechRecognitionLanguage = "en-EN";
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], "");
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
     s.close();
 });
 
-test("Translation Null voice value throws", () => {
+test("Translation Null voice value throws", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], "illegal");
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationVoice], null);
     s.speechRecognitionLanguage = "en-EN";
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Translation Recognizer success.", () => {
+test("Translation Recognizer success.", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], "en-US");
     s.speechRecognitionLanguage = "en-EN";
@@ -366,59 +366,59 @@ test("Translation Recognizer success.", () => {
     s.close();
 });
 
-test("Translation Recog Nul via prop set for targets", () => {
+test("Translation Recog Nul via prop set for targets", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], null);
 
-    expect(() => { s.speechRecognitionLanguage = null; }).toThrow();
+    expect((): void => s.speechRecognitionLanguage = null ).toThrow();
 
     s.close();
 });
 
-test("Translation Recog Null via propset voice and targets", () => {
+test("Translation Recog Null via propset voice and targets", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], null);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationVoice], null);
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Translation Recog Null via propset voice and targets with Language", () => {
+test("Translation Recog Null via propset voice and targets with Language", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], null);
     s.speechRecognitionLanguage = "en-US";
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationVoice], null);
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Translation Recog with empty targets via prop", () => {
+test("Translation Recog with empty targets via prop", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], "");
     s.speechRecognitionLanguage = "en-US";
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationVoice], null);
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Translation Recog, Null voice via prop throws", () => {
+test("Translation Recog, Null voice via prop throws", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], "en-US");
     s.speechRecognitionLanguage = "en-US";
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationVoice], null);
 
-    expect(() => new sdk.TranslationRecognizer(s)).toThrow();
+    expect((): sdk.TranslationRecognizer => new sdk.TranslationRecognizer(s)).toThrow();
 
     s.close();
 });
 
-test("Translation Recog success", () => {
+test("Translation Recog success", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], "en-US");
     s.speechRecognitionLanguage = "en-US";
@@ -435,21 +435,43 @@ test("Translation Recog success", () => {
     s.close();
 });
 
-test("testClose", () => {
+test("testClose", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
     s.close();
 });
 
-describe("NPM proxy test", () => {
+test("bad segmentation silence value", (done: jest.DoneCallback): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
 
-    afterEach(() => {
+    s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, "150000000");
+    const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+        try {
+            expect(e).not.toBeUndefined();
+            expect(e.errorDetails).not.toBeUndefined();
+            expect(e.errorDetails).toContain("1007");
+            done();
+        } catch (error) {
+            done(error);
+        }
+    });
+}, 30000);
+
+describe("NPM proxy test", (): void => {
+
+    afterEach((): void => {
         // Reset the WebSocket test hook to browser.
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
     // Require manual setup of a proxy server.
-    test.skip("valid proxy set", (done: jest.DoneCallback) => {
+    test.skip("valid proxy set", (done: jest.DoneCallback): void => {
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         objsToClose.push(s);
 
@@ -473,7 +495,7 @@ describe("NPM proxy test", () => {
         });
     });
 
-    test("proxy set to bad port", (done: jest.DoneCallback) => {
+    test("proxy set to bad port", (done: jest.DoneCallback): void => {
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         objsToClose.push(s);
 
@@ -495,9 +517,10 @@ describe("NPM proxy test", () => {
             }
         });
     }, 30000);
+
 });
 
-Settings.testIfDOMCondition("Proxy has no effect on browser WebSocket", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("Proxy has no effect on browser WebSocket", (done: jest.DoneCallback): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     objsToClose.push(s);
 
@@ -521,7 +544,7 @@ Settings.testIfDOMCondition("Proxy has no effect on browser WebSocket", (done: j
     });
 });
 
-test("Region & Key getter test (Speech)", () => {
+test("Region & Key getter test (Speech)", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     objsToClose.push(s);
 
@@ -529,7 +552,7 @@ test("Region & Key getter test (Speech)", () => {
     expect(s.region).toEqual(Settings.SpeechRegion);
 });
 
-test("Region & Key getter test (Translation)", () => {
+test("Region & Key getter test (Translation)", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     objsToClose.push(s);
 
@@ -537,37 +560,15 @@ test("Region & Key getter test (Translation)", () => {
     expect(s.region).toEqual(Settings.SpeechRegion);
 });
 
-describe("Connection URL Tests", () => {
-    let uri: string;
-    let detachObject: IDetachable;
+describe("Connection URL Tests", (): void => {
 
-    beforeEach(() => {
-        detachObject = Events.instance.attachListener({
-            onEvent: (event: PlatformEvent) => {
-                if (event instanceof ConnectionStartEvent) {
-                    const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
-                    uri = connectionEvent.uri;
-                }
-            },
-        });
-    });
-
-    afterEach(async () => {
-        if (undefined !== detachObject) {
-            await detachObject.detach();
-            detachObject = undefined;
-        }
-
-        uri = undefined;
-    });
-
-    function testHostConnection(
+    const testHostConnection = (
         createMethod: (url: URL, key: string) => sdk.SpeechConfig | sdk.SpeechTranslationConfig,
         hostName: string,
         expectedHostName: string,
         recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer,
         done: jest.DoneCallback
-    ): void {
+    ): void => {
 
         const s: sdk.SpeechConfig | sdk.SpeechTranslationConfig = createMethod(new URL(hostName), "fakekey");
         objsToClose.push(s);
@@ -576,6 +577,15 @@ describe("Connection URL Tests", () => {
         objsToClose.push(r);
 
         let recognizeOrSynthesizeOnceAsync: (cb: (p2: any) => void) => void;
+        let uri: string;
+        const detachObject: IDetachable = Events.instance.attachListener({
+            onEvent: (event: PlatformEvent): void => {
+                if (event instanceof ConnectionStartEvent) {
+                    const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                    uri = connectionEvent.uri;
+                }
+            },
+        });
 
         if (r instanceof sdk.Recognizer) {
             recognizeOrSynthesizeOnceAsync = (cb: (p2: any) => void): void => {
@@ -587,7 +597,7 @@ describe("Connection URL Tests", () => {
             };
         }
         recognizeOrSynthesizeOnceAsync(
-            (p2: any): void => {
+            (p2: sdk.RecognitionResult): void => {
                 try {
                     expect(uri).not.toBeUndefined();
                     // Make sure there's only a single ? in the URL.
@@ -604,9 +614,13 @@ describe("Connection URL Tests", () => {
                     done();
                 } catch (error) {
                     done(error);
+                } finally {
+                    void detachObject.detach();
+
+                    uri = undefined;
                 }
             });
-    }
+    };
 
     describe.each([
         [sdk.SpeechConfig.fromHost, BuildSpeechRecognizerFromWaveFile],
@@ -617,7 +631,7 @@ describe("Connection URL Tests", () => {
         config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) =>
         sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
 
-        test("Simple Host and protocol", (done: jest.DoneCallback) => {
+        test("Simple Host and protocol", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: Simple Host and protocol");
 
@@ -628,7 +642,7 @@ describe("Connection URL Tests", () => {
                 done);
         }, 30000);
 
-        test("Simple Host, protocol, and port", (done: jest.DoneCallback) => {
+        test("Simple Host, protocol, and port", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: Simple Host, protocol, and port");
 
@@ -640,15 +654,15 @@ describe("Connection URL Tests", () => {
         }, 30000);
     });
 
-    function testUrlParameter(
+    const testUrlParameter = (
         createMethod: (url: URL, key: string) => sdk.SpeechConfig | sdk.SpeechTranslationConfig,
         setMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => void,
         recognizerCreateMethod: (config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer,
         done: jest.DoneCallback,
         ...urlSubStrings: string[]
-    ): void {
+    ): void => {
 
-        const s: sdk.SpeechConfig | sdk.SpeechTranslationConfig = createMethod(new URL("wss://fake.host.name"), "fakekey");
+        const s: sdk.SpeechConfig | sdk.SpeechTranslationConfig = createMethod(new URL("wss://random.host.name"), "fakekey");
         objsToClose.push(s);
 
         setMethod(s);
@@ -657,10 +671,28 @@ describe("Connection URL Tests", () => {
         objsToClose.push(r);
 
         let recognizeOrSynthesizeOnceAsync: (cb: (p2: any) => void) => void;
+        const detachObject: IDetachable = Events.instance.attachListener({
+            onEvent: (event: PlatformEvent): void => {
+                if (event instanceof ConnectionStartEvent) {
+                    const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                    const uri: string = connectionEvent.uri;
+                    expect(uri).not.toBeUndefined();
+                    // Make sure there's only a single ? in the URL.
+                    expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+                    urlSubStrings.forEach((value: string, index: number, array: string[]): void => {
+                        expect(uri).toContain(value);
+                    });
+                    void detachObject.detach();
+                }
+            },
+        });
 
         if (r instanceof sdk.Recognizer) {
             recognizeOrSynthesizeOnceAsync = (cb: (p2: any) => void): void => {
-                r.recognizeOnceAsync(cb);
+                r.recognizeOnceAsync(cb,
+                   (e: string): void => {
+                    done(e);
+                   });
             };
         } else if (r instanceof sdk.SpeechSynthesizer) {
             recognizeOrSynthesizeOnceAsync = (cb: (p2: any) => void): void => {
@@ -669,15 +701,8 @@ describe("Connection URL Tests", () => {
         }
 
         recognizeOrSynthesizeOnceAsync(
-            (p2: any): void => {
+            (p2: sdk.RecognitionResult): void => {
                 try {
-                    expect(uri).not.toBeUndefined();
-                    // Make sure there's only a single ? in the URL.
-                    expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
-                    urlSubStrings.forEach((value: string, index: number, array: string[]) => {
-                        expect(uri).toContain(value);
-                    });
-
                     expect(p2.errorDetails).not.toBeUndefined();
                     expect(sdk.ResultReason[p2.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
 
@@ -689,11 +714,13 @@ describe("Connection URL Tests", () => {
                     done(error);
                 }
             });
-    }
+    };
+
     describe.each([
         [sdk.SpeechConfig.fromEndpoint, BuildSpeechRecognizerFromWaveFile],
         [sdk.SpeechTranslationConfig.fromEndpoint, BuildTranslationRecognizerFromWaveFile],
-        [sdk.SpeechConfig.fromEndpoint, BuildIntentRecognizerFromWaveFile]])("Common URL Tests",
+        [sdk.SpeechConfig.fromEndpoint, BuildIntentRecognizerFromWaveFile]])
+        ("Common URL Tests",
             (createMethod: any, recognizerCreateMethod: (
                 config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
                 test("setServiceProperty (single)", (done: jest.DoneCallback) => {
@@ -712,7 +739,7 @@ describe("Connection URL Tests", () => {
                         propName + "=" + val);
                 });
 
-                test("setServiceProperty (change)", (done: jest.DoneCallback) => {
+                test("setServiceProperty (change)", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: setServiceProperty (change)");
 
@@ -729,7 +756,7 @@ describe("Connection URL Tests", () => {
                         propName + "=" + val + "1");
                 });
 
-                test("setServiceProperty (multiple)", (done: jest.DoneCallback) => {
+                test("setServiceProperty (multiple)", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: setServiceProperty (multiple)");
 
@@ -748,7 +775,7 @@ describe("Connection URL Tests", () => {
                     );
                 });
 
-                test("setProfanity", (done: jest.DoneCallback) => {
+                test("setProfanity", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: setProfanity");
 
@@ -765,7 +792,7 @@ describe("Connection URL Tests", () => {
                     );
                 });
 
-                test("enableAudioLogging", (done: jest.DoneCallback) => {
+                test("enableAudioLogging", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: enableAudioLogging");
 
@@ -782,7 +809,7 @@ describe("Connection URL Tests", () => {
                     );
                 });
 
-                test("requestWordLevelTimestamps", (done: jest.DoneCallback) => {
+                test("requestWordLevelTimestamps", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: requestWordLevelTimestamps");
 
@@ -799,7 +826,7 @@ describe("Connection URL Tests", () => {
                     );
                 });
 
-                test("initialSilenceTimeoutMs", (done: jest.DoneCallback) => {
+                test("initialSilenceTimeoutMs", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: initialSilenceTimeoutMs");
 
@@ -816,7 +843,7 @@ describe("Connection URL Tests", () => {
                     );
                 });
 
-                test("endSilenceTimeoutMs", (done: jest.DoneCallback) => {
+                test("endSilenceTimeoutMs", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: endSilenceTimeoutMs");
 
@@ -833,8 +860,8 @@ describe("Connection URL Tests", () => {
                     );
                 });
 
-                test("segmentationSilenceTimeoutMs", (done: jest.DoneCallback) => {
-                    // tslint:disable-next-line:no-console
+                test("segmentationSilenceTimeoutMs", (done: jest.DoneCallback): void => {
+                    // eslint-disable-next-line no-console
                     console.info("Name: segmentationSilenceTimeoutMs");
 
                     const propName: string = "segmentationSilenceTimeoutMs";
@@ -848,9 +875,9 @@ describe("Connection URL Tests", () => {
                         done,
                         propName + "=" + val
                     );
-                })
+                });
 
-                test("stableIntermediateThreshold", (done: jest.DoneCallback) => {
+                test("stableIntermediateThreshold", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: stableIntermediateThreshold");
 
@@ -868,7 +895,7 @@ describe("Connection URL Tests", () => {
                 });
             });
 
-    test("enableDictation (Speech)", (done: jest.DoneCallback) => {
+    test("enableDictation (Speech)", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: enableDictation");
 
@@ -879,9 +906,18 @@ describe("Connection URL Tests", () => {
 
         const r: sdk.SpeechRecognizer = BuildSpeechRecognizerFromWaveFile(s);
         objsToClose.push(r);
+        let uri: string;
+        const detachObject: IDetachable = Events.instance.attachListener({
+            onEvent: (event: PlatformEvent): void => {
+                if (event instanceof ConnectionStartEvent) {
+                    const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                    uri = connectionEvent.uri;
+                }
+            },
+        });
 
         r.startContinuousRecognitionAsync(
-            () => {
+            (): void => {
                 try {
                     expect(uri).not.toBeUndefined();
                     // Make sure there's only a single ? in the URL.
@@ -893,6 +929,9 @@ describe("Connection URL Tests", () => {
                     done();
                 } catch (error) {
                     done(error);
+                } finally {
+                    void detachObject.detach();
+                    uri = undefined;
                 }
             });
     });

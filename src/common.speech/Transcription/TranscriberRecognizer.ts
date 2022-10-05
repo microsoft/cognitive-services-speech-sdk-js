@@ -3,6 +3,7 @@
 
 import { marshalPromiseToCallbacks } from "../../common/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
+import { AudioStreamFormatImpl } from "../../sdk/Audio/AudioStreamFormat";
 import { Contracts } from "../../sdk/Contracts";
 import {
     AudioConfig,
@@ -42,11 +43,15 @@ export class TranscriberRecognizer extends Recognizer {
     /**
      * TranscriberRecognizer constructor.
      * @constructor
-     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
+     * @param {SpeechTranslationConfig} speechTranslationConfig - Non-audio configuration associated with the recognizer
+     * @param {AudioConfig} audioConfig - An audio configuration associated with the recognizer
      */
-    public constructor(speechTranslationConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+    public constructor(speechTranslationConfig: SpeechTranslationConfig, audioConfig: AudioConfig) {
         const speechTranslationConfigImpl: SpeechTranslationConfigImpl = speechTranslationConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(speechTranslationConfigImpl, "speechTranslationConfig");
+
+        const audioConfigImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
+        Contracts.throwIfNull(audioConfigImpl, "audioConfigImpl");
 
         Contracts.throwIfNullOrWhitespace(
             speechTranslationConfigImpl.speechRecognitionLanguage,
@@ -104,6 +109,18 @@ export class TranscriberRecognizer extends Recognizer {
         const reco = (this.privReco) as TranscriptionServiceRecognizer;
         Contracts.throwIfNullOrUndefined(reco, "serviceRecognizer");
         await reco.sendSpeechEventAsync(conversationInfo, command);
+    }
+
+    public async enforceAudioGating(): Promise<void> {
+        const audioConfigImpl = this.audioConfig as AudioConfigImpl;
+        const format: AudioStreamFormatImpl = await audioConfigImpl.format;
+        const channels = format.channels;
+        if (channels === 1 && this.properties.getProperty("f0f5debc-f8c9-4892-ac4b-90a7ab359fd2", "false").toLowerCase() !== "true") {
+            throw new Error("Single channel audio configuration for ConversationTranscriber is currently under private preview, please contact diarizationrequest@microsoft.com for more details");
+        } else if (channels !== 8) {
+            throw new Error(`Unsupported audio configuration: Detected ${channels}-channel audio`);
+        }
+        return;
     }
 
     public connectCallbacks(transcriber: ConversationTranscriber): void {
