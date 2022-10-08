@@ -18,6 +18,7 @@ import { validateTelemetry } from "./TelemetryUtil";
 import {
     closeAsyncObjects,
     RepeatingPullStream,
+    SetPipelineVersion,
     WaitForCondition
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
@@ -55,6 +56,8 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) 
         s = BuildSpeechConfig();
         // Since we're not going to return it, mark it for closure.
         objsToClose.push(s);
+    } else {
+        SetPipelineVersion(s);
     }
 
     const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
@@ -74,6 +77,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) 
 const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     expect(s).not.toBeUndefined();
+    SetPipelineVersion(s);
     return s;
 };
 
@@ -91,6 +95,7 @@ test("TranslationRecognizerMicrophone", () => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     objsToClose.push(s);
     expect(s).not.toBeUndefined();
+    SetPipelineVersion(s);
     s.addTargetLanguage("en-US");
     s.speechRecognitionLanguage = "en-US";
 
@@ -615,6 +620,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         console.info("Name: Default mic is used when audio config is not specified. (once)");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         expect(s).not.toBeUndefined();
+        SetPipelineVersion(s);
         s.speechRecognitionLanguage = "en-US";
         s.addTargetLanguage("en-US");
 
@@ -638,6 +644,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         console.info("Name: Default mic is used when audio config is not specified. (Cont)");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         expect(s).not.toBeUndefined();
+        SetPipelineVersion(s);
         s.speechRecognitionLanguage = "en-US";
         s.addTargetLanguage("en-US");
 
@@ -661,6 +668,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         console.info("Name: Connection Errors Propogate Async");
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription("badKey", Settings.SpeechRegion);
         objsToClose.push(s);
+        SetPipelineVersion(s);
         s.addTargetLanguage("en-US");
 
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
@@ -684,6 +692,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription("badKey", Settings.SpeechRegion);
         objsToClose.push(s);
         s.addTargetLanguage("en-US");
+        SetPipelineVersion(s);
 
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
 

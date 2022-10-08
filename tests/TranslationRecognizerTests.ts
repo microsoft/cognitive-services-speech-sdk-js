@@ -17,6 +17,7 @@ import { Settings } from "./Settings";
 import { validateTelemetry } from "./TelemetryUtil";
 import {
     closeAsyncObjects,
+    SetPipelineVersion,
     WaitForCondition
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
@@ -54,6 +55,8 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig, 
         s = BuildSpeechConfig();
         // Since we're not going to return it, mark it for closure.
         objsToClose.push(s);
+    } else {
+        SetPipelineVersion(s);
     }
 
     const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
@@ -73,6 +76,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig, 
 const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     expect(s).not.toBeUndefined();
+    SetPipelineVersion(s);
     return s;
 };
 
@@ -263,6 +267,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), Settings.SpeechSubscriptionKey);
         objsToClose.push(s);
+        SetPipelineVersion(s);
 
         s.addTargetLanguage("de-DE");
         s.speechRecognitionLanguage = "en-US";
@@ -299,6 +304,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), Settings.SpeechSubscriptionKey);
         objsToClose.push(s);
+        SetPipelineVersion(s);
 
         s.addTargetLanguage("de-DE");
         s.speechRecognitionLanguage = "en-US";

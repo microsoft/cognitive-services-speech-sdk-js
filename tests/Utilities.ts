@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
+import { Settings } from "./Settings";
 import {
     WaveFileAudioInput
 } from "./WaveFileAudioInputStream";
@@ -16,6 +17,10 @@ export function WaitForCondition(condition: () => boolean, after: () => void): v
 export function sleep(ms: number): Promise<void> {
     return new Promise((resolve: (_: void) => void) => setTimeout(resolve, ms));
 }
+
+export const SetPipelineVersion: (speechConfig: sdk.SpeechConfig) => void = (speechConfig: sdk.SpeechConfig): void => {
+    speechConfig.setServiceProperty("tryPipelineVersion", Settings.TryPipelineVersion.toString(), sdk.ServicePropertyChannel.UriQueryParameter);
+};
 
 export const WaitForPromise = (condition: () => boolean, rejectMessage: string, timeout: number = 60 * 1000): Promise<void> => {
     return new Promise(async (resolve: (value: void) => void, reject: (reason: string) => void): Promise<void> => {

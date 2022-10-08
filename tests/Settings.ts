@@ -4,6 +4,7 @@
 export class Settings {
 
     public static RetryCount: number = 3;
+    public static TryPipelineVersion: number = 1;
     // subscription
     public static SpeechSubscriptionKey: string = "<<YOUR_SUBSCRIPTION_KEY>>";
     public static SpeechRegion: string = "<<YOUR_REGION>>";
