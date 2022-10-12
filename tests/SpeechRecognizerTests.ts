@@ -2424,9 +2424,9 @@ describe("PhraseList tests", () => {
                 if (!gotReco) {
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                     if (phraseAdded) {
-                        expect(res.text).toContain("Wreck a nice beach.");
+                        expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Wreck a nice beach");
                     } else {
-                        expect(res.text).toEqual("Recognize speech.");
+                        expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Recognize speech");
                     }
                     gotReco = true;
                     recoCount++;
