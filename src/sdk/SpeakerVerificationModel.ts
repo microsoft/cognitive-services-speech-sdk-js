@@ -40,7 +40,7 @@ export class SpeakerVerificationModel implements SpeakerRecognitionModel {
         if (this.voiceProfile.profileType === VoiceProfileType.TextDependentVerification) {
             return "TextDependentVerification";
         } else {
-            return "TextDependentIdentification";
+            return "TextIndependentVerification";
         }
     }
 }
