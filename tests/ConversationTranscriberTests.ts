@@ -425,7 +425,7 @@ test("Create Conversation and create PhraseListGrammar", (done: jest.DoneCallbac
     t.joinConversationAsync(c,
         () => {
             try {
-                var phraseListGrammar = t.createPhraseListGrammar()
+                var phraseListGrammar = t.phraseListGrammar
                 expect(phraseListGrammar).not.toBeUndefined()
                 done();
             } catch (error) {

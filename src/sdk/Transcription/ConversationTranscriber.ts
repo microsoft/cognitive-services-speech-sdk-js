@@ -140,6 +140,17 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
     }
 
     /**
+     * Gets the PhraseListGrammar instance from the specified recognizer.
+     * @member ConversationTranscriber.prototype.phraseListGrammar
+     * @function
+     * @public
+     * @return {PhraseListGrammar} The PhraseListGrammar instance of the recognizer.
+     */
+    public get phraseListGrammar(): PhraseListGrammar {
+        return PhraseListGrammar.fromRecognizer(this.privRecognizer);
+    }
+
+    /**
      * Gets the authorization token used to communicate with the service.
      * @member ConversationTranscriber.prototype.authorizationToken
      * @function
@@ -211,17 +222,6 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         this.privRecognizer.disconnectCallbacks();
         // eslint-disable-next-line
         marshalPromiseToCallbacks((async (): Promise<void> => { return; })(), cb, err);
-    }
-
-    /**
-     * Creates PhraseListGrammar instance from the transcriber.
-     * @member ConversationTranscriber.prototype.phraseListGrammar
-     * @function
-     * @public
-     * @return {PhraseListGrammar} The PhraseListGrammar instance created from the transcriber.
-     */
-    public createPhraseListGrammar(): PhraseListGrammar {
-        return PhraseListGrammar.fromRecognizer(this.privRecognizer);
     }
 
     /**
