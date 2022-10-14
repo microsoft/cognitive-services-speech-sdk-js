@@ -9,6 +9,7 @@ import {
     CancellationEventArgs,
     Connection,
     ConversationTranscriptionEventArgs,
+    PhraseListGrammar,
     PropertyCollection,
     PropertyId,
     SessionEventArgs
@@ -210,6 +211,17 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         this.privRecognizer.disconnectCallbacks();
         // eslint-disable-next-line
         marshalPromiseToCallbacks((async (): Promise<void> => { return; })(), cb, err);
+    }
+
+    /**
+     * Creates PhraseListGrammar instance from the transcriber.
+     * @member ConversationTranscriber.prototype.phraseListGrammar
+     * @function
+     * @public
+     * @return {PhraseListGrammar} The PhraseListGrammar instance created from the transcriber.
+     */
+    public createPhraseListGrammar(): PhraseListGrammar {
+        return PhraseListGrammar.fromRecognizer(this.privRecognizer);
     }
 
     /**

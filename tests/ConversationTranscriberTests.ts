@@ -409,6 +409,34 @@ test.skip("Create Conversation with one channel audio (aligned)", (done: jest.Do
             done(error);
         });
 });
+
+
+
+test("Create Conversation and create PhraseListGrammar", (done: jest.DoneCallback) => {
+    // eslint-disable-next-line no-console
+    console.info("Name: Create Conversation and create PhraseListGrammar");
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const c: sdk.Conversation = CreateConversation(s);
+    objsToClose.push(c);
+
+    const t: sdk.ConversationTranscriber = BuildTranscriber();
+    t.joinConversationAsync(c,
+        () => {
+            try {
+                var phraseListGrammar = t.createPhraseListGrammar()
+                expect(phraseListGrammar).not.toBeUndefined()
+                done();
+            } catch (error) {
+                done(error);
+            }
+        },
+        (error: string) => {
+            done(error);
+        });
+});
+
 test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Conversation and force disconnect");
