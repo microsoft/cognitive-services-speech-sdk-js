@@ -9,7 +9,6 @@ import {
     CancellationEventArgs,
     Connection,
     ConversationTranscriptionEventArgs,
-    PhraseListGrammar,
     PropertyCollection,
     PropertyId,
     SessionEventArgs
@@ -137,17 +136,6 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      */
     public get connection(): Connection {
         return Connection.fromRecognizer(this.privRecognizer);
-    }
-
-    /**
-     * Gets the PhraseListGrammar instance from the specified recognizer.
-     * @member ConversationTranscriber.prototype.phraseListGrammar
-     * @function
-     * @public
-     * @return {PhraseListGrammar} The PhraseListGrammar instance of the recognizer.
-     */
-    public get phraseListGrammar(): PhraseListGrammar {
-        return PhraseListGrammar.fromRecognizer(this.privRecognizer);
     }
 
     /**
