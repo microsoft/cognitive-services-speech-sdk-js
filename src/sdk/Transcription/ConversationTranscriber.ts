@@ -88,7 +88,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
 
     protected privAudioConfig: AudioConfig;
     private privDisposedRecognizer: boolean;
-    private privRecognizer: TranscriberRecognizer;
+    protected privRecognizer: TranscriberRecognizer;
     private privProperties: PropertyCollection;
 
     /**
@@ -243,3 +243,4 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         }
     }
 }
+
