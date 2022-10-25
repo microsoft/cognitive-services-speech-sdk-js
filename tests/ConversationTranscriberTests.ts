@@ -421,16 +421,16 @@ test("Create Conversation and create PhraseListGrammar", (done: jest.DoneCallbac
 
     const t: sdk.ConversationTranscriber = BuildTranscriber();
     t.joinConversationAsync(c,
-        () => {
+        (): void => {
             try {
-                var phraseListGrammar = t.phraseListGrammar
-                expect(phraseListGrammar).not.toBeUndefined()
+                const phraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(t);
+                expect(phraseListGrammar).not.toBeUndefined();
                 done();
             } catch (error) {
                 done(error);
             }
         },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 });

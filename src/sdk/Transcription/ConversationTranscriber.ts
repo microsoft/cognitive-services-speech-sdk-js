@@ -7,11 +7,10 @@ import { Contracts } from "../Contracts";
 import {
     AudioConfig,
     CancellationEventArgs,
-    Connection,
     ConversationTranscriptionEventArgs,
-    PhraseListGrammar,
     PropertyCollection,
     PropertyId,
+    Recognizer,
     SessionEventArgs
 } from "../Exports";
 import {
@@ -128,26 +127,8 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         return this.privProperties;
     }
 
-    /**
-     * Gets the Connection instance from the specified recognizer.
-     * @member ConversationTranscriber.prototype.connection
-     * @function
-     * @public
-     * @return {Connection} The Connection instance of the recognizer.
-     */
-    public get connection(): Connection {
-        return Connection.fromRecognizer(this.privRecognizer);
-    }
-
-    /**
-     * Gets the PhraseListGrammar instance from the specified recognizer.
-     * @member ConversationTranscriber.prototype.phraseListGrammar
-     * @function
-     * @public
-     * @return {PhraseListGrammar} The PhraseListGrammar instance of the recognizer.
-     */
-    public get phraseListGrammar(): PhraseListGrammar {
-        return PhraseListGrammar.fromRecognizer(this.privRecognizer);
+    public get recognizer(): Recognizer {
+        return this.privRecognizer;
     }
 
     /**
