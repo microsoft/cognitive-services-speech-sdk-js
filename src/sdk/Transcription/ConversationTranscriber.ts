@@ -11,6 +11,7 @@ import {
     ConversationTranscriptionEventArgs,
     PropertyCollection,
     PropertyId,
+    Recognizer,
     SessionEventArgs
 } from "../Exports";
 import {
@@ -125,6 +126,17 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      */
     public get properties(): PropertyCollection {
         return this.privProperties;
+    }
+
+    /**
+     * The recognizer instance defined for this ConversationTranscriber.
+     * @member ConversationTranscriberImpl.prototype.recognizer
+     * @function
+     * @public;
+     * @returns {Recognizer} The recognizer instance defined for this ConversationTranscriber.
+     */
+     public get recognizer(): Recognizer {
+        return this.privRecognizer;
     }
 
     /**
@@ -243,3 +255,4 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         }
     }
 }
+
