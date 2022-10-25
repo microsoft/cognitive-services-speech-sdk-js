@@ -54,7 +54,7 @@ export class Connection {
     public static fromRecognizer(recognizer: Recognizer | ConversationTranscriber): Connection {
         let recoBase: ServiceRecognizerBase;
         if (recognizer instanceof ConversationTranscriber) {
-            recoBase = recognizer.recognizer.internalData as ServiceRecognizerBase;
+            recoBase = (recognizer.recognizer as Recognizer).internalData as ServiceRecognizerBase;
         } else {
             recoBase = recognizer.internalData as ServiceRecognizerBase;
         }

@@ -7,10 +7,10 @@ import { Contracts } from "../Contracts";
 import {
     AudioConfig,
     CancellationEventArgs,
+    Connection,
     ConversationTranscriptionEventArgs,
     PropertyCollection,
     PropertyId,
-    Recognizer,
     SessionEventArgs
 } from "../Exports";
 import {
@@ -127,8 +127,22 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         return this.privProperties;
     }
 
-    public get recognizer(): Recognizer {
+    /**
+     * @Internal
+     * Internal data member to support fromRecognizer* pattern methods on other classes.
+     * Do not use externally, object returned will change without warning or notice.
+     */
+    public get recognizer(): object {
         return this.privRecognizer;
+    }
+
+    /**
+     * @Deprecated
+     * @Obsolete
+     * Please use the Connection.fromRecognizer pattern to obtain a connection object
+     */
+    public get connection(): Connection {
+        return Connection.fromRecognizer(this.privRecognizer);
     }
 
     /**
@@ -155,7 +169,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
     }
 
     /**
-     * @param {Conversation} converation - conversation to be recognized
+     * @param {Conversation} conversation - conversation to be recognized
      */
     public joinConversationAsync(conversation: IConversation, cb?: Callback, err?: Callback): void {
         const conversationImpl = conversation as ConversationImpl;
