@@ -118,7 +118,7 @@ export class TranscriberRecognizer extends Recognizer {
         const channels = format.channels;
         if (channels === 1 && this.properties.getProperty("f0f5debc-f8c9-4892-ac4b-90a7ab359fd2", "false").toLowerCase() !== "true") {
             throw new Error("Single channel audio configuration for ConversationTranscriber is currently under private preview, please contact diarizationrequest@microsoft.com for more details");
-        } else if (channels !== 8) {
+        } else if (channels !== 8 && channels !== 1) {
             throw new Error(`Unsupported audio configuration: Detected ${channels}-channel audio`);
         }
         return;
