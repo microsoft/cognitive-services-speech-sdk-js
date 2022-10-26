@@ -132,8 +132,8 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * Internal data member to support fromRecognizer* pattern methods on other classes.
      * Do not use externally, object returned will change without warning or notice.
      */
-    public get recognizer(): object {
-        return this.privRecognizer;
+    public get internalData(): object {
+        return this.privRecognizer.internalData;
     }
 
     /**

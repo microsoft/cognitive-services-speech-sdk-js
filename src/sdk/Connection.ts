@@ -52,12 +52,7 @@ export class Connection {
      * @return The Connection instance of the recognizer.
      */
     public static fromRecognizer(recognizer: Recognizer | ConversationTranscriber): Connection {
-        let recoBase: ServiceRecognizerBase;
-        if (recognizer instanceof ConversationTranscriber) {
-            recoBase = (recognizer.recognizer as Recognizer).internalData as ServiceRecognizerBase;
-        } else {
-            recoBase = recognizer.internalData as ServiceRecognizerBase;
-        }
+        const recoBase = recognizer.internalData as ServiceRecognizerBase;
         const ret: Connection = new Connection();
 
         ret.privInternalData = recoBase;

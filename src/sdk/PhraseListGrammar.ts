@@ -28,13 +28,7 @@ export class PhraseListGrammar {
      * @param recognizer The recognizer to add phrase lists to.
      */
     public static fromRecognizer(recognizer: Recognizer | ConversationTranscriber): PhraseListGrammar {
-        let recoBase: ServiceRecognizerBase;
-        if (recognizer instanceof ConversationTranscriber) {
-            recoBase = (recognizer.recognizer as Recognizer).internalData as ServiceRecognizerBase;
-        } else {
-            recoBase = recognizer.internalData as ServiceRecognizerBase;
-        }
-
+        const recoBase = recognizer.internalData as ServiceRecognizerBase;
         return new PhraseListGrammar(recoBase);
     }
 
