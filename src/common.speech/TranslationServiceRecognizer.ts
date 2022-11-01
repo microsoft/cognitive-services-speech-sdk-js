@@ -189,6 +189,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 break;
 
             case "translation.synthesis":
+            case "audio":
                 this.sendSynthesisAudio(connectionMessage.binaryBody, this.privRequestSession.sessionId);
                 processed = true;
                 break;
