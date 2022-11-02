@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { PropertyCollection, SpeechTranslationConfig } from "../Exports";
+import { PropertyCollection, SpeechConfig, SpeechTranslationConfig } from "../Exports";
 import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
 
 export type Callback = (result?: any) => void;
@@ -13,7 +13,7 @@ export type Callback = (result?: any) => void;
  */
 export interface IConversation {
 
-    config: SpeechTranslationConfig;
+    config: SpeechTranslationConfig | SpeechConfig;
 
     /**
      * Gets/sets authorization token used to communicate with the service.

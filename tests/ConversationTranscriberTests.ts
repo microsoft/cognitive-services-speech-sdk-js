@@ -41,8 +41,8 @@ afterEach(async (): Promise<void> => {
     await closeAsyncObjects(objsToClose);
 });
 
-const CreateConversation: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.Conversation = (speechConfig?: sdk.SpeechTranslationConfig): sdk.Conversation => {
-    let s: sdk.SpeechTranslationConfig = speechConfig;
+const CreateConversation: (speechConfig?: sdk.SpeechConfig) => sdk.Conversation = (speechConfig?: sdk.SpeechConfig): sdk.Conversation => {
+    let s: sdk.SpeechConfig = speechConfig;
     if (s === undefined) {
         s = BuildSpeechConfig();
         // Since we're not going to return it, mark it for closure.
@@ -58,8 +58,8 @@ const CreateConversation: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.Co
     return c;
 };
 
-const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
-    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeakerIDSubscriptionKey, Settings.SpeakerIDRegion);
+const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeakerIDSubscriptionKey, Settings.SpeakerIDRegion);
     expect(s).not.toBeUndefined();
     return s;
 };
@@ -133,7 +133,7 @@ test("BuildTranscriber", () => {
 test("Create Conversation and join to Transcriber", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Conversation and join to Transcriber");
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
     const c: sdk.Conversation = CreateConversation(s);
@@ -157,7 +157,7 @@ test("Create Conversation and join to Transcriber", (done: jest.DoneCallback) =>
 test("Create Conversation and add participants", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Conversation and join to Transcriber");
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
     const c: sdk.Conversation = CreateConversation(s);
@@ -235,7 +235,7 @@ test("Create Conversation and add participants", (done: jest.DoneCallback) => {
 test("Leave Conversation", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: Leave Conversation");
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
     const c: sdk.Conversation = CreateConversation(s);
@@ -312,7 +312,7 @@ test("Leave Conversation", (done: jest.DoneCallback) => {
 test("Create Conversation with one channel throws", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Conversation with one channel audio (aligned)");
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
     const c: sdk.Conversation = CreateConversation(s);
@@ -333,7 +333,7 @@ test("Create Conversation with one channel throws", (done: jest.DoneCallback): v
 test.skip("Create Conversation with one channel audio (aligned)", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Conversation with one channel audio (aligned)");
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
     const c: sdk.Conversation = CreateConversation(s);
@@ -413,7 +413,7 @@ test.skip("Create Conversation with one channel audio (aligned)", (done: jest.Do
 test("Create Conversation and create PhraseListGrammar", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Conversation and create PhraseListGrammar");
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
     const c: sdk.Conversation = CreateConversation(s);
@@ -438,7 +438,7 @@ test("Create Conversation and create PhraseListGrammar", (done: jest.DoneCallbac
 test("Create Conversation and force disconnect", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Conversation and force disconnect");
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
     // Use 12s timeout since backend timeout is 10s.
     s.setServiceProperty("maxConnectionDurationSecs", "12", sdk.ServicePropertyChannel.UriQueryParameter);
     objsToClose.push(s);

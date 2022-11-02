@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { SpeechConfig } from "../../../distrib/es2015/microsoft.cognitiveservices.speech.sdk";
 import { TranscriberRecognizer } from "../../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../../common/Exports";
 import { Contracts } from "../Contracts";
@@ -177,7 +178,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
 
         // ref the conversation object
         // create recognizer and subscribe to recognizer events
-        this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
+        this.privRecognizer = new TranscriberRecognizer(conversation.config as SpeechConfig, this.privAudioConfig);
         Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
         this.privRecognizer.connectCallbacks(this);
 

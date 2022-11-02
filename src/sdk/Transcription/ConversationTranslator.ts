@@ -19,6 +19,7 @@ import {
     PropertyCollection,
     PropertyId,
     SessionEventArgs,
+    SpeechConfig,
     SpeechTranslationConfig,
     TranslationRecognitionEventArgs,
     TranslationRecognizer
@@ -205,7 +206,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
      */
     public joinConversationAsync(conversation: IConversation, nickname: string, cb?: Callback, err?: Callback): void;
     public joinConversationAsync(conversationId: string, nickname: string, lang: string, cb?: Callback, err?: Callback): void;
-    public joinConversationAsync(conversation: string | { config: SpeechTranslationConfig }, nickname: string, param1?: string | Callback, param2?: Callback, param3?: Callback): void {
+    public joinConversationAsync(conversation: string | { config: SpeechTranslationConfig | SpeechConfig }, nickname: string, param1?: string | Callback, param2?: Callback, param3?: Callback): void {
 
         try {
 
@@ -273,6 +274,9 @@ export class ConversationTranslator extends ConversationCommon implements IConve
 
             } else if (typeof conversation === "object") {
 
+                if (!(conversation.config instanceof SpeechTranslationConfig)) {
+                    throw new Error("Unexpected config type");
+                }
                 Contracts.throwIfNullOrUndefined(conversation, this.privErrors.invalidArgs.replace("{arg}", "conversation id"));
                 Contracts.throwIfNullOrWhitespace(nickname, this.privErrors.invalidArgs.replace("{arg}", "nickname"));
 

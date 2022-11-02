@@ -16,8 +16,8 @@ import {
     Recognizer,
     SessionEventArgs,
     SpeechRecognitionEventArgs,
-    SpeechTranslationConfig,
-    SpeechTranslationConfigImpl,
+    SpeechConfig,
+    SpeechConfigImpl,
 } from "../../sdk/Exports";
 import {
     IAuthentication,
@@ -44,21 +44,21 @@ export class TranscriberRecognizer extends Recognizer {
     /**
      * TranscriberRecognizer constructor.
      * @constructor
-     * @param {SpeechTranslationConfig} speechTranslationConfig - Non-audio configuration associated with the recognizer
+     * @param {SpeechConfig} speechConfig - Non-audio configuration associated with the recognizer
      * @param {AudioConfig} audioConfig - An audio configuration associated with the recognizer
      */
-    public constructor(speechTranslationConfig: SpeechTranslationConfig, audioConfig: AudioConfig) {
-        const speechTranslationConfigImpl: SpeechTranslationConfigImpl = speechTranslationConfig as SpeechTranslationConfigImpl;
-        Contracts.throwIfNull(speechTranslationConfigImpl, "speechTranslationConfig");
+    public constructor(speechConfig: SpeechConfig, audioConfig: AudioConfig) {
+        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
+        Contracts.throwIfNull(speechConfigImpl, "speechConfig");
 
         const audioConfigImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNull(audioConfigImpl, "audioConfigImpl");
 
         Contracts.throwIfNullOrWhitespace(
-            speechTranslationConfigImpl.speechRecognitionLanguage,
+            speechConfigImpl.speechRecognitionLanguage,
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        super(audioConfig, speechTranslationConfigImpl.properties, new TranscriberConnectionFactory());
+        super(audioConfig, speechConfigImpl.properties, new TranscriberConnectionFactory());
         this.privDisposedRecognizer = false;
     }
 

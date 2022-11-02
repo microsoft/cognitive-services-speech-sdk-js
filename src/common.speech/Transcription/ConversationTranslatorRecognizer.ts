@@ -26,6 +26,7 @@ import {
     PropertyCollection,
     Recognizer,
     SessionEventArgs,
+    SpeechConfig,
     SpeechTranslationConfig
 } from "../../sdk/Exports";
 import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
@@ -46,8 +47,8 @@ import {
 } from "./ConversationTranslatorInterfaces";
 
 export class ConversationRecognizerFactory {
-    public static fromConfig(conversation: IConversation, speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig): ConversationRecognizer {
-        return new ConversationTranslatorRecognizer(conversation, speechConfig, audioConfig);
+    public static fromConfig(conversation: IConversation, speechConfig: SpeechTranslationConfig | SpeechConfig, audioConfig?: AudioConfig): ConversationRecognizer {
+        return new ConversationTranslatorRecognizer(conversation, speechConfig as SpeechTranslationConfig, audioConfig);
     }
 }
 

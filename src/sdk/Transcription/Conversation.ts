@@ -39,6 +39,7 @@ import {
     ProfanityOption,
     PropertyCollection,
     PropertyId,
+    SpeechConfig,
     SpeechTranslationConfig,
 } from "../Exports";
 import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig";
@@ -53,7 +54,7 @@ export abstract class Conversation implements IConversation {
 
     public abstract get authorizationToken(): string;
 
-    public abstract get config(): SpeechTranslationConfig;
+    public abstract get config(): SpeechTranslationConfig | SpeechConfig;
 
     public abstract get conversationId(): string;
     public abstract get conversationInfo(): ConversationInfo;
@@ -69,7 +70,7 @@ export abstract class Conversation implements IConversation {
      * @param cb
      * @param err
      */
-    public static createConversationAsync(speechConfig: SpeechTranslationConfig, arg2?: string | Callback, arg3?: Callback, arg4?: Callback): Conversation {
+    public static createConversationAsync(speechConfig: SpeechTranslationConfig | SpeechConfig, arg2?: string | Callback, arg3?: Callback, arg4?: Callback): Conversation {
         Contracts.throwIfNullOrUndefined(speechConfig, ConversationConnectionConfig.restErrors.invalidArgs.replace("{arg}", "config"));
         Contracts.throwIfNullOrUndefined(speechConfig.region, ConversationConnectionConfig.restErrors.invalidArgs.replace("{arg}", "SpeechServiceConnection_Region"));
         if (!speechConfig.subscriptionKey && !speechConfig.getProperty(PropertyId[PropertyId.SpeechServiceAuthorization_Token])) {
@@ -150,7 +151,7 @@ export abstract class Conversation implements IConversation {
 
 export class ConversationImpl extends Conversation implements IDisposable {
 
-    private privConfig: SpeechTranslationConfig;
+    private privConfig: SpeechTranslationConfig | SpeechConfig;
     private privProperties: PropertyCollection;
     private privLanguage: string;
     private privToken: string;
@@ -172,7 +173,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
      * @param speechConfig
      * @param {string} id - optional conversationId
      */
-    public constructor(speechConfig: SpeechTranslationConfig, id?: string) {
+    public constructor(speechConfig: SpeechTranslationConfig | SpeechConfig, id?: string) {
         super();
         this.privIsConnected = false;
         this.privIsDisposed = false;
@@ -189,7 +190,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
 
         if (!id) {
             // check the target language(s)
-            if (speechConfig.targetLanguages.length === 0) {
+            if (speechConfig instanceof SpeechTranslationConfig && speechConfig.targetLanguages.length === 0) {
                 speechConfig.addTargetLanguage(this.privLanguage);
             }
 
@@ -235,7 +236,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     // get the config
-    public get config(): SpeechTranslationConfig {
+    public get config(): SpeechTranslationConfig | SpeechConfig {
         return this.privConfig;
     }
 
