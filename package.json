@@ -94,7 +94,7 @@
     "lint": "eslint -c .eslintrc.js --ext .ts src",
     "civersion": "node ci/version.js",
     "prepare": "npm run build",
-    "preinstall": "npm install --package-lock-only --ignore-scripts --no-audit"
+    "setup": "npm install --package-lock-only --ignore-scripts --no-audit"
   },
   "jest-junit": {
     "suiteName": "jest tests",
