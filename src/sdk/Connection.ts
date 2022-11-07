@@ -22,6 +22,7 @@ import { Contracts } from "./Contracts";
 import {
     ConnectionEventArgs,
     ConnectionMessageEventArgs,
+    ConversationTranscriber,
     Recognizer,
     ServiceEventArgs,
     SpeechSynthesizer,
@@ -50,9 +51,8 @@ export class Connection {
      * @param recognizer The recognizer associated with the connection.
      * @return The Connection instance of the recognizer.
      */
-    public static fromRecognizer(recognizer: Recognizer): Connection {
-        const recoBase: ServiceRecognizerBase = recognizer.internalData as ServiceRecognizerBase;
-
+    public static fromRecognizer(recognizer: Recognizer | ConversationTranscriber): Connection {
+        const recoBase = recognizer.internalData as ServiceRecognizerBase;
         const ret: Connection = new Connection();
 
         ret.privInternalData = recoBase;

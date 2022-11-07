@@ -128,11 +128,18 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
     }
 
     /**
-     * Gets the Connection instance from the specified recognizer.
-     * @member ConversationTranscriber.prototype.connection
-     * @function
-     * @public
-     * @return {Connection} The Connection instance of the recognizer.
+     * @Internal
+     * Internal data member to support fromRecognizer* pattern methods on other classes.
+     * Do not use externally, object returned will change without warning or notice.
+     */
+    public get internalData(): object {
+        return this.privRecognizer.internalData;
+    }
+
+    /**
+     * @Deprecated
+     * @Obsolete
+     * Please use the Connection.fromRecognizer pattern to obtain a connection object
      */
     public get connection(): Connection {
         return Connection.fromRecognizer(this.privRecognizer);
@@ -162,7 +169,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
     }
 
     /**
-     * @param {Conversation} converation - conversation to be recognized
+     * @param {Conversation} conversation - conversation to be recognized
      */
     public joinConversationAsync(conversation: IConversation, cb?: Callback, err?: Callback): void {
         const conversationImpl = conversation as ConversationImpl;
