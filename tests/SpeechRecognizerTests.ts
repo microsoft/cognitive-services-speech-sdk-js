@@ -2270,7 +2270,7 @@ describe("PhraseList tests", () => {
                     expect(res.errorDetails).toBeUndefined();
                     expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
                     expect(res).not.toBeUndefined();
-                    expect(res.text).toEqual("Recognize speech.");
+                    expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Recognize speech");
                     done();
                 } catch (error) {
                     done(error);
@@ -2307,7 +2307,7 @@ describe("PhraseList tests", () => {
                     expect(res.errorDetails).toBeUndefined();
                     expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
                     expect(res).not.toBeUndefined();
-                    expect(res.text).toEqual("Recognize speech.");
+                    expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Recognize speech");
                     done();
                 } catch (error) {
                     done(error);
@@ -2426,7 +2426,7 @@ describe("PhraseList tests", () => {
                     if (phraseAdded) {
                         expect(res.text).toContain("Wreck a nice beach.");
                     } else {
-                        expect(res.text).toEqual("Recognize speech.");
+                        expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Recognize speech");
                     }
                     gotReco = true;
                     recoCount++;
