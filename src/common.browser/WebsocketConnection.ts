@@ -96,6 +96,10 @@ export class WebsocketConnection implements IConnection {
         return this.privId;
     }
 
+    public get uri(): string {
+        return this.privUri;
+    }
+
     public state(): ConnectionState {
         return this.privConnectionMessageAdapter.state;
     }

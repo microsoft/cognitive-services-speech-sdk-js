@@ -105,9 +105,15 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         }
         headers[HeaderNames.ConnectionId] = connectionId;
 
-        config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
-
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+
+        const webSocketConnection = new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+g
+        // Set the value of SpeechServiceConnection_Url to webSocketConnection.uri (and not to `endpoint`), since this value is the final
+        // URI that was used to make the connection (including query parameters).
+        const uri: string = webSocketConnection.uri;
+        config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, uri);
+
+        return webSocketConnection;
     }
 }
