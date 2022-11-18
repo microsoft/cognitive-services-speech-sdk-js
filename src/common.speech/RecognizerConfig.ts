@@ -19,7 +19,6 @@ export enum SpeechResultFormat {
 export class RecognizerConfig {
     private privRecognitionMode: RecognitionMode;
     private privLanguageIdMode: string;
-    private privLanguageIdPriority: string;
     private privSpeechServiceConfig: SpeechServiceConfig;
     private privRecognitionActivityTimeout: number;
     private privParameters: PropertyCollection;
@@ -31,11 +30,7 @@ export class RecognizerConfig {
         this.privSpeechServiceConfig = speechServiceConfig ? speechServiceConfig : new SpeechServiceConfig(new Context(null));
         this.privParameters = parameters;
         this.privMaxRetryCount = parseInt(parameters.getProperty("SPEECH-Error-MaxRetryCount", "4"), 10);
-        this.privLanguageIdPriority = parameters.getProperty(PropertyId.SpeechServiceConnection_ContinuousLanguageIdPriority, undefined);
-        this.privLanguageIdMode = this.privLanguageIdPriority === "Latency" ? "DetectContinuous" : "DetectAtAudioStart";
-        if (this.privLanguageIdMode === "DetectAtAudioStart") {
-            this.privLanguageIdPriority = parameters.getProperty(PropertyId.SpeechServiceConnection_AtStartLanguageIdPriority, undefined);
-        }
+        this.privLanguageIdMode = parameters.getProperty(PropertyId.SpeechServiceConnection_LanguageIdMode, undefined);
     }
 
     public get parameters(): PropertyCollection {
@@ -62,10 +57,6 @@ export class RecognizerConfig {
 
     public get isContinuousRecognition(): boolean {
         return this.privRecognitionMode !== RecognitionMode.Interactive;
-    }
-
-    public get languageIdPriority(): string {
-        return !!this.privLanguageIdPriority ? `Prioritize${this.privLanguageIdPriority}` : "";
     }
 
     public get languageIdMode(): string {
