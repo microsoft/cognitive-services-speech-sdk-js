@@ -33,6 +33,8 @@ This source code for the Cognitive Services Speeck SDK (JavaScript) is available
 
 In order to build the Speech SDK, ensure that you have [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/) installed. Version requirement for Node: 12.44.0 or higher (or 14.17.0 or higher for Node 14).
 
+__Note (Nov. 17, 2022): we are aware of an issue preventing building the SDK with recent Node.js versions. Until this is fixed, please use Node.js versions v16.18.0 or lower. See [previous releases of Node.js](https://nodejs.org/en/download/releases/)__
+
 Clone the repository:
 
 ```bash
