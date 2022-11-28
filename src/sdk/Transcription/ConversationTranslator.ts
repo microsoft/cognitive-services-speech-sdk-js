@@ -18,6 +18,7 @@ import {
     ProfanityOption,
     PropertyCollection,
     PropertyId,
+    ServicePropertyChannel,
     SessionEventArgs,
     SpeechTranslationConfig,
     TranslationRecognitionEventArgs,
@@ -193,6 +194,10 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         }
 
         return true;
+    }
+
+    public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
+        this.privSpeechTranslationConfig.setServiceProperty(name, value, channel);
     }
 
     /**
