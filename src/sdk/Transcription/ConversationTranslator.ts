@@ -232,9 +232,13 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage], lang);
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], nickname);
 
-                const endpoint: string = this.privProperties.getProperty(PropertyId.ConversationTranslator_Host);
-                if (endpoint) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Host], endpoint);
+                const conversationEndpoint: string = this.privProperties.getProperty(PropertyId.ConversationTranslator_Host);
+                if (conversationEndpoint) {
+                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Host], conversationEndpoint);
+                }
+                const speechEndpoint: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
+                if (speechEndpoint) {
+                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], speechEndpoint);
                 }
                 const speechEndpointHost: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Host);
                 if (speechEndpointHost) {
@@ -449,16 +453,18 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
 
+            let speechEndpoint: string = this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], null);
+            if (!speechEndpoint) {
+                let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
+                    PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationConnectionConfig.speechHost);
+                endpointHost = endpointHost.replace("{region}", this.privConversation.room.cognitiveSpeechRegion);
+
+                speechEndpoint = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}`;
+            }
             // TODO
             const token: string = encodeURIComponent(this.privConversation.room.token);
-
-            let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
-                PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationConnectionConfig.speechHost);
-            endpointHost = endpointHost.replace("{region}", this.privConversation.room.cognitiveSpeechRegion);
-
-            const url = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}?${ConversationConnectionConfig.configParams.token}=${token}`;
-
-            this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], url);
+            speechEndpoint = `${speechEndpoint}?${ConversationConnectionConfig.configParams.token}=${token}`;
+            this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], speechEndpoint);
 
             this.privCTRecognizer = new ConversationTranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this);
         } catch (error) {
