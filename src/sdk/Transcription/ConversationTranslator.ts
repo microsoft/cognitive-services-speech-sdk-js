@@ -458,7 +458,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
 
-            let speechEndpoint: string = this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], null);
+            let speechEndpoint: string = this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], undefined);
             if (!speechEndpoint) {
                 let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
                     PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationConnectionConfig.speechHost);
