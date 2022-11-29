@@ -4,10 +4,14 @@
 
 /* eslint-disable max-classes-per-file */
 
-import { ConversationConnectionConfig } from "../../common.speech/Exports";
+import {
+    ConversationConnectionConfig,
+    ServicePropertiesPropertyName
+} from "../../common.speech/Exports";
 import {
     IDisposable,
     IErrorMessages,
+    IStringDictionary,
     marshalPromiseToCallbacks
 } from "../../common/Exports";
 import { Contracts } from "../Contracts";
@@ -196,8 +200,12 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         return true;
     }
 
-    public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
-        this.privSpeechTranslationConfig.setServiceProperty(name, value, channel);
+    public setServiceProperty(name: string, value: string): void {
+        const currentProperties: IStringDictionary<string> = JSON.parse(this.privProperties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
+
+        currentProperties[name] = value;
+
+        this.privProperties.setProperty(ServicePropertiesPropertyName, JSON.stringify(currentProperties));
     }
 
     /**
@@ -248,6 +256,11 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 const speechEndpointHost: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Host);
                 if (speechEndpointHost) {
                     this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Host], speechEndpointHost);
+                }
+
+                const currentProperties  = JSON.parse(this.privProperties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
+                for (const prop of Object.keys(currentProperties)) {
+                    this.privSpeechTranslationConfig.setServiceProperty(prop, currentProperties[prop], ServicePropertyChannel.UriQueryParameter);
                 }
 
                 // join the conversation

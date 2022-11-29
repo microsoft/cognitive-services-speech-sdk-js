@@ -10,8 +10,12 @@ import {
     ConsoleLoggingListener
 } from "../src/common.browser/Exports";
 import {
+    ServicePropertiesPropertyName
+} from "../src/common.speech/Exports";
+import {
     Events,
     EventType,
+    IStringDictionary,
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import {
@@ -530,6 +534,47 @@ describe("conversation service tests", () => {
 
     }, 60000);
 
+    test("Start Conversation, join as host and set service property", (done: jest.DoneCallback) => {
+
+        // eslint-disable-next-line no-console
+        console.info("Start Conversation, join as host and set service property");
+
+        // start a conversation
+        const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
+
+        const c: sdk.Conversation = sdk.Conversation.createConversationAsync(config, (() => {
+            objsToClose.push(c);
+
+            const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator();
+            objsToClose.push(ct);
+
+            if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
+            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
+
+            ct.setServiceProperty("foo", "bar");
+
+            const currentProperties: IStringDictionary<string> = JSON.parse(ct.properties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
+            expect(currentProperties["foo"]).toEqual("bar");
+            done();
+
+            /*
+            c.startConversationAsync(() => {
+                ct.joinConversationAsync(c, "Host",
+                    (() => {
+                        // continue
+                    }),
+                    ((error: any) => {
+                        done();
+                    }));
+            });
+            */
+        }),
+        ((error: any) => {
+            done();
+        }));
+    });
 });
 
 // Conversation Translator tests: begin
