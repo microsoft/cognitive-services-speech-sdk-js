@@ -13,9 +13,11 @@ import {
     ServicePropertiesPropertyName
 } from "../src/common.speech/Exports";
 import {
+    ConnectionStartEvent,
     Events,
-    EventType,
     IStringDictionary,
+    IDetachable,
+    PlatformEvent,
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import {
@@ -547,29 +549,72 @@ describe("conversation service tests", () => {
         const c: sdk.Conversation = sdk.Conversation.createConversationAsync(config, (() => {
             objsToClose.push(c);
 
-            const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator();
+            // audio config
+            const audioConfig: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+            objsToClose.push(audioConfig);
+
+            const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator(audioConfig);
             objsToClose.push(ct);
 
             if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
             if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
 
-            ct.setServiceProperty("foo", "bar");
+            const propName: string = "foo";
+            const propValue: string = "bar";
+
+            ct.setServiceProperty(propName, propValue);
 
             const currentProperties: IStringDictionary<string> = JSON.parse(ct.properties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
-            expect(currentProperties["foo"]).toEqual("bar");
-            done();
+            expect(currentProperties[propName]).toEqual(propValue);
 
-            /*
             c.startConversationAsync(() => {
-                ct.joinConversationAsync(c, "Host",
+                // Check that uri for service connection contains service property and value
+                const detachObject: IDetachable = Events.instance.attachListener({
+                    onEvent: (event: PlatformEvent): void => {
+                        if (event instanceof ConnectionStartEvent) {
+                            const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                            const uri: string = connectionEvent.uri;
+                            expect(uri).not.toBeUndefined();
+                            if(!uri.includes("capito")){
+                                // Make sure there's only a single ? in the URL.
+                                expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+                                expect(uri).toContain(`${propName}=${propValue}`);
+                                void detachObject.detach();
+                            }
+                        }
+                    },
+                });
+                ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs) => {
+                    try {
+                        ct.startTranscribingAsync();
+                    } catch (error) {
+                        done(error);
+                    }
+                });
+                ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
+                    expect(e.result.text).toContain("weather");
+                    ct.stopTranscribingAsync(
+                        () => {
+                            ct.leaveConversationAsync(() => {
+                                c.endConversationAsync(
+                                    done,
+                                    (e: string) => { done(e); });
+                            },
+                            (e: string) => { done(e); });
+                        },
+                        (e: string) => { done(e); });
+                });
+
+                const lang: string = "en-US";
+                const nickname: string = "Tester";
+                ct.joinConversationAsync(c.conversationId, nickname, lang,
                     (() => {
                         // continue
                     }),
                     ((error: any) => {
-                        done();
+                        done(error);
                     }));
             });
-            */
         }),
         ((error: any) => {
             done();
