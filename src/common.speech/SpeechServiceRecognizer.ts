@@ -76,10 +76,18 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
         if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
             const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
+
+            let speechContextLidMode;
+            if (recognizerConfig.languageIdMode === "Continuous") {
+                speechContextLidMode = "DetectContinuous";
+            } else {// recognizerConfig.languageIdMode === "AtStart"
+                speechContextLidMode = "DetectAtAudioStart";
+            }
+
             this.privSpeechContext.setSection("languageId", {
-                Priority: recognizerConfig.languageIdPriority, // will only be set if continuous LID enabled
+                Priority: "PrioritizeLatency",
                 languages: sourceLanguages,
-                mode: recognizerConfig.languageIdMode,
+                mode: speechContextLidMode,
                 onSuccess: { action: "Recognize" },
                 onUnknown: { action: "None" }
             });

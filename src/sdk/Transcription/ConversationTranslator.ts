@@ -200,14 +200,6 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         return true;
     }
 
-    public setServiceProperty(name: string, value: string): void {
-        const currentProperties: IStringDictionary<string> = JSON.parse(this.privProperties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
-
-        currentProperties[name] = value;
-
-        this.privProperties.setProperty(ServicePropertiesPropertyName, JSON.stringify(currentProperties));
-    }
-
     /**
      * Join a conversation. If this is the host, pass in the previously created Conversation object.
      * @param conversation
@@ -245,13 +237,9 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage], lang);
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], nickname);
 
-                const conversationEndpoint: string = this.privProperties.getProperty(PropertyId.ConversationTranslator_Host);
-                if (conversationEndpoint) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Host], conversationEndpoint);
-                }
-                const speechEndpoint: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
-                if (speechEndpoint) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], speechEndpoint);
+                const endpoint: string = this.privProperties.getProperty(PropertyId.ConversationTranslator_Host);
+                if (endpoint) {
+                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Host], endpoint);
                 }
                 const speechEndpointHost: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Host);
                 if (speechEndpointHost) {
@@ -471,18 +459,16 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
 
-            let speechEndpoint: string = this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], undefined);
-            if (!speechEndpoint) {
-                let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
-                    PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationConnectionConfig.speechHost);
-                endpointHost = endpointHost.replace("{region}", this.privConversation.room.cognitiveSpeechRegion);
-
-                speechEndpoint = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}`;
-            }
             // TODO
             const token: string = encodeURIComponent(this.privConversation.room.token);
-            speechEndpoint = `${speechEndpoint}?${ConversationConnectionConfig.configParams.token}=${token}`;
-            this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], speechEndpoint);
+
+            let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
+                PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationConnectionConfig.speechHost);
+            endpointHost = endpointHost.replace("{region}", this.privConversation.room.cognitiveSpeechRegion);
+
+            const url = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}?${ConversationConnectionConfig.configParams.token}=${token}`;
+
+            this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], url);
 
             this.privCTRecognizer = new ConversationTranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this);
         } catch (error) {
