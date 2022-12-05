@@ -10,7 +10,6 @@ import {
     CancellationErrorCode,
     CancellationReason,
     ConversationTranscriptionCanceledEventArgs,
-    OutputFormat,
     PropertyCollection,
     PropertyId,
     ResultReason,
@@ -21,12 +20,7 @@ import { ConversationInfo } from "../sdk/Transcription/Exports";
 import { ConversationProperties } from "../sdk/Transcription/IConversation";
 import {
     CancellationErrorCodePropertyName,
-    DetailedSpeechPhrase,
-    EnumTranslation,
-    OutputFormatPropertyName,
-    RecognitionStatus,
-    ServiceRecognizerBase,
-    SimpleSpeechPhrase,
+    ConversationServiceRecognizer,
     SpeechHypothesis,
     TranscriberRecognizer
 } from "./Exports";
@@ -36,7 +30,7 @@ import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 // eslint-disable-next-line max-classes-per-file
-export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
+export class TranscriptionServiceRecognizer extends ConversationServiceRecognizer {
 
     private privTranscriberRecognizer: TranscriberRecognizer;
 
@@ -103,81 +97,8 @@ export class TranscriptionServiceRecognizer extends ServiceRecognizerBase {
                 processed = true;
                 break;
             case "speech.phrase":
-                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
-                const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
-
-                this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + simple.Offset + simple.Duration);
-
-                if (ResultReason.Canceled === resultReason) {
-                    const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
-                    const cancellationErrorCode: CancellationErrorCode = EnumTranslation.implTranslateCancelErrorCode(simple.RecognitionStatus);
-
-                    await this.cancelRecognitionLocal(
-                        cancelReason,
-                        cancellationErrorCode,
-                        EnumTranslation.implTranslateErrorDetails(cancellationErrorCode));
-
-                } else {
-                    if (!(this.privRequestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
-                        if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
-                            result = new SpeechRecognitionResult(
-                                this.privRequestSession.requestId,
-                                resultReason,
-                                simple.DisplayText,
-                                simple.Duration,
-                                simple.Offset + this.privRequestSession.currentTurnAudioOffset,
-                                simple.Language,
-                                simple.LanguageDetectionConfidence,
-                                simple.SpeakerId,
-                                undefined,
-                                connectionMessage.textBody,
-                                resultProps);
-                        } else {
-                            const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody);
-                            const totalOffset: number = detailed.Offset + this.privRequestSession.currentTurnAudioOffset;
-                            const offsetCorrectedJson: string = detailed.getJsonWithCorrectedOffsets(totalOffset);
-
-                            result = new SpeechRecognitionResult(
-                                this.privRequestSession.requestId,
-                                resultReason,
-                                detailed.Text,
-                                detailed.Duration,
-                                totalOffset,
-                                detailed.Language,
-                                detailed.LanguageDetectionConfidence,
-                                detailed.SpeakerId,
-                                undefined,
-                                offsetCorrectedJson,
-                                resultProps);
-                        }
-
-                        const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
-
-                        if (!!this.privTranscriberRecognizer.recognized) {
-                            try {
-                                this.privTranscriberRecognizer.recognized(this.privTranscriberRecognizer, event);
-                                /* eslint-disable no-empty */
-                            } catch (error) {
-                                // Not going to let errors in the event handler
-                                // trip things up.
-                            }
-                        }
-                    }
-
-                    if (!!this.privSuccessCallback) {
-                        try {
-                            this.privSuccessCallback(result);
-                        } catch (e) {
-                            if (!!this.privErrorCallback) {
-                                this.privErrorCallback(e as string);
-                            }
-                        }
-                        // Only invoke the call back once.
-                        // and if it's successful don't invoke the
-                        // error after that.
-                        this.privSuccessCallback = undefined;
-                        this.privErrorCallback = undefined;
-                    }
+                if (!!this.handleSpeechPhraseMessage) {
+                    await this.handleSpeechPhraseMessage(connectionMessage.textBody, this.privTranscriberRecognizer);
                 }
                 processed = true;
                 break;

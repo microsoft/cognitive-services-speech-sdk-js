@@ -23,9 +23,9 @@ import {
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
+    ConversationServiceRecognizer,
     EnumTranslation,
     RecognitionStatus,
-    ServiceRecognizerBase,
     SynthesisStatus,
     TranslationHypothesis,
     TranslationPhrase,
@@ -38,7 +38,7 @@ import { ITranslationPhrase } from "./ServiceMessages/TranslationPhrase";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 // eslint-disable-next-line max-classes-per-file
-export class TranslationServiceRecognizer extends ServiceRecognizerBase {
+export class TranslationServiceRecognizer extends ConversationServiceRecognizer {
     private privTranslationRecognizer: TranslationRecognizer;
 
     public constructor(
@@ -234,6 +234,12 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                         break;
                     default:
                         break;
+                }
+                processed = true;
+                break;
+            case "speech.phrase":
+                if (!!this.handleSpeechPhraseMessage) {
+                    await this.handleSpeechPhraseMessage(connectionMessage.textBody, this.privTranslationRecognizer);
                 }
                 processed = true;
                 break;
