@@ -63,7 +63,10 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         const resultProps: PropertyCollection = new PropertyCollection();
-        let processed: boolean = false;
+        let processed: boolean = await super.processTypeSpecificMessages(connectionMessage);
+        if (processed) {
+            return true;
+        }
 
         const handleTranslationPhrase = async (translatedPhrase: TranslationPhrase): Promise<void> => {
             this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
@@ -240,10 +243,7 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
             default:
                 break;
         }
-        if (!processed) {
-            return super.processTypeSpecificMessages(connectionMessage);
-        }
-        return true;
+        return processed;
     }
 
     // Cancels recognition.

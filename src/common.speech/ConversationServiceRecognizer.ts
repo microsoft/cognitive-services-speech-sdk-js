@@ -40,8 +40,6 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
         this.handleSpeechHypothesisMessage = (textBody: string): void => this.handleSpeechHypothesis(textBody);
     }
 
-
-    // eslint-disable-next-line require-await
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
         let processed: boolean = false;
         switch (connectionMessage.path.toLowerCase()) {
