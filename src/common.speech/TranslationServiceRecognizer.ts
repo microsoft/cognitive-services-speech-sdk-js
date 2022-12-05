@@ -237,16 +237,13 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                 }
                 processed = true;
                 break;
-            case "speech.phrase":
-                if (!!this.handleSpeechPhraseMessage) {
-                    await this.handleSpeechPhraseMessage(connectionMessage.textBody, this.privTranslationRecognizer);
-                }
-                processed = true;
-                break;
             default:
                 break;
         }
-        return processed;
+        if (!processed) {
+            return super.processTypeSpecificMessages(connectionMessage);
+        }
+        return true;
     }
 
     // Cancels recognition.
@@ -306,7 +303,7 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
 
         let resultReason: ResultReason;
         if (serviceResult instanceof TranslationPhrase) {
-            if (serviceResult.Translation.TranslationStatus === TranslationStatus.Success) {
+            if (!!serviceResult.Translation && serviceResult.Translation.TranslationStatus === TranslationStatus.Success) {
                 resultReason = ResultReason.TranslatedSpeech;
             } else {
                 resultReason = ResultReason.RecognizedSpeech;

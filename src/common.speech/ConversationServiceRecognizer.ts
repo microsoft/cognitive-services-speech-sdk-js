@@ -5,7 +5,6 @@ import {
     OutputFormat,
     PropertyCollection,
     PropertyId,
-    Recognizer,
     ResultReason,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
@@ -23,9 +22,9 @@ import {
     RecognizerConfig,
     ServiceRecognizerBase,
     SimpleSpeechPhrase,
+    SpeechHypothesis,
     TranscriberRecognizer
 } from "./Exports";
-import { ITranslationPhrase } from "./ServiceMessages/TranslationPhrase";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 export class ConversationServiceRecognizer extends ServiceRecognizerBase {
@@ -35,17 +34,34 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
         connectionFactory: IConnectionFactory,
         audioSource: IAudioSource,
         recognizerConfig: RecognizerConfig,
-        recognizer: Recognizer) {
+        recognizer: TranslationRecognizer | TranscriberRecognizer) {
         super(authentication, connectionFactory, audioSource, recognizerConfig, recognizer);
-        this.handleSpeechPhraseMessage = async (textBody: string, recognizer: Recognizer): Promise<void> => this.handleSpeechPhrase(textBody, recognizer);
+        this.handleSpeechPhraseMessage = async (textBody: string): Promise<void> => this.handleSpeechPhrase(textBody);
+        this.handleSpeechHypothesisMessage = (textBody: string): void => this.handleSpeechHypothesis(textBody);
     }
 
 
     // eslint-disable-next-line require-await
-    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
-        // Implementing to allow inheritance
-        void connectionMessage;
-        return;
+    protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
+        let processed: boolean = false;
+        switch (connectionMessage.path.toLowerCase()) {
+            case "speech.hypothesis":
+            case "speech.fragment":
+                if (!!this.handleSpeechHypothesisMessage) {
+                    this.handleSpeechHypothesisMessage(connectionMessage.textBody);
+                }
+                processed = true;
+                break;
+            case "speech.phrase":
+                if (!!this.handleSpeechPhraseMessage) {
+                    await this.handleSpeechPhraseMessage(connectionMessage.textBody);
+                }
+                processed = true;
+                break;
+            default:
+                break;
+        }
+        return processed;
     }
 
     protected cancelRecognition(
@@ -62,7 +78,7 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
             void error;
         }
 
-    protected async handleSpeechPhrase(textBody: string, recognizer: Recognizer): Promise<void> {
+    protected async handleSpeechPhrase(textBody: string): Promise<void> {
 
         const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(textBody);
         const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
@@ -84,28 +100,6 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
 
         } else {
             if (!(this.privRequestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
-                if (!!recognizer && recognizer instanceof TranslationRecognizer) {
-                    try {
-                        const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(textBody) as { SpeechPhrase: ITranslationPhrase };
-                        const translationResult = new TranslationRecognitionResult(
-                            undefined,
-                            this.privRequestSession.requestId,
-                            resultReason,
-                            phrase.SpeechPhrase.Text,
-                            phrase.SpeechPhrase.Duration,
-                            simpleOffset,
-                            "",
-                            JSON.stringify(phrase.SpeechPhrase),
-                            resultProps);
-
-                        const ev = new TranslationRecognitionEventArgs(translationResult, simpleOffset, this.privRequestSession.sessionId);
-                        recognizer.recognized(recognizer, ev);
-                    } catch (error) {
-                        // Not going to let errors in the event handler
-                        // trip things up.
-                    }
-                    return;
-                }
                 if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
                     result = new SpeechRecognitionResult(
                         this.privRequestSession.requestId,
@@ -119,6 +113,17 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
                         undefined,
                         textBody,
                         resultProps);
+
+                    if (this.privRecognizer instanceof TranslationRecognizer) {
+                        try {
+                            const ev = new TranslationRecognitionEventArgs(TranslationRecognitionResult.fromSpeechRecognitionResult(result), simpleOffset, this.privRequestSession.sessionId);
+                            this.privRecognizer.recognized(this.privRecognizer, ev);
+                        } catch (error) {
+                            // Not going to let errors in the event handler
+                            // trip things up.
+                        }
+                        return;
+                    }
                 } else {
                     const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(textBody);
                     const totalOffset: number = detailed.Offset + this.privRequestSession.currentTurnAudioOffset;
@@ -138,10 +143,10 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
                         resultProps);
                 }
 
-                if (!!recognizer && recognizer instanceof TranscriberRecognizer) {
+                if (this.privRecognizer instanceof TranscriberRecognizer) {
                     try {
                         const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
-                        recognizer.recognized(this.privRecognizer, event);
+                        this.privRecognizer.recognized(this.privRecognizer, event);
                         if (!!this.privSuccessCallback) {
                             try {
                                 this.privSuccessCallback(result);
@@ -166,10 +171,49 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
         }
     }
 
-    /*
-    protected async handleSpeechHypothesis(textBody: string, recognized: (sender: Recognizer, event: SpeechRecognitionEventArgs) => void): Promise<void> {
-        void textBody;
-        void recognized;
+    protected handleSpeechHypothesis(textBody: string): void {
+        const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(textBody);
+        const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
+        const resultProps: PropertyCollection = new PropertyCollection();
+        resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, textBody);
+
+        const result = new SpeechRecognitionResult(
+            this.privRequestSession.requestId,
+            ResultReason.RecognizingSpeech,
+            hypothesis.Text,
+            hypothesis.Duration,
+            offset,
+            hypothesis.Language,
+            hypothesis.LanguageDetectionConfidence,
+            hypothesis.SpeakerId,
+            undefined,
+            textBody,
+            resultProps);
+
+        this.privRequestSession.onHypothesis(offset);
+
+        if (this.privRecognizer instanceof TranscriberRecognizer) {
+            if (!!this.privRecognizer.recognizing) {
+                try {
+                    const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
+                    this.privRecognizer.recognizing(this.privRecognizer, ev);
+                    /* eslint-disable no-empty */
+                } catch (error) {
+                    // Not going to let errors in the event handler
+                    // trip things up.
+                }
+            }
+        } else {
+            if (this.privRecognizer instanceof TranslationRecognizer) {
+                try {
+                    const ev = new TranslationRecognitionEventArgs(TranslationRecognitionResult.fromSpeechRecognitionResult(result), hypothesis.Duration, this.privRequestSession.sessionId);
+                    this.privRecognizer.recognizing(this.privRecognizer, ev);
+                    /* eslint-disable no-empty */
+                } catch (error) {
+                    // Not going to let errors in the event handler
+                    // trip things up.
+                }
+            }
+        }
     }
-    */
 }

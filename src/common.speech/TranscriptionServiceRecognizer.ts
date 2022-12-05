@@ -13,7 +13,6 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
-    SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
 import { ConversationInfo } from "../sdk/Transcription/Exports";
@@ -21,7 +20,6 @@ import { ConversationProperties } from "../sdk/Transcription/IConversation";
 import {
     CancellationErrorCodePropertyName,
     ConversationServiceRecognizer,
-    SpeechHypothesis,
     TranscriberRecognizer
 } from "./Exports";
 import { IAuthentication } from "./IAuthentication";
@@ -56,56 +54,7 @@ export class TranscriptionServiceRecognizer extends ConversationServiceRecognize
     }
 
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
-
-        let result: SpeechRecognitionResult;
-        const resultProps: PropertyCollection = new PropertyCollection();
-        resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
-        let processed: boolean = false;
-
-        switch (connectionMessage.path.toLowerCase()) {
-            case "speech.hypothesis":
-            case "speech.fragment":
-                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
-                const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
-
-                result = new SpeechRecognitionResult(
-                    this.privRequestSession.requestId,
-                    ResultReason.RecognizingSpeech,
-                    hypothesis.Text,
-                    hypothesis.Duration,
-                    offset,
-                    hypothesis.Language,
-                    hypothesis.LanguageDetectionConfidence,
-                    hypothesis.SpeakerId,
-                    undefined,
-                    connectionMessage.textBody,
-                    resultProps);
-
-                this.privRequestSession.onHypothesis(offset);
-
-                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
-
-                if (!!this.privTranscriberRecognizer.recognizing) {
-                    try {
-                        this.privTranscriberRecognizer.recognizing(this.privTranscriberRecognizer, ev);
-                        /* eslint-disable no-empty */
-                    } catch (error) {
-                        // Not going to let errors in the event handler
-                        // trip things up.
-                    }
-                }
-                processed = true;
-                break;
-            case "speech.phrase":
-                if (!!this.handleSpeechPhraseMessage) {
-                    await this.handleSpeechPhraseMessage(connectionMessage.textBody, this.privTranscriberRecognizer);
-                }
-                processed = true;
-                break;
-            default:
-                break;
-        }
-        return processed;
+        return super.processTypeSpecificMessages(connectionMessage);
     }
 
     // Cancels recognition.
