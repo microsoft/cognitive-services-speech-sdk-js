@@ -64,14 +64,17 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
 
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             this.recognized = async (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs): Promise<void> => {
-                // TODO: add support for getting recognitions from here if own speech
-
                 // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
                 if (e.result?.errorDetails) {
                     await this.cancelSpeech();
                     // TODO: format the error message contained in 'errorDetails'
                     this.fireCancelEvent(e.result.errorDetails);
+                } else {
+                    if (!!this.privTranslator.recognized) {
+                        this.privTranslator.recognized(tr, e);
+                    }
                 }
+                return;
             };
 
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -148,6 +151,8 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     public textMessageReceived: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
     public transcribed: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
     public transcribing: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+    public recognized: (sender: TranslationRecognizer, event: TranslationRecognitionEventArgs) => void;
+    public recognizing: (sender: TranslationRecognizer, event: TranslationRecognitionEventArgs) => void;
 
     private privSpeechRecognitionLanguage: string;
     private privProperties: PropertyCollection;
