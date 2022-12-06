@@ -677,7 +677,7 @@ describe("conversation service tests", () => {
                         done(error);
                     }
                 });
-                ct.recognized = ((s: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionEventArgs) => {
+                ct.recognized = ((s: sdk.ConversationTranslator, e: sdk.TranslationRecognitionEventArgs) => {
                     if (e.result.text !== "") {
                         expect(e.result.text).toContain("weather");
                         ct.stopTranscribingAsync(

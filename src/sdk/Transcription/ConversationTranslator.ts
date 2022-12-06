@@ -71,7 +71,7 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
                     this.fireCancelEvent(e.result.errorDetails);
                 } else {
                     if (!!this.privTranslator.recognized) {
-                        this.privTranslator.recognized(tr, e);
+                        this.privTranslator.recognized(this.privTranslator, e);
                     }
                 }
                 return;
@@ -151,8 +151,8 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     public textMessageReceived: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
     public transcribed: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
     public transcribing: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
-    public recognized: (sender: TranslationRecognizer, event: TranslationRecognitionEventArgs) => void;
-    public recognizing: (sender: TranslationRecognizer, event: TranslationRecognitionEventArgs) => void;
+    public recognized: (sender: IConversationTranslator, event: TranslationRecognitionEventArgs) => void;
+    public recognizing: (sender: IConversationTranslator, event: TranslationRecognitionEventArgs) => void;
 
     private privSpeechRecognitionLanguage: string;
     private privProperties: PropertyCollection;
