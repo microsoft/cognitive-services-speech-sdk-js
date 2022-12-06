@@ -236,7 +236,7 @@ describe("conversation service tests", () => {
 
     }, 80000);
 
-    test.skip("Start Conversation, invalid nickname [400025]", (done: jest.DoneCallback) => {
+    test("Start Conversation, invalid nickname [400025]", (done: jest.DoneCallback) => {
 
         let errorMessage: string;
 
@@ -283,7 +283,7 @@ describe("conversation service tests", () => {
 
     }, 80000);
 
-    test.skip("Start Conversation, join as host and mute participants", (done: jest.DoneCallback) => {
+    test("Start Conversation, join as host and mute participants", (done: jest.DoneCallback) => {
 
         // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host, mute participants");
@@ -377,7 +377,7 @@ describe("conversation service tests", () => {
 
     }, 40000);
 
-    test.skip("Start Conversation, join as host and send message", (done: jest.DoneCallback) => {
+    test("Start Conversation, join as host and send message", (done: jest.DoneCallback) => {
 
         // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host and send message");
@@ -439,7 +439,7 @@ describe("conversation service tests", () => {
 
     }, 60000);
 
-    test.skip("Start Conversation, join as host and eject participant", (done: jest.DoneCallback) => {
+    test("Start Conversation, join as host and eject participant", (done: jest.DoneCallback) => {
 
         // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host and eject participant");
@@ -536,7 +536,7 @@ describe("conversation service tests", () => {
 
     }, 60000);
 
-    test.skip("Start Conversation, join as host and set service property", (done: jest.DoneCallback) => {
+    test("Start Conversation, join as host and set service property", (done: jest.DoneCallback) => {
 
         // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host and set service property");
@@ -591,18 +591,23 @@ describe("conversation service tests", () => {
                         done(error);
                     }
                 });
-                ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
-                    expect(e.result.text).toContain("weather");
-                    ct.stopTranscribingAsync(
-                        () => {
-                            ct.leaveConversationAsync(() => {
-                                c.endConversationAsync(
-                                    done,
-                                    (e: string) => { done(e); });
+                ct.recognized = ((s: sdk.ConversationTranslator, e: sdk.TranslationRecognitionEventArgs) => {
+                    if (e.result.text !== "") {
+                        expect(e.result.text).toContain("weather");
+                        ct.stopTranscribingAsync(
+                            () => {
+                                ct.leaveConversationAsync(() => {
+                                    c.endConversationAsync(
+                                        done,
+                                        (e: string) => { done(e); });
+                                },
+                                (e: string) => { done(e); });
                             },
                             (e: string) => { done(e); });
-                        },
-                        (e: string) => { done(e); });
+                    }
+                });
+                ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
+                    expect(e.result.text).toContain("weather");
                 });
 
                 const lang: string = "en-US";
