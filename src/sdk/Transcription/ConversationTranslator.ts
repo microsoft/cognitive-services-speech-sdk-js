@@ -62,16 +62,25 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
                 this.privSpeechState = SpeechState.Inactive;
             };
 
+            this.recognizing = (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs): void => {
+                if (!!this.privTranslator.recognizing) {
+                    this.privTranslator.recognizing(this.privTranslator, e);
+                }
+            };
+
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             this.recognized = async (tr: TranslationRecognizer, e: TranslationRecognitionEventArgs): Promise<void> => {
-                // TODO: add support for getting recognitions from here if own speech
-
                 // if there is an error connecting to the conversation service from the speech service the error will be returned in the ErrorDetails field.
                 if (e.result?.errorDetails) {
                     await this.cancelSpeech();
                     // TODO: format the error message contained in 'errorDetails'
                     this.fireCancelEvent(e.result.errorDetails);
+                } else {
+                    if (!!this.privTranslator.recognized) {
+                        this.privTranslator.recognized(this.privTranslator, e);
+                    }
                 }
+                return;
             };
 
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -146,8 +155,14 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     public sessionStarted: (sender: ConversationHandler, event: SessionEventArgs) => void;
     public sessionStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
     public textMessageReceived: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+
+    // Callbacks for whole conversation results
     public transcribed: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
     public transcribing: (sender: IConversationTranslator, event: ConversationTranslationEventArgs) => void;
+
+    // Callbacks for detecting speech/translation results from self
+    public recognized: (sender: IConversationTranslator, event: TranslationRecognitionEventArgs) => void;
+    public recognizing: (sender: IConversationTranslator, event: TranslationRecognitionEventArgs) => void;
 
     private privSpeechRecognitionLanguage: string;
     private privProperties: PropertyCollection;

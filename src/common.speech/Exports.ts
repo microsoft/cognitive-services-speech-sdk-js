@@ -11,6 +11,7 @@ export * from "./ISynthesisConnectionFactory";
 export * from "./IntentConnectionFactory";
 export * from "./RecognitionEvents";
 export * from "./ServiceRecognizerBase";
+export * from "./ConversationServiceRecognizer";
 export * from "./RecognizerConfig";
 export * from "./SpeechServiceInterfaces";
 export * from "./WebsocketMessageFormatter";

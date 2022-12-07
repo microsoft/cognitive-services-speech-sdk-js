@@ -571,6 +571,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected configConnectionOverride: (connection: IConnection) => Promise<IConnection> = undefined;
+    protected handleSpeechPhraseMessage: (textBody: string) => Promise<void> = undefined;
+    protected handleSpeechHypothesisMessage: (textBody: string) => void = undefined;
 
     protected sendSpeechServiceConfig(connection: IConnection, requestSession: RequestSession, SpeechServiceConfigJson: string): Promise<void> {
         requestSession.onSpeechContext();
