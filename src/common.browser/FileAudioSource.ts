@@ -91,7 +91,7 @@ export class FileAudioSource implements IAudioSource {
         this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
         return Promise.resolve({
             detach: async (): Promise<void> => {
-                stream.readEnded();
+                await stream.readEnded();
                 delete this.privStreams[audioNodeId];
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                 await this.turnOff();
@@ -150,7 +150,7 @@ export class FileAudioSource implements IAudioSource {
 
     private readHeader(): Promise<AudioStreamFormatImpl> {
         // Read the wave header.
-        const maxHeaderSize: number = 512;
+        const maxHeaderSize: number = 4296;
         const header: Blob | Buffer = this.privSource.slice(0, maxHeaderSize);
 
         const headerResult: Deferred<AudioStreamFormatImpl> = new Deferred<AudioStreamFormatImpl>();
