@@ -91,7 +91,7 @@ export class FileAudioSource implements IAudioSource {
         this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
         return Promise.resolve({
             detach: async (): Promise<void> => {
-                await stream.readEnded();
+                stream.readEnded();
                 delete this.privStreams[audioNodeId];
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                 await this.turnOff();
