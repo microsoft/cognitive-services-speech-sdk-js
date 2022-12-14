@@ -72,11 +72,11 @@ export class TranslationRecognizer extends Recognizer {
      * @param {SpeechTranslationConfig} speechConfig - Set of properties to configure this recognizer.
      * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
      */
-    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig, connectionFactory?: IConnectionFactory) {
         const configImpl = speechConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(configImpl, "speechConfig");
 
-        super(audioConfig, configImpl.properties, new TranslationConnectionFactory());
+        super(audioConfig, configImpl.properties, connectionFactory || new TranslationConnectionFactory());
 
         this.privDisposedTranslationRecognizer = false;
 

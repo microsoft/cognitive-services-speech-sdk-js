@@ -6,7 +6,10 @@
 
 import {
     ConversationConnectionConfig,
-    ServicePropertiesPropertyName
+    ServicePropertiesPropertyName,
+    IConnectionFactory,
+    TranslationConnectionFactory,
+    TranscriberConnectionFactory
 } from "../../common.speech/Exports";
 import {
     IDisposable,
@@ -49,8 +52,19 @@ export enum SpeechState {
 class ConversationTranslationRecognizer extends TranslationRecognizer {
     private privTranslator: ConversationTranslator;
     private privSpeechState: SpeechState;
-    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig, translator?: ConversationTranslator) {
-        super(speechConfig, audioConfig);
+
+    public constructor(speechConfig: SpeechTranslationConfig, audioConfig: AudioConfig, translator: ConversationTranslator, convGetter: () => ConversationImpl) {
+        let connectionFactory: IConnectionFactory = new TranslationConnectionFactory();
+
+        const isVirtMicArrayEndpoint: boolean = speechConfig.getProperty("ConversationTranslator_MultiChannelAudio", "").toUpperCase() === "TRUE";
+        if (isVirtMicArrayEndpoint) {
+            const factory = new TranscriberConnectionFactory();
+            factory.getConversationFunc = convGetter;
+            connectionFactory = factory;
+        }
+
+        super(speechConfig, audioConfig, connectionFactory);
+
         this.privSpeechState = SpeechState.Inactive;
         if (!!translator) {
             this.privTranslator = translator;
@@ -95,6 +109,7 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
             };
         }
     }
+
     public get state(): SpeechState {
         return this.privSpeechState;
     }
@@ -141,7 +156,6 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
             // ignore the error
         }
     }
-
 }
 
 /**
@@ -281,6 +295,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 // join the conversation
                 this.privConversation = new ConversationImpl(this.privSpeechTranslationConfig);
                 this.privConversation.conversationTranslator = this;
+                this.privConversation.room.isHost = false;
 
                 this.privConversation.joinConversationAsync(
                     conversation,
@@ -319,6 +334,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privConversation = conversation as ConversationImpl;
                 // ref the conversation translator object
                 this.privConversation.conversationTranslator = this;
+                this.privConversation.room.isHost = true;
 
                 Contracts.throwIfNullOrUndefined(this.privConversation, this.privErrors.permissionDeniedConnect);
                 Contracts.throwIfNullOrUndefined(this.privConversation.room.token, this.privErrors.permissionDeniedConnect);
@@ -485,6 +501,8 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 === this.privPlaceholderKey) {
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
+
+            // TODO the endpoint should not be set here like this. Instead we should consider moving this into the connection factory
             let speechEndpoint: string = this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], undefined);
             if (!speechEndpoint) {
                 let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
@@ -493,12 +511,14 @@ export class ConversationTranslator extends ConversationCommon implements IConve
 
                 speechEndpoint = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}`;
             }
-            // TODO
+
             const token: string = encodeURIComponent(this.privConversation.room.token);
-            speechEndpoint = `${speechEndpoint}?${ConversationConnectionConfig.configParams.token}=${token}`;
+            const separator = speechEndpoint.lastIndexOf("?") < 0 ? "?" : "&";
+            speechEndpoint = `${speechEndpoint}${separator}${ConversationConnectionConfig.configParams.token}=${token}`;
             this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], speechEndpoint);
 
-            this.privCTRecognizer = new ConversationTranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this);
+            const convGetter = (): ConversationImpl => this.privConversation;
+            this.privCTRecognizer = new ConversationTranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this, convGetter);
         } catch (error) {
             await this.cancelSpeech();
             throw error;
