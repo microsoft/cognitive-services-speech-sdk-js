@@ -55,7 +55,7 @@ export class WebsocketConnection implements IConnection {
                     queryParams += key;
 
                     let val = queryParameters[paramName];
-                    if (val !== undefined && val !== null) {
+                    if (val) {
                         val = encodeURIComponent(val);
                         queryParams += `=${val}`;
                     }

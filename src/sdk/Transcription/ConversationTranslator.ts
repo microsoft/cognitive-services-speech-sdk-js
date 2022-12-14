@@ -7,10 +7,8 @@
 import {
     ConversationConnectionConfig,
     ServicePropertiesPropertyName,
-    IConnectionFactory,
-    TranslationConnectionFactory,
-    TranscriberConnectionFactory
 } from "../../common.speech/Exports";
+import { ConversationTranslatorConnectionFactory } from "../../common.speech/Transcription/ConversationTranslatorConnectionFactory";
 import {
     IDisposable,
     IErrorMessages,
@@ -54,16 +52,8 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
     private privSpeechState: SpeechState;
 
     public constructor(speechConfig: SpeechTranslationConfig, audioConfig: AudioConfig, translator: ConversationTranslator, convGetter: () => ConversationImpl) {
-        let connectionFactory: IConnectionFactory = new TranslationConnectionFactory();
 
-        const isVirtMicArrayEndpoint: boolean = speechConfig.getProperty("ConversationTranslator_MultiChannelAudio", "").toUpperCase() === "TRUE";
-        if (isVirtMicArrayEndpoint) {
-            const factory = new TranscriberConnectionFactory();
-            factory.getConversationFunc = convGetter;
-            connectionFactory = factory;
-        }
-
-        super(speechConfig, audioConfig, connectionFactory);
+        super(speechConfig, audioConfig, new ConversationTranslatorConnectionFactory(convGetter));
 
         this.privSpeechState = SpeechState.Inactive;
         if (!!translator) {
