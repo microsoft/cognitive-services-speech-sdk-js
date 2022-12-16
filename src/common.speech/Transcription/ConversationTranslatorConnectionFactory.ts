@@ -10,6 +10,7 @@ import {
     IConnection,
     IStringDictionary,
 } from "../../common/Exports";
+import { StringUtils } from "../../common/StringUtils";
 import { Contracts } from "../../sdk/Contracts";
 import {
     PropertyId
@@ -80,7 +81,7 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
 
             // because the region can change during a session, we support being passed a format string which we can then
             // replace with the correct information.
-            endpointUrl = ConversationTranslatorConnectionFactory.formatString(endpointUrl, replacementValues);
+            endpointUrl = StringUtils.formatString(endpointUrl, replacementValues);
 
             const parsedUrl = new URL(endpointUrl);
             parsedUrl.searchParams.forEach((val: string, key: string): void => {
@@ -112,8 +113,8 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
             // connecting to regular translation endpoint
             const connFactory = new TranslationConnectionFactory();
 
-            endpointUrl = connFactory.getEndpointUrl(config);
-            endpointUrl = ConversationTranslatorConnectionFactory.formatString(endpointUrl, replacementValues);
+            endpointUrl = connFactory.getEndpointUrl(config, true);
+            endpointUrl = StringUtils.formatString(endpointUrl, replacementValues);
 
             connFactory.setQueryParams(queryParams, config, endpointUrl);
         }
@@ -126,70 +127,5 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
 
         const enableCompression = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "").toUpperCase() === "TRUE";
         return new WebsocketConnection(endpointUrl, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
-    }
-
-    protected static formatString(format: string, replacements: IStringDictionary<string>): string {
-
-        if (!format) {
-            return "";
-        }
-
-        if (!replacements) {
-            return format;
-        }
-
-        let formatted: string = "";
-        let key: string = "";
-
-        const appendToFormatted = (str: string): void => {
-            formatted += str;
-        };
-        const appendToKey = (str: string): void => {
-            key += str;
-        };
-        let appendFunc: (str: string) => void = appendToFormatted;
-
-        for (let i = 0; i < format.length; i++) {
-            const c: string = format[i];
-            const next: string = i + 1 < format.length ? format[i + 1] : "";
-
-            switch (c) {
-                case "{":
-                    if (next === "{") {
-                        appendFunc("{");
-                        i++;
-                    } else {
-                        appendFunc = appendToKey;
-                    }
-                    break;
-
-                case "}":
-                    if (next === "}") {
-                        appendFunc("}");
-                        i++;
-                    } else {
-                        if (replacements.hasOwnProperty(key)) {
-                            formatted += replacements[key];
-                        } else {
-                            formatted += `{${key}}`;
-                        }
-
-                        appendFunc = appendToFormatted;
-                        key = "";
-                    }
-                    break;
-
-                default:
-                    appendFunc(c);
-                    break;
-            }
-        }
-
-        // do we have any trailing replacement keys?
-        if (key) {
-            formatted += `{${key}`;
-        }
-
-        return formatted;
     }
 }

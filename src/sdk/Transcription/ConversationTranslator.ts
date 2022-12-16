@@ -264,17 +264,24 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage], lang);
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], nickname);
 
-                const speechEndpointHost: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Host);
-                if (speechEndpointHost) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Host], speechEndpointHost);
-                }
-                const conversationEndpoint: string = this.privProperties.getProperty(PropertyId.ConversationTranslator_Host);
-                if (conversationEndpoint) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Host], conversationEndpoint);
-                }
-                const speechEndpoint: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
-                if (speechEndpoint) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], speechEndpoint);
+                const propertyIdsToCopy: (string | PropertyId)[] = [
+                    PropertyId.SpeechServiceConnection_Host,
+                    PropertyId.ConversationTranslator_Host,
+                    PropertyId.SpeechServiceConnection_Endpoint,
+                    PropertyId.SpeechServiceConnection_ProxyHostName,
+                    PropertyId.SpeechServiceConnection_ProxyPassword,
+                    PropertyId.SpeechServiceConnection_ProxyPort,
+                    PropertyId.SpeechServiceConnection_ProxyUserName,
+                    "ConversationTranslator_MultiChannelAudio",
+                    "ConversationTranslator_Region"
+                ];
+
+                for (const prop of propertyIdsToCopy) {
+                    const value = this.privProperties.getProperty(prop);
+                    if (value) {
+                        const key = typeof prop === "string" ? prop : PropertyId[prop];
+                        this.privSpeechTranslationConfig.setProperty(key, value);
+                    }
                 }
 
                 const currentProperties  = JSON.parse(this.privProperties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;

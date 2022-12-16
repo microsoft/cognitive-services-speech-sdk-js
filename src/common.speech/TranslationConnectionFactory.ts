@@ -9,6 +9,7 @@ import {
     IConnection,
     IStringDictionary,
 } from "../common/Exports";
+import { StringUtils } from "../common/StringUtils";
 import {
     PropertyId
 } from "../sdk/Exports";
@@ -47,17 +48,22 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
     }
 
-    public getEndpointUrl(config: RecognizerConfig): string {
+    public getEndpointUrl(config: RecognizerConfig, returnRegionPlaceholder?: boolean): string {
+
+        const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
+        const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
 
         let endpointUrl: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpointUrl) {
-            const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
-            const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + ".s2s.speech" + hostSuffix);
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://{region}.s2s.speech" + hostSuffix);
             endpointUrl = host + "/speech/translation/cognitiveservices/v1";
         }
 
-        return endpointUrl;
+        if (returnRegionPlaceholder === true) {
+            return endpointUrl;
+        }
+
+        return StringUtils.formatString(endpointUrl, { region });
     }
 
     public setQueryParams(queryParams: IStringDictionary<string>, config: RecognizerConfig, endpointUrl: string): void {
