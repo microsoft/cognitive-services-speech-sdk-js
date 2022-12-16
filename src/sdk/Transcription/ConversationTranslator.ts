@@ -492,21 +492,6 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
 
-            // TODO the endpoint should not be set here like this. Instead we should consider moving this into the connection factory
-            let speechEndpoint: string = this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], undefined);
-            if (!speechEndpoint) {
-                let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
-                    PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationConnectionConfig.speechHost);
-                endpointHost = endpointHost.replace("{region}", this.privConversation.room.cognitiveSpeechRegion);
-
-                speechEndpoint = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}`;
-            }
-
-            const token: string = encodeURIComponent(this.privConversation.room.token);
-            const separator = speechEndpoint.lastIndexOf("?") < 0 ? "?" : "&";
-            speechEndpoint = `${speechEndpoint}${separator}${ConversationConnectionConfig.configParams.token}=${token}`;
-            this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], speechEndpoint);
-
             const convGetter = (): ConversationImpl => this.privConversation;
             this.privCTRecognizer = new ConversationTranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this, convGetter);
         } catch (error) {

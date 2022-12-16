@@ -50,23 +50,26 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
     public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
         const isVirtMicArrayEndpoint = config.parameters.getProperty("ConversationTranslator_MultiChannelAudio", "").toUpperCase() === "TRUE";
 
+        const convInfo = this.privConvGetter().room;
+        const region = convInfo.cognitiveSpeechRegion || config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "");
+
+        const replacementValues: IStringDictionary<string> = {
+            hostSuffix: ConnectionFactoryBase.getHostSuffix(region),
+            path: ConversationTranslatorConnectionFactory.CTS_VIRT_MIC_PATH,
+            region: encodeURIComponent(region)
+        };
+        replacementValues[QueryParameterNames.Language] = encodeURIComponent(config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, ""));
+        replacementValues[QueryParameterNames.CtsMeetingId] = encodeURIComponent(convInfo.roomId);
+        replacementValues[QueryParameterNames.CtsDeviceId] = encodeURIComponent(convInfo.participantId);
+        replacementValues[QueryParameterNames.CtsIsParticipant] = convInfo.isHost ? "" : ("&" + QueryParameterNames.CtsIsParticipant);
+
+        let endpointUrl: string = "";
+        const queryParams: IStringDictionary<string> = {};
+        const headers: IStringDictionary<string> = {};
+
         if (isVirtMicArrayEndpoint) {
             // connecting to the conversation transcription virtual microphone array endpoint
-
-            const convInfo = this.privConvGetter().room;
-            const region = convInfo.cognitiveSpeechRegion || config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, "");
-
-            const replacementValues: IStringDictionary<string> = {
-                hostSuffix: ConnectionFactoryBase.getHostSuffix(region),
-                path: ConversationTranslatorConnectionFactory.CTS_VIRT_MIC_PATH,
-                region: encodeURIComponent(region)
-            };
-            replacementValues[QueryParameterNames.Language] = encodeURIComponent(config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, ""));
-            replacementValues[QueryParameterNames.CtsMeetingId] = encodeURIComponent(convInfo.roomId);
-            replacementValues[QueryParameterNames.CtsDeviceId] = encodeURIComponent(convInfo.participantId);
-            replacementValues[QueryParameterNames.CtsIsParticipant] = convInfo.isHost ? "" : ("&" + QueryParameterNames.CtsIsParticipant);
-
-            let endpointUrl = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
+            endpointUrl = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
             if (!endpointUrl) {
                 const hostName = config.parameters.getProperty(
                     PropertyId.SpeechServiceConnection_Host,
@@ -102,86 +105,94 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
                 }
             }
 
-            const headers: IStringDictionary<string> = {};
-            headers[HeaderNames.ConnectionId] = connectionId;
-            headers[RestConfigBase.configParams.token] = convInfo.token;
-            if (authInfo.token) {
-                headers[authInfo.headerName] = authInfo.token;
-            }
+            parsedUrl.searchParams.forEach((val: string, key: string): void => {
+                parsedUrl.searchParams.set(key, queryParams[key]);
+                delete queryParams[key];
+            });
 
-            // Explicitly don't save the endpoint URL to future reconnections to properly regenerate the endpoint URL possibly
-            // using a different region
             endpointUrl = parsedUrl.toString();
 
-            const enableCompression = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "").toUpperCase() === "TRUE";
-            return new WebsocketConnection(
-                endpointUrl,
-                queryParams,
-                headers,
-                new WebsocketMessageFormatter(),
-                ProxyInfo.fromRecognizerConfig(config),
-                enableCompression,
-                connectionId);
         } else {
             // connecting to regular translation endpoint
             const connFactory = new TranslationConnectionFactory();
-            return connFactory.create(config, authInfo, connectionId);
+
+            endpointUrl = connFactory.getEndpointUrl(config);
+            endpointUrl = ConversationTranslatorConnectionFactory.formatString(endpointUrl, replacementValues);
+
+            const queryParams: IStringDictionary<string> = {};
+            connFactory.setQueryParams(queryParams, config, endpointUrl);
         }
+
+        headers[HeaderNames.ConnectionId] = connectionId;
+        headers[RestConfigBase.configParams.token] = convInfo.token;
+        if (authInfo.token) {
+            headers[authInfo.headerName] = authInfo.token;
+        }
+
+        const enableCompression = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "").toUpperCase() === "TRUE";
+        return new WebsocketConnection(endpointUrl, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
     }
 
     protected static formatString(format: string, replacements: IStringDictionary<string>): string {
-        let formatted: string = "";
 
         if (!format) {
-            return formatted;
+            return "";
         }
 
-        let value: string = "";
-        let active: string = formatted;
+        if (!replacements) {
+            return format;
+        }
+
+        let formatted: string = "";
+        let key: string = "";
+
+        const appendToFormatted = (str: string): void => {
+            formatted += str;
+        };
+        const appendToKey = (str: string): void => {
+            key += str;
+        };
+        let appendFunc: (str: string) => void = appendToFormatted;
 
         for (let i = 0; i < format.length; i++) {
-            const current = format[i];
-            const next = i < format.length - 1 ? format[i + 1] : null;
+            const c: string = format[i];
+            const next: string = i + 1 < format.length ? format[i + 1] : "";
 
-            switch (current) {
+            switch (c) {
                 case "{":
                     if (next === "{") {
-                        // escaped '{'
-                        active += current;
+                        appendFunc("{");
                         i++;
                     } else {
-                        active = value;
+                        appendFunc = appendToKey;
                     }
                     break;
 
                 case "}":
                     if (next === "}") {
-                        // escaped '}'
-                        active += current;
+                        appendFunc("}");
                         i++;
                     } else {
-                        if (value in replacements) {
-                            formatted += replacements[value];
+                        if (replacements.hasOwnProperty(key)) {
+                            formatted += replacements[key];
                         } else {
-                            // add back the replacement string
-                            formatted += `{${value}}`;
+                            formatted += `{${key}}`;
                         }
 
-                        value = "";
-                        active = formatted;
+                        appendFunc = appendToFormatted;
+                        key = "";
                     }
                     break;
 
                 default:
-                    active += current;
+                    appendFunc(c);
                     break;
             }
         }
 
-        // Do we have any trailing replacement keys?
-        if (active === value) {
-            formatted += "{";
-            formatted += value;
+        // do we have any trailing replacement keys?
+        if (key) {
+            formatted += `{${key}`;
         }
 
         return formatted;
