@@ -237,7 +237,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
      */
     public joinConversationAsync(conversation: IConversation, nickname: string, cb?: Callback, err?: Callback): void;
     public joinConversationAsync(conversationId: string, nickname: string, lang: string, cb?: Callback, err?: Callback): void;
-    public joinConversationAsync(conversation: string | { config: SpeechTranslationConfig }, nickname: string, param1?: string | Callback, param2?: Callback, param3?: Callback): void {
+    public joinConversationAsync(conversation: string | IConversation, nickname: string, param1?: string | Callback, param2?: Callback, param3?: Callback): void {
 
         try {
 
@@ -285,7 +285,6 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 // join the conversation
                 this.privConversation = new ConversationImpl(this.privSpeechTranslationConfig);
                 this.privConversation.conversationTranslator = this;
-                this.privConversation.room.isHost = false;
 
                 this.privConversation.joinConversationAsync(
                     conversation,
@@ -298,6 +297,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                         }
 
                         this.privSpeechTranslationConfig.authorizationToken = result;
+                        this.privConversation.room.isHost = false;
 
                         // connect to the ws
                         this.privConversation.startConversationAsync(
