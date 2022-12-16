@@ -82,8 +82,6 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
             // replace with the correct information.
             endpointUrl = ConversationTranslatorConnectionFactory.formatString(endpointUrl, replacementValues);
 
-            const queryParams: IStringDictionary<string> = {};
-
             const parsedUrl = new URL(endpointUrl);
             parsedUrl.searchParams.forEach((val: string, key: string): void => {
                 queryParams[key] = val;
@@ -99,10 +97,8 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
                 queryParams[QueryParameterNames.CtsIsParticipant] = ""; // this doesn't have a value so set to an empty string
             }
 
-            for (const key in queryParams) {
-                if (queryParams.hasOwnProperty(key)) {
-                    parsedUrl.searchParams.set(key, queryParams[key]);
-                }
+            if (!(QueryParameterNames.Format in queryParams)) {
+                queryParams[QueryParameterNames.Format] = "simple";
             }
 
             parsedUrl.searchParams.forEach((val: string, key: string): void => {
@@ -119,7 +115,6 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
             endpointUrl = connFactory.getEndpointUrl(config);
             endpointUrl = ConversationTranslatorConnectionFactory.formatString(endpointUrl, replacementValues);
 
-            const queryParams: IStringDictionary<string> = {};
             connFactory.setQueryParams(queryParams, config, endpointUrl);
         }
 
