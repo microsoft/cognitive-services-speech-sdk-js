@@ -14,6 +14,8 @@ export class Settings {
 
     public static SpeechTestEndpointId: string = "<<YOUR_TEST_ENDPOINT_ID>>";
 
+    public static ConversationTranslatorSwedenEndpoint: string = "wss://transcribe.westus.cts.speech.microsoft.com/speech/recognition/dynamicaudio";
+
     // Endpoint and key for timeout testing.
     // Endpoint should reduce standard speech timeout to value specified in SpeechServiceTimeoutSeconds
     // If undefined, production timeout of 10 seconds will be used, but at the cost of greatly increased test
