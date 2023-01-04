@@ -202,9 +202,11 @@ export class ConversationImpl extends Conversation implements IDisposable {
             // TODO: specify the regex required. Nicknames must be unique or get the duplicate nickname error
             // TODO: check what the max length is and if a truncation is required or if the service handles it without an error
             let hostNickname: string = speechConfig.getProperty(PropertyId[PropertyId.ConversationTranslator_Name]);
-            if (hostNickname === undefined || hostNickname === null || hostNickname.length <= 1 || hostNickname.length > 50) {
+            if (hostNickname === undefined || hostNickname === null) {
                 hostNickname = "Host";
             }
+            Contracts.throwIfNullOrTooLong(hostNickname, 'nickname', 50);
+            Contracts.throwIfNullOrTooShort(hostNickname, 'nickname', 1);
             speechConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], hostNickname);
 
         } else {
