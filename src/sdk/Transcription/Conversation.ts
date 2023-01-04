@@ -206,7 +206,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
                 hostNickname = "Host";
             }
             Contracts.throwIfNullOrTooLong(hostNickname, 'nickname', 50);
-            Contracts.throwIfNullOrTooShort(hostNickname, 'nickname', 1);
+            Contracts.throwIfNullOrTooShort(hostNickname, 'nickname', 2);
             speechConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], hostNickname);
 
         } else {
