@@ -38,7 +38,7 @@ export class Contracts {
     public static throwIfNullOrTooShort(param: string, name: string, minLength: number): void {
         Contracts.throwIfNullOrUndefined(param, name);
 
-        if (("" + param).length > minLength) {
+        if (("" + param).length < minLength) {
             throw new Error("throwIfNullOrTooShort:" + name + " (less than " + minLength.toString() + " characters)");
         }
     }
