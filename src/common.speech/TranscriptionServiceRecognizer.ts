@@ -53,8 +53,8 @@ export class TranscriptionServiceRecognizer extends ConversationServiceRecognize
         }
     }
 
-    protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
-        return super.processTypeSpecificMessages(connectionMessage);
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
+        return this.processSpeechMessages(connectionMessage);
     }
 
     // Cancels recognition.
