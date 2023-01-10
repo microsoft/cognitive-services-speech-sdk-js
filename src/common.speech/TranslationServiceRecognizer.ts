@@ -63,7 +63,7 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         const resultProps: PropertyCollection = new PropertyCollection();
-        let processed: boolean = await super.processTypeSpecificMessages(connectionMessage);
+        let processed: boolean = await this.processSpeechMessages(connectionMessage);
         if (processed) {
             return true;
         }
