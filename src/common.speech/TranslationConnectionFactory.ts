@@ -42,6 +42,13 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
             from: config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
             to: config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages),
         };
+        const endpointId: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_EndpointId, undefined);
+
+        if (endpointId) {
+            if (!endpoint || endpoint.search(QueryParameterNames.CustomSpeechDeploymentId) === -1) {
+                queryParams[QueryParameterNames.CustomSpeechDeploymentId] = endpointId;
+            }
+        }
 
         this.setCommonUrlParams(config, queryParams, endpoint);
         this.setUrlParameter(
