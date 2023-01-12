@@ -38,8 +38,6 @@ export interface EnrollmentResultJSON {
     verificationProfileId?: string;
 }
 
-const parse = (json: string): EnrollmentResultDetails => JSON.parse(json) as EnrollmentResultDetails;
-
 /**
  * Output format
  * @class VoiceProfileEnrollmentResult

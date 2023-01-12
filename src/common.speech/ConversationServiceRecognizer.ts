@@ -112,10 +112,10 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
                         textBody,
                         resultProps);
 
-                    if (this.privRecognizer instanceof TranslationRecognizer) {
+                    if (this.privClient instanceof TranslationRecognizer) {
                         try {
                             const ev = new TranslationRecognitionEventArgs(TranslationRecognitionResult.fromSpeechRecognitionResult(result), simpleOffset, this.privRequestSession.sessionId);
-                            this.privRecognizer.recognized(this.privRecognizer, ev);
+                            this.privClient.recognized(this.privClient, ev);
                         } catch (error) {
                             // Not going to let errors in the event handler
                             // trip things up.
@@ -141,10 +141,10 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
                         resultProps);
                 }
 
-                if (this.privRecognizer instanceof TranscriberRecognizer) {
+                if (this.privClient instanceof TranscriberRecognizer) {
                     try {
                         const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
-                        this.privRecognizer.recognized(this.privRecognizer, event);
+                        this.privClient.recognized(this.privClient, event);
                         if (!!this.privSuccessCallback) {
                             try {
                                 this.privSuccessCallback(result);
@@ -190,11 +190,11 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
 
         this.privRequestSession.onHypothesis(offset);
 
-        if (this.privRecognizer instanceof TranscriberRecognizer) {
-            if (!!this.privRecognizer.recognizing) {
+        if (this.privClient instanceof TranscriberRecognizer) {
+            if (!!this.privClient.recognizing) {
                 try {
                     const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
-                    this.privRecognizer.recognizing(this.privRecognizer, ev);
+                    this.privClient.recognizing(this.privClient, ev);
                     /* eslint-disable no-empty */
                 } catch (error) {
                     // Not going to let errors in the event handler
@@ -202,10 +202,10 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
                 }
             }
         } else {
-            if (this.privRecognizer instanceof TranslationRecognizer) {
+            if (this.privClient instanceof TranslationRecognizer) {
                 try {
                     const ev = new TranslationRecognitionEventArgs(TranslationRecognitionResult.fromSpeechRecognitionResult(result), hypothesis.Duration, this.privRequestSession.sessionId);
-                    this.privRecognizer.recognizing(this.privRecognizer, ev);
+                    this.privClient.recognizing(this.privClient, ev);
                     /* eslint-disable no-empty */
                 } catch (error) {
                     // Not going to let errors in the event handler
