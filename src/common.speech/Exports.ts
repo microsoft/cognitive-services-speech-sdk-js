@@ -12,6 +12,7 @@ export * from "./IntentConnectionFactory";
 export * from "./SpeakerRecognitionConnectionFactory";
 export * from "./RecognitionEvents";
 export * from "./ServiceRecognizerBase";
+export * from "./ConversationServiceRecognizer";
 export * from "./RecognizerConfig";
 export * from "./SpeechServiceInterfaces";
 export * from "./WebsocketMessageFormatter";

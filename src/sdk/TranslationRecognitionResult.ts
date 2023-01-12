@@ -31,6 +31,10 @@ export class TranslationRecognitionResult extends SpeechRecognitionResult {
         this.privTranslations = translations;
     }
 
+    public static fromSpeechRecognitionResult(result: SpeechRecognitionResult): TranslationRecognitionResult {
+        return new TranslationRecognitionResult(undefined, result.resultId, result.reason, result.text, result.duration, result.offset, result.errorDetails, result.json, result.properties);
+    }
+
     /**
      * Presents the translation results. Each item in the dictionary represents
      * a translation result in one of target languages, where the key is the name

@@ -261,18 +261,13 @@ export enum PropertyId {
     SpeechServiceConnection_EnableAudioLogging,
 
     /**
-     * A string value representing the priority for single language detection.
-     * Allowed values include "Latency" and "Accuracy"
-     * Added in version 1.21.0
-     */
-    SpeechServiceConnection_AtStartLanguageIdPriority,
-
-    /**
-     * A string value representing the priority for continuous language detection.
-     * "Latency" is default, "Accuracy" is currently not allowed for continuous LID
-     * Added in version 1.21.0
-     */
-    SpeechServiceConnection_ContinuousLanguageIdPriority,
+     * The speech service connection language identifier mode.
+     * Can be "AtStart" (the default), or "Continuous". See Language
+     * Identification document https://aka.ms/speech/lid?pivots=programming-language-javascript
+     * for more details.
+     * Added in 1.25.0
+     **/
+    SpeechServiceConnection_LanguageIdMode,
 
     /**
      * A string value representing the desired endpoint version to target for Speech Recognition.

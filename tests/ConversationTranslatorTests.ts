@@ -10,8 +10,14 @@ import {
     ConsoleLoggingListener
 } from "../src/common.browser/Exports";
 import {
+    ServicePropertiesPropertyName
+} from "../src/common.speech/Exports";
+import {
+    ConnectionStartEvent,
     Events,
-    EventType,
+    IStringDictionary,
+    IDetachable,
+    PlatformEvent,
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import {
@@ -530,8 +536,184 @@ describe("conversation service tests", () => {
 
     }, 60000);
 
-});
+    test("Start Conversation, join as host and set service property", (done: jest.DoneCallback) => {
 
+        // eslint-disable-next-line no-console
+        console.info("Start Conversation, join as host and set service property");
+
+        // start a conversation
+        const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
+        if (speechEndpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
+
+        const c: sdk.Conversation = sdk.Conversation.createConversationAsync(config, (() => {
+            objsToClose.push(c);
+
+            // audio config
+            const audioConfig: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+            objsToClose.push(audioConfig);
+
+            const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator(audioConfig);
+            objsToClose.push(ct);
+
+            if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
+            if (speechEndpointHost !== "") { ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Host], speechEndpointHost); }
+
+            const propName: string = "foo";
+            const propValue: string = "bar";
+
+            ct.setServiceProperty(propName, propValue);
+
+            const currentProperties: IStringDictionary<string> = JSON.parse(ct.properties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
+            expect(currentProperties[propName]).toEqual(propValue);
+
+            c.startConversationAsync(() => {
+                // Check that uri for service connection contains service property and value
+                const detachObject: IDetachable = Events.instance.attachListener({
+                    onEvent: (event: PlatformEvent): void => {
+                        if (event instanceof ConnectionStartEvent) {
+                            const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                            const uri: string = connectionEvent.uri;
+                            expect(uri).not.toBeUndefined();
+                            if(!uri.includes("capito")){
+                                // Make sure there's only a single ? in the URL.
+                                expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+                                expect(uri).toContain(`${propName}=${propValue}`);
+                                void detachObject.detach();
+                            }
+                        }
+                    },
+                });
+                ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs) => {
+                    try {
+                        ct.startTranscribingAsync();
+                    } catch (error) {
+                        done(error);
+                    }
+                });
+                ct.recognized = ((s: sdk.ConversationTranslator, e: sdk.TranslationRecognitionEventArgs) => {
+                    if (e.result.text !== "") {
+                        expect(e.result.text).toContain("weather");
+                        ct.stopTranscribingAsync(
+                            () => {
+                                ct.leaveConversationAsync(() => {
+                                    c.endConversationAsync(
+                                        done,
+                                        (e: string) => { done(e); });
+                                },
+                                (e: string) => { done(e); });
+                            },
+                            (e: string) => { done(e); });
+                    }
+                });
+                ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs) => {
+                    expect(e.result.text).toContain("weather");
+                });
+
+                const lang: string = "en-US";
+                const nickname: string = "Tester";
+                ct.joinConversationAsync(c.conversationId, nickname, lang,
+                    (() => {
+                        // continue
+                    }),
+                    ((error: any) => {
+                        done(error);
+                    }));
+            });
+        }),
+        ((error: any) => {
+            done();
+        }));
+    });
+
+    test("Start Conversation, join as host and connect to CTS endpoint", (done: jest.DoneCallback) => {
+
+        // eslint-disable-next-line no-console
+        console.info("Start Conversation, join as host and connect to CTS endpoint");
+
+        // start a conversation
+        const config = sdk.SpeechTranslationConfig.fromSubscription(Settings.ConversationTranscriptionKey, Settings.ConversationTranscriptionRegion);
+        if (endpointHost !== "") { config.setProperty(sdk.PropertyId[sdk.PropertyId.ConversationTranslator_Host], endpointHost); }
+        config.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Endpoint], Settings.ConversationTranslatorSwedenEndpoint);
+
+        const c: sdk.Conversation = sdk.Conversation.createConversationAsync(config, (() => {
+            objsToClose.push(c);
+
+            // audio config
+            const audioConfig: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+            objsToClose.push(audioConfig);
+
+            const ct: sdk.ConversationTranslator = new sdk.ConversationTranslator(audioConfig);
+            objsToClose.push(ct);
+
+            if (endpointHost !== "") { ct.properties.setProperty(sdk.PropertyId.ConversationTranslator_Host, endpointHost); }
+
+            ct.properties.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_Endpoint], Settings.ConversationTranslatorSwedenEndpoint);
+
+            const propName: string = "foo";
+            const propValue: string = "bar";
+
+            ct.setServiceProperty(propName, propValue);
+
+            const currentProperties: IStringDictionary<string> = JSON.parse(ct.properties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
+            expect(currentProperties[propName]).toEqual(propValue);
+
+            c.startConversationAsync(() => {
+                // Check that uri for service connection contains service property and value
+                const detachObject: IDetachable = Events.instance.attachListener({
+                    onEvent: (event: PlatformEvent): void => {
+                        if (event instanceof ConnectionStartEvent) {
+                            const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                            const uri: string = connectionEvent.uri;
+                            expect(uri).not.toBeUndefined();
+                            if(!uri.includes("capito")){
+                                // Make sure there's only a single ? in the URL.
+                                expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+                                expect(uri).toContain(`${propName}=${propValue}`);
+                                void detachObject.detach();
+                            }
+                        }
+                    },
+                });
+                ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs) => {
+                    try {
+                        ct.startTranscribingAsync();
+                    } catch (error) {
+                        done(error);
+                    }
+                });
+                ct.recognized = ((s: sdk.ConversationTranslator, e: sdk.TranslationRecognitionEventArgs) => {
+                    if (e.result.text !== "") {
+                        expect(e.result.text).toContain("weather");
+                        ct.stopTranscribingAsync(
+                            () => {
+                                ct.leaveConversationAsync(() => {
+                                    c.endConversationAsync(
+                                        done,
+                                        (e: string) => { done(e); });
+                                },
+                                (e: string) => { done(e); });
+                            },
+                            (e: string) => { done(e); });
+                    }
+                });
+
+                const lang: string = "en-US";
+                const nickname: string = "Tester";
+                ct.joinConversationAsync(c.conversationId, nickname, lang,
+                    (() => {
+                        // continue
+                    }),
+                    ((error: any) => {
+                        done(error);
+                    }));
+            });
+        }),
+        ((error: any) => {
+            done();
+        }));
+    });
+});
 // Conversation Translator tests: begin
 describe("conversation translator constructor tests", () => {
 

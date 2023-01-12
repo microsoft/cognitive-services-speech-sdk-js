@@ -10,7 +10,7 @@ export interface ITranslationPhrase {
     RecognitionStatus: RecognitionStatus;
     Offset: number;
     Duration: number;
-    Translation: ITranslations;
+    Translation?: ITranslations;
     Text: string;
     DisplayText?: string;
 }

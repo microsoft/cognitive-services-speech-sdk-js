@@ -45,6 +45,12 @@ Change to the Speech SDK directory:
 cd cognitive-services-speech-sdk-js
 ```
 
+Run setup to pull updated dependency versions:
+
+```
+npm run setup
+```
+
 Install the required packages:
 
 ```

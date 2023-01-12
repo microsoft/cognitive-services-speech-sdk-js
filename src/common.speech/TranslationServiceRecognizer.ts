@@ -23,9 +23,9 @@ import {
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
+    ConversationServiceRecognizer,
     EnumTranslation,
     RecognitionStatus,
-    ServiceRecognizerBase,
     SynthesisStatus,
     TranslationHypothesis,
     TranslationPhrase,
@@ -38,7 +38,7 @@ import { ITranslationPhrase } from "./ServiceMessages/TranslationPhrase";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 // eslint-disable-next-line max-classes-per-file
-export class TranslationServiceRecognizer extends ServiceRecognizerBase {
+export class TranslationServiceRecognizer extends ConversationServiceRecognizer {
     private privTranslationRecognizer: TranslationRecognizer;
 
     public constructor(
@@ -63,7 +63,10 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         const resultProps: PropertyCollection = new PropertyCollection();
-        let processed: boolean = false;
+        let processed: boolean = await super.processTypeSpecificMessages(connectionMessage);
+        if (processed) {
+            return true;
+        }
 
         const handleTranslationPhrase = async (translatedPhrase: TranslationPhrase): Promise<void> => {
             this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
@@ -300,7 +303,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
         let resultReason: ResultReason;
         if (serviceResult instanceof TranslationPhrase) {
-            if (serviceResult.Translation.TranslationStatus === TranslationStatus.Success) {
+            if (!!serviceResult.Translation && serviceResult.Translation.TranslationStatus === TranslationStatus.Success) {
                 resultReason = ResultReason.TranslatedSpeech;
             } else {
                 resultReason = ResultReason.RecognizedSpeech;

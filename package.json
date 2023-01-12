@@ -94,7 +94,7 @@
     "lint": "eslint -c .eslintrc.js --ext .ts src",
     "civersion": "node ci/version.js",
     "prepare": "npm run build",
-    "preinstall": "npm install --package-lock-only --ignore-scripts --no-audit"
+    "setup": "npm install --package-lock-only --ignore-scripts --no-audit"
   },
   "jest-junit": {
     "suiteName": "jest tests",
@@ -120,6 +120,7 @@
     "extend": "3.0.2",
     "set-value": "4.0.1",
     "minimist": "1.2.6",
+    "source-map": "~0.8.0-beta.0",
     "chokidar": {
       "glob-parent": "6.0.2"
     },
