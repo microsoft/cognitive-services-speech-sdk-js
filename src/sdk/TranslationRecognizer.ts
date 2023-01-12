@@ -71,6 +71,7 @@ export class TranslationRecognizer extends Recognizer {
      * @constructor
      * @param {SpeechTranslationConfig} speechConfig - Set of properties to configure this recognizer.
      * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
+     * @param {IConnectionFactory} connectionFactory - An optional connection factory to use to generate the endpoint URIs, headers to set, etc...
      */
     public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig, connectionFactory?: IConnectionFactory) {
         const configImpl = speechConfig as SpeechTranslationConfigImpl;
