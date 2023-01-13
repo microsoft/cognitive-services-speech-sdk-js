@@ -48,6 +48,8 @@ export interface IInternalConversation {
     correlationId: string;
     // extracted from the headers
     requestId: string;
+    // set programmatically
+    isHost: boolean;
 }
 
 /**

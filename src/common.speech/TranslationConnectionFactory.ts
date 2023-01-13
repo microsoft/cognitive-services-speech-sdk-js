@@ -9,6 +9,7 @@ import {
     IConnection,
     IStringDictionary,
 } from "../common/Exports";
+import { StringUtils } from "../common/StringUtils";
 import {
     PropertyId
 } from "../sdk/Exports";
@@ -30,35 +31,10 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         authInfo: AuthInfo,
         connectionId?: string): IConnection {
 
-        let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
-        if (!endpoint) {
-            const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
-            const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + ".s2s.speech" + hostSuffix);
-            endpoint = host + "/speech/translation/cognitiveservices/v1";
-        }
+        const endpoint: string = this.getEndpointUrl(config);
 
-        const queryParams: IStringDictionary<string> = {
-            from: config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
-            to: config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages),
-        };
-
-        this.setCommonUrlParams(config, queryParams, endpoint);
-        this.setUrlParameter(
-            PropertyId.SpeechServiceResponse_TranslationRequestStablePartialResult,
-            QueryParameterNames.StableTranslation,
-            config,
-            queryParams,
-            endpoint
-        );
-
-        const voiceName: string = "voice";
-        const featureName: string = "features";
-
-        if (config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined) !== undefined) {
-            queryParams[voiceName] = config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice);
-            queryParams[featureName] = "texttospeech";
-        }
+        const queryParams: IStringDictionary<string> = {};
+        this.setQueryParams(queryParams, config, endpoint);
 
         const headers: IStringDictionary<string> = {};
         if (authInfo.token !== undefined && authInfo.token !== "") {
@@ -70,5 +46,44 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+    }
+
+    public getEndpointUrl(config: RecognizerConfig, returnRegionPlaceholder?: boolean): string {
+
+        const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
+        const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
+
+        let endpointUrl: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
+        if (!endpointUrl) {
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://{region}.s2s.speech" + hostSuffix);
+            endpointUrl = host + "/speech/translation/cognitiveservices/v1";
+        }
+
+        if (returnRegionPlaceholder === true) {
+            return endpointUrl;
+        }
+
+        return StringUtils.formatString(endpointUrl, { region });
+    }
+
+    public setQueryParams(queryParams: IStringDictionary<string>, config: RecognizerConfig, endpointUrl: string): void {
+
+        queryParams.from = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
+        queryParams.to = config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages);
+
+        this.setCommonUrlParams(config, queryParams, endpointUrl);
+        this.setUrlParameter(
+            PropertyId.SpeechServiceResponse_TranslationRequestStablePartialResult,
+            QueryParameterNames.StableTranslation,
+            config,
+            queryParams,
+            endpointUrl
+        );
+
+        const translationVoice: string =  config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
+        if (translationVoice !== undefined) {
+            queryParams.voice = translationVoice;
+            queryParams.features = "texttospeech";
+        }
     }
 }
