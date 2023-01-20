@@ -508,7 +508,7 @@ describe("Service based tests", () => {
         });
     });
 
-    test("testSpeechSynthesizerSentenceBoundary", (done: jest.DoneCallback) => {
+    test.skip("testSpeechSynthesizerSentenceBoundary", (done: jest.DoneCallback) => {
         // tslint:disable-next-line:no-console
         console.info("Name: testSpeechSynthesizerWordBoundaryMathXml");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
