@@ -13,21 +13,22 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
+    SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
 import { ConversationInfo } from "../sdk/Transcription/Exports";
 import { ConversationProperties } from "../sdk/Transcription/IConversation";
 import {
     CancellationErrorCodePropertyName,
-    ConversationServiceRecognizer,
+    IAuthentication,
+    IConnectionFactory,
+    RecognizerConfig,
     TranscriberRecognizer
 } from "./Exports";
-import { IAuthentication } from "./IAuthentication";
-import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
+import { ConversationServiceRecognizer } from "./TranslationServiceRecognizer";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
-// eslint-disable-next-line max-classes-per-file
+
 export class TranscriptionServiceRecognizer extends ConversationServiceRecognizer {
 
     private privTranscriberRecognizer: TranscriberRecognizer;
@@ -124,6 +125,42 @@ export class TranscriptionServiceRecognizer extends ConversationServiceRecognize
                 speechEventJson));
         }
         return;
+    }
+
+    protected handleRecognizedCallback(result: SpeechRecognitionResult, sessionId: string): void {
+        try {
+            const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, sessionId);
+            this.privTranscriberRecognizer.recognized(this.privRecognizer, event);
+            if (!!this.privSuccessCallback) {
+                try {
+                    this.privSuccessCallback(result);
+                } catch (e) {
+                    if (!!this.privErrorCallback) {
+                        this.privErrorCallback(e as string);
+                    }
+                }
+                // Only invoke the call back once.
+                // and if it's successful don't invoke the
+                // error after that.
+                this.privSuccessCallback = undefined;
+                this.privErrorCallback = undefined;
+            }
+        /* eslint-disable no-empty */
+        } catch (error) {
+            // Not going to let errors in the event handler
+            // trip things up.
+        }
+    }
+
+    protected handleRecognizingCallback(result: SpeechRecognitionResult, duration: number, sessionId: string): void {
+        try {
+            const ev = new SpeechRecognitionEventArgs(result, duration, sessionId);
+            this.privTranscriberRecognizer.recognizing(this.privRecognizer, ev);
+            /* eslint-disable no-empty */
+        } catch (error) {
+            // Not going to let errors in the event handler
+            // trip things up.
+        }
     }
 
     private createSpeechEventPayload(info: ConversationInfo, command: string): { [id: string]: any } {
