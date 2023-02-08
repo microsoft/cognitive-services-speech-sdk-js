@@ -13,6 +13,7 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
+    SpeechRecognitionResult,
     TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
     TranslationRecognitionResult,
@@ -288,6 +289,27 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                 /* eslint-disable no-empty */
                 this.privSuccessCallback = undefined;
             } catch { }
+        }
+    }
+
+    protected handleRecognizingCallback(result: SpeechRecognitionResult, duration: number, sessionId: string): void {
+        try {
+            const ev = new TranslationRecognitionEventArgs(TranslationRecognitionResult.fromSpeechRecognitionResult(result), duration, sessionId);
+            this.privTranslationRecognizer.recognizing(this.privTranslationRecognizer, ev);
+            /* eslint-disable no-empty */
+        } catch (error) {
+            // Not going to let errors in the event handler
+            // trip things up.
+        }
+    }
+
+    protected handleRecognizedCallback(result: SpeechRecognitionResult, offset: number, sessionId: string): void {
+        try {
+            const ev = new TranslationRecognitionEventArgs(TranslationRecognitionResult.fromSpeechRecognitionResult(result), offset, sessionId);
+            this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, ev);
+        } catch (error) {
+            // Not going to let errors in the event handler
+            // trip things up.
         }
     }
 
