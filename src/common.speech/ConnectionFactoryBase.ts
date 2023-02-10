@@ -65,6 +65,8 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
 
         const value: string = config.parameters.getProperty(propId, undefined);
 
+        // FIXME: The .search() check will incorrectly match parameter name anywhere in the string
+        //        including e.g. the path portion, or even as a substring of other query parameters
         if (value && (!endpoint || endpoint.search(parameterName) === -1)) {
             queryParams[parameterName] = value.toLocaleLowerCase();
         }

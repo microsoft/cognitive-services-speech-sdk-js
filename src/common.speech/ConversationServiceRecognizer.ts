@@ -40,7 +40,12 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
         this.handleSpeechHypothesisMessage = (textBody: string): void => this.handleSpeechHypothesis(textBody);
     }
 
-    protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
+        void connectionMessage;
+        return;
+    }
+
+    protected async processSpeechMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
         let processed: boolean = false;
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
