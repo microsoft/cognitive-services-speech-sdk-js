@@ -7,7 +7,6 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SpeechServiceConfig,
     TranslationConnectionFactory,
     TranslationServiceRecognizer
 } from "../common.speech/Exports";

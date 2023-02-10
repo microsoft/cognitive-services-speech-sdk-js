@@ -5,14 +5,10 @@ import {
     IRestResponse
 } from "../common.browser/Exports";
 import {
-    Context,
     IAuthentication,
     IConnectionFactory,
-    OS,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SpeakerIdMessageAdapter,
-    SpeakerRecognitionConfig,
     VoiceProfileConnectionFactory,
     VoiceServiceRecognizer
 } from "../common.speech/Exports";
@@ -31,7 +27,6 @@ import {
     VoiceProfileType
 } from "./Exports";
 import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
-import { EnrollmentResultJSON } from "./VoiceProfileEnrollmentResult";
 
 /**
  * Defines VoiceProfileClient class for Speaker Recognition

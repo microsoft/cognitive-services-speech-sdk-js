@@ -10,7 +10,6 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SpeechServiceConfig,
 } from "../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
