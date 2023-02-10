@@ -14,13 +14,13 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // Override inputs, if necessary
     Settings.LoadSettings();
     Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
     // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
@@ -83,7 +83,7 @@ test("VoiceProfileClient", (): void => {
     objsToClose.push(r);
 });
 
-test.skip("VoiceProfileClient with Bad credentials throws meaningful error", async (done: jest.DoneCallback) => {
+test.skip("VoiceProfileClient with Bad credentials throws meaningful error", async (done: jest.DoneCallback): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: VoiceProfileClient with Bad credentials throws meaningful error");
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("BADKEY", Settings.SpeakerIDRegion);
@@ -94,11 +94,12 @@ test.skip("VoiceProfileClient with Bad credentials throws meaningful error", asy
     const type: sdk.VoiceProfileType = sdk.VoiceProfileType.TextIndependentIdentification;
     try {
         const res: sdk.VoiceProfile = await r.createProfileAsync(type, "en-us");
+        void res;
         return Promise.reject("Call did not fail.");
     } catch (error) {
         const expectedCode: number = 401;
         const expectedMessage: string = "Access denied due to invalid subscription key or wrong API endpoint. Make sure to provide a valid key for an active subscription and use a correct regional API endpoint for your resource.";
-        expect(error.toString()).toEqual(`Error: createProfileAsync failed with code: ${expectedCode}, message: ${expectedMessage}`);
+        expect(error as string).toEqual(`Error: createProfileAsync failed with code: ${expectedCode}, message: ${expectedMessage}`);
     }
 });
 
@@ -129,7 +130,7 @@ test("Get Authorization Phrases for enrollment", async (): Promise<void> => {
 
 });
 
-test("Get Activation Phrases for enrollment", async (): Promise<void> => {
+test("Get Activation Phrases for enrollment", async (done: jest.DoneCallback): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: Get Activation Phrases for enrollment");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -139,7 +140,7 @@ test("Get Activation Phrases for enrollment", async (): Promise<void> => {
     objsToClose.push(r);
     const types: sdk.VoiceProfileType[] = [sdk.VoiceProfileType.TextIndependentVerification, sdk.VoiceProfileType.TextIndependentIdentification];
 
-    types.forEach(async (type: sdk.VoiceProfileType) => {
+    for (const type of types) {
         try {
             const res: VoiceProfilePhraseResult = await r.getActivationPhrasesAsync(type, "en-us");
             expect(res.reason).not.toBeUndefined();
@@ -148,9 +149,9 @@ test("Get Activation Phrases for enrollment", async (): Promise<void> => {
             expect(res.phrases.length).toBeGreaterThan(0);
             expect(res.phrases[0]).not.toBeUndefined();
         } catch (error) {
-            done.fail(error);
+            done.fail(error as string);
         }
-    });
+    }
     done();
 }, 40000);
 
@@ -230,7 +231,7 @@ test("Create and Delete Voice Profile - Independent Identification", async (): P
     }
     expect(sdk.ResultReason[resultReason]).toEqual(sdk.ResultReason[sdk.ResultReason.EnrolledVoiceProfile]);
     expect(result.enrollmentsCount).toEqual(1);
-    expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
+    expect((): sdk.SpeakerVerificationModel => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
 
     const resetResult: sdk.VoiceProfileResult = await r.resetProfileAsync(res);
     expect(resetResult).not.toBeUndefined();
@@ -282,7 +283,7 @@ test("Create and Delete Voice Profile - Independent Verification", async (): Pro
 
 });
 
-test("Create, Get, and Delete Voice Profile - Independent Verification", async (): Promise<void> => {
+test("Create, Get, and Delete Voice Profile - Independent Verification", async (done: jest.DoneCallback): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: Create, Get, and Delete Voice Profile - Independent Verification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -298,7 +299,7 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", async (
         expect(res.profileId).not.toBeUndefined();
         expect(res.profileType).not.toBeUndefined();
         expect(res.profileType).toEqual(type);
-        expect(() => sdk.SpeakerIdentificationModel.fromProfiles([res])).toThrow();
+        expect((): sdk.SpeakerIdentificationModel => sdk.SpeakerIdentificationModel.fromProfiles([res])).toThrow();
         try {
             const enrollmentRes: sdk.VoiceProfileEnrollmentResult = await r.retrieveEnrollmentResultAsync(res);
             expect(enrollmentRes).not.toBeUndefined();
@@ -332,7 +333,7 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", async (
     }
 }, 15000);
 
-test("Create and Delete Voice Profile - Dependent Verification", async (): Promise<void> => {
+test("Create and Delete Voice Profile - Dependent Verification", async (done: jest.DoneCallback): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: Create and Delete Voice Profile - Dependent Verification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -349,9 +350,9 @@ test("Create and Delete Voice Profile - Dependent Verification", async (): Promi
         expect(res.profileType).not.toBeUndefined();
         expect(res.profileType).toEqual(type);
         const configs: sdk.AudioConfig[] = [];
-        Settings.VerificationWaveFiles.forEach((file: string) => {
+        for (const file of Settings.VerificationWaveFiles) {
             configs.push(WaveFileAudioInput.getAudioConfigFromFile(file));
-        });
+        }
         let enrollmentCount: number = 1;
         let result: VoiceProfileEnrollmentResult;
         for (const config of configs) {
