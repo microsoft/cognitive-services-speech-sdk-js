@@ -83,7 +83,7 @@ test("VoiceProfileClient", (): void => {
     objsToClose.push(r);
 });
 
-test.skip("VoiceProfileClient with Bad credentials throws meaningful error", async (done: jest.DoneCallback): Promise<void> => {
+test.skip("VoiceProfileClient with Bad credentials throws meaningful error", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: VoiceProfileClient with Bad credentials throws meaningful error");
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("BADKEY", Settings.SpeakerIDRegion);
@@ -130,7 +130,7 @@ test("Get Authorization Phrases for enrollment", async (): Promise<void> => {
 
 });
 
-test("Get Activation Phrases for enrollment", async (done: jest.DoneCallback): Promise<void> => {
+test("Get Activation Phrases for enrollment", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: Get Activation Phrases for enrollment");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -149,10 +149,9 @@ test("Get Activation Phrases for enrollment", async (done: jest.DoneCallback): P
             expect(res.phrases.length).toBeGreaterThan(0);
             expect(res.phrases[0]).not.toBeUndefined();
         } catch (error) {
-            done.fail(error as string);
+            expect(error).toBeFalsy();
         }
     }
-    done();
 }, 40000);
 
 test("Create and Delete Voice Profile using push stream - Independent Identification", async (): Promise<void> => {
@@ -283,7 +282,7 @@ test("Create and Delete Voice Profile - Independent Verification", async (): Pro
 
 });
 
-test("Create, Get, and Delete Voice Profile - Independent Verification", async (done: jest.DoneCallback): Promise<void> => {
+test("Create, Get, and Delete Voice Profile - Independent Verification", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: Create, Get, and Delete Voice Profile - Independent Verification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -318,22 +317,21 @@ test("Create, Get, and Delete Voice Profile - Independent Verification", async (
                     const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
                     expect(result).not.toBeUndefined();
                     // expect(result.reason).toEqual(sdk.ResultReason.DeletedVoiceProfile);
-                    done();
                 } catch (error) {
-                    done.fail(error);
+                    expect(error).toBeFalsy();
                 }
             } catch (error) {
-                done.fail(error);
+                expect(error).toBeFalsy();
             }
         } catch (error) {
-            done.fail(error);
+            expect(error).toBeFalsy();
         }
     } catch (error) {
-        done.fail(error);
+        expect(error).toBeFalsy();
     }
 }, 15000);
 
-test("Create and Delete Voice Profile - Dependent Verification", async (done: jest.DoneCallback): Promise<void> => {
+test("Create and Delete Voice Profile - Dependent Verification", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: Create and Delete Voice Profile - Dependent Verification");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -358,7 +356,7 @@ test("Create and Delete Voice Profile - Dependent Verification", async (done: je
         for (const config of configs) {
             result = await r.enrollProfileAsync(res, config);
             if (result.reason === sdk.ResultReason.Canceled) {
-                done.fail("Enrollment unexpectedly canceled");
+                throw new Error("Enrollment unexpectedly canceled");
             }
             expect(result).not.toBeUndefined();
             expect(result.reason).not.toBeUndefined();
@@ -379,14 +377,13 @@ test("Create and Delete Voice Profile - Dependent Verification", async (done: je
                 const result: sdk.VoiceProfileResult = await r.deleteProfileAsync(res);
                 expect(result).not.toBeUndefined();
                 expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.DeletedVoiceProfile]);
-                done();
             } catch (error) {
-                done.fail(error);
+                expect(error).toBeFalsy();
             }
         } catch (error) {
-            done.fail(error);
+            expect(error).toBeFalsy();
         }
     } catch (error) {
-        done.fail(error);
+        expect(error).toBeFalsy();
     }
 }, 45000);
