@@ -18,7 +18,6 @@ import { WaitForPromise } from "./Utilities";
 import * as fs from "fs";
 import * as os from "os";
 import path from "path";
-import got from "got";
 import rimraf from "rimraf";
 
 const origCacehDir: string = process.env.SPEECH_OSCP_CACHE_ROOT;
@@ -67,6 +66,7 @@ afterAll(() => {
     process.env.SPEECH_OSCP_CACHE_ROOT = origCacehDir;
 });
 
+/*
 function findEvent(eventName: string): number {
     let found: number = 0;
     events.forEach((event: OCSPEvent, index: number, array: OCSPEvent[]): void => {
@@ -91,6 +91,8 @@ const makeRequest = (disableOCSPStapling: boolean = true): Promise<void> => {
         const agent: CertCheckAgent = new CertCheckAgent();
         CertCheckAgent.forceDisableOCSPStapling = disableOCSPStapling;
 
+        // TODO: if we re-enable this test, make it work without got (find another http request lib
+        // that replaces the user agent)
         const { statusCode } = await got(testUrl, {
                 agent: { http: agent.GetAgent() },
                 followRedirect: false,
@@ -117,6 +119,8 @@ test.skip("Test OCSP Revoked", async (done: jest.DoneCallback): Promise<void> =>
     const agent: CertCheckAgent = new CertCheckAgent();
 
     try {
+        // TODO: if we re-enable this test, make it work without got (find another http request lib
+        // that replaces the user agent)
         await got(testUrl, {
             agent: { http: agent.GetAgent() },
             followRedirect: false,
@@ -132,17 +136,19 @@ test.skip("Test OCSP Revoked", async (done: jest.DoneCallback): Promise<void> =>
         }
     }
 });
+*/
 
 test.skip("Test OCSP Staple", async (done: jest.DoneCallback) => {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.info("Name: Test OCSP Staple");
 
-    await makeRequest(false);
-    await waitForEvents("OCSPStapleReceivedEvent", 1);
-    await waitForEvents("OCSPResponseRetrievedEvent", 0);
+    // await makeRequest(false);
+    // await waitForEvents("OCSPStapleReceivedEvent", 1);
+    // await waitForEvents("OCSPResponseRetrievedEvent", 0);
     done();
 });
 
+/*
 test.skip("Test OCSP Basic", async (done: jest.DoneCallback) => {
     // tslint:disable-next-line:no-console
     console.info("Name: Test OCSP Basic");
@@ -249,3 +255,4 @@ test.skip("Test OCSP invalid cert refreshes.", async (done: jest.DoneCallback) =
     done();
 
 });
+*/
