@@ -34,11 +34,10 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
         if (!endpoint) {
-            // const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
-            // const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
-            // const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `wss://${region}.spr-frontend.speech${hostSuffix}`);
+            const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
+            const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `wss://${region}.spr-frontend.speech${hostSuffix}`);
             const scenario: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_SpeakerIdMode, "TextIndependentIdentification");
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://dev.spr-frontend.speech.microsoft.com");
             endpoint = `${host}/speaker/ws/${this.scenarioToPath(scenario)}/${endpointPath}`;
         }
 
