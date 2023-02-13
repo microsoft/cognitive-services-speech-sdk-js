@@ -176,9 +176,15 @@ test("testGetVoicesAsyncAuthWithToken", async () => {
         [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
     };
 
+    let authToken: string;
     const sendRequest = bent(url, "POST", "string", headers, 200);
-    const response = await sendRequest(path) as BentResponse;
-    const authToken = await response.text();
+    sendRequest(path)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+        .then((resp: BentResponse): void => {
+            resp.text().then((token: string): void => {
+                authToken = token;
+            }).catch((): void => {});
+        }).catch((): void => {});
 
     WaitForCondition((): boolean => !!authToken, (): void => {
         const config: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
