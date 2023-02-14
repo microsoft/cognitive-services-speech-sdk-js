@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-import got from "got";
+/* eslint-disable no-console */
+import bent, { BentResponse } from "bent";
 import * as sdk from "../../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener } from "../../src/common.browser/Exports";
 import { HeaderNames } from "../../src/common.speech/HeaderNames";
@@ -34,6 +35,13 @@ afterEach(() => {
     });
 });
 
+const tokenUrl = `https://${Settings.SpeechRegion}.api.cognitive.microsoft.com/`;
+const tokenPath = "sts/v1.0/issueToken";
+const headers = {
+    "Content-Type": "application/json",
+    [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
+};
+const sendTokenRequest = bent(tokenUrl, "POST", headers, 200);
 test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: AuthToken refresh works correctly");
@@ -45,19 +53,20 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
         return;
     }
 
-    const url = "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken";
-    const req = {
-        headers: {
-            "Content-Type": "application/json",
-            [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
-        },
-    };
+    console.info("Starting fetch of token");
 
     let authToken: string;
-    got.post(url, req)
+    sendTokenRequest(tokenPath)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
-        .then((resp: { body: any }): void => authToken = resp.body)
-        .catch((error: any): void => done(error));
+        .then((resp: BentResponse): void => {
+            resp.text().then((token: string): void => {
+                authToken = token;
+            }).catch((error: any): void => {
+                done.fail(error as string);
+            });
+        }).catch((error: any): void => {
+            done.fail(error as string);
+        });
 
     WaitForCondition((): boolean => !!authToken, (): void => {
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
@@ -86,11 +95,17 @@ test("AuthToken refresh works correctly", (done: jest.DoneCallback) => {
                 return;
             }
 
-            got.post(url, req)
+            sendTokenRequest(tokenPath)
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
-                .then((resp: { body: any }): void => r.authorizationToken = resp.body)
-                .catch((error: any): void => done(error));
-
+                .then((resp: BentResponse): void => {
+                    resp.text().then((token: string): void => {
+                        r.authorizationToken = token;
+                    }).catch((error: any): void => {
+                        done.fail(error as string);
+                    });
+                }).catch((error: any): void => {
+                    done.fail(error as string);
+                });
             setTimeout((): void => {
                 refreshAuthToken();
             }, 1000 * 60 * 9); // 9 minutes
@@ -187,11 +202,17 @@ test("AuthToken refresh works correctly for Translation Recognizer", (done: jest
     };
 
     let authToken: string;
-    const url = "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken";
-    got.post(url, req)
+    sendTokenRequest(tokenPath)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
-        .then((resp: { body: any }): void => authToken = resp.body)
-        .catch((error: any): void => done(error));
+        .then((resp: BentResponse): void => {
+            resp.text().then((token: string): void => {
+                authToken = token;
+            }).catch((error: any): void => {
+                done.fail(error as string);
+            });
+        }).catch((error: any): void => {
+            done.fail(error as string);
+        });
 
     WaitForCondition((): boolean => !!authToken, (): void => {
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromAuthorizationToken(authToken, Settings.SpeechRegion);
@@ -223,10 +244,17 @@ test("AuthToken refresh works correctly for Translation Recognizer", (done: jest
                 return;
             }
 
-            got.post(url, req)
+            sendTokenRequest(tokenPath)
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
-                .then((resp: { body: any }): void => r.authorizationToken = resp.body)
-                .catch((error: any): void => done(error));
+                .then((resp: BentResponse): void => {
+                    resp.text().then((token: string): void => {
+                        r.authorizationToken = token;
+                    }).catch((error: any): void => {
+                        done.fail(error as string);
+                    });
+                }).catch((error: any): void => {
+                    done.fail(error as string);
+                });
 
             setTimeout((): void => {
                 refreshAuthToken();

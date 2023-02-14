@@ -68,7 +68,6 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jsdoc": "^39.3.2",
     "eslint-plugin-prefer-arrow": "^1.2.3",
-    "got": "^11.8.5",
     "gulp": "^4.0.2",
     "gulp-eslint": "^6.0.0",
     "gulp-rename": "^2.0.0",
