@@ -55,7 +55,7 @@ jobs:
         SpeechTestEndpointId:ec3432b2-8584-4736-865a-556213b9f6fd ^
         BotSubscription:$(BotSubscriptionKeyJS) ^
         BotRegion:$(BotRegionJS) ^
-        SpeakerIDSubscriptionKey:$(SpeakerRecognition2023WestUS) ^
+        SpeakerIDSubscriptionKey:$(SpeakerRecognition-WestUS-Key) ^
         SpeakerIDRegion:westus ^
         ConversationTranscriptionKey:$(ConverstationTranscriptionKeyWestUSOnline) ^
         ConversationTranscriptionRegion:westus ^
