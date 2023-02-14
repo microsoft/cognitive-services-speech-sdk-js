@@ -83,7 +83,7 @@ test("VoiceProfileClient", (): void => {
     objsToClose.push(r);
 });
 
-test.skip("VoiceProfileClient with Bad credentials throws meaningful error", async (): Promise<void> => {
+test("VoiceProfileClient with Bad credentials throws meaningful error", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: VoiceProfileClient with Bad credentials throws meaningful error");
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("BADKEY", Settings.SpeakerIDRegion);
@@ -98,8 +98,33 @@ test.skip("VoiceProfileClient with Bad credentials throws meaningful error", asy
         return Promise.reject("Call did not fail.");
     } catch (error) {
         const expectedCode: number = 401;
-        const expectedMessage: string = "Access denied due to invalid subscription key or wrong API endpoint. Make sure to provide a valid key for an active subscription and use a correct regional API endpoint for your resource.";
-        expect(error as string).toEqual(`Error: createProfileAsync failed with code: ${expectedCode}, message: ${expectedMessage}`);
+        const expectedMessage: string = `Unable to contact server. StatusCode: 1006, undefined Reason:  Unexpected server response: ${expectedCode}`;
+        expect(error as string).toEqual(expectedMessage);
+    }
+});
+
+test("VoiceProfileClient with Bad profile throws meaningful error", async (): Promise<void> => {
+    // eslint-disable-next-line no-console
+    console.info("Name: VoiceProfileClient with Bad profile throws meaningful error");
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const r: sdk.VoiceProfileClient = BuildClient(s);
+    objsToClose.push(r);
+
+    const type: sdk.VoiceProfileType = sdk.VoiceProfileType.TextIndependentIdentification;
+
+    try {
+        const badProfile: sdk.VoiceProfile = new sdk.VoiceProfile("BADPROFILE", type);
+        const result: sdk.VoiceProfileResult = await r.resetProfileAsync(badProfile);
+        void result;
+        return Promise.reject("Call did not fail.");
+    } catch (error) {
+        const e = error as string;
+        console.log(e);
+        const expectedCode: number = 401;
+        const expectedMessage: string = `Unable to contact server. StatusCode: 1006, undefined Reason:  Unexpected server response: ${expectedCode}`;
+        expect(error as string).toEqual(expectedMessage);
     }
 });
 
