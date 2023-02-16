@@ -58,7 +58,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     return s;
 };
 
-const BuildRecognizer: (speechConfig?: sdk.SpeechConfig) => sdk.SpeakerRecognizer = (speechConfig?: sdk.SpeechConfig): sdk.SpeakerRecognizer => {
+const BuildRecognizer: (speechConfig?: sdk.SpeechConfig, audioFile?: string) => sdk.SpeakerRecognizer = (speechConfig?: sdk.SpeechConfig, audioFile?: string): sdk.SpeakerRecognizer => {
 
     let s: sdk.SpeechConfig = speechConfig;
     if (s === undefined) {
@@ -66,10 +66,15 @@ const BuildRecognizer: (speechConfig?: sdk.SpeechConfig) => sdk.SpeakerRecognize
         // Since we're not going to return it, mark it for closure.
         objsToClose.push(s);
     }
+    let audioConfig: sdk.AudioConfig;
+    if (audioFile === undefined) {
+        audioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.DependentVerificationWaveFile);
+    } else {
+        audioConfig = WaveFileAudioInput.getAudioConfigFromFile(audioFile);
+    }
 
-    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.DependentVerificationWaveFile);
-    objsToClose.push(config);
-    const r: sdk.SpeakerRecognizer = new sdk.SpeakerRecognizer(s, config);
+    objsToClose.push(audioConfig);
+    const r: sdk.SpeakerRecognizer = new sdk.SpeakerRecognizer(s, audioConfig);
     expect(r).not.toBeUndefined();
     objsToClose.push(r);
 
@@ -190,6 +195,19 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
     expect(res.profileId).not.toBeUndefined();
     expect(res.profileType).not.toBeUndefined();
     expect(res.profileType).toEqual(type);
+
+    // Attempting to recognize should fail before enrollment.
+    const reco: sdk.SpeakerRecognizer = BuildRecognizer(s, Settings.IndependentIdentificationWaveFile);
+    const m: sdk.SpeakerIdentificationModel = sdk.SpeakerIdentificationModel.fromProfiles([res]);
+    objsToClose.push(m);
+    try {
+        const recognizeResult: sdk.SpeakerRecognitionResult = await reco.recognizeOnceAsync(m);
+        expect(recognizeResult).not.toBeUndefined();
+        expect(recognizeResult.reason).not.toBeUndefined();
+        expect(recognizeResult.errorDetails).toEqual("IncompleteEnrollment");
+    } catch (error) {
+        expect(error).toBeFalsy();
+    }
     // Create the push stream we need for the speech sdk.
     const pushStream: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
 
@@ -212,6 +230,18 @@ test("Create and Delete Voice Profile using push stream - Independent Identifica
     expect(result.enrollmentsCount).toEqual(1);
     expect(() => sdk.SpeakerVerificationModel.fromProfile(res)).toThrow();
 
+    // Independent Identification should now work.
+    const workingReco: sdk.SpeakerRecognizer = BuildRecognizer(s, Settings.IndependentIdentificationWaveFile);
+    const identificationModel: sdk.SpeakerIdentificationModel = sdk.SpeakerIdentificationModel.fromProfiles([res]);
+    objsToClose.push(identificationModel);
+    try {
+        const workingRecognizeResult: sdk.SpeakerRecognitionResult = await workingReco.recognizeOnceAsync(identificationModel);
+        expect(workingRecognizeResult).not.toBeUndefined();
+        expect(workingRecognizeResult.reason).not.toBeUndefined();
+        expect(sdk.ResultReason[workingRecognizeResult.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeakers]);
+    } catch (error) {
+        expect(error).toBeFalsy();
+    }
     const resetResult: sdk.VoiceProfileResult = await r.resetProfileAsync(res);
     expect(resetResult).not.toBeUndefined();
     expect(resetResult.reason).not.toBeUndefined();

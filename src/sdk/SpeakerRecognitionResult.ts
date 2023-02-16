@@ -36,6 +36,7 @@ export class SpeakerRecognitionResult {
             if (resultType === SpeakerRecognitionResultType.Identify) {
                 this.privProfileId = response.identificationResult.identifiedProfile.profileId;
                 this.privScore = response.identificationResult.identifiedProfile.score;
+                this.privReason = ResultReason.RecognizedSpeakers;
             } else {
                 this.privScore = response.verificationResult.score;
                 if (response.verificationResult.recognitionResult.toLowerCase() !== "accept") {

@@ -15,20 +15,20 @@ import {
  */
 export class SpeakerIdentificationModel implements SpeakerRecognitionModel {
     private privVoiceProfiles: VoiceProfile[] = [];
-    private privProfileIds: string[];
+    private privProfileIds: string[] = [];
 
     private constructor(profiles: VoiceProfile[]) {
         Contracts.throwIfNullOrUndefined(profiles, "VoiceProfiles");
         if (profiles.length === 0) {
             throw new Error("Empty Voice Profiles array");
         }
-        profiles.forEach((profile: VoiceProfile): void => {
+        for (const profile of profiles) {
             if (profile.profileType !== VoiceProfileType.TextIndependentIdentification) {
                 throw new Error("Identification model can only be created from Identification profile: " + profile.profileId);
             }
             this.privVoiceProfiles.push(profile);
             this.privProfileIds.push(profile.profileId);
-        });
+        }
     }
     public static fromProfiles(profiles: VoiceProfile[]): SpeakerIdentificationModel {
         return new SpeakerIdentificationModel(profiles);
