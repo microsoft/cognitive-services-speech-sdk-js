@@ -94,9 +94,6 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
             // Profile management response for create, fetch, delete, reset
             case "speaker.profiles":
                 const response: ProfileResponse = JSON.parse(connectionMessage.textBody) as ProfileResponse;
-                if (response.status.statusCode.toLowerCase() !== "success") {
-                    throw new Error(`Voice Profile ${response.operation.toLowerCase()} failed with code: ${response.status.statusCode}, message: ${response.status.reason}`);
-                }
                 switch (response.operation.toLowerCase()) {
                     case "create":
                         this.handleCreateResponse(response, connectionMessage.requestId);
@@ -316,19 +313,15 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
         try {
             const deferral = new Deferred<T>();
             this.privRequestSession.onSpeechContext();
-            this.privDeferralMap.add<T>(this.privRequestSession.requestId, deferral);
             await conPromise;
-            await this.sendRequest(operation, this.scenarioFrom(profileType), profile);
+            const connection: IConnection = await this.fetchConnection();
+            this.privDeferralMap.add<T>(this.privRequestSession.requestId, deferral);
+            await this.sendBaseRequest(connection, operation, this.scenarioFrom(profileType), profile);
             void this.receiveMessage();
             return deferral.promise;
         } catch (err) {
             throw err;
         }
-    }
-
-    private async sendRequest(operation: string, scenario: string, profile: VoiceProfile): Promise<void> {
-        const connection: IConnection = await this.fetchConnection();
-        return this.sendBaseRequest(connection, operation, scenario, profile);
     }
 
     private async sendBaseRequest(connection: IConnection, operation: string, scenario: string, profile: VoiceProfile): Promise<void> {

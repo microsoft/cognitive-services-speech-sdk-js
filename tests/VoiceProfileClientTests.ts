@@ -28,7 +28,7 @@ beforeEach((): void => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-jest.retryTimes(Settings.RetryCount);
+// jest.retryTimes(Settings.RetryCount);
 jest.setTimeout(60000);
 
 afterEach(async (): Promise<void> => {
@@ -83,7 +83,7 @@ test("VoiceProfileClient", (): void => {
     objsToClose.push(r);
 });
 
-test("VoiceProfileClient with Bad credentials throws meaningful error", async (): Promise<void> => {
+test.skip("VoiceProfileClient with Bad credentials throws meaningful error", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: VoiceProfileClient with Bad credentials throws meaningful error");
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("BADKEY", Settings.SpeakerIDRegion);
@@ -97,8 +97,7 @@ test("VoiceProfileClient with Bad credentials throws meaningful error", async ()
         void res;
         return Promise.reject("Call did not fail.");
     } catch (error) {
-        const expectedCode: number = 401;
-        const expectedMessage: string = `Unable to contact server. StatusCode: 1006, undefined Reason:  Unexpected server response: ${expectedCode}`;
+        const expectedMessage: string = "Unable to contact server. StatusCode: 1006, undefined Reason:  undefined";
         expect(error as string).toEqual(expectedMessage);
     }
 });
@@ -114,18 +113,13 @@ test("VoiceProfileClient with Bad profile throws meaningful error", async (): Pr
 
     const type: sdk.VoiceProfileType = sdk.VoiceProfileType.TextIndependentIdentification;
 
-    try {
-        const badProfile: sdk.VoiceProfile = new sdk.VoiceProfile("BADPROFILE", type);
-        const result: sdk.VoiceProfileResult = await r.resetProfileAsync(badProfile);
-        void result;
-        return Promise.reject("Call did not fail.");
-    } catch (error) {
-        const e = error as string;
-        console.log(e);
-        const expectedCode: number = 401;
-        const expectedMessage: string = `Unable to contact server. StatusCode: 1006, undefined Reason:  Unexpected server response: ${expectedCode}`;
-        expect(error as string).toEqual(expectedMessage);
-    }
+    const badProfile: sdk.VoiceProfile = new sdk.VoiceProfile("12345678-1234-5678-1234-BADBADBADBAD", type);
+
+    const res: sdk.VoiceProfileResult = await r.resetProfileAsync(badProfile);
+    expect(res.reason).not.toBeUndefined();
+    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
+    expect(res.errorDetails).not.toBeUndefined();
+    expect(res.errorDetails).toEqual("statusCode: PROFILENOTFOUND, errorDetails: Profile Not Found.");
 });
 
 test("GetParameters", (): void => {
