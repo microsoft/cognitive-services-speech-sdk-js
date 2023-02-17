@@ -28,7 +28,7 @@ beforeEach((): void => {
     console.info("Start Time: " + new Date(Date.now()).toLocaleString());
 });
 
-// jest.retryTimes(Settings.RetryCount);
+jest.retryTimes(Settings.RetryCount);
 jest.setTimeout(60000);
 
 afterEach(async (): Promise<void> => {
