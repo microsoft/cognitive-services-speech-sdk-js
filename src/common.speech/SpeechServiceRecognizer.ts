@@ -26,7 +26,7 @@ import {
 } from "./Exports";
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
+import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 interface CustomModel {
@@ -39,11 +39,15 @@ interface PhraseDetection {
     onInterim?: { action: string };
     onSuccess?: { action: string };
     mode?: string;
-    INTERACTIVE?: {
-        segmentation: {
-            mode: "Custom";
-            segmentationSilenceTimeoutMs: number;
-        };
+    INTERACTIVE?: Segmentation;
+    CONVERSATION?: Segmentation;
+    DICTATION?: Segmentation;
+}
+
+interface Segmentation {
+    segmentation: {
+        mode: "Custom";
+        segmentationSilenceTimeoutMs: number;
     };
 }
 
@@ -64,9 +68,11 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         const phraseDetection: PhraseDetection = {};
         const speechSegmentationTimeout: string = recognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
         if (speechSegmentationTimeout !== undefined) {
+            const mode = recognizerConfig.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
+                recognizerConfig.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
             const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
-            phraseDetection.mode = "INTERACTIVE";
-            phraseDetection.INTERACTIVE = {
+            phraseDetection.mode = mode;
+            phraseDetection[mode] = {
                 segmentation: {
                     mode: "Custom",
                     segmentationSilenceTimeoutMs
