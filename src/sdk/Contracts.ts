@@ -34,7 +34,6 @@ export class Contracts {
         }
     }
 
-    
     public static throwIfNullOrTooShort(param: string, name: string, minLength: number): void {
         Contracts.throwIfNullOrUndefined(param, name);
 
