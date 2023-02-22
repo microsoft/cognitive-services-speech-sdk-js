@@ -205,8 +205,8 @@ export class ConversationImpl extends Conversation implements IDisposable {
             if (hostNickname === undefined || hostNickname === null) {
                 hostNickname = "Host";
             }
-            Contracts.throwIfNullOrTooLong(hostNickname, 'nickname', 50);
-            Contracts.throwIfNullOrTooShort(hostNickname, 'nickname', 2);
+            Contracts.throwIfNullOrTooLong(hostNickname, "nickname", 50);
+            Contracts.throwIfNullOrTooShort(hostNickname, "nickname", 2);
             speechConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], hostNickname);
 
         } else {
