@@ -13,6 +13,7 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
+    SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
 import { ConversationInfo } from "../sdk/Transcription/Exports";
@@ -53,8 +54,44 @@ export class TranscriptionServiceRecognizer extends ConversationServiceRecognize
         }
     }
 
-    protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
-        return super.processTypeSpecificMessages(connectionMessage);
+    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
+        return this.processSpeechMessages(connectionMessage);
+    }
+
+    protected handleRecognizedCallback(result: SpeechRecognitionResult, offset: number, sessionId: string): void {
+        try {
+            const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, offset, sessionId);
+            this.privTranscriberRecognizer.recognized(this.privTranscriberRecognizer, event);
+            if (!!this.privSuccessCallback) {
+                try {
+                    this.privSuccessCallback(result);
+                } catch (e) {
+                    if (!!this.privErrorCallback) {
+                        this.privErrorCallback(e as string);
+                    }
+                }
+                // Only invoke the call back once.
+                // and if it's successful don't invoke the
+                // error after that.
+                this.privSuccessCallback = undefined;
+                this.privErrorCallback = undefined;
+            }
+        /* eslint-disable no-empty */
+        } catch (error) {
+            // Not going to let errors in the event handler
+            // trip things up.
+        }
+    }
+
+    protected handleRecognizingCallback(result: SpeechRecognitionResult, duration: number, sessionId: string): void {
+        try {
+            const ev = new SpeechRecognitionEventArgs(result, duration, sessionId);
+            this.privTranscriberRecognizer.recognizing(this.privTranscriberRecognizer, ev);
+            /* eslint-disable no-empty */
+        } catch (error) {
+            // Not going to let errors in the event handler
+            // trip things up.
+        }
     }
 
     // Cancels recognition.

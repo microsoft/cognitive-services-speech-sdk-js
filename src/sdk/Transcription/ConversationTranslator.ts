@@ -6,8 +6,9 @@
 
 import {
     ConversationConnectionConfig,
-    ServicePropertiesPropertyName
+    ServicePropertiesPropertyName,
 } from "../../common.speech/Exports";
+import { ConversationTranslatorConnectionFactory } from "../../common.speech/Transcription/ConversationTranslatorConnectionFactory";
 import {
     IDisposable,
     IErrorMessages,
@@ -49,8 +50,11 @@ export enum SpeechState {
 class ConversationTranslationRecognizer extends TranslationRecognizer {
     private privTranslator: ConversationTranslator;
     private privSpeechState: SpeechState;
-    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig, translator?: ConversationTranslator) {
-        super(speechConfig, audioConfig);
+
+    public constructor(speechConfig: SpeechTranslationConfig, audioConfig: AudioConfig, translator: ConversationTranslator, convGetter: () => ConversationImpl) {
+
+        super(speechConfig, audioConfig, new ConversationTranslatorConnectionFactory(convGetter));
+
         this.privSpeechState = SpeechState.Inactive;
         if (!!translator) {
             this.privTranslator = translator;
@@ -95,6 +99,7 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
             };
         }
     }
+
     public get state(): SpeechState {
         return this.privSpeechState;
     }
@@ -141,7 +146,6 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
             // ignore the error
         }
     }
-
 }
 
 /**
@@ -233,7 +237,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
      */
     public joinConversationAsync(conversation: IConversation, nickname: string, cb?: Callback, err?: Callback): void;
     public joinConversationAsync(conversationId: string, nickname: string, lang: string, cb?: Callback, err?: Callback): void;
-    public joinConversationAsync(conversation: string | { config: SpeechTranslationConfig }, nickname: string, param1?: string | Callback, param2?: Callback, param3?: Callback): void {
+    public joinConversationAsync(conversation: string | IConversation, nickname: string, param1?: string | Callback, param2?: Callback, param3?: Callback): void {
 
         try {
 
@@ -260,17 +264,24 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage], lang);
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Name], nickname);
 
-                const speechEndpointHost: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Host);
-                if (speechEndpointHost) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Host], speechEndpointHost);
-                }
-                const conversationEndpoint: string = this.privProperties.getProperty(PropertyId.ConversationTranslator_Host);
-                if (conversationEndpoint) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.ConversationTranslator_Host], conversationEndpoint);
-                }
-                const speechEndpoint: string = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
-                if (speechEndpoint) {
-                    this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], speechEndpoint);
+                const propertyIdsToCopy: (string | PropertyId)[] = [
+                    PropertyId.SpeechServiceConnection_Host,
+                    PropertyId.ConversationTranslator_Host,
+                    PropertyId.SpeechServiceConnection_Endpoint,
+                    PropertyId.SpeechServiceConnection_ProxyHostName,
+                    PropertyId.SpeechServiceConnection_ProxyPassword,
+                    PropertyId.SpeechServiceConnection_ProxyPort,
+                    PropertyId.SpeechServiceConnection_ProxyUserName,
+                    "ConversationTranslator_MultiChannelAudio",
+                    "ConversationTranslator_Region"
+                ];
+
+                for (const prop of propertyIdsToCopy) {
+                    const value = this.privProperties.getProperty(prop);
+                    if (value) {
+                        const key = typeof prop === "string" ? prop : PropertyId[prop];
+                        this.privSpeechTranslationConfig.setProperty(key, value);
+                    }
                 }
 
                 const currentProperties  = JSON.parse(this.privProperties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
@@ -293,6 +304,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                         }
 
                         this.privSpeechTranslationConfig.authorizationToken = result;
+                        this.privConversation.room.isHost = false;
 
                         // connect to the ws
                         this.privConversation.startConversationAsync(
@@ -319,6 +331,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 this.privConversation = conversation as ConversationImpl;
                 // ref the conversation translator object
                 this.privConversation.conversationTranslator = this;
+                this.privConversation.room.isHost = true;
 
                 Contracts.throwIfNullOrUndefined(this.privConversation, this.privErrors.permissionDeniedConnect);
                 Contracts.throwIfNullOrUndefined(this.privConversation.room.token, this.privErrors.permissionDeniedConnect);
@@ -485,20 +498,9 @@ export class ConversationTranslator extends ConversationCommon implements IConve
                 === this.privPlaceholderKey) {
                 this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Key], "");
             }
-            let speechEndpoint: string = this.privSpeechTranslationConfig.getProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], undefined);
-            if (!speechEndpoint) {
-                let endpointHost: string = this.privSpeechTranslationConfig.getProperty(
-                    PropertyId[PropertyId.SpeechServiceConnection_Host], ConversationConnectionConfig.speechHost);
-                endpointHost = endpointHost.replace("{region}", this.privConversation.room.cognitiveSpeechRegion);
 
-                speechEndpoint = `wss://${endpointHost}${ConversationConnectionConfig.speechPath}`;
-            }
-            // TODO
-            const token: string = encodeURIComponent(this.privConversation.room.token);
-            speechEndpoint = `${speechEndpoint}?${ConversationConnectionConfig.configParams.token}=${token}`;
-            this.privSpeechTranslationConfig.setProperty(PropertyId[PropertyId.SpeechServiceConnection_Endpoint], speechEndpoint);
-
-            this.privCTRecognizer = new ConversationTranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this);
+            const convGetter = (): ConversationImpl => this.privConversation;
+            this.privCTRecognizer = new ConversationTranslationRecognizer(this.privSpeechTranslationConfig, this.privAudioConfig, this, convGetter);
         } catch (error) {
             await this.cancelSpeech();
             throw error;

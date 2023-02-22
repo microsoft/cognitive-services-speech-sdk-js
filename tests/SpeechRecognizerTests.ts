@@ -42,7 +42,7 @@ import { validateTelemetry } from "./TelemetryUtil";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
-import got from "got";
+import bent, { BentResponse } from "bent";
 
 import { setTimeout } from "timers";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
@@ -402,21 +402,28 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
     test("testGetOutputFormatDetailed with authorization token", (done: jest.DoneCallback) => {
         console.info("Name: testGetOutputFormatDetailed");
 
-        const url = "https://" + Settings.SpeechRegion + ".api.cognitive.microsoft.com/sts/v1.0/issueToken";
-        const req = {
-            headers: {
-                "Content-Type": "application/json",
-                [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
-            },
+        const url = `https://${Settings.SpeechRegion}.api.cognitive.microsoft.com/`;
+        const path = "sts/v1.0/issueToken";
+        const headers = {
+            "Content-Type": "application/json",
+            [HeaderNames.AuthKey]: Settings.SpeechSubscriptionKey,
         };
 
         console.info("Starting fetch of token");
 
         let authToken: string;
-        got.post(url, req)
+        const sendRequest = bent(url, "POST", headers, 200);
+        sendRequest(path)
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
-            .then((resp: { body: any }): void => authToken = resp.body)
-            .catch((error: any): void => done(error));
+            .then((resp: BentResponse): void => {
+                resp.text().then((token: string): void => {
+                    authToken = token;
+                }).catch((error: any): void => {
+                    done.fail(error as string);
+                });
+            }).catch((error: any): void => {
+                done.fail(error as string);
+            });
 
         console.info("Got token");
 
