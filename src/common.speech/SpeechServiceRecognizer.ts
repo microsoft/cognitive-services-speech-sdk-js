@@ -117,10 +117,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
             const mode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
                 this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
             const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
-            let phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
-            if (!phraseDetection) {
-                phraseDetection = {};
-            }
+            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
             phraseDetection.mode = mode;
             phraseDetection[mode] = {
                 segmentation: {

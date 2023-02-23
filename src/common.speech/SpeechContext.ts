@@ -42,7 +42,7 @@ export class SpeechContext {
      * @param value JSON serializable object that represents the value.
      */
     public getSection(sectionName: string): string | Context {
-        return this.privContext[sectionName] as string | Context;
+        return (this.privContext[sectionName] || {}) as string | Context;
     }
 
     /**
