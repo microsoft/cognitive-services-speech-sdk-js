@@ -66,19 +66,6 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         this.privSpeechRecognizer = speechRecognizer;
 
         const phraseDetection: PhraseDetection = {};
-        const speechSegmentationTimeout: string = recognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
-        if (speechSegmentationTimeout !== undefined) {
-            const mode = recognizerConfig.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
-                recognizerConfig.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
-            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
-            phraseDetection.mode = mode;
-            phraseDetection[mode] = {
-                segmentation: {
-                    mode: "Custom",
-                    segmentationSilenceTimeoutMs
-                }
-            };
-        }
 
         if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
             const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
@@ -120,6 +107,27 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         };
 
         if (!isEmpty(phraseDetection)) {
+            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+        }
+    }
+
+    protected setSpeechSegmentationTimeout(): void{
+        const speechSegmentationTimeout: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
+        if (speechSegmentationTimeout !== undefined) {
+            const mode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
+                this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
+            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
+            let phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
+            if (!phraseDetection) {
+                phraseDetection = {};
+            }
+            phraseDetection.mode = mode;
+            phraseDetection[mode] = {
+                segmentation: {
+                    mode: "Custom",
+                    segmentationSilenceTimeoutMs
+                }
+            };
             this.privSpeechContext.setSection("phraseDetection", phraseDetection);
         }
     }
