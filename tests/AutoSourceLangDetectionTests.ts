@@ -223,6 +223,50 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         });
     }); // testRecognizeOnceFromSourceLanguageConfig
 
+    test("testRecognizeOnceWithContinuousLIDGeneratesServiceError", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testRecognizeOnceWithContinuousLIDGeneratesServiceError");
+
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+
+        const configs: sdk.SourceLanguageConfig[] = BuildSourceLanguageConfigs();
+        configs.forEach((c: sdk.SourceLanguageConfig) => { objsToClose.push(c); });
+
+        const a: sdk.AutoDetectSourceLanguageConfig = BuildAutoConfig(configs);
+        a.mode = sdk.LanguageIdMode.Continuous;
+        a.properties.setProperty(sdk.PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "1");
+
+        objsToClose.push(a);
+
+        const r: sdk.SpeechRecognizer = BuildRecognizer(s, a);
+        objsToClose.push(r);
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).not.toBeUndefined();
+                expect(e.errorDetails).toEqual("Language identification with DetectContinuous not supported on v1. websocket error code: 1007");
+                done();
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            try {
+                expect(result).not.toBeUndefined();
+                expect(result.errorDetails).not.toBeUndefined();
+                expect(result.errorDetails).toEqual("Language identification with DetectContinuous not supported on v1. websocket error code: 1007");
+
+                done();
+            } catch (error) {
+                done(error);
+            }
+        }, (error: string) => {
+            done(error);
+        });
+    }); // testRecognizeOnceFromSourceLanguageConfig
+
     test("Silence After Speech - AutoDetect set", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Silence After Speech - AutoDetect set");
@@ -401,6 +445,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         objsToClose.push(a);
         const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const segSilenceTimeoutMs = 1100;
+        s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, segSilenceTimeoutMs.toString());
         objsToClose.push(s);
         const r: sdk.SpeechRecognizer = BuildRecognizer(s, a);
         objsToClose.push(r);
@@ -409,6 +455,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         let speechContextSent: boolean = false;
 
         const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
+        const expectedRecognitionMode = "CONVERSATION";
+        const segmentationField = "segmentation";
 
         con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
             if (args.message.path === "speech.context" && args.message.isTextMessage) {
@@ -419,6 +467,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(message.languageId.mode).toEqual("DetectContinuous");
                     expect(message.languageId.Priority).not.toBeUndefined();
                     expect(message.languageId.Priority).toEqual("PrioritizeLatency");
+                    expect(message.phraseDetection.mode).toEqual(expectedRecognitionMode);
+                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationSilenceTimeoutMs).toEqual(segSilenceTimeoutMs);
                     speechContextSent = true;
                 } catch (error) {
                     done(error);
