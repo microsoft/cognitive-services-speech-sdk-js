@@ -37,9 +37,9 @@ export class SpeechContext {
     }
 
     /**
-     * Adds a section to the speech.context object.
-     * @param sectionName Name of the section to add.
-     * @param value JSON serializable object that represents the value.
+     * Gets a section of the speech.context object.
+     * @param sectionName Name of the section to get.
+     * @return string or Context JSON serializable object that represents the value.
      */
     public getSection(sectionName: string): string | Context {
         return (this.privContext[sectionName] || {}) as string | Context;
