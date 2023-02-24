@@ -116,6 +116,18 @@ export class PronunciationAssessmentConfig {
     }
 
     /**
+     * Sets the boolean enableMiscue property.
+     * Added in version 1.26.0
+     * @member PronunciationAssessmentConfig.prototype.enableMiscue
+     * @function
+     * @public
+     * @param {boolean} enableMiscue - enable miscue.
+     */
+    public set enableMiscue(enableMiscue: boolean) {
+        this.properties.setProperty(PropertyId.PronunciationAssessment_EnableMiscue, String(enableMiscue));
+    }
+
+    /**
      * Sets the nbest phoneme count
      * Added in version 1.20.0
      * @member PronunciationAssessmentConfig.prototype.nbestPhonemeCount
