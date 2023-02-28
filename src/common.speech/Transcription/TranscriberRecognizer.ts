@@ -25,6 +25,7 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechServiceConfig,
     TranscriberConnectionFactory,
     TranscriptionServiceRecognizer,
 } from "../Exports";
@@ -179,6 +180,12 @@ export class TranscriberRecognizer extends Recognizer {
         }
 
         await super.dispose(disposing);
+    }
+
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(
+            speechConfig,
+            this.properties);
     }
 
     protected createServiceRecognizer(

@@ -8,6 +8,7 @@ import {
     ServiceRecognizerBase,
     SpeakerRecognitionConnectionFactory,
     SpeakerServiceRecognizer,
+    SpeechServiceConfig
 } from "../common.speech/Exports";
 import { SpeakerRecognitionModel } from "./SpeakerRecognitionModel";
 import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
@@ -127,6 +128,10 @@ export class SpeakerRecognizer extends Recognizer {
             await this.privReco.stopRecognizing();
         }
         return;
+    }
+
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(speechConfig, this.privProperties);
     }
 
     protected createServiceRecognizer(authentication: IAuthentication, connectionFactory: IConnectionFactory, audioConfig: AudioConfig, recognizerConfig: RecognizerConfig): ServiceRecognizerBase {

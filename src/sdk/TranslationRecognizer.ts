@@ -7,6 +7,7 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechServiceConfig,
     TranslationConnectionFactory,
     TranslationServiceRecognizer
 } from "../common.speech/Exports";
@@ -296,6 +297,11 @@ export class TranslationRecognizer extends Recognizer {
             await this.implRecognizerStop();
             await super.dispose(disposing);
         }
+    }
+
+
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(speechConfig, this.privProperties);
     }
 
     protected createServiceRecognizer(

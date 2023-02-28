@@ -9,16 +9,17 @@ import {
     IConnectionFactory,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechServiceConfig,
     VoiceProfileConnectionFactory,
     VoiceServiceRecognizer
 } from "../common.speech/Exports";
 import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
-import { Client } from "./Client";
 import {
     AudioInputStream,
     PropertyCollection,
     PropertyId,
+    Recognizer,
     ResultReason,
     VoiceProfile,
     VoiceProfileEnrollmentResult,
@@ -33,7 +34,7 @@ import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
  * Handles operations from user for Voice Profile operations (e.g. createProfile, deleteProfile)
  * @class VoiceProfileClient
  */
-export class VoiceProfileClient extends Client {
+export class VoiceProfileClient extends Recognizer {
     protected privProperties: PropertyCollection;
     private privVoiceAdapter: VoiceServiceRecognizer;
     private privDisposedVoiceAdapter: boolean;
@@ -221,6 +222,10 @@ export class VoiceProfileClient extends Client {
         if (disposing) {
             await super.dispose(disposing);
         }
+    }
+
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(speechConfig, this.properties);
     }
 
     private getResult(result: IRestResponse, successReason: ResultReason): VoiceProfileResult {

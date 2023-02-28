@@ -10,6 +10,7 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
+    SpeechServiceConfig
 } from "../common.speech/Exports";
 import {
     Deferred,
@@ -242,6 +243,10 @@ export class DialogServiceConnector extends Recognizer {
             await this.implRecognizerStop();
             await super.dispose(disposing);
         }
+    }
+
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(speechConfig, this.privProperties);
     }
 
     protected createServiceRecognizer(

@@ -20,13 +20,13 @@ import {
     Timeout
 } from "../common/Exports";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
-import { Client } from "../sdk/Client";
 import { SpeakerRecognitionModel } from "../sdk/SpeakerRecognitionModel";
 import {
     CancellationErrorCode,
     CancellationReason,
     PropertyId,
     RecognitionEventArgs,
+    Recognizer,
     SessionEventArgs,
     SpeakerRecognitionResult,
     SpeechRecognitionResult,
@@ -77,7 +77,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
     protected privRecognizerConfig: RecognizerConfig;
-    protected privClient: Client;
+    protected privRecognizer: Recognizer;
     protected privSuccessCallback: (e: SpeechRecognitionResult) => void;
     protected privErrorCallback: (e: string) => void;
 
@@ -86,7 +86,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         connectionFactory: IConnectionFactory,
         audioSource: IAudioSource,
         recognizerConfig: RecognizerConfig,
-        client: Client) {
+        recognizer: Recognizer) {
 
         if (!authentication) {
             throw new ArgumentNullError("authentication");
@@ -110,7 +110,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privAudioSource = audioSource;
         this.privRecognizerConfig = recognizerConfig;
         this.privIsDisposed = false;
-        this.privClient = client;
+        this.privRecognizer = recognizer;
         this.privRequestSession = new RequestSession(this.privAudioSource.id());
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
         this.privServiceEvents = new EventSource<ServiceEvent>();
@@ -247,8 +247,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
 
-        if (!!this.privClient.sessionStarted) {
-            this.privClient.sessionStarted(this.privClient, sessionStartEventArgs);
+        if (!!this.privRecognizer.sessionStarted) {
+            this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
         }
 
         void this.receiveMessage();
@@ -442,8 +442,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     case "speech.startdetected":
                         const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
                         const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
-                        if (!!this.privClient.speechStartDetected) {
-                            this.privClient.speechStartDetected(this.privClient, speechStartEventArgs);
+                        if (!!this.privRecognizer.speechStartDetected) {
+                            this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
                         }
                         break;
 
@@ -462,8 +462,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             this.privRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset);
                         }
                         const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
-                        if (!!this.privClient.speechEndDetected) {
-                            this.privClient.speechEndDetected(this.privClient, speechStopEventArgs);
+                        if (!!this.privRecognizer.speechEndDetected) {
+                            this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
                         }
                         break;
 
@@ -476,8 +476,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         const sessionStopEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
                         await this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition);
                         if (!this.privRecognizerConfig.isContinuousRecognition || this.privRequestSession.isSpeechEnded || !this.privRequestSession.isRecognizing) {
-                            if (!!this.privClient.sessionStopped) {
-                                this.privClient.sessionStopped(this.privClient, sessionStopEventArgs);
+                            if (!!this.privRecognizer.sessionStopped) {
+                                this.privRecognizer.sessionStopped(this.privRecognizer, sessionStopEventArgs);
                             }
                             return;
                         } else {

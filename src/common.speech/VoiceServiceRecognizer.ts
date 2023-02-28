@@ -246,8 +246,8 @@ export class VoiceServiceRecognizer extends ServiceRecognizerBase {
 
         const sessionStartEventArgs: SessionEventArgs = new SessionEventArgs(this.privRequestSession.sessionId);
 
-        if (!!this.privClient.sessionStarted) {
-            this.privClient.sessionStarted(this.privClient, sessionStartEventArgs);
+        if (!!this.privRecognizer.sessionStarted) {
+            this.privRecognizer.sessionStarted(this.privRecognizer, sessionStartEventArgs);
         }
 
         void this.receiveMessage();

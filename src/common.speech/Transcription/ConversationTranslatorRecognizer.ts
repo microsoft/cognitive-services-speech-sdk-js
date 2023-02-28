@@ -248,7 +248,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
      * Create the config for the recognizer
      * @param speechConfig
      */
-    protected createConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
         return new RecognizerConfig(speechConfig, this.privProperties);
     }
 
