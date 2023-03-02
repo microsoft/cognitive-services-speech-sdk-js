@@ -111,37 +111,6 @@ export class SpeakerServiceRecognizer extends ServiceRecognizerBase {
         const properties: PropertyCollection = new PropertyCollection();
         properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
-        /*
-        if (!!this.privSpeakerRecognizer.canceled) {
-
-            const cancelEvent: RecognitionCanceledEventArgs = new SpeakerRecognitionCanceledEventArgs(
-                cancellationReason,
-                error,
-                errorCode,
-                undefined,
-                undefined,
-                sessionId);
-            try {
-                this.privSpeakerRecognizer.canceled(this.privIntentRecognizer, cancelEvent);
-            } catch { }
-        }
-
-        if (!!this.privResultDeferral) {
-            const result: SpeakerRecognitionResult = new SpeakerRecognitionResult(
-                SpeakerRecognitionResultType.Identify,
-                error,
-                "",
-                ResultReason.Canceled,
-                );
-            try {
-                this.privResultDeferral.resolve(result);
-                this.privResultDeferral = undefined;
-            } catch (error) {
-                this.privResultDeferral.reject(error as string);
-            }
-        }
-        */
-
         if (!!this.privResultDeferral) {
             const result: SpeakerRecognitionResult = new SpeakerRecognitionResult(
                 {
