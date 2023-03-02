@@ -26,7 +26,7 @@ import {
 } from "./Exports";
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
+import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 interface CustomModel {
@@ -39,11 +39,15 @@ interface PhraseDetection {
     onInterim?: { action: string };
     onSuccess?: { action: string };
     mode?: string;
-    INTERACTIVE?: {
-        segmentation: {
-            mode: "Custom";
-            segmentationSilenceTimeoutMs: number;
-        };
+    INTERACTIVE?: Segmentation;
+    CONVERSATION?: Segmentation;
+    DICTATION?: Segmentation;
+}
+
+interface Segmentation {
+    segmentation: {
+        mode: "Custom";
+        segmentationSilenceTimeoutMs: number;
     };
 }
 
@@ -62,17 +66,6 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         this.privSpeechRecognizer = speechRecognizer;
 
         const phraseDetection: PhraseDetection = {};
-        const speechSegmentationTimeout: string = recognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
-        if (speechSegmentationTimeout !== undefined) {
-            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
-            phraseDetection.mode = "INTERACTIVE";
-            phraseDetection.INTERACTIVE = {
-                segmentation: {
-                    mode: "Custom",
-                    segmentationSilenceTimeoutMs
-                }
-            };
-        }
 
         if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
             const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
@@ -114,6 +107,24 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         };
 
         if (!isEmpty(phraseDetection)) {
+            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+        }
+    }
+
+    protected setSpeechSegmentationTimeout(): void{
+        const speechSegmentationTimeout: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
+        if (speechSegmentationTimeout !== undefined) {
+            const mode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
+                this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
+            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
+            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
+            phraseDetection.mode = mode;
+            phraseDetection[mode] = {
+                segmentation: {
+                    mode: "Custom",
+                    segmentationSilenceTimeoutMs
+                }
+            };
             this.privSpeechContext.setSection("phraseDetection", phraseDetection);
         }
     }

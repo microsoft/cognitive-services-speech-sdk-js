@@ -212,6 +212,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         // Clear the existing configuration promise to force a re-transmission of config and context.
         this.privConnectionConfigurationPromise = undefined;
         this.privRecognizerConfig.recognitionMode = recoMode;
+        this.setSpeechSegmentationTimeout();
 
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallBack;
@@ -499,6 +500,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         } catch (error) {
             return null;
         }
+    }
+
+    protected setSpeechSegmentationTimeout(): void {
+        return;
     }
 
     protected sendSpeechContext(connection: IConnection, generateNewRequestId: boolean): Promise<void> {
