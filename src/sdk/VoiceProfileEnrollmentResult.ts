@@ -14,31 +14,29 @@ import {
 export interface EnrollmentResultDetails {
     profileId: string;
     enrollmentsCount: number;
-    enrollmentsLengthInSec: number;
-    enrollmentsSpeechLengthInSec: number;
+    enrollmentsLength: number;
+    enrollmentsSpeechLength: number;
     remainingEnrollmentsCount: number;
-    remainingEnrollmentsSpeechLengthInSec: number;
-    audioLengthInSec: number;
-    audioSpeechLengthInSec: number;
+    remainingEnrollmentsSpeechLength: number;
+    audioLength: number;
+    audioSpeechLength: number;
     enrollmentStatus: string;
 }
 
 export interface EnrollmentResultJSON {
     profileId: string;
     enrollmentsCount: number;
-    enrollmentsLengthInSec: string;
-    enrollmentsSpeechLengthInSec: string;
+    enrollmentsLength: string;
+    enrollmentsSpeechLength: string;
     remainingEnrollmentsCount: number;
-    remainingEnrollmentsSpeechLengthInSec: string;
-    audioLengthInSec: string;
-    audioSpeechLengthInSec: string;
+    remainingEnrollmentsSpeechLength: string;
+    audioLength: string;
+    audioSpeechLength: string;
     enrollmentStatus: string;
     remainingEnrollments?: number;
     identificationProfileId?: string;
     verificationProfileId?: string;
 }
-
-const parse = (json: string): EnrollmentResultDetails => JSON.parse(json) as EnrollmentResultDetails;
 
 /**
  * Output format
@@ -55,7 +53,7 @@ export class VoiceProfileEnrollmentResult {
         this.privProperties = new PropertyCollection();
         if (this.privReason !== ResultReason.Canceled) {
             if (!!json) {
-                this.privDetails = parse(json);
+                this.privDetails = JSON.parse(json) as EnrollmentResultDetails;
                 if (this.privDetails.enrollmentStatus.toLowerCase() === "enrolling") {
                     this.privReason = ResultReason.EnrollingVoiceProfile;
                 }
@@ -74,8 +72,8 @@ export class VoiceProfileEnrollmentResult {
         return this.privDetails.enrollmentsCount;
     }
 
-    public get enrollmentsLengthInSec(): number {
-        return this.privDetails.enrollmentsLengthInSec;
+    public get enrollmentsLength(): number {
+        return this.privDetails.enrollmentsLength;
     }
 
     public get properties(): PropertyCollection {
@@ -118,28 +116,28 @@ export class VoiceProfileEnrollmentResult {
 
     private static getIdentificationDetails(json: EnrollmentResultJSON): unknown {
         return {
-            audioLengthInSec: json.audioLengthInSec ? parseFloat(json.audioLengthInSec) : 0,
-            audioSpeechLengthInSec: json.audioSpeechLengthInSec ? parseFloat(json.audioSpeechLengthInSec) : 0,
+            audioLength: json.audioLength ? parseFloat(json.audioLength) : 0,
+            audioSpeechLength: json.audioSpeechLength ? parseFloat(json.audioSpeechLength) : 0,
             enrollmentStatus: json.enrollmentStatus,
             enrollmentsCount: json.enrollmentsCount || 0,
-            enrollmentsLengthInSec: json.enrollmentsLengthInSec ? parseFloat(json.enrollmentsLengthInSec) : 0,
-            enrollmentsSpeechLengthInSec: json.enrollmentsSpeechLengthInSec ? parseFloat(json.enrollmentsSpeechLengthInSec) : 0,
+            enrollmentsLength: json.enrollmentsLength ? parseFloat(json.enrollmentsLength) : 0,
+            enrollmentsSpeechLength: json.enrollmentsSpeechLength ? parseFloat(json.enrollmentsSpeechLength) : 0,
             profileId: json.profileId || json.identificationProfileId,
-            remainingEnrollmentsSpeechLengthInSec: json.remainingEnrollmentsSpeechLengthInSec ? parseFloat(json.remainingEnrollmentsSpeechLengthInSec) : 0
+            remainingEnrollmentsSpeechLength: json.remainingEnrollmentsSpeechLength ? parseFloat(json.remainingEnrollmentsSpeechLength) : 0
         };
     }
 
     private static getVerificationDetails(json: EnrollmentResultJSON): unknown {
         return {
-            audioLengthInSec: json.audioLengthInSec ? parseFloat(json.audioLengthInSec) : 0,
-            audioSpeechLengthInSec: json.audioSpeechLengthInSec ? parseFloat(json.audioSpeechLengthInSec) : 0,
+            audioLength: json.audioLength ? parseFloat(json.audioLength) : 0,
+            audioSpeechLength: json.audioSpeechLength ? parseFloat(json.audioSpeechLength) : 0,
             enrollmentStatus: json.enrollmentStatus,
             enrollmentsCount: json.enrollmentsCount,
-            enrollmentsLengthInSec: json.enrollmentsLengthInSec ? parseFloat(json.enrollmentsLengthInSec) : 0,
-            enrollmentsSpeechLengthInSec: json.enrollmentsSpeechLengthInSec ? parseFloat(json.enrollmentsSpeechLengthInSec) : 0,
+            enrollmentsLength: json.enrollmentsLength ? parseFloat(json.enrollmentsLength) : 0,
+            enrollmentsSpeechLength: json.enrollmentsSpeechLength ? parseFloat(json.enrollmentsSpeechLength) : 0,
             profileId: json.profileId || json.verificationProfileId,
             remainingEnrollmentsCount: json.remainingEnrollments || json.remainingEnrollmentsCount,
-            remainingEnrollmentsSpeechLengthInSec: json.remainingEnrollmentsSpeechLengthInSec ? parseFloat(json.remainingEnrollmentsSpeechLengthInSec) : 0
+            remainingEnrollmentsSpeechLength: json.remainingEnrollmentsSpeechLength ? parseFloat(json.remainingEnrollmentsSpeechLength) : 0
         };
     }
 }

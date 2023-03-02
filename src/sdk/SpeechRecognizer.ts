@@ -280,9 +280,7 @@ export class SpeechRecognizer extends Recognizer {
     }
 
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
-        return new RecognizerConfig(
-            speechConfig,
-            this.properties);
+        return new RecognizerConfig(speechConfig, this.privProperties);
     }
 
     protected createServiceRecognizer(

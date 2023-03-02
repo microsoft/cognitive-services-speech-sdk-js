@@ -13,18 +13,22 @@ import {
  */
 export class VoiceProfilePhraseResult extends VoiceProfileResult {
     private privPhrases: string[] = [];
+    private privType: string;
 
-    public constructor(reason: ResultReason, statusText: string, json: {value: {passPhrase?: string; activationPhrase?: string}[]}) {
+    public constructor(reason: ResultReason, statusText: string, type: string, phraseArray: string[]) {
         super(reason, statusText);
-        Contracts.throwIfNullOrUndefined(json, "phrase result JSON");
-        if (!!json.value && !!json.value[0]) {
-            for (const item of json.value) {
-                this.privPhrases.push(item.passPhrase || item.activationPhrase);
-            }
+        Contracts.throwIfNullOrUndefined(phraseArray, "phrase array");
+        this.privType = type;
+        if (!!phraseArray && !!phraseArray[0]) {
+            this.privPhrases = phraseArray;
         }
     }
 
     public get phrases(): string[] {
         return this.privPhrases;
+    }
+
+    public get type(): string {
+        return this.privType;
     }
 }

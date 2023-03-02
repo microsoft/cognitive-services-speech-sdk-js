@@ -85,7 +85,7 @@ export class Settings {
 
     public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
 
-    public static IndependentIdentificationWaveFile: string = Settings.InputDir + "talkforafewseconds.wav";
+    public static IndependentIdentificationWaveFile: string = Settings.InputDir + "english_activation_v3_p1.wav";
     public static DependentVerificationWaveFile: string = Settings.InputDir + "myVoiceIsMyPassportVerifyMe04.wav";
     public static VerificationWaveFiles: string[] = [
         Settings.InputDir + "myVoiceIsMyPassportVerifyMe01.wav",

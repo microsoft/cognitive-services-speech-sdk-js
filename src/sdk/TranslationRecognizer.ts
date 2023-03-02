@@ -299,8 +299,9 @@ export class TranslationRecognizer extends Recognizer {
         }
     }
 
+
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
-        return new RecognizerConfig(speechConfig, this.properties);
+        return new RecognizerConfig(speechConfig, this.privProperties);
     }
 
     protected createServiceRecognizer(

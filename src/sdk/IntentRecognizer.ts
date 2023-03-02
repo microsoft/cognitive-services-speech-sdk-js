@@ -10,7 +10,7 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SpeechServiceConfig,
+    SpeechServiceConfig
 } from "../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../common/Exports";
 import { AudioConfigImpl } from "./Audio/AudioConfig";
@@ -308,7 +308,7 @@ export class IntentRecognizer extends Recognizer {
     }
 
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
-        return new RecognizerConfig(speechConfig, this.properties);
+        return new RecognizerConfig(speechConfig, this.privProperties);
     }
 
     protected createServiceRecognizer(authentication: IAuthentication, connectionFactory: IConnectionFactory, audioConfig: AudioConfig, recognizerConfig: RecognizerConfig): ServiceRecognizerBase {

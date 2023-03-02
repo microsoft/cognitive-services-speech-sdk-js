@@ -276,6 +276,13 @@ export enum PropertyId {
     SpeechServiceConnection_RecognitionEndpointVersion,
 
     /**
+    /**
+     * A string value the current speaker recognition scenario/mode (TextIndependentIdentification, etc.).
+     * Added in version 1.23.0
+     */
+    SpeechServiceConnection_SpeakerIdMode,
+
+    /**
      * The requested Cognitive Services Speech Service response output profanity setting.
      * Allowed values are "masked", "removed", and "raw".
      * Added in version 1.7.0.

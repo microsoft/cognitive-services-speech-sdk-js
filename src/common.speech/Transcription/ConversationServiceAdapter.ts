@@ -159,11 +159,6 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
         }
     }
 
-    protected noOp(): Promise<void> {
-        // operation not supported
-        return;
-    }
-
     /**
      * Establishes a websocket connection to the end point.
      */
