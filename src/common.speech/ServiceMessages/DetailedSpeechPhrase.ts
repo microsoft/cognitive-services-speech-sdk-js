@@ -22,6 +22,7 @@ export interface IPhrase {
     Display?: string;
     DisplayText?: string;
     Words?: IWord[];
+    DisplayWords?: IWord[];
 }
 
 export interface IWord {
@@ -56,6 +57,11 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
                 for (const details of this.privDetailedSpeechPhrase.NBest) {
                     if (!!details.Words) {
                         for (const word of details.Words) {
+                            word.Offset += offset;
+                        }
+                    }
+                    if (!!details.DisplayWords) {
+                        for (const word of details.DisplayWords) {
                             word.Offset += offset;
                         }
                     }
