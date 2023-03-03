@@ -57,7 +57,7 @@
     "@types/prettier": "<2.6.0",
     "@types/request": "^2.48.3",
     "@types/rimraf": "^3.0.0",
-    "@types/uuid": "^3.3.3",
+    "@types/uuid": "^9.0.0",
     "@types/ws": "^6.0.4",
     "@typescript-eslint/eslint-plugin": "^5.26.0",
     "@typescript-eslint/eslint-plugin-tslint": "^5.27.0",
@@ -112,7 +112,7 @@
     "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",
     "simple-lru-cache": "0.0.2",
-    "uuid": "^8.3.0",
+    "uuid": "^9.0.0",
     "ws": "^7.5.6"
   },
   "overrides": {
