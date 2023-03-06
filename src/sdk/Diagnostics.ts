@@ -15,8 +15,20 @@ export class Diagnostics {
     private static privListener: ConsoleLoggingListener = undefined;
 
     public static SetLoggingLevel(logLevel: LogLevel): void {
-        this.privListener =  new ConsoleLoggingListener(logLevel);
+        this.privListener = new ConsoleLoggingListener(logLevel);
         Events.instance.attachConsoleListener(this.privListener);
+    }
+
+    public static StartConsoleOutput(): void {
+        if (!!this.privListener) {
+            this.privListener.enableConsoleOutput = true;
+        }
+    }
+
+    public static StopConsoleOutput(): void {
+        if (!!this.privListener) {
+            this.privListener.enableConsoleOutput = false;
+        }
     }
 
     public static SetLogOutputPath(path: string): void {
