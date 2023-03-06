@@ -19,13 +19,13 @@ export class Diagnostics {
         Events.instance.attachConsoleListener(this.privListener);
     }
 
-    public static EnableConsoleOutput(): void {
+    public static StartConsoleOutput(): void {
         if (!!this.privListener) {
             this.privListener.enableConsoleOutput = true;
         }
     }
 
-    public static DisableConsoleOutput(): void {
+    public static StopConsoleOutput(): void {
         if (!!this.privListener) {
             this.privListener.enableConsoleOutput = false;
         }
