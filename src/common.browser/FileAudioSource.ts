@@ -63,10 +63,6 @@ export class FileAudioSource implements IAudioSource {
         return this.privAudioFormatPromise;
     }
 
-    public get blob(): Promise<Blob | Buffer> {
-        return Promise.resolve(this.privSource);
-    }
-
     public turnOn(): Promise<void> {
         if (this.privFilename.lastIndexOf(".wav") !== this.privFilename.length - 4) {
             const errorMsg = this.privFilename + " is not supported. Only WAVE files are allowed at the moment.";

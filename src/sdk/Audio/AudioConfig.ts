@@ -259,15 +259,6 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
     }
 
     /**
-     * @member AudioConfigImpl.prototype.blob
-     * @function
-     * @public
-     */
-    public get blob(): Promise<Blob | Buffer> {
-        return this.privSource.blob;
-    }
-
-    /**
      * @member AudioConfigImpl.prototype.turnOn
      * @function
      * @public

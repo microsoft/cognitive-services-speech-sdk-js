@@ -51,7 +51,6 @@ export * from "./SynthesisRestAdapter";
 export * from "./SynthesizerConfig";
 export * from "./SynthesisContext";
 export * from "./SpeakerRecognitionConfig";
-export * from "./SpeakerIdMessageAdapter";
 export * from "./SpeakerServiceRecognizer";
 export * from "./VoiceServiceRecognizer";
 
