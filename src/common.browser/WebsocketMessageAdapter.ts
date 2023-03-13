@@ -27,6 +27,8 @@ import {
 } from "../common/Exports";
 import { ProxyInfo } from "./ProxyInfo";
 
+import { CertCheckAgent } from "./CertChecks";
+
 interface ISendItem {
     Message: ConnectionMessage;
     RawWebsocketMessage: RawWebsocketMessage;
@@ -113,7 +115,9 @@ export class WebsocketMessageAdapter {
                 const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression };
                 // The ocsp library will handle validation for us and fail the connection if needed.
                 this.privCertificateValidatedDeferral.resolve();
+                const checkAgent: CertCheckAgent = new CertCheckAgent(this.proxyInfo);
 
+                options.agent = checkAgent.GetAgent();
                 // Workaround for https://github.com/microsoft/cognitive-services-speech-sdk-js/issues/465
                 // Which is root caused by https://github.com/TooTallNate/node-agent-base/issues/61
                 const uri = new URL(this.privUri);
