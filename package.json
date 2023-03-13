@@ -34,8 +34,6 @@
     "ws": false,
     "fs": false,
     "async-disk-cache": false,
-    "distrib/es2015/external/ocsp/ocsp": false,
-    "distrib/lib/external/ocsp/ocsp": false,
     "agent-base": false,
     "tls": false,
     "net": false
