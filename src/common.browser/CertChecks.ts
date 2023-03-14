@@ -10,7 +10,6 @@ import Agent from "agent-base";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import Cache from "async-disk-cache";
 import HttpsProxyAgent from "https-proxy-agent";
 import * as net from "net";
 
@@ -22,20 +21,11 @@ export class CertCheckAgent {
     // Test hook to disable stapling for cache testing.
     public static forceDisableOCSPStapling: boolean = false;
 
-    // The on disk cache.
-    private static privDiskCache: Cache;
-
     private privProxyInfo: ProxyInfo;
 
     public constructor(proxyInfo?: ProxyInfo) {
         if (!!proxyInfo) {
             this.privProxyInfo = proxyInfo;
-        }
-
-        // Initialize this here to allow tests to set the env variable before the cache is constructed.
-        if (!CertCheckAgent.privDiskCache) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-            CertCheckAgent.privDiskCache = new Cache("microsoft-cognitiveservices-speech-sdk-cache", { supportBuffer: true, location: (typeof process !== "undefined" && !!process.env.SPEECH_OCSP_CACHE_ROOT) ? process.env.SPEECH_OCSP_CACHE_ROOT : undefined });
         }
     }
 
