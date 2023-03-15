@@ -280,109 +280,112 @@ export abstract class SpeechConfig {
     public abstract get region(): string;
 
     /**
+     * Sets a property value that will be passed to service using the specified channel.
+     * Added in version 1.7.0.
      * @member SpeechConfig.prototype.setServiceProperty
      * @function
      * @public
      * @param {name} The name of the property.
      * @param {value} Value to set.
      * @param {channel} The channel used to pass the specified property to service.
-     * @summary Sets a property value that will be passed to service using the specified channel.
-     * Added in version 1.7.0.
      */
     public abstract setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void;
 
     /**
+     * Sets profanity option.
+     * Added in version 1.7.0.
      * @member SpeechConfig.prototype.setProfanity
      * @function
      * @public
      * @param {profanity} Profanity option to set.
-     * @summary Sets profanity option.
-     * Added in version 1.7.0.
      */
     public abstract setProfanity(profanity: ProfanityOption): void;
 
     /**
+     * Enable audio logging in service.
+     * Audio and content logs are stored either in Microsoft-owned storage, or in your own storage account linked
+     * to your Cognitive Services subscription (Bring Your Own Storage (BYOS) enabled Speech resource).
+     * The logs will be removed after 30 days.
+     * Added in version 1.7.0.
      * @member SpeechConfig.prototype.enableAudioLogging
      * @function
      * @public
-     * @summary Enable audio logging in service.
-     * Added in version 1.7.0.
      */
     public abstract enableAudioLogging(): void;
 
     /**
+     * Includes word-level timestamps.
+     * Added in version 1.7.0.
      * @member SpeechConfig.prototype.requestWordLevelTimestamps
      * @function
      * @public
-     * @summary Includes word-level timestamps.
-     * Added in version 1.7.0.
      */
     public abstract requestWordLevelTimestamps(): void;
 
     /**
+     * Enable dictation. Only supported in speech continuous recognition.
+     * Added in version 1.7.0.
      * @member SpeechConfig.prototype.enableDictation
      * @function
      * @public
-     * @summary Enable dictation. Only supported in speech continuous recognition.
-     * Added in version 1.7.0.
      */
     public abstract enableDictation(): void;
 
     /**
      * Gets the language of the speech synthesizer.
+     * Added in version 1.11.0.
      * @member SpeechConfig.prototype.speechSynthesisLanguage
      * @function
      * @public
      * @returns {string} Returns the speech synthesis language.
-     * Added in version 1.11.0.
      */
     public abstract get speechSynthesisLanguage(): string;
 
     /**
      * Sets the language of the speech synthesizer.
+     * Added in version 1.11.0.
      * @member SpeechConfig.prototype.speechSynthesisLanguage
      * @function
      * @public
-     * Added in version 1.11.0.
      */
     public abstract set speechSynthesisLanguage(language: string);
 
     /**
      * Gets the voice of the speech synthesizer.
+     * Added in version 1.11.0.
      * @member SpeechConfig.prototype.speechSynthesisVoiceName
      * @function
      * @public
      * @returns {string} Returns the speech synthesis voice.
-     * Added in version 1.11.0.
      */
     public abstract get speechSynthesisVoiceName(): string;
 
     /**
      * Sets the voice of the speech synthesizer. (see <a href="https://aka.ms/speech/tts-languages">available voices</a>).
+     * Added in version 1.11.0.
      * @member SpeechConfig.prototype.speechSynthesisVoiceName
      * @function
      * @public
-     * Added in version 1.11.0.
      */
     public abstract set speechSynthesisVoiceName(voice: string);
 
     /**
      * Gets the speech synthesis output format.
+    * Added in version 1.11.0.
      * @member SpeechConfig.prototype.speechSynthesisOutputFormat
      * @function
      * @public
      * @returns {SpeechSynthesisOutputFormat} Returns the speech synthesis output format
-     * Added in version 1.11.0.
      */
     public abstract get speechSynthesisOutputFormat(): SpeechSynthesisOutputFormat;
 
     /**
      * Sets the speech synthesis output format (e.g. Riff16Khz16BitMonoPcm).
+     * The default format is Audio16Khz64KBitRateMonoMp3 for browser and Riff16Khz16BitMonoPcm for Node.JS.
+     * Added in version 1.11.0.
      * @member SpeechConfig.prototype.speechSynthesisOutputFormat
      * @function
      * @public
-     * The default format is Audio16Khz64KBitRateMonoMp3 for browser and Riff16Khz16BitMonoPcm for Node.JS
-     * Added in version 1.11.0.
      */
     public abstract set speechSynthesisOutputFormat(format: SpeechSynthesisOutputFormat);
 }
