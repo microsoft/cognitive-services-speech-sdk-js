@@ -256,6 +256,9 @@ export enum PropertyId {
 
     /**
      * A boolean value specifying whether audio logging is enabled in the service or not.
+     * Audio and content logs are stored either in Microsoft-owned storage, or in your own storage account linked
+     * to your Cognitive Services subscription (Bring Your Own Storage (BYOS) enabled Speech resource).
+     * The logs will be removed after 30 days.
      * Added in version 1.7.0
      */
     SpeechServiceConnection_EnableAudioLogging,
