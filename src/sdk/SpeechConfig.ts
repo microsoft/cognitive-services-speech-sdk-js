@@ -371,7 +371,7 @@ export abstract class SpeechConfig {
 
     /**
      * Gets the speech synthesis output format.
-    * Added in version 1.11.0.
+     * Added in version 1.11.0.
      * @member SpeechConfig.prototype.speechSynthesisOutputFormat
      * @function
      * @public
