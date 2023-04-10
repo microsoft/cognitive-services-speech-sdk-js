@@ -50,7 +50,6 @@ import { closeAsyncObjects, RepeatingPullStream, WaitForCondition } from "./Util
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 import { Console } from "console";
-import { utils } from "../external/ocsp/ocsp";
 import { PullAudioInputStream } from "../microsoft.cognitiveservices.speech.sdk";
 
 const FIRST_EVENT_ID: number = 1;

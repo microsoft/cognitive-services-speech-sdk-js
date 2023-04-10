@@ -33,9 +33,6 @@
     "simple-lru-cache": false,
     "ws": false,
     "fs": false,
-    "async-disk-cache": false,
-    "distrib/es2015/external/ocsp/ocsp": false,
-    "distrib/lib/external/ocsp/ocsp": false,
     "agent-base": false,
     "tls": false,
     "net": false
@@ -106,12 +103,8 @@
   },
   "dependencies": {
     "agent-base": "^6.0.1",
-    "asn1.js-rfc2560": "^5.0.1",
-    "asn1.js-rfc5280": "^3.0.0",
-    "async-disk-cache": "^2.1.0",
     "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",
-    "simple-lru-cache": "0.0.2",
     "uuid": "^9.0.0",
     "ws": "^7.5.6"
   },

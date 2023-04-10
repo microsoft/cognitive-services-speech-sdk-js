@@ -30,9 +30,6 @@
       .pipe(tsProject())
       .pipe(sourcemaps.write('.'))
       .pipe(gulp.dest('distrib/lib'));
-  }, function () {
-    return gulp.src('./external/**/*')
-      .pipe(gulp.dest('./distrib/lib/external/'));
   }));
 
   gulp.task('build2015', gulp.series(function build() {
@@ -50,9 +47,6 @@
       .pipe(tsProject2015())
       .pipe(sourcemaps.write('.'))
       .pipe(gulp.dest('distrib/es2015'));
-  }, function () {
-    return gulp.src('./external/**/*')
-      .pipe(gulp.dest('./distrib/es2015/external/'));
   }));
 
   gulp.task('bundle', gulp.series('build', function bundle() {
