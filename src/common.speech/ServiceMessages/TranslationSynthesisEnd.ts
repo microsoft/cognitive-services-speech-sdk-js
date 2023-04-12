@@ -15,10 +15,10 @@ export class TranslationSynthesisEnd implements ITranslationSynthesisEnd {
 
     private constructor(json: string) {
         this.privSynthesisEnd = JSON.parse(json) as ITranslationSynthesisEnd;
-        if(!!this.privSynthesisEnd.SynthesisStatus) {
+        if (!!this.privSynthesisEnd.SynthesisStatus) {
             this.privSynthesisEnd.SynthesisStatus = SynthesisStatus[this.privSynthesisEnd.SynthesisStatus as unknown as keyof typeof SynthesisStatus];
         }
-        if(!!this.privSynthesisEnd.Status) {
+        if (!!this.privSynthesisEnd.Status) {
             this.privSynthesisEnd.SynthesisStatus = SynthesisStatus[this.privSynthesisEnd.Status as unknown as keyof typeof SynthesisStatus];
         }
     }
