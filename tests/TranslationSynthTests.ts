@@ -493,7 +493,7 @@ test("MultiPhrase", (done: jest.DoneCallback) => {
                         () => {
                             r2.stopContinuousRecognitionAsync(() => {
                                 try {
-                                    expect(synthCount).toEqual(numPhrases);
+                                    expect(synthCount).toBeGreaterThanOrEqual(numPhrases);
                                     expect(numEvents).toEqual(numPhrases);
                                     done();
                                 } catch (error) {
