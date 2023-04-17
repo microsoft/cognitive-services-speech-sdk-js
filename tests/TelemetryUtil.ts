@@ -24,9 +24,6 @@ export const validateTelemetry: (json: string, numPhrases: number, numHypothesis
         expect(hypothesis.length).toEqual(numHypothesis);
     }
 
-    // For review: V2 service does not appear to be sending a PhraseLatencyMs metric, despite sending a 
-    // translation.phrase message
-    /*
     let foundPhrases: number = 0;
     for (const metric of telemetryMessage.Metrics) {
         if (metric.PhraseLatencyMs !== undefined) {
@@ -38,7 +35,6 @@ export const validateTelemetry: (json: string, numPhrases: number, numHypothesis
     }
 
     expect(foundPhrases).toEqual(numPhrases === 0 ? 0 : 1);
-    */
 
     let foundHypothesis: number = 0;
     for (const metric of telemetryMessage.Metrics) {
