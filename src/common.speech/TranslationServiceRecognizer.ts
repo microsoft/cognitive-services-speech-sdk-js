@@ -197,6 +197,7 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                 processed = true;
                 break;
 
+            case "audio.end":
             case "translation.synthesis.end":
                 const synthEnd: TranslationSynthesisEnd = TranslationSynthesisEnd.fromJSON(connectionMessage.textBody);
 

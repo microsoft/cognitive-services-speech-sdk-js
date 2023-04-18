@@ -223,7 +223,7 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
         try {
             stopReco = true;
             if (!pass) {
-                expect(e.errorDetails).toEqual("Synthesis service failed with code:  - Could not identify the voice 'Microsoft Server Speech Text to Speech Voice (BadVoice)' for the text to speech service ");
+                expect(e.errorDetails).toEqual("Translation request failed with status code: BadRequest Reason: Unsupported voice Microsoft Server Speech Text to Speech Voice (BadVoice).");
             } else {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
             }
@@ -493,7 +493,7 @@ test("MultiPhrase", (done: jest.DoneCallback) => {
                         () => {
                             r2.stopContinuousRecognitionAsync(() => {
                                 try {
-                                    expect(synthCount).toEqual(numPhrases);
+                                    expect(synthCount).toBeGreaterThanOrEqual(numPhrases);
                                     expect(numEvents).toEqual(numPhrases);
                                     done();
                                 } catch (error) {
