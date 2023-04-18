@@ -330,12 +330,12 @@ export class WebsocketMessageAdapter {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private getAgent(): http.Agent {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        const agent: { privProxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { privProxyInfo: ProxyInfo } ;
+        const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo } ;
 
         if (this.proxyInfo !== undefined &&
             this.proxyInfo.HostName !== undefined &&
             this.proxyInfo.Port > 0) {
-            agent.privProxyInfo = this.proxyInfo;
+            agent.proxyInfo = this.proxyInfo;
         }
 
         return agent as unknown as http.Agent;
