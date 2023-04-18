@@ -457,11 +457,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             json = "{ Offset: 0 }";
                         }
                         const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
-                        // Only shrink the buffers for continuous recognition.
-                        // For single shot, the speech.phrase message will come after the speech.end and it should own buffer shrink.
-                        if (this.privRecognizerConfig.isContinuousRecognition) {
-                            this.privRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset);
-                        }
                         const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
                         if (!!this.privRecognizer.speechEndDetected) {
                             this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
