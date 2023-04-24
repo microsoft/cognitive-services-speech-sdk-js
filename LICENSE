@@ -4,11 +4,6 @@ Copyright (c) Microsoft Corporation
 All rights reserved.
 
 Component.
-ocsp (https://github.com/indutny/ocsp)
-Open Source License/Copyright Notice.
-Copyright Fedor Indutny, 2015.
-
-Component.
 uuid (https://github.com/uuidjs/uuid)
 Open Source License/Copyright Notice.
 Copyright (c) 2010-2020 Robert Kieffer and other contributors
