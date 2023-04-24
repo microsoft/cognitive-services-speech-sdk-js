@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as http from "http";
 import {
     ServicePropertiesPropertyName,
 } from "../common.speech/Exports";
@@ -10,6 +11,12 @@ import { AuthInfo, IConnectionFactory, RecognizerConfig } from "./Exports";
 import { QueryParameterNames } from "./QueryParameterNames";
 
 export abstract class ConnectionFactoryBase implements IConnectionFactory {
+
+    protected privAgent: http.Agent;
+
+    public constructor(agent: http.Agent) {
+        this.privAgent = agent;
+    }
 
     public static getHostSuffix(region: string): string {
         if (!!region) {

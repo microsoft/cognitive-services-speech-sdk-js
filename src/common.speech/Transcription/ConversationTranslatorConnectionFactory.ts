@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as http from "http";
 import {
     ProxyInfo,
     RestConfigBase,
@@ -41,8 +42,8 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
 
     private privConvGetter: () => ConversationImpl;
 
-    public constructor(convGetter: () => ConversationImpl) {
-        super();
+    public constructor(convGetter: () => ConversationImpl, agent: http.Agent) {
+        super(agent);
 
         Contracts.throwIfNullOrUndefined(convGetter, "convGetter");
         this.privConvGetter = convGetter;
@@ -88,7 +89,7 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
                 queryParams[key] = val;
             });
 
-            const connFactory = new TranscriberConnectionFactory();
+            const connFactory = new TranscriberConnectionFactory(this.privAgent);
             connFactory.setQueryParams(queryParams, config, endpointUrl);
 
             // Some query parameters are required for the CTS endpoint, let's explicity set them here
@@ -111,7 +112,7 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
 
         } else {
             // connecting to regular translation endpoint
-            const connFactory = new TranslationConnectionFactory();
+            const connFactory = new TranslationConnectionFactory(this.privAgent);
 
             endpointUrl = connFactory.getEndpointUrl(config, true);
             endpointUrl = StringUtils.formatString(endpointUrl, replacementValues);
@@ -126,6 +127,6 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
         }
 
         const enableCompression = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "").toUpperCase() === "TRUE";
-        return new WebsocketConnection(endpointUrl, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+        return new WebsocketConnection(endpointUrl, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, this.privAgent, connectionId);
     }
 }

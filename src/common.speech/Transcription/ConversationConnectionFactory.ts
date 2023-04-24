@@ -30,7 +30,7 @@ export class ConversationConnectionFactory extends ConnectionFactoryBase  {
         queryParams[ConversationConnectionConfig.configParams.token] = token;
         queryParams[ConversationConnectionConfig.configParams.correlationId] = correlationId;
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, {}, new ConversationWebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+        return new WebsocketConnection(endpoint, queryParams, {}, new ConversationWebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, this.privAgent, connectionId);
     }
 
 }

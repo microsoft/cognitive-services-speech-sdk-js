@@ -73,6 +73,6 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         this.setCommonUrlParams(config, queryParams, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, this.privAgent, connectionId);
     }
 }

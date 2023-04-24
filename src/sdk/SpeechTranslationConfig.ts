@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
+import * as http from "http";
 import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
@@ -214,6 +215,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
 export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
 
     private privSpeechProperties: PropertyCollection;
+    private privAgent: http.Agent;
 
     public constructor() {
         super();
@@ -474,5 +476,13 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
 
     public set speechSynthesisOutputFormat(format: SpeechSynthesisOutputFormat) {
         this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, SpeechSynthesisOutputFormat[format]);
+    }
+
+    public set agent(agent: http.Agent) {
+        this.privAgent = agent;
+    }
+
+    public get agent(): http.Agent {
+        return this.privAgent;
     }
 }

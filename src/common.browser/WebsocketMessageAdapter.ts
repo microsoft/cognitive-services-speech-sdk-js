@@ -45,6 +45,7 @@ export class WebsocketMessageAdapter {
     private privConnectionState: ConnectionState;
     private privMessageFormatter: IWebsocketMessageFormatter;
     private privWebsocketClient: WebSocket | ws;
+    private privAgent: http.Agent;
 
     private privSendMessageQueue: Queue<ISendItem>;
     private privReceivingMessageQueue: Queue<ConnectionMessage>;
@@ -67,6 +68,7 @@ export class WebsocketMessageAdapter {
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
         headers: { [key: string]: string },
+        agent: http.Agent,
         enableCompression: boolean) {
 
         if (!uri) {
@@ -85,6 +87,7 @@ export class WebsocketMessageAdapter {
         this.privUri = uri;
         this.privHeaders = headers;
         this.privEnableCompression = enableCompression;
+        this.privAgent = agent;
 
         // Add the connection ID to the headers
         this.privHeaders[HeaderNames.ConnectionId] = this.privConnectionId;
@@ -329,6 +332,9 @@ export class WebsocketMessageAdapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private getAgent(): http.Agent {
+        if (!!this.privAgent) {
+            return this.privAgent;
+        }
         // eslint-disable-next-line @typescript-eslint/unbound-method
         const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo } ;
 

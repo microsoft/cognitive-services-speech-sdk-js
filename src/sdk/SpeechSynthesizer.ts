@@ -194,7 +194,7 @@ export class SpeechSynthesizer {
         this.privProperties = speechConfigImpl.properties.clone();
         this.privDisposed = false;
         this.privSynthesizing = false;
-        this.privConnectionFactory = new SpeechSynthesisConnectionFactory();
+        this.privConnectionFactory = new SpeechSynthesisConnectionFactory(speechConfig.agent);
         this.synthesisRequestQueue = new Queue<SynthesisRequest>();
         this.implCommonSynthesizeSetup();
     }

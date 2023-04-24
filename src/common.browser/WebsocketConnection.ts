@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as http from "http";
 import {
     ArgumentNullError,
     ConnectionEvent,
@@ -31,6 +32,7 @@ export class WebsocketConnection implements IConnection {
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
         enableCompression: boolean = false,
+        agent: http.Agent,
         connectionId?: string) {
 
         if (!uri) {
@@ -85,6 +87,7 @@ export class WebsocketConnection implements IConnection {
             this.privMessageFormatter,
             proxyInfo,
             headers,
+            agent,
             enableCompression);
     }
 

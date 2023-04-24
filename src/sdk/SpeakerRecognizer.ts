@@ -43,7 +43,7 @@ export class SpeakerRecognizer extends Recognizer {
         const configImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "speechConfig");
 
-        super(audioConfig, configImpl.properties, new SpeakerRecognitionConnectionFactory());
+        super(audioConfig, configImpl.properties, new SpeakerRecognitionConnectionFactory(configImpl.agent));
         this.privAudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNull(this.privAudioConfigImpl, "audioConfig");
 

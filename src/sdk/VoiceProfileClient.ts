@@ -49,7 +49,7 @@ export class VoiceProfileClient extends Recognizer {
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         Contracts.throwIfNull(speechConfigImpl, "speechConfig");
 
-        super(AudioConfig.fromStreamInput(AudioInputStream.createPushStream()), speechConfigImpl.properties, new VoiceProfileConnectionFactory());
+        super(AudioConfig.fromStreamInput(AudioInputStream.createPushStream()), speechConfigImpl.properties, new VoiceProfileConnectionFactory(speechConfigImpl.agent));
 
         this.privProperties = speechConfigImpl.properties.clone();
         this.privVoiceAdapter = this.privReco as VoiceServiceRecognizer;
