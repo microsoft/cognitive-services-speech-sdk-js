@@ -65,6 +65,7 @@ export class SpeechSynthesizer {
     protected privRestAdapter: SynthesisRestAdapter;
     protected privProperties: PropertyCollection;
     protected synthesisRequestQueue: Queue<SynthesisRequest>;
+    protected privAgent: object;
 
     /**
      * Defines event handler for synthesis start events.
@@ -194,8 +195,9 @@ export class SpeechSynthesizer {
         this.privProperties = speechConfigImpl.properties.clone();
         this.privDisposed = false;
         this.privSynthesizing = false;
-        this.privConnectionFactory = new SpeechSynthesisConnectionFactory(speechConfig.agent);
+        this.privConnectionFactory = new SpeechSynthesisConnectionFactory();
         this.synthesisRequestQueue = new Queue<SynthesisRequest>();
+        this.privAgent = speechConfigImpl.agent;
         this.implCommonSynthesizeSetup();
     }
 
@@ -416,6 +418,17 @@ export class SpeechSynthesizer {
         marshalPromiseToCallbacks(this.dispose(true), cb, err);
     }
 
+    /**
+     * @Internal
+     * Do not use externally, object returned will change without warning or notice.
+     */
+    public get internalAgent(): object {
+        return this.privAgent;
+    }
+
+    /**
+     * This method performs cleanup of resources.
+     * The Boolean parameter disposing indicates whether the method is called
     /**
      * @Internal
      * Do not use externally, object returned will change without warning or notice.

@@ -68,7 +68,7 @@ export class WebsocketMessageAdapter {
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
         headers: { [key: string]: string },
-        agent: http.Agent,
+        agent: object,
         enableCompression: boolean) {
 
         if (!uri) {
@@ -87,7 +87,7 @@ export class WebsocketMessageAdapter {
         this.privUri = uri;
         this.privHeaders = headers;
         this.privEnableCompression = enableCompression;
-        this.privAgent = agent;
+        this.privAgent = agent as http.Agent;
 
         // Add the connection ID to the headers
         this.privHeaders[HeaderNames.ConnectionId] = this.privConnectionId;

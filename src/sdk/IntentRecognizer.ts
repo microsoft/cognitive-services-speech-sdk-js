@@ -51,7 +51,7 @@ export class IntentRecognizer extends Recognizer {
         const configImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "speechConfig");
 
-        super(audioConfig, configImpl.properties, new IntentConnectionFactory(configImpl.agent));
+        super(audioConfig, configImpl.properties, new IntentConnectionFactory(), configImpl.agent);
         this.privAddedIntents = [];
         this.privAddedLmIntents = {};
 

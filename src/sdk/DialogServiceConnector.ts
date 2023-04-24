@@ -49,7 +49,7 @@ export class DialogServiceConnector extends Recognizer {
         const dialogServiceConfigImpl = dialogConfig as DialogServiceConfigImpl;
         Contracts.throwIfNull(dialogConfig, "dialogConfig");
 
-        super(audioConfig, dialogServiceConfigImpl.properties, new DialogConnectionFactory(dialogServiceConfigImpl.agent));
+        super(audioConfig, dialogServiceConfigImpl.properties, new DialogConnectionFactory(), dialogServiceConfigImpl.agent);
 
         this.isTurnComplete = true;
         this.privIsDisposed = false;

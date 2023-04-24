@@ -53,7 +53,7 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
 
     public constructor(speechConfig: SpeechTranslationConfig, audioConfig: AudioConfig, translator: ConversationTranslator, convGetter: () => ConversationImpl) {
 
-        super(speechConfig, audioConfig, new ConversationTranslatorConnectionFactory(convGetter, speechConfig.agent));
+        super(speechConfig, audioConfig, new ConversationTranslatorConnectionFactory(convGetter));
 
         this.privSpeechState = SpeechState.Inactive;
         if (!!translator) {

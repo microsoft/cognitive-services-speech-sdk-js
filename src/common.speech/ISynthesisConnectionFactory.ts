@@ -9,5 +9,6 @@ export interface ISynthesisConnectionFactory {
     create(
         config: SynthesizerConfig,
         authInfo: AuthInfo,
+        agent: object,
         connectionId?: string): IConnection;
 }

@@ -22,6 +22,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
     public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
+        agent: object,
         connectionId?: string): IConnection {
 
         const applicationId: string = config.parameters.getProperty(PropertyId.Conversation_ApplicationId, "");
@@ -73,6 +74,6 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         this.setCommonUrlParams(config, queryParams, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, this.privAgent, connectionId);
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, agent, connectionId);
     }
 }

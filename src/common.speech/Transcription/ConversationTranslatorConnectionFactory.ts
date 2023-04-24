@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import * as http from "http";
 import {
     ProxyInfo,
     RestConfigBase,
@@ -42,14 +41,14 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
 
     private privConvGetter: () => ConversationImpl;
 
-    public constructor(convGetter: () => ConversationImpl, agent: http.Agent) {
-        super(agent);
+    public constructor(convGetter: () => ConversationImpl) {
+        super();
 
         Contracts.throwIfNullOrUndefined(convGetter, "convGetter");
         this.privConvGetter = convGetter;
     }
 
-    public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
+    public create(config: RecognizerConfig, authInfo: AuthInfo, agent: object, connectionId?: string): IConnection {
         const isVirtMicArrayEndpoint = config.parameters.getProperty("ConversationTranslator_MultiChannelAudio", "").toUpperCase() === "TRUE";
 
         const convInfo = this.privConvGetter().room;
@@ -89,7 +88,7 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
                 queryParams[key] = val;
             });
 
-            const connFactory = new TranscriberConnectionFactory(this.privAgent);
+            const connFactory = new TranscriberConnectionFactory();
             connFactory.setQueryParams(queryParams, config, endpointUrl);
 
             // Some query parameters are required for the CTS endpoint, let's explicity set them here
@@ -112,7 +111,7 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
 
         } else {
             // connecting to regular translation endpoint
-            const connFactory = new TranslationConnectionFactory(this.privAgent);
+            const connFactory = new TranslationConnectionFactory();
 
             endpointUrl = connFactory.getEndpointUrl(config, true);
             endpointUrl = StringUtils.formatString(endpointUrl, replacementValues);
@@ -127,6 +126,6 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
         }
 
         const enableCompression = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "").toUpperCase() === "TRUE";
-        return new WebsocketConnection(endpointUrl, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, this.privAgent, connectionId);
+        return new WebsocketConnection(endpointUrl, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, agent, connectionId);
     }
 }

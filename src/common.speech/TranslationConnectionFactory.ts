@@ -29,6 +29,7 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
     public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
+        agent: object,
         connectionId?: string): IConnection {
 
         const endpoint: string = this.getEndpointUrl(config);
@@ -45,7 +46,7 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, this.privAgent, connectionId);
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, agent, connectionId);
     }
 
     public getEndpointUrl(config: RecognizerConfig, returnRegionPlaceholder?: boolean): string {

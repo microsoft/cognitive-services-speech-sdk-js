@@ -16,7 +16,7 @@ import { ConversationWebsocketMessageFormatter } from "./ConversationWebsocketMe
  */
 export class ConversationConnectionFactory extends ConnectionFactoryBase  {
 
-    public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
+    public create(config: RecognizerConfig, authInfo: AuthInfo, agent: object, connectionId?: string): IConnection {
 
         const endpointHost: string = config.parameters.getProperty(PropertyId.ConversationTranslator_Host, ConversationConnectionConfig.host);
         const correlationId: string = config.parameters.getProperty(PropertyId.ConversationTranslator_CorrelationId, createGuid());
@@ -30,7 +30,7 @@ export class ConversationConnectionFactory extends ConnectionFactoryBase  {
         queryParams[ConversationConnectionConfig.configParams.token] = token;
         queryParams[ConversationConnectionConfig.configParams.correlationId] = correlationId;
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, {}, new ConversationWebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, this.privAgent, connectionId);
+        return new WebsocketConnection(endpoint, queryParams, {}, new ConversationWebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, agent, connectionId);
     }
 
 }

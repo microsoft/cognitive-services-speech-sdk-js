@@ -77,7 +77,7 @@ export class TranslationRecognizer extends Recognizer {
         const configImpl = speechConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(configImpl, "speechConfig");
 
-        super(audioConfig, configImpl.properties, connectionFactory || new TranslationConnectionFactory(configImpl.agent));
+        super(audioConfig, configImpl.properties, connectionFactory || new TranslationConnectionFactory(), configImpl.agent);
 
         this.privDisposedTranslationRecognizer = false;
 

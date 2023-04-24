@@ -9,5 +9,6 @@ export interface IConnectionFactory {
     create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
+        agent: object,
         connectionId?: string): IConnection;
 }

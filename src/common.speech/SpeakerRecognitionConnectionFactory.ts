@@ -29,6 +29,7 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
     public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
+        agent: object,
         endpointPath: string,
         connectionId?: string): IConnection {
 
@@ -58,7 +59,7 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, this.privAgent, connectionId);
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, agent, connectionId);
     }
 
     private scenarioToPath(mode: string): string {
@@ -76,14 +77,14 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
 }
 
 export class SpeakerRecognitionConnectionFactory extends SpeakerRecognitionConnectionFactoryBase {
-    public create( config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
-        return super.create(config, authInfo, "recognition", connectionId);
+    public create( config: RecognizerConfig, authInfo: AuthInfo, agent: object, connectionId?: string): IConnection {
+        return super.create(config, authInfo, agent, "recognition", connectionId);
     }
 }
 
 export class VoiceProfileConnectionFactory extends SpeakerRecognitionConnectionFactoryBase {
-    public create( config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
-        return super.create(config, authInfo, "profile", connectionId);
+    public create( config: RecognizerConfig, authInfo: AuthInfo, agent: object, connectionId?: string): IConnection {
+        return super.create(config, authInfo, agent, "profile", connectionId);
     }
 }
 

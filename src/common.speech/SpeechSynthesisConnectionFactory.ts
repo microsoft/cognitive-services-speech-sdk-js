@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import * as http from "http";
 import {
     ProxyInfo,
     WebsocketConnection
@@ -26,15 +25,10 @@ import {
 export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFactory {
 
     private readonly synthesisUri: string = "/cognitiveservices/websocket/v1";
-    private privAgent: http.Agent;
-
-    public constructor(agent: http.Agent) {
-        this.privAgent = agent;
-    }
-
     public create(
         config: SynthesizerConfig,
         authInfo: AuthInfo,
+        agent: object,
         connectionId?: string): IConnection {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
@@ -62,6 +56,6 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromParameters(config.parameters), enableCompression, this.privAgent, connectionId);
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromParameters(config.parameters), enableCompression, agent, connectionId);
     }
 }
