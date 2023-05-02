@@ -26,30 +26,8 @@ import {
 } from "./Exports";
 import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig";
+import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
-
-interface CustomModel {
-    language: string;
-    endpoint: string;
-}
-
-interface PhraseDetection {
-    customModels?: CustomModel[];
-    onInterim?: { action: string };
-    onSuccess?: { action: string };
-    mode?: string;
-    INTERACTIVE?: Segmentation;
-    CONVERSATION?: Segmentation;
-    DICTATION?: Segmentation;
-}
-
-interface Segmentation {
-    segmentation: {
-        mode: "Custom";
-        segmentationSilenceTimeoutMs: number;
-    };
-}
 
 // eslint-disable-next-line max-classes-per-file
 export class SpeechServiceRecognizer extends ServiceRecognizerBase {
@@ -65,68 +43,6 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         super(authentication, connectionFactory, audioSource, recognizerConfig, speechRecognizer);
         this.privSpeechRecognizer = speechRecognizer;
 
-        const phraseDetection: PhraseDetection = {};
-
-        if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
-            const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
-
-            let speechContextLidMode;
-            if (recognizerConfig.languageIdMode === "Continuous") {
-                speechContextLidMode = "DetectContinuous";
-            } else {// recognizerConfig.languageIdMode === "AtStart"
-                speechContextLidMode = "DetectAtAudioStart";
-            }
-
-            this.privSpeechContext.setSection("languageId", {
-                Priority: "PrioritizeLatency",
-                languages: sourceLanguages,
-                mode: speechContextLidMode,
-                onSuccess: { action: "Recognize" },
-                onUnknown: { action: "None" }
-            });
-            this.privSpeechContext.setSection("phraseOutput", {
-                interimResults: {
-                    resultType: "Auto"
-                },
-                phraseResults: {
-                    resultType: "Always"
-                }
-            });
-            const customModels: CustomModel[] = recognizerConfig.sourceLanguageModels;
-            if (customModels !== undefined) {
-                phraseDetection.customModels = customModels;
-                phraseDetection.onInterim = { action: "None" };
-                phraseDetection.onSuccess = { action: "None" };
-            }
-        }
-
-        const isEmpty = (obj: object): boolean => {
-            // eslint-disable-next-line guard-for-in, brace-style
-            for (const x in obj) { return false; }
-            return true;
-        };
-
-        if (!isEmpty(phraseDetection)) {
-            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
-        }
-    }
-
-    protected setSpeechSegmentationTimeout(): void{
-        const speechSegmentationTimeout: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
-        if (speechSegmentationTimeout !== undefined) {
-            const mode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
-                this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
-            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
-            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
-            phraseDetection.mode = mode;
-            phraseDetection[mode] = {
-                segmentation: {
-                    mode: "Custom",
-                    segmentationSilenceTimeoutMs
-                }
-            };
-            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
-        }
     }
 
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {

@@ -50,6 +50,28 @@ import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
+interface CustomModel {
+    language: string;
+    endpoint: string;
+}
+
+interface PhraseDetection {
+    customModels?: CustomModel[];
+    onInterim?: { action: string };
+    onSuccess?: { action: string };
+    mode?: string;
+    INTERACTIVE?: Segmentation;
+    CONVERSATION?: Segmentation;
+    DICTATION?: Segmentation;
+}
+
+interface Segmentation {
+    segmentation: {
+        mode: "Custom";
+        segmentationSilenceTimeoutMs: number;
+    };
+}
+
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
     private privConnectionFactory: IConnectionFactory;
@@ -136,6 +158,69 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 }
             }
         });
+
+        const phraseDetection: PhraseDetection = {};
+
+        if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
+            const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
+
+            let speechContextLidMode;
+            if (recognizerConfig.languageIdMode === "Continuous") {
+                speechContextLidMode = "DetectContinuous";
+            } else {// recognizerConfig.languageIdMode === "AtStart"
+                speechContextLidMode = "DetectAtAudioStart";
+            }
+
+            this.privSpeechContext.setSection("languageId", {
+                Priority: "PrioritizeLatency",
+                languages: sourceLanguages,
+                mode: speechContextLidMode,
+                onSuccess: { action: "Recognize" },
+                onUnknown: { action: "None" }
+            });
+            this.privSpeechContext.setSection("phraseOutput", {
+                interimResults: {
+                    resultType: "Auto"
+                },
+                phraseResults: {
+                    resultType: "Always"
+                }
+            });
+            const customModels: CustomModel[] = recognizerConfig.sourceLanguageModels;
+            if (customModels !== undefined) {
+                phraseDetection.customModels = customModels;
+                phraseDetection.onInterim = { action: "None" };
+                phraseDetection.onSuccess = { action: "None" };
+            }
+        }
+
+        const isEmpty = (obj: object): boolean => {
+            // eslint-disable-next-line guard-for-in, brace-style
+            for (const x in obj) { return false; }
+            return true;
+        };
+
+        if (!isEmpty(phraseDetection)) {
+            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+        }
+    }
+
+    protected setSpeechSegmentationTimeout(): void{
+        const speechSegmentationTimeout: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
+        if (speechSegmentationTimeout !== undefined) {
+            const mode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
+                this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
+            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
+            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
+            phraseDetection.mode = mode;
+            phraseDetection[mode] = {
+                segmentation: {
+                    mode: "Custom",
+                    segmentationSilenceTimeoutMs
+                }
+            };
+            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+        }
     }
 
     public get audioSource(): IAudioSource {
@@ -500,10 +585,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         } catch (error) {
             return null;
         }
-    }
-
-    protected setSpeechSegmentationTimeout(): void {
-        return;
     }
 
     protected sendSpeechContext(connection: IConnection, generateNewRequestId: boolean): Promise<void> {
