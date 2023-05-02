@@ -16,14 +16,6 @@ Notwithstanding any other terms, you may reverse engineer this software to the
 extent required to debug changes to any libraries licensed under the GNU Lesser
 General Public License.
 
-Component. 
-ocsp (https://github.com/indutny/ocsp)
-
-Open Source License/Copyright Notice. 
-This software is licensed under the MIT License.
-
-Copyright Fedor Indutny, 2015.
-
 Component.
 uuid (https://github.com/uuidjs/uuid)
 

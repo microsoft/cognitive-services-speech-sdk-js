@@ -208,7 +208,6 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(res.translations).toBeUndefined();
                 expect(res.text).toEqual("What's the weather like?");
                 done();
             },
@@ -232,8 +231,8 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
-                expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
-                expect(e.errorDetails).toContain("1006");
+                expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.BadRequestParameters]);
+                expect(e.errorDetails).toContain("1007");
                 doneCount++;
             } catch (error) {
                 done(error);
@@ -244,8 +243,8 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             try {
                 const e: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
-                expect(sdk.CancellationErrorCode[e.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
-                expect(e.errorDetails).toContain("1006");
+                expect(sdk.CancellationErrorCode[e.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.BadRequestParameters]);
+                expect(e.errorDetails).toContain("1007");
                 doneCount++;
             } catch (error) {
                 done(error);

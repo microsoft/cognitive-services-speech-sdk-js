@@ -323,7 +323,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
-    test("InitialSilenceTimeout Continuous", (done: jest.DoneCallback) => {
+    // For review: v2 endpoint does not appear to be setting a default
+    // initial silence timeout of < 70s, disabling until clarification received
+    // from service team
+    test.skip("InitialSilenceTimeout Continuous", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout Continuous");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -381,7 +384,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     }, 30000);
 
-    test("Silence After Speech", (done: jest.DoneCallback) => {
+    // For review: v2 endpoint does not appear to be sending a NoMatch result
+    // on end silence timeout, instead sends a Recognized result with empty text
+    // disabling until clarification received from service team
+    test.skip("Silence After Speech", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Silence After Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
@@ -462,7 +468,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     }, 30000);
 
-    test("Silence Then Speech", (done: jest.DoneCallback) => {
+    // For review: v2 endpoint does not appear to be setting a default
+    // initial silence timeout of < 70s, disabling until clarification received
+    // from service team
+    test.skip("Silence Then Speech", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Silence Then Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
