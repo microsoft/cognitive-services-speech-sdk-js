@@ -19,20 +19,23 @@ export class TranslationRecognitionResult extends SpeechRecognitionResult {
      * @param {string} text - The recognized text.
      * @param {number} duration - The duration.
      * @param {number} offset - The offset into the stream.
+     * @param {string} language - Primary Language detected, if provided.
+     * @param {string} languageDetectionConfidence - Primary Language confidence ("Unknown," "Low," "Medium," "High"...), if provided.
      * @param {string} errorDetails - Error details, if provided.
      * @param {string} json - Additional Json, if provided.
      * @param {PropertyCollection} properties - Additional properties, if provided.
      */
     public constructor(translations: Translations, resultId?: string, reason?: ResultReason,
-                       text?: string, duration?: number, offset?: number, errorDetails?: string,
+                       text?: string, duration?: number, offset?: number, language?: string,
+                       languageDetectionConfidence?: string, errorDetails?: string,
                        json?: string, properties?: PropertyCollection) {
-        super(resultId, reason, text, duration, offset, undefined, undefined, undefined, errorDetails, json, properties);
+        super(resultId, reason, text, duration, offset, language, languageDetectionConfidence, undefined, errorDetails, json, properties);
 
         this.privTranslations = translations;
     }
 
     public static fromSpeechRecognitionResult(result: SpeechRecognitionResult): TranslationRecognitionResult {
-        return new TranslationRecognitionResult(undefined, result.resultId, result.reason, result.text, result.duration, result.offset, result.errorDetails, result.json, result.properties);
+        return new TranslationRecognitionResult(undefined, result.resultId, result.reason, result.text, result.duration, result.offset, result.language, result.languageDetectionConfidence, result.errorDetails, result.json, result.properties);
     }
 
     /**

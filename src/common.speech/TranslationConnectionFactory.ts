@@ -34,6 +34,10 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         const endpoint: string = this.getEndpointUrl(config);
 
         const queryParams: IStringDictionary<string> = {};
+
+        if (config.autoDetectSourceLanguages !== undefined) {
+            queryParams[QueryParameterNames.EnableLanguageId] = "true";
+        }
         this.setQueryParams(queryParams, config, endpoint);
 
         const headers: IStringDictionary<string> = {};
@@ -55,8 +59,13 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
 
         let endpointUrl: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         if (!endpointUrl) {
-            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://{region}.s2s.speech" + hostSuffix);
-            endpointUrl = host + "/speech/translation/cognitiveservices/v1";
+            if (config.autoDetectSourceLanguages !== undefined) {
+                const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://{region}.stt.speech" + hostSuffix);
+                endpointUrl = host + "/speech/universal/v2";
+            } else {
+                const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://{region}.s2s.speech" + hostSuffix);
+                endpointUrl = host + "/speech/translation/cognitiveservices/v1";
+            }
         }
 
         if (returnRegionPlaceholder === true) {
