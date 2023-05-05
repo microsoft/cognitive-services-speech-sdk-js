@@ -111,6 +111,8 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                     translatedPhrase.Text,
                     translatedPhrase.Duration,
                     this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset,
+                    translatedPhrase.Language,
+                    translatedPhrase.Confidence,
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
@@ -282,6 +284,8 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                 undefined, // Text
                 undefined, // Druation
                 undefined, // Offset
+                undefined, // Language
+                undefined, // LanguageDetectionConfidence
                 error,
                 undefined, // Json
                 properties);
@@ -325,12 +329,16 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
         }
 
         let resultReason: ResultReason;
+        let language: string;
+        let confidence: string;
         if (serviceResult instanceof TranslationPhrase) {
             if (!!serviceResult.Translation && serviceResult.Translation.TranslationStatus === TranslationStatus.Success) {
                 resultReason = ResultReason.TranslatedSpeech;
             } else {
                 resultReason = ResultReason.RecognizedSpeech;
             }
+            language = serviceResult.Language;
+            confidence = serviceResult.Confidence;
         } else {
             resultReason = ResultReason.TranslatingSpeech;
         }
@@ -344,6 +352,8 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
             serviceResult.Text,
             serviceResult.Duration,
             offset,
+            language,
+            confidence,
             serviceResult.Translation.FailureReason,
             JSON.stringify(serviceResult),
             properties);

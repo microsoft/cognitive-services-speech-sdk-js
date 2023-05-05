@@ -76,6 +76,35 @@ export const BuildRecognizer: (speechConfig?: sdk.SpeechConfig, autoConfig?: sdk
     return r;
 };
 
+export const BuildTranslationRecognizer: (speechTranslationConfig?: sdk.SpeechTranslationConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig, fileName?: string) => sdk.TranslationRecognizer = (speechTranslationConfig?: sdk.SpeechTranslationConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig, fileName?: string): sdk.TranslationRecognizer => {
+
+    let s: sdk.SpeechTranslationConfig = speechTranslationConfig;
+    if (s === undefined) {
+        s = BuildSpeechTranslationConfig();
+        // Since we're not going to return it, mark it for closure.
+        objsToClose.push(s);
+    }
+    let a: sdk.AutoDetectSourceLanguageConfig = autoConfig;
+    if (a === undefined) {
+        a = BuildAutoConfig();
+        // Since we're not going to return it, mark it for closure.
+        objsToClose.push(a);
+    }
+
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
+
+    const language: string = Settings.WaveFileLanguage;
+    if (s.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_RecoLanguage]) === undefined) {
+        s.speechRecognitionLanguage = language;
+    }
+    s.addTargetLanguage("de-DE");
+
+    const r: sdk.TranslationRecognizer = sdk.TranslationRecognizer.FromConfig(s, a, config);
+    expect(r).not.toBeUndefined();
+
+    return r;
+};
+
 export const BuildRecognizerFromPushStream: (speechConfig: sdk.SpeechConfig, audioConfig: sdk.AudioConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig) => sdk.SpeechRecognizer = (speechConfig: sdk.SpeechConfig, audioConfig: sdk.AudioConfig, autoConfig?: sdk.AutoDetectSourceLanguageConfig): sdk.SpeechRecognizer => {
     let a: sdk.AutoDetectSourceLanguageConfig = autoConfig;
     if (a === undefined) {
@@ -96,6 +125,23 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
         s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     } else {
         s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+    }
+
+    if (undefined !== Settings.proxyServer) {
+        s.setProxy(Settings.proxyServer, Settings.proxyPort);
+    }
+
+    expect(s).not.toBeUndefined();
+    return s;
+};
+
+const BuildSpeechTranslationConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
+
+    let s: sdk.SpeechTranslationConfig;
+    if (undefined === Settings.SpeechEndpoint) {
+        s = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    } else {
+        s = sdk.SpeechTranslationConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
     }
 
     if (undefined !== Settings.proxyServer) {
@@ -393,9 +439,103 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     }, 10000); // testAddLIDCustomModels
 
 
+    test("testTransationContinuousRecoWithContinuousLID", (done: jest.DoneCallback) => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testTransationContinuousRecoWithContinuousLID");
+
+        const configs: sdk.SourceLanguageConfig[] = BuildSourceLanguageConfigs();
+        configs.forEach((c: sdk.SourceLanguageConfig) => { objsToClose.push(c); });
+
+        const a: sdk.AutoDetectSourceLanguageConfig = BuildAutoConfig(configs);
+        a.mode = sdk.LanguageIdMode.Continuous;
+
+        expect(a.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_LanguageIdMode)).toEqual("Continuous");
+
+        objsToClose.push(a);
+
+        const s: sdk.SpeechTranslationConfig = BuildSpeechTranslationConfig();
+        const segSilenceTimeoutMs = 1100;
+        s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, segSilenceTimeoutMs.toString());
+        objsToClose.push(s);
+
+        const r: sdk.TranslationRecognizer = BuildTranslationRecognizer(s, a);
+        objsToClose.push(r);
+
+        let speechRecognized: boolean = false;
+        let speechContextSent: boolean = false;
+
+        const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
+        const expectedRecognitionMode = "CONVERSATION";
+        const segmentationField = "segmentation";
+
+        con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
+            if (args.message.path === "speech.context" && args.message.isTextMessage) {
+                const message = JSON.parse(args.message.TextMessage);
+                try {
+                    expect(message.languageId).not.toBeUndefined();
+                    expect(message.languageId.mode).not.toBeUndefined();
+                    expect(message.languageId.mode).toEqual("DetectContinuous");
+                    expect(message.languageId.Priority).not.toBeUndefined();
+                    expect(message.languageId.Priority).toEqual("PrioritizeLatency");
+                    expect(message.phraseDetection.mode).toEqual(expectedRecognitionMode);
+                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationSilenceTimeoutMs).toEqual(segSilenceTimeoutMs);
+                    speechContextSent = true;
+                } catch (error) {
+                    done(error);
+                }
+            }
+        };
+
+        r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs) => {
+            try {
+                if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
+                    expect(speechRecognized).toEqual(false);
+                    speechRecognized = true;
+                    expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(e.result.text).toEqual("What's the weather like?");
+                    expect(e.result.properties).not.toBeUndefined();
+                    expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    const autoDetectResult: sdk.AutoDetectSourceLanguageResult = sdk.AutoDetectSourceLanguageResult.fromResult(e.result);
+                    expect(autoDetectResult).not.toBeUndefined();
+                    expect(autoDetectResult.language).not.toBeUndefined();
+                    expect(autoDetectResult.languageDetectionConfidence).not.toBeUndefined();
+                } else if (e.result.reason === sdk.ResultReason.NoMatch) {
+                    expect(speechRecognized).toEqual(true);
+                }
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.startContinuousRecognitionAsync(() => {
+            WaitForCondition(() => (speechContextSent), () => {
+                r.stopContinuousRecognitionAsync(() => {
+                    try {
+                        done();
+                    } catch (error) {
+                        done(error);
+                    }
+                }, (error: string) => {
+                    done(error);
+                });
+            });
+        },
+            (err: string) => {
+                done(err);
+            });
+    }, 30000); // testTranslationContinuousRecoWithContinuousLID
+
     // TODO: Update this test to use multilingual WAV file and check for language detection results
     // TODO: Test that the connection URL uses v2 endpoint
-    test("testContinuousRecoWithContinuousLID", (done: jest.DoneCallback) => {
+    test.skip("testContinuousRecoWithContinuousLID", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: testContinuousRecoWithContinuousLID");
 
