@@ -354,7 +354,7 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
             offset,
             language,
             confidence,
-            serviceResult.Translation.FailureReason,,
+            serviceResult.Translation.FailureReason,
             JSON.stringify(serviceResult),
             properties);
 
