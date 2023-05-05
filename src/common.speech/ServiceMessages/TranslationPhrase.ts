@@ -57,11 +57,11 @@ export class TranslationPhrase implements ITranslationPhrase {
     }
 
     public get Language(): string {
-        return this.privTranslationPhrase.PrimaryLanguage.Language;
+        return this.privTranslationPhrase.PrimaryLanguage?.Language;
     }
 
     public get Confidence(): string {
-        return this.privTranslationPhrase.PrimaryLanguage.Confidence;
+        return this.privTranslationPhrase.PrimaryLanguage?.Confidence;
     }
 
     public get Translation(): ITranslations {
