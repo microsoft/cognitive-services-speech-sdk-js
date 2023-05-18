@@ -22,7 +22,7 @@ export class SynthesisVoicesResult extends SynthesisResult {
             super(requestId, ResultReason.VoicesListRetrieved, undefined, new PropertyCollection());
             this.privVoices = [];
             for (const item of json) {
-                this.privVoices.push(new VoiceInfo(item as { Name: string; LocalName: string; ShortName: string; Gender: string; VoiceType: string; Locale: string; StyleList: string[] }));
+                this.privVoices.push(new VoiceInfo(item as { Name: string; LocalName: string; LocaleName: string; ShortName: string; Gender: string; VoiceType: string; Locale: string; StyleList: string[] }));
             }
         } else {
             super(requestId, ResultReason.Canceled, errorDetails ? errorDetails : "Error information unavailable", new PropertyCollection());
