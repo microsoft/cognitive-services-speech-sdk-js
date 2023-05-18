@@ -105,7 +105,7 @@ export class SpeechServiceConfig {
 
     public serialize(): string {
         return JSON.stringify(this, (key: any, value: { [k: string]: any }): any => {
-            if (value && typeof value === "object") {
+            if (value && typeof value === "object" && !Array.isArray(value)) {
                 const replacement: { [k: string ]: any } = {};
                 for (const k in value) {
                     if (Object.hasOwnProperty.call(value, k)) {
@@ -132,10 +132,49 @@ export class SpeechServiceConfig {
     }
 }
 
+export interface ISynthesisSectionVideo {
+    protocol: {
+        name: string;
+        webrtcConfig: {
+            clientDescription: string;
+            iceServers: {
+                urls: string[];
+                username: string;
+                credential: string;
+            }[];
+        };
+    };
+    format: {
+        codec: string;
+        resolution: {
+            width: number;
+            height: number;
+        };
+    };
+    talkingAvatar: {
+        character: string;
+        style: string;
+        background: {
+            color: {
+                red: number;
+                green: number;
+                blue: number;
+                alpha: number;
+            };
+            image: {
+                url: string;
+            };
+        };
+    };
+}
+
 export class Context {
     public system: System;
     public os: OS;
     public audio: ISpeechConfigAudio;
+    public synthesis: {
+        video: ISynthesisSectionVideo;
+    };
 
     public constructor(os: OS) {
         this.system = new System();

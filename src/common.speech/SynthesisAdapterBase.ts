@@ -328,7 +328,7 @@ export class SynthesisAdapterBase implements IDisposable {
             if (connectionMessage.requestId.toLowerCase() === this.privSynthesisTurn.requestId.toLowerCase()) {
                 switch (connectionMessage.path.toLowerCase()) {
                     case "turn.start":
-                        this.privSynthesisTurn.onServiceTurnStartResponse();
+                        this.privSynthesisTurn.onServiceTurnStartResponse(connectionMessage.textBody);
                         break;
                     case "response":
                         this.privSynthesisTurn.onServiceResponseMessage(connectionMessage.textBody);
@@ -430,7 +430,7 @@ export class SynthesisAdapterBase implements IDisposable {
                                 ResultReason.SynthesizingAudioCompleted,
                                 audioBuffer,
                                 undefined,
-                                undefined,
+                                this.privSynthesisTurn.extraProperties,
                                 this.privSynthesisTurn.audioDuration
                             );
                             if (!!this.privSuccessCallback) {
@@ -586,7 +586,7 @@ export class SynthesisAdapterBase implements IDisposable {
         if (this.configConnectionOverride !== undefined) {
             return this.configConnectionOverride(connection);
         }
-        await this.sendSpeechServiceConfig(connection, this.privSynthesizerConfig.SpeechServiceConfig.serialize());
+        await this.sendSpeechServiceConfig(connection, this.privSynthesizerConfig.SpeechSynthesisServiceConfig.serialize());
         return connection;
     }
 }

@@ -481,5 +481,17 @@ export enum PropertyId {
      * Version of Speaker Recognition API to use.
      * Added in version 1.18.0
      */
-    SpeakerRecognition_Api_Version
+    SpeakerRecognition_Api_Version,
+
+    /**
+     * Talking avatar service client request json; internal use only.
+     * Added in version 1.29.0
+     */
+    TalkingAvatarService_ClientRequestJson,
+
+    /**
+     * Talking avatar service WebRTC session description protocol.
+     * Added in version 1.29.0
+     */
+    TalkingAvatarService_WebRTC_SDP,
 }

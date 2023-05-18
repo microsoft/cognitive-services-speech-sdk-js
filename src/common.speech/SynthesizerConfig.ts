@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyCollection } from "../sdk/Exports";
-import {Context, SpeechServiceConfig} from "./Exports";
+// eslint-disable-next-line max-classes-per-file
+import { PropertyCollection, PropertyId } from "../sdk/Exports";
+import { Context, ISynthesisSectionVideo, SpeechServiceConfig } from "./Exports";
 
 export enum SynthesisServiceType {
     Standard,
@@ -33,7 +34,15 @@ export class SynthesizerConfig {
         this.privSynthesisServiceType = value;
     }
 
-    public get SpeechServiceConfig(): SpeechServiceConfig {
+    public get SpeechSynthesisServiceConfig(): SpeechServiceConfig {
+        const talkingAvatarServiceClientRequest = this.privParameters.getProperty(
+            PropertyId.TalkingAvatarService_ClientRequestJson, undefined);
+        if (talkingAvatarServiceClientRequest !== undefined) {
+            const video = JSON.parse(talkingAvatarServiceClientRequest) as ISynthesisSectionVideo;
+            this.privSpeechServiceConfig.Context.synthesis = {
+                video,
+            };
+        }
         return this.privSpeechServiceConfig;
     }
 }

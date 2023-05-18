@@ -9,6 +9,7 @@ import {
 } from "../common/Exports";
 import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
+import { PropertyCollection, PropertyId } from "../sdk/Exports";
 import { ISynthesisMetadata, MetadataType } from "./ServiceMessages/SynthesisAudioMetadata";
 import { SynthesisAdapterBase } from "./SynthesisAdapterBase";
 import {
@@ -30,6 +31,9 @@ export interface ISynthesisResponseAudio {
 export interface ISynthesisResponse {
     context: ISynthesisResponseContext;
     audio: ISynthesisResponseAudio;
+    webrtc: {
+        connectionString: string;
+    };
 }
 
 export class SynthesisTurn {
@@ -83,6 +87,16 @@ export class SynthesisTurn {
         return this.privAudioDuration;
     }
 
+    public get extraProperties(): PropertyCollection {
+        if (!!this.privWebRTCSDP) {
+            const properties = new PropertyCollection();
+            properties.setProperty(PropertyId.TalkingAvatarService_WebRTC_SDP, this.privWebRTCSDP);
+            return properties;
+        }
+
+        return undefined;
+    }
+
     private privIsDisposed: boolean = false;
     private privAuthFetchEventId: string;
     private privIsSynthesizing: boolean = false;
@@ -105,6 +119,7 @@ export class SynthesisTurn {
     private privIsSSML: boolean;
     private privTurnAudioDestination: IAudioDestination;
     private privAudioDuration: number;
+    private privWebRTCSDP: string;
 
     public constructor() {
         this.privRequestId = createNoDashGuid();
@@ -157,6 +172,7 @@ export class SynthesisTurn {
         this.privSentenceOffset = 0;
         this.privNextSearchSentenceIndex = 0;
         this.privPartialVisemeAnimation = "";
+        this.privWebRTCSDP = "";
         if (audioDestination !== undefined) {
             this.privTurnAudioDestination = audioDestination;
             this.privTurnAudioDestination.format = this.privAudioOutputFormat;
@@ -187,6 +203,9 @@ export class SynthesisTurn {
 
     public onServiceResponseMessage(responseJson: string): void {
         const response: ISynthesisResponse = JSON.parse(responseJson) as ISynthesisResponse;
+        if (response.webrtc !== undefined) {
+            this.privWebRTCSDP = response.webrtc.connectionString;
+        }
         this.streamId = response.audio.streamId;
     }
 
@@ -196,7 +215,7 @@ export class SynthesisTurn {
         this.onComplete();
     }
 
-    public onServiceTurnStartResponse(): void {
+    public onServiceTurnStartResponse(responseJson: string): void {
         if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
@@ -206,6 +225,10 @@ export class SynthesisTurn {
         }
         this.privInTurn = true;
         this.privTurnDeferral = new Deferred<void>();
+        const response: ISynthesisResponse = JSON.parse(responseJson) as ISynthesisResponse;
+        if (response.webrtc !== undefined && response.webrtc !== null) {
+            this.privWebRTCSDP = response.webrtc.connectionString;
+        }
     }
 
     public onAudioChunkReceived(data: ArrayBuffer): void {

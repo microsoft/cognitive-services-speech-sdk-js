@@ -391,6 +391,21 @@ export class SpeechSynthesizer {
     }
 
     /**
+     * Executes speech synthesis on SSML.
+     * The task returns the synthesis result.
+     * @member SpeechSynthesizer.prototype.setupTalkingAvatarAsync
+     * @function
+     * @public
+     * @param clientRequest - SSML to be synthesized.
+     * @param cb - Callback that received the SpeechSynthesisResult.
+     * @param err - Callback invoked in case of an error.
+     */
+    public setupTalkingAvatarAsync(clientRequest: string, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void): void {
+        this.properties.setProperty(PropertyId.TalkingAvatarService_ClientRequestJson, clientRequest);
+        this.speakImpl("", false, cb, err, undefined);
+    }
+
+    /**
      * Get list of synthesis voices available.
      * The task returns the synthesis voice result.
      * @member SpeechSynthesizer.prototype.getVoicesAsync
