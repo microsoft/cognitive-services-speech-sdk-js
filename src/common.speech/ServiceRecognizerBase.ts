@@ -338,7 +338,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         void this.receiveMessage();
-        const audioSendPromise = this.sendAudio(audioNode);
+        void this.startSendingAudio(audioNode);
+        return;
+    }
+
+    public startSendingAudio(audioStreamNode: IAudioStreamNode): Promise<void> {
+        const audioSendPromise = this.sendAudio(audioStreamNode);
 
         audioSendPromise.catch(async (error: string): Promise<void> => {
             await this.cancelRecognitionLocal(CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
@@ -564,6 +569,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         } else {
                             connection = await this.fetchConnection();
                             await this.sendPrePayloadJSON(connection);
+                            if (!this.privRequestSession.audioNode.isEmpty()) {
+                                void this.startSendingAudio(this.privRequestSession.audioNode);
+                            }
                         }
                         break;
 

@@ -149,14 +149,22 @@ export class RequestSession {
     public async onServiceTurnEndResponse(continuousRecognition: boolean): Promise<void> {
         this.privTurnDeferral.resolve();
 
-        if (!continuousRecognition || this.isSpeechEnded) {
+        if (!continuousRecognition || this.privAudioNode.isEmpty()) {
             await this.onComplete();
             this.privInTurn = false;
         } else {
+            // Trailing audio issue: Restart ServiceRecognizerBase.sendAudio and do below
             // Start a new request set.
             this.privTurnStartAudioOffset = this.privLastRecoOffset;
             this.privAudioNode.replay();
+            if (this.isSpeechEnded) {
+                this.privIsSpeechEnded = false;
+            }
         }
+    }
+
+    public get audioNode(): ReplayableAudioNode {
+        return this.privAudioNode;
     }
 
     public onSpeechContext(): void {

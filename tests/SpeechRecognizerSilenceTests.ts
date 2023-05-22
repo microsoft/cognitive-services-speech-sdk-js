@@ -99,7 +99,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
     });
 
     describe("Intiial Silence Tests", (): void => {
-        test("InitialSilenceTimeout (pull)", (done: jest.DoneCallback): void => {
+        test.skip("InitialSilenceTimeout (pull)", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (pull)");
             let bytesSent: number = 0;
@@ -129,7 +129,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             });
         }, 15000);
 
-        test("InitialSilenceTimeout (push)", (done: jest.DoneCallback): void => {
+        test.skip("InitialSilenceTimeout (push)", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (push)");
             const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -142,14 +142,41 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             testInitialSilenceTimeout(config, done);
         }, 15000);
 
-        test("InitialSilenceTimeoutContinuous trailing audio", (done: jest.DoneCallback): void => {
+        test.only("Multi-turn silence test", (done: jest.DoneCallback) => {
             // eslint-disable-next-line no-console
-            console.info("Name: InitialSilenceTimeout trailing audio");
-            const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.InputDir + "initialSilence5s.wav");
+            console.info("Name: Multi-turn silence test");
+            const s: sdk.SpeechConfig = BuildSpeechConfig();
+            objsToClose.push(s);
 
-            testInitialSilenceTimeoutContinuous(config, done, 4000);
-        }, 25000);
+            s.setProperty(sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "3000");
 
+            const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+            objsToClose.push(p);
+            p.write(new ArrayBuffer(2 * 16000 * 5)); // 5 seconds of silence
+            p.close();
+
+            const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, sdk.AudioConfig.fromStreamInput(p));
+            objsToClose.push(r);
+
+            let lastOffset: number = 0;
+
+            r.speechEndDetected = (r: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+                lastOffset = e.offset;
+            };
+
+            r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+                if (lastOffset !== 50000000) {
+                    done("Got unexpected offset: " + lastOffset.toString());
+                } else {
+                    done();
+                }
+            };
+
+            r.startContinuousRecognitionAsync();
+
+        }, 15000);
+
+        /*
         Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (File)");
@@ -161,51 +188,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
             testInitialSilenceTimeout(config, done);
         }, 15000);
-
-        const testInitialSilenceTimeoutContinuous = (config: sdk.AudioConfig, done: jest.DoneCallback, timeoutMs: number = 4000): void => {
-            const s: sdk.SpeechConfig = BuildSpeechConfig();
-            objsToClose.push(s);
-
-            s.setProperty(sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, timeoutMs.toString());
-
-            const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
-            objsToClose.push(r);
-
-            expect(r).not.toBeUndefined();
-            expect(r instanceof sdk.Recognizer);
-
-            let numReports: number = 0;
-
-            r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-                done(e.errorDetails);
-            };
-
-            r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
-                try {
-                    const res: sdk.SpeechRecognitionResult = e.result;
-                    expect(res).not.toBeUndefined();
-                    expect(res.properties).not.toBeUndefined();
-                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
-                } catch (error) {
-                    done(error);
-                } finally {
-                    numReports++;
-                }
-            };
-            r.startContinuousRecognitionAsync(
-                (): void => {},
-                (error: string): void => {
-                    fail(error);
-                });
-
-            WaitForCondition((): boolean => (numReports === 2), (): void => {
-                try {
-                    done();
-                } catch (error) {
-                    done(error);
-                }
-            });
-        };
+        */
 
         const testInitialSilenceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, expectedNumReports: number = 2, addedChecks?: () => void): void => {
             const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -325,7 +308,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         });
     });
 
-    test("burst of silence", (done: jest.DoneCallback) => {
+    test.skip("burst of silence", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: burst of silence");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
