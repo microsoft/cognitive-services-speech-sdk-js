@@ -14,6 +14,7 @@ import {
     IAudioStreamNode,
     IConnection,
     IDisposable,
+    InvalidOperationError,
     IStreamChunk,
     MessageType,
     ServiceEvent,
@@ -555,7 +556,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                     case "turn.end":
                         await this.sendTelemetryData();
-                        if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) {
+                        if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream && this.privRequestSession.audioNode.isEmpty()) {
                             this.privMustReportEndOfStream = false;
                             await this.cancelRecognitionLocal(CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined);
                         }
@@ -568,8 +569,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             return;
                         } else {
                             connection = await this.fetchConnection();
-                            await this.sendPrePayloadJSON(connection);
-                            if (!this.privRequestSession.audioNode.isEmpty()) {
+                            const restartAudio = !this.privRequestSession.audioNode.isEmpty();
+                            await this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
+                            await this.sendPrePayloadJSON(connection, restartAudio);
+                            if (restartAudio) {
                                 void this.startSendingAudio(this.privRequestSession.audioNode);
                             }
                         }
@@ -751,7 +754,18 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 this.privRequestSession.recogNumber === startRecogNumber) {
 
                 const connection: IConnection = await this.fetchConnection();
-                const audioStreamChunk: IStreamChunk<ArrayBuffer> = await audioStreamNode.read();
+                let audioStreamChunk: IStreamChunk<ArrayBuffer> = {
+                    buffer: null,
+                    isEnd: true,
+                    timeReceived: Date.now()};
+                try {
+                    audioStreamChunk = await audioStreamNode.read();
+                } catch (error: any) {
+                    // If end of stream reached, eat the error and process default end chunk.
+                    if (!(error instanceof InvalidOperationError)) {
+                        throw error;
+                    }
+                }
                 // we have a new audio chunk to upload.
                 if (this.privRequestSession.isSpeechEnded) {
                     // If service already recognized audio end then don't send any more audio

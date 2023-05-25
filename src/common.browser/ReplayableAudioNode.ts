@@ -46,13 +46,14 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             }
 
             let i: number = 0;
-
             while (i < this.privBuffers.length && bytesToSeek >= this.privBuffers[i].chunk.buffer.byteLength) {
                 bytesToSeek -= this.privBuffers[i++].chunk.buffer.byteLength;
             }
 
             if (i < this.privBuffers.length) {
                 const retVal: ArrayBuffer = this.privBuffers[i].chunk.buffer.slice(bytesToSeek);
+                const timeReceived = this.privBuffers[i].chunk.timeReceived;
+                const isEnd: boolean = false;
 
                 this.privReplayOffset += (retVal.byteLength / this.privBytesPerSecond) * 1e+7;
 
@@ -63,8 +64,8 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 
                 return Promise.resolve<IStreamChunk<ArrayBuffer>>({
                     buffer: retVal,
-                    isEnd: false,
-                    timeReceived: this.privBuffers[i].chunk.timeReceived,
+                    isEnd,
+                    timeReceived,
                 });
             }
         }

@@ -99,7 +99,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
     });
 
     describe("Intiial Silence Tests", (): void => {
-        test.skip("InitialSilenceTimeout (pull)", (done: jest.DoneCallback): void => {
+        test("InitialSilenceTimeout (pull)", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (pull)");
             let bytesSent: number = 0;
@@ -129,7 +129,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             });
         }, 15000);
 
-        test.skip("InitialSilenceTimeout (push)", (done: jest.DoneCallback): void => {
+        test("InitialSilenceTimeout (push)", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (push)");
             const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -174,9 +174,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
             r.startContinuousRecognitionAsync();
 
-        }, 15000);
+        }, 25000);
 
-        /*
         Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (File)");
@@ -188,7 +187,6 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
             testInitialSilenceTimeout(config, done);
         }, 15000);
-        */
 
         const testInitialSilenceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, expectedNumReports: number = 2, addedChecks?: () => void): void => {
             const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -308,7 +306,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         });
     });
 
-    test.skip("burst of silence", (done: jest.DoneCallback) => {
+    test("burst of silence", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: burst of silence");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
