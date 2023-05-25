@@ -760,7 +760,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     timeReceived: Date.now()};
                 try {
                     audioStreamChunk = await audioStreamNode.read();
-                } catch (error: any) {
+                } catch (error) {
                     // If end of stream reached, eat the error and process default end chunk.
                     if (!(error instanceof InvalidOperationError)) {
                         throw error;
