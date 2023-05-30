@@ -30,7 +30,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 
     // Reads and returns the next chunk of audio buffer.
     // If replay of existing buffers are needed, read() will first seek and replay
-    // existing content, and upoin completion it will read new content from the underlying
+    // existing content, and upon completion it will read new content from the underlying
     // audio node, saving that content into the replayable buffers.
     public read(): Promise<IStreamChunk<ArrayBuffer>> {
         // if there is a replay request to honor.

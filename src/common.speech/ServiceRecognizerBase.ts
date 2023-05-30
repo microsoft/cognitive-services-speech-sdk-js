@@ -14,7 +14,6 @@ import {
     IAudioStreamNode,
     IConnection,
     IDisposable,
-    InvalidOperationError,
     IStreamChunk,
     MessageType,
     ServiceEvent,
@@ -761,10 +760,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 try {
                     audioStreamChunk = await audioStreamNode.read();
                 } catch (error) {
-                    // If end of stream reached, eat the error and process default end chunk.
-                    if (!(error instanceof InvalidOperationError)) {
-                        throw error;
+                    if (!this.privIsLiveAudio) {
+                        this.privRequestSession.onSpeechEnded();
                     }
+                    return;
                 }
                 // we have a new audio chunk to upload.
                 if (this.privRequestSession.isSpeechEnded) {
