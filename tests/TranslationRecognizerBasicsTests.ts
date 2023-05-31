@@ -209,7 +209,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             };
 
             const expectedText = "Hello. It's a good day for me to teach you the sound of my voice. You have learned what I look like";
-            const expectedTranslation = "Hallo. Es ist ein guter Tag für mich, dir den Klang meiner Stimme beizubringen. Du hast gelernt";
+            const expectedTranslation = "Hallo. Es ist ein guter Tag für mich, um dir den Klang meiner Stimme beizubringen. Du hast gelernt";
 
             r.recognizeOnceAsync(
                 (res: sdk.TranslationRecognitionResult) => {
