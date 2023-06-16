@@ -436,7 +436,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                         const speechResult: ConversationTranslationResult = new ConversationTranslationResult(speechPayload.participantId,
                             this.getTranslations(speechPayload.translations),
                             speechPayload.language,
-                            this.privRequestSession.requestId,
+                            speechPayload.id,
                             undefined,
                             speechPayload.recognition,
                             undefined,
