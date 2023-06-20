@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { Contracts } from "../../sdk/Contracts";
-import { ITranslations, RecognitionStatus } from "../Exports";
+import { IPrimaryLanguage, ITranslations, RecognitionStatus } from "../Exports";
 import { TranslationStatus } from "../TranslationStatus";
 
 // translation.phrase
@@ -13,6 +13,7 @@ export interface ITranslationPhrase {
     Translation?: ITranslations;
     Text: string;
     DisplayText?: string;
+    PrimaryLanguage?: IPrimaryLanguage;
 }
 
 export class TranslationPhrase implements ITranslationPhrase {
@@ -53,6 +54,14 @@ export class TranslationPhrase implements ITranslationPhrase {
 
     public get Text(): string {
         return this.privTranslationPhrase.Text;
+    }
+
+    public get Language(): string {
+        return this.privTranslationPhrase.PrimaryLanguage?.Language;
+    }
+
+    public get Confidence(): string {
+        return this.privTranslationPhrase.PrimaryLanguage?.Confidence;
     }
 
     public get Translation(): ITranslations {

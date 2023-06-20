@@ -17,6 +17,7 @@ import { Connection } from "./Connection";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
+    AutoDetectSourceLanguageConfig,
     PropertyCollection,
     PropertyId,
     Recognizer,
@@ -95,6 +96,19 @@ export class TranslationRecognizer extends Recognizer {
             PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
+    }
+
+    /**
+     * TranslationRecognizer constructor.
+     * @constructor
+     * @param {SpeechTranslationConfig} speechTranslationConfig - an set of initial properties for this recognizer
+     * @param {AutoDetectSourceLanguageConfig} autoDetectSourceLanguageConfig - An source language detection configuration associated with the recognizer
+     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
+     */
+    public static FromConfig(speechTranslationConfig: SpeechTranslationConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): TranslationRecognizer {
+        const speechTranslationConfigImpl: SpeechTranslationConfigImpl = speechTranslationConfig as SpeechTranslationConfigImpl;
+        autoDetectSourceLanguageConfig.properties.mergeTo(speechTranslationConfigImpl.properties);
+        return new TranslationRecognizer(speechTranslationConfig, audioConfig);
     }
 
     /**
