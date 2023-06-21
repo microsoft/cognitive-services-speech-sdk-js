@@ -1,34 +1,88 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { TranscriberRecognizer } from "../../common.speech/Exports";
+import {
+    IAuthentication,
+    IConnectionFactory,
+    OutputFormatPropertyName,
+    RecognitionMode,
+    RecognizerConfig,
+    ServiceRecognizerBase,
+    // SpeechConnectionFactory,
+    ConversationTranscriberConnectionFactory,
+    SpeechServiceConfig,
+    ConversationTranscriptionServiceRecognizer,
+} from "../../common.speech/Exports";
 import { marshalPromiseToCallbacks } from "../../common/Exports";
+import { AudioConfigImpl } from "../Audio/AudioConfig";
 import { Contracts } from "../Contracts";
 import {
     AudioConfig,
-    CancellationEventArgs,
-    Connection,
+    AutoDetectSourceLanguageConfig,
     ConversationTranscriptionEventArgs,
+    ConversationTranscriptionCanceledEventArgs,
+    OutputFormat,
     PropertyCollection,
     PropertyId,
-    SessionEventArgs
+    Recognizer,
 } from "../Exports";
-import {
-    ConversationHandler,
-    ConversationImpl,
-    ConversationTranscriptionHandler
-} from "./Exports";
-import { Callback, IConversation } from "./IConversation";
+import { SpeechConfig, SpeechConfigImpl } from "../SpeechConfig";
 
-export class ConversationTranscriber implements ConversationTranscriptionHandler {
+/**
+ * Performs speech recognition with speaker separation from microphone, file, or other audio input streams, and gets transcribed text as result.
+ * @class ConversationTranscriber
+ */
+export class ConversationTranscriber extends Recognizer {
+    private privDisposedRecognizer: boolean;
 
     /**
-     * The event canceled signals that an error occurred during the conversation.
-     * @member ConversationTranscriber.prototype.conversationCanceled
+     * ConversationTranscriber constructor.
+     * @constructor
+     * @param {SpeechConfig} speechConfig - an set of initial properties for this recognizer
+     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
+     */
+    public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
+        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
+        Contracts.throwIfNull(speechConfigImpl, "speechConfig");
+
+        Contracts.throwIfNullOrWhitespace(
+            speechConfigImpl.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
+            PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
+
+        super(audioConfig, speechConfigImpl.properties, new ConversationTranscriberConnectionFactory());
+        this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "2");
+        this.privDisposedRecognizer = false;
+    }
+
+    /**
+     * ConversationTranscriber constructor.
+     * @constructor
+     * @param {SpeechConfig} speechConfig - an set of initial properties for this recognizer
+     * @param {AutoDetectSourceLanguageConfig} autoDetectSourceLanguageConfig - An source language detection configuration associated with the recognizer
+     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
+     */
+    public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): ConversationTranscriber {
+        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
+        autoDetectSourceLanguageConfig.properties.mergeTo(speechConfigImpl.properties);
+        const recognizer = new ConversationTranscriber(speechConfig, audioConfig);
+        return recognizer;
+    }
+
+    /**
+     * The event transcribing signals that an intermediate transcription result is received.
+     * @member ConversationTranscriber.prototype.transcribing
      * @function
      * @public
      */
-    public conversationCanceled: (sender: ConversationHandler, event: CancellationEventArgs) => void;
+    public transcribing: (sender: Recognizer, event: ConversationTranscriptionEventArgs) => void;
+
+    /**
+     * The event transcriber signals that a final recognition result is received.
+     * @member ConversationTranscriber.prototype.transcribed
+     * @function
+     * @public
+     */
+    public transcribed: (sender: Recognizer, event: ConversationTranscriptionEventArgs) => void;
 
     /**
      * The event canceled signals that an error occurred during transcription.
@@ -36,113 +90,19 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @function
      * @public
      */
-    public canceled: (sender: ConversationHandler, event: CancellationEventArgs) => void;
-
-     /**
-      * The event recognized signals that a final conversation transcription result is received.
-      * @member ConversationTranscriber.prototype.transcribed
-      * @function
-      * @public
-      */
-    public transcribed: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionEventArgs) => void;
-
-     /**
-      * The event recognizing signals that an intermediate conversation transcription result is received.
-      * @member ConversationTranscriber.prototype.transcribing
-      * @function
-      * @public
-      */
-    public transcribing: (sender: ConversationTranscriptionHandler, event: ConversationTranscriptionEventArgs) => void;
+    public canceled: (sender: Recognizer, event: ConversationTranscriptionCanceledEventArgs) => void;
 
     /**
-     * Defines event handler for session started events.
-     * @member ConversationTranscriber.prototype.sessionStarted
+     * Gets the endpoint id of a customized speech model that is used for transcription.
+     * @member ConversationTranscriber.prototype.endpointId
      * @function
      * @public
+     * @returns {string} the endpoint id of a customized speech model that is used for speech recognition.
      */
-    public sessionStarted: (sender: ConversationHandler, event: SessionEventArgs) => void;
-
-    /**
-     * Defines event handler for session stopped events.
-     * @member ConversationTranscriber.prototype.sessionStopped
-     * @function
-     * @public
-     */
-    public sessionStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
-
-    /**
-     * Defines event handler for conversation started events.
-     * @member ConversationTranscriber.prototype.conversationStarted
-     * @function
-     * @public
-     */
-    public conversationStarted: (sender: ConversationHandler, event: SessionEventArgs) => void;
-
-    /**
-     * Defines event handler for conversation stopped events.
-     * @member ConversationTranscriber.prototype.conversationStopped
-     * @function
-     * @public
-     */
-    public conversationStopped: (sender: ConversationHandler, event: SessionEventArgs) => void;
-
-    protected privAudioConfig: AudioConfig;
-    private privDisposedRecognizer: boolean;
-    private privRecognizer: TranscriberRecognizer;
-    private privProperties: PropertyCollection;
-
-    /**
-     * ConversationTranscriber constructor.
-     * @constructor
-     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
-     */
-    public constructor(audioConfig?: AudioConfig) {
-        this.privAudioConfig = audioConfig;
-        this.privProperties = new PropertyCollection();
-        this.privRecognizer = undefined;
-        this.privDisposedRecognizer = false;
-    }
-
-    /**
-     * Gets the spoken language of recognition.
-     * @member ConversationTranscriber.prototype.speechRecognitionLanguage
-     * @function
-     * @public
-     * @returns {string} The spoken language of recognition.
-     */
-    public get speechRecognitionLanguage(): string {
+    public get endpointId(): string {
         Contracts.throwIfDisposed(this.privDisposedRecognizer);
 
-        return this.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
-    }
-
-    /**
-     * The collection of properties and their values defined for this ConversationTranscriber.
-     * @member ConversationTranscriber.prototype.properties
-     * @function
-     * @public
-     * @returns {PropertyCollection} The collection of properties and their values defined for this ConversationTranscriber.
-     */
-    public get properties(): PropertyCollection {
-        return this.privProperties;
-    }
-
-    /**
-     * @Internal
-     * Internal data member to support fromRecognizer* pattern methods on other classes.
-     * Do not use externally, object returned will change without warning or notice.
-     */
-    public get internalData(): object {
-        return this.privRecognizer.internalData;
-    }
-
-    /**
-     * @Deprecated
-     * @Obsolete
-     * Please use the Connection.fromRecognizer pattern to obtain a connection object
-     */
-    public get connection(): Connection {
-        return Connection.fromRecognizer(this.privRecognizer);
+        return this.properties.getProperty(PropertyId.SpeechServiceConnection_EndpointId, "00000000-0000-0000-0000-000000000000");
     }
 
     /**
@@ -169,19 +129,44 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
     }
 
     /**
-     * @param {Conversation} conversation - conversation to be recognized
+     * Gets the spoken language of transcription.
+     * @member ConversationTranscriber.prototype.speechRecognitionLanguage
+     * @function
+     * @public
+     * @returns {string} The spoken language of transcription.
      */
-    public joinConversationAsync(conversation: IConversation, cb?: Callback, err?: Callback): void {
-        const conversationImpl = conversation as ConversationImpl;
-        Contracts.throwIfNullOrUndefined(conversationImpl, "Conversation");
+    public get speechRecognitionLanguage(): string {
+        Contracts.throwIfDisposed(this.privDisposedRecognizer);
 
-        // ref the conversation object
-        // create recognizer and subscribe to recognizer events
-        this.privRecognizer = new TranscriberRecognizer(conversation.config, this.privAudioConfig);
-        Contracts.throwIfNullOrUndefined(this.privRecognizer, "Recognizer");
-        this.privRecognizer.connectCallbacks(this);
+        return this.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
+    }
 
-        marshalPromiseToCallbacks(conversationImpl.connectTranscriberRecognizer(this.privRecognizer), cb, err);
+    /**
+     * Gets the output format of transcription.
+     * @member ConversationTranscriber.prototype.outputFormat
+     * @function
+     * @public
+     * @returns {OutputFormat} The output format of transcription.
+     */
+    public get outputFormat(): OutputFormat {
+        Contracts.throwIfDisposed(this.privDisposedRecognizer);
+
+        if (this.properties.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]) === OutputFormat[OutputFormat.Simple]) {
+            return OutputFormat.Simple;
+        } else {
+            return OutputFormat.Detailed;
+        }
+    }
+
+    /**
+     * The collection of properties and their values defined for this conversation transcriber.
+     * @member ConversationTranscriber.prototype.properties
+     * @function
+     * @public
+     * @returns {PropertyCollection} The collection of properties and their values defined for this SpeechRecognizer.
+     */
+    public get properties(): PropertyCollection {
+        return this.privProperties;
     }
 
     /**
@@ -193,30 +178,20 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
      * @param cb - Callback invoked once the transcription has started.
      * @param err - Callback invoked in case of an error.
      */
-    public startTranscribingAsync(cb?: Callback, err?: Callback): void {
-        this.privRecognizer.startContinuousRecognitionAsync(cb, err);
+    public startTranscribingAsync(cb?: () => void, err?: (e: string) => void): void {
+        marshalPromiseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
     }
 
     /**
-     * Starts conversation transcription, until stopTranscribingAsync() is called.
-     * User must subscribe to events to receive transcription results.
+     * Stops conversation transcription.
      * @member ConversationTranscriber.prototype.stopTranscribingAsync
      * @function
      * @public
-     * @param cb - Callback invoked once the transcription has started.
+     * @param cb - Callback invoked once the transcription has stopped.
      * @param err - Callback invoked in case of an error.
      */
-    public stopTranscribingAsync(cb?: Callback, err?: Callback): void {
-        this.privRecognizer.stopContinuousRecognitionAsync(cb, err);
-    }
-
-    /**
-     * Leave the current conversation. After this is called, you will no longer receive any events.
-     */
-    public leaveConversationAsync(cb?: Callback, err?: Callback): void {
-        this.privRecognizer.disconnectCallbacks();
-        // eslint-disable-next-line
-        marshalPromiseToCallbacks((async (): Promise<void> => { return; })(), cb, err);
+    public stopTranscribingAsync(cb?: () => void, err?: (e: string) => void): void {
+        marshalPromiseToCallbacks(this.stopContinuousRecognitionAsyncImpl(), cb, err);
     }
 
     /**
@@ -232,7 +207,7 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
 
     /**
      * Disposes any resources held by the object.
-     * @member ConversationTranscriber.prototype.dispose
+     * @member SpeechRecognizer.prototype.dispose
      * @function
      * @public
      * @param {boolean} disposing - true if disposing the object.
@@ -241,12 +216,25 @@ export class ConversationTranscriber implements ConversationTranscriptionHandler
         if (this.privDisposedRecognizer) {
             return;
         }
-        if (!!this.privRecognizer) {
-            await this.privRecognizer.close();
-            this.privRecognizer = undefined;
-        }
+
         if (disposing) {
             this.privDisposedRecognizer = true;
+            await this.implRecognizerStop();
         }
+
+        await super.dispose(disposing);
+    }
+
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(speechConfig, this.privProperties);
+    }
+
+    protected createServiceRecognizer(
+        authentication: IAuthentication,
+        connectionFactory: IConnectionFactory,
+        audioConfig: AudioConfig,
+        recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
+        const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
+        return new ConversationTranscriptionServiceRecognizer(authentication, connectionFactory, configImpl, recognizerConfig, this);
     }
 }
