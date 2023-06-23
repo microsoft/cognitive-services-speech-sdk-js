@@ -773,7 +773,7 @@ export class MeetingImpl extends Meeting implements IDisposable {
         if (!!this.privTranscriberRecognizer) {
             await this.privTranscriberRecognizer.close();
         }
-        // await recognizer.enforceAudioGating();
+        await recognizer.checkAudioConfiguration();
         this.privTranscriberRecognizer = recognizer;
         this.privTranscriberRecognizer.meeting = this;
     }

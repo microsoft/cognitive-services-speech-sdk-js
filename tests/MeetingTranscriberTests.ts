@@ -76,18 +76,6 @@ const BuildMeetingTranscriber: () => sdk.MeetingTranscriber = (): sdk.MeetingTra
     return t;
 };
 
-const BuildMonoWaveTranscriber: () => sdk.MeetingTranscriber = (): sdk.MeetingTranscriber => {
-
-    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.DependentVerificationWaveFile);
-    objsToClose.push(config);
-
-    const m: sdk.MeetingTranscriber = new sdk.MeetingTranscriber(config);
-    expect(m).not.toBeUndefined();
-    objsToClose.push(m);
-
-    return m;
-};
-
 const GetParticipantKatie: () => sdk.IParticipant = (): sdk.IParticipant => {
     const voiceSignatureKatie: string = `{
               Version: 0,
@@ -233,6 +221,96 @@ test("Create Meeting and add participants", (done: jest.DoneCallback) => {
         });
 }, 50000);
 
+test("Create Meeting and add participants using single channel file", (done: jest.DoneCallback) => {
+    // eslint-disable-next-line no-console
+    console.info("Name: Create Meeting and add participants using single channel file");
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const m: sdk.Meeting = CreateMeeting(s);
+    objsToClose.push(m);
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFileSingleChannel);
+    objsToClose.push(config);
+
+    const t: sdk.MeetingTranscriber = new sdk.MeetingTranscriber(config);
+    expect(t).not.toBeUndefined();
+    objsToClose.push(t);
+    let userFound: boolean = false;
+
+    t.sessionStopped = (o: sdk.MeetingTranscriber, e: sdk.SessionEventArgs) => {
+        try {
+            done();
+        } catch (error) {
+            done(error);
+        }
+    };
+    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs) => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+            expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
+            expect(userFound).toEqual(true);
+        } catch (error) {
+            done(error);
+        }
+    };
+
+    t.transcribed = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs) => {
+        try {
+            expect(e).not.toBeUndefined();
+            expect(e.result).not.toBeUndefined();
+            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(e.result.text).not.toBeUndefined();
+            expect(e.result.speakerId).not.toBeUndefined();
+            // eslint-disable-next-line no-console
+            console.info("[Transcribed] SpeakerId: " + e.result.speakerId + " Text:" + e.result.text);
+            if (e.result.speakerId.startsWith("katie") || e.result.speakerId.startsWith("steve")) {
+                userFound = true;
+            }
+        } catch (error) {
+            done(error);
+        }
+    };
+
+    t.joinMeetingAsync(m,
+        () => {
+            try {
+                expect(t.properties).not.toBeUndefined();
+                m.addParticipantAsync(GetParticipantKatie(),
+                    () => {
+                        try {
+                            expect(m.participants).not.toBeUndefined();
+                            expect(m.participants.length).toEqual(1);
+                            // Adds steve as a participant to the conversation.
+                            m.addParticipantAsync(GetParticipantSteve(),
+                                () => {
+                                    try {
+                                        expect(m.participants).not.toBeUndefined();
+                                        expect(m.participants.length).toEqual(2);
+                                    } catch (error) {
+                                        done(error);
+                                    }
+
+                                    /* eslint-disable:no-empty */
+                                    t.startTranscribingAsync(
+                                        /* eslint-disable:no-empty */
+                                        () => {},
+                                        (err: string) => {
+                                            done(err);
+                                        });
+                                });
+                        } catch (error) {
+                            done(error);
+                        }
+                    });
+            } catch (error) {
+                done(error);
+            }
+        },
+        (error: string) => {
+            done(error);
+        });
+}, 50000);
+
 test("Leave Meeting", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: Leave Meeting");
@@ -319,7 +397,12 @@ test("Create Meeting with one channel does not throw", (done: jest.DoneCallback)
     const m: sdk.Meeting = CreateMeeting(s);
     objsToClose.push(m);
 
-    const t: sdk.MeetingTranscriber = BuildMonoWaveTranscriber();
+    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.DependentVerificationWaveFile);
+    objsToClose.push(config);
+
+    const t: sdk.MeetingTranscriber = new sdk.MeetingTranscriber(config);
+    expect(t).not.toBeUndefined();
+    objsToClose.push(t);
 
     t.joinMeetingAsync(m,
         (): void => {
@@ -327,86 +410,6 @@ test("Create Meeting with one channel does not throw", (done: jest.DoneCallback)
         },
         (error: string): void => {
             done.fail("No error callback expected for single channel CTS");
-        });
-});
-
-test.skip("Create Meeting with one channel audio (aligned)", (done: jest.DoneCallback): void => {
-    // eslint-disable-next-line no-console
-    console.info("Name: Create Meeting with one channel audio (aligned)");
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
-    objsToClose.push(s);
-
-    const m: sdk.Meeting = CreateMeeting(s);
-    objsToClose.push(m);
-    let sessionId: string = "";
-    let canceled: boolean = false;
-
-    const t: sdk.MeetingTranscriber = BuildMonoWaveTranscriber();
-    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs) => {
-        try {
-            expect(e.errorDetails).toBeUndefined();
-            expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
-            canceled = true;
-        } catch (error) {
-            done(error);
-        }
-    };
-    t.sessionStopped = (o: sdk.MeetingTranscriber, e: sdk.SessionEventArgs) => {
-        try {
-            expect(canceled).toEqual(true);
-            expect(e.sessionId).not.toBeUndefined();
-            expect(e.sessionId).toEqual(sessionId);
-            done();
-        } catch (error) {
-            done(error);
-        }
-    };
-    t.sessionStarted = (o: sdk.MeetingTranscriber, e: sdk.SessionEventArgs) => {
-        try {
-            expect(e.sessionId).not.toBeUndefined();
-            sessionId = e.sessionId;
-        } catch (error) {
-            done(error);
-        }
-    };
-
-    t.transcribed = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs) => {
-        try {
-            expect(e.result).not.toBeUndefined();
-            expect(e.result.text).not.toBeUndefined();
-            expect(e.result.text).toEqual("");
-        } catch (error) {
-            done(error);
-        }
-    };
-
-    t.transcribing = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs) => {
-        done(e.result.errorDetails);
-    };
-
-    t.joinMeetingAsync(m,
-        () => {
-            try {
-                expect(t.properties).not.toBeUndefined();
-                m.addParticipantAsync(GetParticipantKatie(),
-                    () => {
-                        /* eslint-disable:no-empty */
-                        t.startTranscribingAsync(
-                            /* eslint-disable:no-empty */
-                            () => { },
-                            (err: string) => {
-                                done(err);
-                            });
-                    },
-                    (error: string) => {
-                        done(error);
-                    });
-            } catch (error) {
-                done(error);
-            }
-        },
-        (error: string) => {
-            done(error);
         });
 });
 

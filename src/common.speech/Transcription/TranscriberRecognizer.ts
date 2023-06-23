@@ -139,14 +139,13 @@ export class TranscriberRecognizer extends Recognizer {
         await reco.sendMeetingSpeechEventAsync(meetingInfo, command);
     }
 
-    public async enforceAudioGating(): Promise<void> {
+    public async checkAudioConfiguration(): Promise<void> {
         const audioConfigImpl = this.audioConfig as AudioConfigImpl;
         const format: AudioStreamFormatImpl = await audioConfigImpl.format;
         const channels = format.channels;
         if (channels === 1) {
-            if (this.properties.getProperty("f0f5debc-f8c9-4892-ac4b-90a7ab359fd2", "false").toLowerCase() !== "true") {
-                throw new Error("Single channel audio configuration for ConversationTranscriber is currently under private preview, please contact diarizationrequest@microsoft.com for more details");
-            }
+            // We use this GUID property to indicate that single channel audio is in use for MeetingTranscriber.
+            this.properties.setProperty("f0f5debc-f8c9-4892-ac4b-90a7ab359fd2", "true");
         } else if (channels !== 8) {
             throw new Error(`Unsupported audio configuration: Detected ${channels}-channel audio`);
         }
