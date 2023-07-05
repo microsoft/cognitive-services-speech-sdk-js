@@ -15,6 +15,7 @@ import {
     ConversationExpirationEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationResult,
+    ResultReason,
     Translations
 } from "../../sdk/Exports";
 import {
@@ -191,10 +192,11 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
             }
 
             const sessionId: string = this.privConversationRequestSession.sessionId;
+            const conversationMessageType: string = message.conversationMessageType.toLowerCase();
             let sendFinal: boolean = false;
 
             try {
-                switch (message.conversationMessageType.toLowerCase()) {
+                switch (conversationMessageType) {
                     case "info":
                     case "participant_command":
                     case "command":
@@ -432,12 +434,13 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                     case "final":
 
                         const speechPayload: SpeechResponsePayload = SpeechResponsePayload.fromJSON(message.textBody);
+                        const conversationResultReason: ResultReason = (conversationMessageType === "final") ? ResultReason.TranslatedParticipantSpeech : ResultReason.TranslatingParticipantSpeech;
 
                         const speechResult: ConversationTranslationResult = new ConversationTranslationResult(speechPayload.participantId,
                             this.getTranslations(speechPayload.translations),
                             speechPayload.language,
-                            undefined,
-                            undefined,
+                            speechPayload.id,
+                            conversationResultReason,
                             speechPayload.recognition,
                             undefined,
                             undefined,
@@ -478,6 +481,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                     case "translated_message":
 
                         const textPayload: TextResponsePayload = TextResponsePayload.fromJSON(message.textBody);
+                        // TODO: (Native parity) a result reason should be set based whether the participantId is ours or not
 
                         const textResult: ConversationTranslationResult = new ConversationTranslationResult(textPayload.participantId,
                             this.getTranslations(textPayload.translations),

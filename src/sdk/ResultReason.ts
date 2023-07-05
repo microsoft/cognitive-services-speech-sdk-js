@@ -125,4 +125,34 @@ export enum ResultReason {
      * @member ResultReason.VoicesListRetrieved
      */
     VoicesListRetrieved,
+
+    /**
+     * Indicates the transcription result contains hypothesis text and its translation(s) for
+     * other participants in the conversation.
+     * @member ResultReason.TranslatingParticipantSpeech
+     */
+    TranslatingParticipantSpeech,
+
+    /**
+     * Indicates the transcription result contains final text and corresponding translation(s)
+     * for other participants in the conversation. Speech Recognition and Translation are now
+     * complete for this phrase.
+     * @member ResultReason.TranslatedParticipantSpeech
+     */
+    TranslatedParticipantSpeech,
+
+    /**
+     * <summary>
+     * Indicates the transcription result contains the instant message and corresponding
+     * translation(s).
+     * @member ResultReason.TranslatedInstantMessage
+     */
+    TranslatedInstantMessage,
+
+    /**
+     * Indicates the transcription result contains the instant message for other participants
+     * in the conversation and corresponding translation(s).
+     * @member ResultReason.TranslatedParticipantInstantMessage
+     */
+    TranslatedParticipantInstantMessage,
 }
