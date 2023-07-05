@@ -481,6 +481,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                     case "translated_message":
 
                         const textPayload: TextResponsePayload = TextResponsePayload.fromJSON(message.textBody);
+                        // TODO: (Native parity) a result reason should be set based whether the participantId is ours or not
 
                         const textResult: ConversationTranslationResult = new ConversationTranslationResult(textPayload.participantId,
                             this.getTranslations(textPayload.translations),
