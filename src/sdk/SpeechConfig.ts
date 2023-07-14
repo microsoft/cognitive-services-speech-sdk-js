@@ -461,10 +461,10 @@ export class SpeechConfigImpl extends SpeechConfig {
         this.privProperties.setProperty(PropertyId.SpeechServiceConnection_EndpointId, value);
     }
 
-    public setProperty(name: string | PropertyId, value: string): void {
-        Contracts.throwIfNull(value, "value");
+    public setProperty(name: string | PropertyId, propertyValue: string): void {
+        Contracts.throwIfNull(propertyValue, "propertyValue");
 
-        this.privProperties.setProperty(name, value);
+        this.privProperties.setProperty(name, propertyValue);
     }
 
     public getProperty(name: string | PropertyId, def?: string): string {

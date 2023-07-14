@@ -149,11 +149,11 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
      * @member DialogServiceConfigImpl.prototype.speechRecognitionLanguage
      * @function
      * @public
-     * @param {string} value - The language to set.
+     * @param {string} dialogRecognitionLanguage - The language to set.
      */
-    public set speechRecognitionLanguage(value: string) {
-        Contracts.throwIfNullOrWhitespace(value, "value");
-        this.privSpeechConfig.speechRecognitionLanguage = value;
+    public set speechRecognitionLanguage(dialogRecognitionLanguage: string) {
+        Contracts.throwIfNullOrWhitespace(dialogRecognitionLanguage, "dialogRecognitionLanguage");
+        this.privSpeechConfig.speechRecognitionLanguage = dialogRecognitionLanguage;
     }
 
     public get outputFormat(): OutputFormat {

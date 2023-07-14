@@ -12,6 +12,9 @@ secrets/*
 test-javascript-junit.xml
 coverage/*
 *.tgz
+*.d.ts
+*.js.map
+package/*
 
 # ignore audio files generated in tests
 test*.wav
