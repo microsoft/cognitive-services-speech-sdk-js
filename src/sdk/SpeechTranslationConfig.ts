@@ -357,7 +357,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @public
      * @param {string} translationVoiceName - The name of the voice.
      */
-    public set voiceName(translationVoiceName : string) {
+    public set voiceName(translationVoiceName: string) {
         Contracts.throwIfNullOrWhitespace(translationVoiceName, "translationVoiceName");
 
         this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_TranslationVoice, translationVoiceName);
