@@ -145,6 +145,7 @@ export interface ISynthesisSectionVideo {
         };
     };
     format: {
+        bitRate: number;
         codec: string;
         resolution: {
             width: number;
@@ -155,12 +156,7 @@ export interface ISynthesisSectionVideo {
         character: string;
         style: string;
         background: {
-            color: {
-                red: number;
-                green: number;
-                blue: number;
-                alpha: number;
-            };
+            color: string;
             image: {
                 url: string;
             };
