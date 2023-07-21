@@ -58,6 +58,8 @@ export class PronunciationAssessmentConfig {
      * @param {string} json The json string containing the pronunciation assessment parameters.
      * @return {PronunciationAssessmentConfig} Instance of PronunciationAssessmentConfig
      * @summary Creates an instance of the PronunciationAssessmentConfig from json.
+     * This method is designed to support the pronunciation assessment parameters still in preview.
+     * Under normal circumstances, use the constructor instead.
      */
     public static fromJSON(json: string): PronunciationAssessmentConfig {
         Contracts.throwIfNullOrUndefined(json, "json");
