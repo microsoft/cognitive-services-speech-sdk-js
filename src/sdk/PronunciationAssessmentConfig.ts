@@ -193,7 +193,11 @@ export class PronunciationAssessmentConfig {
 
         // always set dimension to Comprehensive
         paramsJson.dimension = "Comprehensive";
-        paramsJson.enableMiscue = this.enableMiscue;
+
+        const enableMiscueString = this.privProperties.getProperty(PropertyId.PronunciationAssessment_EnableMiscue);
+        if (enableMiscueString) {
+            paramsJson.enableMiscue = this.enableMiscue;
+        }
 
         this.privProperties.setProperty(PropertyId.PronunciationAssessment_Params, JSON.stringify(paramsJson));
     }
