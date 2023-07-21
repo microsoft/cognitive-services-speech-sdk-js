@@ -29,7 +29,10 @@ interface WordResult {
             NBestPhonemes: { Phoneme: string }[];
         };
      }[];
-
+    PronunciationAssessment?: {
+        AccuracyScore: number;
+        ErrorType: string;
+    };
     Syllables: { Syllable: string }[];
 }
 
