@@ -339,7 +339,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                     this.privConversationServiceConnector.participantUpdateCommandReceived(this.privConversationServiceConnector,
                                         new ParticipantAttributeEventArgs(commandPayload.participantId,
                                             ConversationTranslatorCommandTypes.changeNickname,
-                                            commandPayload.nickname, sessionId));
+                                            commandPayload.value, sessionId));
                                 }
 
                                 break;
