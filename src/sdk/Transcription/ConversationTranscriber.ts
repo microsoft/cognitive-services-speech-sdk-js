@@ -235,6 +235,7 @@ export class ConversationTranscriber extends Recognizer {
         audioConfig: AudioConfig,
         recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
+        recognizerConfig.isSpeakerDiarizationEnabled = true;
         return new ConversationTranscriptionServiceRecognizer(authentication, connectionFactory, configImpl, recognizerConfig, this);
     }
 }

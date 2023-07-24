@@ -28,6 +28,7 @@ import { IAuthentication } from "./IAuthentication";
 import { IConnectionFactory } from "./IConnectionFactory";
 import { RecognizerConfig } from "./RecognizerConfig";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+import { PhraseDetection, SpeakerDiarization } from "./ServiceRecognizerBase";
 
 // eslint-disable-next-line max-classes-per-file
 export class ConversationTranscriptionServiceRecognizer extends ServiceRecognizerBase {
@@ -40,8 +41,21 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
         audioSource: IAudioSource,
         recognizerConfig: RecognizerConfig,
         conversationTranscriber: ConversationTranscriber) {
-        super(authentication, connectionFactory, audioSource, recognizerConfig, conversationTranscriber, true);
+        super(authentication, connectionFactory, audioSource, recognizerConfig, conversationTranscriber);
         this.privConversationTranscriber = conversationTranscriber;
+        this.setSpeakerDiarizationJson();
+    }
+
+    protected setSpeakerDiarizationJson(): void {
+        if (this.privEnableSpeakerId) {
+            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
+            const speakerDiarization: SpeakerDiarization = {};
+            speakerDiarization.mode = "Anonymous";
+            speakerDiarization.audioSessionId = this.privDiarizationSessionId;
+            speakerDiarization.audioOffsetMs = 0;
+            phraseDetection.speakerDiarization = speakerDiarization;
+            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+        }
     }
 
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {

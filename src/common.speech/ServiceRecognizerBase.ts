@@ -57,7 +57,7 @@ interface CustomModel {
     endpoint: string;
 }
 
-interface PhraseDetection {
+export interface PhraseDetection {
     customModels?: CustomModel[];
     onInterim?: { action: string };
     onSuccess?: { action: string };
@@ -68,14 +68,14 @@ interface PhraseDetection {
     speakerDiarization?: SpeakerDiarization;
 }
 
-interface SpeakerDiarization {
+export interface SpeakerDiarization {
     mode?: string;
     audioSessionId?: string;
     audioOffsetMs?: number;
     identityProvider?: string;
 }
 
-interface Segmentation {
+export interface Segmentation {
     segmentation: {
         mode: "Custom";
         segmentationSilenceTimeoutMs: number;
@@ -121,8 +121,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         connectionFactory: IConnectionFactory,
         audioSource: IAudioSource,
         recognizerConfig: RecognizerConfig,
-        recognizer: Recognizer,
-        enableSpeakerId: boolean = false) {
+        recognizer: Recognizer) {
 
         if (!authentication) {
             throw new ArgumentNullError("authentication");
@@ -140,7 +139,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             throw new ArgumentNullError("recognizerConfig");
         }
 
-        this.privEnableSpeakerId = enableSpeakerId;
+        this.privEnableSpeakerId = recognizerConfig.isSpeakerDiarizationEnabled;
         this.privMustReportEndOfStream = false;
         this.privAuthentication = authentication;
         this.privConnectionFactory = connectionFactory;
@@ -176,12 +175,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         if (this.privEnableSpeakerId) {
             this.privDiarizationSessionId = createNoDashGuid();
-            // this.setSpeakerDiarizationJson(phraseDetection);
         }
 
         this.setLanguageIdJson();
         this.setOutputDetailLevelJson();
-        this.setSpeakerDiarizationJson();
     }
 
     protected setSpeechSegmentationTimeoutJson(): void{
@@ -198,20 +195,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     segmentationSilenceTimeoutMs
                 }
             };
-            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
-        }
-    }
-
-    protected setSpeakerDiarizationJson(): void {
-        if (this.privEnableSpeakerId) {
-            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
-            const speakerDiarization: SpeakerDiarization = {};
-            speakerDiarization.mode = "Anonymous";
-            speakerDiarization.audioSessionId = this.privDiarizationSessionId;
-            // eslint-disable-next-line no-console
-            console.log("***** ServiceRecognizerBase sessionId: " + this.privDiarizationSessionId);
-            speakerDiarization.audioOffsetMs = 0;
-            phraseDetection.speakerDiarization = speakerDiarization;
             this.privSpeechContext.setSection("phraseDetection", phraseDetection);
         }
     }
