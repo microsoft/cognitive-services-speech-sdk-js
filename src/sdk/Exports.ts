@@ -17,7 +17,7 @@ export { RecognitionResult } from "./RecognitionResult";
 export { SpeechRecognitionResult } from "./SpeechRecognitionResult";
 export { IntentRecognitionResult } from "./IntentRecognitionResult";
 export { LanguageUnderstandingModel } from "./LanguageUnderstandingModel";
-export { SpeechRecognitionEventArgs, ConversationTranscriptionEventArgs } from "./SpeechRecognitionEventArgs";
+export { SpeechRecognitionEventArgs, ConversationTranscriptionEventArgs, MeetingTranscriptionEventArgs } from "./SpeechRecognitionEventArgs";
 export { SpeechRecognitionCanceledEventArgs } from "./SpeechRecognitionCanceledEventArgs";
 export { TranslationRecognitionEventArgs } from "./TranslationRecognitionEventArgs";
 export { TranslationSynthesisEventArgs } from "./TranslationSynthesisEventArgs";
@@ -77,6 +77,10 @@ export { Conversation,
     ConversationTranslationResult,
     ConversationTranslator,
     ConversationTranscriber,
+    ConversationTranscriptionResult,
+    Meeting,
+    MeetingInfo,
+    MeetingTranscriber,
     IParticipant,
     Participant,
     ParticipantChangedReason,
@@ -98,6 +102,7 @@ export { IPlayer } from "./Audio/IPlayer";
 export { SpeakerAudioDestination } from "./Audio/SpeakerAudioDestination";
 export { CancellationEventArgs } from "./CancellationEventArgs";
 export { ConversationTranscriptionCanceledEventArgs } from "./ConversationTranscriptionCanceledEventArgs";
+export { MeetingTranscriptionCanceledEventArgs } from "./MeetingTranscriptionCanceledEventArgs";
 export { PronunciationAssessmentGradingSystem } from "./PronunciationAssessmentGradingSystem";
 export { PronunciationAssessmentGranularity } from "./PronunciationAssessmentGranularity";
 export { PronunciationAssessmentConfig } from "./PronunciationAssessmentConfig";

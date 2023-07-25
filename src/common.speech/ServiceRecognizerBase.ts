@@ -30,6 +30,7 @@ import {
     SessionEventArgs,
     SpeakerRecognitionResult,
     SpeechRecognitionResult,
+    OutputFormat
 } from "../sdk/Exports";
 import { Callback } from "../sdk/Transcription/IConversation";
 import {
@@ -40,7 +41,8 @@ import {
     RequestSession,
     SpeechContext,
     SpeechDetected,
-    type
+    type,
+    OutputFormatPropertyName
 } from "./Exports";
 import {
     AuthInfo,
@@ -55,7 +57,7 @@ interface CustomModel {
     endpoint: string;
 }
 
-interface PhraseDetection {
+export interface PhraseDetection {
     customModels?: CustomModel[];
     onInterim?: { action: string };
     onSuccess?: { action: string };
@@ -63,9 +65,17 @@ interface PhraseDetection {
     INTERACTIVE?: Segmentation;
     CONVERSATION?: Segmentation;
     DICTATION?: Segmentation;
+    speakerDiarization?: SpeakerDiarization;
 }
 
-interface Segmentation {
+export interface SpeakerDiarization {
+    mode?: string;
+    audioSessionId?: string;
+    audioOffsetMs?: number;
+    identityProvider?: string;
+}
+
+export interface Segmentation {
     segmentation: {
         mode: "Custom";
         segmentationSilenceTimeoutMs: number;
@@ -95,13 +105,16 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privSetTimeout: (cb: () => void, delay: number) => number = setTimeout;
     private privAudioSource: IAudioSource;
     private privIsLiveAudio: boolean = false;
+    private privAverageBytesPerMs: number = 0;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId: string;
+    protected privDiarizationSessionId: string;
     protected privRecognizerConfig: RecognizerConfig;
     protected privRecognizer: Recognizer;
     protected privSuccessCallback: (e: SpeechRecognitionResult) => void;
     protected privErrorCallback: (e: string) => void;
+    protected privEnableSpeakerId: boolean = false;
 
     public constructor(
         authentication: IAuthentication,
@@ -126,6 +139,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             throw new ArgumentNullError("recognizerConfig");
         }
 
+        this.privEnableSpeakerId = recognizerConfig.isSpeakerDiarizationEnabled;
         this.privMustReportEndOfStream = false;
         this.privAuthentication = authentication;
         this.privConnectionFactory = connectionFactory;
@@ -159,13 +173,39 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             }
         });
 
-        const phraseDetection: PhraseDetection = {};
+        if (this.privEnableSpeakerId) {
+            this.privDiarizationSessionId = createNoDashGuid();
+        }
 
-        if (recognizerConfig.autoDetectSourceLanguages !== undefined) {
-            const sourceLanguages: string[] = recognizerConfig.autoDetectSourceLanguages.split(",");
+        this.setLanguageIdJson();
+        this.setOutputDetailLevelJson();
+    }
+
+    protected setSpeechSegmentationTimeoutJson(): void{
+        const speechSegmentationTimeout: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
+        if (speechSegmentationTimeout !== undefined) {
+            const mode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
+                this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
+            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
+            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
+            phraseDetection.mode = mode;
+            phraseDetection[mode] = {
+                segmentation: {
+                    mode: "Custom",
+                    segmentationSilenceTimeoutMs
+                }
+            };
+            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+        }
+    }
+
+    protected setLanguageIdJson(): void {
+        if (this.privRecognizerConfig.autoDetectSourceLanguages !== undefined) {
+            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
+            const sourceLanguages: string[] = this.privRecognizerConfig.autoDetectSourceLanguages.split(",");
 
             let speechContextLidMode;
-            if (recognizerConfig.languageIdMode === "Continuous") {
+            if (this.privRecognizerConfig.languageIdMode === "Continuous") {
                 speechContextLidMode = "DetectContinuous";
             } else {// recognizerConfig.languageIdMode === "AtStart"
                 speechContextLidMode = "DetectAtAudioStart";
@@ -186,41 +226,32 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     resultType: "Always"
                 }
             });
-            const customModels: CustomModel[] = recognizerConfig.sourceLanguageModels;
+            const customModels: CustomModel[] = this.privRecognizerConfig.sourceLanguageModels;
             if (customModels !== undefined) {
                 phraseDetection.customModels = customModels;
                 phraseDetection.onInterim = { action: "None" };
                 phraseDetection.onSuccess = { action: "None" };
             }
-        }
-
-        const isEmpty = (obj: object): boolean => {
-            // eslint-disable-next-line guard-for-in, brace-style
-            for (const x in obj) { return false; }
-            return true;
-        };
-
-        if (!isEmpty(phraseDetection)) {
             this.privSpeechContext.setSection("phraseDetection", phraseDetection);
         }
     }
 
-    protected setSpeechSegmentationTimeout(): void{
-        const speechSegmentationTimeout: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
-        if (speechSegmentationTimeout !== undefined) {
-            const mode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
-                this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
-            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
-            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
-            phraseDetection.mode = mode;
-            phraseDetection[mode] = {
-                segmentation: {
-                    mode: "Custom",
-                    segmentationSilenceTimeoutMs
+    protected setOutputDetailLevelJson(): void {
+        if (this.privEnableSpeakerId) {
+            const requestWordLevelTimestamps: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase();
+            if (requestWordLevelTimestamps === "true") {
+                this.privSpeechContext.setWordLevelTimings();
+            } else {
+                const outputFormat: string = this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
+                if (outputFormat === OutputFormat[OutputFormat.Detailed].toLocaleLowerCase()) {
+                    this.privSpeechContext.setDetailedOutputFormat();
                 }
-            };
-            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+            }
         }
+    }
+
+    public get isSpeakerDiarizationEnabled(): boolean {
+        return this.privEnableSpeakerId;
     }
 
     public get audioSource(): IAudioSource {
@@ -297,7 +328,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         // Clear the existing configuration promise to force a re-transmission of config and context.
         this.privConnectionConfigurationPromise = undefined;
         this.privRecognizerConfig.recognitionMode = recoMode;
-        this.setSpeechSegmentationTimeout();
+        this.setSpeechSegmentationTimeoutJson();
 
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallBack;
@@ -582,7 +613,16 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
+    private updateSpeakerDiarizationAudioOffset(): void {
+        const bytesSent: number = this.privRequestSession.recognitionBytesSent;
+        const audioOffsetMs: number = bytesSent / this.privAverageBytesPerMs;
+        this.privSpeechContext.setSpeakerDiarizationAudioOffsetMs(audioOffsetMs);
+    }
+
     protected sendSpeechContext(connection: IConnection, generateNewRequestId: boolean): Promise<void> {
+        if (this.privEnableSpeakerId) {
+            this.updateSpeakerDiarizationAudioOffset();
+        }
         const speechContextJson = this.speechContext.toJSON();
         if (generateNewRequestId) {
             this.privRequestSession.onSpeechContext();
@@ -726,7 +766,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected async sendAudio(audioStreamNode: IAudioStreamNode): Promise<void> {
         const audioFormat: AudioStreamFormatImpl = await this.audioSource.format;
-
+        this.privAverageBytesPerMs = audioFormat.avgBytesPerSec / 1000;
         // The time we last sent data to the service.
         let nextSendTime: number = Date.now();
 
