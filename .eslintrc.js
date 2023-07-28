@@ -12,6 +12,7 @@ https://github.com/typescript-eslint/tslint-to-eslint-config/blob/master/docs/FA
 Happy linting! 💖
 */
 module.exports = {
+    "ignorePatterns": ["**/workers/*.js"],
     "env": {
         "browser": true,
         "node": true

@@ -5,6 +5,7 @@
 src/**/*.js
 tests/**/*.js
 !tests/AudioPlayerTests/server/server.js
+!src/workers/timeout-worker.js
 distrib/*
 secrets/*
 /**/speech.key

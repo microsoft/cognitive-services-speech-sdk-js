@@ -30,7 +30,11 @@
       .pipe(tsProject())
       .pipe(sourcemaps.write('.'))
       .pipe(gulp.dest('distrib/lib'));
+  }, function () {
+    return gulp.src('./src/workers/*')
+      .pipe(gulp.dest('./distrib/lib/src/common'));
   }));
+
 
   gulp.task('build2015', gulp.series(function build() {
     return gulp.src([
@@ -52,7 +56,11 @@
   gulp.task('bundle', gulp.series('build', function bundle() {
     return gulp.src('bundleApp.js')
       .pipe(webpack({
-        output: { filename: 'microsoft.cognitiveservices.speech.sdk.bundle.js' },
+        entry: { 
+          'microsoft.cognitiveservices.speech.sdk.bundle': './bundleApp.js',
+          'precompiled-timeout-worker-web-worker': './distrib/lib/timeout-worker.js'
+        },
+        output: { filename: '[name].js' },
         devtool: 'source-map',
         module: {
           rules: [{
@@ -72,7 +80,7 @@
         ]
       }))
       .pipe(gulp.dest('distrib/browser'));
-  }, function () {
+    }, function () {
     return gulp.src('./src/audioworklet/speech-processor.js')
       .pipe(gulp.dest('./distrib/browser'));
   }));
