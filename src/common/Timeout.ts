@@ -105,8 +105,6 @@ export class Timeout {
 
                         // A timeout can be safely deleted because it is only called once.
                         scheduledTimeoutFunctions.delete(timerId);
-                    } else {
-                        throw new Error("The timer is in an undefined state.");
                     }
                 } else if (Timeout.isClearResponse(data)) {
                     const { id } = data;
