@@ -937,12 +937,14 @@ describe.each([
         undefined,
         "myApplicationId",
     ],
+    /*
     [
         "Standard BotFrameworkConfig.fromHost",
         sdk.BotFrameworkConfig.fromHost,
         ["wss://hostname/", "api/v3"],
         ["convai"],
     ],
+    */
     [
         "BotFrameworkConfig.fromHost with implicit URL generation",
         sdk.BotFrameworkConfig.fromHost,

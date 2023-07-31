@@ -481,5 +481,12 @@ export enum PropertyId {
      * Version of Speaker Recognition API to use.
      * Added in version 1.18.0
      */
-    SpeakerRecognition_Api_Version
+    SpeakerRecognition_Api_Version,
+
+    /**
+     * Specifies whether to allow load of data URL for web worker
+     * Allowed values are "off" and "on". Default is "on".
+     * Added in version 1.32.0
+     */
+    WebWorkerLoadType,
 }
