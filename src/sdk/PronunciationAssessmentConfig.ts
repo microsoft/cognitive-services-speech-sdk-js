@@ -58,6 +58,8 @@ export class PronunciationAssessmentConfig {
      * @param {string} json The json string containing the pronunciation assessment parameters.
      * @return {PronunciationAssessmentConfig} Instance of PronunciationAssessmentConfig
      * @summary Creates an instance of the PronunciationAssessmentConfig from json.
+     * This method is designed to support the pronunciation assessment parameters still in preview.
+     * Under normal circumstances, use the constructor instead.
      */
     public static fromJSON(json: string): PronunciationAssessmentConfig {
         Contracts.throwIfNullOrUndefined(json, "json");
@@ -75,7 +77,7 @@ export class PronunciationAssessmentConfig {
     public applyTo(recognizer: Recognizer): void {
         this.updateJson();
         const recoBase = recognizer.internalData as ServiceRecognizerBase;
-        recoBase.speechContext.setPronunciationAssessmentParams(this.properties.getProperty(PropertyId.PronunciationAssessment_Params));
+        recoBase.speechContext.setPronunciationAssessmentParams(this.properties.getProperty(PropertyId.PronunciationAssessment_Params), recoBase.isSpeakerDiarizationEnabled);
     }
 
     /**
@@ -193,7 +195,11 @@ export class PronunciationAssessmentConfig {
 
         // always set dimension to Comprehensive
         paramsJson.dimension = "Comprehensive";
-        paramsJson.enableMiscue = this.enableMiscue;
+
+        const enableMiscueString = this.privProperties.getProperty(PropertyId.PronunciationAssessment_EnableMiscue);
+        if (enableMiscueString) {
+            paramsJson.enableMiscue = this.enableMiscue;
+        }
 
         this.privProperties.setProperty(PropertyId.PronunciationAssessment_Params, JSON.stringify(paramsJson));
     }

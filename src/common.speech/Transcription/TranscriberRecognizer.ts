@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-
 import { marshalPromiseToCallbacks } from "../../common/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
 import { AudioStreamFormatImpl } from "../../sdk/Audio/AudioStreamFormat";
@@ -10,7 +9,9 @@ import {
     CancellationEventArgs,
     Conversation,
     ConversationInfo,
-    ConversationTranscriber,
+    Meeting,
+    MeetingInfo,
+    MeetingTranscriber,
     PropertyCollection,
     PropertyId,
     Recognizer,
@@ -40,6 +41,8 @@ export class TranscriberRecognizer extends Recognizer {
 
     private privDisposedRecognizer: boolean;
     private privConversation: Conversation;
+    private privMeeting: Meeting;
+    private isMeetingRecognizer: boolean;
 
     /**
      * TranscriberRecognizer constructor.
@@ -60,6 +63,7 @@ export class TranscriberRecognizer extends Recognizer {
 
         super(audioConfig, speechTranslationConfigImpl.properties, new TranscriberConnectionFactory());
         this.privDisposedRecognizer = false;
+        this.isMeetingRecognizer = false;
     }
 
     public get speechRecognitionLanguage(): string {
@@ -83,12 +87,28 @@ export class TranscriberRecognizer extends Recognizer {
 
     public set conversation(c: Conversation) {
         Contracts.throwIfNullOrUndefined(c, "Conversation");
+        this.isMeetingRecognizer = false;
         this.privConversation = c;
     }
 
     public getConversationInfo(): ConversationInfo {
         Contracts.throwIfNullOrUndefined(this.privConversation, "Conversation");
         return this.privConversation.conversationInfo;
+    }
+
+    public set meeting(m: Meeting) {
+        Contracts.throwIfNullOrUndefined(m, "Meeting");
+        this.isMeetingRecognizer = true;
+        this.privMeeting = m;
+    }
+
+    public getMeetingInfo(): MeetingInfo {
+        Contracts.throwIfNullOrUndefined(this.privMeeting, "Meeting");
+        return this.privMeeting.meetingInfo;
+    }
+
+    public IsMeetingRecognizer(): boolean {
+        return this.isMeetingRecognizer;
     }
 
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
@@ -112,21 +132,28 @@ export class TranscriberRecognizer extends Recognizer {
         await reco.sendSpeechEventAsync(conversationInfo, command);
     }
 
-    public async enforceAudioGating(): Promise<void> {
+    // Push async join/leave meeting message via serviceRecognizer
+    public async pushMeetingEvent(meetingInfo: MeetingInfo, command: string): Promise<void> {
+        const reco = (this.privReco) as TranscriptionServiceRecognizer;
+        Contracts.throwIfNullOrUndefined(reco, "serviceRecognizer");
+        await reco.sendMeetingSpeechEventAsync(meetingInfo, command);
+    }
+
+    public async checkAudioConfiguration(): Promise<void> {
         const audioConfigImpl = this.audioConfig as AudioConfigImpl;
         const format: AudioStreamFormatImpl = await audioConfigImpl.format;
         const channels = format.channels;
         if (channels === 1) {
-            if (this.properties.getProperty("f0f5debc-f8c9-4892-ac4b-90a7ab359fd2", "false").toLowerCase() !== "true") {
-                throw new Error("Single channel audio configuration for ConversationTranscriber is currently under private preview, please contact diarizationrequest@microsoft.com for more details");
-            }
+            // We use this GUID property to indicate that single channel audio is in use for MeetingTranscriber.
+            this.properties.setProperty("f0f5debc-f8c9-4892-ac4b-90a7ab359fd2", "true");
         } else if (channels !== 8) {
             throw new Error(`Unsupported audio configuration: Detected ${channels}-channel audio`);
         }
         return;
     }
 
-    public connectCallbacks(transcriber: ConversationTranscriber): void {
+    public connectMeetingCallbacks(transcriber: MeetingTranscriber): void {
+        this.isMeetingRecognizer = true;
         this.canceled = (s: any, e: CancellationEventArgs): void => {
             if (!!transcriber.canceled) {
                 transcriber.canceled(transcriber, e);

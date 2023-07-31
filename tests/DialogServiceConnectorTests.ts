@@ -938,6 +938,7 @@ describe.each([
         "myApplicationId",
     ],
     /*
+    // TODO: debug and re-enable
     [
         "Standard BotFrameworkConfig.fromHost",
         sdk.BotFrameworkConfig.fromHost,

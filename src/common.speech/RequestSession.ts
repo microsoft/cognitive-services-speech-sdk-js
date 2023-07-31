@@ -35,6 +35,7 @@ export class RequestSession {
     private privLastRecoOffset: number = 0;
     private privHypothesisReceived: boolean = false;
     private privBytesSent: number = 0;
+    private privRecognitionBytesSent: number = 0;
     private privRecogNumber: number = 0;
     private privSessionId: string;
     private privTurnDeferral: Deferred<void>;
@@ -92,6 +93,13 @@ export class RequestSession {
     public get bytesSent(): number {
         return this.privBytesSent;
     }
+
+    // The number of bytes sent for the current recognition.
+    // Counter is reset to 0 each time recognition is started.
+    public get recognitionBytesSent(): number {
+        return this.privRecognitionBytesSent;
+    }
+
     public listenForServiceTelemetry(eventSource: IEventSource<PlatformEvent>): void {
         if (!!this.privServiceTelemetryListener) {
             this.privDetachables.push(eventSource.attachListener(this.privServiceTelemetryListener));
@@ -99,6 +107,7 @@ export class RequestSession {
     }
 
     public startNewRecognition(): void {
+        this.privRecognitionBytesSent = 0;
         this.privIsSpeechEnded = false;
         this.privIsRecognizing = true;
         this.privTurnStartAudioOffset = 0;
@@ -196,6 +205,7 @@ export class RequestSession {
 
     public onAudioSent(bytesSent: number): void {
         this.privBytesSent += bytesSent;
+        this.privRecognitionBytesSent += bytesSent;
     }
 
     public onRetryConnection(): void {
