@@ -820,7 +820,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         if (!!this.privTranscriberRecognizer) {
             await this.privTranscriberRecognizer.close();
         }
-        await recognizer.checkAudioConfiguration();
+        await recognizer.enforceAudioGating();
         this.privTranscriberRecognizer = recognizer;
         this.privTranscriberRecognizer.conversation = this;
     }
