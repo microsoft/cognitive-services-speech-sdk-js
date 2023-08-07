@@ -10,5 +10,11 @@ export interface IVoiceJson {
     Gender: string;
     VoiceType: string;
     Locale: string;
-    StyleList: string[]
+    StyleList: string[];
+    SampleRateHertz: string;
+    Status: string;
+    ExtendedPropertyMap?: any;
+    WordsPerMinute: string;
+    SecondaryLocaleList?: string[];
+    RolePlayList?: string[];
 }

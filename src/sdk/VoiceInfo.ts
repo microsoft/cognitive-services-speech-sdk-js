@@ -50,6 +50,12 @@ export class VoiceInfo {
     private privGender: SynthesisVoiceGender;
     private privVoiceType: SynthesisVoiceType;
     private privStyleList: IVoiceJson["StyleList"] = [];
+    private privSampleRateHertz: IVoiceJson["SampleRateHertz"];
+    private privStatus: IVoiceJson["Status"];
+    private privExtendedPropertyMap: IVoiceJson["ExtendedPropertyMap"];
+    private privWordsPerMinute: IVoiceJson["WordsPerMinute"];
+    private privSecondaryLocaleList: IVoiceJson["SecondaryLocaleList"];
+    private privRolePlayList: IVoiceJson["RolePlayList"];
 
     public constructor(json: IVoiceJson) {
         if (!!json) {
@@ -66,6 +72,24 @@ export class VoiceInfo {
                 for (const style of json.StyleList) {
                     this.privStyleList.push(style);
                 }
+            }
+
+            this.privSampleRateHertz = json.SampleRateHertz;
+            this.privStatus = json.Status;
+
+            if (json.ExtendedPropertyMap) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                this.privExtendedPropertyMap = json.ExtendedPropertyMap;
+            }
+
+            this.privWordsPerMinute = json.WordsPerMinute;
+
+            if (Array.isArray(json.SecondaryLocaleList)) {
+                this.privSecondaryLocaleList = [...json.SecondaryLocaleList];
+            }
+
+            if (Array.isArray(json.RolePlayList)) {
+                this.privRolePlayList = [...json.RolePlayList];
             }
         }
     }
@@ -104,5 +128,30 @@ export class VoiceInfo {
 
     public get styleList(): IVoiceJson["StyleList"] {
         return this.privStyleList;
+    }
+
+    public get sampleRateHertz(): IVoiceJson["SampleRateHertz"] {
+        return this.privSampleRateHertz;
+    }
+
+    public get status(): IVoiceJson["Status"] {
+        return this.privStatus;
+    }
+
+    public get extendedPropertyMap(): IVoiceJson["ExtendedPropertyMap"] {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.privExtendedPropertyMap;
+    }
+
+    public get wordsPerMinute(): IVoiceJson["WordsPerMinute"] {
+        return this.privWordsPerMinute;
+    }
+
+    public get secondaryLocaleList(): IVoiceJson["SecondaryLocaleList"] {
+        return this.privSecondaryLocaleList;
+    }
+
+    public get rolePlayList(): IVoiceJson["RolePlayList"] {
+        return this.privRolePlayList;
     }
 }
