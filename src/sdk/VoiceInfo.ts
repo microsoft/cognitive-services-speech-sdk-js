@@ -39,10 +39,8 @@ export class VoiceInfo {
     private privGender: SynthesisVoiceGender;
     private privVoiceType: SynthesisVoiceType;
     private privStyleList: string[] = [];
-    private privVoicePath: string;
 
     public constructor(json: { Name: string; LocalName: string; DisplayName: string; ShortName: string; Gender: string; VoiceType: string; LocaleName: string ; Locale: string; StyleList: string[] }) {
-        this.privVoicePath = "";
         if (!!json) {
             this.privName = json.Name;
             this.privLocale = json.Locale;
@@ -94,9 +92,5 @@ export class VoiceInfo {
 
     public get styleList(): string[] {
         return this.privStyleList;
-    }
-
-    public get voicePath(): string {
-        return this.privVoicePath;
     }
 }
