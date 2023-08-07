@@ -360,8 +360,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
         });
 }, 10000);
 
-// TODO: fix and re-enable (Translation service change)
-test.skip("MultiPhrase", (done: jest.DoneCallback) => {
+test("MultiPhrase", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: MultiPhrase");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
