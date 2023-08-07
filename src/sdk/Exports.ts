@@ -110,3 +110,4 @@ export { PronunciationAssessmentResult } from "./PronunciationAssessmentResult";
 export { LanguageIdMode } from "./LanguageIdMode";
 export { Diagnostics } from "./Diagnostics";
 export { LogLevel } from "./LogLevel";
+export { IVoiceJson } from "./IVoiceJson";
