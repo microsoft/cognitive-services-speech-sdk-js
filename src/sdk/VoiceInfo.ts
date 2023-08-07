@@ -16,7 +16,10 @@ export enum SynthesisVoiceGender {
     Female,
 
     /** Male voice */
-    Male
+    Male,
+
+    /** Neutral voice */
+    Neutral
 }
 
 export enum SynthesisVoiceType {
@@ -25,6 +28,12 @@ export enum SynthesisVoiceType {
     OfflineNeural = 3,
     OfflineStandard = 4,
 }
+
+const GENDER_LOOKUP: Record<string, SynthesisVoiceGender> = {
+    [SynthesisVoiceGender[SynthesisVoiceGender.Neutral]]: SynthesisVoiceGender.Neutral,
+    [SynthesisVoiceGender[SynthesisVoiceGender.Male]]: SynthesisVoiceGender.Male,
+    [SynthesisVoiceGender[SynthesisVoiceGender.Female]]: SynthesisVoiceGender.Female,
+};
 
 /**
  * Information about Speech Synthesis voice
@@ -51,7 +60,8 @@ export class VoiceInfo {
             this.privDisplayName = json.DisplayName;
             this.privLocalName = json.LocalName;
             this.privVoiceType = json.VoiceType.endsWith("Standard") ? SynthesisVoiceType.OnlineStandard : SynthesisVoiceType.OnlineNeural;
-            this.privGender = json.Gender === "Male" ? SynthesisVoiceGender.Male : json.Gender === "Female" ? SynthesisVoiceGender.Female : SynthesisVoiceGender.Unknown;
+            this.privGender = GENDER_LOOKUP[json.Gender] || SynthesisVoiceGender.Unknown;
+
             if (!!json.StyleList && Array.isArray(json.StyleList)) {
                 for (const style of json.StyleList) {
                     this.privStyleList.push(style);
