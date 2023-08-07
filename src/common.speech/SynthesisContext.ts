@@ -5,7 +5,7 @@ import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
 import { PropertyId, SpeechSynthesizer } from "../sdk/Exports";
 
 /**
- * Represents the JSON used in the synthesis.context message sent to the speech service.
+ * Represents the JSON used in the `synthesis.context` message sent to the speech service.
  * The dynamic grammar is always refreshed from the encapsulated dynamic grammar object.
  */
 export class SynthesisContext {
@@ -60,7 +60,7 @@ export class SynthesisContext {
             },
             language: {
                 autoDetection: this.privSpeechSynthesizer.autoDetectSourceLanguage
-            }
+            },
         } as ISynthesisSection;
     }
 }
