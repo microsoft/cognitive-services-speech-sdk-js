@@ -10,16 +10,14 @@ import {
     CancellationErrorCode,
     CancellationReason,
     ConversationTranscriptionCanceledEventArgs,
-    MeetingTranscriptionCanceledEventArgs,
     PropertyCollection,
     PropertyId,
     ResultReason,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
 } from "../sdk/Exports";
-import { ConversationInfo, MeetingInfo } from "../sdk/Transcription/Exports";
+import { ConversationInfo } from "../sdk/Transcription/Exports";
 import { ConversationProperties } from "../sdk/Transcription/IConversation";
-import { MeetingProperties } from "../sdk/Transcription/IMeeting";
 import {
     CancellationErrorCodePropertyName,
     ConversationServiceRecognizer,
@@ -53,13 +51,6 @@ export class TranscriptionServiceRecognizer extends ConversationServiceRecognize
         if (!!this.privRequestSession.isRecognizing) {
             const connection: IConnection = await this.fetchConnection();
             await this.sendSpeechEvent(connection, this.createSpeechEventPayload(info, command));
-        }
-    }
-
-    public async sendMeetingSpeechEventAsync(info: MeetingInfo, command: string): Promise<void> {
-        if (!!this.privRequestSession.isRecognizing) {
-            const connection: IConnection = await this.fetchConnection();
-            await this.sendSpeechEvent(connection, this.createMeetingSpeechEventPayload(info, command));
         }
     }
 
@@ -114,32 +105,17 @@ export class TranscriptionServiceRecognizer extends ConversationServiceRecognize
         const properties: PropertyCollection = new PropertyCollection();
         properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
 
-        if (this.privTranscriberRecognizer.IsMeetingRecognizer()) {
-            if (!!this.privTranscriberRecognizer.canceled) {
-                const cancelEvent: MeetingTranscriptionCanceledEventArgs = new MeetingTranscriptionCanceledEventArgs(
-                    cancellationReason,
-                    error,
-                    errorCode,
-                    undefined,
-                    sessionId);
-                try {
-                    this.privTranscriberRecognizer.canceled(this.privTranscriberRecognizer, cancelEvent);
-                    /* eslint-disable no-empty */
-                } catch { }
-            }
-        } else {
-            if (!!this.privTranscriberRecognizer.canceled) {
-                const cancelEvent: ConversationTranscriptionCanceledEventArgs = new ConversationTranscriptionCanceledEventArgs(
-                    cancellationReason,
-                    error,
-                    errorCode,
-                    undefined,
-                    sessionId);
-                try {
-                    this.privTranscriberRecognizer.canceled(this.privTranscriberRecognizer, cancelEvent);
-                    /* eslint-disable no-empty */
-                } catch { }
-            }
+        if (!!this.privTranscriberRecognizer.canceled) {
+            const cancelEvent: ConversationTranscriptionCanceledEventArgs = new ConversationTranscriptionCanceledEventArgs(
+                cancellationReason,
+                error,
+                errorCode,
+                undefined,
+                sessionId);
+            try {
+                this.privTranscriberRecognizer.canceled(this.privTranscriberRecognizer, cancelEvent);
+                /* eslint-disable no-empty */
+            } catch { }
         }
 
         if (!!this.privSuccessCallback) {
@@ -166,15 +142,9 @@ export class TranscriptionServiceRecognizer extends ConversationServiceRecognize
     // Encapsulated for derived service recognizers that need to send additional JSON
     protected async sendTranscriptionStartJSON(connection: IConnection): Promise<void> {
         await this.sendSpeechContext(connection, true);
-        if (this.privTranscriberRecognizer.IsMeetingRecognizer()) {
-            const info: MeetingInfo = this.privTranscriberRecognizer.getMeetingInfo();
-            const payload: { [id: string]: any } = this.createMeetingSpeechEventPayload(info, "start");
-            await this.sendSpeechEvent(connection, payload);
-        } else {
-            const info: ConversationInfo = this.privTranscriberRecognizer.getConversationInfo();
-            const payload: { [id: string]: any } = this.createSpeechEventPayload(info, "start");
-            await this.sendSpeechEvent(connection, payload);
-        }
+        const info: ConversationInfo = this.privTranscriberRecognizer.getConversationInfo();
+        const payload: { [id: string]: any } = this.createSpeechEventPayload(info, "start");
+        await this.sendSpeechEvent(connection, payload);
         await this.sendWaveHeader(connection);
         return;
     }
@@ -197,14 +167,7 @@ export class TranscriptionServiceRecognizer extends ConversationServiceRecognize
         const eventDict: { id: string; name: string; meeting: ConversationProperties } = { id: "meeting", name: command, meeting: info.conversationProperties };
         eventDict.meeting.id = info.id;
         eventDict.meeting.attendees = info.participants;
+        eventDict.meeting.record = info.conversationProperties.audiorecording === "on" ? "true" : "false";
         return eventDict;
     }
-
-    private createMeetingSpeechEventPayload(info: MeetingInfo, command: string): { [id: string]: any } {
-        const eventDict: { id: string; name: string; meeting: MeetingProperties } = { id: "meeting", name: command, meeting: info.meetingProperties };
-        eventDict.meeting.id = info.id;
-        eventDict.meeting.attendees = info.participants;
-        return eventDict;
-    }
-
 }

@@ -79,17 +79,8 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         this.privProperties = serviceConfigImpl.properties.clone();
         this.privConnection = Connection.fromRecognizer(this);
         const webWorkerLoadType: string = this.privProperties.getProperty(PropertyId.WebWorkerLoadType, "on").toLowerCase();
-        if (webWorkerLoadType === "on" && typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {
-            this.privSetTimeout = Timeout.setTimeout;
-            this.privClearTimeout = Timeout.clearTimeout;
-        } else {
-            if (typeof window !== "undefined") {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                this.privSetTimeout = window.setTimeout.bind(window);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                this.privClearTimeout = window.clearTimeout.bind(window);
-            }
-        }
+        this.privSetTimeout = (webWorkerLoadType === "on" && typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.setTimeout : setTimeout;
+        this.privClearTimeout = (webWorkerLoadType === "on" && typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.clearTimeout : clearTimeout;
     }
 
     public canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;

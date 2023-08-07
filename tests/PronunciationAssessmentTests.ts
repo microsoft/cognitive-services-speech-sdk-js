@@ -150,7 +150,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         objsToClose.push(r);
 
         const p: sdk.PronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig(Settings.WaveFileText,
-            PronunciationAssessmentGradingSystem.HundredMark, PronunciationAssessmentGranularity.Phoneme, false);
+            PronunciationAssessmentGradingSystem.HundredMark, PronunciationAssessmentGranularity.Phoneme, true);
         objsToClose.push(p);
         p.applyTo(r);
 
@@ -178,56 +178,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(pronResult.detailResult.Words[0].Word).not.toBeUndefined();
                 expect(pronResult.detailResult.Words[0].Phonemes[0].Phoneme).not.toBeUndefined();
                 expect(pronResult.detailResult.Words[0].Syllables[0].Syllable).not.toBeUndefined();
-                expect(pronResult.pronunciationScore).toBeGreaterThan(0);
-                expect(pronResult.accuracyScore).toBeGreaterThan(0);
-                expect(pronResult.fluencyScore).toBeGreaterThan(0);
-                expect(pronResult.completenessScore).toBeGreaterThan(0);
-                done();
-            } catch (error) {
-                done(error);
-            }
-        }, (error: string) => {
-            done(error);
-        });
-    });
-
-    test("test Pronunciation Assessment with miscue enabled", (done: jest.DoneCallback) => {
-        // eslint-disable-next-line no-console
-        console.info("Name: test Pronunciation Assessment with miscue enabled");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
-        objsToClose.push(s);
-
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s, Settings.WaveFile);
-        objsToClose.push(r);
-
-        const p: sdk.PronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig(Settings.WaveFileText + " buddy",
-            PronunciationAssessmentGradingSystem.HundredMark, PronunciationAssessmentGranularity.Phoneme, true);
-        objsToClose.push(p);
-        p.applyTo(r);
-
-        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-            try {
-                expect(e.errorDetails).toBeUndefined();
-            } catch (error) {
-                done(error);
-            }
-        };
-
-        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
-            try {
-                expect(result).not.toBeUndefined();
-                expect(result.errorDetails).toBeUndefined();
-                expect(result.text).toEqual(Settings.WaveFileText);
-                expect(result.properties).not.toBeUndefined();
-                const jsonString = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
-                expect(jsonString).not.toBeUndefined();
-                const jsonResult = JSON.parse(jsonString);
-                expect(jsonResult.SNR).toBeGreaterThan(0);
-                const pronResult = sdk.PronunciationAssessmentResult.fromResult(result);
-                expect(pronResult).not.toBeUndefined();
-                expect(pronResult.detailResult).not.toBeUndefined();
-                expect(pronResult.detailResult.Words[4].Word).not.toBeUndefined();
-                expect(pronResult.detailResult.Words[4].PronunciationAssessment.ErrorType).toEqual("Omission")
                 expect(pronResult.pronunciationScore).toBeGreaterThan(0);
                 expect(pronResult.accuracyScore).toBeGreaterThan(0);
                 expect(pronResult.fluencyScore).toBeGreaterThan(0);

@@ -33,7 +33,6 @@ export class VoiceInfo {
     private privName: string;
     private privLocale: string;
     private privShortName: string;
-    private privDisplayName: string;
     private privLocalName: string;
     private privLocaleName: string;
     private privGender: SynthesisVoiceGender;
@@ -41,14 +40,13 @@ export class VoiceInfo {
     private privStyleList: string[] = [];
     private privVoicePath: string;
 
-    public constructor(json: { Name: string; LocalName: string; DisplayName: string; ShortName: string; Gender: string; VoiceType: string; LocaleName: string ; Locale: string; StyleList: string[] }) {
+    public constructor(json: { Name: string; LocalName: string; ShortName: string; Gender: string; VoiceType: string; LocaleName: string ; Locale: string; StyleList: string[] }) {
         this.privVoicePath = "";
         if (!!json) {
             this.privName = json.Name;
             this.privLocale = json.Locale;
             this.privShortName = json.ShortName;
             this.privLocaleName = json.LocaleName;
-            this.privDisplayName = json.DisplayName;
             this.privLocalName = json.LocalName;
             this.privVoiceType = json.VoiceType.endsWith("Standard") ? SynthesisVoiceType.OnlineStandard : SynthesisVoiceType.OnlineNeural;
             this.privGender = json.Gender === "Male" ? SynthesisVoiceGender.Male : json.Gender === "Female" ? SynthesisVoiceGender.Female : SynthesisVoiceGender.Unknown;
@@ -70,10 +68,6 @@ export class VoiceInfo {
 
     public get shortName(): string {
         return this.privShortName;
-    }
-
-    public get displayName(): string {
-        return this.privDisplayName;
     }
 
     public get localName(): string {

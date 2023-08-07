@@ -4,7 +4,6 @@
 import { Contracts } from "./Contracts";
 import {
     SpeechRecognitionResult,
-    ConversationTranscriptionResult
 } from "./Exports";
 
 /**
@@ -34,18 +33,6 @@ export class AutoDetectSourceLanguageResult {
     public static fromResult(result: SpeechRecognitionResult): AutoDetectSourceLanguageResult {
         return new AutoDetectSourceLanguageResult(result.language, result.languageDetectionConfidence);
     }
-
-    /**
-     * Creates an instance of AutoDetectSourceLanguageResult object from a ConversationTranscriptionResult instance.
-     * @member AutoDetectSourceLanguageResult.fromConversationTranscriptionResult
-     * @function
-     * @public
-     * @param {ConversationTranscriptionResult} result - The transcription result.
-     * @returns {AutoDetectSourceLanguageResult} AutoDetectSourceLanguageResult object being created.
-     */
-        public static fromConversationTranscriptionResult(result: ConversationTranscriptionResult): AutoDetectSourceLanguageResult {
-            return new AutoDetectSourceLanguageResult(result.language, result.languageDetectionConfidence);
-        }
 
     public get language(): string {
         return this.privLanguage;

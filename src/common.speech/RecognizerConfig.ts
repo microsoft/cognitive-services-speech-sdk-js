@@ -23,7 +23,6 @@ export class RecognizerConfig {
     private privRecognitionActivityTimeout: number;
     private privParameters: PropertyCollection;
     private privMaxRetryCount: number;
-    private privEnableSpeakerId: boolean;
 
     public constructor(
         speechServiceConfig: SpeechServiceConfig,
@@ -32,7 +31,6 @@ export class RecognizerConfig {
         this.privParameters = parameters;
         this.privMaxRetryCount = parseInt(parameters.getProperty("SPEECH-Error-MaxRetryCount", "4"), 10);
         this.privLanguageIdMode = parameters.getProperty(PropertyId.SpeechServiceConnection_LanguageIdMode, undefined);
-        this.privEnableSpeakerId = false;
     }
 
     public get parameters(): PropertyCollection {
@@ -93,14 +91,6 @@ export class RecognizerConfig {
 
     public get maxRetryCount(): number {
         return this.privMaxRetryCount;
-    }
-
-    public get isSpeakerDiarizationEnabled(): boolean {
-        return this.privEnableSpeakerId;
-    }
-
-    public set isSpeakerDiarizationEnabled(value: boolean) {
-        this.privEnableSpeakerId = value;
     }
 }
 
