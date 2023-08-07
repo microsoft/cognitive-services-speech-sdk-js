@@ -88,6 +88,9 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
                 this.privSetTimeout = window.setTimeout.bind(window);
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 this.privClearTimeout = window.clearTimeout.bind(window);
+            } else {
+                this.privSetTimeout = setTimeout;
+                this.privClearTimeout = clearTimeout;
             }
         }
     }
