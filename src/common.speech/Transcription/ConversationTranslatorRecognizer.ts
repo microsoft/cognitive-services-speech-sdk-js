@@ -3,6 +3,7 @@
 
 // eslint-disable-next-line max-classes-per-file
 import {
+    CognitiveTokenAuthentication,
     IAuthentication,
     IConnectionFactory,
     RecognizerConfig,
@@ -205,6 +206,13 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
             });
 
         }
+    }
+
+    /**
+     * Handle update of conversation token (#694)
+     */
+    public onConversationToken(token: CognitiveTokenAuthentication): void {
+        void token;
     }
 
     /**
