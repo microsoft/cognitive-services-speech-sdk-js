@@ -209,10 +209,10 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
     }
 
     /**
-     * Handle update of conversation token (#694)
+     * Handle update of service auth token (#694)
      */
-    public onConversationToken(token: CognitiveTokenAuthentication): void {
-        void token;
+    public onToken(token: CognitiveTokenAuthentication): void {
+        this.privReco.authentication = token;
     }
 
     /**
