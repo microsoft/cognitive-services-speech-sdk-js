@@ -724,8 +724,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     }, 15000);
 
-    // TODO: fix and re-enable (Translation service change)
-    test.skip("Silence After Speech", (done: jest.DoneCallback) => {
+    test("Silence After Speech", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Silence After Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
@@ -793,8 +792,8 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             WaitForCondition(() => (canceled && !inTurn), () => {
                 r.stopContinuousRecognitionAsync(() => {
                     try {
-                        expect(speechEnded).toBeGreaterThanOrEqual(noMatchCount);
-                        expect(noMatchCount).toBeGreaterThanOrEqual(3);
+                        expect(speechEnded).toEqual(noMatchCount);
+                        expect(noMatchCount).toEqual(2);
                         done();
                     } catch (error) {
                         done(error);
