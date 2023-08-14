@@ -152,17 +152,10 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             ServiceRecognizerBase.telemetryData = undefined;
         });
 
-        // TODO: fix and re-enable (Translation service change)
-        test.skip("RecognizeOnceAsync1", (done: jest.DoneCallback) => {
+        test("RecognizeOnceAsync1", (done: jest.DoneCallback) => {
             // eslint-disable-next-line no-console
             console.info("Name: RecognizeOnceAsync1");
-            const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
-            objsToClose.push(s);
-
-            const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.LongerWaveFile);
-            objsToClose.push(a);
-
-            const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s, a);
+            const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
             objsToClose.push(r);
 
             let telemetryEvents: number = 0;
@@ -184,7 +177,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                     json.indexOf(sessionId) > 0) {
                     try {
                         expect(hypoCounter).toBeGreaterThanOrEqual(1);
-                        validateTelemetry(json, 1, hypoCounter); 
+                        validateTelemetry(json, 2, hypoCounter); // 2 phrases because the extra silence at the end of conversation mode. 
                     } catch (error) {
                         done(error);
                     }
@@ -209,17 +202,14 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 }
             };
 
-            const expectedText = "Hello. It's a good day for me to teach you the sound of my voice. You have learned what I look like";
-            const expectedTranslation = "Hallo. Es ist ein guter Tag für mich, um dir den Klang meiner Stimme beizubringen. Du hast gelernt";
-
             r.recognizeOnceAsync(
                 (res: sdk.TranslationRecognitionResult) => {
                     expect(res).not.toBeUndefined();
                     expect(res.errorDetails).toBeUndefined();
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
                     expect(res.translations.get("de", undefined) !== undefined).toEqual(true);
-                    expect(res.translations.get("de", "")).toContain(expectedTranslation);
-                    expect(res.text).toContain(expectedText);
+                    expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
+                    expect(res.text).toEqual("What's the weather like?");
                 },
                 (error: string) => {
                     done(error);
