@@ -37,6 +37,7 @@ export class TalkingAvatarVideoFormat {
 
     /**
      * Creates and initializes an instance of this class.
+     * @constructor
      * @param {string} codec - The video codec.
      * @param {number} bitrate - The video bitrate.
      * @param {number} width - The video width.

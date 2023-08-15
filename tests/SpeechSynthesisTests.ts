@@ -995,14 +995,19 @@ describe("Service based tests", () => {
             console.info("Avatar event received " + e.type);
         };
 
-        const webrtcConnectionInfo: sdk.TalkingAvatarWebRTCConnectionInfo = new sdk.TalkingAvatarWebRTCConnectionInfo(
-            "<your webrtc connection SDP>", ["<your webrtc connection ICE server list>"],
-            "<your webrtc connection ICE username>", "<your webrtc connection ICE credential>");
+        const iceServer: RTCIceServer = {
+            urls: ["<your webrtc connection ICE server list>"],
+            username: "<your webrtc connection ICE username>",
+            credential: "<your webrtc connection ICE credential>"
+        }
+        const peerConnection: RTCPeerConnection = new RTCPeerConnection(
+            { iceServers: [iceServer] },
+        );
+        const sdpOffer: RTCSessionDescriptionInit = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(sdpOffer);
 
-        const webrtcConnectionResult = await avatarSynthesizer.startTalkingAvatarAsync(webrtcConnectionInfo);
-        console.info("WebRTC connection SDP answer: " + webrtcConnectionResult.SDPAnswer);
-        // some other code to establish WebRTC connection with the SDP answer
-        // waiting for WebRTC connection established
+        const webrtcConnectionResult = await avatarSynthesizer.startTalkingAvatarAsync(peerConnection);
+        expect(webrtcConnectionResult.reason).toEqual(sdk.ResultReason.SynthesizingAudioStarted);
 
         // start speaking, the audio will be streamed to the WebRTC connection
         await avatarSynthesizer.speakSsmlAsync("<ssml>");

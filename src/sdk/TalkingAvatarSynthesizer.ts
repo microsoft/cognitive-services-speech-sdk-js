@@ -42,11 +42,18 @@ export class TalkingAvatarSynthesizer {
      * @member TalkingAvatarSynthesizer.prototype.startTalkingAvatarAsync
      * @function
      * @public
-     * @param {TalkingAvatarWebRTCConnectionInfo} webrtcConnectionInfo - The WebRTC connection info.
-     * @returns {Promise<TalkingAvatarWebRTCConnectionResult>} The promise of the connection result.
+     * @param {TalkingAvatarWebRTCConnectionInfo} peerConnection - The peer connection.
+     * @returns {Promise<SynthesisResult>} The promise of the connection result.
      */
-    public async startTalkingAvatarAsync(webrtcConnectionInfo: TalkingAvatarWebRTCConnectionInfo): Promise<TalkingAvatarWebRTCConnectionResult> {
+    public async startTalkingAvatarAsync(peerConnection: RTCPeerConnection): Promise<SynthesisResult> {
+        const sdp: RTCSessionDescriptionInit = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(sdp);
         // todo: implement
+        const x: RTCSessionDescription = new RTCSessionDescription();
+        await peerConnection.setRemoteDescription(x);
+        return new SynthesisResult(
+            "someid",
+        )
     }
 
     /**
@@ -59,6 +66,9 @@ export class TalkingAvatarSynthesizer {
      */
     public async speakSsmlAsync(ssml: string): Promise<SynthesisResult> {
         // todo: implement
+        return new SynthesisResult(
+            "someid",
+        )
     }
 
     /**
