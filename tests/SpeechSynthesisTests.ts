@@ -978,4 +978,39 @@ describe("Service based tests", () => {
             done(e);
         });
     });
+
+    test("testTalkingAvatarSynthesizerDemo", async (done: jest.DoneCallback) => {
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        const videoFormat: sdk.TalkingAvatarVideoFormat = new sdk.TalkingAvatarVideoFormat(
+            /*codec*/ "h264",
+            /*bitrate*/ 2000000,
+            /*width*/ 1920,
+            /*height*/ 1080,
+            /*background*/ "white");
+        const avatarConfig: sdk.TalkingAvatarConfig = new sdk.TalkingAvatarConfig(
+            /*character*/ "lisa", /*style*/ "casual-sitting", videoFormat);
+        const avatarSynthesizer: sdk.TalkingAvatarSynthesizer = new sdk.TalkingAvatarSynthesizer(speechConfig, avatarConfig);
+        avatarSynthesizer.eventReceived = (o: sdk.TalkingAvatarSynthesizer, e: sdk.TalkingAvatarEventArgs): void => {
+            // eslint-disable-next-line no-console
+            console.info("Avatar event received " + e.type);
+        };
+
+        const webrtcConnectionInfo: sdk.TalkingAvatarWebRTCConnectionInfo = new sdk.TalkingAvatarWebRTCConnectionInfo(
+            "<your webrtc connection SDP>", ["<your webrtc connection ICE server list>"],
+            "<your webrtc connection ICE username>", "<your webrtc connection ICE credential>");
+
+        const webrtcConnectionResult = await avatarSynthesizer.startTalkingAvatarAsync(webrtcConnectionInfo);
+        console.info("WebRTC connection SDP answer: " + webrtcConnectionResult.SDPAnswer);
+        // some other code to establish WebRTC connection with the SDP answer
+        // waiting for WebRTC connection established
+
+        // start speaking, the audio will be streamed to the WebRTC connection
+        await avatarSynthesizer.speakSsmlAsync("<ssml>");
+
+        // wait a while and stop speaking, the avatar will stop speaking switch to idle state.
+        await avatarSynthesizer.stopSpeakingAsync();
+
+        // stop the avatar synthesizer and close the WebRTC connection.
+        await avatarSynthesizer.stopTalkingAvatarAsync();
+    });
 });

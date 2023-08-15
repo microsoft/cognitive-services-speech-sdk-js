@@ -108,5 +108,11 @@ export { PronunciationAssessmentGranularity } from "./PronunciationAssessmentGra
 export { PronunciationAssessmentConfig } from "./PronunciationAssessmentConfig";
 export { PronunciationAssessmentResult } from "./PronunciationAssessmentResult";
 export { LanguageIdMode } from "./LanguageIdMode";
+export { TalkingAvatarConfig } from "./TalkingAvatarConfig";
+export { TalkingAvatarEventArgs } from "./TalkingAvatarEventArgs";
+export { TalkingAvatarSynthesizer } from "./TalkingAvatarSynthesizer";
+export { TalkingAvatarVideoFormat } from "./TalkingAvatarVideoFormat";
+export { TalkingAvatarWebRTCConnectionInfo } from "./TalkingAvatarWebRTCConnectionInfo";
+export { TalkingAvatarWebRTCConnectionResult } from "./TalkingAvatarWebRTCConnectionResult";
 export { Diagnostics } from "./Diagnostics";
 export { LogLevel } from "./LogLevel";
