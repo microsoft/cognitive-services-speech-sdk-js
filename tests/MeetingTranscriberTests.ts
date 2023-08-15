@@ -122,6 +122,20 @@ test("CreateMeeting", () => {
     expect(m.properties).not.toBeUndefined();
 });
 
+test("NullMeetingId", () => {
+    let s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    // Since we're not going to return it, mark it for closure.
+    objsToClose.push(s);
+    expect(() => sdk.Meeting.createMeetingAsync(s, null)).toThrow();
+});
+
+test("EmptyMeetingId", () => {
+    let s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    // Since we're not going to return it, mark it for closure.
+    objsToClose.push(s);
+    expect(() => sdk.Meeting.createMeetingAsync(s, "")).toThrow();
+});
+
 test("CreateMeetingTranscriber", () => {
     // eslint-disable-next-line no-console
     console.info("Name: CreateMeetingTranscriber");
