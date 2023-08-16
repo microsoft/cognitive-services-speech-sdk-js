@@ -446,6 +446,13 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         })(), cb, err);
     }
 
+    public set authorizationToken (value: string) {
+        if(!!this.privCTRecognizer) {
+            this.privCTRecognizer.authorizationToken = value;
+        }
+        this.privSpeechTranslationConfig.authorizationToken = value;
+    }
+
     public isDisposed(): boolean {
         return this.privIsDisposed;
     }
