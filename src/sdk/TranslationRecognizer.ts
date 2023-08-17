@@ -198,7 +198,7 @@ export class TranslationRecognizer extends Recognizer {
      */
     public recognizeOnceAsync(cb?: (e: TranslationRecognitionResult) => void, err?: (e: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Conversation), cb, err);
+        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Interactive), cb, err);
     }
 
     /**

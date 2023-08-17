@@ -177,7 +177,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                     json.indexOf(sessionId) > 0) {
                     try {
                         expect(hypoCounter).toBeGreaterThanOrEqual(1);
-                        validateTelemetry(json, 2, hypoCounter); // 2 phrases because the extra silence at the end of conversation mode. 
+                        validateTelemetry(json, 1, hypoCounter);
                     } catch (error) {
                         done(error);
                     }
@@ -432,8 +432,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     });
     
-    // TODO: fix and re-enable (Translation service change)
-    test.skip("InitialSilenceTimeout (pull)", (done: jest.DoneCallback) => {
+    test("InitialSilenceTimeout (pull)", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (pull)");
         let p: sdk.PullAudioInputStream;
@@ -464,8 +463,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     }, 20000);
 
-    // TODO: fix and re-enable (Translation service change)
-    test.skip("InitialSilenceTimeout (push)", (done: jest.DoneCallback) => {
+    test("InitialSilenceTimeout (push)", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (push)");
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -478,9 +476,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         testInitialSilenceTimeout(config, done);
     }, 15000);
 
-    // TODO: fix and re-enable (Translation service change)
-    // Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
-    test.skip("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (File)");
         const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
