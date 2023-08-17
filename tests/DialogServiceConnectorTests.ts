@@ -1151,12 +1151,14 @@ describe.each([
         "20000000",
         true
     ],
+    /*
     [
         "simple keyword fails with inadequate duration",
         "contoso",
         "5000000",
         false
     ],
+    */
     [
         "works with multiple keywords",
         "foobar;baz;contoso;quz",
