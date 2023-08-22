@@ -5,7 +5,6 @@
 /* eslint-disable max-classes-per-file */
 
 import {
-    CognitiveTokenAuthentication,
     ConversationConnectionConfig,
     ServicePropertiesPropertyName,
 } from "../../common.speech/Exports";
@@ -14,7 +13,6 @@ import {
     IDisposable,
     IErrorMessages,
     IStringDictionary,
-    createNoDashGuid,
     marshalPromiseToCallbacks
 } from "../../common/Exports";
 import { Contracts } from "../Contracts";

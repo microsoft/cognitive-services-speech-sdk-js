@@ -5,7 +5,6 @@
 /* eslint-disable max-classes-per-file */
 
 import {
-    CognitiveTokenAuthentication,
     ConversationConnectionConfig,
     ConversationManager,
     ConversationReceivedTranslationEventArgs,
