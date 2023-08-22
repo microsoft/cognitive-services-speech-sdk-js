@@ -5,6 +5,7 @@
 /* eslint-disable max-classes-per-file */
 
 import {
+    CognitiveTokenAuthentication,
     ConversationConnectionConfig,
     ServicePropertiesPropertyName,
 } from "../../common.speech/Exports";
@@ -13,6 +14,7 @@ import {
     IDisposable,
     IErrorMessages,
     IStringDictionary,
+    createNoDashGuid,
     marshalPromiseToCallbacks
 } from "../../common/Exports";
 import { Contracts } from "../Contracts";
@@ -217,6 +219,10 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         }
 
         return true;
+    }
+
+    public onToken(token: string): void {
+        this.privCTRecognizer.authorizationToken = token;
     }
 
     public setServiceProperty(name: string, value: string): void {

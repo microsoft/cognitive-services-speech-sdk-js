@@ -5,6 +5,7 @@
 /* eslint-disable max-classes-per-file */
 
 import {
+    CognitiveTokenAuthentication,
     ConversationConnectionConfig,
     ConversationManager,
     ConversationReceivedTranslationEventArgs,
@@ -323,6 +324,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privConversationTranslator = conversationTranslator;
     }
 
+    public onToken(token: string): void {
+        this.privConversationTranslator.onToken(token);
+    }
 
     /**
      * Create a new conversation as Host
