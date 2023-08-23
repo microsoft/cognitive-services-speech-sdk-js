@@ -6,7 +6,7 @@ import { AuthInfo, IAuthentication } from "./IAuthentication";
 import { HeaderNames } from "./HeaderNames";
 
 export class CognitiveTokenAuthentication implements IAuthentication {
-    private static privTokenPrefix: string = "bearer ";
+    private static privTokenPrefix: string = "Bearer ";
     private privFetchCallback: (authFetchEventId: string) => Promise<string>;
     private privFetchOnExpiryCallback: (authFetchEventId: string) => Promise<string>;
 
