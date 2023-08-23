@@ -154,8 +154,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
         this.privAgentConfig = new AgentConfig();
         const webWorkerLoadType: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.WebWorkerLoadType, "on").toLowerCase();
-        if (webWorkerLoadType === "off" && typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {
+        if (webWorkerLoadType === "on" && typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {
             this.privSetTimeout = Timeout.setTimeout;
+        } else {
+            if (typeof window !== "undefined") {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                this.privSetTimeout = window.setTimeout.bind(window);
+            }
         }
 
         this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
