@@ -24,6 +24,7 @@ import {
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     PropertyCollection,
+    PropertyId,
     Recognizer,
     SessionEventArgs,
     SpeechTranslationConfig
@@ -77,8 +78,21 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         this.privIsDisposed = false;
         this.privProperties = serviceConfigImpl.properties.clone();
         this.privConnection = Connection.fromRecognizer(this);
-        this.privSetTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.setTimeout : setTimeout;
-        this.privClearTimeout = (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") ? Timeout.clearTimeout : clearTimeout;
+        const webWorkerLoadType: string = this.privProperties.getProperty(PropertyId.WebWorkerLoadType, "on").toLowerCase();
+        if (webWorkerLoadType === "on" && typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {
+            this.privSetTimeout = Timeout.setTimeout;
+            this.privClearTimeout = Timeout.clearTimeout;
+        } else {
+            if (typeof window !== "undefined") {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                this.privSetTimeout = window.setTimeout.bind(window);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                this.privClearTimeout = window.clearTimeout.bind(window);
+            } else {
+                this.privSetTimeout = setTimeout;
+                this.privClearTimeout = clearTimeout;
+            }
+        }
     }
 
     public canceled: (sender: ConversationRecognizer, event: ConversationTranslationCanceledEventArgs) => void;
