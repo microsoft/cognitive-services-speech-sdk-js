@@ -153,7 +153,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privDynamicGrammar = new DynamicGrammarBuilder();
         this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
         this.privAgentConfig = new AgentConfig();
-        if (typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {
+        const webWorkerLoadType: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.WebWorkerLoadType, "on").toLowerCase();
+        if (webWorkerLoadType === "off" && typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {
             this.privSetTimeout = Timeout.setTimeout;
         }
 
