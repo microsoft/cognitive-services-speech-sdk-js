@@ -3,8 +3,6 @@
 
 // eslint-disable-next-line max-classes-per-file
 import {
-    AuthInfo,
-    CognitiveTokenAuthentication,
     IAuthentication,
     IConnectionFactory,
     RecognizerConfig,
@@ -15,7 +13,6 @@ import {
     BackgroundEvent,
     Events,
     Timeout,
-    createNoDashGuid
 } from "../../common/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
 import { Contracts } from "../../sdk/Contracts";
@@ -213,9 +210,8 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
     /**
      * Handle update of service auth token (#694)
      */
-    public async onToken(token: CognitiveTokenAuthentication): Promise<void> {
-        const value: AuthInfo = await token.fetch(createNoDashGuid());
-        this.privConversation.onToken(value.token);
+    public onToken(token: IAuthentication): void {
+        this.privConversation.onToken(token);
     }
 
     /**

@@ -12,6 +12,7 @@ import {
     ConversationRecognizerFactory,
     ConversationTranslatorCommandTypes,
     ConversationTranslatorMessageTypes,
+    IAuthentication,
     IInternalConversation,
     IInternalParticipant,
     InternalParticipants,
@@ -323,7 +324,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privConversationTranslator = conversationTranslator;
     }
 
-    public onToken(token: string): void {
+    public onToken(token: IAuthentication): void {
         this.privConversationTranslator.onToken(token);
     }
 

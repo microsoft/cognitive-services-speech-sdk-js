@@ -863,8 +863,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
             // Get the auth information for the connection. This is a bit of overkill for the current API surface, but leaving the plumbing in place to be able to raise a developer-customer
             // facing event when a connection fails to let them try and provide new auth information.
-            const authPromise = isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
-            const auth: AuthInfo = await authPromise;
+            const authPromise = isMultiAuth ? this.privAuthentication.fetchAll(createNoDashGuid()) : isUnAuthorized ? this.privAuthentication.fetchOnExpiry(this.privAuthFetchEventId) : this.privAuthentication.fetch(this.privAuthFetchEventId);
+            const auth: AuthInfo | AuthInfo[] = await authPromise;
 
             await this.privRequestSession.onAuthCompleted(false);
 
