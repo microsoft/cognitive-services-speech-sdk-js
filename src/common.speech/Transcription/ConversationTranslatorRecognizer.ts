@@ -12,7 +12,7 @@ import {
 import {
     BackgroundEvent,
     Events,
-    Timeout
+    Timeout,
 } from "../../common/Exports";
 import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
 import { Contracts } from "../../sdk/Contracts";
@@ -219,6 +219,13 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
             });
 
         }
+    }
+
+    /**
+     * Handle update of service auth token (#694)
+     */
+    public onToken(token: IAuthentication): void {
+        this.privConversation.onToken(token);
     }
 
     /**

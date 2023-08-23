@@ -285,7 +285,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     public set authentication(auth: IAuthentication) {
-        this.privAuthentication = this.authentication;
+        this.privAuthentication = auth;
     }
 
     public isDisposed(): boolean {

@@ -6,6 +6,7 @@
 
 import {
     ConversationConnectionConfig,
+    IAuthentication,
     ServicePropertiesPropertyName,
 } from "../../common.speech/Exports";
 import { ConversationTranslatorConnectionFactory } from "../../common.speech/Transcription/ConversationTranslatorConnectionFactory";
@@ -107,6 +108,11 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
     public set state(newState: SpeechState) {
         this.privSpeechState = newState;
     }
+
+    public set authentication(token: IAuthentication) {
+        this.privReco.authentication = token;
+    }
+
 
     public onConnection(): void {
         this.privSpeechState = SpeechState.Connected;
@@ -217,6 +223,10 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         }
 
         return true;
+    }
+
+    public onToken(token: IAuthentication): void {
+        this.privCTRecognizer.authentication = token;
     }
 
     public setServiceProperty(name: string, value: string): void {
