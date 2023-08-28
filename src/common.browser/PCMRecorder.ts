@@ -111,9 +111,7 @@ export class PcmRecorder implements IRecorder {
                         stream: mediaStream,
                     };
                 })
-                .catch((e: any): void => {
-                    // eslint-disable-next-line no-console
-                    console.log(e);
+                .catch((): void => {
                     attachScriptProcessor();
                 });
         } else {
