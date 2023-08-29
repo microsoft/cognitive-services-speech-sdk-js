@@ -478,6 +478,18 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     }
 
     /**
+     * @Internal
+     * Internal data member to support fromRecognizer* pattern methods on other classes.
+     * Do not use externally, object returned will change without warning or notice.
+     */
+    public get internalData(): object {
+        if (this.privCTRecognizer != null) {
+            return this.privCTRecognizer.internalData;
+        }
+        return undefined;
+    }
+
+    /**
      * Cancel the speech websocket
      */
     private async cancelSpeech(): Promise<void> {

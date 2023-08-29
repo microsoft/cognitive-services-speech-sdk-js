@@ -1,16 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// TODO
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
-
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener
 } from "../src/common.browser/Exports";
 import {
-    ServicePropertiesPropertyName
+    ServicePropertiesPropertyName, ServiceRecognizerBase
 } from "../src/common.speech/Exports";
 import {
     ConnectionStartEvent,
@@ -24,7 +20,20 @@ import {
     closeAsyncObjects,
     WaitForCondition
 } from "./Utilities";
+import { Callback, IConversation } from "../src/sdk/Transcription/IConversation";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
+import { bootstrap } from "global-agent";
+import { AuthTokenProvider } from "./Utils/AuthTokenProvider";
+import { TestServer } from "./Utils/TestServer";
+
+const USE_TEST_PROXY: boolean = false;
+const TEST_PROXY_HOST: string = USE_TEST_PROXY ? "127.0.0.1" : undefined;
+const TEST_PROXY_PORT: number = USE_TEST_PROXY ? 8888 : undefined;
+const TEST_PROXY: string = USE_TEST_PROXY ? `http://${TEST_PROXY_HOST}:${TEST_PROXY_PORT}` : undefined;
+if (USE_TEST_PROXY) {
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+}
+bootstrap();
 
 // eslint-disable-next-line no-console
 const consoleInfo = console.info;
@@ -981,4 +990,204 @@ describe("conversation translator service tests", (): void => {
 
     }, 90000);
 
+});
+
+function createConversationWrapper(config: sdk.SpeechTranslationConfig): Promise<sdk.Conversation> {
+    return new Promise<sdk.Conversation>(
+        (resolve: (conv: sdk.Conversation) => void, reject: (error: any) => void): void => {
+            let conv: sdk.Conversation = sdk.Conversation.createConversationAsync(
+                config,
+                (): void => {
+                    resolve(conv);
+                },
+                (error: any): void => {
+                    reject(error);
+                });
+        }
+    );
+};
+
+function joinConversationWrapper(convTrans: sdk.ConversationTranslator, conv: sdk.Conversation | string, nickname: string, lang?: string): Promise<void> {
+    return new Promise<void>(
+        (resolve: () => void, reject: (error: any) => void): void => {
+            if (typeof conv === "string") {
+                convTrans.joinConversationAsync(
+                    <string>conv,
+                    nickname,
+                    lang,
+                    (): void => {
+                        resolve();
+                    },
+                    (error: any): void => {
+                        reject(error);
+                    });
+            }
+            else {
+                convTrans.joinConversationAsync(
+                    <IConversation>conv,
+                    nickname,
+                    (): void => {
+                        resolve();
+                    },
+                    (error: any): void => {
+                        reject(error);
+                    });
+            }
+        }
+    );
+}
+
+function promiseWrapper<TInstance>(instance: TInstance, callbackFunc: (cb?: Callback, err?: Callback) => void): Promise<void> {
+    return new Promise<void>((resolve: () => void, reject: (error: any) => void): void => {
+        callbackFunc.call(instance, () => { resolve(); }, (error: any) => { reject(error); });
+    });
+}
+
+function sleepAsync(ms: number): Promise<void> {
+    return new Promise<void>((resolve: () => void): void => { setTimeout(resolve, ms); });
+}
+
+async function waitForAsync(cond: () => boolean, timeoutInMs: number = -1): Promise<void> {
+    let stopAt = Date.now() + timeoutInMs;
+    let withTimeout: boolean = timeoutInMs > 0;
+
+    while (!cond() && (!withTimeout || Date.now() <= stopAt)) {
+        await sleepAsync(250);
+    }
+}
+
+// Auth token tests
+describe("conversation translator auth token tests", (): void => {
+
+    test("Host joins with short lived auth token", async () => {
+        let conv: sdk.Conversation = undefined;
+        let convTrans: sdk.ConversationTranslator = undefined;
+
+        try {
+            let authTokenValidityInSecs: number = 15;
+
+            let numSessionStarted: number = 0;
+            let numSessionEnded: number = 0;
+            let partReceived: boolean = false;
+            let recognitions: string[] = [];
+            let translations: IStringDictionary<string>[] = [];
+            let error: any = undefined;
+            let done: boolean = false;
+            let forcedDisconnect: boolean = false;
+
+            let testServer = await TestServer.startAsync();
+            objsToClose.push(testServer);
+            let proxiedEndpoint = testServer.getWsProxyEndpoint(
+                `wss://${Settings.SpeechRegion}.s2s.speech.microsoft.com/speech/translation/cognitiveservices/v1`,
+                "USP",
+                TEST_PROXY_HOST,
+                TEST_PROXY_PORT);
+
+            let initialAuthToken = await AuthTokenProvider.createAuthTokenAsync(Settings.SpeechSubscriptionKey, Settings.SpeechRegion, authTokenValidityInSecs);
+            console.info("Auth token", initialAuthToken);
+            let expirationTime: number = Date.now() + (authTokenValidityInSecs * 1000);
+
+            const config = sdk.SpeechTranslationConfig.fromEndpoint(new URL(proxiedEndpoint), undefined);
+            objsToClose.push(config);
+            config.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
+            config.addTargetLanguage("fr");
+            config.addTargetLanguage("ar");
+            config.authorizationToken = initialAuthToken;
+            if (USE_TEST_PROXY) {
+                config.setProxy(TEST_PROXY_HOST, TEST_PROXY_PORT);
+                (<any>global).GLOBAL_AGENT.HTTP_PROXY = TEST_PROXY;
+            }
+
+            conv = await createConversationWrapper(config);
+            await promiseWrapper(conv, conv.startConversationAsync);
+
+            const audioConfig = WaveFileAudioInput.getAudioConfigFromFile("c:\\temp\\LongAudio.wav");
+            objsToClose.push(audioConfig);
+            convTrans = new sdk.ConversationTranslator(audioConfig);
+
+            convTrans.sessionStarted = (s: sdk.ConversationTranslator, e: sdk.SessionEventArgs): void => {
+                numSessionStarted++;
+
+                // eslint-disable-next-line no-console
+                console.info(`sessionStarted: ${e.sessionId}`);
+            };
+
+            convTrans.sessionStopped = (s: sdk.ConversationTranslator, e: sdk.SessionEventArgs): void => {
+                numSessionEnded++;
+                done = true;
+
+                // eslint-disable-next-line no-console
+                console.info(`sessionStopped: ${e.sessionId}`);
+            };
+
+            convTrans.canceled = (s: sdk.ConversationTranslator, e: sdk.ConversationTranslationCanceledEventArgs): void => {
+                if (e.reason !== sdk.CancellationReason.EndOfStream) {
+                    done = true;
+                    error = e;
+
+                    // eslint-disable-next-line no-console
+                    console.error("Cancelled", e);
+                }
+                else {
+                    console.info("Cancelled", e);
+                }            
+            };
+
+            convTrans.transcribed = (s: any, e: sdk.ConversationTranslationEventArgs): void => {
+                recognitions.push(e.result.text);
+
+                let trans: IStringDictionary<string> = {};
+                const langs: string[] = e.result.translations.languages;
+                for (let i = 0; i < langs.length; i++) {
+                    trans[langs[i]] = e.result.translations.get(langs[i]);
+                }
+
+                translations.push(trans);
+
+                // is our auth token still valid? if not force a disconnect
+                if (!forcedDisconnect && Date.now() > expirationTime) {
+                    forcedDisconnect = true;
+                    (<ServiceRecognizerBase>convTrans.internalData).sendNetworkMessage(
+                        testServer.commandPath,
+                        testServer.getDisconnectCommand(
+                            1011, // server error
+                            "forced by integration test",
+                            1000)
+                        );
+                }
+            };
+
+            convTrans.participantsChanged = (s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs): void => {
+                partReceived = true;
+                console.info("Participants", e);
+            };
+
+            await joinConversationWrapper(convTrans, conv, "Host");
+            await waitForAsync(() => partReceived, 5000);
+            await promiseWrapper(convTrans, convTrans.startTranscribingAsync);
+
+            await waitForAsync(() => done);
+            
+            expect(numSessionStarted).toEqual(1);
+            expect(numSessionEnded).toEqual(1);
+            expect(partReceived).toEqual(true);
+            expect(forcedDisconnect).toEqual(true);
+            expect(recognitions.length).toBeGreaterThan(10);
+            expect(recognitions.length).toEqual(translations.length);
+            expect(error).toBeDefined();
+            expect(error.errorDetails).toContain("403008");
+        }
+        finally {
+            if (convTrans) {
+                await promiseWrapper(convTrans, convTrans.stopTranscribingAsync);
+                await promiseWrapper(convTrans, convTrans.leaveConversationAsync);
+            }
+
+            if (conv) {
+                await promiseWrapper(conv, conv.endConversationAsync);
+                await promiseWrapper(conv, conv.deleteConversationAsync);
+            }
+        }
+
+    }, 10 * 60 * 1000); // 10 minutes
 });

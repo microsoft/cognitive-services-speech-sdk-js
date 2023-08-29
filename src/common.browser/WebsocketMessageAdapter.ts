@@ -44,6 +44,7 @@ interface ISendItem {
 export class WebsocketMessageAdapter {
     private privConnectionState: ConnectionState;
     private privMessageFormatter: IWebsocketMessageFormatter;
+    private privWebSocketProtocols: string[];
     private privWebsocketClient: WebSocket | ws;
 
     private privSendMessageQueue: Queue<ISendItem>;
@@ -67,7 +68,8 @@ export class WebsocketMessageAdapter {
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
         headers: { [key: string]: string },
-        enableCompression: boolean) {
+        enableCompression: boolean,
+        protocols?: string[]) {
 
         if (!uri) {
             throw new ArgumentNullError("uri");
@@ -85,6 +87,7 @@ export class WebsocketMessageAdapter {
         this.privUri = uri;
         this.privHeaders = headers;
         this.privEnableCompression = enableCompression;
+        this.privWebSocketProtocols = protocols;
 
         // Add the connection ID to the headers
         this.privHeaders[HeaderNames.ConnectionId] = this.privConnectionId;
@@ -116,7 +119,7 @@ export class WebsocketMessageAdapter {
                 // Browser handles cert checks.
                 this.privCertificateValidatedDeferral.resolve();
 
-                this.privWebsocketClient = new WebSocket(this.privUri);
+                this.privWebsocketClient = new WebSocket(this.privUri, this.privWebSocketProtocols);
             } else {
                 const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression };
                 // The ocsp library will handle validation for us and fail the connection if needed.
@@ -135,7 +138,7 @@ export class WebsocketMessageAdapter {
                 }
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 (options.agent as any).protocol = protocol;
-                this.privWebsocketClient = new ws(this.privUri, options);
+                this.privWebsocketClient = new ws(this.privUri, this.privWebSocketProtocols, options);
             }
 
             this.privWebsocketClient.binaryType = "arraybuffer";

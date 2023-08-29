@@ -31,7 +31,8 @@ export class WebsocketConnection implements IConnection {
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
         enableCompression: boolean = false,
-        connectionId?: string) {
+        connectionId?: string,
+        protocols?: string[]) {
 
         if (!uri) {
             throw new ArgumentNullError("uri");
@@ -85,7 +86,8 @@ export class WebsocketConnection implements IConnection {
             this.privMessageFormatter,
             proxyInfo,
             headers,
-            enableCompression);
+            enableCompression,
+            protocols);
     }
 
     public async dispose(): Promise<void> {

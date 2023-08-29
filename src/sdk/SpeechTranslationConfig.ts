@@ -122,13 +122,15 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
      * @param {string} subscriptionKey - The subscription key.
      * @returns {SpeechTranslationConfig} A speech config instance.
      */
-    public static fromEndpoint(endpoint: URL, subscriptionKey: string): SpeechTranslationConfig {
+    public static fromEndpoint(endpoint: URL, subscriptionKey?: string): SpeechTranslationConfig {
         Contracts.throwIfNull(endpoint, "endpoint");
         Contracts.throwIfNull(subscriptionKey, "subscriptionKey");
 
         const ret: SpeechTranslationConfigImpl = new SpeechTranslationConfigImpl();
         ret.properties.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
-        ret.properties.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
+        if (subscriptionKey !== undefined) {
+            ret.properties.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
+        }
         return ret;
     }
 
