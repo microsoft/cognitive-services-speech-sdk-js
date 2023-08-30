@@ -299,23 +299,19 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
             try {
                 if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
-                    if (!!e.result.text && e.result.text !== "") {
-                        expect(speechRecognized).toEqual(false);
-                        speechRecognized = true;
-                        speechEnded--;
-                        expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                        expect(e.result.text).toEqual("What's the weather like?");
-                        expect(e.result.properties).not.toBeUndefined();
-                        expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
-                        expect(e.result.language).not.toBeUndefined();
-                        expect(e.result.languageDetectionConfidence).not.toBeUndefined();
-                        const autoDetectResult: sdk.AutoDetectSourceLanguageResult = sdk.AutoDetectSourceLanguageResult.fromResult(e.result);
-                        expect(autoDetectResult).not.toBeUndefined();
-                        expect(autoDetectResult.language).not.toBeUndefined();
-                        expect(autoDetectResult.languageDetectionConfidence).not.toBeUndefined();
-                    } else {
-                        emptyTextRecognizedCount++;
-                    }
+                    expect(speechRecognized).toEqual(false);
+                    speechRecognized = true;
+                    speechEnded--;
+                    expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(e.result.text).toEqual("What's the weather like?");
+                    expect(e.result.properties).not.toBeUndefined();
+                    expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    expect(e.result.language).not.toBeUndefined();
+                    expect(e.result.languageDetectionConfidence).not.toBeUndefined();
+                    const autoDetectResult: sdk.AutoDetectSourceLanguageResult = sdk.AutoDetectSourceLanguageResult.fromResult(e.result);
+                    expect(autoDetectResult).not.toBeUndefined();
+                    expect(autoDetectResult.language).not.toBeUndefined();
+                    expect(autoDetectResult.languageDetectionConfidence).not.toBeUndefined();
                 } else if (e.result.reason === sdk.ResultReason.NoMatch) {
                     expect(speechRecognized).toEqual(true);
                     noMatchCount++;
@@ -352,8 +348,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 r.stopContinuousRecognitionAsync(() => {
                     try {
                         expect(speechEnded).toEqual(noMatchCount);
-                        // expect(noMatchCount).toBeGreaterThanOrEqual(2);
-                        expect(emptyTextRecognizedCount).toBeGreaterThanOrEqual(1);
+                        expect(noMatchCount).toBeGreaterThanOrEqual(2);
                         done();
                     } catch (error) {
                         done(error);
