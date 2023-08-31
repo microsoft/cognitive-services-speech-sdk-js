@@ -291,15 +291,6 @@ export class TranslationRecognizer extends Recognizer {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     public onConnection(): void { }
 
-    /**
-     * handles disconnection events for conversation translation scenarios.
-     * @member TranslationRecognizer.prototype.onDisconnection
-     * @function
-     * @public
-     */
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    public async onDisconnection(): Promise<void> { }
-
     protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposedTranslationRecognizer) {
             return;
