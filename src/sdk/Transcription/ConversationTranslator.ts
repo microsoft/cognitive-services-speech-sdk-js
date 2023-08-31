@@ -118,7 +118,7 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
         this.privSpeechState = SpeechState.Connected;
     }
 
-    public async onDisconnection(): Promise<void> {
+    public async onCancelSpeech(): Promise<void> {
         this.privSpeechState = SpeechState.Inactive;
         await this.cancelSpeech();
     }
@@ -483,7 +483,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     private async cancelSpeech(): Promise<void> {
         try {
             this.privIsSpeaking = false;
-            await this.privCTRecognizer?.onDisconnection();
+            await this.privCTRecognizer?.onCancelSpeech();
             this.privCTRecognizer = undefined;
         } catch (e) {
             // ignore the error
