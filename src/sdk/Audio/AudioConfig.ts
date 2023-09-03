@@ -309,11 +309,11 @@ export class AudioConfigImpl extends AudioConfig implements IAudioSource {
         return this.privSource.events;
     }
 
-    public setProperty(name: string, value: string): void {
-        Contracts.throwIfNull(value, "value");
+    public setProperty(name: string, configPropertyValue: string): void {
+        Contracts.throwIfNull(configPropertyValue, "configPropertyValue");
 
         if (undefined !== this.privSource.setProperty) {
-            this.privSource.setProperty(name, value);
+            this.privSource.setProperty(name, configPropertyValue);
         } else {
             throw new Error("This AudioConfig instance does not support setting properties.");
         }

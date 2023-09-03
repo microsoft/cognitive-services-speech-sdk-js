@@ -74,11 +74,11 @@ export class CustomCommandsConfig extends DialogServiceConfigImpl {
      * @member CustomCommandsConfig.prototype.Conversation_ApplicationId
      * @function
      * @public
-     * @param {string} value - The application identifier to set.
+     * @param {string} conversationApplicationId - The application identifier to set.
      */
-    public set applicationId(value: string) {
-        Contracts.throwIfNullOrWhitespace(value, "value");
-        this.setProperty(PropertyId.Conversation_ApplicationId, value);
+    public set applicationId(conversationApplicationId: string) {
+        Contracts.throwIfNullOrWhitespace(conversationApplicationId, "conversationApplicationId");
+        this.setProperty(PropertyId.Conversation_ApplicationId, conversationApplicationId);
     }
 
     /**

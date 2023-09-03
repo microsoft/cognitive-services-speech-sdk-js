@@ -227,12 +227,12 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @member SpeechTranslationConfigImpl.prototype.authorizationToken
      * @function
      * @public
-     * @param {string} value - The authorization token.
+     * @param {string} translationAuthToken - The authorization token.
      */
-    public set authorizationToken(value: string) {
-        Contracts.throwIfNullOrWhitespace(value, "value");
+    public set authorizationToken(translationAuthToken: string) {
+        Contracts.throwIfNullOrWhitespace(translationAuthToken, "translationAuthToken");
 
-        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceAuthorization_Token, value);
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceAuthorization_Token, translationAuthToken);
     }
 
     /**
@@ -240,11 +240,11 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @member SpeechTranslationConfigImpl.prototype.speechRecognitionLanguage
      * @function
      * @public
-     * @param {string} value - The authorization token.
+     * @param {string} translationRecognitionLanguage - The speech recognition language.
      */
-    public set speechRecognitionLanguage(value: string) {
-        Contracts.throwIfNullOrWhitespace(value, "value");
-        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, value);
+    public set speechRecognitionLanguage(translationRecognitionLanguage: string) {
+        Contracts.throwIfNullOrWhitespace(translationRecognitionLanguage, "translationRecognitionLanguage");
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, translationRecognitionLanguage);
     }
 
     /**
@@ -313,13 +313,13 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @member SpeechTranslationConfigImpl.prototype.addTargetLanguage
      * @function
      * @public
-     * @param {string} value - The language such as de-DE
+     * @param {string} targetLanguage - The language such as de-DE
      */
-    public addTargetLanguage(value: string): void {
-        Contracts.throwIfNullOrWhitespace(value, "value");
+    public addTargetLanguage(targetLanguage: string): void {
+        Contracts.throwIfNullOrWhitespace(targetLanguage, "targetLanguage");
 
         const languages: string[] = this.targetLanguages;
-        languages.push(value);
+        languages.push(targetLanguage);
         this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, languages.join(","));
     }
 
@@ -355,12 +355,12 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @member SpeechTranslationConfigImpl.prototype.voiceName
      * @function
      * @public
-     * @param {string} value - The name of the voice.
+     * @param {string} translationVoiceName - The name of the voice.
      */
-    public set voiceName(value: string) {
-        Contracts.throwIfNullOrWhitespace(value, "value");
+    public set voiceName(translationVoiceName: string) {
+        Contracts.throwIfNullOrWhitespace(translationVoiceName, "translationVoiceName");
 
-        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_TranslationVoice, value);
+        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_TranslationVoice, translationVoiceName);
     }
 
     /**
