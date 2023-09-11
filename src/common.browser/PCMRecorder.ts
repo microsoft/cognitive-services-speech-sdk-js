@@ -6,7 +6,7 @@ import { IRecorder } from "./IRecorder";
 
 export class PcmRecorder implements IRecorder {
     private privMediaResources: IMediaResources;
-    private privSpeechProcessorScript: string | URL; // speech-processor.js Url
+    private privSpeechProcessorScript: string; // speech-processor.js Url
     private privStopInputOnRelease: boolean;
 
     public constructor(stopInputOnRelease: boolean) {
@@ -62,15 +62,16 @@ export class PcmRecorder implements IRecorder {
 
         // https://webaudio.github.io/web-audio-api/#audioworklet
         // Using AudioWorklet to improve audio quality and avoid audio glitches due to blocking the UI thread
-        const skipAudioWorklet = !!this.privSpeechProcessorScript && this.privSpeechProcessorScript.toString().toLowerCase() === "ignore";
+        const skipAudioWorklet = !!this.privSpeechProcessorScript && this.privSpeechProcessorScript.toLowerCase() === "ignore";
 
         if (!!context.audioWorklet && !skipAudioWorklet) {
             if (typeof window !== "undefined") {
                 this.privSpeechProcessorScript = new URL(
                     /* webpackChunkName: 'script_processor.audioWorklet' */
-                    "./script-processor.js",
+                    "../audioworklet/speech-processor.js",
+                    // eslint-disable-next-line @typescript-eslint/tslint/config
                     import.meta.url,
-                );
+                ).toString();
             }
             if (!this.privSpeechProcessorScript) {
                 const workletScript = `class SP extends AudioWorkletProcessor {
