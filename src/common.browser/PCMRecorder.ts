@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import path from "path";
 import { RiffPcmEncoder, Stream } from "../common/Exports";
 import { IRecorder } from "./IRecorder";
 
@@ -68,7 +69,7 @@ export class PcmRecorder implements IRecorder {
             if (typeof window !== "undefined") {
                 this.privSpeechProcessorScript = new URL(
                     /* webpackChunkName: 'script_processor.audioWorklet' */
-                    "../audioworklet/speech-processor.js",
+                    path.join("..", "audioworklet", "speech-processor.js"),
                     // eslint-disable-next-line @typescript-eslint/tslint/config
                     import.meta.url,
                 ).toString();

@@ -62,6 +62,11 @@
           }],
         },
         mode: 'none',
+        resolve: {
+          fallback: {
+            'path': false,
+          },
+        },
         plugins: [
           new dtsBundleWebpack({
             name: 'microsoft.cognitiveservices.speech.sdk.bundle',
