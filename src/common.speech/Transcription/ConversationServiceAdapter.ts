@@ -412,6 +412,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                         return Promise.resolve(authorizationToken);
                                     });
                                 this.authentication = token;
+                                this.privConversationServiceConnector.onToken(token);
 
                                 break;
 

@@ -54,8 +54,6 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
         this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
             if (connectionEvent.name === "ConnectionEstablishedEvent") {
                 this.privTranslationRecognizer.onConnection();
-            } else if (connectionEvent.name === "ConnectionClosedEvent") {
-                void this.privTranslationRecognizer.onDisconnection();
             }
         });
 

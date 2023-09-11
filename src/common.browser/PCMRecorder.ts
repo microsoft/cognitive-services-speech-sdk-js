@@ -62,8 +62,9 @@ export class PcmRecorder implements IRecorder {
 
         // https://webaudio.github.io/web-audio-api/#audioworklet
         // Using AudioWorklet to improve audio quality and avoid audio glitches due to blocking the UI thread
+        const skipAudioWorklet = !!this.privSpeechProcessorScript && this.privSpeechProcessorScript.toLowerCase() === "ignore";
 
-        if (!!context.audioWorklet) {
+        if (!!context.audioWorklet && !skipAudioWorklet) {
             if (!this.privSpeechProcessorScript) {
                 const workletScript = `class SP extends AudioWorkletProcessor {
                     constructor(options) {

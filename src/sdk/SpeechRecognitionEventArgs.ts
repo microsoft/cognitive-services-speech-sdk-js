@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
-import { RecognitionEventArgs, SpeechRecognitionResult } from "./Exports";
+import { RecognitionEventArgs, SpeechRecognitionResult, ConversationTranscriptionResult } from "./Exports";
 
 /**
  * Defines contents of speech recognizing/recognized event.
@@ -40,5 +40,37 @@ export class SpeechRecognitionEventArgs extends RecognitionEventArgs {
  * Defines contents of conversation transcribed/transcribing event.
  * @class ConversationTranscriptionEventArgs
  */
-export class ConversationTranscriptionEventArgs extends SpeechRecognitionEventArgs {
+export class ConversationTranscriptionEventArgs extends RecognitionEventArgs {
+    private privResult: ConversationTranscriptionResult;
+
+    /**
+     * Creates and initializes an instance of this class.
+     * @constructor
+     * @param {ConversationTranscriptionResult} result - The conversation transcription result.
+     * @param {number} offset - The offset.
+     * @param {string} sessionId - The session id.
+     */
+    public constructor(result: ConversationTranscriptionResult, offset?: number, sessionId?: string) {
+        super(offset, sessionId);
+
+        this.privResult = result;
+    }
+
+    /**
+     * Specifies the transcription result.
+     * @member ConversationTranscription1EventArgs.prototype.result
+     * @function
+     * @public
+     * @returns {ConversationTranscriptionResult} the recognition result.
+     */
+        public get result(): ConversationTranscriptionResult {
+            return this.privResult;
+        }
+}
+
+/**
+ * Defines contents of meeting transcribed/transcribing event.
+ * @class MeetingTranscriptionEventArgs
+ */
+export class MeetingTranscriptionEventArgs extends SpeechRecognitionEventArgs {
 }

@@ -6,6 +6,7 @@
 
 import {
     ConversationConnectionConfig,
+    IAuthentication,
     ServicePropertiesPropertyName,
 } from "../../common.speech/Exports";
 import { ConversationTranslatorConnectionFactory } from "../../common.speech/Transcription/ConversationTranslatorConnectionFactory";
@@ -108,11 +109,16 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
         this.privSpeechState = newState;
     }
 
+    public set authentication(token: IAuthentication) {
+        this.privReco.authentication = token;
+    }
+
+
     public onConnection(): void {
         this.privSpeechState = SpeechState.Connected;
     }
 
-    public async onDisconnection(): Promise<void> {
+    public async onCancelSpeech(): Promise<void> {
         this.privSpeechState = SpeechState.Inactive;
         await this.cancelSpeech();
     }
@@ -217,6 +223,10 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         }
 
         return true;
+    }
+
+    public onToken(token: IAuthentication): void {
+        this.privCTRecognizer.authentication = token;
     }
 
     public setServiceProperty(name: string, value: string): void {
@@ -473,7 +483,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     private async cancelSpeech(): Promise<void> {
         try {
             this.privIsSpeaking = false;
-            await this.privCTRecognizer?.onDisconnection();
+            await this.privCTRecognizer?.onCancelSpeech();
             this.privCTRecognizer = undefined;
         } catch (e) {
             // ignore the error
