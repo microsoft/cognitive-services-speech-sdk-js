@@ -6,7 +6,7 @@ import { IRecorder } from "./IRecorder";
 
 export class PcmRecorder implements IRecorder {
     private privMediaResources: IMediaResources;
-    private privSpeechProcessorScript: string; // speech-processor.js Url
+    private privSpeechProcessorScript: string | URL; // speech-processor.js Url
     private privStopInputOnRelease: boolean;
 
     public constructor(stopInputOnRelease: boolean) {
@@ -62,25 +62,32 @@ export class PcmRecorder implements IRecorder {
 
         // https://webaudio.github.io/web-audio-api/#audioworklet
         // Using AudioWorklet to improve audio quality and avoid audio glitches due to blocking the UI thread
-        const skipAudioWorklet = !!this.privSpeechProcessorScript && this.privSpeechProcessorScript.toLowerCase() === "ignore";
+        const skipAudioWorklet = !!this.privSpeechProcessorScript && this.privSpeechProcessorScript.toString().toLowerCase() === "ignore";
 
         if (!!context.audioWorklet && !skipAudioWorklet) {
+            if (typeof window !== "undefined") {
+                this.privSpeechProcessorScript = new URL(
+                    /* webpackChunkName: 'script_processor.audioWorklet' */
+                    "./script-processor.js",
+                    import.meta.url,
+                );
+            }
             if (!this.privSpeechProcessorScript) {
                 const workletScript = `class SP extends AudioWorkletProcessor {
                     constructor(options) {
-                      super(options);
+                    super(options);
                     }
                     process(inputs, outputs) {
-                      const input = inputs[0];
-                      const output = [];
-                      for (let channel = 0; channel < input.length; channel += 1) {
+                    const input = inputs[0];
+                    const output = [];
+                    for (let channel = 0; channel < input.length; channel += 1) {
                         output[channel] = input[channel];
-                      }
-                      this.port.postMessage(output[0]);
-                      return true;
                     }
-                  }
-                  registerProcessor('speech-processor', SP);`;
+                    this.port.postMessage(output[0]);
+                    return true;
+                    }
+                }
+                registerProcessor('speech-processor', SP);`;
                 const blob = new Blob([workletScript], { type: "application/javascript; charset=utf-8" });
                 this.privSpeechProcessorScript = URL.createObjectURL(blob);
             }
