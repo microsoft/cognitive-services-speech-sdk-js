@@ -30,6 +30,9 @@
       .pipe(tsProject())
       .pipe(sourcemaps.write('.'))
       .pipe(gulp.dest('distrib/lib'));
+    }, function () {
+      return gulp.src('./src/audioworklet/speech-processor.js')
+        .pipe(gulp.dest('./distrib/lib/src/common.browser'));
   }));
 
   gulp.task('build2015', gulp.series(function build() {
@@ -52,7 +55,10 @@
   gulp.task('bundle', gulp.series('build', function bundle() {
     return gulp.src('bundleApp.js')
       .pipe(webpack({
-        output: { filename: 'microsoft.cognitiveservices.speech.sdk.bundle.js' },
+        entry: { 
+          'microsoft.cognitiveservices.speech.sdk.bundle': './bundleApp.js',
+        },
+        output: { filename: '[name].js' },
         devtool: 'source-map',
         module: {
           rules: [{
@@ -62,11 +68,6 @@
           }],
         },
         mode: 'none',
-        resolve: {
-          fallback: {
-            'path': false,
-          },
-        },
         plugins: [
           new dtsBundleWebpack({
             name: 'microsoft.cognitiveservices.speech.sdk.bundle',
