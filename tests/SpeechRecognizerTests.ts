@@ -59,6 +59,10 @@ const Canceled: string = "Canceled";
 
 let objsToClose: any[];
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "./SpeechRecognizerTests.ts"
+}));
+
 beforeAll(() => {
     // override inputs, if necessary
     Settings.LoadSettings();

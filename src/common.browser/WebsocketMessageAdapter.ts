@@ -4,6 +4,9 @@
 // Node.JS specific web socket / browser support.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import * as http from "http";
 import * as net from "net";
 import * as tls from "tls";
@@ -386,11 +389,13 @@ export class WebsocketMessageAdapter {
                 });
             });
         } else {
+            /* eslint-disable @typescript-eslint/no-unsafe-argument */
             if (!!options.secureEndpoint) {
                 socketPromise = Promise.resolve(tls.connect(options));
             } else {
                 socketPromise = Promise.resolve(net.connect(options));
             }
+            /* eslint-enable @typescript-eslint/no-unsafe-argument */
         }
 
         return socketPromise;

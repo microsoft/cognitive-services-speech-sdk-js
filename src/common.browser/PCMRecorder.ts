@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { RiffPcmEncoder, Stream } from "../common/Exports";
+import { getAudioWorkerUrl } from "./AudioWorkerUrl";
 import { IRecorder } from "./IRecorder";
 
 export class PcmRecorder implements IRecorder {
@@ -65,10 +66,7 @@ export class PcmRecorder implements IRecorder {
         const skipAudioWorklet = !!this.privSpeechProcessorScript && this.privSpeechProcessorScript.toLowerCase() === "ignore";
 
         if (!!context.audioWorklet && !skipAudioWorklet) {
-            /* webpackChunkName: 'script_processor_audioWorklet' */
-            // eslint-disable-next-line @typescript-eslint/tslint/config
-            const audioWorkerUrl = new URL("speech-processor.js", import.meta.url);
-            this.privSpeechProcessorScript = audioWorkerUrl.toString();
+            this.privSpeechProcessorScript = getAudioWorkerUrl();
             if (!this.privSpeechProcessorScript) {
                 const workletScript = `class SP extends AudioWorkletProcessor {
                     constructor(options) {
