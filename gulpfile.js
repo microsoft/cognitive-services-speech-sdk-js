@@ -52,7 +52,7 @@
       .pipe(gulp.dest('distrib/es2015'));
     }, function () {
       return gulp.src('./src/audioworklet/speech-processor.js')
-        .pipe(gulp.dest('./distrib/lib/src/common.browser'));
+        .pipe(gulp.dest('./distrib/es2015/src/common.browser'));
   }));
 
   gulp.task('bundle', gulp.series('build', function bundle() {
