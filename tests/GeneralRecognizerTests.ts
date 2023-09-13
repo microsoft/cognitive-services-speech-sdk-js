@@ -6,7 +6,7 @@ import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
-   getAudioWorkerUrl: (): string => "speech-processor.js.ts"
+   getAudioWorkerUrl: (): string => "speech-processor.js"
 }));
 
 let bufferSize: number;

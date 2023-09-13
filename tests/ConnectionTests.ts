@@ -23,7 +23,7 @@ import {
 import * as fs from "fs";
 
 jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
-   getAudioWorkerUrl: (): string => "speech-processor.js.ts"
+   getAudioWorkerUrl: (): string => "speech-processor.js"
 }));
 
 let objsToClose: any[];

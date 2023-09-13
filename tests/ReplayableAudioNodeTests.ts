@@ -15,7 +15,7 @@ const targetBytes: number = 4096;
 const defaultAudioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
 
 jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
-   getAudioWorkerUrl: (): string => "speech-processor.js.ts"
+   getAudioWorkerUrl: (): string => "speech-processor.js"
 }));
 
 beforeEach(() => {
