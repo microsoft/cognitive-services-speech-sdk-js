@@ -9,6 +9,10 @@ import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 
 let objsToClose: any[];
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js.ts"
+}));
+
 beforeAll((): void => {
     // Override inputs, if necessary
     Settings.LoadSettings();

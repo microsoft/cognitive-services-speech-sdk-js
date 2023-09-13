@@ -22,6 +22,10 @@ import {
 
 import * as fs from "fs";
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js.ts"
+}));
+
 let objsToClose: any[];
 
 beforeAll(() => {

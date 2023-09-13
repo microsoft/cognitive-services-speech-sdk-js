@@ -20,6 +20,11 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js.ts"
+}));
+
+
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();

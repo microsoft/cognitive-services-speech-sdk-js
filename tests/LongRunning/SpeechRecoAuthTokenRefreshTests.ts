@@ -11,6 +11,10 @@ import { CreateRepeatingPullStream, WaitForCondition } from "../Utilities";
 
 let objsToClose: any[];
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js.ts"
+}));
+
 beforeAll(() => {
     // override inputs, if necessary
     Settings.LoadSettings();

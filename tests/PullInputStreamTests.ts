@@ -16,6 +16,12 @@ import { Settings } from "./Settings";
 
 let bufferSize: number;
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js.ts"
+}));
+
+let bufferSize: number;
+
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
