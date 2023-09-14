@@ -38,11 +38,10 @@
     "net": false
   },
   "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
-  "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
+  "module": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
   "types": "distrib/lib/microsoft.cognitiveservices.speech.sdk.d.ts",
   "files": [
     "distrib/lib/**/*",
-    "distrib/es2015/**/*",
     "distrib/browser/**/*",
     "LICENSE",
     "REDIST.txt"
@@ -83,7 +82,7 @@
     "webpack-stream": "^7.0.0"
   },
   "scripts": {
-    "build": "gulp compress && gulp build2015",
+    "build": "gulp compress && gulp build",
     "test": "npm run lint && npm run jest --coverage",
     "jest": "jest",
     "lint": "eslint -c .eslintrc.js --ext .ts src",
