@@ -26,6 +26,10 @@ import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
 let objsToClose: any[];
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js"
+}));
+
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();

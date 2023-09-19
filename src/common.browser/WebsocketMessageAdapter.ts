@@ -3,7 +3,6 @@
 
 // Node.JS specific web socket / browser support.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import * as http from "http";
 import * as net from "net";
 import * as tls from "tls";

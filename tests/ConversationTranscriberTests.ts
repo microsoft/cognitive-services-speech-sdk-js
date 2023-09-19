@@ -23,6 +23,10 @@ import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import { closeAsyncObjects, RepeatingPullStream, WaitForCondition } from "./Utilities";
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js"
+}));
+
 let objsToClose: any[];
 
 beforeAll(() => {

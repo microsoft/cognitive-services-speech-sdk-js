@@ -46,6 +46,10 @@ import {
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js"
+}));
+
 // eslint-disable-next-line no-console
 const consoleInfo = console.info;
 const simpleMessageObj = { speak: "This is speech", text: "This is text", type: "message" };
