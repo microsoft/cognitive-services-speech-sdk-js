@@ -57,6 +57,12 @@ interface CustomModel {
     endpoint: string;
 }
 
+export interface TranslationSection {
+    targetLanguages: string[];
+    output: { interimResults: { mode: "Always" } };
+    onSuccess: { action: string };
+}
+
 export interface PhraseDetection {
     customModels?: CustomModel[];
     onInterim?: { action: string };
@@ -187,7 +193,21 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.setOutputDetailLevelJson();
     }
 
-    protected setSpeechSegmentationTimeoutJson(): void{
+    protected setTranslationJson(): void {
+        const targetLanguages: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined);
+        if (targetLanguages !== undefined) {
+            const languages = targetLanguages.split(",");
+            const translationVoice: string =  this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
+            const action = ( translationVoice !== undefined ) ? "Synthesize" : "None";
+            this.privSpeechContext.setSection("translation", {
+                targetLanguages: languages,
+                onSuccess: { action },
+                output: { interimResults: { mode: "Always" } }
+            });
+        }
+    }
+
+    protected setSpeechSegmentationTimeoutJson(): void {
         const speechSegmentationTimeout: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
         if (speechSegmentationTimeout !== undefined) {
             const mode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
@@ -224,12 +244,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 onSuccess: { action: "Recognize" },
                 onUnknown: { action: "None" }
             });
+            const targetLanguages: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined);
             this.privSpeechContext.setSection("phraseOutput", {
                 interimResults: {
-                    resultType: "Auto"
+                    resultType: (targetLanguages === undefined) ? "Auto" : "None"
                 },
                 phraseResults: {
-                    resultType: "Always"
+                    resultType: (targetLanguages === undefined) ? "Always" : "None"
                 }
             });
             const customModels: CustomModel[] = this.privRecognizerConfig.sourceLanguageModels;
@@ -238,6 +259,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 phraseDetection.onInterim = { action: "None" };
                 phraseDetection.onSuccess = { action: "None" };
             }
+            if (targetLanguages !== undefined) {
+                phraseDetection.onInterim = { action: "Translate" };
+                phraseDetection.onSuccess = { action: "Translate" };
+            }
+
             this.privSpeechContext.setSection("phraseDetection", phraseDetection);
         }
     }
@@ -335,6 +361,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionConfigurationPromise = undefined;
         this.privRecognizerConfig.recognitionMode = recoMode;
         this.setSpeechSegmentationTimeoutJson();
+        this.setTranslationJson();
 
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallBack;
