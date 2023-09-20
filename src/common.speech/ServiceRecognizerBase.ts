@@ -57,12 +57,6 @@ interface CustomModel {
     endpoint: string;
 }
 
-export interface TranslationSection {
-    targetLanguages: string[];
-    output: { interimResults: { mode: "Always" } };
-    onSuccess: { action: string };
-}
-
 export interface PhraseDetection {
     customModels?: CustomModel[];
     onInterim?: { action: string };
@@ -200,10 +194,20 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             const translationVoice: string =  this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
             const action = ( translationVoice !== undefined ) ? "Synthesize" : "None";
             this.privSpeechContext.setSection("translation", {
-                targetLanguages: languages,
                 onSuccess: { action },
-                output: { interimResults: { mode: "Always" } }
+                output: { interimResults: { mode: "Always" } },
+                targetLanguages: languages,
             });
+
+            if (translationVoice !== undefined) {
+                const languageToVoiceMap: { [key: string]: string } = {};
+                for (const lang of languages) {
+                    languageToVoiceMap[lang] = translationVoice;
+                }
+                this.privSpeechContext.setSection("synthesis", {
+                    defaultVoices: languageToVoiceMap
+                });
+            }
         }
     }
 
