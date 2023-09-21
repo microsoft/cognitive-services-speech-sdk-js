@@ -319,8 +319,10 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
         Contracts.throwIfNullOrWhitespace(value, "value");
 
         const languages: string[] = this.targetLanguages;
-        languages.push(value);
-        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, languages.join(","));
+        if (!languages.includes(value)) {
+            languages.push(value);
+            this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, languages.join(","));
+        }
     }
 
     /**

@@ -230,8 +230,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected setLanguageIdJson(): void {
+        const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
         if (this.privRecognizerConfig.autoDetectSourceLanguages !== undefined) {
-            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
             const sourceLanguages: string[] = this.privRecognizerConfig.autoDetectSourceLanguages.split(",");
 
             let speechContextLidMode;
@@ -248,13 +248,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 onSuccess: { action: "Recognize" },
                 onUnknown: { action: "None" }
             });
-            const targetLanguages: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined);
             this.privSpeechContext.setSection("phraseOutput", {
                 interimResults: {
-                    resultType: (targetLanguages === undefined) ? "Auto" : "None"
+                    resultType: "Auto"
                 },
                 phraseResults: {
-                    resultType: (targetLanguages === undefined) ? "Always" : "None"
+                    resultType: "Always"
                 }
             });
             const customModels: CustomModel[] = this.privRecognizerConfig.sourceLanguageModels;
@@ -263,13 +262,22 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 phraseDetection.onInterim = { action: "None" };
                 phraseDetection.onSuccess = { action: "None" };
             }
-            if (targetLanguages !== undefined) {
-                phraseDetection.onInterim = { action: "Translate" };
-                phraseDetection.onSuccess = { action: "Translate" };
-            }
-
-            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
         }
+        const targetLanguages: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined);
+        if (targetLanguages !== undefined) {
+            phraseDetection.onInterim = { action: "Translate" };
+            phraseDetection.onSuccess = { action: "Translate" };
+            this.privSpeechContext.setSection("phraseOutput", {
+                interimResults: {
+                    resultType: "None"
+                },
+                phraseResults: {
+                    resultType: "None"
+                }
+            });
+        }
+
+        this.privSpeechContext.setSection("phraseDetection", phraseDetection);
     }
 
     protected setOutputDetailLevelJson(): void {
