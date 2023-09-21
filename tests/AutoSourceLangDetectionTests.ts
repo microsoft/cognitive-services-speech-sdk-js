@@ -32,6 +32,7 @@ jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
 }));
 
 let objsToClose: any[];
+const defaultTargetLanguage: string = "de-DE";
 
 beforeAll((): void => {
     // override inputs, if necessary
@@ -101,7 +102,7 @@ export const BuildTranslationRecognizer: (speechTranslationConfig?: sdk.SpeechTr
     if (s.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_RecoLanguage]) === undefined) {
         s.speechRecognitionLanguage = language;
     }
-    s.addTargetLanguage("de-DE");
+    s.addTargetLanguage(defaultTargetLanguage);
 
     const r: sdk.TranslationRecognizer = sdk.TranslationRecognizer.FromConfig(s, a, config);
     expect(r).not.toBeUndefined();
@@ -462,7 +463,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         const r: sdk.TranslationRecognizer = BuildTranslationRecognizer(s, a);
         objsToClose.push(r);
 
-        let speechRecognized: boolean = false;
+        let speechTranslated: boolean = false;
         let speechContextSent: boolean = false;
 
         const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
@@ -489,19 +490,21 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs) => {
             try {
-                if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
-                    expect(speechRecognized).toEqual(false);
-                    speechRecognized = true;
-                    expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                if (e.result.reason === sdk.ResultReason.TranslatedSpeech) {
+                    expect(speechTranslated).toEqual(false);
+                    speechTranslated = true;
                     expect(e.result.text).toEqual("What's the weather like?");
                     expect(e.result.properties).not.toBeUndefined();
                     expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    expect(e.result.translations).not.toBeUndefined();
+                    expect(e.result.translations.languages[0]).toEqual(defaultTargetLanguage);
+                    expect(e.result.translations.get(defaultTargetLanguage)).toEqual("Wie ist das Wetter?");
                     const autoDetectResult: sdk.AutoDetectSourceLanguageResult = sdk.AutoDetectSourceLanguageResult.fromResult(e.result);
                     expect(autoDetectResult).not.toBeUndefined();
                     expect(autoDetectResult.language).not.toBeUndefined();
                     expect(autoDetectResult.languageDetectionConfidence).not.toBeUndefined();
                 } else if (e.result.reason === sdk.ResultReason.NoMatch) {
-                    expect(speechRecognized).toEqual(true);
+                    expect(speechTranslated).toEqual(true);
                 }
             } catch (error) {
                 done(error);
