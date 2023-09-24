@@ -5,10 +5,6 @@ import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { LanguageUnderstandingModelImpl } from "../src/sdk/LanguageUnderstandingModel";
 import { Settings } from "./Settings";
 
-jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
-   getAudioWorkerUrl: (): string => "speech-processor.js"
-}));
-
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();

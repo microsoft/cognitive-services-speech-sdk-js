@@ -5,10 +5,6 @@ import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
-   getAudioWorkerUrl: (): string => "speech-processor.js"
-}));
-
 let bufferSize: number;
 beforeEach(() => {
     // eslint-disable-next-line no-console
