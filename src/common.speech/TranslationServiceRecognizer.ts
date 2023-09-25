@@ -26,6 +26,7 @@ import {
     CancellationErrorCodePropertyName,
     ConversationServiceRecognizer,
     EnumTranslation,
+    ITranslationHypothesis,
     RecognitionStatus,
     SynthesisStatus,
     TranslationHypothesis,
@@ -160,32 +161,40 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
 
         };
 
+        const handleTranslationHypothesis = (hypothesis: TranslationHypothesis, resultProperties: PropertyCollection): void => {
+            const result: TranslationRecognitionEventArgs = this.fireEventForResult(hypothesis, resultProperties);
+            this.privRequestSession.onHypothesis(this.privRequestSession.currentTurnAudioOffset + result.offset);
+
+            if (!!this.privTranslationRecognizer.recognizing) {
+                try {
+                    this.privTranslationRecognizer.recognizing(this.privTranslationRecognizer, result);
+                    /* eslint-disable no-empty */
+                } catch (error) {
+                    // Not going to let errors in the event handler
+                    // trip things up.
+                }
+            }
+            processed = true;
+        };
+
         if (connectionMessage.messageType === MessageType.Text) {
             resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
         }
 
         switch (connectionMessage.path.toLowerCase()) {
             case "translation.hypothesis":
-
-                const result: TranslationRecognitionEventArgs = this.fireEventForResult(TranslationHypothesis.fromJSON(connectionMessage.textBody), resultProps);
-                this.privRequestSession.onHypothesis(this.privRequestSession.currentTurnAudioOffset + result.offset);
-
-                if (!!this.privTranslationRecognizer.recognizing) {
-                    try {
-                        this.privTranslationRecognizer.recognizing(this.privTranslationRecognizer, result);
-                        /* eslint-disable no-empty */
-                    } catch (error) {
-                        // Not going to let errors in the event handler
-                        // trip things up.
-                    }
-                }
-                processed = true;
+                handleTranslationHypothesis(TranslationHypothesis.fromJSON(connectionMessage.textBody), resultProps);
                 break;
 
             case "translation.response":
                 const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody) as { SpeechPhrase: ITranslationPhrase };
                 if (!!phrase.SpeechPhrase) {
                     await handleTranslationPhrase(TranslationPhrase.fromTranslationResponse(phrase));
+                } else {
+                    const hypothesis: { SpeechHypothesis: ITranslationHypothesis } = JSON.parse(connectionMessage.textBody) as { SpeechHypothesis: ITranslationHypothesis };
+                    if (!!hypothesis.SpeechHypothesis) {
+                        handleTranslationHypothesis(TranslationHypothesis.fromTranslationResponse(hypothesis), resultProps);
+                    }
                 }
                 break;
             case "translation.phrase":
