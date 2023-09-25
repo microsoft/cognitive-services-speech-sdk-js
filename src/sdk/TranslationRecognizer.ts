@@ -198,7 +198,7 @@ export class TranslationRecognizer extends Recognizer {
      */
     public recognizeOnceAsync(cb?: (e: TranslationRecognitionResult) => void, err?: (e: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Conversation), cb, err);
+        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Interactive), cb, err);
     }
 
     /**
@@ -290,15 +290,6 @@ export class TranslationRecognizer extends Recognizer {
      */
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     public onConnection(): void { }
-
-    /**
-     * handles disconnection events for conversation translation scenarios.
-     * @member TranslationRecognizer.prototype.onDisconnection
-     * @function
-     * @public
-     */
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    public async onDisconnection(): Promise<void> { }
 
     protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposedTranslationRecognizer) {

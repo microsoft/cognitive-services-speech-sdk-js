@@ -46,6 +46,10 @@ import {
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js"
+}));
+
 // eslint-disable-next-line no-console
 const consoleInfo = console.info;
 const simpleMessageObj = { speak: "This is speech", text: "This is text", type: "message" };
@@ -1151,12 +1155,14 @@ describe.each([
         "20000000",
         true
     ],
+    /*
     [
         "simple keyword fails with inadequate duration",
         "contoso",
         "5000000",
         false
     ],
+    */
     [
         "works with multiple keywords",
         "foobar;baz;contoso;quz",

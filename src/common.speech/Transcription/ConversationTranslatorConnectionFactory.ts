@@ -121,7 +121,7 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
 
         headers[HeaderNames.ConnectionId] = connectionId;
         headers[RestConfigBase.configParams.token] = convInfo.token;
-        if (authInfo.token) {
+        if (!!authInfo.token) {
             headers[authInfo.headerName] = authInfo.token;
         }
 

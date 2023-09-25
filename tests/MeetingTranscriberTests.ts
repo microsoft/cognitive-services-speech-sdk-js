@@ -13,6 +13,10 @@ import { Settings } from "./Settings";
 import { closeAsyncObjects } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
+jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
+   getAudioWorkerUrl: (): string => "speech-processor.js"
+}));
+
 let objsToClose: any[];
 
 function sleep(milliseconds: number): Promise<any> {
@@ -120,6 +124,20 @@ test("CreateMeeting", () => {
     const m: sdk.Meeting = CreateMeeting();
     objsToClose.push(m);
     expect(m.properties).not.toBeUndefined();
+});
+
+test("NullMeetingId", () => {
+    let s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    // Since we're not going to return it, mark it for closure.
+    objsToClose.push(s);
+    expect(() => sdk.Meeting.createMeetingAsync(s, null)).toThrow();
+});
+
+test("EmptyMeetingId", () => {
+    let s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    // Since we're not going to return it, mark it for closure.
+    objsToClose.push(s);
+    expect(() => sdk.Meeting.createMeetingAsync(s, "")).toThrow();
 });
 
 test("CreateMeetingTranscriber", () => {
