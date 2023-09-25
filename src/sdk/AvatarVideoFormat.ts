@@ -2,13 +2,13 @@
 // Licensed under the MIT license.
 
 /**
- * Defines the talking avatar output video format.
- * @class TalkingAvatarVideoFormat
+ * Defines the avatar output video format.
+ * @class AvatarVideoFormat
  * Added in version 1.32.0
  *
  * @experimental This feature is experimental and might change in the future.
  */
-export class TalkingAvatarVideoFormat {
+export class AvatarVideoFormat {
     /**
      * Defines the video codec.
      * @default "H264"

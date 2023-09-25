@@ -8,13 +8,13 @@ import {
 } from "./Exports";
 
 /**
- * Defines the talking avatar WebRTC connection result.
- * @class TalkingAvatarWebRTCConnectionResult
+ * Defines the avatar WebRTC connection result.
+ * @class AvatarWebRTCConnectionResult
  * Added in version 1.32.0
  *
  * @experimental This feature is experimental and might change in the future.
  */
-export class TalkingAvatarWebRTCConnectionResult extends SynthesisResult {
+export class AvatarWebRTCConnectionResult extends SynthesisResult {
     private readonly privSDPAnswer: RTCSessionDescriptionInit;
 
     /**
@@ -33,7 +33,7 @@ export class TalkingAvatarWebRTCConnectionResult extends SynthesisResult {
 
     /**
      * Specifies SDP (Session Description Protocol) answer of WebRTC connection.
-     * @member TalkingAvatarWebRTCConnectionResult.prototype.SDPAnswer
+     * @member AvatarWebRTCConnectionResult.prototype.SDPAnswer
      * @function
      * @public
      * @returns {RTCSessionDescriptionInit} Specifies the SDP answer of WebRTC connection.
