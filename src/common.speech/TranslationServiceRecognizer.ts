@@ -336,7 +336,6 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
         }
 
         let resultReason: ResultReason;
-        let language: string;
         let confidence: string;
         if (serviceResult instanceof TranslationPhrase) {
             if (!!serviceResult.Translation && serviceResult.Translation.TranslationStatus === TranslationStatus.Success) {
@@ -344,11 +343,11 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
             } else {
                 resultReason = ResultReason.RecognizedSpeech;
             }
-            language = serviceResult.Language;
             confidence = serviceResult.Confidence;
         } else {
             resultReason = ResultReason.TranslatingSpeech;
         }
+        const language = serviceResult.Language;
 
         const offset: number = serviceResult.Offset + this.privRequestSession.currentTurnAudioOffset;
 

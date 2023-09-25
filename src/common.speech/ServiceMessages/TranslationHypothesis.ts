@@ -2,13 +2,14 @@
 // Licensed under the MIT license.
 
 import { Contracts } from "../../sdk/Contracts";
-import { ITranslations } from "../Exports";
+import { IPrimaryLanguage, ITranslations } from "../Exports";
 import { TranslationStatus } from "../TranslationStatus";
 
 // translation.hypothesis
 export interface ITranslationHypothesis {
     Duration: number;
     Offset: number;
+    PrimaryLanguage?: IPrimaryLanguage;
     Text: string;
     Translation: ITranslations;
 }
@@ -47,5 +48,9 @@ export class TranslationHypothesis implements ITranslationHypothesis {
 
     public get Translation(): ITranslations {
         return this.privTranslationHypothesis.Translation;
+    }
+
+    public get Language(): string {
+        return this.privTranslationHypothesis.PrimaryLanguage?.Language;
     }
 }
