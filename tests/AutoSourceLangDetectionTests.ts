@@ -484,6 +484,16 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             }
         };
 
+        r.recognizing = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs) => {
+            expect(e.result).not.toBeUndefined();
+            expect(e.result.text).toContain("what's the");
+            expect(e.result.properties).not.toBeUndefined();
+            expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+            expect(e.result.translations).not.toBeUndefined();
+            expect(e.result.translations.languages[0]).toEqual(defaultTargetLanguage);
+            expect(e.result.translations.get(defaultTargetLanguage)).toContain("Wie ist das");
+        }
+
         r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs) => {
             try {
                 if (e.result.reason === sdk.ResultReason.TranslatedSpeech) {
