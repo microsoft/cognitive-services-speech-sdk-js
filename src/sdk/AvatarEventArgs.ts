@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-export enum TalkingAvatarEventTypes {
+export enum AvatarEventTypes {
     SwitchedToSpeaking = "SwitchedToSpeaking",
     SwitchedToIdle = "SwitchedToIdle",
     SessionClosed = "SessionClosed",
@@ -9,21 +9,21 @@ export enum TalkingAvatarEventTypes {
 
 /**
  * Defines content for talking avatar events.
- * @class TalkingAvatarEventArgs
+ * @class AvatarEventArgs
  * Added in version 1.32.0
  *
  * @experimental This feature is experimental and might change or have limited support.
  */
-export class TalkingAvatarEventArgs {
-    private privType: TalkingAvatarEventTypes;
+export class AvatarEventArgs {
+    private privType: AvatarEventTypes;
     private privOffset: number;
 
     /**
      * The type of the event.
      * @public
-     * @returns {TalkingAvatarEventTypes} The type of the event.
+     * @returns {AvatarEventTypes} The type of the event.
      */
-    public get type(): TalkingAvatarEventTypes {
+    public get type(): AvatarEventTypes {
         return this.privType;
     }
 

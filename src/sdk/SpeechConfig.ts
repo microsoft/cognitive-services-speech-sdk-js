@@ -153,7 +153,7 @@ export abstract class SpeechConfig {
      * Added in version 1.4.0.
      * @param proxyHostName The host name of the proxy server, without the protocol scheme (http://)
      * @param proxyPort The port number of the proxy server.
-     * @param proxyUserName The user name of the proxy server.
+     * @param proxyUserName The username of the proxy server.
      * @param proxyPassword The password of the proxy server.
      */
     public abstract setProxy(proxyHostName: string, proxyPort: number, proxyUserName: string, proxyPassword: string): void;

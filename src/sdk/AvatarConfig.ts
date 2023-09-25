@@ -1,16 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {TalkingAvatarVideoFormat} from "./Exports";
+import {AvatarVideoFormat} from "./Exports";
 
 /**
  * Defines the talking avatar configuration.
- * @class TalkingAvatarConfig
+ * @class AvatarConfig
  * Added in version 1.32.0
  *
  * @experimental This feature is experimental and might change or have limited support.
  */
-export class TalkingAvatarConfig {
+export class AvatarConfig {
     /**
      * Defines the avatar character.
      */
@@ -22,16 +22,16 @@ export class TalkingAvatarConfig {
     /**
      * Defines the talking avatar output video format.
      */
-    public videoFormat: TalkingAvatarVideoFormat;
+    public videoFormat: AvatarVideoFormat;
 
     /**
      * Creates and initializes an instance of this class.
      * @constructor
      * @param {string} character - The avatar character.
      * @param {string} style - The avatar style.
-     * @param {TalkingAvatarVideoFormat} videoFormat - The talking avatar output video format.
+     * @param {AvatarVideoFormat} videoFormat - The talking avatar output video format.
      */
-    public constructor(character: string, style: string, videoFormat: TalkingAvatarVideoFormat) {
+    public constructor(character: string, style: string, videoFormat: AvatarVideoFormat) {
         this.character = character;
         this.style = style;
         this.videoFormat = videoFormat;

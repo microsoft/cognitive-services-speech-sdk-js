@@ -999,7 +999,7 @@ describe("Service based tests", () => {
             urls: ["<your webrtc connection ICE server list>"],
             username: "<your webrtc connection ICE username>",
             credential: "<your webrtc connection ICE credential>"
-        }
+        };
         const peerConnection: RTCPeerConnection = new RTCPeerConnection(
             { iceServers: [iceServer] },
         );
