@@ -492,6 +492,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             expect(e.result.translations).not.toBeUndefined();
             expect(e.result.translations.languages[0]).toEqual(defaultTargetLanguage);
             expect(e.result.translations.get(defaultTargetLanguage)).toContain("Wie ist das");
+            expect(e.result.language).not.toBeUndefined();
+            expect(e.result.language).toEqual("en-US");
         }
 
         r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs) => {
