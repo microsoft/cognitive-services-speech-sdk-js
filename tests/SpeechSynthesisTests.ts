@@ -984,34 +984,32 @@ describe("Service based tests", () => {
         });
     });
 
-    test("testTalkingAvatarSynthesizerDemo", async (done: jest.DoneCallback) => {
+    test("testAvatarSynthesizerDemo", async (done: jest.DoneCallback) => {
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
-        const videoFormat: sdk.TalkingAvatarVideoFormat = new sdk.TalkingAvatarVideoFormat(
+        const videoFormat: sdk.AvatarVideoFormat = new sdk.AvatarVideoFormat(
             /*codec*/ "h264",
             /*bitrate*/ 2000000,
             /*width*/ 1920,
             /*height*/ 1080,
             /*background*/ "white");
-        const avatarConfig: sdk.TalkingAvatarConfig = new sdk.TalkingAvatarConfig(
+        const avatarConfig: sdk.AvatarConfig = new sdk.AvatarConfig(
             /*character*/ "lisa", /*style*/ "casual-sitting", videoFormat);
-        const avatarSynthesizer: sdk.TalkingAvatarSynthesizer = new sdk.TalkingAvatarSynthesizer(speechConfig, avatarConfig);
-        avatarSynthesizer.eventReceived = (o: sdk.TalkingAvatarSynthesizer, e: sdk.TalkingAvatarEventArgs): void => {
+        const avatarSynthesizer: sdk.AvatarSynthesizer = new sdk.AvatarSynthesizer(speechConfig, avatarConfig);
+        avatarSynthesizer.eventReceived = (o: sdk.AvatarSynthesizer, e: sdk.AvatarEventArgs): void => {
             // eslint-disable-next-line no-console
             console.info("Avatar event received " + e.type);
         };
 
         const iceServer: RTCIceServer = {
+            credential: "<your webrtc connection ICE credential>",
             urls: ["<your webrtc connection ICE server list>"],
-            username: "<your webrtc connection ICE username>",
-            credential: "<your webrtc connection ICE credential>"
+            username: "<your webrtc connection ICE username>"
         };
         const peerConnection: RTCPeerConnection = new RTCPeerConnection(
             { iceServers: [iceServer] },
         );
-        const sdpOffer: RTCSessionDescriptionInit = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(sdpOffer);
 
-        const webrtcConnectionResult = await avatarSynthesizer.startTalkingAvatarAsync(peerConnection);
+        const webrtcConnectionResult: sdk.SynthesisResult = await avatarSynthesizer.startAvatarAsync(peerConnection);
         expect(webrtcConnectionResult.reason).toEqual(sdk.ResultReason.SynthesizingAudioStarted);
 
         // start speaking, the audio will be streamed to the WebRTC connection
