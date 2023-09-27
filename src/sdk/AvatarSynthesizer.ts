@@ -1,27 +1,19 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {
-    AudioConfig,
-    PropertyCollection,
-    PropertyId,
-    SpeechConfig,
-    SpeechConfigImpl,
-    SpeechSynthesisOutputFormat,
-    SynthesisResult,
-    AvatarConfig,
-    AvatarEventArgs
-} from "./Exports";
-import {Contracts} from "./Contracts";
 import {SpeechSynthesisConnectionFactory} from "../common.speech/SpeechSynthesisConnectionFactory";
-import {Queue} from "../common/Queue";
-import {SynthesisRequest} from "./SpeechSynthesizer";
-import {Context, OS, SpeechServiceConfig} from "../common.speech/RecognizerConfig";
-import {CognitiveSubscriptionKeyAuthentication} from "../common.speech/CognitiveSubscriptionKeyAuthentication";
-import {CognitiveTokenAuthentication} from "../common.speech/CognitiveTokenAuthentication";
-import {AudioOutputFormatImpl} from "./Audio/AudioOutputFormat";
 import {SynthesisRestAdapter} from "../common.speech/SynthesisRestAdapter";
 import {SynthesizerConfig} from "../common.speech/SynthesizerConfig";
+import { IAuthentication, ISynthesisConnectionFactory, SynthesisAdapterBase } from "../common.speech/Exports";
+import {
+    AvatarConfig,
+    AvatarEventArgs,
+    PropertyCollection,
+    SpeechConfig,
+    SpeechSynthesizer,
+    SynthesisResult,
+    Synthesizer
+} from "./Exports";
 
 /**
  * Defines the avatar synthesizer.
@@ -30,7 +22,7 @@ import {SynthesizerConfig} from "../common.speech/SynthesizerConfig";
  *
  * @experimental This feature is experimental and might change or have limited support.
  */
-export class AvatarSynthesizer {
+export class AvatarSynthesizer extends Synthesizer {
     protected privProperties: PropertyCollection;
 
     /**
@@ -48,63 +40,15 @@ export class AvatarSynthesizer {
      * @param {AvatarConfig} avatarConfig - The talking avatar config.
      */
     public constructor(speechConfig: SpeechConfig, avatarConfig: AvatarConfig) {
-        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
-        Contracts.throwIfNull(speechConfigImpl, "speechConfig");
+        super(speechConfig);
 
-        this.privProperties = speechConfigImpl.properties.clone();
-        this.privDisposed = false;
-        this.privSynthesizing = false;
         this.privConnectionFactory = new SpeechSynthesisConnectionFactory();
-        this.synthesisRequestQueue = new Queue<SynthesisRequest>();
+        // this.synthesisRequestQueue = new Queue<SynthesisRequest>();
         this.implCommonSynthesizeSetup();
     }
 
     protected implCommonSynthesizeSetup(): void {
-
-        let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
-        let osName = "unknown";
-        let osVersion = "unknown";
-
-        if (typeof navigator !== "undefined") {
-            osPlatform = osPlatform + "/" + navigator.platform;
-            osName = navigator.userAgent;
-            osVersion = navigator.appVersion;
-        }
-
-        const synthesizerConfig = this.createSynthesizerConfig(
-            new SpeechServiceConfig(
-                new Context(new OS(osPlatform, osName, osVersion))));
-
-        const subscriptionKey = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
-        const authentication = (subscriptionKey && subscriptionKey !== "") ?
-            new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
-            new CognitiveTokenAuthentication(
-                (): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                },
-                (): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                });
-
-        this.privAdapter = this.createSynthesisAdapter(
-            authentication,
-            this.privConnectionFactory,
-            this.audioConfig,
-            synthesizerConfig);
-
-        this.privAdapter.audioOutputFormat = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(
-            SpeechSynthesisOutputFormat[this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined) as keyof typeof SpeechSynthesisOutputFormat]
-        );
-
-        this.privRestAdapter = new SynthesisRestAdapter(synthesizerConfig, authentication);
-    }
-
-    protected createSynthesizerConfig(speechConfig: SpeechServiceConfig): SynthesizerConfig {
-        return new SynthesizerConfig(
-            speechConfig,
-            this.privProperties);
+        super.implCommonSynthesizeSetup();
     }
 
     /**
@@ -119,11 +63,13 @@ export class AvatarSynthesizer {
         const sdp: RTCSessionDescriptionInit = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(sdp);
         // todo: implement
-        const sdpAnswer: RTCSessionDescription = new RTCSessionDescription();
+        const sdpAnswer: RTCSessionDescription = new RTCSessionDescription(
+            JSON.parse("") as RTCSessionDescriptionInit,
+        );
         await peerConnection.setRemoteDescription(sdpAnswer);
         return new SynthesisResult(
             "someid",
-        )
+        );
     }
 
     /**
@@ -134,11 +80,12 @@ export class AvatarSynthesizer {
      * @param {string} ssml - The SSML text to speak.
      * @returns {Promise<SynthesisResult>} The promise of the synthesis result.
      */
+    // eslint-disable-next-line @typescript-eslint/require-await
     public async speakSsmlAsync(ssml: string): Promise<SynthesisResult> {
         // todo: implement
         return new SynthesisResult(
             "someid",
-        )
+        );
     }
 
     /**
@@ -163,7 +110,19 @@ export class AvatarSynthesizer {
         // todo: implement
     }
 
-    protected async startAvatarAsync(sdp: RTCSessionDescriptionInit): Promise<RTCSessionDescription> {
-
+    // Creates the synthesis adapter
+    protected createSynthesisAdapter(
+        authentication: IAuthentication,
+        connectionFactory: ISynthesisConnectionFactory,
+        synthesizerConfig: SynthesizerConfig): SynthesisAdapterBase {
+        return new SynthesisAdapterBase(authentication, connectionFactory,
+            synthesizerConfig, this as unknown as SpeechSynthesizer, undefined);
     }
+
+    protected createRestSynthesisAdapter(
+        authentication: IAuthentication,
+        synthesizerConfig: SynthesizerConfig): SynthesisRestAdapter {
+        return undefined;
+    }
+
 }

@@ -1,20 +1,15 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable max-classes-per-file */
 
 import { PathLike } from "fs";
 import { IRestResponse } from "../common.browser/RestMessageAdapter";
 import {
     AutoDetectSourceLanguagesOpenRangeOptionName,
-    CognitiveSubscriptionKeyAuthentication,
-    CognitiveTokenAuthentication,
-    Context,
     IAuthentication,
     ISynthesisConnectionFactory,
-    OS,
-    SpeechServiceConfig,
     SpeechSynthesisConnectionFactory,
     SynthesisAdapterBase,
     SynthesisRestAdapter,
@@ -51,6 +46,7 @@ import {
     SpeechSynthesisVisemeEventArgs,
     SpeechSynthesisWordBoundaryEventArgs,
     SynthesisVoicesResult,
+    Synthesizer
 } from "./Exports";
 import { SpeechConfigImpl } from "./SpeechConfig";
 
@@ -59,11 +55,8 @@ import { SpeechConfigImpl } from "./SpeechConfig";
  * Updated in version 1.16.0
  * @class SpeechSynthesizer
  */
-export class SpeechSynthesizer {
+export class SpeechSynthesizer extends Synthesizer {
     protected audioConfig: AudioConfig;
-    protected privAdapter: SynthesisAdapterBase;
-    protected privRestAdapter: SynthesisRestAdapter;
-    protected privProperties: PropertyCollection;
     protected synthesisRequestQueue: Queue<SynthesisRequest>;
 
     /**
@@ -160,7 +153,7 @@ export class SpeechSynthesizer {
 
     /**
      * Indicates if auto detect source language is enabled
-     * @member SpeechSynthesizer.prototype.properties
+     * @member SpeechSynthesizer.prototype.autoDetectSourceLanguage
      * @function
      * @public
      * @returns {boolean} if auto detect source language is enabled
@@ -170,7 +163,7 @@ export class SpeechSynthesizer {
     }
 
     private privDisposed: boolean;
-    private privConnectionFactory: ISynthesisConnectionFactory;
+
     private privSynthesizing: boolean;
 
     /**
@@ -180,8 +173,7 @@ export class SpeechSynthesizer {
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the synthesizer.
      */
     public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
-        const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
-        Contracts.throwIfNull(speechConfigImpl, "speechConfig");
+        super(speechConfig);
 
         if (audioConfig !== null) {
             if (audioConfig === undefined) {
@@ -191,7 +183,6 @@ export class SpeechSynthesizer {
             }
         }
 
-        this.privProperties = speechConfigImpl.properties.clone();
         this.privDisposed = false;
         this.privSynthesizing = false;
         this.privConnectionFactory = new SpeechSynthesisConnectionFactory();
@@ -451,65 +442,30 @@ export class SpeechSynthesizer {
     //
     // ################################################################################################################
     // IMPLEMENTATION.
-    // Move to independent class
     // ################################################################################################################
     //
-    protected createSynthesizerConfig(speechConfig: SpeechServiceConfig): SynthesizerConfig {
-        return new SynthesizerConfig(
-            speechConfig,
-            this.privProperties);
-    }
 
     // Creates the synthesis adapter
     protected createSynthesisAdapter(
         authentication: IAuthentication,
         connectionFactory: ISynthesisConnectionFactory,
-        audioConfig: AudioConfig,
         synthesizerConfig: SynthesizerConfig): SynthesisAdapterBase {
         return new SynthesisAdapterBase(authentication, connectionFactory,
             synthesizerConfig, this, this.audioConfig as AudioOutputConfigImpl);
     }
 
+    protected createRestSynthesisAdapter(
+        authentication: IAuthentication,
+        synthesizerConfig: SynthesizerConfig): SynthesisRestAdapter {
+        return new SynthesisRestAdapter(synthesizerConfig, authentication);
+    }
+
     protected implCommonSynthesizeSetup(): void {
-
-        let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
-        let osName = "unknown";
-        let osVersion = "unknown";
-
-        if (typeof navigator !== "undefined") {
-            osPlatform = osPlatform + "/" + navigator.platform;
-            osName = navigator.userAgent;
-            osVersion = navigator.appVersion;
-        }
-
-        const synthesizerConfig = this.createSynthesizerConfig(
-            new SpeechServiceConfig(
-                new Context(new OS(osPlatform, osName, osVersion))));
-
-        const subscriptionKey = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
-        const authentication = (subscriptionKey && subscriptionKey !== "") ?
-            new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
-            new CognitiveTokenAuthentication(
-                (): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                },
-                (): Promise<string> => {
-                    const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                });
-
-        this.privAdapter = this.createSynthesisAdapter(
-            authentication,
-            this.privConnectionFactory,
-            this.audioConfig,
-            synthesizerConfig);
+        super.implCommonSynthesizeSetup();
 
         this.privAdapter.audioOutputFormat = AudioOutputFormatImpl.fromSpeechSynthesisOutputFormat(
             SpeechSynthesisOutputFormat[this.properties.getProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, undefined) as keyof typeof SpeechSynthesisOutputFormat]
         );
-
-        this.privRestAdapter = new SynthesisRestAdapter(synthesizerConfig, authentication);
     }
 
     protected speakImpl(text: string, IsSsml: boolean, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, dataStream?: AudioOutputStream | PushAudioOutputStreamCallback | PathLike): void {

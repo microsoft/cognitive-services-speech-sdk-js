@@ -87,6 +87,7 @@ export { Conversation,
     User,
     VoiceSignature
     } from "./Transcription/Exports";
+export { Synthesizer } from "./Synthesizer";
 export { SpeechSynthesisOutputFormat } from "./SpeechSynthesisOutputFormat";
 export { SpeechSynthesizer } from "./SpeechSynthesizer";
 export { SynthesisResult } from "./SynthesisResult";
