@@ -100,7 +100,7 @@
     "includeConsoleOutput": true
   },
   "dependencies": {
-    "@types/webrtc": "^0.0.36",
+    "@types/webrtc": "^0.0.37",
     "agent-base": "^6.0.1",
     "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",
