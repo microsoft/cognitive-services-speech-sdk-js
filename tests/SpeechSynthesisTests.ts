@@ -1019,6 +1019,6 @@ describe("Service based tests", () => {
         await avatarSynthesizer.stopSpeakingAsync();
 
         // stop the avatar synthesizer and close the WebRTC connection.
-        await avatarSynthesizer.stopTalkingAvatarAsync();
+        await avatarSynthesizer.stopAvatarAsync();
     });
 });
