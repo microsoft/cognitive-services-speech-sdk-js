@@ -58,6 +58,8 @@ export class PronunciationAssessmentConfig {
      * @param {string} json The json string containing the pronunciation assessment parameters.
      * @return {PronunciationAssessmentConfig} Instance of PronunciationAssessmentConfig
      * @summary Creates an instance of the PronunciationAssessmentConfig from json.
+     * This method is designed to support the pronunciation assessment parameters still in preview.
+     * Under normal circumstances, use the constructor instead.
      */
     public static fromJSON(json: string): PronunciationAssessmentConfig {
         Contracts.throwIfNullOrUndefined(json, "json");
@@ -75,7 +77,7 @@ export class PronunciationAssessmentConfig {
     public applyTo(recognizer: Recognizer): void {
         this.updateJson();
         const recoBase = recognizer.internalData as ServiceRecognizerBase;
-        recoBase.speechContext.setPronunciationAssessmentParams(this.properties.getProperty(PropertyId.PronunciationAssessment_Params));
+        recoBase.speechContext.setPronunciationAssessmentParams(this.properties.getProperty(PropertyId.PronunciationAssessment_Params), recoBase.isSpeakerDiarizationEnabled);
     }
 
     /**
@@ -113,6 +115,32 @@ export class PronunciationAssessmentConfig {
     public set phonemeAlphabet(phonemeAlphabet: string) {
         Contracts.throwIfNullOrWhitespace(phonemeAlphabet, "phonemeAlphabet");
         this.privPhonemeAlphabet = phonemeAlphabet;
+    }
+
+    /**
+     * Sets the boolean enableMiscue property.
+     * Added in version 1.26.0
+     * @member PronunciationAssessmentConfig.prototype.enableMiscue
+     * @function
+     * @public
+     * @param {boolean} enableMiscue - enable miscue.
+     */
+    public set enableMiscue(enableMiscue: boolean) {
+        const enableMiscueString = enableMiscue ? "true" : "false";
+        this.properties.setProperty(PropertyId.PronunciationAssessment_EnableMiscue, enableMiscueString);
+    }
+
+    /**
+     * Gets the boolean enableMiscue property.
+     * Added in version 1.26.0
+     * @member PronunciationAssessmentConfig.prototype.enableMiscue
+     * @function
+     * @public
+     * @return {boolean} enableMiscue - enable miscue.
+     */
+    public get enableMiscue(): boolean {
+        const enableMiscueString = this.properties.getProperty(PropertyId.PronunciationAssessment_EnableMiscue, "false");
+        return (enableMiscueString.toLowerCase() === "true");
     }
 
     /**
@@ -169,10 +197,8 @@ export class PronunciationAssessmentConfig {
         paramsJson.dimension = "Comprehensive";
 
         const enableMiscueString = this.privProperties.getProperty(PropertyId.PronunciationAssessment_EnableMiscue);
-        if (enableMiscueString === "true") {
-            paramsJson.enableMiscue = true;
-        } else if (enableMiscueString === "false") {
-            paramsJson.enableMiscue = false;
+        if (enableMiscueString) {
+            paramsJson.enableMiscue = this.enableMiscue;
         }
 
         this.privProperties.setProperty(PropertyId.PronunciationAssessment_Params, JSON.stringify(paramsJson));

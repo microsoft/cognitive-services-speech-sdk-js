@@ -17,6 +17,7 @@ import { Connection } from "./Connection";
 import { Contracts } from "./Contracts";
 import {
     AudioConfig,
+    AutoDetectSourceLanguageConfig,
     PropertyCollection,
     PropertyId,
     Recognizer,
@@ -71,12 +72,13 @@ export class TranslationRecognizer extends Recognizer {
      * @constructor
      * @param {SpeechTranslationConfig} speechConfig - Set of properties to configure this recognizer.
      * @param {AudioConfig} audioConfig - An optional audio config associated with the recognizer
+     * @param {IConnectionFactory} connectionFactory - An optional connection factory to use to generate the endpoint URIs, headers to set, etc...
      */
-    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig) {
+    public constructor(speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig, connectionFactory?: IConnectionFactory) {
         const configImpl = speechConfig as SpeechTranslationConfigImpl;
         Contracts.throwIfNull(configImpl, "speechConfig");
 
-        super(audioConfig, configImpl.properties, new TranslationConnectionFactory());
+        super(audioConfig, configImpl.properties, connectionFactory || new TranslationConnectionFactory());
 
         this.privDisposedTranslationRecognizer = false;
 
@@ -94,6 +96,19 @@ export class TranslationRecognizer extends Recognizer {
             PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
+    }
+
+    /**
+     * TranslationRecognizer constructor.
+     * @constructor
+     * @param {SpeechTranslationConfig} speechTranslationConfig - an set of initial properties for this recognizer
+     * @param {AutoDetectSourceLanguageConfig} autoDetectSourceLanguageConfig - An source language detection configuration associated with the recognizer
+     * @param {AudioConfig} audioConfig - An optional audio configuration associated with the recognizer
+     */
+    public static FromConfig(speechTranslationConfig: SpeechTranslationConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): TranslationRecognizer {
+        const speechTranslationConfigImpl: SpeechTranslationConfigImpl = speechTranslationConfig as SpeechTranslationConfigImpl;
+        autoDetectSourceLanguageConfig.properties.mergeTo(speechTranslationConfigImpl.properties);
+        return new TranslationRecognizer(speechTranslationConfig, audioConfig);
     }
 
     /**
@@ -183,7 +198,7 @@ export class TranslationRecognizer extends Recognizer {
      */
     public recognizeOnceAsync(cb?: (e: TranslationRecognitionResult) => void, err?: (e: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposedTranslationRecognizer);
-        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Conversation), cb, err);
+        marshalPromiseToCallbacks(this.recognizeOnceAsyncImpl(RecognitionMode.Interactive), cb, err);
     }
 
     /**
@@ -276,15 +291,6 @@ export class TranslationRecognizer extends Recognizer {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     public onConnection(): void { }
 
-    /**
-     * handles disconnection events for conversation translation scenarios.
-     * @member TranslationRecognizer.prototype.onDisconnection
-     * @function
-     * @public
-     */
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    public async onDisconnection(): Promise<void> { }
-
     protected async dispose(disposing: boolean): Promise<void> {
         if (this.privDisposedTranslationRecognizer) {
             return;
@@ -298,8 +304,9 @@ export class TranslationRecognizer extends Recognizer {
         }
     }
 
+
     protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
-        return new RecognizerConfig(speechConfig, this.properties);
+        return new RecognizerConfig(speechConfig, this.privProperties);
     }
 
     protected createServiceRecognizer(

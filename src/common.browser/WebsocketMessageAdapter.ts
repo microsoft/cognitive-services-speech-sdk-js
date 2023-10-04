@@ -2,6 +2,13 @@
 // Licensed under the MIT license.
 
 // Node.JS specific web socket / browser support.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+import * as http from "http";
+import * as net from "net";
+import * as tls from "tls";
+import Agent from "agent-base";
+import HttpsProxyAgent from "https-proxy-agent";
+
 import ws from "ws";
 import { HeaderNames } from "../common.speech/HeaderNames";
 import {
@@ -26,8 +33,6 @@ import {
     RawWebsocketMessage,
 } from "../common/Exports";
 import { ProxyInfo } from "./ProxyInfo";
-
-import { CertCheckAgent } from "./CertChecks";
 
 interface ISendItem {
     Message: ConnectionMessage;
@@ -115,10 +120,8 @@ export class WebsocketMessageAdapter {
                 const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression };
                 // The ocsp library will handle validation for us and fail the connection if needed.
                 this.privCertificateValidatedDeferral.resolve();
-                const checkAgent: CertCheckAgent = new CertCheckAgent(this.proxyInfo);
 
-                options.agent = checkAgent.GetAgent();
-
+                options.agent = this.getAgent();
                 // Workaround for https://github.com/microsoft/cognitive-services-speech-sdk-js/issues/465
                 // Which is root caused by https://github.com/TooTallNate/node-agent-base/issues/61
                 const uri = new URL(this.privUri);
@@ -321,6 +324,75 @@ export class WebsocketMessageAdapter {
     private onEvent(event: ConnectionEvent): void {
         this.privConnectionEvents.onEvent(event);
         Events.instance.onEvent(event);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private getAgent(): http.Agent {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo } ;
+
+        if (this.proxyInfo !== undefined &&
+            this.proxyInfo.HostName !== undefined &&
+            this.proxyInfo.Port > 0) {
+            agent.proxyInfo = this.proxyInfo;
+        }
+
+        return agent as unknown as http.Agent;
+    }
+
+    private static GetProxyAgent(proxyInfo: ProxyInfo): HttpsProxyAgent {
+        const httpProxyOptions: HttpsProxyAgent.HttpsProxyAgentOptions = {
+            host: proxyInfo.HostName,
+            port: proxyInfo.Port,
+        };
+
+        if (!!proxyInfo.UserName) {
+            httpProxyOptions.headers = {
+                "Proxy-Authentication": "Basic " + new Buffer(`${proxyInfo.UserName}:${(proxyInfo.Password === undefined) ? "" : proxyInfo.Password}`).toString("base64"),
+            };
+        } else {
+            httpProxyOptions.headers = {};
+        }
+
+        httpProxyOptions.headers.requestOCSP = "true";
+
+        const httpProxyAgent: HttpsProxyAgent = new HttpsProxyAgent(httpProxyOptions);
+        return httpProxyAgent;
+    }
+
+    private createConnection(request: Agent.ClientRequest, options: Agent.RequestOptions): Promise<net.Socket> {
+        let socketPromise: Promise<net.Socket>;
+
+        options = {
+            ...options,
+            ...{
+                requestOCSP: true,
+                servername: options.host
+            }
+        };
+
+        if (!!this.proxyInfo) {
+            const httpProxyAgent: HttpsProxyAgent = WebsocketMessageAdapter.GetProxyAgent(this.proxyInfo);
+            const baseAgent: Agent.Agent = httpProxyAgent as unknown as Agent.Agent;
+
+            socketPromise = new Promise<net.Socket>((resolve: (value: net.Socket) => void, reject: (error: string | Error) => void): void => {
+                baseAgent.callback(request, options, (error: Error, socket: net.Socket): void => {
+                    if (!!error) {
+                        reject(error);
+                    } else {
+                        resolve(socket);
+                    }
+                });
+            });
+        } else {
+            if (!!options.secureEndpoint) {
+                socketPromise = Promise.resolve(tls.connect(options));
+            } else {
+                socketPromise = Promise.resolve(net.connect(options));
+            }
+        }
+
+        return socketPromise;
     }
 
     private get isWebsocketOpen(): boolean {

@@ -182,31 +182,6 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         return this.privId;
     }
 
-    public get blob(): Promise<Blob | Buffer> {
-        return this.attach("id").then<Blob | Buffer>((audioNode: IAudioStreamNode): Promise<Blob | Buffer> => {
-            const data: ArrayBuffer[] = [];
-            let bufferData = Buffer.from("");
-            const readCycle = (): Promise<Blob | Buffer> =>
-                audioNode.read().then<Blob | Buffer>((audioStreamChunk: IStreamChunk<ArrayBuffer>): Promise<Blob | Buffer> => {
-                    if (!audioStreamChunk || audioStreamChunk.isEnd) {
-                        if (typeof (XMLHttpRequest) !== "undefined" && typeof (Blob) !== "undefined") {
-                            return Promise.resolve(new Blob(data));
-                        } else {
-                            return Promise.resolve(Buffer.from(bufferData));
-                        }
-                    } else {
-                        if (typeof (Blob) !== "undefined") {
-                            data.push(audioStreamChunk.buffer);
-                        } else {
-                            bufferData = Buffer.concat([bufferData, this.toBuffer(audioStreamChunk.buffer)]);
-                        }
-                        return readCycle();
-                    }
-                });
-            return readCycle();
-        });
-    }
-
     public turnOn(): Promise<void> {
         this.onEvent(new AudioSourceInitializingEvent(this.privId)); // no stream id
         this.onEvent(new AudioSourceReadyEvent(this.privId));
@@ -364,10 +339,6 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
 
     public id(): string {
         return this.privId;
-    }
-
-    public get blob(): Promise<Blob | Buffer> {
-        return Promise.reject("Not implemented");
     }
 
     public turnOn(): Promise<void> {

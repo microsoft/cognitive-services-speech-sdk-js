@@ -22,7 +22,7 @@ export class ConversationTranslationResult extends TranslationRecognitionResult 
                        errorDetails?: string,
                        json?: string,
                        properties?: PropertyCollection) {
-        super(translations, resultId, reason, text, duration, offset, errorDetails, json, properties);
+        super(translations, resultId, reason, text, duration, offset, undefined, undefined, errorDetails, json, properties);
         this.privId = participantId;
         this.privOrigLang = originalLanguage;
     }

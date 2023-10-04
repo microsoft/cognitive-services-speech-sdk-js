@@ -53,8 +53,8 @@ jobs:
         LuisSubscriptionKey:$(luis-westus-s0-201809-key1) ^
         LuisRegion:westus ^
         SpeechTestEndpointId:ec3432b2-8584-4736-865a-556213b9f6fd ^
-        BotSubscription:$(BotSubscriptionKeyJS) ^
-        BotRegion:$(BotRegionJS) ^
+        BotSubscription:$(DialogSubscriptionKey) ^
+        BotRegion:$(DialogRegion) ^
         SpeakerIDSubscriptionKey:$(SpeakerRecognition-WestUS-Key) ^
         SpeakerIDRegion:westus ^
         ConversationTranscriptionKey:$(ConverstationTranscriptionKeyWestUSOnline) ^

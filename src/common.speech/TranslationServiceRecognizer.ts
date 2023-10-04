@@ -13,6 +13,7 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
+    SpeechRecognitionResult,
     TranslationRecognitionCanceledEventArgs,
     TranslationRecognitionEventArgs,
     TranslationRecognitionResult,
@@ -23,9 +24,10 @@ import {
 } from "../sdk/Exports";
 import {
     CancellationErrorCodePropertyName,
+    ConversationServiceRecognizer,
     EnumTranslation,
+    ITranslationHypothesis,
     RecognitionStatus,
-    ServiceRecognizerBase,
     SynthesisStatus,
     TranslationHypothesis,
     TranslationPhrase,
@@ -38,7 +40,7 @@ import { ITranslationPhrase } from "./ServiceMessages/TranslationPhrase";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
 
 // eslint-disable-next-line max-classes-per-file
-export class TranslationServiceRecognizer extends ServiceRecognizerBase {
+export class TranslationServiceRecognizer extends ConversationServiceRecognizer {
     private privTranslationRecognizer: TranslationRecognizer;
 
     public constructor(
@@ -53,8 +55,6 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
             if (connectionEvent.name === "ConnectionEstablishedEvent") {
                 this.privTranslationRecognizer.onConnection();
-            } else if (connectionEvent.name === "ConnectionClosedEvent") {
-                void this.privTranslationRecognizer.onDisconnection();
             }
         });
 
@@ -63,7 +63,10 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         const resultProps: PropertyCollection = new PropertyCollection();
-        let processed: boolean = false;
+        let processed: boolean = await this.processSpeechMessages(connectionMessage);
+        if (processed) {
+            return true;
+        }
 
         const handleTranslationPhrase = async (translatedPhrase: TranslationPhrase): Promise<void> => {
             this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset + translatedPhrase.Duration);
@@ -107,6 +110,8 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                     translatedPhrase.Text,
                     translatedPhrase.Duration,
                     this.privRequestSession.currentTurnAudioOffset + translatedPhrase.Offset,
+                    translatedPhrase.Language,
+                    translatedPhrase.Confidence,
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
@@ -156,32 +161,40 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
 
         };
 
+        const handleTranslationHypothesis = (hypothesis: TranslationHypothesis, resultProperties: PropertyCollection): void => {
+            const result: TranslationRecognitionEventArgs = this.fireEventForResult(hypothesis, resultProperties);
+            this.privRequestSession.onHypothesis(this.privRequestSession.currentTurnAudioOffset + result.offset);
+
+            if (!!this.privTranslationRecognizer.recognizing) {
+                try {
+                    this.privTranslationRecognizer.recognizing(this.privTranslationRecognizer, result);
+                    /* eslint-disable no-empty */
+                } catch (error) {
+                    // Not going to let errors in the event handler
+                    // trip things up.
+                }
+            }
+            processed = true;
+        };
+
         if (connectionMessage.messageType === MessageType.Text) {
             resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
         }
 
         switch (connectionMessage.path.toLowerCase()) {
             case "translation.hypothesis":
-
-                const result: TranslationRecognitionEventArgs = this.fireEventForResult(TranslationHypothesis.fromJSON(connectionMessage.textBody), resultProps);
-                this.privRequestSession.onHypothesis(this.privRequestSession.currentTurnAudioOffset + result.offset);
-
-                if (!!this.privTranslationRecognizer.recognizing) {
-                    try {
-                        this.privTranslationRecognizer.recognizing(this.privTranslationRecognizer, result);
-                        /* eslint-disable no-empty */
-                    } catch (error) {
-                        // Not going to let errors in the event handler
-                        // trip things up.
-                    }
-                }
-                processed = true;
+                handleTranslationHypothesis(TranslationHypothesis.fromJSON(connectionMessage.textBody), resultProps);
                 break;
 
             case "translation.response":
                 const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody) as { SpeechPhrase: ITranslationPhrase };
                 if (!!phrase.SpeechPhrase) {
                     await handleTranslationPhrase(TranslationPhrase.fromTranslationResponse(phrase));
+                } else {
+                    const hypothesis: { SpeechHypothesis: ITranslationHypothesis } = JSON.parse(connectionMessage.textBody) as { SpeechHypothesis: ITranslationHypothesis };
+                    if (!!hypothesis.SpeechHypothesis) {
+                        handleTranslationHypothesis(TranslationHypothesis.fromTranslationResponse(hypothesis), resultProps);
+                    }
                 }
                 break;
             case "translation.phrase":
@@ -193,6 +206,7 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 processed = true;
                 break;
 
+            case "audio.end":
             case "translation.synthesis.end":
                 const synthEnd: TranslationSynthesisEnd = TranslationSynthesisEnd.fromJSON(connectionMessage.textBody);
 
@@ -277,6 +291,8 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 undefined, // Text
                 undefined, // Druation
                 undefined, // Offset
+                undefined, // Language
+                undefined, // LanguageDetectionConfidence
                 error,
                 undefined, // Json
                 properties);
@@ -285,6 +301,27 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
                 /* eslint-disable no-empty */
                 this.privSuccessCallback = undefined;
             } catch { }
+        }
+    }
+
+    protected handleRecognizingCallback(result: SpeechRecognitionResult, duration: number, sessionId: string): void {
+        try {
+            const ev = new TranslationRecognitionEventArgs(TranslationRecognitionResult.fromSpeechRecognitionResult(result), duration, sessionId);
+            this.privTranslationRecognizer.recognizing(this.privTranslationRecognizer, ev);
+            /* eslint-disable no-empty */
+        } catch (error) {
+            // Not going to let errors in the event handler
+            // trip things up.
+        }
+    }
+
+    protected handleRecognizedCallback(result: SpeechRecognitionResult, offset: number, sessionId: string): void {
+        try {
+            const ev = new TranslationRecognitionEventArgs(TranslationRecognitionResult.fromSpeechRecognitionResult(result), offset, sessionId);
+            this.privTranslationRecognizer.recognized(this.privTranslationRecognizer, ev);
+        } catch (error) {
+            // Not going to let errors in the event handler
+            // trip things up.
         }
     }
 
@@ -299,15 +336,18 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
         }
 
         let resultReason: ResultReason;
+        let confidence: string;
         if (serviceResult instanceof TranslationPhrase) {
-            if (serviceResult.Translation.TranslationStatus === TranslationStatus.Success) {
+            if (!!serviceResult.Translation && serviceResult.Translation.TranslationStatus === TranslationStatus.Success) {
                 resultReason = ResultReason.TranslatedSpeech;
             } else {
                 resultReason = ResultReason.RecognizedSpeech;
             }
+            confidence = serviceResult.Confidence;
         } else {
             resultReason = ResultReason.TranslatingSpeech;
         }
+        const language = serviceResult.Language;
 
         const offset: number = serviceResult.Offset + this.privRequestSession.currentTurnAudioOffset;
 
@@ -318,6 +358,8 @@ export class TranslationServiceRecognizer extends ServiceRecognizerBase {
             serviceResult.Text,
             serviceResult.Duration,
             offset,
+            language,
+            confidence,
             serviceResult.Translation.FailureReason,
             JSON.stringify(serviceResult),
             properties);

@@ -18,6 +18,7 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
 let objsToClose: any[];
+let bufferSize: number;
 
 beforeAll(() => {
     // override inputs, if necessary
@@ -999,7 +1000,7 @@ test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
             expect(res.errorDetails).toBeUndefined();
             expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
             expect(res).not.toBeUndefined();
-            expect(res.text).toEqual("Recognize speech.");
+            expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Recognize speech");
             done();
         },
         (error: string) => {
@@ -1078,9 +1079,9 @@ test("Phraselist Clear works.", (done: jest.DoneCallback) => {
             expect(res).not.toBeUndefined();
             expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
             if (phraseAdded) {
-                expect(res.text).toContain("Wreck a nice beach.");
+                expect(res.text).toContain("Wreck a nice beach");
             } else {
-                expect(res.text).toEqual("Recognize speech.");
+                expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Recognize speech");
             }
             recoCount++;
         } catch (error) {

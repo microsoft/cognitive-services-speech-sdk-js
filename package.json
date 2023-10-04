@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.21.0-alpha.0.1",
+  "version": "1.31.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
@@ -33,19 +33,15 @@
     "simple-lru-cache": false,
     "ws": false,
     "fs": false,
-    "async-disk-cache": false,
-    "distrib/es2015/external/ocsp/ocsp": false,
-    "distrib/lib/external/ocsp/ocsp": false,
     "agent-base": false,
     "tls": false,
     "net": false
   },
   "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
-  "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
+  "module": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
   "types": "distrib/lib/microsoft.cognitiveservices.speech.sdk.d.ts",
   "files": [
     "distrib/lib/**/*",
-    "distrib/es2015/**/*",
     "distrib/browser/**/*",
     "LICENSE",
     "REDIST.txt"
@@ -57,7 +53,7 @@
     "@types/prettier": "<2.6.0",
     "@types/request": "^2.48.3",
     "@types/rimraf": "^3.0.0",
-    "@types/uuid": "^3.3.3",
+    "@types/uuid": "^9.0.0",
     "@types/ws": "^6.0.4",
     "@typescript-eslint/eslint-plugin": "^5.26.0",
     "@typescript-eslint/eslint-plugin-tslint": "^5.27.0",
@@ -68,7 +64,6 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jsdoc": "^39.3.2",
     "eslint-plugin-prefer-arrow": "^1.2.3",
-    "got": "^11.8.5",
     "gulp": "^4.0.2",
     "gulp-eslint": "^6.0.0",
     "gulp-rename": "^2.0.0",
@@ -77,7 +72,6 @@
     "gulp-typescript": "^5.0.1",
     "jest": "^27.0.0",
     "jest-junit": "^12.0.0",
-    "ocsp": "^1.2.0",
     "rimraf": "^3.0.2",
     "semver": "^6.3.0",
     "source-map-loader": "^3.0.1",
@@ -88,13 +82,13 @@
     "webpack-stream": "^7.0.0"
   },
   "scripts": {
-    "build": "gulp compress && gulp build2015",
+    "build": "gulp compress && gulp build",
     "test": "npm run lint && npm run jest --coverage",
     "jest": "jest",
     "lint": "eslint -c .eslintrc.js --ext .ts src",
     "civersion": "node ci/version.js",
     "prepare": "npm run build",
-    "preinstall": "npm install --package-lock-only --ignore-scripts --no-audit && npx npm-force-resolutions"
+    "setup": "npm install --package-lock-only --ignore-scripts --no-audit"
   },
   "jest-junit": {
     "suiteName": "jest tests",
@@ -107,19 +101,22 @@
   },
   "dependencies": {
     "agent-base": "^6.0.1",
-    "asn1.js-rfc2560": "^5.0.1",
-    "asn1.js-rfc5280": "^3.0.0",
-    "async-disk-cache": "^2.1.0",
     "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",
-    "simple-lru-cache": "0.0.2",
-    "uuid": "^8.3.0",
+    "uuid": "^9.0.0",
     "ws": "^7.5.6"
   },
-  "resolutions": {
+  "overrides": {
     "extend": "3.0.2",
     "set-value": "4.0.1",
-    "minimist": "1.2.6"
+    "minimist": "1.2.6",
+    "source-map": "~0.8.0-beta.0",
+    "chokidar": {
+      "glob-parent": "6.0.2"
+    },
+    "glob-stream": {
+      "glob-parent": "6.0.2"
+    }
   },
   "sideEffects": false
 }

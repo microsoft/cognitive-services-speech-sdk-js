@@ -11,6 +11,6 @@
   "dependencies": {},
   "devDependencies": {
     "gulp": "^4.0.0",
-    "webpack-stream": "^5.2.1"
+    "webpack-stream": "^7.0.0"
   }
 }

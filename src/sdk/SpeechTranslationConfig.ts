@@ -193,10 +193,10 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
      * @member SpeechTranslationConfig.prototype.setProperty
      * @function
      * @public
-     * @param {string} name - The name of the property.
-     * @param {string} value - The value.
+     * @param {string | PropertyId} name - The name of the property to set.
+     * @param {string} value - The new value of the property.
      */
-    public abstract setProperty(name: string, value: string): void;
+    public abstract setProperty(name: string | PropertyId, value: string): void;
 
     /**
      * Dispose of associated resources.
@@ -319,8 +319,10 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
         Contracts.throwIfNullOrWhitespace(value, "value");
 
         const languages: string[] = this.targetLanguages;
-        languages.push(value);
-        this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, languages.join(","));
+        if (!languages.includes(value)) {
+            languages.push(value);
+            this.privSpeechProperties.setProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, languages.join(","));
+        }
     }
 
     /**
@@ -401,7 +403,7 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      * @member SpeechTranslationConfigImpl.prototype.setProperty
      * @function
      * @public
-     * @param {string} name - The name of the property.
+     * @param {string | PropertyId} name - The name of the property to set.
      * @param {string} value - The value of the property.
      */
     public setProperty(name: string | PropertyId, value: string): void {

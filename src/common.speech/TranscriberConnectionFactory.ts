@@ -43,27 +43,8 @@ export class TranscriberConnectionFactory extends ConnectionFactoryBase {
         const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, hostDefault);
 
         const queryParams: IStringDictionary<string> = {};
+        this.setQueryParams(queryParams, config, endpoint);
 
-        const endpointId: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_EndpointId, undefined);
-        const language: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, undefined);
-
-        if (endpointId) {
-            if (!endpoint || endpoint.search(QueryParameterNames.CustomSpeechDeploymentId) === -1) {
-                queryParams[QueryParameterNames.CustomSpeechDeploymentId] = endpointId;
-            }
-        } else if (language) {
-            if (!endpoint || endpoint.search(QueryParameterNames.Language) === -1) {
-                queryParams[QueryParameterNames.Language] = language;
-            }
-        }
-
-        const wordLevelTimings: boolean = config.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase() === "true";
-        const detailed: boolean = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]) !== OutputFormat[OutputFormat.Simple];
-        if (wordLevelTimings || detailed) {
-            queryParams[QueryParameterNames.Format] = OutputFormat[OutputFormat.Detailed].toLowerCase();
-        }
-
-        this.setCommonUrlParams(config, queryParams, endpoint);
         if (!endpoint) {
             endpoint = host;
         }
@@ -78,5 +59,27 @@ export class TranscriberConnectionFactory extends ConnectionFactoryBase {
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
         return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+    }
+
+    public setQueryParams(queryParams: IStringDictionary<string>, config: RecognizerConfig, endpointUrl: string): void {
+
+        const endpointId: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_EndpointId, undefined);
+        const language: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, undefined);
+
+        if (endpointId && !(QueryParameterNames.CustomSpeechDeploymentId in queryParams)) {
+            queryParams[QueryParameterNames.CustomSpeechDeploymentId] = endpointId;
+        }
+
+        if (language && !(QueryParameterNames.Language in queryParams)) {
+            queryParams[QueryParameterNames.Language] = language;
+        }
+
+        const wordLevelTimings: boolean = config.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase() === "true";
+        const detailed: boolean = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]) !== OutputFormat[OutputFormat.Simple];
+        if (wordLevelTimings || detailed) {
+            queryParams[QueryParameterNames.Format] = OutputFormat[OutputFormat.Detailed].toLowerCase();
+        }
+
+        this.setCommonUrlParams(config, queryParams, endpointUrl);
     }
 }

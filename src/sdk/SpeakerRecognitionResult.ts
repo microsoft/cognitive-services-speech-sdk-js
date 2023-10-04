@@ -2,8 +2,7 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
-import { CancellationErrorCodePropertyName } from "../common.speech/Exports";
-import { Contracts } from "./Contracts";
+import { CancellationErrorCodePropertyName, SpeakerResponse } from "../common.speech/Exports";
 import {
     CancellationDetailsBase,
     CancellationErrorCode,
@@ -18,18 +17,6 @@ export enum SpeakerRecognitionResultType {
     Identify
 }
 
-interface IdentifyResult {
-    identifiedProfile: {
-        profileId: string;
-        score: number;
-    };
-}
-
-interface VerifyResult {
-    recognitionResult: string;
-    score: number;
-}
-
 /**
  * Output format
  * @class SpeakerRecognitionResult
@@ -41,33 +28,29 @@ export class SpeakerRecognitionResult {
     private privScore: number;
     private privErrorDetails: string;
 
-    public constructor(resultType: SpeakerRecognitionResultType, data: string, profileId: string, resultReason: ResultReason = ResultReason.RecognizedSpeaker) {
+    public constructor(response: SpeakerResponse, resultReason: ResultReason = ResultReason.RecognizedSpeaker, cancellationErrorCode: CancellationErrorCode = CancellationErrorCode.NoError, errorDetails: string = "") {
         this.privProperties = new PropertyCollection();
+        const resultType = response.scenario === "TextIndependentIdentification" ? SpeakerRecognitionResultType.Identify : SpeakerRecognitionResultType.Verify;
         this.privReason = resultReason;
         if (this.privReason !== ResultReason.Canceled) {
             if (resultType === SpeakerRecognitionResultType.Identify) {
-                const json: IdentifyResult = JSON.parse(data) as IdentifyResult;
-                Contracts.throwIfNullOrUndefined(json, "JSON");
-                this.privProfileId = json.identifiedProfile.profileId;
-                this.privScore = json.identifiedProfile.score;
+                this.privProfileId = response.identificationResult.identifiedProfile.profileId;
+                this.privScore = response.identificationResult.identifiedProfile.score;
+                this.privReason = ResultReason.RecognizedSpeakers;
             } else {
-                const json: VerifyResult = JSON.parse(data) as VerifyResult;
-                Contracts.throwIfNullOrUndefined(json, "JSON");
-                this.privScore = json.score;
-                if (json.recognitionResult.toLowerCase() !== "accept") {
+                this.privScore = response.verificationResult.score;
+                if (response.verificationResult.recognitionResult.toLowerCase() !== "accept") {
                     this.privReason = ResultReason.NoMatch;
                 }
-                if (profileId !== undefined && profileId !== "") {
-                    this.privProfileId = profileId;
+                if (response.verificationResult.profileId !== undefined && response.verificationResult.profileId !== "") {
+                    this.privProfileId = response.verificationResult.profileId;
                 }
             }
         } else {
-            const json: { statusText: string } = JSON.parse(data) as { statusText: string };
-            Contracts.throwIfNullOrUndefined(json, "JSON");
-            this.privErrorDetails = json.statusText;
-            this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[CancellationErrorCode.ServiceError]);
+            this.privErrorDetails = errorDetails;
+            this.privProperties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[cancellationErrorCode]);
         }
-        this.privProperties.setProperty(PropertyId.SpeechServiceResponse_JsonResult, data);
+        this.privProperties.setProperty(PropertyId.SpeechServiceResponse_JsonResult, JSON.stringify(response));
     }
 
     public get properties(): PropertyCollection {

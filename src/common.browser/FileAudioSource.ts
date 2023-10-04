@@ -63,10 +63,6 @@ export class FileAudioSource implements IAudioSource {
         return this.privAudioFormatPromise;
     }
 
-    public get blob(): Promise<Blob | Buffer> {
-        return Promise.resolve(this.privSource);
-    }
-
     public turnOn(): Promise<void> {
         if (this.privFilename.lastIndexOf(".wav") !== this.privFilename.length - 4) {
             const errorMsg = this.privFilename + " is not supported. Only WAVE files are allowed at the moment.";
@@ -150,7 +146,7 @@ export class FileAudioSource implements IAudioSource {
 
     private readHeader(): Promise<AudioStreamFormatImpl> {
         // Read the wave header.
-        const maxHeaderSize: number = 512;
+        const maxHeaderSize: number = 4296;
         const header: Blob | Buffer = this.privSource.slice(0, maxHeaderSize);
 
         const headerResult: Deferred<AudioStreamFormatImpl> = new Deferred<AudioStreamFormatImpl>();

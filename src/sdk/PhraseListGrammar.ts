@@ -5,7 +5,11 @@ import {
     DynamicGrammarBuilder,
     ServiceRecognizerBase,
 } from "../common.speech/Exports";
-import { Recognizer } from "./Exports";
+import {
+    ConversationTranscriber,
+    MeetingTranscriber,
+    Recognizer
+} from "./Exports";
 
 /**
  * Allows additions of new phrases to improve speech recognition.
@@ -24,9 +28,8 @@ export class PhraseListGrammar {
      * Creates a PhraseListGrammar from a given speech recognizer. Will accept any recognizer that derives from @class Recognizer.
      * @param recognizer The recognizer to add phrase lists to.
      */
-    public static fromRecognizer(recognizer: Recognizer): PhraseListGrammar {
-        const recoBase: ServiceRecognizerBase = recognizer.internalData as ServiceRecognizerBase;
-
+    public static fromRecognizer(recognizer: Recognizer | ConversationTranscriber | MeetingTranscriber): PhraseListGrammar {
+        const recoBase = recognizer.internalData as ServiceRecognizerBase;
         return new PhraseListGrammar(recoBase);
     }
 

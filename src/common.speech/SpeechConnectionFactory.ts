@@ -47,9 +47,7 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
         const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
         const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + ".stt.speech" + hostSuffix);
-
         const queryParams: IStringDictionary<string> = {};
-
         const endpointId: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_EndpointId, undefined);
         const language: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, undefined);
 
@@ -105,9 +103,15 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         }
         headers[HeaderNames.ConnectionId] = connectionId;
 
-        config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
-
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+
+        const webSocketConnection = new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+
+        // Set the value of SpeechServiceConnection_Url to webSocketConnection.uri (and not to `endpoint`), since this value is the final
+        // URI that was used to make the connection (including query parameters).
+        const uri: string = webSocketConnection.uri;
+        config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, uri);
+
+        return webSocketConnection;
     }
 }

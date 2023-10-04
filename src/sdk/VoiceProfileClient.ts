@@ -5,16 +5,21 @@ import {
     IRestResponse
 } from "../common.browser/Exports";
 import {
-    Context,
-    OS,
-    SpeakerIdMessageAdapter,
-    SpeakerRecognitionConfig
+    IAuthentication,
+    IConnectionFactory,
+    RecognizerConfig,
+    ServiceRecognizerBase,
+    SpeechServiceConfig,
+    VoiceProfileConnectionFactory,
+    VoiceServiceRecognizer
 } from "../common.speech/Exports";
 import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
 import { Contracts } from "./Contracts";
 import {
+    AudioInputStream,
     PropertyCollection,
     PropertyId,
+    Recognizer,
     ResultReason,
     VoiceProfile,
     VoiceProfileEnrollmentResult,
@@ -23,16 +28,16 @@ import {
     VoiceProfileType
 } from "./Exports";
 import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
-import { EnrollmentResultJSON } from "./VoiceProfileEnrollmentResult";
 
 /**
  * Defines VoiceProfileClient class for Speaker Recognition
  * Handles operations from user for Voice Profile operations (e.g. createProfile, deleteProfile)
  * @class VoiceProfileClient
  */
-export class VoiceProfileClient {
+export class VoiceProfileClient extends Recognizer {
     protected privProperties: PropertyCollection;
-    private privAdapter: SpeakerIdMessageAdapter;
+    private privVoiceAdapter: VoiceServiceRecognizer;
+    private privDisposedVoiceAdapter: boolean;
 
     /**
      * VoiceProfileClient constructor.
@@ -40,11 +45,15 @@ export class VoiceProfileClient {
      * @param {SpeechConfig} speechConfig - An set of initial properties for this synthesizer (authentication key, region, &c)
      */
     public constructor(speechConfig: SpeechConfig) {
+        Contracts.throwIfNullOrUndefined(speechConfig, "speechConfig");
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         Contracts.throwIfNull(speechConfigImpl, "speechConfig");
 
+        super(AudioConfig.fromStreamInput(AudioInputStream.createPushStream()), speechConfigImpl.properties, new VoiceProfileConnectionFactory());
+
         this.privProperties = speechConfigImpl.properties.clone();
-        this.implClientSetup();
+        this.privVoiceAdapter = this.privReco as VoiceServiceRecognizer;
+        this.privDisposedVoiceAdapter = false;
     }
 
     /**
@@ -92,14 +101,10 @@ export class VoiceProfileClient {
      * @return {Promise<VoiceProfile>} - Promise of a VoiceProfile.
      */
     public async createProfileAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfile> {
-        const result: { ok: boolean; status: number; statusText: string; json: { profileId?: string } } = await this.privAdapter.createProfile(profileType, lang);
-        if (!result.ok) {
-            throw new Error(`createProfileAsync failed with code: ${result.status}, message: ${result.statusText}`);
-        }
-        const response: { profileId?: string } = result.json;
-        const profile = new VoiceProfile(response.profileId, profileType);
-        return profile;
+        const profileIds: string[] = await this.privVoiceAdapter.createProfile(profileType, lang);
+        return new VoiceProfile(profileIds[0], profileType);
     }
+
     /**
      * Get current information of a voice profile
      * @member VoiceProfileClient.prototype.retrieveEnrollmentResultAsync
@@ -110,12 +115,7 @@ export class VoiceProfileClient {
      * @return {Promise<VoiceProfileEnrollmentResult>} - Promise of a VoiceProfileEnrollmentResult.
      */
     public async retrieveEnrollmentResultAsync(profile: VoiceProfile): Promise<VoiceProfileEnrollmentResult> {
-        const result:  { ok: boolean; data: string; statusText: string; json: { value: EnrollmentResultJSON[] } } = await this.privAdapter.getProfileStatus(profile);
-        return new VoiceProfileEnrollmentResult(
-            result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
-            result.data,
-            result.statusText
-        );
+        return this.privVoiceAdapter.retrieveEnrollmentResult(profile);
     }
 
     /**
@@ -128,16 +128,19 @@ export class VoiceProfileClient {
      * @return {Promise<VoiceProfileEnrollmentResult[]>} - Promise of an array of VoiceProfileEnrollmentResults.
      */
     public async getAllProfilesAsync(profileType: VoiceProfileType): Promise<VoiceProfileEnrollmentResult[]> {
+        return this.privVoiceAdapter.getAllProfiles(profileType);
+        /*
         const result: { json: { value: EnrollmentResultJSON[] } } = await this.privAdapter.getProfiles(profileType);
         if (profileType === VoiceProfileType.TextIndependentIdentification) {
             return VoiceProfileEnrollmentResult.FromIdentificationProfileList(result.json);
         }
         return VoiceProfileEnrollmentResult.FromVerificationProfileList(result.json);
+        */
     }
 
     /**
      * Get valid authorization phrases for voice profile enrollment
-     * @member VoiceProfileClient.prototype.getAuthorizationPhrasesAsync
+     * @member VoiceProfileClient.prototype.getActivationPhrasesAsync
      * @function
      * @public
      * @async
@@ -145,12 +148,7 @@ export class VoiceProfileClient {
      * @param {string} lang Language string (locale) for Voice Profile
      */
     public async getActivationPhrasesAsync(profileType: VoiceProfileType, lang: string): Promise<VoiceProfilePhraseResult> {
-        const result: { ok: boolean; statusText: string; json: { value: { passPhrase?: string; activationPhrase?: string }[] } } = await this.privAdapter.getPhrases(profileType, lang);
-        return new VoiceProfilePhraseResult(
-            result.ok ? ResultReason.EnrollingVoiceProfile : ResultReason.Canceled,
-            result.statusText,
-            result.json
-        );
+        return this.privVoiceAdapter.getActivationPhrases(profileType, lang);
     }
 
     /**
@@ -166,13 +164,10 @@ export class VoiceProfileClient {
     public async enrollProfileAsync(profile: VoiceProfile, audioConfig: AudioConfig): Promise<VoiceProfileEnrollmentResult> {
         const configImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
         Contracts.throwIfNullOrUndefined(configImpl, "audioConfig");
+        this.audioConfig = audioConfig;
+        this.privVoiceAdapter.SpeakerAudioSource = configImpl;
 
-        const result: IRestResponse = await this.privAdapter.createEnrollment(profile, configImpl);
-        return new VoiceProfileEnrollmentResult(
-            result.ok ? ResultReason.EnrolledVoiceProfile : ResultReason.Canceled,
-            result.data,
-            result.statusText
-        );
+        return this.privVoiceAdapter.enrollProfile(profile);
     }
 
     /**
@@ -185,8 +180,7 @@ export class VoiceProfileClient {
      * @return {Promise<VoiceProfileResult>} - Promise of a VoiceProfileResult.
      */
     public async deleteProfileAsync(profile: VoiceProfile): Promise<VoiceProfileResult> {
-        const result: IRestResponse = await this.privAdapter.deleteProfile(profile);
-        return this.getResult(result, ResultReason.DeletedVoiceProfile);
+        return this.privVoiceAdapter.deleteProfile(profile);
     }
 
     /**
@@ -199,39 +193,39 @@ export class VoiceProfileClient {
      * @return {Promise<VoiceProfileResult>} - Promise of a VoiceProfileResult.
      */
     public async resetProfileAsync(profile: VoiceProfile): Promise<VoiceProfileResult> {
-        const result: IRestResponse = await this.privAdapter.resetProfile(profile);
-        return this.getResult(result, ResultReason.ResetVoiceProfile);
+        return this.privVoiceAdapter.resetProfile(profile);
     }
 
     /**
-     * Included for compatibility
+     * Clean up object and close underlying connection
      * @member VoiceProfileClient.prototype.close
      * @function
+     * @async
      * @public
      */
-    public close(): void {
-        return;
+    public async close(): Promise<void> {
+        await this.dispose(true);
     }
 
-    // Does class setup, swiped from Recognizer.
-    protected implClientSetup(): void {
+    protected createServiceRecognizer(authentication: IAuthentication, connectionFactory: IConnectionFactory, audioConfig: AudioConfig, recognizerConfig: RecognizerConfig): ServiceRecognizerBase {
+        const audioImpl: AudioConfigImpl = audioConfig as AudioConfigImpl;
+        return new VoiceServiceRecognizer(authentication, connectionFactory, audioImpl, recognizerConfig, this);
+    }
 
-        let osPlatform = (typeof window !== "undefined") ? "Browser" : "Node";
-        let osName = "unknown";
-        let osVersion = "unknown";
-
-        if (typeof navigator !== "undefined") {
-            osPlatform = osPlatform + "/" + navigator.platform;
-            osName = navigator.userAgent;
-            osVersion = navigator.appVersion;
+    protected async dispose(disposing: boolean): Promise<void> {
+        if (this.privDisposedVoiceAdapter) {
+            return;
         }
 
-        const recognizerConfig =
-            new SpeakerRecognitionConfig(
-                new Context(new OS(osPlatform, osName, osVersion)),
-                this.privProperties);
+        this.privDisposedVoiceAdapter = true;
 
-        this.privAdapter = new SpeakerIdMessageAdapter(recognizerConfig);
+        if (disposing) {
+            await super.dispose(disposing);
+        }
+    }
+
+    protected createRecognizerConfig(speechConfig: SpeechServiceConfig): RecognizerConfig {
+        return new RecognizerConfig(speechConfig, this.properties);
     }
 
     private getResult(result: IRestResponse, successReason: ResultReason): VoiceProfileResult {

@@ -83,7 +83,6 @@ export class RestMessageAdapter {
         uri: string,
         queryParams: { [key: string]: any } = {},
         body: any = null,
-        binaryBody: Blob | Buffer = null,
         ): Promise<IRestResponse> {
 
         const responseReceivedDeferral = new Deferred<IRestResponse>();
@@ -99,16 +98,6 @@ export class RestMessageAdapter {
                 status: data.statusCode,
                 statusText: j.error ? j.error.message : d.statusText ? d.statusText : d.statusMessage
             };
-        };
-
-        const blobToArrayBuffer = (blob: Blob): Promise<unknown> => {
-            const reader = new FileReader();
-            reader.readAsArrayBuffer(blob);
-            return new Promise((resolve: (value: unknown) => void): void => {
-                reader.onloadend = (): void => {
-                resolve(reader.result);
-                };
-            });
         };
 
         const send = (postData: RequestBody): void => {
@@ -135,32 +124,12 @@ export class RestMessageAdapter {
             this.privHeaders["Cache-Control"] = "no-cache";
         }
 
-        if (method === RestRequestType.File && binaryBody) {
-            const contentType = "multipart/form-data";
-            this.privHeaders["content-type"] = contentType;
-            this.privHeaders["Content-Type"] = contentType;
-            if (typeof (Blob) !== "undefined" && binaryBody instanceof Blob) {
-                blobToArrayBuffer(binaryBody).then( (res: RequestBody): void => {
-                    send(res);
-                }).catch((error: any): void => {
-                    responseReceivedDeferral.reject(error as string);
-                });
-            } else {
-                send(binaryBody as Buffer);
-            }
-        } else {
-            if (method === RestRequestType.Post && body) {
-                this.privHeaders["content-type"] = "application/json";
-                this.privHeaders["Content-Type"] = "application/json";
-            }
-            send(body as RequestBody);
+        if (method === RestRequestType.Post && body) {
+            this.privHeaders["content-type"] = "application/json";
+            this.privHeaders["Content-Type"] = "application/json";
         }
+        send(body as RequestBody);
         return responseReceivedDeferral.promise;
-    }
-
-    private withQuery(url: string, params: { [key: string]: string } = {}): any {
-        const queryString = this.queryParams(params);
-        return queryString ? url + (url.indexOf("?") === -1 ? "?" : "&") + queryString : url;
     }
 
     private queryParams(params: { [key: string]: string } = {}): string {

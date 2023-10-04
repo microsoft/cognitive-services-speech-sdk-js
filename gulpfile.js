@@ -10,10 +10,6 @@
   var webpack = require('webpack-stream');
   var dtsBundleWebpack = require('dts-bundle-webpack');
   var tsProject = ts.createProject('tsconfig.json');
-  var tsProject2015 = ts.createProject('tsconfig.json', {
-    target: 'es2015',
-    module: 'esnext'
-  });
 
   gulp.task('build', gulp.series(function build() {
     return gulp.src([
@@ -30,35 +26,18 @@
       .pipe(tsProject())
       .pipe(sourcemaps.write('.'))
       .pipe(gulp.dest('distrib/lib'));
-  }, function () {
-    return gulp.src('./external/**/*')
-      .pipe(gulp.dest('./distrib/lib/external/'));
-  }));
-
-  gulp.task('build2015', gulp.series(function build() {
-    return gulp.src([
-      'src/**/*.ts',
-      'microsoft.cognitiveservices.speech.sdk.ts'],
-      { base: '.' })
-      .pipe(eslint({
-        formatter: 'prose',
-        configuration: 'eslint.json'
-      }))
-      .pipe(eslint.format())
-      .pipe(eslint.failAfterError())
-      .pipe(sourcemaps.init())
-      .pipe(tsProject2015())
-      .pipe(sourcemaps.write('.'))
-      .pipe(gulp.dest('distrib/es2015'));
-  }, function () {
-    return gulp.src('./external/**/*')
-      .pipe(gulp.dest('./distrib/es2015/external/'));
+    }, function () {
+      return gulp.src('./src/audioworklet/speech-processor.js')
+        .pipe(gulp.dest('./distrib/lib/src/common.browser'));
   }));
 
   gulp.task('bundle', gulp.series('build', function bundle() {
     return gulp.src('bundleApp.js')
       .pipe(webpack({
-        output: { filename: 'microsoft.cognitiveservices.speech.sdk.bundle.js' },
+        entry: { 
+          'microsoft.cognitiveservices.speech.sdk.bundle': './bundleApp.js',
+        },
+        output: { filename: '[name].js' },
         devtool: 'source-map',
         module: {
           rules: [{

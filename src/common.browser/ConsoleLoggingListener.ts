@@ -10,6 +10,7 @@ import { Contracts } from "../sdk/Contracts";
 export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
     private privLogLevelFilter: LogLevel;
     private privLogPath: fs.PathLike = undefined;
+    private privEnableConsoleOutput: boolean = true;
 
     public constructor(logLevelFilter: LogLevel = LogLevel.None) { // Console output disabled by default
         this.privLogLevelFilter = logLevelFilter;
@@ -20,6 +21,10 @@ export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
         this.privLogPath = path;
     }
 
+    public set enableConsoleOutput(enableOutput: boolean) {
+        this.privEnableConsoleOutput = enableOutput;
+    }
+
     public onEvent(event: PlatformEvent): void {
         if (event.eventType >= this.privLogLevelFilter) {
             const log = this.toString(event);
@@ -27,27 +32,29 @@ export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
                 fs.writeFileSync(this.privLogPath, log + "\n", { flag: "a+" });
             }
 
-            switch (event.eventType) {
-                case LogLevel.Debug:
-                    // eslint-disable-next-line no-console
-                    console.debug(log);
-                    break;
-                case LogLevel.Info:
-                    // eslint-disable-next-line no-console
-                    console.info(log);
-                    break;
-                case LogLevel.Warning:
-                    // eslint-disable-next-line no-console
-                    console.warn(log);
-                    break;
-                case LogLevel.Error:
-                    // eslint-disable-next-line no-console
-                    console.error(log);
-                    break;
-                default:
-                    // eslint-disable-next-line no-console
-                    console.log(log);
-                    break;
+            if (this.privEnableConsoleOutput) {
+                switch (event.eventType) {
+                    case LogLevel.Debug:
+                        // eslint-disable-next-line no-console
+                        console.debug(log);
+                        break;
+                    case LogLevel.Info:
+                        // eslint-disable-next-line no-console
+                        console.info(log);
+                        break;
+                    case LogLevel.Warning:
+                        // eslint-disable-next-line no-console
+                        console.warn(log);
+                        break;
+                    case LogLevel.Error:
+                        // eslint-disable-next-line no-console
+                        console.error(log);
+                        break;
+                    default:
+                        // eslint-disable-next-line no-console
+                        console.log(log);
+                        break;
+                }
             }
         }
     }

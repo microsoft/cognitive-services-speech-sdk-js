@@ -10,7 +10,7 @@ import {
     RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SpeechServiceConfig,
+    SpeechServiceConfig
 } from "../common.speech/Exports";
 import {
     Deferred,

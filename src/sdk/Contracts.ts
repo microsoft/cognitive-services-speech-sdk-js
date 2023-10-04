@@ -26,6 +26,22 @@ export class Contracts {
         }
     }
 
+    public static throwIfNullOrTooLong(param: string, name: string, maxLength: number): void {
+        Contracts.throwIfNullOrUndefined(param, name);
+
+        if (("" + param).length > maxLength) {
+            throw new Error("throwIfNullOrTooLong:" + name + " (more than " + maxLength.toString() + " characters)");
+        }
+    }
+
+    public static throwIfNullOrTooShort(param: string, name: string, minLength: number): void {
+        Contracts.throwIfNullOrUndefined(param, name);
+
+        if (("" + param).length < minLength) {
+            throw new Error("throwIfNullOrTooShort:" + name + " (less than " + minLength.toString() + " characters)");
+        }
+    }
+
     public static throwIfDisposed(isDisposed: boolean): void {
         if (isDisposed) {
             throw new Error("the object is already disposed");

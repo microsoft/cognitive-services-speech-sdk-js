@@ -14,8 +14,6 @@ export class ConversationConnectionConfig extends RestConfigBase {
     private static readonly privDefaultLanguageCode: string = "en-US";
     private static readonly privClientAppId: string = "FC539C22-1767-4F1F-84BC-B4D811114F15";
     private static readonly privWebSocketPath: string = "/capito/translate";
-    private static readonly privSpeechHost: string = "{region}.s2s.speech.microsoft.com";
-    private static readonly privSpeechPath: string = "/speech/translation/cognitiveservices/v1";
     private static readonly privTranscriptionEventKeys: string[] = ["iCalUid", "callId", "organizer", "FLAC", "MTUri", "DifferentiateGuestSpeakers", "audiorecording", "Threadid", "OrganizerMri", "OrganizerTenantId", "UserToken"];
 
     public static get host(): string {
@@ -40,14 +38,6 @@ export class ConversationConnectionConfig extends RestConfigBase {
 
     public static get webSocketPath(): string {
         return ConversationConnectionConfig.privWebSocketPath;
-    }
-
-    public static get speechHost(): string {
-        return ConversationConnectionConfig.privSpeechHost;
-    }
-
-    public static get speechPath(): string {
-        return ConversationConnectionConfig.privSpeechPath;
     }
 
     public static get transcriptionEventKeys(): string[] {

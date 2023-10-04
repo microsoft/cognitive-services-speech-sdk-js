@@ -14,6 +14,8 @@ export class Settings {
 
     public static SpeechTestEndpointId: string = "<<YOUR_TEST_ENDPOINT_ID>>";
 
+    public static ConversationTranslatorSwedenEndpoint: string = "wss://transcribe.westus.cts.speech.microsoft.com/speech/recognition/dynamicaudio";
+
     // Endpoint and key for timeout testing.
     // Endpoint should reduce standard speech timeout to value specified in SpeechServiceTimeoutSeconds
     // If undefined, production timeout of 10 seconds will be used, but at the cost of greatly increased test
@@ -68,6 +70,8 @@ export class Settings {
 
     public static WaveFile: string = Settings.InputDir + "whatstheweatherlike.wav";
     public static WaveFile8ch: string = Settings.InputDir + "Speech016_30s_xmos_8ch.wav";
+    public static WaveFile8ch2: string = Settings.InputDir + "katiesteve.wav";
+    public static WaveFileSingleChannel: string = Settings.InputDir + "katiesteve_mono.wav";
     public static WaveFile44k: string = Settings.InputDir + "whatstheweatherlike.44khz.wav";
     public static WaveFileMulaw: string = Settings.InputDir + "whatstheweatherlike.mulaw";
     public static WaveFileAlaw: string = Settings.InputDir + "whatstheweatherlike.alaw";
@@ -83,7 +87,7 @@ export class Settings {
 
     public static AmbiguousWaveFile: string = Settings.InputDir + "wreck-a-nice-beach.wav";
 
-    public static IndependentIdentificationWaveFile: string = Settings.InputDir + "talkforafewseconds.wav";
+    public static IndependentIdentificationWaveFile: string = Settings.InputDir + "english_activation_v3_p1.wav";
     public static DependentVerificationWaveFile: string = Settings.InputDir + "myVoiceIsMyPassportVerifyMe04.wav";
     public static VerificationWaveFiles: string[] = [
         Settings.InputDir + "myVoiceIsMyPassportVerifyMe01.wav",

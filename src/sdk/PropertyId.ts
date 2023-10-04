@@ -256,29 +256,34 @@ export enum PropertyId {
 
     /**
      * A boolean value specifying whether audio logging is enabled in the service or not.
+     * Audio and content logs are stored either in Microsoft-owned storage, or in your own storage account linked
+     * to your Cognitive Services subscription (Bring Your Own Storage (BYOS) enabled Speech resource).
+     * The logs will be removed after 30 days.
      * Added in version 1.7.0
      */
     SpeechServiceConnection_EnableAudioLogging,
 
     /**
-     * A string value representing the priority for single language detection.
-     * Allowed values include "Latency" and "Accuracy"
-     * Added in version 1.21.0
-     */
-    SpeechServiceConnection_AtStartLanguageIdPriority,
-
-    /**
-     * A string value representing the priority for continuous language detection.
-     * "Latency" is default, "Accuracy" is currently not allowed for continuous LID
-     * Added in version 1.21.0
-     */
-    SpeechServiceConnection_ContinuousLanguageIdPriority,
+     * The speech service connection language identifier mode.
+     * Can be "AtStart" (the default), or "Continuous". See Language
+     * Identification document https://aka.ms/speech/lid?pivots=programming-language-javascript
+     * for more details.
+     * Added in 1.25.0
+     **/
+    SpeechServiceConnection_LanguageIdMode,
 
     /**
      * A string value representing the desired endpoint version to target for Speech Recognition.
      * Added in version 1.21.0
      */
     SpeechServiceConnection_RecognitionEndpointVersion,
+
+    /**
+    /**
+     * A string value the current speaker recognition scenario/mode (TextIndependentIdentification, etc.).
+     * Added in version 1.23.0
+     */
+    SpeechServiceConnection_SpeakerIdMode,
 
     /**
      * The requested Cognitive Services Speech Service response output profanity setting.
@@ -476,5 +481,12 @@ export enum PropertyId {
      * Version of Speaker Recognition API to use.
      * Added in version 1.18.0
      */
-    SpeakerRecognition_Api_Version
+    SpeakerRecognition_Api_Version,
+
+    /**
+     * Specifies whether to allow load of data URL for web worker
+     * Allowed values are "off" and "on". Default is "on".
+     * Added in version 1.32.0
+     */
+    WebWorkerLoadType,
 }
