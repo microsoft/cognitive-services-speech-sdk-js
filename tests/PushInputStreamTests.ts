@@ -15,10 +15,6 @@ import {
 } from "../src/sdk/Audio/AudioStreamFormat";
 import { Settings } from "./Settings";
 
-jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
-   getAudioWorkerUrl: (): string => "speech-processor.js"
-}));
-
 let bufferSize: number;
 beforeAll(() => {
     // Override inputs, if necessary

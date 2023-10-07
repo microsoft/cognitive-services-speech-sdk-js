@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import { RiffPcmEncoder, Stream } from "../common/Exports";
-import { getAudioWorkerUrl } from "./AudioWorkerUrl";
 import { IRecorder } from "./IRecorder";
 
 export class PcmRecorder implements IRecorder {
@@ -91,7 +90,10 @@ export class PcmRecorder implements IRecorder {
         const skipAudioWorklet = !!this.privSpeechProcessorScript && this.privSpeechProcessorScript.toLowerCase() === "ignore";
 
         if (!!context.audioWorklet && !skipAudioWorklet) {
-            this.privSpeechProcessorScript = getAudioWorkerUrl();
+            /* eslint-disable-next-line */
+            const audioUrl = require("./AudioWorkerUrl");
+            /* eslint-disable-next-line */
+            this.privSpeechProcessorScript = audioUrl.getAudioWorkerUrl();
 
             context.audioWorklet
                 .addModule(this.privSpeechProcessorScript)

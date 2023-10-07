@@ -9,10 +9,6 @@ import {
 } from "../src/common.speech/Exports";
 import { Settings } from "./Settings";
 
-jest.mock("../src/common.browser/AudioWorkerUrl", () => ({
-   getAudioWorkerUrl: (): string => "speech-processor.js"
-}));
-
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();
