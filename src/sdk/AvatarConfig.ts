@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {AvatarVideoFormat} from "./Exports";
+import { Contracts } from "./Contracts";
+import { AvatarVideoFormat } from "./Exports";
 
 /**
  * Defines the talking avatar configuration.
@@ -32,8 +33,12 @@ export class AvatarConfig {
      * @param {AvatarVideoFormat} videoFormat - The talking avatar output video format.
      */
     public constructor(character: string, style: string, videoFormat: AvatarVideoFormat) {
+        Contracts.throwIfNullOrWhitespace(character, "character");
         this.character = character;
         this.style = style;
+        if (videoFormat === undefined) {
+            videoFormat = new AvatarVideoFormat();
+        }
         this.videoFormat = videoFormat;
     }
 }

@@ -17,6 +17,18 @@ export enum AvatarEventTypes {
 export class AvatarEventArgs {
     private privType: AvatarEventTypes;
     private privOffset: number;
+    private privDescription: string;
+
+    /**
+     * Creates and initializes an instance of this class.
+     * @constructor
+     * @param {number} audioOffset - The audio offset.
+     * @param {string} description - The description of the event.
+     */
+    public constructor(audioOffset: number, description: string) {
+        this.privOffset = audioOffset;
+        this.privDescription = description;
+    }
 
     /**
      * The type of the event.
@@ -34,5 +46,14 @@ export class AvatarEventArgs {
      */
     public get offset(): number {
         return this.privOffset;
+    }
+
+    /**
+     * The description of the event.
+     * @public
+     * @returns {string} The description of the event.
+     */
+    public get description(): string {
+        return this.privDescription;
     }
 }

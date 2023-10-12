@@ -18,7 +18,7 @@ export enum SpeechSynthesisOutputFormat {
      * @note Unsupported by the service. Do not use this value.
      * @member SpeechSynthesisOutputFormat.Riff16Khz16KbpsMonoSiren
      */
-    Riff16Khz16KbpsMonoSiren ,
+    Riff16Khz16KbpsMonoSiren,
 
     /**
      * audio-16khz-16kbps-mono-siren

@@ -489,4 +489,11 @@ export enum PropertyId {
      * Added in version 1.32.0
      */
     WebWorkerLoadType,
+
+    /**
+     * Talking avatar service WebRTC session description protocol.
+     * This property is intended to be read-only. The SDK is using it internally.
+     * Added in version 1.34.0
+     */
+    TalkingAvatarService_WebRTC_SDP,
 }

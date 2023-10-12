@@ -22,4 +22,5 @@ export class QueryParameterNames {
     public static CtsMeetingId: string = "meetingId";
     public static CtsDeviceId: string = "deviceId";
     public static CtsIsParticipant: string = "isParticipant";
+    public static EnableAvatar: string = "enableTalkingAvatar";
 }

@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
+
 import {
     AutoDetectSourceLanguagesOpenRangeOptionName,
     CognitiveSubscriptionKeyAuthentication,
@@ -12,15 +14,16 @@ import {
     SynthesisAdapterBase,
     SynthesisRestAdapter,
     SynthesizerConfig } from "../common.speech/Exports";
-import { IStringDictionary } from "../common/Exports";
+import { IAudioDestination, IStringDictionary } from "../common/Exports";
 import { Contracts } from "./Contracts";
-import { PropertyCollection, PropertyId, SpeechConfig, SpeechConfigImpl } from "./Exports";
+import { PropertyCollection, PropertyId, SpeechConfig, SpeechConfigImpl, SpeechSynthesisResult } from "./Exports";
 
 export abstract class Synthesizer {
     protected privAdapter: SynthesisAdapterBase;
     protected privRestAdapter: SynthesisRestAdapter;
     protected privProperties: PropertyCollection;
     protected privConnectionFactory: ISynthesisConnectionFactory;
+    protected privDisposed: boolean;
 
     /**
      * Gets the authorization token used to communicate with the service.
@@ -77,6 +80,7 @@ export abstract class Synthesizer {
         Contracts.throwIfNull(speechConfigImpl, "speechConfig");
 
         this.privProperties = speechConfigImpl.properties.clone();
+        this.privDisposed = false;
     }
 
     public buildSsml(text: string): string {
@@ -227,6 +231,30 @@ export abstract class Synthesizer {
         return ssml;
     }
 
+    /**
+     * This method performs cleanup of resources.
+     * The Boolean parameter disposing indicates whether the method is called
+     * from Dispose (if disposing is true) or from the finalizer (if disposing is false).
+     * Derived classes should override this method to dispose resource if needed.
+     * @member Synthesizer.prototype.dispose
+     * @function
+     * @public
+     * @param {boolean} disposing - Flag to request disposal.
+     */
+    protected async dispose(disposing: boolean): Promise<void> {
+        if (this.privDisposed) {
+            return;
+        }
+
+        if (disposing) {
+            if (this.privAdapter) {
+                await this.privAdapter.dispose();
+            }
+        }
+
+        this.privDisposed = true;
+    }
+
     //
     // ################################################################################################################
     // IMPLEMENTATION.
@@ -240,6 +268,7 @@ export abstract class Synthesizer {
         connectionFactory: ISynthesisConnectionFactory,
         synthesizerConfig: SynthesizerConfig): SynthesisAdapterBase;
 
+    // Creates the REST synthesis adapter
     protected abstract createRestSynthesisAdapter(
         authentication: IAuthentication,
         synthesizerConfig: SynthesizerConfig): SynthesisRestAdapter;
@@ -296,5 +325,23 @@ export abstract class Synthesizer {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&apos;");
+    }
+}
+
+export class SynthesisRequest {
+    public requestId: string;
+    public text: string;
+    public isSSML: boolean;
+    public cb: (e: SpeechSynthesisResult) => void;
+    public err: (e: string) => void;
+    public dataStream: IAudioDestination;
+
+    public constructor(requestId: string, text: string, isSSML: boolean, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, dataStream?: IAudioDestination) {
+        this.requestId = requestId;
+        this.text = text;
+        this.isSSML = isSSML;
+        this.cb = cb;
+        this.err = err;
+        this.dataStream = dataStream;
     }
 }

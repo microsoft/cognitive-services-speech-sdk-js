@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { SynthesisAdapterBase } from "../../common.speech/Exports";
 import {
     BackgroundEvent,
     createNoDashGuid,
@@ -99,7 +98,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
             } else {
                 let receivedAudio = new ArrayBuffer(this.privBytesReceived);
                 this.privAudioOutputStream.read(receivedAudio).then((): void => {
-                    receivedAudio = SynthesisAdapterBase.addHeader(receivedAudio, this.privFormat);
+                    receivedAudio = this.privFormat.addHeader(receivedAudio);
                     const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.formatTag] });
                     this.privAudio.src = window.URL.createObjectURL(audioBlob);
                     this.notifyPlayback().then((): void => {

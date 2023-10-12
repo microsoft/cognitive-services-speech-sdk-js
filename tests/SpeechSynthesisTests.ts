@@ -991,7 +991,7 @@ describe("Service based tests", () => {
         const avatarConfig: sdk.AvatarConfig = new sdk.AvatarConfig(
             /*character*/ "lisa", /*style*/ "casual-sitting", videoFormat);
         const avatarSynthesizer: sdk.AvatarSynthesizer = new sdk.AvatarSynthesizer(speechConfig, avatarConfig);
-        avatarSynthesizer.eventReceived = (o: sdk.AvatarSynthesizer, e: sdk.AvatarEventArgs): void => {
+        avatarSynthesizer.avatarEventReceived = (o: sdk.AvatarSynthesizer, e: sdk.AvatarEventArgs): void => {
             // eslint-disable-next-line no-console
             console.info("Avatar event received " + e.type);
         };
@@ -1001,9 +1001,15 @@ describe("Service based tests", () => {
             urls: ["<your webrtc connection ICE server list>"],
             username: "<your webrtc connection ICE username>"
         };
-        const peerConnection: RTCPeerConnection = new RTCPeerConnection(
-            { iceServers: [iceServer] },
-        );
+
+        let peerConnection: RTCPeerConnection;
+        try {
+            peerConnection = new RTCPeerConnection(
+                {iceServers: [iceServer]},
+            );
+        } catch (error) {
+            done(error);
+        }
 
         const webrtcConnectionResult: sdk.SynthesisResult = await avatarSynthesizer.startAvatarAsync(peerConnection);
         expect(webrtcConnectionResult.reason).toEqual(sdk.ResultReason.SynthesizingAudioStarted);
@@ -1016,5 +1022,7 @@ describe("Service based tests", () => {
 
         // stop the avatar synthesizer and close the WebRTC connection.
         await avatarSynthesizer.stopAvatarAsync();
+
+        done();
     });
 });

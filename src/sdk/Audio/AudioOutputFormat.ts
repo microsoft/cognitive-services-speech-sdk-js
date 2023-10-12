@@ -595,4 +595,21 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         return this.priRequestAudioFormatString;
     }
 
+    /**
+     * Adds audio header
+     * @param audio the raw audio without header
+     * @returns the audio with header if applicable
+     */
+
+    public addHeader(audio: ArrayBuffer): ArrayBuffer {
+        if (!this.hasHeader) {
+            return audio;
+        }
+        this.updateHeader(audio.byteLength);
+        const tmp = new Uint8Array(audio.byteLength + this.header.byteLength);
+        tmp.set(new Uint8Array(this.header), 0);
+        tmp.set(new Uint8Array(audio), this.header.byteLength);
+        return tmp.buffer;
+    }
+
 }

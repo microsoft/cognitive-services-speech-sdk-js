@@ -2,7 +2,11 @@
 // Licensed under the MIT license.
 
 import { PropertyCollection } from "../sdk/Exports";
-import {Context, SpeechServiceConfig} from "./Exports";
+import {
+    Context,
+    ISynthesisSectionVideo,
+    SpeechServiceConfig
+    } from "./Exports";
 
 export enum SynthesisServiceType {
     Standard,
@@ -13,6 +17,7 @@ export class SynthesizerConfig {
     private privSynthesisServiceType: SynthesisServiceType = SynthesisServiceType.Standard;
     private privSpeechServiceConfig: SpeechServiceConfig;
     private privParameters: PropertyCollection;
+    public avatarEnabled: boolean = false;
 
     public constructor(
         speechServiceConfig: SpeechServiceConfig,
@@ -31,6 +36,12 @@ export class SynthesizerConfig {
 
     public set synthesisServiceType(value: SynthesisServiceType) {
         this.privSynthesisServiceType = value;
+    }
+
+    public set synthesisVideoSection(value: ISynthesisSectionVideo) {
+        this.privSpeechServiceConfig.Context.synthesis = {
+            video: value
+        };
     }
 
     public get SpeechServiceConfig(): SpeechServiceConfig {

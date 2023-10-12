@@ -2,23 +2,20 @@
 // Licensed under the MIT license.
 
 /* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable max-classes-per-file */
 
 import { PathLike } from "fs";
 import { IRestResponse } from "../common.browser/RestMessageAdapter";
 import {
-    AutoDetectSourceLanguagesOpenRangeOptionName,
     IAuthentication,
     ISynthesisConnectionFactory,
     SpeechSynthesisConnectionFactory,
     SynthesisAdapterBase,
+    SpeechSynthesisAdapter,
     SynthesisRestAdapter,
     SynthesizerConfig,
 } from "../common.speech/Exports";
 import {
     createNoDashGuid,
-    IAudioDestination,
-    IStringDictionary,
     marshalPromiseToCallbacks,
     Queue
 } from "../common/Exports";
@@ -34,7 +31,6 @@ import {
     AudioConfig,
     AudioOutputStream,
     AutoDetectSourceLanguageConfig,
-    PropertyCollection,
     PropertyId,
     PullAudioOutputStream,
     PushAudioOutputStreamCallback,
@@ -49,6 +45,7 @@ import {
     Synthesizer
 } from "./Exports";
 import { SpeechConfigImpl } from "./SpeechConfig";
+import { SynthesisRequest } from "./Synthesizer";
 
 /**
  * Defines the class SpeechSynthesizer for text to speech.
@@ -117,7 +114,6 @@ export class SpeechSynthesizer extends Synthesizer {
      */
     public visemeReceived: (sender: SpeechSynthesizer, event: SpeechSynthesisVisemeEventArgs) => void;
 
-    private privDisposed: boolean;
     private privSynthesizing: boolean;
 
     /**
@@ -137,7 +133,6 @@ export class SpeechSynthesizer extends Synthesizer {
             }
         }
 
-        this.privDisposed = false;
         this.privSynthesizing = false;
         this.privConnectionFactory = new SpeechSynthesisConnectionFactory();
         this.synthesisRequestQueue = new Queue<SynthesisRequest>();
@@ -221,30 +216,6 @@ export class SpeechSynthesizer extends Synthesizer {
         return this.privAdapter;
     }
 
-    /**
-     * This method performs cleanup of resources.
-     * The Boolean parameter disposing indicates whether the method is called
-     * from Dispose (if disposing is true) or from the finalizer (if disposing is false).
-     * Derived classes should override this method to dispose resource if needed.
-     * @member SpeechSynthesizer.prototype.dispose
-     * @function
-     * @public
-     * @param {boolean} disposing - Flag to request disposal.
-     */
-    protected async dispose(disposing: boolean): Promise<void> {
-        if (this.privDisposed) {
-            return;
-        }
-
-        if (disposing) {
-            if (this.privAdapter) {
-                await this.privAdapter.dispose();
-            }
-        }
-
-        this.privDisposed = true;
-    }
-
     //
     // ################################################################################################################
     // IMPLEMENTATION.
@@ -256,7 +227,7 @@ export class SpeechSynthesizer extends Synthesizer {
         authentication: IAuthentication,
         connectionFactory: ISynthesisConnectionFactory,
         synthesizerConfig: SynthesizerConfig): SynthesisAdapterBase {
-        return new SynthesisAdapterBase(authentication, connectionFactory,
+        return new SpeechSynthesisAdapter(authentication, connectionFactory,
             synthesizerConfig, this, this.audioConfig as AudioOutputConfigImpl);
     }
 
@@ -348,23 +319,5 @@ export class SpeechSynthesizer extends Synthesizer {
             const request: SynthesisRequest = await this.synthesisRequestQueue.dequeue();
             return this.privAdapter.Speak(request.text, request.isSSML, request.requestId, request.cb, request.err, request.dataStream);
         }
-    }
-}
-
-export class SynthesisRequest {
-    public requestId: string;
-    public text: string;
-    public isSSML: boolean;
-    public cb: (e: SpeechSynthesisResult) => void;
-    public err: (e: string) => void;
-    public dataStream: IAudioDestination;
-
-    public constructor(requestId: string, text: string, isSSML: boolean, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, dataStream?: IAudioDestination) {
-        this.requestId = requestId;
-        this.text = text;
-        this.isSSML = isSSML;
-        this.cb = cb;
-        this.err = err;
-        this.dataStream = dataStream;
     }
 }
