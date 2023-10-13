@@ -980,7 +980,8 @@ describe("Service based tests", () => {
         });
     });
 
-    test("testAvatarSynthesizerDemo", async (done: jest.DoneCallback) => {
+    // WebRTC PeerConnection is not implemented in jest, which is only available in browser.
+    test.skip("testAvatarSynthesizerDemo", async () => {
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         const videoFormat: sdk.AvatarVideoFormat = new sdk.AvatarVideoFormat(
             /*codec*/ "h264",
@@ -1008,7 +1009,7 @@ describe("Service based tests", () => {
                 {iceServers: [iceServer]},
             );
         } catch (error) {
-            done(error);
+            throw new Error("Failed to create RTCPeerConnection, error: " + error);
         }
 
         const webrtcConnectionResult: sdk.SynthesisResult = await avatarSynthesizer.startAvatarAsync(peerConnection);
@@ -1022,7 +1023,5 @@ describe("Service based tests", () => {
 
         // stop the avatar synthesizer and close the WebRTC connection.
         await avatarSynthesizer.stopAvatarAsync();
-
-        done();
     });
 });

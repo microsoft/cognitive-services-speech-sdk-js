@@ -337,7 +337,6 @@ export abstract class SynthesisAdapterBase implements IDisposable {
                                 case MetadataType.WordBoundary:
                                 case MetadataType.SentenceBoundary:
                                     this.privSynthesisTurn.onTextBoundaryEvent(metadata);
-
                                     const wordBoundaryEventArgs: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
                                         metadata.Data.Offset,
                                         metadata.Data.Duration,
@@ -346,7 +345,6 @@ export abstract class SynthesisAdapterBase implements IDisposable {
                                         metadata.Type === MetadataType.WordBoundary
                                             ? this.privSynthesisTurn.currentTextOffset : this.privSynthesisTurn.currentSentenceOffset,
                                         metadata.Data.text.BoundaryType);
-
                                     this.onWordBoundary(wordBoundaryEventArgs);
                                     break;
                                 case MetadataType.Bookmark:
@@ -362,7 +360,6 @@ export abstract class SynthesisAdapterBase implements IDisposable {
                                             metadata.Data.Offset,
                                             metadata.Data.VisemeId,
                                             this.privSynthesisTurn.getAndClearVisemeAnimation());
-
                                         this.onVisemeReceived(visemeEventArgs);
                                     }
                                     break;

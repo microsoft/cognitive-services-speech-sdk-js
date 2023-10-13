@@ -79,6 +79,7 @@ export class AvatarSynthesizer extends Synthesizer {
      * @returns {Promise<SynthesisResult>} The promise of the connection result.
      */
     public async startAvatarAsync(peerConnection: RTCPeerConnection): Promise<SynthesisResult> {
+        Contracts.throwIfNullOrUndefined(peerConnection, "peerConnection");
         this.privIceServers = peerConnection.getConfiguration().iceServers;
         Contracts.throwIfNullOrUndefined(this.privIceServers, "Ice servers must be set.");
         const iceGatheringDone = new Deferred<void>();
