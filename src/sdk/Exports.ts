@@ -112,7 +112,7 @@ export { LanguageIdMode } from "./LanguageIdMode";
 export { AvatarConfig } from "./AvatarConfig";
 export { AvatarEventArgs } from "./AvatarEventArgs";
 export { AvatarSynthesizer } from "./AvatarSynthesizer";
-export { AvatarVideoFormat } from "./AvatarVideoFormat";
+export { AvatarVideoFormat, Coordinate } from "./AvatarVideoFormat";
 export { AvatarWebRTCConnectionResult } from "./AvatarWebRTCConnectionResult";
 export { Diagnostics } from "./Diagnostics";
 export { LogLevel } from "./LogLevel";

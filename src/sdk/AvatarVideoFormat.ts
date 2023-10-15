@@ -1,6 +1,23 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
+
+/**
+ * Defines a coordinate in 2D space.
+ * @class Coordinate
+ * Added in version 1.34.0
+ */
+export class Coordinate {
+    public x: number;
+    public y: number;
+
+    public constructor(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
 /**
  * Defines the avatar output video format.
  * @class AvatarVideoFormat
@@ -34,6 +51,26 @@ export class AvatarVideoFormat {
      * @default "white"
      */
     public background: string;
+
+    /**
+     * Sets the video crop range.
+     */
+    public setCropRange(topLeft: Coordinate, bottomRight: Coordinate): void {
+        this.cropRange = {
+            bottomRight,
+            topLeft,
+        };
+    }
+
+    /**
+     * Defines the video crop range.
+     * @default undefined
+     * @internal
+     */
+    public cropRange: {
+        topLeft: Coordinate;
+        bottomRight: Coordinate;
+    };
 
     /**
      * Creates and initializes an instance of this class.

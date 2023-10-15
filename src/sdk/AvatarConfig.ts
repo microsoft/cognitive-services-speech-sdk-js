@@ -12,6 +12,8 @@ import { AvatarVideoFormat } from "./Exports";
  * @experimental This feature is experimental and might change or have limited support.
  */
 export class AvatarConfig {
+    private privCustomized: boolean = false;
+
     /**
      * Defines the avatar character.
      */
@@ -24,6 +26,20 @@ export class AvatarConfig {
      * Defines the talking avatar output video format.
      */
     public videoFormat: AvatarVideoFormat;
+
+    /**
+     * Indicates if the talking avatar is customized.
+     */
+    public get customized(): boolean {
+        return this.privCustomized;
+    }
+
+    /**
+     * Sets if the talking avatar is customized.
+     */
+    public set customized(value: boolean) {
+        this.privCustomized = value;
+    }
 
     /**
      * Creates and initializes an instance of this class.

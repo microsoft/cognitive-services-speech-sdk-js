@@ -45,6 +45,16 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
             format: {
                 bitrate: this.privAvatarConfig.videoFormat?.bitrate,
                 codec: this.privAvatarConfig.videoFormat?.codec,
+                crop: {
+                    bottomRight: {
+                        x: this.privAvatarConfig.videoFormat?.cropRange?.bottomRight?.x,
+                        y: this.privAvatarConfig.videoFormat?.cropRange?.bottomRight?.y,
+                    },
+                    topLeft: {
+                        x: this.privAvatarConfig.videoFormat?.cropRange?.topLeft?.x,
+                        y: this.privAvatarConfig.videoFormat?.cropRange?.topLeft?.y,
+                    },
+                },
                 resolution: {
                     height: this.privAvatarConfig.videoFormat?.height,
                     width: this.privAvatarConfig.videoFormat?.width,
@@ -62,6 +72,7 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
                     color: this.privAvatarConfig.videoFormat?.background,
                 },
                 character: this.privAvatarConfig.character,
+                customized: this.privAvatarConfig.customized,
                 style: this.privAvatarConfig.style,
             }
         } as ISynthesisSectionVideo;

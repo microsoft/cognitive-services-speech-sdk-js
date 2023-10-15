@@ -134,6 +134,11 @@ export enum type {
     Stream = "Stream",
 }
 
+export interface ICoordinate {
+    x: number;
+    y: number;
+}
+
 // For avatar synthesis
 export interface ISynthesisSectionVideo {
     protocol: {
@@ -150,6 +155,10 @@ export interface ISynthesisSectionVideo {
     format: {
         bitrate: number;
         codec: string;
+        crop: {
+            topLeft: ICoordinate;
+            bottomRight: ICoordinate;
+        };
         resolution: {
             width: number;
             height: number;
@@ -157,6 +166,7 @@ export interface ISynthesisSectionVideo {
     };
     talkingAvatar: {
         character: string;
+        customized: boolean;
         style: string;
         background: {
             color: string;
