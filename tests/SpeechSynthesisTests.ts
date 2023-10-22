@@ -987,8 +987,7 @@ describe("Service based tests", () => {
             /*codec*/ "h264",
             /*bitrate*/ 2000000,
             /*width*/ 1920,
-            /*height*/ 1080,
-            /*background*/ "white");
+            /*height*/ 1080);
         const avatarConfig: sdk.AvatarConfig = new sdk.AvatarConfig(
             /*character*/ "lisa", /*style*/ "casual-sitting", videoFormat);
         const avatarSynthesizer: sdk.AvatarSynthesizer = new sdk.AvatarSynthesizer(speechConfig, avatarConfig);

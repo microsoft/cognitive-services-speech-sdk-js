@@ -13,6 +13,7 @@ import { AvatarVideoFormat } from "./Exports";
  */
 export class AvatarConfig {
     private privCustomized: boolean = false;
+    private privBackgroundColor: string;
 
     /**
      * Defines the avatar character.
@@ -39,6 +40,20 @@ export class AvatarConfig {
      */
     public set customized(value: boolean) {
         this.privCustomized = value;
+    }
+
+    /**
+     * Sets the background color.
+     */
+    public get backgroundColor(): string {
+        return this.privBackgroundColor;
+    }
+
+    /**
+     * Gets the background color.
+     */
+    public set backgroundColor(value: string) {
+        this.privBackgroundColor = value;
     }
 
     /**

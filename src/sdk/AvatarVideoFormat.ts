@@ -46,11 +46,6 @@ export class AvatarVideoFormat {
      * @default 1080
      */
     public height: number;
-    /**
-     * Defines the video background color.
-     * @default "white"
-     */
-    public background: string;
 
     /**
      * Sets the video crop range.
@@ -79,18 +74,15 @@ export class AvatarVideoFormat {
      * @param {number} bitrate - The video bitrate.
      * @param {number} width - The video width.
      * @param {number} height - The video height.
-     * @param {string} background - The video background color.
      */
     public constructor(codec: string = "H264",
                        bitrate: number = 2000000,
                        width: number = 1920,
                        height: number = 1080,
-                       background: string = "white",
     ) {
         this.codec = codec;
         this.bitrate = bitrate;
         this.width = width;
         this.height = height;
-        this.background = background;
     }
 }
