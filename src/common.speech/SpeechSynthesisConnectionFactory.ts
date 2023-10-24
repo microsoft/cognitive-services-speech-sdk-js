@@ -25,10 +25,10 @@ import {
 export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFactory {
 
     private readonly synthesisUri: string = "/cognitiveservices/websocket/v1";
-
     public create(
         config: SynthesizerConfig,
         authInfo: AuthInfo,
+        agent: object,
         connectionId?: string): IConnection {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
@@ -56,6 +56,6 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromParameters(config.parameters), enableCompression, connectionId);
+        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromParameters(config.parameters), enableCompression, agent, connectionId);
     }
 }

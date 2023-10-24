@@ -38,6 +38,7 @@ export abstract class Recognizer {
     protected audioConfig: AudioConfig;
     protected privReco: ServiceRecognizerBase;
     protected privProperties: PropertyCollection;
+    private privAgent: object;
     private privConnectionFactory: IConnectionFactory;
 
     /**
@@ -45,11 +46,12 @@ export abstract class Recognizer {
      * @constructor
      * @param {AudioConfig} audioInput - An optional audio input stream associated with the recognizer
      */
-    protected constructor(audioConfig: AudioConfig, properties: PropertyCollection, connectionFactory: IConnectionFactory) {
+    protected constructor(audioConfig: AudioConfig, properties: PropertyCollection, connectionFactory: IConnectionFactory, agent: object) {
         this.audioConfig = (audioConfig !== undefined) ? audioConfig : AudioConfig.fromDefaultMicrophoneInput();
         this.privDisposed = false;
         this.privProperties = properties.clone();
         this.privConnectionFactory = connectionFactory;
+        this.privAgent = agent;
         this.implCommonRecognizerSetup();
     }
 
@@ -94,6 +96,15 @@ export abstract class Recognizer {
     public close(cb?: () => void, errorCb?: (error: string) => void): void {
         Contracts.throwIfDisposed(this.privDisposed);
         marshalPromiseToCallbacks(this.dispose(true), cb, errorCb);
+    }
+
+    /**
+     * @Internal
+     * Internal data member to support advanced agent setting scenarios.
+     * Do not use externally, object returned will change without warning or notice.
+     */
+    public get internalAgent(): object {
+        return this.privAgent;
     }
 
     /**

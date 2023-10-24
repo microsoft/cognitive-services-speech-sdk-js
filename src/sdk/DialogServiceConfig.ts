@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
+import * as http from "http";
 import { Contracts } from "./Contracts";
 import { PropertyCollection, PropertyId, ServicePropertyChannel, SpeechConfigImpl } from "./Exports";
 import { OutputFormat } from "./OutputFormat";
@@ -105,6 +106,24 @@ export abstract class DialogServiceConfig {
             CustomCommands: "custom_commands"
         };
     }
+
+    /**
+     * Sets the http.Agent object for advanced certificate handling.
+     * Added in version 1.28.0.
+     * @member DialogServiceConfig.prototype.agent
+     * @function
+     * @public
+     */
+    public abstract set agent(agent: http.Agent);
+
+    /**
+     * Gets the http.Agent object for advanced certificate handling, used internally.
+     * Added in version 1.28.0.
+     * @member DialogServiceConfig.prototype.agent
+     * @function
+     * @public
+     */
+    public abstract get agent(): http.Agent;
 }
 
 /**
@@ -213,6 +232,14 @@ export class DialogServiceConfigImpl extends DialogServiceConfig {
     public setServiceProperty(name: string, value: string, channel: ServicePropertyChannel): void {
         void channel;
         this.privSpeechConfig.setServiceProperty(name, value);
+    }
+
+    public set agent(agent: http.Agent) {
+        this.privSpeechConfig.agent = agent;
+    }
+
+    public get agent(): http.Agent {
+        return this.privSpeechConfig.agent;
     }
 
     /**

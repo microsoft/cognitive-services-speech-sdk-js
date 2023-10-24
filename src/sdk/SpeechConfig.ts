@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 /* eslint-disable max-classes-per-file */
 
+import * as http from "http";
 import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
@@ -388,6 +389,24 @@ export abstract class SpeechConfig {
      * @public
      */
     public abstract set speechSynthesisOutputFormat(format: SpeechSynthesisOutputFormat);
+
+    /**
+     * Sets the http.Agent object for advanced certificate handling.
+     * Added in version 1.28.0.
+     * @member SpeechConfig.prototype.agent
+     * @function
+     * @public
+     */
+    public abstract set agent(agent: http.Agent);
+
+    /**
+     * Gets the http.Agent object for advanced certificate handling, used internally.
+     * Added in version 1.28.0.
+     * @member SpeechConfig.prototype.agent
+     * @function
+     * @public
+     */
+    public abstract get agent(): http.Agent;
 }
 
 /**
@@ -397,6 +416,7 @@ export abstract class SpeechConfig {
 export class SpeechConfigImpl extends SpeechConfig {
 
     private privProperties: PropertyCollection;
+    private privAgent: http.Agent;
 
     public constructor() {
         super();
@@ -531,5 +551,13 @@ export class SpeechConfigImpl extends SpeechConfig {
 
     public set speechSynthesisOutputFormat(format: SpeechSynthesisOutputFormat) {
         this.privProperties.setProperty(PropertyId.SpeechServiceConnection_SynthOutputFormat, SpeechSynthesisOutputFormat[format]);
+    }
+
+    public set agent(agent: http.Agent) {
+        this.privAgent = agent;
+    }
+
+    public get agent(): http.Agent {
+        return this.privAgent;
     }
 }

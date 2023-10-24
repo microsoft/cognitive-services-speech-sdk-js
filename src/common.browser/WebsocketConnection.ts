@@ -31,6 +31,7 @@ export class WebsocketConnection implements IConnection {
         messageFormatter: IWebsocketMessageFormatter,
         proxyInfo: ProxyInfo,
         enableCompression: boolean = false,
+        agent: object,
         connectionId?: string) {
 
         if (!uri) {
@@ -85,6 +86,7 @@ export class WebsocketConnection implements IConnection {
             this.privMessageFormatter,
             proxyInfo,
             headers,
+            agent,
             enableCompression);
     }
 

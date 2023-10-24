@@ -61,7 +61,7 @@ export class TranscriberRecognizer extends Recognizer {
             speechTranslationConfigImpl.speechRecognitionLanguage,
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        super(audioConfig, speechTranslationConfigImpl.properties, new TranscriberConnectionFactory());
+        super(audioConfig, speechTranslationConfigImpl.properties, new TranscriberConnectionFactory(), speechTranslationConfig.agent);
         this.privDisposedRecognizer = false;
         this.isMeetingRecognizer = false;
     }

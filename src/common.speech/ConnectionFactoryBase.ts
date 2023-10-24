@@ -10,7 +10,6 @@ import { AuthInfo, IConnectionFactory, RecognizerConfig } from "./Exports";
 import { QueryParameterNames } from "./QueryParameterNames";
 
 export abstract class ConnectionFactoryBase implements IConnectionFactory {
-
     public static getHostSuffix(region: string): string {
         if (!!region) {
             if (region.toLowerCase().startsWith("china")) {
@@ -26,6 +25,7 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
     public abstract create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
+        agent: object,
         connectionId?: string): IConnection;
 
     protected setCommonUrlParams(
