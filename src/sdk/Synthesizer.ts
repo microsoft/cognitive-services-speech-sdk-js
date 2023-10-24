@@ -10,11 +10,12 @@ import {
     Context,
     IAuthentication,
     ISynthesisConnectionFactory,
-    OS, SpeechServiceConfig,
+    OS,
+    SpeechServiceConfig,
     SynthesisAdapterBase,
     SynthesisRestAdapter,
     SynthesizerConfig } from "../common.speech/Exports";
-import { IAudioDestination, IStringDictionary } from "../common/Exports";
+import { IAudioDestination, IStringDictionary, Queue } from "../common/Exports";
 import { Contracts } from "./Contracts";
 import { PropertyCollection, PropertyId, SpeechConfig, SpeechConfigImpl, SpeechSynthesisResult } from "./Exports";
 
@@ -24,6 +25,8 @@ export abstract class Synthesizer {
     protected privProperties: PropertyCollection;
     protected privConnectionFactory: ISynthesisConnectionFactory;
     protected privDisposed: boolean;
+    protected privSynthesizing: boolean;
+    protected synthesisRequestQueue: Queue<SynthesisRequest>;
 
     /**
      * Gets the authorization token used to communicate with the service.
@@ -81,6 +84,8 @@ export abstract class Synthesizer {
 
         this.privProperties = speechConfigImpl.properties.clone();
         this.privDisposed = false;
+        this.privSynthesizing = false;
+        this.synthesisRequestQueue = new Queue<SynthesisRequest>();
     }
 
     public buildSsml(text: string): string {
@@ -253,6 +258,14 @@ export abstract class Synthesizer {
         }
 
         this.privDisposed = true;
+    }
+
+    protected async adapterSpeak(): Promise<void> {
+        if (!this.privDisposed && !this.privSynthesizing) {
+            this.privSynthesizing = true;
+            const request: SynthesisRequest = await this.synthesisRequestQueue.dequeue();
+            return this.privAdapter.Speak(request.text, request.isSSML, request.requestId, request.cb, request.err, request.dataStream);
+        }
     }
 
     //

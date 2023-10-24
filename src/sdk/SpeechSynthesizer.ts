@@ -17,7 +17,6 @@ import {
 import {
     createNoDashGuid,
     marshalPromiseToCallbacks,
-    Queue
 } from "../common/Exports";
 import { AudioOutputConfigImpl } from "./Audio/AudioConfig";
 import { AudioFileWriter } from "./Audio/AudioFileWriter";
@@ -54,7 +53,6 @@ import { SynthesisRequest } from "./Synthesizer";
  */
 export class SpeechSynthesizer extends Synthesizer {
     protected audioConfig: AudioConfig;
-    protected synthesisRequestQueue: Queue<SynthesisRequest>;
 
     /**
      * Defines event handler for synthesis start events.
@@ -114,8 +112,6 @@ export class SpeechSynthesizer extends Synthesizer {
      */
     public visemeReceived: (sender: SpeechSynthesizer, event: SpeechSynthesisVisemeEventArgs) => void;
 
-    private privSynthesizing: boolean;
-
     /**
      * SpeechSynthesizer constructor.
      * @constructor
@@ -133,9 +129,7 @@ export class SpeechSynthesizer extends Synthesizer {
             }
         }
 
-        this.privSynthesizing = false;
         this.privConnectionFactory = new SpeechSynthesisConnectionFactory();
-        this.synthesisRequestQueue = new Queue<SynthesisRequest>();
         this.implCommonSynthesizeSetup();
     }
 
@@ -312,12 +306,4 @@ export class SpeechSynthesizer extends Synthesizer {
             return new SynthesisVoicesResult(requestId, undefined, `Error: ${response.status}: ${response.statusText}`);
         }
    }
-
-    protected async adapterSpeak(): Promise<void> {
-        if (!this.privDisposed && !this.privSynthesizing) {
-            this.privSynthesizing = true;
-            const request: SynthesisRequest = await this.synthesisRequestQueue.dequeue();
-            return this.privAdapter.Speak(request.text, request.isSSML, request.requestId, request.cb, request.err, request.dataStream);
-        }
-    }
 }

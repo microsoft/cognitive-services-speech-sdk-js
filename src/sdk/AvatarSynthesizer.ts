@@ -25,6 +25,7 @@ import {
     Synthesizer
 } from "./Exports";
 import { Contracts } from "./Contracts";
+import { SynthesisRequest } from "./Synthesizer";
 
 /**
  * Defines the avatar synthesizer.
@@ -96,7 +97,7 @@ export class AvatarSynthesizer extends Synthesizer {
         Events.instance.onEvent(new PlatformEvent("peer connection: got local SDP.", EventType.Info));
         this.privProperties.setProperty(PropertyId.TalkingAvatarService_WebRTC_SDP, JSON.stringify(peerConnection.localDescription));
 
-        const result: SpeechSynthesisResult = await this.adapterSpeak("", false);
+        const result: SpeechSynthesisResult = await this.speak("", false);
         const sdpAnswerString: string = atob(result.properties.getProperty(PropertyId.TalkingAvatarService_WebRTC_SDP));
         const sdpAnswer: RTCSessionDescription = new RTCSessionDescription(
             JSON.parse(sdpAnswerString) as RTCSessionDescriptionInit,
@@ -119,7 +120,7 @@ export class AvatarSynthesizer extends Synthesizer {
      * @returns {Promise<SynthesisResult>} The promise of the synthesis result.
      */
     public async speakTextAsync(text: string): Promise<SynthesisResult> {
-        const r = await this.adapterSpeak(text, false);
+        const r = await this.speak(text, false);
         return new SynthesisResult(
             r.resultId,
             r.reason,
@@ -137,7 +138,7 @@ export class AvatarSynthesizer extends Synthesizer {
      * @returns {Promise<SynthesisResult>} The promise of the synthesis result.
      */
     public async speakSsmlAsync(ssml: string): Promise<SynthesisResult> {
-        const r = await this.adapterSpeak(ssml, true);
+        const r = await this.speak(ssml, true);
         return new SynthesisResult(
             r.resultId,
             r.reason,
@@ -217,16 +218,20 @@ export class AvatarSynthesizer extends Synthesizer {
         return config;
     }
 
-    protected async adapterSpeak(text: string, isSSML: boolean): Promise<SpeechSynthesisResult> {
+    protected async speak(text: string, isSSML: boolean): Promise<SpeechSynthesisResult> {
         const requestId = createNoDashGuid();
         const deferredResult = new Deferred<SpeechSynthesisResult>();
-        await this.privAdapter.Speak(text, isSSML, requestId,
+        this.synthesisRequestQueue.enqueue(new SynthesisRequest(requestId, text, isSSML,
             (e: SpeechSynthesisResult): void => {
                 deferredResult.resolve(e);
+                this.privSynthesizing = false;
+                void this.adapterSpeak();
             },
             (e: string): void => {
                 deferredResult.reject(e);
-            }, undefined);
+                this.privSynthesizing = false;
+            }));
+        void this.adapterSpeak();
         return deferredResult.promise;
     }
 }
