@@ -385,11 +385,10 @@ export abstract class SynthesisAdapterBase implements IDisposable {
                                 this.privErrorCallback(error as string);
                             }
                         }
-                        this.onSynthesisCancelled(result);
+                        this.onSynthesisCompleted(result);
                         break;
 
                     default:
-
                         if (!this.processTypeSpecificMessages(connectionMessage)) {
                             // here are some messages that the derived class has not processed, dispatch them to connect class
                             if (!!this.privServiceEvents) {
