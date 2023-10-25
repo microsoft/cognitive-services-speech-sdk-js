@@ -6,7 +6,7 @@
 /**
  * Defines a coordinate in 2D space.
  * @class Coordinate
- * Added in version 1.34.0
+ * Added in version 1.33.0
  */
 export class Coordinate {
     public x: number;
@@ -21,7 +21,7 @@ export class Coordinate {
 /**
  * Defines the avatar output video format.
  * @class AvatarVideoFormat
- * Added in version 1.32.0
+ * Added in version 1.33.0
  *
  * @experimental This feature is experimental and might change in the future.
  */

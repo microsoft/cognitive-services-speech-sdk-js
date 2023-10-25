@@ -10,7 +10,7 @@ import {
 /**
  * Defines the avatar WebRTC connection result.
  * @class AvatarWebRTCConnectionResult
- * Added in version 1.32.0
+ * Added in version 1.33.0
  *
  * @experimental This feature is experimental and might change in the future.
  */

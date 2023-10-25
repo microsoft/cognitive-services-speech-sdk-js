@@ -10,7 +10,7 @@ export enum AvatarEventTypes {
 /**
  * Defines content for talking avatar events.
  * @class AvatarEventArgs
- * Added in version 1.32.0
+ * Added in version 1.33.0
  *
  * @experimental This feature is experimental and might change or have limited support.
  */

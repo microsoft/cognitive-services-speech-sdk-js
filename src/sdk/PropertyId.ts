@@ -493,7 +493,7 @@ export enum PropertyId {
     /**
      * Talking avatar service WebRTC session description protocol.
      * This property is intended to be read-only. The SDK is using it internally.
-     * Added in version 1.34.0
+     * Added in version 1.33.0
      */
     TalkingAvatarService_WebRTC_SDP,
 }

@@ -7,7 +7,7 @@ import { AvatarVideoFormat } from "./Exports";
 /**
  * Defines the talking avatar configuration.
  * @class AvatarConfig
- * Added in version 1.32.0
+ * Added in version 1.33.0
  *
  * @experimental This feature is experimental and might change or have limited support.
  */

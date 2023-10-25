@@ -30,7 +30,7 @@ import { SynthesisRequest } from "./Synthesizer";
 /**
  * Defines the avatar synthesizer.
  * @class AvatarSynthesizer
- * Added in version 1.34.0
+ * Added in version 1.33.0
  *
  * @experimental This feature is experimental and might change or have limited support.
  */
@@ -84,7 +84,8 @@ export class AvatarSynthesizer extends Synthesizer {
         this.privIceServers = peerConnection.getConfiguration().iceServers;
         Contracts.throwIfNullOrUndefined(this.privIceServers, "Ice servers must be set.");
         const iceGatheringDone = new Deferred<void>();
-        peerConnection.onicecandidate = (): void => {
+        // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/icegatheringstatechange_event
+        peerConnection.onicegatheringstatechange = (): void => {
             Events.instance.onEvent(new PlatformEvent("peer connection: ice gathering state: " + peerConnection.iceGatheringState, EventType.Debug));
             if (peerConnection.iceGatheringState === "complete") {
                 Events.instance.onEvent(new PlatformEvent("peer connection: ice gathering complete.", EventType.Info));
