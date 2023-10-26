@@ -1401,8 +1401,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     }, 120000);
 
-    // service returning NoMatch, is this our fault?
-    test.skip("PullStreamHalfFill", (done: jest.DoneCallback) => {
+    test("PullStreamHalfFill", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: PullStreamHalfFill");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1527,7 +1526,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
-    test("PullStreamSendHalfTheFile", (done: jest.DoneCallback) => {
+    // service returning NoMatch, is this our fault?
+    test.skip("PullStreamSendHalfTheFile", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: PullStreamSendHalfTheFile");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
