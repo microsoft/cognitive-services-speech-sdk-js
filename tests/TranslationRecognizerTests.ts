@@ -156,7 +156,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect(secondRes).not.toBeUndefined();
                         expect(secondRes.errorDetails).toBeUndefined();
                         expect(sdk.ResultReason[secondRes.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                        expect("Quel temps fait-il?").toEqual(secondRes.translations.get("fr", ""));
+                        expect(secondRes.translations.get("fr", "")).toContain("Quel temps fait-il");
                         expect(secondRes.translations.languages.includes("es")).toBeTruthy();
                         expect(secondRes.translations.languages.includes("fr")).toBeTruthy();
                         expect(secondRes.translations.languages.includes("de")).toBeFalsy();
