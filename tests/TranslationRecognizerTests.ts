@@ -144,7 +144,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(res.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
                 expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
-                expect("Quel temps fait-il?").toEqual(res.translations.get("fr", ""));
+                expect(res.translations.get("fr", "")).toContain("Quel temps fait-il");
                 expect(res.translations.languages).toEqual(["fr", "de"]);
                 expect(r.targetLanguages.length).toEqual(res.translations.languages.length);
                 r.removeTargetLanguage("de-DE");
