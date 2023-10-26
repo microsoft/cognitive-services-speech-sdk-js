@@ -979,4 +979,48 @@ describe("Service based tests", () => {
             done(e);
         });
     });
+
+    // WebRTC PeerConnection is not implemented in jest, which is only available in browser.
+    test.skip("testAvatarSynthesizerDemo", async () => {
+        const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
+        const videoFormat: sdk.AvatarVideoFormat = new sdk.AvatarVideoFormat(
+            /*codec*/ "h264",
+            /*bitrate*/ 2000000,
+            /*width*/ 1920,
+            /*height*/ 1080);
+        const avatarConfig: sdk.AvatarConfig = new sdk.AvatarConfig(
+            /*character*/ "lisa", /*style*/ "casual-sitting", videoFormat);
+        const avatarSynthesizer: sdk.AvatarSynthesizer = new sdk.AvatarSynthesizer(speechConfig, avatarConfig);
+        avatarSynthesizer.avatarEventReceived = (o: sdk.AvatarSynthesizer, e: sdk.AvatarEventArgs): void => {
+            // eslint-disable-next-line no-console
+            console.info("Avatar event received " + e.type);
+        };
+
+        const iceServer: RTCIceServer = {
+            credential: "<your webrtc connection ICE credential>",
+            urls: ["<your webrtc connection ICE server list>"],
+            username: "<your webrtc connection ICE username>"
+        };
+
+        let peerConnection: RTCPeerConnection;
+        try {
+            peerConnection = new RTCPeerConnection(
+                {iceServers: [iceServer]},
+            );
+        } catch (error) {
+            throw new Error("Failed to create RTCPeerConnection, error: " + error);
+        }
+
+        const webrtcConnectionResult: sdk.SynthesisResult = await avatarSynthesizer.startAvatarAsync(peerConnection);
+        expect(webrtcConnectionResult.reason).toEqual(sdk.ResultReason.SynthesizingAudioStarted);
+
+        // start speaking, the audio will be streamed to the WebRTC connection
+        await avatarSynthesizer.speakSsmlAsync("<ssml>");
+
+        // wait a while and stop speaking, the avatar will stop speaking switch to idle state.
+        await avatarSynthesizer.stopSpeakingAsync();
+
+        // stop the avatar synthesizer and close the WebRTC connection.
+        await avatarSynthesizer.stopAvatarAsync();
+    });
 });

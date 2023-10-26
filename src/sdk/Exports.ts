@@ -87,6 +87,7 @@ export { Conversation,
     User,
     VoiceSignature
     } from "./Transcription/Exports";
+export { Synthesizer } from "./Synthesizer";
 export { SpeechSynthesisOutputFormat } from "./SpeechSynthesisOutputFormat";
 export { SpeechSynthesizer } from "./SpeechSynthesizer";
 export { SynthesisResult } from "./SynthesisResult";
@@ -108,5 +109,10 @@ export { PronunciationAssessmentGranularity } from "./PronunciationAssessmentGra
 export { PronunciationAssessmentConfig } from "./PronunciationAssessmentConfig";
 export { PronunciationAssessmentResult } from "./PronunciationAssessmentResult";
 export { LanguageIdMode } from "./LanguageIdMode";
+export { AvatarConfig } from "./AvatarConfig";
+export { AvatarEventArgs } from "./AvatarEventArgs";
+export { AvatarSynthesizer } from "./AvatarSynthesizer";
+export { AvatarVideoFormat, Coordinate } from "./AvatarVideoFormat";
+export { AvatarWebRTCConnectionResult } from "./AvatarWebRTCConnectionResult";
 export { Diagnostics } from "./Diagnostics";
 export { LogLevel } from "./LogLevel";

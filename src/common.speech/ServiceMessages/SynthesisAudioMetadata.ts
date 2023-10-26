@@ -9,6 +9,7 @@ export enum MetadataType {
     Viseme = "Viseme",
     SentenceBoundary = "SentenceBoundary",
     SessionEnd = "SessionEnd",
+    AvatarSignal = "TalkingAvatarSignal",
 }
 
 export interface ISynthesisMetadata {
@@ -25,6 +26,7 @@ export interface ISynthesisMetadata {
         VisemeId: number;
         AnimationChunk: string;
         IsLastAnimation: boolean;
+        Name: string;
     };
 }
 

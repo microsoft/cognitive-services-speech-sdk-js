@@ -39,18 +39,26 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
         const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + "." + hostPrefix + ".speech" + hostSuffix);
 
         const queryParams: IStringDictionary<string> = {};
-
-        if (!endpoint) {
-            endpoint = host + this.synthesisUri;
-        }
-
         const headers: IStringDictionary<string> = {};
+
         if (authInfo.token !== undefined && authInfo.token !== "") {
             headers[authInfo.headerName] = authInfo.token;
         }
         headers[HeaderNames.ConnectionId] = connectionId;
-        if (endpointId !== undefined) {
-            headers[QueryParameterNames.CustomVoiceDeploymentId] = endpointId;
+        if (endpointId !== undefined && endpointId !== "") {
+            if (!endpoint || endpoint.search(QueryParameterNames.CustomVoiceDeploymentId) === -1) {
+                queryParams[QueryParameterNames.CustomVoiceDeploymentId] = endpointId;
+            }
+        }
+
+        if (config.avatarEnabled) {
+            if (!endpoint || endpoint.search(QueryParameterNames.EnableAvatar) === -1) {
+                queryParams[QueryParameterNames.EnableAvatar] = "true";
+            }
+        }
+
+        if (!endpoint) {
+            endpoint = host + this.synthesisUri;
         }
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);

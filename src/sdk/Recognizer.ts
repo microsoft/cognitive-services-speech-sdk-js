@@ -44,6 +44,8 @@ export abstract class Recognizer {
      * Creates and initializes an instance of a Recognizer
      * @constructor
      * @param {AudioConfig} audioInput - An optional audio input stream associated with the recognizer
+     * @param {PropertyCollection} properties - A set of properties to set on the recognizer
+     * @param {IConnectionFactory} connectionFactory - The factory class used to create a custom IConnection for the recognizer
      */
     protected constructor(audioConfig: AudioConfig, properties: PropertyCollection, connectionFactory: IConnectionFactory) {
         this.audioConfig = (audioConfig !== undefined) ? audioConfig : AudioConfig.fromDefaultMicrophoneInput();

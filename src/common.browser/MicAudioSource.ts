@@ -35,9 +35,9 @@ import { IRecorder } from "./IRecorder";
 
 // Extending the default definition with browser specific definitions for backward compatibility
 interface INavigator extends Navigator {
-    webkitGetUserMedia?: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback | undefined, errorCallback: NavigatorUserMediaErrorCallback) => void;
-    mozGetUserMedia?: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback | undefined, errorCallback: NavigatorUserMediaErrorCallback) => void;
-    msGetUserMedia?: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback, errorCallback: NavigatorUserMediaErrorCallback) => void;
+    webkitGetUserMedia: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback | undefined, errorCallback: NavigatorUserMediaErrorCallback) => void;
+    mozGetUserMedia: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback | undefined, errorCallback: NavigatorUserMediaErrorCallback) => void;
+    msGetUserMedia: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback, errorCallback: NavigatorUserMediaErrorCallback) => void;
 }
 
 export const AudioWorkletSourceURLPropertyName = "MICROPHONE-WorkletSourceUrl";

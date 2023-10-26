@@ -49,12 +49,15 @@ export * from "./Transcription/Exports";
 export * from "./ServiceMessages/SynthesisAudioMetadata";
 export * from "./SynthesisTurn";
 export * from "./SynthesisAdapterBase";
+export { AvatarSynthesisAdapter } from "./AvatarSynthesisAdapter";
+export { SpeechSynthesisAdapter } from "./SpeechSynthesisAdapter";
 export * from "./SynthesisRestAdapter";
 export * from "./SynthesizerConfig";
 export * from "./SynthesisContext";
 export * from "./SpeakerRecognitionConfig";
 export * from "./SpeakerServiceRecognizer";
 export * from "./VoiceServiceRecognizer";
+export * from "./SpeechServiceConfig";
 
 export const OutputFormatPropertyName: string = "OutputFormat";
 export const CancellationErrorCodePropertyName: string = "CancellationErrorCode";
