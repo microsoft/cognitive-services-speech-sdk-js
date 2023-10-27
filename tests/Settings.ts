@@ -76,6 +76,7 @@ export class Settings {
     public static WaveFileMulaw: string = Settings.InputDir + "whatstheweatherlike.mulaw";
     public static WaveFileAlaw: string = Settings.InputDir + "whatstheweatherlike.alaw";
     public static LongerWaveFile: string = Settings.InputDir + "StreamingEnrollment.wav";
+    public static PronunciationFallWaveFile: string = Settings.InputDir + "PronunciationAssessmentFall.wav";
     public static MonoChannelAlignedWaveFile: string = Settings.InputDir + "only-a-test.wav";
     public static WaveFileLanguage: string = "en-US";
     public static WaveFileDuration: number = 12900000;
