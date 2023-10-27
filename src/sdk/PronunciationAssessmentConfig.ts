@@ -19,6 +19,7 @@ interface PronunciationAssessmentJSON {
     nbestPhonemeCount: number;
     dimension: string;
     enableMiscue: boolean;
+    enableProsodyAssessment: boolean;
 }
 
 /**
@@ -30,6 +31,8 @@ export class PronunciationAssessmentConfig {
     private privProperties: PropertyCollection;
     private privPhonemeAlphabet: string;
     private privNBestPhonemeCount: number;
+    private privEnableProsodyAssessment: boolean;
+    private privContentAssessmentTopic: string;
 
     /**
      * PronunciationAssessmentConfig constructor.
@@ -77,7 +80,10 @@ export class PronunciationAssessmentConfig {
     public applyTo(recognizer: Recognizer): void {
         this.updateJson();
         const recoBase = recognizer.internalData as ServiceRecognizerBase;
-        recoBase.speechContext.setPronunciationAssessmentParams(this.properties.getProperty(PropertyId.PronunciationAssessment_Params), recoBase.isSpeakerDiarizationEnabled);
+        recoBase.speechContext.setPronunciationAssessmentParams(
+            this.properties.getProperty(PropertyId.PronunciationAssessment_Params),
+            this.privContentAssessmentTopic,
+            recoBase.isSpeakerDiarizationEnabled);
     }
 
     /**
@@ -156,6 +162,30 @@ export class PronunciationAssessmentConfig {
     }
 
     /**
+     * Enables the prosody assessment.
+     * Added in version 1.34.0
+     * @member PronunciationAssessmentConfig.prototype.enableProsodyAssessment
+     * @function
+     * @public
+     * @param {boolean} enableProsodyAssessment - enable prosody assessment.
+     */
+    public set enableProsodyAssessment(enableProsodyAssessment: boolean) {
+        this.privEnableProsodyAssessment = enableProsodyAssessment;
+    }
+
+    /**
+     * Enables content assessment and sets the topic.
+     * Added in version 1.34.0
+     * @member PronunciationAssessmentConfig.prototype.enableContentAssessmentWithTopic
+     * @function
+     * @public
+     * @param {string} topic - Topic for content assessment.
+     */
+    public enableContentAssessmentWithTopic(topic: string): void {
+        this.privContentAssessmentTopic = topic;
+    }
+
+    /**
      * @member PronunciationAssessmentConfig.prototype.properties
      * @function
      * @public
@@ -192,6 +222,8 @@ export class PronunciationAssessmentConfig {
         if (this.privNBestPhonemeCount) {
             paramsJson.nbestPhonemeCount = this.privNBestPhonemeCount;
         }
+
+        paramsJson.enableProsodyAssessment = this.privEnableProsodyAssessment;
 
         // always set dimension to Comprehensive
         paramsJson.dimension = "Comprehensive";
