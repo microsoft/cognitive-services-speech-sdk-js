@@ -428,8 +428,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             try {
                 await this.audioSource.turnOff();
                 await this.sendFinalAudio();
-                await this.privRequestSession.turnCompletionPromise;
                 await this.privRequestSession.onStopRecognizing();
+                await this.privRequestSession.turnCompletionPromise;
             } finally {
                 await this.privRequestSession.dispose();
             }
@@ -584,11 +584,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
             // indicates we are draining the queue and it came with no message;
             if (!message) {
-                if (!this.privRequestSession.isRecognizing) {
-                    return;
-                } else {
-                    return this.receiveMessage();
-                }
+                return this.receiveMessage();
             }
 
             this.privServiceHasSentMessage = true;
