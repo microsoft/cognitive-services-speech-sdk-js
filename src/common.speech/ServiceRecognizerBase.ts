@@ -593,17 +593,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             if (connectionMessage.requestId.toLowerCase() === this.privRequestSession.requestId.toLowerCase()) {
                 switch (connectionMessage.path.toLowerCase()) {
                     case "turn.start":
-                        if (!this.privRequestSession.isRecognizing) {
-                            return; // Fix for gap in receiving turn.end #741
-                        }
                         this.privMustReportEndOfStream = true;
                         this.privRequestSession.onServiceTurnStartResponse();
                         break;
 
                     case "speech.startdetected":
-                        if (!this.privRequestSession.isRecognizing) {
-                            return; // Fix for gap in receiving turn.end #741
-                        }
                         const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
                         const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
                         if (!!this.privRecognizer.speechStartDetected) {
