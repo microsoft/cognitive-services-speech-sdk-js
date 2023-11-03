@@ -584,11 +584,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
             // indicates we are draining the queue and it came with no message;
             if (!message) {
-                if (!this.privRequestSession.isRecognizing) {
-                    return;
-                } else {
-                    return this.receiveMessage();
-                }
+                return this.receiveMessage();
             }
 
             this.privServiceHasSentMessage = true;
