@@ -87,7 +87,7 @@
     "test": "npm run lint && npm run jest --coverage",
     "jest": "jest",
     "lint": "eslint -c .eslintrc.cjs --ext .ts src",
-    "civersion": "node ci/version.js",
+    "civersion": "node ci/version.cjs",
     "prepare": "npm run build",
     "setup": "npm install --package-lock-only --ignore-scripts --no-audit"
   },
