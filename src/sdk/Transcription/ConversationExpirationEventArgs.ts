@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { SessionEventArgs } from "../Exports";
+import { SessionEventArgs } from "../Exports.js";
 
 export class ConversationExpirationEventArgs extends SessionEventArgs {
     private privExpirationTime: number;

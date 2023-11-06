@@ -4,12 +4,12 @@
 import {
     DynamicGrammarBuilder,
     ServiceRecognizerBase,
-} from "../common.speech/Exports";
+} from "../common.speech/Exports.js";
 import {
     ConversationTranscriber,
     MeetingTranscriber,
     Recognizer
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Allows additions of new phrases to improve speech recognition.

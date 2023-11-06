@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyCollection } from "../sdk/Exports";
+import { PropertyCollection } from "../sdk/Exports.js";
 import {
     Context,
     ISynthesisSectionVideo,
     SpeechServiceConfig
-    } from "./Exports";
+    } from "./Exports.js";
 
 export enum SynthesisServiceType {
     Standard,

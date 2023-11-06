@@ -3,8 +3,8 @@
 
 /* eslint-disable max-classes-per-file */
 
-import { PropertyCollection, PropertyId } from "../sdk/Exports";
-import { Context, SpeechServiceConfig } from "./Exports";
+import { PropertyCollection, PropertyId } from "../sdk/Exports.js";
+import { Context, SpeechServiceConfig } from "./Exports.js";
 
 export enum RecognitionMode {
     Interactive,

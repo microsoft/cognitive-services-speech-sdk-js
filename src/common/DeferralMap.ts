@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Deferred } from "./Promise";
+import { Deferred } from "./Promise.js";
 
 /**
  * The error that is thrown when an argument passed in is null.

@@ -5,7 +5,7 @@ import {
     PropertyCollection,
     ResultReason,
     SynthesisResult
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Defines result of speech synthesis.

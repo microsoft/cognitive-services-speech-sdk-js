@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
-import { PropertyId, SpeechSynthesizer } from "../sdk/Exports";
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat.js";
+import { PropertyId, SpeechSynthesizer } from "../sdk/Exports.js";
 
 /**
  * Represents the JSON used in the synthesis.context message sent to the speech service.

@@ -3,9 +3,9 @@
 // Licensed under the MIT license. See LICENSE.md file in the project root for full license information.
 //
 
-import { ConsoleLoggingListener } from "../common.browser/Exports";
-import { Events } from "../common/Exports";
-import { LogLevel } from "./LogLevel";
+import { ConsoleLoggingListener } from "../common.browser/Exports.js";
+import { Events } from "../common/Exports.js";
+import { LogLevel } from "./LogLevel.js";
 
 /**
  * Defines diagnostics API for managing console output

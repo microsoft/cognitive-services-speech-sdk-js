@@ -10,7 +10,7 @@ import Agent from "agent-base";
 import HttpsProxyAgent from "https-proxy-agent";
 
 import ws from "ws";
-import { HeaderNames } from "../common.speech/HeaderNames";
+import { HeaderNames } from "../common.speech/HeaderNames.js";
 import {
     ArgumentNullError,
     BackgroundEvent,
@@ -31,8 +31,8 @@ import {
     MessageType,
     Queue,
     RawWebsocketMessage,
-} from "../common/Exports";
-import { ProxyInfo } from "./ProxyInfo";
+} from "../common/Exports.js";
+import { ProxyInfo } from "./ProxyInfo.js";
 
 interface ISendItem {
     Message: ConnectionMessage;

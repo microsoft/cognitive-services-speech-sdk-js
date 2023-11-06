@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RecognitionEventArgs, TranslationRecognitionResult } from "./Exports";
+import { RecognitionEventArgs, TranslationRecognitionResult } from "./Exports.js";
 
 /**
  * Translation text result event arguments.

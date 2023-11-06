@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IPrimaryLanguage, RecognitionStatus } from "../Exports";
+import { IPrimaryLanguage, RecognitionStatus } from "../Exports.js";
 
 // speech.phrase for detailed
 export interface IDetailedSpeechPhrase {

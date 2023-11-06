@@ -2,9 +2,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { InvalidOperationError } from "./Error";
-import { createNoDashGuid } from "./Guid";
-import { IStringDictionary } from "./IDictionary";
+import { InvalidOperationError } from "./Error.js";
+import { createNoDashGuid } from "./Guid.js";
+import { IStringDictionary } from "./IDictionary.js";
 
 export enum MessageType {
     Text,

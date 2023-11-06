@@ -12,9 +12,9 @@ import {
     IConnection,
     IStringDictionary,
     IWebsocketMessageFormatter,
-} from "../common/Exports";
-import { ProxyInfo } from "./ProxyInfo";
-import { WebsocketMessageAdapter } from "./WebsocketMessageAdapter";
+} from "../common/Exports.js";
+import { ProxyInfo } from "./ProxyInfo.js";
+import { WebsocketMessageAdapter } from "./WebsocketMessageAdapter.js";
 
 export class WebsocketConnection implements IConnection {
 

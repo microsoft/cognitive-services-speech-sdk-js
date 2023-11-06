@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ISpeechConfigAudioDevice } from "../common.speech/Exports";
-import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
-import { AudioSourceEvent } from "./AudioSourceEvents";
-import { EventSource } from "./EventSource";
-import { IDetachable } from "./IDetachable";
-import { IStreamChunk } from "./Stream";
+import { ISpeechConfigAudioDevice } from "../common.speech/Exports.js";
+import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat.js";
+import { AudioSourceEvent } from "./AudioSourceEvents.js";
+import { EventSource } from "./EventSource.js";
+import { IDetachable } from "./IDetachable.js";
+import { IStreamChunk } from "./Stream.js";
 
 export interface IAudioSource {
     id(): string;

@@ -5,31 +5,31 @@ import {
     ProxyInfo,
     RestConfigBase,
     WebsocketConnection,
-} from "../../common.browser/Exports";
+} from "../../common.browser/Exports.js";
 import {
     IConnection,
     IStringDictionary,
-} from "../../common/Exports";
-import { StringUtils } from "../../common/StringUtils";
-import { Contracts } from "../../sdk/Contracts";
+} from "../../common/Exports.js";
+import { StringUtils } from "../../common/StringUtils.js";
+import { Contracts } from "../../sdk/Contracts.js";
 import {
     PropertyId
-} from "../../sdk/Exports";
+} from "../../sdk/Exports.js";
 import {
     ConversationImpl
-} from "../../sdk/Transcription/Conversation";
-import { HeaderNames } from "../HeaderNames";
-import { QueryParameterNames } from "../QueryParameterNames";
+} from "../../sdk/Transcription/Conversation.js";
+import { HeaderNames } from "../HeaderNames.js";
+import { QueryParameterNames } from "../QueryParameterNames.js";
 import {
     ConnectionFactoryBase
-} from "./../ConnectionFactoryBase";
+} from "./../ConnectionFactoryBase.js";
 import {
     AuthInfo,
     RecognizerConfig,
     TranscriberConnectionFactory,
     TranslationConnectionFactory,
     WebsocketMessageFormatter,
-} from "./../Exports";
+} from "./../Exports.js";
 
 /**
  * Connection factory for the conversation translator. Handles connecting to the regular translator endpoint,

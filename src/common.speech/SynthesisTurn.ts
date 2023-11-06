@@ -6,22 +6,22 @@ import {
     Deferred,
     Events,
     IAudioDestination
-} from "../common/Exports";
-import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
-import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
+} from "../common/Exports.js";
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat.js";
+import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream.js";
 import {
     PropertyCollection,
     PropertyId,
     ResultReason,
     SpeechSynthesisResult,
-} from "../sdk/Exports";
-import { ISynthesisMetadata, MetadataType } from "./ServiceMessages/SynthesisAudioMetadata";
+} from "../sdk/Exports.js";
+import { ISynthesisMetadata, MetadataType } from "./ServiceMessages/SynthesisAudioMetadata.js";
 import {
     ConnectingToSynthesisServiceEvent,
     SpeechSynthesisEvent,
     SynthesisStartedEvent,
     SynthesisTriggeredEvent,
-} from "./SynthesisEvents";
+} from "./SynthesisEvents.js";
 
 export interface ISynthesisResponseContext {
     serviceTag: string;

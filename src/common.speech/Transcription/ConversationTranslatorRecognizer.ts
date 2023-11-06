@@ -8,14 +8,14 @@ import {
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechServiceConfig
-} from "../../common.speech/Exports";
+} from "../../common.speech/Exports.js";
 import {
     BackgroundEvent,
     Events,
     Timeout,
-} from "../../common/Exports";
-import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
-import { Contracts } from "../../sdk/Contracts";
+} from "../../common/Exports.js";
+import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig.js";
+import { Contracts } from "../../sdk/Contracts.js";
 import {
     AudioConfig,
     Connection,
@@ -28,12 +28,12 @@ import {
     Recognizer,
     SessionEventArgs,
     SpeechTranslationConfig
-} from "../../sdk/Exports";
-import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig";
-import { ConversationImpl } from "../../sdk/Transcription/Conversation";
-import { Callback, IConversation } from "../../sdk/Transcription/IConversation";
-import { ConversationConnectionFactory } from "./ConversationConnectionFactory";
-import { ConversationServiceAdapter } from "./ConversationServiceAdapter";
+} from "../../sdk/Exports.js";
+import { SpeechTranslationConfigImpl } from "../../sdk/SpeechTranslationConfig.js";
+import { ConversationImpl } from "../../sdk/Transcription/Conversation.js";
+import { Callback, IConversation } from "../../sdk/Transcription/IConversation.js";
+import { ConversationConnectionFactory } from "./ConversationConnectionFactory.js";
+import { ConversationServiceAdapter } from "./ConversationServiceAdapter.js";
 import {
     ConversationReceivedTranslationEventArgs,
     LockRoomEventArgs,
@@ -41,10 +41,10 @@ import {
     ParticipantAttributeEventArgs,
     ParticipantEventArgs,
     ParticipantsListEventArgs
-} from "./ConversationTranslatorEventArgs";
+} from "./ConversationTranslatorEventArgs.js";
 import {
     ConversationRecognizer,
-} from "./ConversationTranslatorInterfaces";
+} from "./ConversationTranslatorInterfaces.js";
 
 export class ConversationRecognizerFactory {
     public static fromConfig(conversation: IConversation, speechConfig: SpeechTranslationConfig, audioConfig?: AudioConfig): ConversationRecognizer {

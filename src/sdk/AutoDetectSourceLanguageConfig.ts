@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AutoDetectSourceLanguagesOpenRangeOptionName } from "../common.speech/Exports";
-import {Contracts} from "./Contracts";
+import { AutoDetectSourceLanguagesOpenRangeOptionName } from "../common.speech/Exports.js";
+import {Contracts} from "./Contracts.js";
 import {
     PropertyCollection,
     PropertyId,
     SourceLanguageConfig,
-} from "./Exports";
-import { LanguageIdMode } from "./LanguageIdMode";
+} from "./Exports.js";
+import { LanguageIdMode } from "./LanguageIdMode.js";
 
 /**
  * Language auto detect configuration.

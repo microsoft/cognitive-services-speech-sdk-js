@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RiffPcmEncoder, Stream } from "../common/Exports";
-import { IRecorder } from "./IRecorder";
+import { RiffPcmEncoder, Stream } from "../common/Exports.js";
+import { IRecorder } from "./IRecorder.js";
 
 export class PcmRecorder implements IRecorder {
     private privMediaResources: IMediaResources;

@@ -4,7 +4,7 @@
 import {
     CancellationErrorCode,
     CancellationReason,
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Contains detailed information about why a result was canceled.

@@ -3,7 +3,7 @@
 
 import {
     IRestResponse
-} from "../common.browser/Exports";
+} from "../common.browser/Exports.js";
 import {
     IAuthentication,
     IConnectionFactory,
@@ -12,9 +12,9 @@ import {
     SpeechServiceConfig,
     VoiceProfileConnectionFactory,
     VoiceServiceRecognizer
-} from "../common.speech/Exports";
-import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
-import { Contracts } from "./Contracts";
+} from "../common.speech/Exports.js";
+import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig.js";
+import { Contracts } from "./Contracts.js";
 import {
     AudioInputStream,
     PropertyCollection,
@@ -26,8 +26,8 @@ import {
     VoiceProfilePhraseResult,
     VoiceProfileResult,
     VoiceProfileType
-} from "./Exports";
-import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
+} from "./Exports.js";
+import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig.js";
 
 /**
  * Defines VoiceProfileClient class for Speaker Recognition

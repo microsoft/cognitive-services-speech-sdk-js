@@ -11,10 +11,10 @@ import {
     SpeechConnectionFactory,
     SpeechServiceConfig,
     SpeechServiceRecognizer,
-} from "../common.speech/Exports";
-import { marshalPromiseToCallbacks } from "../common/Exports";
-import { AudioConfigImpl } from "./Audio/AudioConfig";
-import { Contracts } from "./Contracts";
+} from "../common.speech/Exports.js";
+import { marshalPromiseToCallbacks } from "../common/Exports.js";
+import { AudioConfigImpl } from "./Audio/AudioConfig.js";
+import { Contracts } from "./Contracts.js";
 import {
     AudioConfig,
     AutoDetectSourceLanguageConfig,
@@ -26,8 +26,8 @@ import {
     SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
-} from "./Exports";
-import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
+} from "./Exports.js";
+import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig.js";
 
 /**
  * Performs speech recognition from microphone, file, or other audio input streams, and gets transcribed text as result.

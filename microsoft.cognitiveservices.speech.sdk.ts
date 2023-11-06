@@ -1,11 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-import { ConsoleLoggingListener } from "./src/common.browser/Exports";
-import { Events } from "./src/common/Exports";
+import { AgentConfig } from "./src/common.speech/Exports.js";
 
-// Common.Storage.SetLocalStorage(new Common.Browser.LocalStorage());
-// Common.Storage.SetSessionStorage(new Common.Browser.SessionStorage());
-Events.instance.attachConsoleListener(new ConsoleLoggingListener());
-
+void new AgentConfig();
 // Speech SDK API
-export * from "./src/sdk/Exports";
+export * from "./src/sdk/Exports.js";

@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 
 import * as fs from "fs";
-import { IAudioDestination } from "../../common/Exports";
-import { Contracts } from "../Contracts";
-import { AudioStreamFormat } from "../Exports";
-import { AudioOutputFormatImpl } from "./AudioOutputFormat";
+import { IAudioDestination } from "../../common/Exports.js";
+import { Contracts } from "../Contracts.js";
+import { AudioStreamFormat } from "../Exports.js";
+import { AudioOutputFormatImpl } from "./AudioOutputFormat.js";
 
 export class AudioFileWriter implements IAudioDestination {
     private privAudioFormat: AudioOutputFormatImpl;

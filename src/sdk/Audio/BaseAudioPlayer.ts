@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { InvalidOperationError } from "../../common/Error";
-import { AudioStreamFormat } from "../Exports";
-import { AudioStreamFormatImpl } from "./AudioStreamFormat";
+import { InvalidOperationError } from "../../common/Error.js";
+import { AudioStreamFormat } from "../Exports.js";
+import { AudioStreamFormatImpl } from "./AudioStreamFormat.js";
 
 type AudioDataTypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array;
 /**

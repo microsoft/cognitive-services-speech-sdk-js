@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Contracts } from "./Contracts";
+import { Contracts } from "./Contracts.js";
 import {
     SpeechRecognitionResult,
     ConversationTranscriptionResult
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Output format

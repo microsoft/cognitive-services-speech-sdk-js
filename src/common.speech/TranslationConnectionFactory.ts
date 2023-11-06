@@ -4,26 +4,26 @@
 import {
     ProxyInfo,
     WebsocketConnection,
-} from "../common.browser/Exports";
+} from "../common.browser/Exports.js";
 import {
     IConnection,
     IStringDictionary,
-} from "../common/Exports";
-import { StringUtils } from "../common/StringUtils";
+} from "../common/Exports.js";
+import { StringUtils } from "../common/StringUtils.js";
 import {
     PropertyId
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     ConnectionFactoryBase
-} from "./ConnectionFactoryBase";
+} from "./ConnectionFactoryBase.js";
 import {
     AuthInfo,
     RecognitionMode,
     RecognizerConfig,
     WebsocketMessageFormatter,
-} from "./Exports";
-import { HeaderNames } from "./HeaderNames";
-import { QueryParameterNames } from "./QueryParameterNames";
+} from "./Exports.js";
+import { HeaderNames } from "./HeaderNames.js";
+import { QueryParameterNames } from "./QueryParameterNames.js";
 
 export class TranslationConnectionFactory extends ConnectionFactoryBase {
 

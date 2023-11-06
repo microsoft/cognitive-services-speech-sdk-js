@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
-import { PullAudioOutputStream } from "./Audio/AudioOutputStream";
+import { PullAudioOutputStream } from "./Audio/AudioOutputStream.js";
 
 interface IActivity {
     conversation?: any;

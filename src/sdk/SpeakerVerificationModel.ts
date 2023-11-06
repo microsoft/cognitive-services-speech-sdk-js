@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Contracts } from "./Contracts";
-import { SpeakerRecognitionModel } from "./SpeakerRecognitionModel";
+import { Contracts } from "./Contracts.js";
+import { SpeakerRecognitionModel } from "./SpeakerRecognitionModel.js";
 import {
     VoiceProfile,
     VoiceProfileType,
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Defines SpeakerVerificationModel class for Speaker Recognition

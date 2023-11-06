@@ -6,7 +6,7 @@ import {
     IAudioSource,
     MessageType,
     TranslationStatus,
-} from "../common/Exports";
+} from "../common/Exports.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -21,7 +21,7 @@ import {
     Translations,
     TranslationSynthesisEventArgs,
     TranslationSynthesisResult,
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     CancellationErrorCodePropertyName,
     ConversationServiceRecognizer,
@@ -32,12 +32,12 @@ import {
     TranslationHypothesis,
     TranslationPhrase,
     TranslationSynthesisEnd,
-} from "./Exports";
-import { IAuthentication } from "./IAuthentication";
-import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
-import { ITranslationPhrase } from "./ServiceMessages/TranslationPhrase";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./Exports.js";
+import { IAuthentication } from "./IAuthentication.js";
+import { IConnectionFactory } from "./IConnectionFactory.js";
+import { RecognizerConfig } from "./RecognizerConfig.js";
+import { ITranslationPhrase } from "./ServiceMessages/TranslationPhrase.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 // eslint-disable-next-line max-classes-per-file
 export class TranslationServiceRecognizer extends ConversationServiceRecognizer {

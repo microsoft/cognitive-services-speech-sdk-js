@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
-import { RecognitionEventArgs, SpeechRecognitionResult, ConversationTranscriptionResult } from "./Exports";
+import { RecognitionEventArgs, SpeechRecognitionResult, ConversationTranscriptionResult } from "./Exports.js";
 
 /**
  * Defines contents of speech recognizing/recognized event.

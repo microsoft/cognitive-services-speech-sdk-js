@@ -5,7 +5,7 @@ import {
     Deferred,
     IAudioSource,
     MessageType,
-} from "../common/Exports";
+} from "../common/Exports.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -16,7 +16,7 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     AddedLmIntent,
     CancellationErrorCodePropertyName,
@@ -25,11 +25,11 @@ import {
     ServiceRecognizerBase,
     SimpleSpeechPhrase,
     SpeechHypothesis,
-} from "./Exports";
-import { IAuthentication } from "./IAuthentication";
-import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./Exports.js";
+import { IAuthentication } from "./IAuthentication.js";
+import { IConnectionFactory } from "./IConnectionFactory.js";
+import { RecognizerConfig } from "./RecognizerConfig.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 // eslint-disable-next-line max-classes-per-file
 export class IntentServiceRecognizer extends ServiceRecognizerBase {

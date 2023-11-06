@@ -4,15 +4,15 @@
 //
 
 // eslint-disable-next-line max-classes-per-file
-import { HeaderNames } from "../common.speech/HeaderNames";
+import { HeaderNames } from "../common.speech/HeaderNames.js";
 import {
     ConnectionMessage as IntConnectionMessage,
     MessageType
-} from "../common/Exports";
+} from "../common/Exports.js";
 import {
     PropertyCollection
-} from "./PropertyCollection";
-import { PropertyId } from "./PropertyId";
+} from "./PropertyCollection.js";
+import { PropertyId } from "./PropertyId.js";
 
 /**
  * ConnectionMessage represents implementation specific messages sent to and received from

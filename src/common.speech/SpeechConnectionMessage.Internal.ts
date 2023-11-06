@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ArgumentNullError, ConnectionMessage, IStringDictionary, MessageType } from "../common/Exports";
-import { HeaderNames } from "./HeaderNames";
+import { ArgumentNullError, ConnectionMessage, IStringDictionary, MessageType } from "../common/Exports.js";
+import { HeaderNames } from "./HeaderNames.js";
 
 export class SpeechConnectionMessage extends ConnectionMessage {
 

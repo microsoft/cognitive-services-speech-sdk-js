@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RecognizerConfig } from "../common.speech/Exports";
-import { PropertyCollection, PropertyId } from "../sdk/Exports";
+import { RecognizerConfig } from "../common.speech/Exports.js";
+import { PropertyCollection, PropertyId } from "../sdk/Exports.js";
 
 export class ProxyInfo {
     private privProxyHostName: string;

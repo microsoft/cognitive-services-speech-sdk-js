@@ -3,12 +3,12 @@
 
 import {
     ArgumentNullError,
-} from "../common/Exports";
-import { HeaderNames } from "./HeaderNames";
+} from "../common/Exports.js";
+import { HeaderNames } from "./HeaderNames.js";
 import {
     AuthInfo,
     IAuthentication
-} from "./IAuthentication";
+} from "./IAuthentication.js";
 
 /**
  * @class

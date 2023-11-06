@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ReplayableAudioNode } from "../common.browser/Exports";
-import { ConnectionOpenResponse } from "../common/ConnectionOpenResponse";
+import { ReplayableAudioNode } from "../common.browser/Exports.js";
+import { ConnectionOpenResponse } from "../common/ConnectionOpenResponse.js";
 import {
     ArgumentNullError,
     ConnectionClosedEvent,
@@ -18,9 +18,9 @@ import {
     MessageType,
     ServiceEvent,
     Timeout
-} from "../common/Exports";
-import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
-import { SpeakerRecognitionModel } from "../sdk/SpeakerRecognitionModel";
+} from "../common/Exports.js";
+import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat.js";
+import { SpeakerRecognitionModel } from "../sdk/SpeakerRecognitionModel.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -31,8 +31,8 @@ import {
     SpeakerRecognitionResult,
     SpeechRecognitionResult,
     OutputFormat
-} from "../sdk/Exports";
-import { Callback } from "../sdk/Transcription/IConversation";
+} from "../sdk/Exports.js";
+import { Callback } from "../sdk/Transcription/IConversation.js";
 import {
     AgentConfig,
     DynamicGrammarBuilder,
@@ -43,14 +43,14 @@ import {
     SpeechDetected,
     type,
     OutputFormatPropertyName
-} from "./Exports";
+} from "./Exports.js";
 import {
     AuthInfo,
     IAuthentication,
-} from "./IAuthentication";
-import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./IAuthentication.js";
+import { IConnectionFactory } from "./IConnectionFactory.js";
+import { RecognizerConfig } from "./RecognizerConfig.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 interface CustomModel {
     language: string;

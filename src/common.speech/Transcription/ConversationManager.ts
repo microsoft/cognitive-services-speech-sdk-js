@@ -7,12 +7,12 @@ import {
     IRestResponse,
     RestMessageAdapter,
     RestRequestType
-} from "../../common.browser/Exports";
-import { IErrorMessages, IStringDictionary } from "../../common/Exports";
-import { Contracts } from "../../sdk/Contracts";
-import { PropertyCollection, PropertyId } from "../../sdk/Exports";
-import { ConversationConnectionConfig } from "./ConversationConnectionConfig";
-import { IConversationResponseError, IInternalConversation } from "./ConversationTranslatorInterfaces";
+} from "../../common.browser/Exports.js";
+import { IErrorMessages, IStringDictionary } from "../../common/Exports.js";
+import { Contracts } from "../../sdk/Contracts.js";
+import { PropertyCollection, PropertyId } from "../../sdk/Exports.js";
+import { ConversationConnectionConfig } from "./ConversationConnectionConfig.js";
+import { IConversationResponseError, IInternalConversation } from "./ConversationTranslatorInterfaces.js";
 
 export class ConversationManager {
 

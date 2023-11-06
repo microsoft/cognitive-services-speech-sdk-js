@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-import { marshalPromiseToCallbacks } from "../../common/Exports";
-import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig";
-import { AudioStreamFormatImpl } from "../../sdk/Audio/AudioStreamFormat";
-import { Contracts } from "../../sdk/Contracts";
+import { marshalPromiseToCallbacks } from "../../common/Exports.js";
+import { AudioConfigImpl } from "../../sdk/Audio/AudioConfig.js";
+import { AudioStreamFormatImpl } from "../../sdk/Audio/AudioStreamFormat.js";
+import { Contracts } from "../../sdk/Contracts.js";
 import {
     AudioConfig,
     CancellationEventArgs,
@@ -19,7 +19,7 @@ import {
     SpeechRecognitionEventArgs,
     SpeechTranslationConfig,
     SpeechTranslationConfigImpl,
-} from "../../sdk/Exports";
+} from "../../sdk/Exports.js";
 import {
     IAuthentication,
     IConnectionFactory,
@@ -29,7 +29,7 @@ import {
     SpeechServiceConfig,
     TranscriberConnectionFactory,
     TranscriptionServiceRecognizer,
-} from "../Exports";
+} from "../Exports.js";
 
 export class TranscriberRecognizer extends Recognizer {
 

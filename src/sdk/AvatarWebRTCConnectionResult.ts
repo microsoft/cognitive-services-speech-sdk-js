@@ -5,7 +5,7 @@ import {
     ResultReason,
     PropertyCollection,
     SynthesisResult
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Defines the avatar WebRTC connection result.
