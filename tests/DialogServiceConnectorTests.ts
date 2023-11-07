@@ -22,7 +22,6 @@
 //   Settings.proxyPort
 //
 
-import { Callback } from "../distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener,
@@ -46,6 +45,7 @@ import {
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
+type Callback = (result?: any) => void;
 // eslint-disable-next-line no-console
 const consoleInfo = console.info;
 const simpleMessageObj = { speak: "This is speech", text: "This is text", type: "message" };
