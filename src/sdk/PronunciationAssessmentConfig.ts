@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ServiceRecognizerBase } from "../common.speech/ServiceRecognizerBase";
-import { Contracts } from "./Contracts";
+import { ServiceRecognizerBase } from "../common.speech/ServiceRecognizerBase.js";
+import { Contracts } from "./Contracts.js";
 import {
     PronunciationAssessmentGradingSystem,
     PronunciationAssessmentGranularity,
     PropertyCollection,
     PropertyId,
     Recognizer
-} from "./Exports";
+} from "./Exports.js";
 
 interface PronunciationAssessmentJSON {
     referenceText: string;

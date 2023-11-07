@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { CancellationErrorCodePropertyName, EnumTranslation, SimpleSpeechPhrase } from "../common.speech/Exports";
-import { CancellationDetailsBase } from "./CancellationDetailsBase";
+import { CancellationErrorCodePropertyName, EnumTranslation, SimpleSpeechPhrase } from "../common.speech/Exports.js";
+import { CancellationDetailsBase } from "./CancellationDetailsBase.js";
 import {
     CancellationErrorCode,
     CancellationReason,
     RecognitionResult,
     SpeechSynthesisResult
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Contains detailed information about why a result was canceled.

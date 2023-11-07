@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RecognitionStatus, SimpleSpeechPhrase } from "../../src/common.speech/Exports";
-import { IntentRecognitionResult, NoMatchReason, SpeechRecognitionResult, TranslationRecognitionResult } from "./Exports";
+import { RecognitionStatus, SimpleSpeechPhrase } from "../../src/common.speech/Exports.js";
+import { IntentRecognitionResult, NoMatchReason, SpeechRecognitionResult, TranslationRecognitionResult } from "./Exports.js";
 
 /**
  * Contains detailed information for NoMatch recognition results.

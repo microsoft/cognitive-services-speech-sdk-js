@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ProxyInfo, WebsocketConnection } from "../../common.browser/Exports";
-import { createGuid, IConnection, IStringDictionary } from "../../common/Exports";
-import { Contracts } from "../../sdk/Contracts";
-import { PropertyId } from "../../sdk/Exports";
-import { ConnectionFactoryBase } from "../ConnectionFactoryBase";
-import { AuthInfo, RecognizerConfig } from "../Exports";
-import { ConversationConnectionConfig } from "./ConversationConnectionConfig";
-import { ConversationWebsocketMessageFormatter } from "./ConversationWebsocketMessageFormatter";
+import { ProxyInfo, WebsocketConnection } from "../../common.browser/Exports.js";
+import { createGuid, IConnection, IStringDictionary } from "../../common/Exports.js";
+import { Contracts } from "../../sdk/Contracts.js";
+import { PropertyId } from "../../sdk/Exports.js";
+import { ConnectionFactoryBase } from "../ConnectionFactoryBase.js";
+import { AuthInfo, RecognizerConfig } from "../Exports.js";
+import { ConversationConnectionConfig } from "./ConversationConnectionConfig.js";
+import { ConversationWebsocketMessageFormatter } from "./ConversationWebsocketMessageFormatter.js";
 
 /**
  * Create a connection to the Conversation Translator websocket for sending instant messages and commands, and for receiving translated messages.

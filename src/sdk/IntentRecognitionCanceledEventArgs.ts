@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { CancellationEventArgs } from "./CancellationEventArgs";
-import { CancellationErrorCode, CancellationReason, IntentRecognitionEventArgs, IntentRecognitionResult } from "./Exports";
+import { CancellationEventArgs } from "./CancellationEventArgs.js";
+import { CancellationErrorCode, CancellationReason, IntentRecognitionEventArgs, IntentRecognitionResult } from "./Exports.js";
 
 /**
  * Define payload of intent recognition canceled result events.

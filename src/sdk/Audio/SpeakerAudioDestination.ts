@@ -7,11 +7,11 @@ import {
     Events,
     IAudioDestination,
     INumberDictionary
-} from "../../common/Exports";
-import { AudioStreamFormat, IPlayer } from "../Exports";
-import { AudioOutputFormatImpl } from "./AudioOutputFormat";
-import { PullAudioOutputStreamImpl } from "./AudioOutputStream";
-import { AudioFormatTag } from "./AudioStreamFormat";
+} from "../../common/Exports.js";
+import { AudioStreamFormat, IPlayer } from "../Exports.js";
+import { AudioOutputFormatImpl } from "./AudioOutputFormat.js";
+import { PullAudioOutputStreamImpl } from "./AudioOutputStream.js";
+import { AudioFormatTag } from "./AudioStreamFormat.js";
 
 const MediaDurationPlaceholderSeconds = 60 * 30;
 

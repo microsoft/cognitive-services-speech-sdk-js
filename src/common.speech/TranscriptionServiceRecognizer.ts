@@ -5,7 +5,7 @@ import {
     IAudioSource,
     IConnection,
     MessageType
-} from "../common/Exports";
+} from "../common/Exports.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -16,19 +16,19 @@ import {
     ResultReason,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
-} from "../sdk/Exports";
-import { ConversationInfo, MeetingInfo } from "../sdk/Transcription/Exports";
-import { ConversationProperties } from "../sdk/Transcription/IConversation";
-import { MeetingProperties } from "../sdk/Transcription/IMeeting";
+} from "../sdk/Exports.js";
+import { ConversationInfo, MeetingInfo } from "../sdk/Transcription/Exports.js";
+import { ConversationProperties } from "../sdk/Transcription/IConversation.js";
+import { MeetingProperties } from "../sdk/Transcription/IMeeting.js";
 import {
     CancellationErrorCodePropertyName,
     ConversationServiceRecognizer,
     TranscriberRecognizer
-} from "./Exports";
-import { IAuthentication } from "./IAuthentication";
-import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./Exports.js";
+import { IAuthentication } from "./IAuthentication.js";
+import { IConnectionFactory } from "./IConnectionFactory.js";
+import { RecognizerConfig } from "./RecognizerConfig.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 // eslint-disable-next-line max-classes-per-file
 export class TranscriptionServiceRecognizer extends ConversationServiceRecognizer {

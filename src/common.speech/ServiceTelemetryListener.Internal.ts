@@ -16,8 +16,8 @@ import {
     IEventListener,
     IStringDictionary,
     PlatformEvent,
-} from "../common/Exports";
-import { ConnectingToServiceEvent, RecognitionTriggeredEvent } from "./RecognitionEvents";
+} from "../common/Exports.js";
+import { ConnectingToServiceEvent, RecognitionTriggeredEvent } from "./RecognitionEvents.js";
 
 export interface ITelemetry {
     Metrics: IMetric[];

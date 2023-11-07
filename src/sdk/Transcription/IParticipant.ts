@@ -3,7 +3,7 @@
 // Multi-device Conversation is a Preview feature.
 
 /* eslint-disable max-classes-per-file */
-import { PropertyCollection } from "../Exports";
+import { PropertyCollection } from "../Exports.js";
 
 /**
  * Represents a user in a conversation.

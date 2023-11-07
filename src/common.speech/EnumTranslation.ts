@@ -5,8 +5,8 @@ import {
     CancellationErrorCode,
     CancellationReason,
     ResultReason
-} from "../sdk/Exports";
-import { RecognitionStatus } from "./Exports";
+} from "../sdk/Exports.js";
+import { RecognitionStatus } from "./Exports.js";
 
 export class EnumTranslation {
     public static implTranslateRecognitionResult(recognitionStatus: RecognitionStatus): ResultReason {

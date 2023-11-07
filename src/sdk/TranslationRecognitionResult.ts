@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyCollection, ResultReason, SpeechRecognitionResult, Translations } from "./Exports";
+import { PropertyCollection, ResultReason, SpeechRecognitionResult, Translations } from "./Exports.js";
 
 /**
  * Translation text result.

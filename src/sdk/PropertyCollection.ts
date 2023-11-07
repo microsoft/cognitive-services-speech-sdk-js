@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyId } from "./Exports";
+import { PropertyId } from "./Exports.js";
 
 /**
  * Represents collection of properties and their values.

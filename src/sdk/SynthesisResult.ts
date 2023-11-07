@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyCollection, ResultReason } from "./Exports";
+import { PropertyCollection, ResultReason } from "./Exports.js";
 
 /**
  * Base class for synthesis results

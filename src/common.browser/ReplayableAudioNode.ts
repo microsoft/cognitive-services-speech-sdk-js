@@ -5,7 +5,7 @@
 import {
     IAudioStreamNode,
     IStreamChunk,
-} from "../common/Exports";
+} from "../common/Exports.js";
 
 export class ReplayableAudioNode implements IAudioStreamNode {
     private privAudioNode: IAudioStreamNode;

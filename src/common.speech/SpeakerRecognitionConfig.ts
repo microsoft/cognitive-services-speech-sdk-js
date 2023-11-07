@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyCollection } from "../sdk/Exports";
-import { Context } from "./Exports";
+import { PropertyCollection } from "../sdk/Exports.js";
+import { Context } from "./Exports.js";
 
 export class SpeakerRecognitionConfig {
     private privParameters: PropertyCollection;

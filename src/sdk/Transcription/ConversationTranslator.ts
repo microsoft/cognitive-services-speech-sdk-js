@@ -8,15 +8,15 @@ import {
     ConversationConnectionConfig,
     IAuthentication,
     ServicePropertiesPropertyName,
-} from "../../common.speech/Exports";
-import { ConversationTranslatorConnectionFactory } from "../../common.speech/Transcription/ConversationTranslatorConnectionFactory";
+} from "../../common.speech/Exports.js";
+import { ConversationTranslatorConnectionFactory } from "../../common.speech/Transcription/ConversationTranslatorConnectionFactory.js";
 import {
     IDisposable,
     IErrorMessages,
     IStringDictionary,
     marshalPromiseToCallbacks
-} from "../../common/Exports";
-import { Contracts } from "../Contracts";
+} from "../../common/Exports.js";
+import { Contracts } from "../Contracts.js";
 import {
     AudioConfig,
     CancellationErrorCode,
@@ -29,8 +29,8 @@ import {
     SpeechTranslationConfig,
     TranslationRecognitionEventArgs,
     TranslationRecognizer
-} from "../Exports";
-import { ConversationImpl } from "./Conversation";
+} from "../Exports.js";
+import { ConversationImpl } from "./Conversation.js";
 import {
     ConversationCommon,
     ConversationExpirationEventArgs,
@@ -40,8 +40,8 @@ import {
     ConversationTranslationEventArgs,
     IConversationTranslator,
     Participant
-} from "./Exports";
-import { Callback, IConversation } from "./IConversation";
+} from "./Exports.js";
+import { Callback, IConversation } from "./IConversation.js";
 
 export enum SpeechState {
     Inactive, Connecting, Connected

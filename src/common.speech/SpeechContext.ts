@@ -4,7 +4,7 @@
 import {
     DynamicGrammarBuilder,
     IDynamicGrammar,
-} from "./Exports";
+} from "./Exports.js";
 
 interface Context {
     [section: string]: any;

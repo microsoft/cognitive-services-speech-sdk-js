@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { RecognitionEventArgs } from "../Exports";
-import { ConversationTranslationResult } from "./Exports";
+import { RecognitionEventArgs } from "../Exports.js";
+import { ConversationTranslationResult } from "./Exports.js";
 
 export class ConversationTranslationEventArgs extends RecognitionEventArgs {
     private privResult: ConversationTranslationResult;

@@ -12,14 +12,14 @@ import {
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechServiceConfig,
-} from "../common.speech/Exports";
+} from "../common.speech/Exports.js";
 import {
     Deferred,
     marshalPromiseToCallbacks
-} from "../common/Exports";
+} from "../common/Exports.js";
 import {
     Contracts
-} from "./Contracts";
+} from "./Contracts.js";
 import {
     AudioConfig,
     PropertyCollection,
@@ -27,7 +27,7 @@ import {
     RecognitionEventArgs,
     SessionEventArgs,
     SpeechRecognitionResult,
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Defines the base class Recognizer which mainly contains common event handlers.

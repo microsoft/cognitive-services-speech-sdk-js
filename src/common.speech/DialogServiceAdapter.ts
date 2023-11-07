@@ -3,8 +3,8 @@
 
 import {
     ReplayableAudioNode
-} from "../common.browser/Exports";
-import { SendingAgentContextMessageEvent } from "../common/DialogEvents";
+} from "../common.browser/Exports.js";
+import { SendingAgentContextMessageEvent } from "../common/DialogEvents.js";
 import {
     BackgroundEvent,
     ConnectionEvent,
@@ -20,10 +20,10 @@ import {
     IConnection,
     MessageType,
     ServiceEvent,
-} from "../common/Exports";
-import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
-import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
-import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
+} from "../common/Exports.js";
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat.js";
+import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream.js";
+import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat.js";
 import {
     ActivityReceivedEventArgs,
     CancellationErrorCode,
@@ -39,8 +39,8 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
     TurnStatusReceivedEventArgs,
-} from "../sdk/Exports";
-import { DialogServiceTurnStateManager } from "./DialogServiceTurnStateManager";
+} from "../sdk/Exports.js";
+import { DialogServiceTurnStateManager } from "./DialogServiceTurnStateManager.js";
 import {
     CancellationErrorCodePropertyName,
     EnumTranslation,
@@ -51,12 +51,12 @@ import {
     SpeechDetected,
     SpeechHypothesis,
     SpeechKeyword,
-} from "./Exports";
-import { IAuthentication } from "./IAuthentication";
-import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig";
-import { ActivityPayloadResponse } from "./ServiceMessages/ActivityResponsePayload";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./Exports.js";
+import { IAuthentication } from "./IAuthentication.js";
+import { IConnectionFactory } from "./IConnectionFactory.js";
+import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig.js";
+import { ActivityPayloadResponse } from "./ServiceMessages/ActivityResponsePayload.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privDialogServiceConnector: DialogServiceConnector;

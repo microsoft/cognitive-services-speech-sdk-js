@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Contracts } from "../../sdk/Contracts";
-import { IPrimaryLanguage, ITranslations, RecognitionStatus } from "../Exports";
-import { TranslationStatus } from "../TranslationStatus";
+import { Contracts } from "../../sdk/Contracts.js";
+import { IPrimaryLanguage, ITranslations, RecognitionStatus } from "../Exports.js";
+import { TranslationStatus } from "../TranslationStatus.js";
 
 // translation.phrase
 export interface ITranslationPhrase {

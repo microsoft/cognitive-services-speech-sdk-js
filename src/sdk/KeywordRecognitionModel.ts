@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Contracts } from "./Contracts";
+import { Contracts } from "./Contracts.js";
 
 /**
  * Represents a keyword recognition model for recognizing when

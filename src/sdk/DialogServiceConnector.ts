@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { DialogConnectionFactory } from "../common.speech/DialogConnectorFactory";
+import { DialogConnectionFactory } from "../common.speech/DialogConnectorFactory.js";
 import {
     DialogServiceAdapter,
     IAgentConfig,
@@ -11,15 +11,15 @@ import {
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechServiceConfig
-} from "../common.speech/Exports";
+} from "../common.speech/Exports.js";
 import {
     Deferred,
     marshalPromiseToCallbacks
-} from "../common/Exports";
-import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs";
-import { AudioConfigImpl } from "./Audio/AudioConfig";
-import { Contracts } from "./Contracts";
-import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
+} from "../common/Exports.js";
+import { ActivityReceivedEventArgs } from "./ActivityReceivedEventArgs.js";
+import { AudioConfigImpl } from "./Audio/AudioConfig.js";
+import { Contracts } from "./Contracts.js";
+import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig.js";
 import {
     AudioConfig,
     PropertyCollection,
@@ -27,9 +27,9 @@ import {
     SpeechRecognitionCanceledEventArgs,
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult
-} from "./Exports";
-import { PropertyId } from "./PropertyId";
-import { TurnStatusReceivedEventArgs } from "./TurnStatusReceivedEventArgs";
+} from "./Exports.js";
+import { PropertyId } from "./PropertyId.js";
+import { TurnStatusReceivedEventArgs } from "./TurnStatusReceivedEventArgs.js";
 
 /**
  * Dialog Service Connector

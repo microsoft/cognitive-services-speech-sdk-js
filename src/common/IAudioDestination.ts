@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioStreamFormat } from "../sdk/Exports";
+import { AudioStreamFormat } from "../sdk/Exports.js";
 
 export interface IAudioDestination {
     id(): string;

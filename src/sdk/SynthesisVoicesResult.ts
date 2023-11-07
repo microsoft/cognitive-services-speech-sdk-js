@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyCollection, ResultReason, SynthesisResult, VoiceInfo } from "./Exports";
+import { PropertyCollection, ResultReason, SynthesisResult, VoiceInfo } from "./Exports.js";
 
 /**
  * Defines result of speech synthesis.

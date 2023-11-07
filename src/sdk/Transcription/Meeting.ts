@@ -19,13 +19,13 @@ import {
     ParticipantEventArgs,
     ParticipantsListEventArgs,
     TranscriberRecognizer
-} from "../../common.speech/Exports";
+} from "../../common.speech/Exports.js";
 import {
     IDisposable,
     IErrorMessages,
     marshalPromiseToCallbacks
-} from "../../common/Exports";
-import { Contracts } from "../Contracts";
+} from "../../common/Exports.js";
+import { Contracts } from "../Contracts.js";
 import {
     ConnectionEventArgs,
     ConversationExpirationEventArgs,
@@ -38,10 +38,10 @@ import {
     PropertyCollection,
     PropertyId,
     SpeechTranslationConfig,
-} from "../Exports";
-import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig";
-import { Callback, MeetingInfo, MeetingProperties, IMeeting } from "./IMeeting";
-import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
+} from "../Exports.js";
+import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig.js";
+import { Callback, MeetingInfo, MeetingProperties, IMeeting } from "./IMeeting.js";
+import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant.js";
 
 export abstract class Meeting implements IMeeting {
 

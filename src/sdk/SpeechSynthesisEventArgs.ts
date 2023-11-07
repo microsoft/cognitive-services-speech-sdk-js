@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { SpeechSynthesisResult } from "./Exports";
+import { SpeechSynthesisResult } from "./Exports.js";
 
 /**
  * Defines contents of speech synthesis events.

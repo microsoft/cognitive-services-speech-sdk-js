@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { TranscriberRecognizer } from "../../common.speech/Exports";
-import { marshalPromiseToCallbacks } from "../../common/Exports";
-import { Contracts } from "../Contracts";
+import { TranscriberRecognizer } from "../../common.speech/Exports.js";
+import { marshalPromiseToCallbacks } from "../../common/Exports.js";
+import { Contracts } from "../Contracts.js";
 import {
     AudioConfig,
     CancellationEventArgs,
@@ -12,13 +12,13 @@ import {
     PropertyCollection,
     PropertyId,
     SessionEventArgs
-} from "../Exports";
+} from "../Exports.js";
 import {
     MeetingHandler,
     MeetingImpl,
     MeetingTranscriptionHandler
-} from "./Exports";
-import { Callback, IMeeting } from "./IMeeting";
+} from "./Exports.js";
+import { Callback, IMeeting } from "./IMeeting.js";
 
 export class MeetingTranscriber implements MeetingTranscriptionHandler {
 

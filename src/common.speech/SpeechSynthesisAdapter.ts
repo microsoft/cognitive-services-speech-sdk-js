@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IAudioDestination } from "../common/Exports";
+import { IAudioDestination } from "../common/Exports.js";
 import {
     ResultReason,
     SpeechSynthesisBookmarkEventArgs,
@@ -11,13 +11,13 @@ import {
     SpeechSynthesisWordBoundaryEventArgs,
     SpeechSynthesizer,
     Synthesizer,
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     IAuthentication,
     ISynthesisConnectionFactory,
     SynthesisAdapterBase,
     SynthesizerConfig
-} from "./Exports";
+} from "./Exports.js";
 
 export class SpeechSynthesisAdapter extends SynthesisAdapterBase {
     private privSpeechSynthesizer: SpeechSynthesizer;

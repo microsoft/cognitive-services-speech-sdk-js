@@ -3,7 +3,7 @@
 
 import {
     CancellationEventArgsBase,
-} from "./CancellationEventArgsBase";
+} from "./CancellationEventArgsBase.js";
 
 /**
  * Defines content of a RecognitionErrorEvent.

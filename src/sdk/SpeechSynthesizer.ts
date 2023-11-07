@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 
 import { PathLike } from "fs";
-import { IRestResponse } from "../common.browser/RestMessageAdapter";
+import { IRestResponse } from "../common.browser/RestMessageAdapter.js";
 import {
     IAuthentication,
     ISynthesisConnectionFactory,
@@ -13,19 +13,19 @@ import {
     SpeechSynthesisAdapter,
     SynthesisRestAdapter,
     SynthesizerConfig,
-} from "../common.speech/Exports";
+} from "../common.speech/Exports.js";
 import {
     createNoDashGuid,
     marshalPromiseToCallbacks,
-} from "../common/Exports";
-import { AudioOutputConfigImpl } from "./Audio/AudioConfig";
-import { AudioFileWriter } from "./Audio/AudioFileWriter";
-import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat";
+} from "../common/Exports.js";
+import { AudioOutputConfigImpl } from "./Audio/AudioConfig.js";
+import { AudioFileWriter } from "./Audio/AudioFileWriter.js";
+import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat.js";
 import {
     PullAudioOutputStreamImpl,
     PushAudioOutputStreamImpl
-} from "./Audio/AudioOutputStream";
-import { Contracts } from "./Contracts";
+} from "./Audio/AudioOutputStream.js";
+import { Contracts } from "./Contracts.js";
 import {
     AudioConfig,
     AudioOutputStream,
@@ -42,9 +42,9 @@ import {
     SpeechSynthesisWordBoundaryEventArgs,
     SynthesisVoicesResult,
     Synthesizer
-} from "./Exports";
-import { SpeechConfigImpl } from "./SpeechConfig";
-import { SynthesisRequest } from "./Synthesizer";
+} from "./Exports.js";
+import { SpeechConfigImpl } from "./SpeechConfig.js";
+import { SynthesisRequest } from "./Synthesizer.js";
 
 /**
  * Defines the class SpeechSynthesizer for text to speech.

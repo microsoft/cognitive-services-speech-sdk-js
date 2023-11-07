@@ -14,10 +14,10 @@ import {
     SpeechServiceConfig,
     SynthesisAdapterBase,
     SynthesisRestAdapter,
-    SynthesizerConfig } from "../common.speech/Exports";
-import { IAudioDestination, IStringDictionary, Queue } from "../common/Exports";
-import { Contracts } from "./Contracts";
-import { PropertyCollection, PropertyId, SpeechConfig, SpeechConfigImpl, SpeechSynthesisResult } from "./Exports";
+    SynthesizerConfig } from "../common.speech/Exports.js";
+import { IAudioDestination, IStringDictionary, Queue } from "../common/Exports.js";
+import { Contracts } from "./Contracts.js";
+import { PropertyCollection, PropertyId, SpeechConfig, SpeechConfigImpl, SpeechSynthesisResult } from "./Exports.js";
 
 export abstract class Synthesizer {
     protected privAdapter: SynthesisAdapterBase;

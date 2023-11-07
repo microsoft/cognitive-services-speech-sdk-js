@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Contracts } from "./Contracts";
-import { AvatarVideoFormat } from "./Exports";
+import { Contracts } from "./Contracts.js";
+import { AvatarVideoFormat } from "./Exports.js";
 
 /**
  * Defines the talking avatar configuration.

@@ -4,6 +4,9 @@ module.exports = {
     projects: [
         {
             displayName: "jsdom",
+            moduleNameMapper: {
+                "(.+)\\.js": "$1"
+            },
             transform: {
                 "^.+\\.ts$": "ts-jest",
             },
@@ -17,6 +20,9 @@ module.exports = {
         },
         {
             displayName: "node",
+            moduleNameMapper: {
+                "(.+)\\.js": "$1"
+            },
             transform: {
                 "^.+\\.ts$": "ts-jest",
             },

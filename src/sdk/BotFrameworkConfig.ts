@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Contracts } from "./Contracts";
-import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig";
-import { PropertyId } from "./Exports";
+import { Contracts } from "./Contracts.js";
+import { DialogServiceConfig, DialogServiceConfigImpl } from "./DialogServiceConfig.js";
+import { PropertyId } from "./Exports.js";
 
 /**
  * Class that defines configurations for the dialog service connector object for using a Bot Framework backend.

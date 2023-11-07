@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ResultReason } from "./ResultReason";
+import { ResultReason } from "./ResultReason.js";
 
 /**
  * Defines translation synthesis result, i.e. the voice output of the translated

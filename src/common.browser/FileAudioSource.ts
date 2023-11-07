@@ -5,7 +5,7 @@ import {
     connectivity,
     ISpeechConfigAudioDevice,
     type,
-} from "../common.speech/Exports";
+} from "../common.speech/Exports.js";
 import {
     AudioSourceErrorEvent,
     AudioSourceEvent,
@@ -26,8 +26,8 @@ import {
     IStreamChunk,
     IStringDictionary,
     Stream,
-} from "../common/Exports";
-import { AudioStreamFormat, AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
+} from "../common/Exports.js";
+import { AudioStreamFormat, AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat.js";
 
 export class FileAudioSource implements IAudioSource {
 

@@ -5,14 +5,14 @@
 import {
     ProxyInfo,
     WebsocketConnection,
-} from "../common.browser/Exports";
-import { OutputFormatPropertyName } from "../common.speech/Exports";
-import { IConnection, IStringDictionary } from "../common/Exports";
-import { DialogServiceConfig, OutputFormat, PropertyId } from "../sdk/Exports";
-import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
-import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports";
-import { HeaderNames } from "./HeaderNames";
-import { QueryParameterNames } from "./QueryParameterNames";
+} from "../common.browser/Exports.js";
+import { OutputFormatPropertyName } from "../common.speech/Exports.js";
+import { IConnection, IStringDictionary } from "../common/Exports.js";
+import { DialogServiceConfig, OutputFormat, PropertyId } from "../sdk/Exports.js";
+import { ConnectionFactoryBase } from "./ConnectionFactoryBase.js";
+import { AuthInfo, RecognizerConfig, WebsocketMessageFormatter } from "./Exports.js";
+import { HeaderNames } from "./HeaderNames.js";
+import { QueryParameterNames } from "./QueryParameterNames.js";
 
 export class DialogConnectionFactory extends ConnectionFactoryBase {
 

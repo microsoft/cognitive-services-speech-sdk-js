@@ -5,6 +5,7 @@
   "version": "1.31.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
+  "type": "module",
   "keywords": [
     "microsoft",
     "cognitiveservices",
@@ -82,11 +83,11 @@
     "webpack-stream": "^7.0.0"
   },
   "scripts": {
-    "build": "gulp compress && gulp build",
+    "build": "gulp compress --gulpfile gulpfile.cjs && gulp build --gulpfile gulpfile.cjs",
     "test": "npm run lint && npm run jest --coverage",
     "jest": "jest",
-    "lint": "eslint -c .eslintrc.js --ext .ts src",
-    "civersion": "node ci/version.js",
+    "lint": "eslint -c .eslintrc.cjs --ext .ts src",
+    "civersion": "node ci/version.cjs",
     "prepare": "npm run build",
     "setup": "npm install --package-lock-only --ignore-scripts --no-audit"
   },
