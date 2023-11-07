@@ -12,10 +12,10 @@ import {
     ConversationTranscriberConnectionFactory,
     SpeechServiceConfig,
     ConversationTranscriptionServiceRecognizer,
-} from "../../common.speech/Exports";
-import { marshalPromiseToCallbacks } from "../../common/Exports";
-import { AudioConfigImpl } from "../Audio/AudioConfig";
-import { Contracts } from "../Contracts";
+} from "../../common.speech/Exports.js";
+import { marshalPromiseToCallbacks } from "../../common/Exports.js";
+import { AudioConfigImpl } from "../Audio/AudioConfig.js";
+import { Contracts } from "../Contracts.js";
 import {
     AudioConfig,
     AutoDetectSourceLanguageConfig,
@@ -25,8 +25,8 @@ import {
     PropertyCollection,
     PropertyId,
     Recognizer,
-} from "../Exports";
-import { SpeechConfig, SpeechConfigImpl } from "../SpeechConfig";
+} from "../Exports.js";
+import { SpeechConfig, SpeechConfigImpl } from "../SpeechConfig.js";
 
 /**
  * Performs speech recognition with speaker separation from microphone, file, or other audio input streams, and gets transcribed text as result.

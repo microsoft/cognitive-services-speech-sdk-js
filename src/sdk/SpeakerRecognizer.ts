@@ -9,10 +9,10 @@ import {
     SpeakerRecognitionConnectionFactory,
     SpeakerServiceRecognizer,
     SpeechServiceConfig
-} from "../common.speech/Exports";
-import { SpeakerRecognitionModel } from "./SpeakerRecognitionModel";
-import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig";
-import { Contracts } from "./Contracts";
+} from "../common.speech/Exports.js";
+import { SpeakerRecognitionModel } from "./SpeakerRecognitionModel.js";
+import { AudioConfig, AudioConfigImpl } from "./Audio/AudioConfig.js";
+import { Contracts } from "./Contracts.js";
 import {
     PropertyCollection,
     PropertyId,
@@ -20,8 +20,8 @@ import {
     SpeakerIdentificationModel,
     SpeakerRecognitionResult,
     SpeakerVerificationModel,
-} from "./Exports";
-import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig";
+} from "./Exports.js";
+import { SpeechConfig, SpeechConfigImpl } from "./SpeechConfig.js";
 
 /**
  * Defines SpeakerRecognizer class for Speaker Recognition

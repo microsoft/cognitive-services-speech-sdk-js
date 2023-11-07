@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { SynthesisStatus } from "../Exports";
+import { SynthesisStatus } from "../Exports.js";
 
 // translation.synthesis.end
 export interface ITranslationSynthesisEnd {

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 /* eslint-disable max-classes-per-file */
 
-import { EventType, PlatformEvent } from "../common/Exports";
+import { EventType, PlatformEvent } from "../common/Exports.js";
 
 export class SpeechRecognitionEvent extends PlatformEvent {
     private privRequestId: string;

@@ -6,9 +6,9 @@ import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
     ServicePropertiesPropertyName
-} from "../common.speech/Exports";
-import { IStringDictionary } from "../common/Exports";
-import { Contracts } from "./Contracts";
+} from "../common.speech/Exports.js";
+import { IStringDictionary } from "../common/Exports.js";
+import { Contracts } from "./Contracts.js";
 import {
     OutputFormat,
     ProfanityOption,
@@ -16,7 +16,7 @@ import {
     PropertyId,
     SpeechConfig,
     SpeechSynthesisOutputFormat,
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Speech translation configuration.

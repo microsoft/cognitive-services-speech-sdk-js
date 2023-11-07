@@ -4,8 +4,8 @@
 import {
     AudioConfig,
     SpeechTranslationConfig
-} from "../Exports";
-import { Callback } from "./IConversation";
+} from "../Exports.js";
+import { Callback } from "./IConversation.js";
 
 export class ConversationCommon {
 

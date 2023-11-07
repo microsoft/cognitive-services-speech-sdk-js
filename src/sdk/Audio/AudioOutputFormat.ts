@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { INumberDictionary } from "../../common/Exports";
-import { SpeechSynthesisOutputFormat } from "../SpeechSynthesisOutputFormat";
-import { AudioFormatTag, AudioStreamFormatImpl } from "./AudioStreamFormat";
+import { INumberDictionary } from "../../common/Exports.js";
+import { SpeechSynthesisOutputFormat } from "../SpeechSynthesisOutputFormat.js";
+import { AudioFormatTag, AudioStreamFormatImpl } from "./AudioStreamFormat.js";
 
 /**
  * @private

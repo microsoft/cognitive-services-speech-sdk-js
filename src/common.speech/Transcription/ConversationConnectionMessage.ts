@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ConnectionMessage, IStringDictionary, MessageType } from "../../common/Exports";
+import { ConnectionMessage, IStringDictionary, MessageType } from "../../common/Exports.js";
 
 export class ConversationConnectionMessage extends ConnectionMessage {
     private privConversationMessageType: string;

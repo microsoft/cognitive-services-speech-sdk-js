@@ -2,13 +2,13 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { ConversationTranscriptionEventArgs, PropertyCollection, SessionEventArgs } from "../Exports";
+import { ConversationTranscriptionEventArgs, PropertyCollection, SessionEventArgs } from "../Exports.js";
 import {
   ConversationExpirationEventArgs,
   ConversationParticipantsChangedEventArgs,
   ConversationTranslationCanceledEventArgs,
-  ConversationTranslationEventArgs } from "./Exports";
-import { Callback, IConversation } from "./IConversation";
+  ConversationTranslationEventArgs } from "./Exports.js";
+import { Callback, IConversation } from "./IConversation.js";
 
 export interface ConversationHandler {
     /**

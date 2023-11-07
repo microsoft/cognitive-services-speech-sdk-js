@@ -6,6 +6,7 @@ LICENSE text
 
 *.cmd text
 *.js text
+*.cjs text
 *.json text
 *.md text
 *.ts text

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 // eslint-disable-next-line max-classes-per-file
-import { Contracts } from "./Contracts";
+import { Contracts } from "./Contracts.js";
 
 /**
  * Language understanding model

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ReplayableAudioNode } from "../common.browser/Exports";
+import { ReplayableAudioNode } from "../common.browser/Exports.js";
 import {
     createNoDashGuid,
     Deferred,
@@ -9,15 +9,15 @@ import {
     IDetachable,
     IEventSource,
     PlatformEvent
-} from "../common/Exports";
+} from "../common/Exports.js";
 import {
     ConnectingToServiceEvent,
     ListeningStartedEvent,
     RecognitionStartedEvent,
     RecognitionTriggeredEvent,
     SpeechRecognitionEvent,
-} from "./RecognitionEvents";
-import { ServiceTelemetryListener } from "./ServiceTelemetryListener.Internal";
+} from "./RecognitionEvents.js";
+import { ServiceTelemetryListener } from "./ServiceTelemetryListener.Internal.js";
 
 export class RequestSession {
     private privIsDisposed: boolean = false;

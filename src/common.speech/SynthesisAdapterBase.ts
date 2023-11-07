@@ -14,8 +14,8 @@ import {
     IDisposable,
     MessageType,
     ServiceEvent,
-} from "../common/Exports";
-import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
+} from "../common/Exports.js";
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -27,7 +27,7 @@ import {
     SpeechSynthesisVisemeEventArgs,
     SpeechSynthesisWordBoundaryEventArgs,
     Synthesizer,
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     AgentConfig,
     CancellationErrorCodePropertyName,
@@ -38,9 +38,9 @@ import {
     SynthesisContext,
     SynthesisTurn,
     SynthesizerConfig
-} from "./Exports";
-import { AuthInfo, IAuthentication } from "./IAuthentication";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./Exports.js";
+import { AuthInfo, IAuthentication } from "./IAuthentication.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 export abstract class SynthesisAdapterBase implements IDisposable {
     protected privSynthesisTurn: SynthesisTurn;

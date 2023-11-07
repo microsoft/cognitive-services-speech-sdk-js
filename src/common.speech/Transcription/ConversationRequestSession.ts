@@ -5,7 +5,7 @@ import {
     createNoDashGuid,
     Deferred,
     IDetachable,
-} from "../../common/Exports";
+} from "../../common/Exports.js";
 
 /**
  * Placeholder class for the Conversation Request Session. Based off RequestSession.

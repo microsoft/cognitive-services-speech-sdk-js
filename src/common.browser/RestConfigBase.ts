@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IErrorMessages } from "../common/Exports";
+import { IErrorMessages } from "../common/Exports.js";
 /**
  * HTTP request helper
  */

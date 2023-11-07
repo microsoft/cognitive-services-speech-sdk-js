@@ -5,7 +5,7 @@
 
 import {
     ConnectionMessage
-} from "./Exports";
+} from "./Exports.js";
 
 export class ConnectionMessageEventArgs {
 

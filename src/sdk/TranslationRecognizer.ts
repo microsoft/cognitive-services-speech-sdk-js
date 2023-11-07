@@ -10,11 +10,11 @@ import {
     SpeechServiceConfig,
     TranslationConnectionFactory,
     TranslationServiceRecognizer
-} from "../common.speech/Exports";
-import { marshalPromiseToCallbacks } from "../common/Exports";
-import { AudioConfigImpl } from "./Audio/AudioConfig";
-import { Connection } from "./Connection";
-import { Contracts } from "./Contracts";
+} from "../common.speech/Exports.js";
+import { marshalPromiseToCallbacks } from "../common/Exports.js";
+import { AudioConfigImpl } from "./Audio/AudioConfig.js";
+import { Connection } from "./Connection.js";
+import { Contracts } from "./Contracts.js";
 import {
     AudioConfig,
     AutoDetectSourceLanguageConfig,
@@ -25,8 +25,8 @@ import {
     TranslationRecognitionEventArgs,
     TranslationRecognitionResult,
     TranslationSynthesisEventArgs
-} from "./Exports";
-import { SpeechTranslationConfig, SpeechTranslationConfigImpl } from "./SpeechTranslationConfig";
+} from "./Exports.js";
+import { SpeechTranslationConfig, SpeechTranslationConfigImpl } from "./SpeechTranslationConfig.js";
 
 /**
  * Translation recognizer

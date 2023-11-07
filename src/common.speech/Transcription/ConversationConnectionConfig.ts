@@ -4,7 +4,7 @@
 
 import {
     RestConfigBase
-} from "../../common.browser/RestConfigBase";
+} from "../../common.browser/RestConfigBase.js";
 
 export class ConversationConnectionConfig extends RestConfigBase {
 

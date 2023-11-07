@@ -6,7 +6,7 @@ import {
     CancellationEventArgs,
     CancellationReason,
     RecognitionEventArgs
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Defines content of a CancellationEvent.

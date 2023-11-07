@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
-import { CancellationErrorCodePropertyName, SpeakerResponse } from "../common.speech/Exports";
+import { CancellationErrorCodePropertyName, SpeakerResponse } from "../common.speech/Exports.js";
 import {
     CancellationDetailsBase,
     CancellationErrorCode,
@@ -10,7 +10,7 @@ import {
     PropertyCollection,
     PropertyId,
     ResultReason,
-} from "./Exports";
+} from "./Exports.js";
 
 export enum SpeakerRecognitionResultType {
     Verify,

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { SessionEventArgs } from "./Exports";
+import { SessionEventArgs } from "./Exports.js";
 
 /**
  * Defines payload for session events like Speech Start/End Detected

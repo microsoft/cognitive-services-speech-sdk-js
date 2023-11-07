@@ -8,7 +8,7 @@ import {
     IWebsocketMessageFormatter,
     MessageType,
     RawWebsocketMessage,
-} from "../common/Exports";
+} from "../common/Exports.js";
 
 const CRLF: string = "\r\n";
 

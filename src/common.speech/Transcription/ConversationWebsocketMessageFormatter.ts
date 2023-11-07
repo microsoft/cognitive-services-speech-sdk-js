@@ -7,8 +7,8 @@ import {
     IWebsocketMessageFormatter,
     MessageType,
     RawWebsocketMessage,
-} from "../../common/Exports";
-import { ConversationConnectionMessage } from "./ConversationConnectionMessage";
+} from "../../common/Exports.js";
+import { ConversationConnectionMessage } from "./ConversationConnectionMessage.js";
 
 /**
  * Based off WebsocketMessageFormatter. The messages for Conversation Translator have some variations from the Speech messages.

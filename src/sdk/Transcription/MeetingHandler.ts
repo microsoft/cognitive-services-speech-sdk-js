@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { MeetingTranscriptionEventArgs, SessionEventArgs } from "../Exports";
-import { MeetingTranscriptionCanceledEventArgs } from "./Exports";
-import { Callback, IMeeting } from "./IMeeting";
+import { MeetingTranscriptionEventArgs, SessionEventArgs } from "../Exports.js";
+import { MeetingTranscriptionCanceledEventArgs } from "./Exports.js";
+import { Callback, IMeeting } from "./IMeeting.js";
 
 export interface MeetingHandler {
     /**

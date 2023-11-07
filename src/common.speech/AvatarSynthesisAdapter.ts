@@ -7,15 +7,15 @@ import {
     AvatarSynthesizer,
     PropertyId,
     Synthesizer,
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     ISynthesisConnectionFactory,
     ISynthesisMetadata,
     ISynthesisSectionVideo,
     SynthesisAdapterBase,
     SynthesizerConfig
-} from "./Exports";
-import { IAuthentication } from "./IAuthentication";
+} from "./Exports.js";
+import { IAuthentication } from "./IAuthentication.js";
 
 export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
     private readonly privAvatarSynthesizer: AvatarSynthesizer;

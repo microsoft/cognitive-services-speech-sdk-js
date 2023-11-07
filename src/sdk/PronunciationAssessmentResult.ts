@@ -3,11 +3,11 @@
 
 /* eslint-disable max-classes-per-file */
 
-import {Contracts} from "./Contracts";
+import {Contracts} from "./Contracts.js";
 import {
     PropertyId,
     RecognitionResult
-} from "./Exports";
+} from "./Exports.js";
 
 interface AssessmentResult {
     NBest: DetailResult[];

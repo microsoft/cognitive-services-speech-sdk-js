@@ -5,7 +5,7 @@ import {
     connectivity,
     ISpeechConfigAudioDevice,
     type
-} from "../common.speech/Exports";
+} from "../common.speech/Exports.js";
 import {
     AudioSourceErrorEvent,
     AudioSourceEvent,
@@ -25,13 +25,13 @@ import {
     IAudioStreamNode,
     IStringDictionary,
     Stream,
-} from "../common/Exports";
-import { IStreamChunk } from "../common/Stream";
+} from "../common/Exports.js";
+import { IStreamChunk } from "../common/Stream.js";
 import {
     AudioStreamFormat,
     AudioStreamFormatImpl,
-} from "../sdk/Audio/AudioStreamFormat";
-import { IRecorder } from "./IRecorder";
+} from "../sdk/Audio/AudioStreamFormat.js";
+import { IRecorder } from "./IRecorder.js";
 
 // Extending the default definition with browser specific definitions for backward compatibility
 interface INavigator extends Navigator {

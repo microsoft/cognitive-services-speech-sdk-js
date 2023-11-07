@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { LanguageUnderstandingModelImpl } from "../sdk/LanguageUnderstandingModel";
+import { LanguageUnderstandingModelImpl } from "../sdk/LanguageUnderstandingModel.js";
 
 /**
  * @class AddedLmIntent

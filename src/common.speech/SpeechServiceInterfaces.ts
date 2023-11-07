@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RecognitionCompletionStatus } from "../../src/common.speech/Exports";
-import { TranslationStatus } from "./TranslationStatus";
+import { RecognitionCompletionStatus } from "../../src/common.speech/Exports.js";
+import { TranslationStatus } from "./TranslationStatus.js";
 
 export interface ITranslations {
     TranslationStatus: TranslationStatus;

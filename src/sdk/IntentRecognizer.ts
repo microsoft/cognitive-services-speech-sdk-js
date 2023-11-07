@@ -11,10 +11,10 @@ import {
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechServiceConfig
-} from "../common.speech/Exports";
-import { marshalPromiseToCallbacks } from "../common/Exports";
-import { AudioConfigImpl } from "./Audio/AudioConfig";
-import { Contracts } from "./Contracts";
+} from "../common.speech/Exports.js";
+import { marshalPromiseToCallbacks } from "../common/Exports.js";
+import { AudioConfigImpl } from "./Audio/AudioConfig.js";
+import { Contracts } from "./Contracts.js";
 import {
     AudioConfig,
     IntentRecognitionCanceledEventArgs,
@@ -26,9 +26,9 @@ import {
     PropertyId,
     Recognizer,
     SpeechConfig,
-} from "./Exports";
-import { LanguageUnderstandingModelImpl } from "./LanguageUnderstandingModel";
-import { SpeechConfigImpl } from "./SpeechConfig";
+} from "./Exports.js";
+import { LanguageUnderstandingModelImpl } from "./LanguageUnderstandingModel.js";
+import { SpeechConfigImpl } from "./SpeechConfig.js";
 
 /**
  * Intent recognizer.

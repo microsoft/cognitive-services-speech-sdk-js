@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
-import { Contracts } from "./Contracts";
-import { PropertyCollection, PropertyId, ServicePropertyChannel, SpeechConfigImpl } from "./Exports";
-import { OutputFormat } from "./OutputFormat";
+import { Contracts } from "./Contracts.js";
+import { PropertyCollection, PropertyId, ServicePropertyChannel, SpeechConfigImpl } from "./Exports.js";
+import { OutputFormat } from "./OutputFormat.js";
 
 /**
  * Class that defines base configurations for dialog service connector

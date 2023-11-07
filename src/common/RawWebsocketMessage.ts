@@ -2,9 +2,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { MessageType } from "./ConnectionMessage";
-import { ArgumentNullError, InvalidOperationError } from "./Error";
-import { createNoDashGuid } from "./Guid";
+import { MessageType } from "./ConnectionMessage.js";
+import { ArgumentNullError, InvalidOperationError } from "./Error.js";
+import { createNoDashGuid } from "./Guid.js";
 
 export class RawWebsocketMessage {
     private privMessageType: MessageType;

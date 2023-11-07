@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 /* eslint-disable max-classes-per-file */
-import { ConversationTranslationResult, SessionEventArgs } from "../../sdk/Exports";
-import { IInternalParticipant } from "./ConversationTranslatorInterfaces";
+import { ConversationTranslationResult, SessionEventArgs } from "../../sdk/Exports.js";
+import { IInternalParticipant } from "./ConversationTranslatorInterfaces.js";
 
 export class MuteAllEventArgs extends SessionEventArgs {
     private privIsMuted: boolean;

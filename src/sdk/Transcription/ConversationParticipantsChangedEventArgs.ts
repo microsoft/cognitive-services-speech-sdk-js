@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { SessionEventArgs } from "../Exports";
-import { ParticipantChangedReason } from "./Exports";
-import { IParticipant } from "./IParticipant";
+import { SessionEventArgs } from "../Exports.js";
+import { ParticipantChangedReason } from "./Exports.js";
+import { IParticipant } from "./IParticipant.js";
 
 export class ConversationParticipantsChangedEventArgs extends SessionEventArgs {
     private privReason: ParticipantChangedReason;

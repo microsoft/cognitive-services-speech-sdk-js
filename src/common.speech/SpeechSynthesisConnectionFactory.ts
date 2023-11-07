@@ -4,23 +4,23 @@
 import {
     ProxyInfo,
     WebsocketConnection
-} from "../common.browser/Exports";
+} from "../common.browser/Exports.js";
 import {
     IConnection,
     IStringDictionary
-} from "../common/Exports";
-import { PropertyId } from "../sdk/Exports";
-import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
+} from "../common/Exports.js";
+import { PropertyId } from "../sdk/Exports.js";
+import { ConnectionFactoryBase } from "./ConnectionFactoryBase.js";
 import {
     AuthInfo,
     SynthesizerConfig,
     WebsocketMessageFormatter
-} from "./Exports";
-import { HeaderNames } from "./HeaderNames";
-import { ISynthesisConnectionFactory } from "./ISynthesisConnectionFactory";
+} from "./Exports.js";
+import { HeaderNames } from "./HeaderNames.js";
+import { ISynthesisConnectionFactory } from "./ISynthesisConnectionFactory.js";
 import {
     QueryParameterNames
-} from "./QueryParameterNames";
+} from "./QueryParameterNames.js";
 
 export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFactory {
 

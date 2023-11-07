@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyCollection } from "./Exports";
+import { PropertyCollection } from "./Exports.js";
 
 /**
  * Represents collection of parameters and their values.

@@ -1,18 +1,18 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { SpeechSynthesisConnectionFactory } from "../common.speech/SpeechSynthesisConnectionFactory";
-import { SynthesisRestAdapter } from "../common.speech/SynthesisRestAdapter";
-import { SynthesizerConfig } from "../common.speech/SynthesizerConfig";
+import { SpeechSynthesisConnectionFactory } from "../common.speech/SpeechSynthesisConnectionFactory.js";
+import { SynthesisRestAdapter } from "../common.speech/SynthesisRestAdapter.js";
+import { SynthesizerConfig } from "../common.speech/SynthesizerConfig.js";
 import {
     AvatarSynthesisAdapter,
     IAuthentication,
     ISynthesisConnectionFactory,
     SpeechServiceConfig,
     SynthesisAdapterBase
-} from "../common.speech/Exports";
-import { createNoDashGuid, Deferred, Events, EventType, PlatformEvent } from "../common/Exports";
-import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat";
+} from "../common.speech/Exports.js";
+import { createNoDashGuid, Deferred, Events, EventType, PlatformEvent } from "../common/Exports.js";
+import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat.js";
 import {
     AvatarConfig,
     AvatarEventArgs,
@@ -23,9 +23,9 @@ import {
     SpeechSynthesisResult,
     SynthesisResult,
     Synthesizer
-} from "./Exports";
-import { Contracts } from "./Contracts";
-import { SynthesisRequest } from "./Synthesizer";
+} from "./Exports.js";
+import { Contracts } from "./Contracts.js";
+import { SynthesisRequest } from "./Synthesizer.js";
 
 /**
  * Defines the avatar synthesizer.
