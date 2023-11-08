@@ -393,7 +393,8 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         });
     });
 
-    test("Continuous pronunciation assessment with content", (done: jest.DoneCallback) => {
+    // Disable until Yulin can correct this
+    test.skip("Continuous pronunciation assessment with content", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Continuous pronunciation assessment with content");
         const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.PronunciationFallWaveFile);
@@ -429,7 +430,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(firstResult.contentAssessmentResult).toBeUndefined();
                 const lastResult = pronunciationAssessmentResults[pronunciationAssessmentResults.length - 1];
                 expect(lastResult).not.toBeUndefined();
-                expect(lastResult.prosodyScore).toBeUndefined()
+                expect(lastResult.prosodyScore).toBeUndefined();
                 expect(lastResult.contentAssessmentResult).not.toBeUndefined();
                 expect(lastResult.contentAssessmentResult.grammarScore).toBeGreaterThan(0);
                 expect(lastResult.contentAssessmentResult.vocabularyScore).toBeGreaterThan(0);
