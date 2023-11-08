@@ -13,7 +13,9 @@
 
   gulp.task('build', gulp.series(function build() {
     return gulp.src([
-      'src/**/(!__mocks__/)*.ts',
+      'src/**/*.ts',
+      '!src/common.browser/__mocks__/',
+      '!src/common.browser/__mocks__/**',
       'microsoft.cognitiveservices.speech.sdk.ts'],
       { base: '.' })
       .pipe(eslint({
