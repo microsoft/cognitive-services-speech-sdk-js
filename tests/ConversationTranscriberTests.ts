@@ -23,6 +23,7 @@ import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import { closeAsyncObjects, RepeatingPullStream, WaitForCondition } from "./Utilities";
 
+jest.mock("../src/common.browser/PCMRecorder");
 let objsToClose: any[];
 
 beforeAll(() => {

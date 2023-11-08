@@ -14,6 +14,8 @@
   gulp.task('build', gulp.series(function build() {
     return gulp.src([
       'src/**/*.ts',
+      '!src/common.browser/__mocks__/',
+      '!src/common.browser/__mocks__/**',
       'microsoft.cognitiveservices.speech.sdk.ts'],
       { base: '.' })
       .pipe(eslint({
@@ -37,7 +39,9 @@
         entry: { 
           'microsoft.cognitiveservices.speech.sdk.bundle': './bundleApp.js',
         },
-        output: { filename: '[name].js' },
+        output: { 
+          filename: '[name].js',
+        },
         devtool: 'source-map',
         module: {
           rules: [{

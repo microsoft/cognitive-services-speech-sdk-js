@@ -9,6 +9,7 @@ import {
 } from "../src/common.speech/Exports";
 import { Settings } from "./Settings";
 
+jest.mock("../src/common.browser/PCMRecorder");
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();

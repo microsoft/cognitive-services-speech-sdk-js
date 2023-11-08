@@ -45,6 +45,7 @@ import {
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
+jest.mock("../src/common.browser/PCMRecorder");
 type Callback = (result?: any) => void;
 // eslint-disable-next-line no-console
 const consoleInfo = console.info;

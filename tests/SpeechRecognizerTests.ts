@@ -58,6 +58,7 @@ const Recognized: string = "Recognized";
 const Canceled: string = "Canceled";
 
 let objsToClose: any[];
+jest.mock("../src/common.browser/PCMRecorder");
 
 beforeAll(() => {
     // override inputs, if necessary

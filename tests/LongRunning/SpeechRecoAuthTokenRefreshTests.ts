@@ -9,6 +9,7 @@ import { Events } from "../../src/common/Exports";
 import { Settings } from "../Settings";
 import { CreateRepeatingPullStream, WaitForCondition } from "../Utilities";
 
+jest.mock("../../src/common.browser/PCMRecorder");
 let objsToClose: any[];
 
 beforeAll(() => {
