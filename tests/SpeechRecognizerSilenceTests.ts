@@ -21,6 +21,7 @@ import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
+jest.mock("../src/common.browser/PCMRecorder");
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
 const Recognized: string = "Recognized";
