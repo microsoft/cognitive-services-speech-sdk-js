@@ -91,9 +91,7 @@ export class PcmRecorder implements IRecorder {
 
         if (!!context.audioWorklet && !skipAudioWorklet) {
             /* eslint-disable-next-line */
-            const audioUrl = require("./AudioWorkerUrl");
-            /* eslint-disable-next-line */
-            this.privSpeechProcessorScript = audioUrl.getAudioWorkerUrl();
+            this.privSpeechProcessorScript = new URL( /* webpackChunkName: 'script_processor_audioWorklet' */ "speech-processor.js", import.meta.url).toString(); 
 
             context.audioWorklet
                 .addModule(this.privSpeechProcessorScript)
