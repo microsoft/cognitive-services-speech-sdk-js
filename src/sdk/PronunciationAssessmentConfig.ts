@@ -80,6 +80,7 @@ export class PronunciationAssessmentConfig {
     public applyTo(recognizer: Recognizer): void {
         this.updateJson();
         const recoBase = recognizer.internalData as ServiceRecognizerBase;
+        recoBase.expectContentAssessmentResponse = !!this.privContentAssessmentTopic;
         recoBase.speechContext.setPronunciationAssessmentParams(
             this.properties.getProperty(PropertyId.PronunciationAssessment_Params),
             this.privContentAssessmentTopic,

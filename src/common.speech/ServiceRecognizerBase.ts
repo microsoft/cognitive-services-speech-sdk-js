@@ -115,6 +115,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected privSuccessCallback: (e: SpeechRecognitionResult) => void;
     protected privErrorCallback: (e: string) => void;
     protected privEnableSpeakerId: boolean = false;
+    protected privExpectContentAssessmentResponse: boolean = false;
 
     public constructor(
         authentication: IAuthentication,
@@ -509,6 +510,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public get activityTemplate(): string {
         return this.privActivityTemplate;
+    }
+
+    public set expectContentAssessmentResponse(value: boolean) {
+        this.privExpectContentAssessmentResponse = value;
     }
 
     protected abstract processTypeSpecificMessages(
