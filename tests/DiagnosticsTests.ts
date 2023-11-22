@@ -6,7 +6,7 @@ import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { Settings } from "./Settings";
 import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 
-jest.mock("../src/common.browser/PCMRecorder");
+
 let objsToClose: any[];
 
 beforeAll((): void => {

@@ -22,7 +22,7 @@ import {
 
 import * as fs from "fs";
 
-jest.mock("../src/common.browser/PCMRecorder");
+
 let objsToClose: any[];
 
 beforeAll(() => {

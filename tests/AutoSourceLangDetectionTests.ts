@@ -27,7 +27,7 @@ import { Settings } from "./Settings";
 import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-jest.mock("../src/common.browser/PCMRecorder");
+
 let objsToClose: any[];
 const defaultTargetLanguage: string = "de-DE";
 

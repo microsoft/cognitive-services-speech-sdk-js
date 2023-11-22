@@ -14,7 +14,7 @@ import {
 } from "../src/sdk/Audio/AudioStreamFormat";
 import { Settings } from "./Settings";
 
-jest.mock("../src/common.browser/PCMRecorder");
+
 let bufferSize: number;
 
 beforeAll(() => {

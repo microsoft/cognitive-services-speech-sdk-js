@@ -7,7 +7,7 @@ import { Settings } from "./Settings";
 import { closeAsyncObjects } from "./Utilities";
 
 let objsToClose: any[];
-jest.mock("../src/common.browser/PCMRecorder");
+
 
 beforeAll(() => {
     // Override inputs, if necessary
