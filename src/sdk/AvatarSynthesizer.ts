@@ -18,6 +18,7 @@ import {
     AvatarEventArgs,
     PropertyCollection,
     PropertyId,
+    ResultReason,
     SpeechConfig,
     SpeechSynthesisOutputFormat,
     SpeechSynthesisResult,
@@ -99,6 +100,14 @@ export class AvatarSynthesizer extends Synthesizer {
         this.privProperties.setProperty(PropertyId.TalkingAvatarService_WebRTC_SDP, JSON.stringify(peerConnection.localDescription));
 
         const result: SpeechSynthesisResult = await this.speak("", false);
+        if (result.reason !== ResultReason.SynthesizingAudioCompleted) {
+            return new SynthesisResult(
+                result.resultId,
+                result.reason,
+                result.errorDetails,
+                result.properties,
+            );
+        }
         const sdpAnswerString: string = atob(result.properties.getProperty(PropertyId.TalkingAvatarService_WebRTC_SDP));
         const sdpAnswer: RTCSessionDescription = new RTCSessionDescription(
             JSON.parse(sdpAnswerString) as RTCSessionDescriptionInit,
@@ -156,6 +165,10 @@ export class AvatarSynthesizer extends Synthesizer {
      * @returns {Promise<void>} The promise of the void result.
      */
     public async stopSpeakingAsync(): Promise<void> {
+        while (this.synthesisRequestQueue.length() > 0) {
+            const request = await this.synthesisRequestQueue.dequeue();
+            request.err("Synthesis is canceled by user.");
+        }
         return this.privAdapter.stopSpeaking();
     }
 
