@@ -5,7 +5,6 @@
   "version": "1.31.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
-  "type": "module",
   "keywords": [
     "microsoft",
     "cognitiveservices",

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RiffPcmEncoder, Stream } from "../common/Exports.js";
-import { IRecorder } from "./IRecorder.js";
+import { RiffPcmEncoder, Stream } from "../common/Exports";
+import { IRecorder } from "./IRecorder";
 
 export class PcmRecorder implements IRecorder {
     private privMediaResources: IMediaResources;
@@ -60,71 +60,59 @@ export class PcmRecorder implements IRecorder {
             };
         };
 
-        const connectWorkletToMicInput = (context: AudioContext): void => {
-            const workletNode = new AudioWorkletNode(context, "speech-processor");
-            workletNode.port.onmessage = (ev: MessageEvent): void => {
-                const inputFrame: Float32Array = ev.data as Float32Array;
-
-                if (outputStream && !outputStream.isClosed) {
-                    const waveFrame = waveStreamEncoder.encode(inputFrame);
-                    if (!!waveFrame) {
-                        outputStream.writeStreamChunk({
-                            buffer: waveFrame,
-                            isEnd: false,
-                            timeReceived: Date.now(),
-                        });
-                    }
-                }
-            };
-            micInput.connect(workletNode);
-            workletNode.connect(context.destination);
-            this.privMediaResources = {
-                scriptProcessorNode: workletNode,
-                source: micInput,
-                stream: mediaStream,
-            };
-        };
-
         // https://webaudio.github.io/web-audio-api/#audioworklet
         // Using AudioWorklet to improve audio quality and avoid audio glitches due to blocking the UI thread
         const skipAudioWorklet = !!this.privSpeechProcessorScript && this.privSpeechProcessorScript.toLowerCase() === "ignore";
 
         if (!!context.audioWorklet && !skipAudioWorklet) {
-            /* eslint-disable-next-line */
-            this.privSpeechProcessorScript = new URL( /* webpackChunkName: 'script_processor_audioWorklet' */ "speech-processor.js", import.meta.url).toString(); 
+            if (!this.privSpeechProcessorScript) {
+                const workletScript = `class SP extends AudioWorkletProcessor {
+                    constructor(options) {
+                      super(options);
+                    }
+                    process(inputs, outputs) {
+                      const input = inputs[0];
+                      const output = [];
+                      for (let channel = 0; channel < input.length; channel += 1) {
+                        output[channel] = input[channel];
+                      }
+                      this.port.postMessage(output[0]);
+                      return true;
+                    }
+                  }
+                  registerProcessor('speech-processor', SP);`;
+                const blob = new Blob([workletScript], { type: "application/javascript; charset=utf-8" });
+                this.privSpeechProcessorScript = URL.createObjectURL(blob);
+            }
 
             context.audioWorklet
                 .addModule(this.privSpeechProcessorScript)
                 .then((): void => {
-                    connectWorkletToMicInput(context);
+                    const workletNode = new AudioWorkletNode(context, "speech-processor");
+                    workletNode.port.onmessage = (ev: MessageEvent): void => {
+                        const inputFrame: Float32Array = ev.data as Float32Array;
+
+                        if (outputStream && !outputStream.isClosed) {
+                            const waveFrame = waveStreamEncoder.encode(inputFrame);
+                            if (!!waveFrame) {
+                                outputStream.writeStreamChunk({
+                                    buffer: waveFrame,
+                                    isEnd: false,
+                                    timeReceived: Date.now(),
+                                });
+                            }
+                        }
+                    };
+                    micInput.connect(workletNode);
+                    workletNode.connect(context.destination);
+                    this.privMediaResources = {
+                        scriptProcessorNode: workletNode,
+                        source: micInput,
+                        stream: mediaStream,
+                    };
                 })
                 .catch((): void => {
-                    const workletScript = `class SP extends AudioWorkletProcessor {
-                        constructor(options) {
-                        super(options);
-                        }
-                        process(inputs, outputs) {
-                        const input = inputs[0];
-                        const output = [];
-                        for (let channel = 0; channel < input.length; channel += 1) {
-                            output[channel] = input[channel];
-                        }
-                        this.port.postMessage(output[0]);
-                        return true;
-                        }
-                    }
-                    registerProcessor('speech-processor', SP);`;
-                    const blob = new Blob([workletScript], { type: "application/javascript; charset=utf-8" });
-                    this.privSpeechProcessorScript = URL.createObjectURL(blob);
-
-                    context.audioWorklet
-                        .addModule(this.privSpeechProcessorScript)
-                        .then((): void => {
-                            connectWorkletToMicInput(context);
-                        })
-                        .catch((): void => {
-                            attachScriptProcessor();
-                        });
+                    attachScriptProcessor();
                 });
         } else {
             try {

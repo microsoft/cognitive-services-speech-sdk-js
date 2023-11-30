@@ -17,7 +17,7 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
-jest.mock("../src/common.browser/PCMRecorder");
+
 let objsToClose: any[];
 let bufferSize: number;
 

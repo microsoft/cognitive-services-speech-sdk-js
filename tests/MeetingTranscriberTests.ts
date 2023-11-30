@@ -13,7 +13,7 @@ import { Settings } from "./Settings";
 import { closeAsyncObjects } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-jest.mock("../src/common.browser/PCMRecorder");
+
 let objsToClose: any[];
 
 function sleep(milliseconds: number): Promise<any> {

@@ -17,7 +17,7 @@ import {
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-jest.mock("../src/common.browser/PCMRecorder");
+
 let objsToClose: any[];
 
 beforeAll(() => {
