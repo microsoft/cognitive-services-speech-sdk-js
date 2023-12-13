@@ -24,15 +24,15 @@ body:
       label: Version
       description: What version of our software are you running?
       options:
-        - 1.33.0 (Latest)
-        - 1.32.0 (Default)
+        - 1.34.0 (Latest)
+        - 1.33.1 (Default)
+        - 1.33.0
+        - 1.32.0
         - 1.31.0
         - 1.30.0
         - 1.29.0
         - 1.28.0
         - 1.27.0
-        - 1.26.0
-        - 1.25.0
         - Older 
     validations:
       required: true
