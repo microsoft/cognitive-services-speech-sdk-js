@@ -100,7 +100,7 @@ export { SpeechSynthesisBoundaryType } from "./SpeechSynthesisBoundaryType.js";
 export { SynthesisVoicesResult } from "./SynthesisVoicesResult.js";
 export { VoiceInfo } from "./VoiceInfo.js";
 export { IPlayer } from "./Audio/IPlayer.js";
-export { SpeakerAudioDestination } from "./Audio/SpeakerAudioDestination.js";
+export { AudioFormatToMimeType, SpeakerAudioDestination } from "./Audio/SpeakerAudioDestination.js";
 export { CancellationEventArgs } from "./CancellationEventArgs.js";
 export { ConversationTranscriptionCanceledEventArgs } from "./ConversationTranscriptionCanceledEventArgs.js";
 export { MeetingTranscriptionCanceledEventArgs } from "./MeetingTranscriptionCanceledEventArgs.js";

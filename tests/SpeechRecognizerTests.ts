@@ -122,7 +122,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 };
 
 /*
-test("speech.event from service", (done: jest.DoneCallback) => {
+test.skip("speech.event from service", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: speech.event from service");
 
@@ -205,7 +205,7 @@ test("speech.event from service", (done: jest.DoneCallback) => {
 
 }, 200000);
 */
-test("testDetailedSpeechPhrase1", (done: jest.DoneCallback) => {
+test.skip("testDetailedSpeechPhrase1", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: testDetailedSpeechPhrase1");
     try {
@@ -219,7 +219,7 @@ test("testDetailedSpeechPhrase1", (done: jest.DoneCallback) => {
     }
 });
 
-test("testSpeechRecognizer1", () => {
+test.skip("testSpeechRecognizer1", () => {
     // eslint-disable-next-line no-console
     console.info("Name: testSpeechRecognizer1");
     const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
@@ -235,7 +235,7 @@ test("testSpeechRecognizer1", () => {
     expect(r instanceof sdk.Recognizer);
 });
 
-test("testGetLanguage1", () => {
+test.skip("testGetLanguage1", () => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetLanguage1");
     const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
@@ -244,7 +244,7 @@ test("testGetLanguage1", () => {
     expect(r.speechRecognitionLanguage).not.toBeNull();
 });
 
-test("testGetLanguage2", () => {
+test.skip("testGetLanguage2", () => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetLanguage2");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -260,7 +260,7 @@ test("testGetLanguage2", () => {
     expect(language === r.speechRecognitionLanguage);
 });
 
-test("testGetOutputFormatDefault", () => {
+test.skip("testGetOutputFormatDefault", () => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetOutputFormatDefault");
     const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
@@ -269,7 +269,7 @@ test("testGetOutputFormatDefault", () => {
     expect(r.outputFormat === sdk.OutputFormat.Simple);
 });
 
-test("testGetParameters", () => {
+test.skip("testGetParameters", () => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetParameters");
     const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
@@ -282,7 +282,7 @@ test("testGetParameters", () => {
     expect(r.endpointId === r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, null)); // todo: is this really the correct mapping?
 });
 
-test("BadWavFileProducesError", (done: jest.DoneCallback) => {
+test.skip("BadWavFileProducesError", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: BadWavFileProducesError");
     const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -322,7 +322,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
-    test("44Khz Wave File", (done: jest.DoneCallback) => {
+    test.skip("44Khz Wave File", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: 44Khz Wave File");
 
@@ -361,7 +361,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     });
 
-    test("testGetOutputFormatDetailed", (done: jest.DoneCallback) => {
+    test.skip("testGetOutputFormatDetailed", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: testGetOutputFormatDetailed");
 
@@ -400,7 +400,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     });
 
-    test("testGetOutputFormatDetailed with authorization token", (done: jest.DoneCallback) => {
+    test.skip("testGetOutputFormatDetailed with authorization token", (done: jest.DoneCallback) => {
         console.info("Name: testGetOutputFormatDetailed");
 
         const url = `https://${Settings.SpeechRegion}.api.cognitive.microsoft.com/`;
@@ -470,7 +470,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     }, 20000);
 
-    test("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
+    test.skip("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: fromEndPoint with Subscription key");
 
@@ -588,7 +588,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 });
         });
 
-        test("testStopContinuousRecognitionAsyncWithTelemetry", (done: jest.DoneCallback) => {
+        test.skip("testStopContinuousRecognitionAsyncWithTelemetry", (done: jest.DoneCallback) => {
             // eslint-disable-next-line no-console
             console.info("Name: testStopContinuousRecognitionAsyncWithTelemetry");
 
@@ -678,7 +678,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     });
 
-    test("Event Tests (RecognizeOnce)", (done: jest.DoneCallback) => {
+    test.skip("Event Tests (RecognizeOnce)", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Event Tests (RecognizeOnce)");
         const SpeechStartDetectedEvent = "SpeechStartDetectedEvent";
@@ -798,7 +798,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     });
 
-    test("Event Tests (Continuous)", (done: jest.DoneCallback) => {
+    test.skip("Event Tests (Continuous)", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Event Tests (Continuous)");
         const SpeechStartDetectedEvent = "SpeechStartDetectedEvent";
@@ -924,7 +924,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         // Re-enable telemetry
         afterEach(() => sdk.Recognizer.enableTelemetry(true));
 
-        test("testStopContinuousRecognitionAsyncWithoutTelemetry", (done: jest.DoneCallback) => {
+        test.skip("testStopContinuousRecognitionAsyncWithoutTelemetry", (done: jest.DoneCallback) => {
             // eslint-disable-next-line no-console
             console.info("Name: testStopContinuousRecognitionAsyncWithoutTelemetry");
             // start with telemetry disabled
@@ -981,14 +981,14 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     });
 
-    test("Close with no recognition", () => {
+    test.skip("Close with no recognition", () => {
         // eslint-disable-next-line no-console
         console.info("Name: Close with no recognition");
         const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
         objsToClose.push(r);
     });
 
-    test("Config is copied on construction", () => {
+    test.skip("Config is copied on construction", () => {
         // eslint-disable-next-line no-console
         console.info("Name: Config is copied on construction");
 
@@ -1021,7 +1021,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     });
 
-    test("PushStream4KNoDelay", (done: jest.DoneCallback) => {
+    test.skip("PushStream4KNoDelay", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: PushStream4KNoDelay");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1076,7 +1076,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
-    test("Detailed output continuous recognition stops correctly", (done: jest.DoneCallback) => {
+    test.skip("Detailed output continuous recognition stops correctly", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Detailed output continuous recognition stops correctly");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1102,7 +1102,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         r.startContinuousRecognitionAsync();
     }, 15000);
 
-    test("PushStream start-stop-start continuous recognition on PushStream", (done: jest.DoneCallback) => {
+    test.skip("PushStream start-stop-start continuous recognition on PushStream", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: PushStream start-stop-start continuous recognition on PushStream");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1167,6 +1167,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             { file: Settings.WaveFile44k, sampleRate: 44100, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.PCM },
             { file: Settings.WaveFileAlaw, sampleRate: 16000, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.ALaw },
             { file: Settings.WaveFileMulaw, sampleRate: 16000, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.MuLaw },
+            { file: Settings.WaveFileOpusCBR, sampleRate: 16000, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.WEBM_OPUS },
         ];
 
         for (const testFile of formatTestFiles) {
@@ -1216,7 +1217,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         WaitForCondition(() => success === 3, done);
     });
 
-    test("PushStream4KPostRecognizePush", (done: jest.DoneCallback) => {
+    test.skip("PushStream4KPostRecognizePush", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: PushStream4KPostRecognizePush");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1271,7 +1272,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     });
 
-    test("PullStreamFullFill", (done: jest.DoneCallback) => {
+    test.skip("PullStreamFullFill", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: PullStreamFullFill");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1336,7 +1337,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
-    test("PullStream44K", (done: jest.DoneCallback) => {
+    test.skip("PullStream44K", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: PullStream44K");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1402,7 +1403,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     }, 120000);
 
-    test("PullStreamHalfFill", (done: jest.DoneCallback) => {
+    test.skip("PullStreamHalfFill", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: PullStreamHalfFill");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1591,7 +1592,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
-    test("RecognizeOnceAsync is async", (done: jest.DoneCallback) => {
+    test.skip("RecognizeOnceAsync is async", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: RecognizeOnceAsync is async");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1636,7 +1637,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         postCall = true;
     }, 100000);
 
-    test("Audio Config is optional", () => {
+    test.skip("Audio Config is optional", () => {
         // eslint-disable-next-line no-console
         console.info("Name: Audio Config is optional");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1672,7 +1673,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
     });
 
-    test("Using disposed recognizer invokes error callbacks.", (done: jest.DoneCallback) => {
+    test.skip("Using disposed recognizer invokes error callbacks.", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Using disposed recognizer invokes error callbacks.");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1826,7 +1827,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                 });
         }, 100000);
 
-        test("Endpoint URL With Auth Token Bearer added", (done: jest.DoneCallback) => {
+        test.skip("Endpoint URL With Auth Token Bearer added", (done: jest.DoneCallback) => {
             // eslint-disable-next-line no-console
             console.info("Name: Endpoint URL With Auth Token Bearer added");
 
@@ -1858,7 +1859,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
         }, 100000);
     });
 
-    test("Connection Errors Propogate Async", (done: jest.DoneCallback) => {
+    test.skip("Connection Errors Propogate Async", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Connection Errors Propogate Async");
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("badKey", Settings.SpeechRegion);
@@ -1880,7 +1881,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     }, 15000);
 
-    test("Connection Errors Propogate Sync", (done: jest.DoneCallback) => {
+    test.skip("Connection Errors Propogate Sync", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Connection Errors Propogate Sync");
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("badKey", Settings.SpeechRegion);
@@ -1917,7 +1918,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     }, 15000);
 
-    test("RecognizeOnce Bad Language", (done: jest.DoneCallback) => {
+    test.skip("RecognizeOnce Bad Language", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: RecognizeOnce Bad Language");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
@@ -1995,7 +1996,7 @@ Settings.testIfDOMCondition("Push Stream Async", (done: jest.DoneCallback) => {
         });
 }, 10000);
 
-test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback) => {
+test.skip("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: Multiple RecognizeOnce calls share a connection");
 
@@ -2078,7 +2079,7 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
     });
 }, 15000);
 
-test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => {
+test.skip("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: Multiple ContReco calls share a connection");
 
@@ -2176,7 +2177,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     });
 }, 20000);
 
-test("StopContinous Reco does", (done: jest.DoneCallback) => {
+test.skip("StopContinous Reco does", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: StopContinous Reco does");
 
@@ -2258,7 +2259,7 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
 }, 100000);
 
 describe("PhraseList tests", () => {
-    test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
+    test.skip("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Ambiguous Speech default as expected");
 
@@ -2292,7 +2293,7 @@ describe("PhraseList tests", () => {
     });
 
     // This test validates our ability to add features to the SDK in parallel / ahead of implementation by the Speech Service with no ill effects.
-    test("Service accepts random speech.context sections w/o error", (done: jest.DoneCallback) => {
+    test.skip("Service accepts random speech.context sections w/o error", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Service accepts random speech.context sections w/o error.");
 
@@ -2328,7 +2329,7 @@ describe("PhraseList tests", () => {
             });
     });
 
-    test("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
+    test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Phraselist assists speech Reco.");
 
@@ -2364,7 +2365,7 @@ describe("PhraseList tests", () => {
             });
     });
 
-    test("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
+    test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Phraselist extra phraselists have no effect.");
 

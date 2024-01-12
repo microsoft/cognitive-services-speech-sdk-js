@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+/* eslint-disable max-classes-per-file */
+
 import {
     BackgroundEvent,
     createNoDashGuid,
@@ -15,7 +17,7 @@ import { AudioFormatTag } from "./AudioStreamFormat.js";
 
 const MediaDurationPlaceholderSeconds = 60 * 30;
 
-const AudioFormatToMimeType: INumberDictionary<string> = {
+export const AudioFormatToMimeType: INumberDictionary<string> = {
     [AudioFormatTag.PCM]: "audio/wav",
     [AudioFormatTag.MuLaw]: "audio/x-wav",
     [AudioFormatTag.MP3]: "audio/mpeg",

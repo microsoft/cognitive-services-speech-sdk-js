@@ -75,6 +75,7 @@ export class Settings {
     public static WaveFile44k: string = Settings.InputDir + "whatstheweatherlike.44khz.wav";
     public static WaveFileMulaw: string = Settings.InputDir + "whatstheweatherlike.mulaw";
     public static WaveFileAlaw: string = Settings.InputDir + "whatstheweatherlike.alaw";
+    public static WaveFileOpusCBR: string = Settings.InputDir + "whatstheweatherlike-16k-cbr.opus";
     public static LongerWaveFile: string = Settings.InputDir + "StreamingEnrollment.wav";
     public static PronunciationFallWaveFile: string = Settings.InputDir + "PronunciationAssessmentFall.wav";
     public static MonoChannelAlignedWaveFile: string = Settings.InputDir + "only-a-test.wav";

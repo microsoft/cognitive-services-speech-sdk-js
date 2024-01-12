@@ -30,7 +30,8 @@ import {
     SessionEventArgs,
     SpeakerRecognitionResult,
     SpeechRecognitionResult,
-    OutputFormat
+    OutputFormat,
+    AudioFormatToMimeType
 } from "../sdk/Exports.js";
 import { Callback } from "../sdk/Transcription/IConversation.js";
 import {
@@ -705,13 +706,16 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected async sendWaveHeader(connection: IConnection): Promise<void> {
         const format: AudioStreamFormatImpl = await this.audioSource.format;
+        const body = !format.header ? null : format.header;
+        const formatTag = format.formatTag;
+        const contentType: string = AudioFormatToMimeType[formatTag];
         // this.writeBufferToConsole(format.header);
         return connection.send(new SpeechConnectionMessage(
             MessageType.Binary,
             "audio",
             this.privRequestSession.requestId,
-            "audio/x-wav",
-            format.header
+            contentType,
+            body
         ));
     }
 
