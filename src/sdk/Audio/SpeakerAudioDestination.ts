@@ -22,6 +22,7 @@ export const AudioFormatToMimeType: INumberDictionary<string> = {
     [AudioFormatTag.MuLaw]: "audio/x-wav",
     [AudioFormatTag.MP3]: "audio/mpeg",
     [AudioFormatTag.OGG_OPUS]: "audio/ogg",
+    [AudioFormatTag.OPUS]: "audio/ogg",
     [AudioFormatTag.WEBM_OPUS]: "audio/webm; codecs=opus",
     [AudioFormatTag.ALaw]: "audio/x-wav",
     [AudioFormatTag.FLAC]: "audio/flac",
@@ -90,8 +91,8 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 }
             });
         } else if (this.privAudioOutputStream !== undefined && typeof window !== "undefined") {
-            if ((this.privFormat.formatTag === AudioFormatTag.PCM || this.privFormat.formatTag === AudioFormatTag.MuLaw
-                || this.privFormat.formatTag === AudioFormatTag.ALaw) && this.privFormat.hasHeader === false) {
+            if ((this.privFormat.audioFormatTag === AudioFormatTag.PCM || this.privFormat.audioFormatTag === AudioFormatTag.MuLaw
+                || this.privFormat.audioFormatTag === AudioFormatTag.ALaw) && this.privFormat.hasHeader === false) {
                 // eslint-disable-next-line no-console
                 console.warn("Play back is not supported for raw PCM, mulaw or alaw format without header.");
                 if (!!this.onAudioEnd) {
@@ -101,7 +102,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 let receivedAudio = new ArrayBuffer(this.privBytesReceived);
                 this.privAudioOutputStream.read(receivedAudio).then((): void => {
                     receivedAudio = this.privFormat.addHeader(receivedAudio);
-                    const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.formatTag] });
+                    const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.audioFormatTag] });
                     this.privAudio.src = window.URL.createObjectURL(audioBlob);
                     this.notifyPlayback().then((): void => {
                         if (!!cb) {
@@ -130,11 +131,11 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (typeof (AudioContext) !== "undefined" || (typeof (window) !== "undefined" && typeof ((window as any).webkitAudioContext) !== "undefined")) {
             this.privFormat = format as AudioOutputFormatImpl;
-            const mimeType: string = AudioFormatToMimeType[this.privFormat.formatTag];
+            const mimeType: string = AudioFormatToMimeType[this.privFormat.audioFormatTag];
             if (mimeType === undefined) {
                 // eslint-disable-next-line no-console
                 console.warn(
-                    `Unknown mimeType for format ${AudioFormatTag[this.privFormat.formatTag]}; playback is not supported.`);
+                    `Unknown mimeType for format ${AudioFormatTag[this.privFormat.audioFormatTag]}; playback is not supported.`);
 
             } else if (typeof (MediaSource) !== "undefined" && MediaSource.isTypeSupported(mimeType)) {
                 this.privAudio = new Audio();
@@ -167,7 +168,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
             } else {
                 // eslint-disable-next-line no-console
                 console.warn(
-                    `Format ${AudioFormatTag[this.privFormat.formatTag]} could not be played by MSE, streaming playback is not enabled.`);
+                    `Format ${AudioFormatTag[this.privFormat.audioFormatTag]} could not be played by MSE, streaming playback is not enabled.`);
                 this.privAudioOutputStream = new PullAudioOutputStreamImpl();
                 this.privAudioOutputStream.format = this.privFormat;
                 this.privAudio = new Audio();

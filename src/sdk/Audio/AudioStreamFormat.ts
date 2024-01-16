@@ -91,16 +91,17 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
         super();
 
         let isWavFormat: boolean = true;
+        this.audioFormatTag = format;
         /* 1 for PCM; 6 for alaw; 7 for mulaw */
         switch (format) {
             case AudioFormatTag.PCM:
-                this.formatTag = 1;
+                this.wavFormatTag = 1;
                 break;
             case AudioFormatTag.ALaw:
-                this.formatTag = 6;
+                this.wavFormatTag = 6;
                 break;
             case AudioFormatTag.MuLaw:
-                this.formatTag = 7;
+                this.wavFormatTag = 7;
                 break;
             default:
                 isWavFormat = false;
@@ -126,7 +127,7 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
             /* format chunk length */
             view.setUint32(16, 16, true);
             /* audio format */
-            view.setUint16(20, this.formatTag, true);
+            view.setUint16(20, this.wavFormatTag, true);
             /* channel count */
             view.setUint16(22, this.channels, true);
             /* sample rate */
@@ -193,12 +194,12 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
     }
 
     /**
-     * The format of the audio, valid values: 1 (PCM)
-     * @member AudioStreamFormatImpl.prototype.formatTag
+     * The format of the audio
+     * @member AudioStreamFormatImpl.prototype.audioFormatTag
      * @function
      * @public
      */
-    public formatTag: number;
+    public audioFormatTag: number;
 
     /**
      * The number of channels, valid values: 1 (Mono).
@@ -243,6 +244,8 @@ export class AudioStreamFormatImpl extends AudioStreamFormat {
     public get header(): ArrayBuffer {
         return this.privHeader;
     }
+
+    private wavFormatTag: number;
 
     protected setString(view: DataView, offset: number, str: string): void {
         for (let i = 0; i < str.length; i++) {

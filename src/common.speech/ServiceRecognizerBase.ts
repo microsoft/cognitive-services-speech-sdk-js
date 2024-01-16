@@ -707,8 +707,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected async sendWaveHeader(connection: IConnection): Promise<void> {
         const format: AudioStreamFormatImpl = await this.audioSource.format;
         const body = !format.header ? null : format.header;
-        const formatTag = format.formatTag;
-        const contentType: string = AudioFormatToMimeType[formatTag];
+        const audioFormatTag = format.audioFormatTag;
+        const contentType: string = AudioFormatToMimeType[audioFormatTag];
         // this.writeBufferToConsole(format.header);
         return connection.send(new SpeechConnectionMessage(
             MessageType.Binary,

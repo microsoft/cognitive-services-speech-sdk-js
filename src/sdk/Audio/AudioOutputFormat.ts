@@ -62,7 +62,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
     /**
      * Creates an instance with the given values.
      * @constructor
-     * @param formatTag
+     * @param audioFormatTag
      * @param {number} channels - Number of channels.
      * @param {number} samplesPerSec - Samples per second.
      * @param {number} avgBytesPerSec - Average bytes per second.
@@ -72,7 +72,7 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
      * @param {string} requestAudioFormatString - Audio format string sent to service.
      * @param {boolean} hasHeader - If the format has header or not.
      */
-    public constructor(formatTag: AudioFormatTag,
+    public constructor(audioFormatTag: AudioFormatTag,
                        channels: number,
                        samplesPerSec: number,
                        avgBytesPerSec: number,
@@ -81,8 +81,8 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                        audioFormatString: string,
                        requestAudioFormatString: string,
                        hasHeader: boolean) {
-        super(samplesPerSec, bitsPerSample, channels, formatTag);
-        this.formatTag = formatTag;
+        super(samplesPerSec, bitsPerSample, channels, audioFormatTag);
+        this.audioFormatTag = audioFormatTag;
         this.avgBytesPerSec = avgBytesPerSec;
         this.blockAlign = blockAlign;
         this.priAudioFormatString = audioFormatString;
@@ -541,11 +541,11 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
 
     /**
      * The format tag of the audio
-     * @AudioFormatTag AudioOutputFormatImpl.prototype.formatTag
+     * @AudioFormatTag AudioOutputFormatImpl.prototype.audioFormatTag
      * @function
      * @public
      */
-    public formatTag: AudioFormatTag;
+    public audioFormatTag: AudioFormatTag;
 
     /**
      * Specifies if this audio output format has a header
