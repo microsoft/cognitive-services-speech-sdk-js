@@ -467,7 +467,9 @@ export abstract class SynthesisAdapterBase implements IDisposable {
                 return this.connectImpl(true);
             } else {
                 this.privSynthesisTurn.onConnectionEstablishCompleted(response.statusCode);
-                return Promise.reject(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privSynthesizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
+                return Promise.reject(
+                    `Unable to contact server. StatusCode: ${response.statusCode},
+                    ${this.privSynthesizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Url)} Reason: ${response.reason}`);
             }
         }, (error: string): Promise<IConnection> => {
             this.privSynthesisTurn.onAuthCompleted(true);
