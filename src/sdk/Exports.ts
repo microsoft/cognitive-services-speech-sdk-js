@@ -116,3 +116,4 @@ export { AvatarVideoFormat, Coordinate } from "./AvatarVideoFormat.js";
 export { AvatarWebRTCConnectionResult } from "./AvatarWebRTCConnectionResult.js";
 export { Diagnostics } from "./Diagnostics.js";
 export { LogLevel } from "./LogLevel.js";
+export { IVoiceJson } from "./IVoiceJson.js";
