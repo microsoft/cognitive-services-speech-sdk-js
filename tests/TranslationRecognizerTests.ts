@@ -6,22 +6,17 @@ import {
     ConsoleLoggingListener,
     WebsocketMessageAdapter,
 } from "../src/common.browser/Exports";
-import { ServiceRecognizerBase } from "../src/common.speech/Exports";
 import {
     Events,
-    EventType
 } from "../src/common/Exports";
 
-import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { Settings } from "./Settings";
-import { validateTelemetry } from "./TelemetryUtil";
 import {
     closeAsyncObjects,
     WaitForCondition
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
 let objsToClose: any[];
 
@@ -131,7 +126,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         console.info("Name: Translate Multiple Targets");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
         objsToClose.push(s);
-        s.addTargetLanguage("en-US");
+        s.addTargetLanguage("fr-FR");
 
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
@@ -150,8 +145,8 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(res.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
                 expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
-                expect("What's the weather like?").toEqual(res.translations.get("en", ""));
-                expect(res.translations.languages).toEqual(["en", "de"]);
+                expect(res.translations.get("fr", "")).toContain("Quel temps fait-il");
+                expect(res.translations.languages).toEqual(["fr", "de"]);
                 expect(r.targetLanguages.length).toEqual(res.translations.languages.length);
                 r.removeTargetLanguage("de-DE");
                 expect(r.targetLanguages.includes("de-DE")).toBeFalsy();
@@ -162,9 +157,9 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect(secondRes).not.toBeUndefined();
                         expect(secondRes.errorDetails).toBeUndefined();
                         expect(sdk.ResultReason[secondRes.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                        expect("What's the weather like?").toEqual(secondRes.translations.get("en", ""));
+                        expect(secondRes.translations.get("fr", "")).toContain("Quel temps fait-il");
                         expect(secondRes.translations.languages.includes("es")).toBeTruthy();
-                        expect(secondRes.translations.languages.includes("en")).toBeTruthy();
+                        expect(secondRes.translations.languages.includes("fr")).toBeTruthy();
                         expect(secondRes.translations.languages.includes("de")).toBeFalsy();
                         expect("¿Cómo es el clima?").toEqual(secondRes.translations.get("es", ""));
                         done();
@@ -294,21 +289,14 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         // eslint-disable-next-line no-console
         console.info("Name: fromV2EndPoint with Subscription key");
 
-        const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/universal/v2?SpeechContext-translation.targetLanguages=[\"de-de\"]";
+        const targetLanguage = "de-DE";
+        const endpoint = `wss://${Settings.SpeechRegion}.stt.speech.microsoft.com/speech/universal/v2`;
 
         const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), Settings.SpeechSubscriptionKey);
         objsToClose.push(s);
 
-        s.addTargetLanguage("de-DE");
+        s.addTargetLanguage(targetLanguage);
         s.speechRecognitionLanguage = "en-US";
-        s.setServiceProperty("language", "en-US", sdk.ServicePropertyChannel.UriQueryParameter);
-        s.setServiceProperty("SpeechContext-phraseDetection.interimResults", "true", sdk.ServicePropertyChannel.UriQueryParameter);
-        s.setServiceProperty("SpeechContext-phraseDetection.onInterim.action", "Translate", sdk.ServicePropertyChannel.UriQueryParameter);
-        s.setServiceProperty("SpeechContext-phraseDetection.onSuccess.action", "Translate", sdk.ServicePropertyChannel.UriQueryParameter);
-        s.setServiceProperty("SpeechContext-phraseOutput.interimResults.resultType", "Hypothesis", sdk.ServicePropertyChannel.UriQueryParameter);
-        s.setServiceProperty("SpeechContext-translation.onSuccess.action", "None", sdk.ServicePropertyChannel.UriQueryParameter);
-        s.setServiceProperty("SpeechContext-translation.output.includePassThroughResults", "true", sdk.ServicePropertyChannel.UriQueryParameter);
-        s.setServiceProperty("SpeechContext-translation.output.interimResults.mode", "Always", sdk.ServicePropertyChannel.UriQueryParameter);
 
         const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
@@ -325,8 +313,8 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                expect(res.translations.get("de-de", undefined) !== undefined).toEqual(true);
-                expect("Wie ist das Wetter?").toEqual(res.translations.get("de-de", ""));
+                expect(res.translations.get(targetLanguage, undefined) !== undefined).toEqual(true);
+                expect("Wie ist das Wetter?").toEqual(res.translations.get(targetLanguage, ""));
                 expect(res.text).toEqual("What's the weather like?");
                 done();
             },

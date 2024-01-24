@@ -14,6 +14,7 @@ import {
 } from "../src/sdk/Audio/AudioStreamFormat";
 import { Settings } from "./Settings";
 
+
 let bufferSize: number;
 
 beforeAll(() => {

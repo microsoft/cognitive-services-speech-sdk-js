@@ -3,9 +3,9 @@
 // Licensed under the MIT license.
 
 import * as fs from "fs";
-import { LogLevel } from "../sdk/LogLevel";
-import { IEventListener, PlatformEvent } from "../common/Exports";
-import { Contracts } from "../sdk/Contracts";
+import { LogLevel } from "../sdk/LogLevel.js";
+import { IEventListener, PlatformEvent } from "../common/Exports.js";
+import { Contracts } from "../sdk/Contracts.js";
 
 export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
     private privLogLevelFilter: LogLevel;

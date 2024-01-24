@@ -8,6 +8,7 @@ import { closeAsyncObjects } from "./Utilities";
 
 let objsToClose: any[];
 
+
 beforeAll(() => {
     // Override inputs, if necessary
     Settings.LoadSettings();

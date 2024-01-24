@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { SpeechSynthesisBoundaryType } from "./SpeechSynthesisBoundaryType";
+import { SpeechSynthesisBoundaryType } from "./SpeechSynthesisBoundaryType.js";
 
 /**
  * Defines contents of speech synthesis word boundary event.

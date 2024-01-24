@@ -14,8 +14,9 @@ import {
     Events,
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
-import { closeAsyncObjects } from "./Utilities";
+import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
+
 
 let objsToClose: any[];
 
@@ -71,6 +72,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
         s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     } else {
         s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+        s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
     }
 
     if (undefined !== Settings.proxyServer) {
@@ -340,4 +342,104 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             done(error);
         });
     });
+
+    test("test Pronunciation Assessment with prosody and content", (done: jest.DoneCallback) => {
+        // eslint-disable-next-line no-console
+        console.info("Name: test Pronunciation Assessment with prosody and content");
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+
+        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s, Settings.WaveFile);
+        objsToClose.push(r);
+
+        const p: sdk.PronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig(Settings.WaveFileText,
+            PronunciationAssessmentGradingSystem.HundredMark, PronunciationAssessmentGranularity.Phoneme, true);
+        objsToClose.push(p);
+        p.enableProsodyAssessment = true;
+        p.enableContentAssessmentWithTopic("greetings");
+        p.applyTo(r);
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+            try {
+                expect(result).not.toBeUndefined();
+                expect(result.errorDetails).toBeUndefined();
+                expect(result.text).toEqual(Settings.WaveFileText);
+                expect(result.properties).not.toBeUndefined();
+                const jsonString = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+                expect(jsonString).not.toBeUndefined();
+                const jsonResult = JSON.parse(jsonString);
+                expect(jsonResult.SNR).toBeGreaterThan(0);
+                const pronResult = sdk.PronunciationAssessmentResult.fromResult(result);
+                expect(pronResult).not.toBeUndefined();
+                expect(pronResult.pronunciationScore).toBeGreaterThan(0);
+                expect(pronResult.accuracyScore).toBeGreaterThan(0);
+                expect(pronResult.fluencyScore).toBeGreaterThan(0);
+                expect(pronResult.completenessScore).toBeGreaterThan(0);
+                expect(pronResult.prosodyScore).toBeGreaterThan(0);
+                expect(pronResult.contentAssessmentResult).not.toBeUndefined();
+                done();
+            } catch (error) {
+                done(error);
+            }
+        }, (error: string) => {
+            done(error);
+        });
+    });
+
+    // Disable until Yulin can correct this
+    test.skip("Continuous pronunciation assessment with content", (done: jest.DoneCallback) => {
+        // eslint-disable-next-line no-console
+        console.info("Continuous pronunciation assessment with content");
+        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.PronunciationFallWaveFile);
+        objsToClose.push(r);
+
+        const p: sdk.PronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig("",
+            PronunciationAssessmentGradingSystem.HundredMark, PronunciationAssessmentGranularity.Phoneme, true);
+        objsToClose.push(p);
+        p.enableProsodyAssessment = true;
+        p.enableContentAssessmentWithTopic("greetings");
+        p.applyTo(r);
+
+        let sessionStopped: boolean = false;
+
+        const pronunciationAssessmentResults: sdk.PronunciationAssessmentResult[] = [];
+
+        r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
+            pronunciationAssessmentResults.push(sdk.PronunciationAssessmentResult.fromResult(e.result));
+        };
+
+        r.sessionStopped = (o: sdk.Recognizer, e: sdk.SessionEventArgs) => {
+            sessionStopped = true;
+        };
+
+        r.startContinuousRecognitionAsync();
+
+        WaitForCondition(() => sessionStopped, () => {
+            try {
+                expect(pronunciationAssessmentResults.length).toBeGreaterThan(2);
+                const firstResult = pronunciationAssessmentResults[0];
+                expect(firstResult).not.toBeUndefined();
+                expect(firstResult.prosodyScore).toBeGreaterThan(0);
+                expect(firstResult.contentAssessmentResult).toBeUndefined();
+                const lastResult = pronunciationAssessmentResults[pronunciationAssessmentResults.length - 1];
+                expect(lastResult).not.toBeUndefined();
+                expect(lastResult.prosodyScore).toBeUndefined();
+                expect(lastResult.contentAssessmentResult).not.toBeUndefined();
+                expect(lastResult.contentAssessmentResult.grammarScore).toBeGreaterThan(0);
+                expect(lastResult.contentAssessmentResult.vocabularyScore).toBeGreaterThan(0);
+                expect(lastResult.contentAssessmentResult.topicScore).toBeGreaterThan(0);
+                done();
+            } catch (error) {
+                done(error);
+            }
+        });
+    }, 60000);
 });

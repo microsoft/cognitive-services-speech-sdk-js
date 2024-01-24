@@ -2,15 +2,15 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
-import { CancellationErrorCodePropertyName } from "../common.speech/Exports";
-import { Contracts } from "./Contracts";
+import { CancellationErrorCodePropertyName } from "../common.speech/Exports.js";
+import { Contracts } from "./Contracts.js";
 import {
     CancellationDetailsBase,
     CancellationErrorCode,
     CancellationReason,
     PropertyCollection,
     ResultReason
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Output format

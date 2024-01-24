@@ -6,17 +6,22 @@ import {
     Deferred,
     Events,
     IAudioDestination
-} from "../common/Exports";
-import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
-import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream";
-import { ISynthesisMetadata, MetadataType } from "./ServiceMessages/SynthesisAudioMetadata";
-import { SynthesisAdapterBase } from "./SynthesisAdapterBase";
+} from "../common/Exports.js";
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat.js";
+import { PullAudioOutputStreamImpl } from "../sdk/Audio/AudioOutputStream.js";
+import {
+    PropertyCollection,
+    PropertyId,
+    ResultReason,
+    SpeechSynthesisResult,
+} from "../sdk/Exports.js";
+import { ISynthesisMetadata, MetadataType } from "./ServiceMessages/SynthesisAudioMetadata.js";
 import {
     ConnectingToSynthesisServiceEvent,
     SpeechSynthesisEvent,
     SynthesisStartedEvent,
     SynthesisTriggeredEvent,
-} from "./SynthesisEvents";
+} from "./SynthesisEvents.js";
 
 export interface ISynthesisResponseContext {
     serviceTag: string;
@@ -30,6 +35,9 @@ export interface ISynthesisResponseAudio {
 export interface ISynthesisResponse {
     context: ISynthesisResponseContext;
     audio: ISynthesisResponseAudio;
+    webrtc: {
+        connectionString: string;
+    };
 }
 
 export class SynthesisTurn {
@@ -83,6 +91,16 @@ export class SynthesisTurn {
         return this.privAudioDuration;
     }
 
+    public get extraProperties(): PropertyCollection {
+        if (!!this.privWebRTCSDP) {
+            const properties = new PropertyCollection();
+            properties.setProperty(PropertyId.TalkingAvatarService_WebRTC_SDP, this.privWebRTCSDP);
+            return properties;
+        }
+
+        return undefined;
+    }
+
     private privIsDisposed: boolean = false;
     private privAuthFetchEventId: string;
     private privIsSynthesizing: boolean = false;
@@ -105,6 +123,7 @@ export class SynthesisTurn {
     private privIsSSML: boolean;
     private privTurnAudioDestination: IAudioDestination;
     private privAudioDuration: number;
+    private privWebRTCSDP: string;
 
     public constructor() {
         this.privRequestId = createNoDashGuid();
@@ -134,7 +153,7 @@ export class SynthesisTurn {
         }
         if (this.audioOutputFormat.hasHeader) {
             const audio: ArrayBuffer = await this.getAllReceivedAudio();
-            this.privReceivedAudioWithHeader = SynthesisAdapterBase.addHeader(audio, this.audioOutputFormat);
+            this.privReceivedAudioWithHeader = this.audioOutputFormat.addHeader(audio);
             return this.privReceivedAudioWithHeader;
         } else {
             return this.getAllReceivedAudio();
@@ -157,6 +176,7 @@ export class SynthesisTurn {
         this.privSentenceOffset = 0;
         this.privNextSearchSentenceIndex = 0;
         this.privPartialVisemeAnimation = "";
+        this.privWebRTCSDP = "";
         if (audioDestination !== undefined) {
             this.privTurnAudioDestination = audioDestination;
             this.privTurnAudioDestination.format = this.privAudioOutputFormat;
@@ -196,7 +216,7 @@ export class SynthesisTurn {
         this.onComplete();
     }
 
-    public onServiceTurnStartResponse(): void {
+    public onServiceTurnStartResponse(responseJson: string): void {
         if (!!this.privTurnDeferral && !!this.privInTurn) {
             // What? How are we starting a turn with another not done?
             this.privTurnDeferral.reject("Another turn started before current completed.");
@@ -206,6 +226,10 @@ export class SynthesisTurn {
         }
         this.privInTurn = true;
         this.privTurnDeferral = new Deferred<void>();
+        const response: ISynthesisResponse = JSON.parse(responseJson) as ISynthesisResponse;
+        if (!!response.webrtc) {
+            this.privWebRTCSDP = response.webrtc.connectionString;
+        }
     }
 
     public onAudioChunkReceived(data: ArrayBuffer): void {
@@ -230,6 +254,18 @@ export class SynthesisTurn {
 
     public onSessionEnd(metadata: ISynthesisMetadata): void {
         this.privAudioDuration = metadata.Data.Offset;
+    }
+
+    public async constructSynthesisResult(): Promise<SpeechSynthesisResult> {
+        const audioBuffer: ArrayBuffer = await this.getAllReceivedAudioWithHeader();
+        return new SpeechSynthesisResult(
+            this.requestId,
+            ResultReason.SynthesizingAudioCompleted,
+            audioBuffer,
+            undefined,
+            this.extraProperties,
+            this.audioDuration
+        );
     }
 
     public dispose(): void {

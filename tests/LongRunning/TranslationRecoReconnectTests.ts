@@ -10,6 +10,7 @@ import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
 
 import { WaitForCondition } from "../Utilities";
 
+
 let objsToClose: any[];
 
 beforeAll((): void => {

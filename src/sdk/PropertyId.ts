@@ -481,5 +481,19 @@ export enum PropertyId {
      * Version of Speaker Recognition API to use.
      * Added in version 1.18.0
      */
-    SpeakerRecognition_Api_Version
+    SpeakerRecognition_Api_Version,
+
+    /**
+     * Specifies whether to allow load of data URL for web worker
+     * Allowed values are "off" and "on". Default is "on".
+     * Added in version 1.32.0
+     */
+    WebWorkerLoadType,
+
+    /**
+     * Talking avatar service WebRTC session description protocol.
+     * This property is intended to be read-only. The SDK is using it internally.
+     * Added in version 1.33.0
+     */
+    TalkingAvatarService_WebRTC_SDP,
 }

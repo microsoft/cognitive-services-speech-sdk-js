@@ -6,9 +6,9 @@ import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
     ServicePropertiesPropertyName
-} from "../common.speech/Exports";
-import {IStringDictionary} from "../common/Exports";
-import {Contracts} from "./Contracts";
+} from "../common.speech/Exports.js";
+import {IStringDictionary} from "../common/Exports.js";
+import {Contracts} from "./Contracts.js";
 import {
     OutputFormat,
     ProfanityOption,
@@ -16,7 +16,7 @@ import {
     PropertyId,
     ServicePropertyChannel,
     SpeechSynthesisOutputFormat,
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Speech configuration.
@@ -153,7 +153,7 @@ export abstract class SpeechConfig {
      * Added in version 1.4.0.
      * @param proxyHostName The host name of the proxy server, without the protocol scheme (http://)
      * @param proxyPort The port number of the proxy server.
-     * @param proxyUserName The user name of the proxy server.
+     * @param proxyUserName The username of the proxy server.
      * @param proxyPassword The password of the proxy server.
      */
     public abstract setProxy(proxyHostName: string, proxyPort: number, proxyUserName: string, proxyPassword: string): void;

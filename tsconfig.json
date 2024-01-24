@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2020",
     "module": "commonjs",
     "lib": ["es2015"],
     "moduleResolution": "node",
@@ -9,6 +9,7 @@
     "declaration": true,
     "noImplicitAny": true,
     "removeComments": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true
   }
 }

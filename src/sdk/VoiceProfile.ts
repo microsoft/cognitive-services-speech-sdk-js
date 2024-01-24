@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { VoiceProfileType } from "./Exports";
+import { VoiceProfileType } from "./Exports.js";
 
 /**
  * Defines Voice Profile class for Speaker Recognition

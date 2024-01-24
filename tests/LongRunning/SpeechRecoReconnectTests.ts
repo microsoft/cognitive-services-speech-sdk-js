@@ -9,6 +9,7 @@ import { WaveFileAudioInput } from "../WaveFileAudioInputStream";
 
 import { WaitForCondition } from "../Utilities";
 
+
 let objsToClose: any[];
 
 beforeAll((): void => {
@@ -42,6 +43,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
         s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     } else {
         s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+        s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
     }
 
     expect(s).not.toBeUndefined();

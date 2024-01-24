@@ -12,6 +12,7 @@ import { Settings } from "./Settings";
 import { closeAsyncObjects } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
+
 let objsToClose: any[];
 
 beforeAll((): void => {

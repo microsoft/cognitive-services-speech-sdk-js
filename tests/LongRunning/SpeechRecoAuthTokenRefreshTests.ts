@@ -9,6 +9,7 @@ import { Events } from "../../src/common/Exports";
 import { Settings } from "../Settings";
 import { CreateRepeatingPullStream, WaitForCondition } from "../Utilities";
 
+
 let objsToClose: any[];
 
 beforeAll(() => {

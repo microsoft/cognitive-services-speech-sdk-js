@@ -6,7 +6,7 @@
 import {
     ServiceRecognizerBase,
     SynthesisAdapterBase,
-} from "../common.speech/Exports";
+} from "../common.speech/Exports.js";
 import {
     ConnectionEvent,
     ConnectionMessageReceivedEvent,
@@ -14,11 +14,11 @@ import {
     IDetachable,
     marshalPromiseToCallbacks,
     ServiceEvent,
-} from "../common/Exports";
+} from "../common/Exports.js";
 import {
     ConnectionMessageImpl
-} from "./ConnectionMessage";
-import { Contracts } from "./Contracts";
+} from "./ConnectionMessage.js";
+import { Contracts } from "./Contracts.js";
 import {
     ConnectionEventArgs,
     ConnectionMessageEventArgs,
@@ -26,7 +26,7 @@ import {
     Recognizer,
     ServiceEventArgs,
     SpeechSynthesizer,
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Connection is a proxy class for managing connection to the speech service of the specified Recognizer.

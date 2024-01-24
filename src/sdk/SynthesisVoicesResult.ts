@@ -7,7 +7,7 @@ import {
     ResultReason,
     SynthesisResult,
     VoiceInfo,
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Defines result of speech synthesis.

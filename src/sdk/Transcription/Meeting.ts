@@ -19,13 +19,13 @@ import {
     ParticipantEventArgs,
     ParticipantsListEventArgs,
     TranscriberRecognizer
-} from "../../common.speech/Exports";
+} from "../../common.speech/Exports.js";
 import {
     IDisposable,
     IErrorMessages,
     marshalPromiseToCallbacks
-} from "../../common/Exports";
-import { Contracts } from "../Contracts";
+} from "../../common/Exports.js";
+import { Contracts } from "../Contracts.js";
 import {
     ConnectionEventArgs,
     ConversationExpirationEventArgs,
@@ -38,10 +38,10 @@ import {
     PropertyCollection,
     PropertyId,
     SpeechTranslationConfig,
-} from "../Exports";
-import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig";
-import { Callback, MeetingInfo, MeetingProperties, IMeeting } from "./IMeeting";
-import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
+} from "../Exports.js";
+import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig.js";
+import { Callback, MeetingInfo, MeetingProperties, IMeeting } from "./IMeeting.js";
+import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant.js";
 
 export abstract class Meeting implements IMeeting {
 
@@ -64,25 +64,23 @@ export abstract class Meeting implements IMeeting {
     /**
      * Create a meeting
      * @param speechConfig
+     * @param meetingId
      * @param cb
      * @param err
      */
-    public static createMeetingAsync(speechConfig: SpeechTranslationConfig, arg2?: string | Callback, arg3?: Callback, arg4?: Callback): Meeting {
+    public static createMeetingAsync(speechConfig: SpeechTranslationConfig, meetingId: string, arg3?: Callback, arg4?: Callback): Meeting {
         Contracts.throwIfNullOrUndefined(speechConfig, ConversationConnectionConfig.restErrors.invalidArgs.replace("{arg}", "config"));
         Contracts.throwIfNullOrUndefined(speechConfig.region, ConversationConnectionConfig.restErrors.invalidArgs.replace("{arg}", "SpeechServiceConnection_Region"));
+        Contracts.throwIfNull(meetingId, "meetingId");
+        if (meetingId.length === 0) {
+            throw new Error("meetingId cannot be empty");
+        }
         if (!speechConfig.subscriptionKey && !speechConfig.getProperty(PropertyId[PropertyId.SpeechServiceAuthorization_Token])) {
             Contracts.throwIfNullOrUndefined(speechConfig.subscriptionKey, ConversationConnectionConfig.restErrors.invalidArgs.replace("{arg}", "SpeechServiceConnection_Key"));
         }
-        let meetingImpl: MeetingImpl;
-        if (typeof arg2 === "string") {
-            meetingImpl = new MeetingImpl(speechConfig, arg2);
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-            marshalPromiseToCallbacks((async (): Promise<void> => {})(), arg3, arg4);
-        } else {
-            meetingImpl = new MeetingImpl(speechConfig, "");
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-            marshalPromiseToCallbacks((async (): Promise<void> => {})(), arg2, arg3);
-        }
+        const meetingImpl = new MeetingImpl(speechConfig, meetingId);
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        marshalPromiseToCallbacks((async (): Promise<void> => {})(), arg3, arg4);
         return meetingImpl;
     }
 

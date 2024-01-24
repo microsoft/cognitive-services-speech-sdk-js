@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ConnectionEvent } from "./ConnectionEvents";
-import { ConnectionMessage } from "./ConnectionMessage";
-import { ConnectionOpenResponse } from "./ConnectionOpenResponse";
-import { EventSource } from "./EventSource";
+import { ConnectionEvent } from "./ConnectionEvents.js";
+import { ConnectionMessage } from "./ConnectionMessage.js";
+import { ConnectionOpenResponse } from "./ConnectionOpenResponse.js";
+import { EventSource } from "./EventSource.js";
 
 export enum ConnectionState {
     None,

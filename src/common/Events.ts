@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ArgumentNullError } from "./Error";
-import { EventSource } from "./EventSource";
-import { IEventSource } from "./IEventSource";
-import { PlatformEvent } from "./PlatformEvent";
+import { ArgumentNullError } from "./Error.js";
+import { EventSource } from "./EventSource.js";
+import { IEventSource } from "./IEventSource.js";
+import { PlatformEvent } from "./PlatformEvent.js";
 
 export class Events {
     private static privInstance: IEventSource<PlatformEvent> = new EventSource<PlatformEvent>();

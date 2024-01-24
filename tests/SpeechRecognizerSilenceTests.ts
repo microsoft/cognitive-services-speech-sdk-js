@@ -21,6 +21,7 @@ import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
+
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
 const Recognized: string = "Recognized";
@@ -78,6 +79,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
         s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     } else {
         s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+        s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
     }
 
     if (undefined !== Settings.proxyServer) {

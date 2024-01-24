@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
-import { PropertyId, SpeechSynthesizer } from "../sdk/Exports";
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat.js";
+import { PropertyId, SpeechSynthesizer } from "../sdk/Exports.js";
 
 /**
  * Represents the JSON used in the synthesis.context message sent to the speech service.
@@ -10,12 +10,7 @@ import { PropertyId, SpeechSynthesizer } from "../sdk/Exports";
  */
 export class SynthesisContext {
     private privContext: { [section: string]: any } = {};
-    private privSpeechSynthesizer: SpeechSynthesizer;
     private privAudioOutputFormat: AudioOutputFormatImpl;
-
-    public constructor(speechSynthesizer: SpeechSynthesizer) {
-        this.privSpeechSynthesizer = speechSynthesizer;
-    }
 
     /**
      * Adds a section to the synthesis.context object.
@@ -35,31 +30,32 @@ export class SynthesisContext {
     }
 
     public toJSON(): string {
-
-        const synthesisSection: ISynthesisSection = this.buildSynthesisContext();
-        this.setSection("synthesis", synthesisSection);
-
         return JSON.stringify(this.privContext);
     }
 
-    private buildSynthesisContext(): ISynthesisSection {
+    public setSynthesisSection(speechSynthesizer: SpeechSynthesizer): void {
+        const synthesisSection: ISynthesisSection = this.buildSynthesisContext(speechSynthesizer);
+        this.setSection("synthesis", synthesisSection);
+    }
+
+    private buildSynthesisContext(speechSynthesizer: SpeechSynthesizer): ISynthesisSection {
         return {
             audio: {
                 metadataOptions: {
-                    bookmarkEnabled: (!!this.privSpeechSynthesizer.bookmarkReached),
-                    punctuationBoundaryEnabled: this.privSpeechSynthesizer.properties.getProperty(
-                        PropertyId.SpeechServiceResponse_RequestPunctuationBoundary, (!!this.privSpeechSynthesizer.wordBoundary)),
-                    sentenceBoundaryEnabled: this.privSpeechSynthesizer.properties.getProperty(
+                    bookmarkEnabled: (!!speechSynthesizer?.bookmarkReached),
+                    punctuationBoundaryEnabled: speechSynthesizer?.properties.getProperty(
+                        PropertyId.SpeechServiceResponse_RequestPunctuationBoundary, (!!speechSynthesizer?.wordBoundary)),
+                    sentenceBoundaryEnabled: speechSynthesizer?.properties.getProperty(
                         PropertyId.SpeechServiceResponse_RequestSentenceBoundary, false),
                     sessionEndEnabled: true,
-                    visemeEnabled: (!!this.privSpeechSynthesizer.visemeReceived),
-                    wordBoundaryEnabled: this.privSpeechSynthesizer.properties.getProperty(
-                        PropertyId.SpeechServiceResponse_RequestWordBoundary, (!!this.privSpeechSynthesizer.wordBoundary)),
+                    visemeEnabled: (!!speechSynthesizer?.visemeReceived),
+                    wordBoundaryEnabled: speechSynthesizer?.properties.getProperty(
+                        PropertyId.SpeechServiceResponse_RequestWordBoundary, (!!speechSynthesizer?.wordBoundary)),
                 },
                 outputFormat: this.privAudioOutputFormat.requestAudioFormatString,
             },
             language: {
-                autoDetection: this.privSpeechSynthesizer.autoDetectSourceLanguage
+                autoDetection: speechSynthesizer?.autoDetectSourceLanguage
             }
         } as ISynthesisSection;
     }

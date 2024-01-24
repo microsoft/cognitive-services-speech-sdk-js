@@ -8,7 +8,7 @@ import {
     IAudioSource,
     IConnection,
     MessageType,
-} from "../../common/Exports";
+} from "../../common/Exports.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -17,16 +17,16 @@ import {
     ConversationTranslationResult,
     ResultReason,
     Translations
-} from "../../sdk/Exports";
+} from "../../sdk/Exports.js";
 import {
     CognitiveTokenAuthentication,
     IAuthentication,
     IConnectionFactory,
     RecognizerConfig,
     ServiceRecognizerBase
-} from "../Exports";
-import { ConversationConnectionMessage } from "./ConversationConnectionMessage";
-import { ConversationRequestSession } from "./ConversationRequestSession";
+} from "../Exports.js";
+import { ConversationConnectionMessage } from "./ConversationConnectionMessage.js";
+import { ConversationRequestSession } from "./ConversationRequestSession.js";
 import {
     ConversationReceivedTranslationEventArgs,
     LockRoomEventArgs,
@@ -34,13 +34,13 @@ import {
     ParticipantAttributeEventArgs,
     ParticipantEventArgs,
     ParticipantsListEventArgs
-} from "./ConversationTranslatorEventArgs";
+} from "./ConversationTranslatorEventArgs.js";
 import {
     ConversationTranslatorCommandTypes,
     ConversationTranslatorMessageTypes,
     IInternalParticipant
-} from "./ConversationTranslatorInterfaces";
-import { ConversationTranslatorRecognizer } from "./ConversationTranslatorRecognizer";
+} from "./ConversationTranslatorInterfaces.js";
+import { ConversationTranslatorRecognizer } from "./ConversationTranslatorRecognizer.js";
 import {
     CommandResponsePayload,
     IParticipantPayloadResponse,
@@ -50,7 +50,7 @@ import {
     ParticipantsListPayloadResponse,
     SpeechResponsePayload,
     TextResponsePayload
-} from "./ServiceMessages/Exports";
+} from "./ServiceMessages/Exports.js";
 
 /**
  * The service adapter handles sending and receiving messages to the Conversation Translator websocket.
@@ -412,6 +412,7 @@ export class ConversationServiceAdapter extends ServiceRecognizerBase {
                                         return Promise.resolve(authorizationToken);
                                     });
                                 this.authentication = token;
+                                this.privConversationServiceConnector.onToken(token);
 
                                 break;
 

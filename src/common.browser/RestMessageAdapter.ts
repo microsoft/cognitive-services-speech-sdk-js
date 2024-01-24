@@ -5,8 +5,8 @@ import bent, { BentResponse, RequestBody } from "bent";
 import {
     ArgumentNullError,
     Deferred
-} from "../common/Exports";
-import { IRequestOptions } from "./Exports";
+} from "../common/Exports.js";
+import { IRequestOptions } from "./Exports.js";
 
 export enum RestRequestType {
     Get = "GET",

@@ -18,6 +18,7 @@ import {
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
+
 let objsToClose: any[];
 
 beforeAll(() => {

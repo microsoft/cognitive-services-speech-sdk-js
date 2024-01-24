@@ -6,16 +6,17 @@
 
 import {
     ConversationConnectionConfig,
+    IAuthentication,
     ServicePropertiesPropertyName,
-} from "../../common.speech/Exports";
-import { ConversationTranslatorConnectionFactory } from "../../common.speech/Transcription/ConversationTranslatorConnectionFactory";
+} from "../../common.speech/Exports.js";
+import { ConversationTranslatorConnectionFactory } from "../../common.speech/Transcription/ConversationTranslatorConnectionFactory.js";
 import {
     IDisposable,
     IErrorMessages,
     IStringDictionary,
     marshalPromiseToCallbacks
-} from "../../common/Exports";
-import { Contracts } from "../Contracts";
+} from "../../common/Exports.js";
+import { Contracts } from "../Contracts.js";
 import {
     AudioConfig,
     CancellationErrorCode,
@@ -28,8 +29,8 @@ import {
     SpeechTranslationConfig,
     TranslationRecognitionEventArgs,
     TranslationRecognizer
-} from "../Exports";
-import { ConversationImpl } from "./Conversation";
+} from "../Exports.js";
+import { ConversationImpl } from "./Conversation.js";
 import {
     ConversationCommon,
     ConversationExpirationEventArgs,
@@ -39,8 +40,8 @@ import {
     ConversationTranslationEventArgs,
     IConversationTranslator,
     Participant
-} from "./Exports";
-import { Callback, IConversation } from "./IConversation";
+} from "./Exports.js";
+import { Callback, IConversation } from "./IConversation.js";
 
 export enum SpeechState {
     Inactive, Connecting, Connected
@@ -108,11 +109,16 @@ class ConversationTranslationRecognizer extends TranslationRecognizer {
         this.privSpeechState = newState;
     }
 
+    public set authentication(token: IAuthentication) {
+        this.privReco.authentication = token;
+    }
+
+
     public onConnection(): void {
         this.privSpeechState = SpeechState.Connected;
     }
 
-    public async onDisconnection(): Promise<void> {
+    public async onCancelSpeech(): Promise<void> {
         this.privSpeechState = SpeechState.Inactive;
         await this.cancelSpeech();
     }
@@ -217,6 +223,10 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         }
 
         return true;
+    }
+
+    public onToken(token: IAuthentication): void {
+        this.privCTRecognizer.authentication = token;
     }
 
     public setServiceProperty(name: string, value: string): void {
@@ -473,7 +483,7 @@ export class ConversationTranslator extends ConversationCommon implements IConve
     private async cancelSpeech(): Promise<void> {
         try {
             this.privIsSpeaking = false;
-            await this.privCTRecognizer?.onDisconnection();
+            await this.privCTRecognizer?.onCancelSpeech();
             this.privCTRecognizer = undefined;
         } catch (e) {
             // ignore the error

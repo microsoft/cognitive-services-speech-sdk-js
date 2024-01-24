@@ -5,7 +5,7 @@
 import {
     EventType,
     PlatformEvent
-} from "./Exports";
+} from "./Exports.js";
 
 export class BackgroundEvent extends PlatformEvent {
     private privError: string;

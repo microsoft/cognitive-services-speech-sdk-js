@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { SpeechSynthesisBoundaryType } from "../../sdk/Exports";
+import { SpeechSynthesisBoundaryType } from "../../sdk/Exports.js";
 
 export enum MetadataType {
     WordBoundary = "WordBoundary",
@@ -9,6 +9,7 @@ export enum MetadataType {
     Viseme = "Viseme",
     SentenceBoundary = "SentenceBoundary",
     SessionEnd = "SessionEnd",
+    AvatarSignal = "TalkingAvatarSignal",
 }
 
 export interface ISynthesisMetadata {
@@ -25,6 +26,7 @@ export interface ISynthesisMetadata {
         VisemeId: number;
         AnimationChunk: string;
         IsLastAnimation: boolean;
+        Name: string;
     };
 }
 

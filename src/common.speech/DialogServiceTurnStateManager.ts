@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { InvalidOperationError } from "../common/Error";
-import { DialogServiceTurnState } from "./DialogServiceTurnState";
+import { InvalidOperationError } from "../common/Error.js";
+import { DialogServiceTurnState } from "./DialogServiceTurnState.js";
 
 export class DialogServiceTurnStateManager {
     private privTurnMap: Map<string, DialogServiceTurnState>;

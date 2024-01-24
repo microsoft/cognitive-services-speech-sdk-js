@@ -4,7 +4,7 @@
 import {
     CancellationErrorCode,
     CancellationReason,
-} from "./Exports";
+} from "./Exports.js";
 
 export interface CancellationEventArgs {
 

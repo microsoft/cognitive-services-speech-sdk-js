@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Contracts } from "../../sdk/Contracts";
-import { IPrimaryLanguage, ITranslations, RecognitionStatus } from "../Exports";
-import { TranslationStatus } from "../TranslationStatus";
+import { Contracts } from "../../sdk/Contracts.js";
+import { IPrimaryLanguage, ITranslations, RecognitionStatus } from "../Exports.js";
+import { TranslationStatus } from "../TranslationStatus.js";
 
 // translation.phrase
 export interface ITranslationPhrase {
@@ -11,7 +11,7 @@ export interface ITranslationPhrase {
     Offset: number;
     Duration: number;
     Translation?: ITranslations;
-    Text: string;
+    Text?: string;
     DisplayText?: string;
     PrimaryLanguage?: IPrimaryLanguage;
 }
@@ -52,19 +52,19 @@ export class TranslationPhrase implements ITranslationPhrase {
         return this.privTranslationPhrase.Duration;
     }
 
-    public get Text(): string {
+    public get Text(): string | undefined {
         return this.privTranslationPhrase.Text;
     }
 
-    public get Language(): string {
+    public get Language(): string | undefined {
         return this.privTranslationPhrase.PrimaryLanguage?.Language;
     }
 
-    public get Confidence(): string {
+    public get Confidence(): string | undefined {
         return this.privTranslationPhrase.PrimaryLanguage?.Confidence;
     }
 
-    public get Translation(): ITranslations {
+    public get Translation(): ITranslations | undefined {
         return this.privTranslationPhrase.Translation;
     }
 }

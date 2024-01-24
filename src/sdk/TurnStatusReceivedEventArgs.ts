@@ -4,7 +4,7 @@
 import {
     ITurnStatusResponsePayload,
     TurnStatusResponsePayload
-    } from "../common.speech/ServiceMessages/TurnStatusPayload";
+    } from "../common.speech/ServiceMessages/TurnStatusPayload.js";
 
 /**
  * Defines contents of received message/events.

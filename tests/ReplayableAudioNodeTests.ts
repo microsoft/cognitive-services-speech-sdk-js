@@ -10,6 +10,7 @@ import {
 } from "../src/common/Exports";
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
+
 let readCount: number;
 const targetBytes: number = 4096;
 const defaultAudioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;

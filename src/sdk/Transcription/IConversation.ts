@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 // Multi-device Conversation is a Preview feature.
 
-import { PropertyCollection, SpeechTranslationConfig } from "../Exports";
-import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
+import { PropertyCollection, SpeechTranslationConfig } from "../Exports.js";
+import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant.js";
 
 export type Callback = (result?: any) => void;
 

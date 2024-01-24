@@ -4,11 +4,14 @@ module.exports = {
     projects: [
         {
             displayName: "jsdom",
+            moduleNameMapper: {
+                "(.+)\\.js": "$1"
+            },
             transform: {
                 "^.+\\.ts$": "ts-jest",
             },
             testRegex: "tests/.*Tests\\.ts$",
-            testPathIgnorePatterns: ["/lib/", "/es2015/", "/node_modules/", "/src/"],
+            testPathIgnorePatterns: ["/lib/", "/node_modules/", "/src/"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "jsdom",
             collectCoverage: false,
@@ -17,11 +20,14 @@ module.exports = {
         },
         {
             displayName: "node",
+            moduleNameMapper: {
+                "(.+)\\.js": "$1"
+            },
             transform: {
                 "^.+\\.ts$": "ts-jest",
             },
             testRegex: "tests/.*Tests\\.ts$",
-            testPathIgnorePatterns: ["/lib/", "/es2015/", "/node_modules/", "/src/"],
+            testPathIgnorePatterns: ["/lib/", "/node_modules/", "/src/"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "node",
             collectCoverage: false,

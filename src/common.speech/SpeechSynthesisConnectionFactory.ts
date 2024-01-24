@@ -4,23 +4,23 @@
 import {
     ProxyInfo,
     WebsocketConnection
-} from "../common.browser/Exports";
+} from "../common.browser/Exports.js";
 import {
     IConnection,
     IStringDictionary
-} from "../common/Exports";
-import { PropertyId } from "../sdk/Exports";
-import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
+} from "../common/Exports.js";
+import { PropertyId } from "../sdk/Exports.js";
+import { ConnectionFactoryBase } from "./ConnectionFactoryBase.js";
 import {
     AuthInfo,
     SynthesizerConfig,
     WebsocketMessageFormatter
-} from "./Exports";
-import { HeaderNames } from "./HeaderNames";
-import { ISynthesisConnectionFactory } from "./ISynthesisConnectionFactory";
+} from "./Exports.js";
+import { HeaderNames } from "./HeaderNames.js";
+import { ISynthesisConnectionFactory } from "./ISynthesisConnectionFactory.js";
 import {
     QueryParameterNames
-} from "./QueryParameterNames";
+} from "./QueryParameterNames.js";
 
 export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFactory {
 
@@ -39,18 +39,26 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
         const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://" + region + "." + hostPrefix + ".speech" + hostSuffix);
 
         const queryParams: IStringDictionary<string> = {};
-
-        if (!endpoint) {
-            endpoint = host + this.synthesisUri;
-        }
-
         const headers: IStringDictionary<string> = {};
+
         if (authInfo.token !== undefined && authInfo.token !== "") {
             headers[authInfo.headerName] = authInfo.token;
         }
         headers[HeaderNames.ConnectionId] = connectionId;
-        if (endpointId !== undefined) {
-            headers[QueryParameterNames.CustomVoiceDeploymentId] = endpointId;
+        if (endpointId !== undefined && endpointId !== "") {
+            if (!endpoint || endpoint.search(QueryParameterNames.CustomVoiceDeploymentId) === -1) {
+                queryParams[QueryParameterNames.CustomVoiceDeploymentId] = endpointId;
+            }
+        }
+
+        if (config.avatarEnabled) {
+            if (!endpoint || endpoint.search(QueryParameterNames.EnableAvatar) === -1) {
+                queryParams[QueryParameterNames.EnableAvatar] = "true";
+            }
+        }
+
+        if (!endpoint) {
+            endpoint = host + this.synthesisUri;
         }
 
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);

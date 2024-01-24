@@ -38,11 +38,10 @@
     "net": false
   },
   "main": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
-  "module": "distrib/es2015/microsoft.cognitiveservices.speech.sdk.js",
+  "module": "distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
   "types": "distrib/lib/microsoft.cognitiveservices.speech.sdk.d.ts",
   "files": [
     "distrib/lib/**/*",
-    "distrib/es2015/**/*",
     "distrib/browser/**/*",
     "LICENSE",
     "REDIST.txt"
@@ -83,11 +82,11 @@
     "webpack-stream": "^7.0.0"
   },
   "scripts": {
-    "build": "gulp compress && gulp build2015",
+    "build": "gulp compress --gulpfile gulpfile.cjs && gulp build --gulpfile gulpfile.cjs",
     "test": "npm run lint && npm run jest --coverage",
     "jest": "jest",
-    "lint": "eslint -c .eslintrc.js --ext .ts src",
-    "civersion": "node ci/version.js",
+    "lint": "eslint -c .eslintrc.cjs --ext .ts src",
+    "civersion": "node ci/version.cjs",
     "prepare": "npm run build",
     "setup": "npm install --package-lock-only --ignore-scripts --no-audit"
   },
@@ -101,6 +100,7 @@
     "includeConsoleOutput": true
   },
   "dependencies": {
+    "@types/webrtc": "^0.0.37",
     "agent-base": "^6.0.1",
     "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",

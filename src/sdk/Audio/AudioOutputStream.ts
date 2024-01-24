@@ -8,13 +8,13 @@ import {
     IAudioDestination,
     IStreamChunk,
     Stream,
-} from "../../common/Exports";
-import { Contracts } from "../Contracts";
+} from "../../common/Exports.js";
+import { Contracts } from "../Contracts.js";
 import {
     AudioStreamFormat,
     PushAudioOutputStreamCallback
-} from "../Exports";
-import { AudioOutputFormatImpl } from "./AudioOutputFormat";
+} from "../Exports.js";
+import { AudioOutputFormatImpl } from "./AudioOutputFormat.js";
 
 /**
  * Represents audio output stream used for custom audio output configurations.

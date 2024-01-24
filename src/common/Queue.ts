@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { InvalidOperationError, ObjectDisposedError } from "./Error";
-import { IDetachable } from "./IDetachable";
-import { IDisposable } from "./IDisposable";
-import { List } from "./List";
+import { InvalidOperationError, ObjectDisposedError } from "./Error.js";
+import { IDetachable } from "./IDetachable.js";
+import { IDisposable } from "./IDisposable.js";
+import { List } from "./List.js";
 import {
     Deferred,
-} from "./Promise";
+} from "./Promise.js";
 export interface IQueue<TItem> extends IDisposable {
     enqueue(item: TItem): void;
     enqueueFromPromise(promise: Promise<TItem>): void;

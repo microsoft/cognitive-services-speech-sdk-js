@@ -2,14 +2,14 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
-import { CancellationErrorCodePropertyName } from "../common.speech/Exports";
+import { CancellationErrorCodePropertyName } from "../common.speech/Exports.js";
 import {
     CancellationDetailsBase,
     CancellationErrorCode,
     CancellationReason,
     PropertyCollection,
     ResultReason
-} from "./Exports";
+} from "./Exports.js";
 
 export interface EnrollmentResultDetails {
     profileId: string;

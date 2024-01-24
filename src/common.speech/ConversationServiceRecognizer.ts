@@ -1,4 +1,4 @@
-import { IAudioSource } from "../common/Exports";
+import { IAudioSource } from "../common/Exports.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -8,7 +8,7 @@ import {
     Recognizer,
     ResultReason,
     SpeechRecognitionResult
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     DetailedSpeechPhrase,
     EnumTranslation,
@@ -20,8 +20,8 @@ import {
     ServiceRecognizerBase,
     SimpleSpeechPhrase,
     SpeechHypothesis
-} from "./Exports";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./Exports.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 export class ConversationServiceRecognizer extends ServiceRecognizerBase {
 

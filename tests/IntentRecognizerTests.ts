@@ -17,7 +17,9 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 
+
 let objsToClose: any[];
+let bufferSize: number;
 
 beforeAll(() => {
     // override inputs, if necessary

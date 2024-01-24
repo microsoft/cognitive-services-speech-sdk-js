@@ -12,6 +12,7 @@ import {
     ConversationRecognizerFactory,
     ConversationTranslatorCommandTypes,
     ConversationTranslatorMessageTypes,
+    IAuthentication,
     IInternalConversation,
     IInternalParticipant,
     InternalParticipants,
@@ -20,13 +21,13 @@ import {
     ParticipantEventArgs,
     ParticipantsListEventArgs,
     TranscriberRecognizer
-} from "../../common.speech/Exports";
+} from "../../common.speech/Exports.js";
 import {
     IDisposable,
     IErrorMessages,
     marshalPromiseToCallbacks
-} from "../../common/Exports";
-import { Contracts } from "../Contracts";
+} from "../../common/Exports.js";
+import { Contracts } from "../Contracts.js";
 import {
     ConnectionEventArgs,
     ConversationExpirationEventArgs,
@@ -40,10 +41,10 @@ import {
     PropertyCollection,
     PropertyId,
     SpeechTranslationConfig,
-} from "../Exports";
-import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig";
-import { Callback, ConversationInfo, ConversationProperties, IConversation } from "./IConversation";
-import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant";
+} from "../Exports.js";
+import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig.js";
+import { Callback, ConversationInfo, ConversationProperties, IConversation } from "./IConversation.js";
+import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant.js";
 
 export abstract class Conversation implements IConversation {
 
@@ -323,6 +324,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privConversationTranslator = conversationTranslator;
     }
 
+    public onToken(token: IAuthentication): void {
+        this.privConversationTranslator.onToken(token);
+    }
 
     /**
      * Create a new conversation as Host

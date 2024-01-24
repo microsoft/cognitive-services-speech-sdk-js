@@ -4,13 +4,13 @@ import {
     RestConfigBase,
     RestMessageAdapter,
     RestRequestType,
-} from "../common.browser/Exports";
+} from "../common.browser/Exports.js";
 import {
     PropertyId,
-} from "../sdk/Exports";
-import { ConnectionFactoryBase } from "./ConnectionFactoryBase";
-import { AuthInfo, IAuthentication, SynthesizerConfig } from "./Exports";
-import { HeaderNames } from "./HeaderNames";
+} from "../sdk/Exports.js";
+import { ConnectionFactoryBase } from "./ConnectionFactoryBase.js";
+import { AuthInfo, IAuthentication, SynthesizerConfig } from "./Exports.js";
+import { HeaderNames } from "./HeaderNames.js";
 
 /**
  * Implements methods for speaker recognition classes, sending requests to endpoint

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IAudioSource } from "../common/Exports";
+import { IAudioSource } from "../common/Exports.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -13,7 +13,7 @@ import {
     SpeechRecognitionEventArgs,
     SpeechRecognitionResult,
     SpeechRecognizer,
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     CancellationErrorCodePropertyName,
     DetailedSpeechPhrase,
@@ -23,11 +23,11 @@ import {
     ServiceRecognizerBase,
     SimpleSpeechPhrase,
     SpeechHypothesis,
-} from "./Exports";
-import { IAuthentication } from "./IAuthentication";
-import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./Exports.js";
+import { IAuthentication } from "./IAuthentication.js";
+import { IConnectionFactory } from "./IConnectionFactory.js";
+import { RecognizerConfig } from "./RecognizerConfig.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 // eslint-disable-next-line max-classes-per-file
 export class SpeechServiceRecognizer extends ServiceRecognizerBase {
@@ -88,7 +88,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 break;
             case "speech.phrase":
                 const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
-                const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
+                const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus, this.privExpectContentAssessmentResponse);
 
                 this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + simple.Offset + simple.Duration);
 

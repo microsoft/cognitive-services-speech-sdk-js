@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ReplayableAudioNode } from "../common.browser/Exports";
+import { ReplayableAudioNode } from "../common.browser/Exports.js";
 import {
     DeferralMap,
     Deferred,
@@ -9,9 +9,9 @@ import {
     IAudioStreamNode,
     IConnection,
     MessageType,
-} from "../common/Exports";
-import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat";
-import { SpeakerRecognitionModel } from "../sdk/SpeakerRecognitionModel";
+} from "../common/Exports.js";
+import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat.js";
+import { SpeakerRecognitionModel } from "../sdk/SpeakerRecognitionModel.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -25,7 +25,7 @@ import {
     VoiceProfileResult,
     VoiceProfileType,
     VoiceProfile
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     CancellationErrorCodePropertyName,
     EnrollmentResponse,
@@ -34,11 +34,11 @@ import {
     ProfilePhraseResponse,
     ProfileResponse,
     ServiceRecognizerBase,
-} from "./Exports";
-import { IAuthentication } from "./IAuthentication";
-import { IConnectionFactory } from "./IConnectionFactory";
-import { RecognizerConfig } from "./RecognizerConfig";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./Exports.js";
+import { IAuthentication } from "./IAuthentication.js";
+import { IConnectionFactory } from "./IConnectionFactory.js";
+import { RecognizerConfig } from "./RecognizerConfig.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 interface CreateProfile {
     scenario: string;

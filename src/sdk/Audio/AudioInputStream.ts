@@ -7,7 +7,7 @@ import {
     connectivity,
     ISpeechConfigAudioDevice,
     type,
-} from "../../common.speech/Exports";
+} from "../../common.speech/Exports.js";
 import {
     AudioSourceEvent,
     AudioSourceInitializingEvent,
@@ -22,10 +22,10 @@ import {
     IAudioStreamNode,
     IStreamChunk,
     Stream,
-} from "../../common/Exports";
-import { createNoDashGuid } from "../../common/Guid";
-import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports";
-import { AudioStreamFormatImpl } from "./AudioStreamFormat";
+} from "../../common/Exports.js";
+import { createNoDashGuid } from "../../common/Guid.js";
+import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports.js";
+import { AudioStreamFormatImpl } from "./AudioStreamFormat.js";
 
 /**
  * Represents audio input stream used for custom audio input configurations.

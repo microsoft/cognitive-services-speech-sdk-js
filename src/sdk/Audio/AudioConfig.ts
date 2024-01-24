@@ -8,16 +8,16 @@ import {
     FileAudioSource,
     MicAudioSource,
     PcmRecorder,
-} from "../../common.browser/Exports";
-import { ISpeechConfigAudioDevice } from "../../common.speech/Exports";
+} from "../../common.browser/Exports.js";
+import { ISpeechConfigAudioDevice } from "../../common.speech/Exports.js";
 import {
     AudioSourceEvent,
     EventSource,
     IAudioDestination,
     IAudioSource,
     IAudioStreamNode
-} from "../../common/Exports";
-import { Contracts } from "../Contracts";
+} from "../../common/Exports.js";
+import { Contracts } from "../Contracts.js";
 import {
     AudioInputStream,
     AudioOutputStream,
@@ -28,11 +28,11 @@ import {
     PushAudioOutputStream,
     PushAudioOutputStreamCallback,
     SpeakerAudioDestination
-} from "../Exports";
-import { AudioFileWriter } from "./AudioFileWriter";
-import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream";
-import { PullAudioOutputStreamImpl, PushAudioOutputStreamImpl } from "./AudioOutputStream";
-import { AudioStreamFormatImpl } from "./AudioStreamFormat";
+} from "../Exports.js";
+import { AudioFileWriter } from "./AudioFileWriter.js";
+import { PullAudioInputStreamImpl, PushAudioInputStreamImpl } from "./AudioInputStream.js";
+import { PullAudioOutputStreamImpl, PushAudioOutputStreamImpl } from "./AudioOutputStream.js";
+import { AudioStreamFormatImpl } from "./AudioStreamFormat.js";
 
 /**
  * Represents audio input configuration used for specifying what type of input to use (microphone, file, stream).

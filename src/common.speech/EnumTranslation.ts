@@ -5,20 +5,24 @@ import {
     CancellationErrorCode,
     CancellationReason,
     ResultReason
-} from "../sdk/Exports";
-import { RecognitionStatus } from "./Exports";
+} from "../sdk/Exports.js";
+import { RecognitionStatus } from "./Exports.js";
 
 export class EnumTranslation {
-    public static implTranslateRecognitionResult(recognitionStatus: RecognitionStatus): ResultReason {
+    public static implTranslateRecognitionResult(recognitionStatus: RecognitionStatus, expectEndOfDictation: boolean = false): ResultReason {
         let reason = ResultReason.Canceled;
         switch (recognitionStatus) {
             case RecognitionStatus.Success:
                 reason = ResultReason.RecognizedSpeech;
                 break;
+            case RecognitionStatus.EndOfDictation:
+                // If we need the result in EndOfDictation (typically some session level result),
+                // translate into RecognizedSpeech, otherwise NoMatch
+                reason = expectEndOfDictation ? ResultReason.RecognizedSpeech : ResultReason.NoMatch;
+                break;
             case RecognitionStatus.NoMatch:
             case RecognitionStatus.InitialSilenceTimeout:
             case RecognitionStatus.BabbleTimeout:
-            case RecognitionStatus.EndOfDictation:
                 reason = ResultReason.NoMatch;
                 break;
             case RecognitionStatus.Error:

@@ -4,7 +4,7 @@
 import {
     IDynamicGrammar,
     IDynamicGrammarGeneric,
-} from "./Exports";
+} from "./Exports.js";
 
 /**
  * Responsible for building the object to be sent to the speech service to support dynamic grammars.

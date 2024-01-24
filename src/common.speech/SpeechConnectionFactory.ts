@@ -4,32 +4,32 @@
 import {
     ProxyInfo,
     WebsocketConnection,
-} from "../common.browser/Exports";
+} from "../common.browser/Exports.js";
 import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
-} from "../common.speech/Exports";
+} from "../common.speech/Exports.js";
 import {
     IConnection,
     IStringDictionary
-} from "../common/Exports";
+} from "../common/Exports.js";
 import {
     OutputFormat,
     PropertyId
-} from "../sdk/Exports";
+} from "../sdk/Exports.js";
 import {
     ConnectionFactoryBase
-} from "./ConnectionFactoryBase";
+} from "./ConnectionFactoryBase.js";
 import {
     AuthInfo,
     RecognitionMode,
     RecognizerConfig,
     WebsocketMessageFormatter
-} from "./Exports";
-import { HeaderNames } from "./HeaderNames";
+} from "./Exports.js";
+import { HeaderNames } from "./HeaderNames.js";
 import {
     QueryParameterNames
-} from "./QueryParameterNames";
+} from "./QueryParameterNames.js";
 
 export class SpeechConnectionFactory extends ConnectionFactoryBase {
 

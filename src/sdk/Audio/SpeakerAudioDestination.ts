@@ -1,18 +1,17 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { SynthesisAdapterBase } from "../../common.speech/Exports";
 import {
     BackgroundEvent,
     createNoDashGuid,
     Events,
     IAudioDestination,
     INumberDictionary
-} from "../../common/Exports";
-import { AudioStreamFormat, IPlayer } from "../Exports";
-import { AudioOutputFormatImpl } from "./AudioOutputFormat";
-import { PullAudioOutputStreamImpl } from "./AudioOutputStream";
-import { AudioFormatTag } from "./AudioStreamFormat";
+} from "../../common/Exports.js";
+import { AudioStreamFormat, IPlayer } from "../Exports.js";
+import { AudioOutputFormatImpl } from "./AudioOutputFormat.js";
+import { PullAudioOutputStreamImpl } from "./AudioOutputStream.js";
+import { AudioFormatTag } from "./AudioStreamFormat.js";
 
 const MediaDurationPlaceholderSeconds = 60 * 30;
 
@@ -99,7 +98,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
             } else {
                 let receivedAudio = new ArrayBuffer(this.privBytesReceived);
                 this.privAudioOutputStream.read(receivedAudio).then((): void => {
-                    receivedAudio = SynthesisAdapterBase.addHeader(receivedAudio, this.privFormat);
+                    receivedAudio = this.privFormat.addHeader(receivedAudio);
                     const audioBlob = new Blob([receivedAudio], { type: AudioFormatToMimeType[this.privFormat.formatTag] });
                     this.privAudio.src = window.URL.createObjectURL(audioBlob);
                     this.notifyPlayback().then((): void => {

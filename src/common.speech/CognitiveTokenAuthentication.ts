@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ArgumentNullError } from "../common/Exports";
-import { AuthInfo, IAuthentication } from "./IAuthentication";
-import { HeaderNames } from "./HeaderNames";
+import { ArgumentNullError } from "../common/Exports.js";
+import { AuthInfo, IAuthentication } from "./IAuthentication.js";
+import { HeaderNames } from "./HeaderNames.js";
 
 export class CognitiveTokenAuthentication implements IAuthentication {
-    private static privTokenPrefix: string = "bearer ";
+    private static privTokenPrefix: string = "Bearer ";
     private privFetchCallback: (authFetchEventId: string) => Promise<string>;
     private privFetchOnExpiryCallback: (authFetchEventId: string) => Promise<string>;
 

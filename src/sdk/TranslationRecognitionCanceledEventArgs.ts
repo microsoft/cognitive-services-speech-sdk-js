@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { CancellationErrorCode, CancellationReason, TranslationRecognitionResult } from "./Exports";
+import { CancellationErrorCode, CancellationReason, TranslationRecognitionResult } from "./Exports.js";
 
 /**
  * Define payload of speech recognition canceled result events.

@@ -3,11 +3,11 @@
 
 import {
     ServicePropertiesPropertyName,
-} from "../common.speech/Exports";
-import { IConnection, IStringDictionary } from "../common/Exports";
-import { PropertyId } from "../sdk/Exports";
-import { AuthInfo, IConnectionFactory, RecognizerConfig } from "./Exports";
-import { QueryParameterNames } from "./QueryParameterNames";
+} from "../common.speech/Exports.js";
+import { IConnection, IStringDictionary } from "../common/Exports.js";
+import { PropertyId } from "../sdk/Exports.js";
+import { AuthInfo, IConnectionFactory, RecognizerConfig } from "./Exports.js";
+import { QueryParameterNames } from "./QueryParameterNames.js";
 
 export abstract class ConnectionFactoryBase implements IConnectionFactory {
 

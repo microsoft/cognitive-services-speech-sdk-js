@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ObjectDisposedError } from "./Error";
-import { IDetachable } from "./IDetachable";
-import { IStringDictionary } from "./IDictionary";
-import { IDisposable } from "./IDisposable";
+import { ObjectDisposedError } from "./Error.js";
+import { IDetachable } from "./IDetachable.js";
+import { IStringDictionary } from "./IDictionary.js";
+import { IDisposable } from "./IDisposable.js";
 
 export interface IList<TItem> extends IDisposable {
     get(itemIndex: number): TItem;

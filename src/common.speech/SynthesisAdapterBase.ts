@@ -14,8 +14,8 @@ import {
     IDisposable,
     MessageType,
     ServiceEvent,
-} from "../common/Exports";
-import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat";
+} from "../common/Exports.js";
+import { AudioOutputFormatImpl } from "../sdk/Audio/AudioOutputFormat.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -23,30 +23,30 @@ import {
     PropertyId,
     ResultReason,
     SpeechSynthesisBookmarkEventArgs,
-    SpeechSynthesisEventArgs,
     SpeechSynthesisResult,
     SpeechSynthesisVisemeEventArgs,
     SpeechSynthesisWordBoundaryEventArgs,
-    SpeechSynthesizer,
-} from "../sdk/Exports";
+    Synthesizer,
+} from "../sdk/Exports.js";
 import {
     AgentConfig,
     CancellationErrorCodePropertyName,
     ISynthesisConnectionFactory,
+    ISynthesisMetadata,
     MetadataType,
     SynthesisAudioMetadata,
     SynthesisContext,
     SynthesisTurn,
     SynthesizerConfig
-} from "./Exports";
-import { AuthInfo, IAuthentication } from "./IAuthentication";
-import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal";
+} from "./Exports.js";
+import { AuthInfo, IAuthentication } from "./IAuthentication.js";
+import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
-export class SynthesisAdapterBase implements IDisposable {
+export abstract class SynthesisAdapterBase implements IDisposable {
     protected privSynthesisTurn: SynthesisTurn;
     protected privConnectionId: string;
     protected privSynthesizerConfig: SynthesizerConfig;
-    protected privSpeechSynthesizer: SpeechSynthesizer;
+    protected privSynthesizer: Synthesizer;
     protected privSuccessCallback: (e: SpeechSynthesisResult) => void;
     protected privErrorCallback: (e: string) => void;
 
@@ -110,17 +110,16 @@ export class SynthesisAdapterBase implements IDisposable {
     private privIsDisposed: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privServiceEvents: EventSource<ServiceEvent>;
-    private privSynthesisContext: SynthesisContext;
+    protected privSynthesisContext: SynthesisContext;
     private privAgentConfig: AgentConfig;
     private privActivityTemplate: string;
-    private privAudioOutputFormat: AudioOutputFormatImpl;
+    protected privAudioOutputFormat: AudioOutputFormatImpl;
     private privSessionAudioDestination: IAudioDestination;
 
     public constructor(
         authentication: IAuthentication,
         connectionFactory: ISynthesisConnectionFactory,
         synthesizerConfig: SynthesizerConfig,
-        speechSynthesizer: SpeechSynthesizer,
         audioDestination: IAudioDestination) {
 
         if (!authentication) {
@@ -139,12 +138,11 @@ export class SynthesisAdapterBase implements IDisposable {
         this.privConnectionFactory = connectionFactory;
         this.privSynthesizerConfig = synthesizerConfig;
         this.privIsDisposed = false;
-        this.privSpeechSynthesizer = speechSynthesizer;
         this.privSessionAudioDestination = audioDestination;
         this.privSynthesisTurn = new SynthesisTurn();
         this.privConnectionEvents = new EventSource<ConnectionEvent>();
         this.privServiceEvents = new EventSource<ServiceEvent>();
-        this.privSynthesisContext = new SynthesisContext(this.privSpeechSynthesizer);
+        this.privSynthesisContext = new SynthesisContext();
         this.privAgentConfig = new AgentConfig();
 
         this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
@@ -157,17 +155,6 @@ export class SynthesisAdapterBase implements IDisposable {
                 }
             }
         });
-    }
-
-    public static addHeader(audio: ArrayBuffer, format: AudioOutputFormatImpl): ArrayBuffer {
-        if (!format.hasHeader) {
-            return audio;
-        }
-        format.updateHeader(audio.byteLength);
-        const tmp = new Uint8Array(audio.byteLength + format.header.byteLength);
-        tmp.set(new Uint8Array(format.header), 0);
-        tmp.set(new Uint8Array(audio), format.header.byteLength);
-        return tmp.buffer;
     }
 
     public isDisposed(): boolean {
@@ -211,7 +198,7 @@ export class SynthesisAdapterBase implements IDisposable {
         if (isSSML) {
             ssml = text;
         } else {
-            ssml = this.privSpeechSynthesizer.buildSsml(text);
+            ssml = this.privSynthesizer.buildSsml(text);
         }
 
         if (this.speakOverride !== undefined) {
@@ -228,16 +215,7 @@ export class SynthesisAdapterBase implements IDisposable {
             const connection: IConnection = await this.fetchConnection();
             await this.sendSynthesisContext(connection);
             await this.sendSsmlMessage(connection, ssml, requestId);
-            const synthesisStartEventArgs: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(
-                new SpeechSynthesisResult(
-                    requestId,
-                    ResultReason.SynthesizingAudioStarted,
-                )
-            );
-
-            if (!!this.privSpeechSynthesizer.synthesisStarted) {
-                this.privSpeechSynthesizer.synthesisStarted(this.privSpeechSynthesizer, synthesisStartEventArgs);
-            }
+            this.onSynthesisStarted(requestId);
 
             void this.receiveMessage();
         } catch (e) {
@@ -246,10 +224,25 @@ export class SynthesisAdapterBase implements IDisposable {
         }
     }
 
+    public async stopSpeaking(): Promise<void> {
+        await this.connectImpl();
+        const connection: IConnection = await this.fetchConnection();
+
+        return connection.send(new SpeechConnectionMessage(
+            MessageType.Text,
+            "synthesis.control",
+            this.privSynthesisTurn.requestId,
+            "application/json",
+            JSON.stringify({
+                action: "stop"
+            })
+        ));
+    }
+
     // Cancels synthesis.
     protected cancelSynthesis(
         requestId: string,
-        cancellationReason: CancellationReason,
+        _cancellationReason: CancellationReason,
         errorCode: CancellationErrorCode,
         error: string): void {
         const properties: PropertyCollection = new PropertyCollection();
@@ -262,13 +255,7 @@ export class SynthesisAdapterBase implements IDisposable {
             properties
         );
 
-        if (!!this.privSpeechSynthesizer.SynthesisCanceled) {
-            const cancelEvent: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(result);
-            try {
-                this.privSpeechSynthesizer.SynthesisCanceled(this.privSpeechSynthesizer, cancelEvent);
-                /* eslint-disable no-empty */
-            } catch { }
-        }
+        this.onSynthesisCancelled(result);
 
         if (!!this.privSuccessCallback) {
             try {
@@ -296,7 +283,7 @@ export class SynthesisAdapterBase implements IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    protected processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): boolean {
+    protected processTypeSpecificMessages(_connectionMessage: SpeechConnectionMessage): boolean {
         return true;
     }
 
@@ -328,7 +315,7 @@ export class SynthesisAdapterBase implements IDisposable {
             if (connectionMessage.requestId.toLowerCase() === this.privSynthesisTurn.requestId.toLowerCase()) {
                 switch (connectionMessage.path.toLowerCase()) {
                     case "turn.start":
-                        this.privSynthesisTurn.onServiceTurnStartResponse();
+                        this.privSynthesisTurn.onServiceTurnStartResponse(connectionMessage.textBody);
                         break;
                     case "response":
                         this.privSynthesisTurn.onServiceResponseMessage(connectionMessage.textBody);
@@ -337,20 +324,7 @@ export class SynthesisAdapterBase implements IDisposable {
                         if (this.privSynthesisTurn.streamId.toLowerCase() === connectionMessage.streamId.toLowerCase()
                             && !!connectionMessage.binaryBody) {
                             this.privSynthesisTurn.onAudioChunkReceived(connectionMessage.binaryBody);
-                            if (!!this.privSpeechSynthesizer.synthesizing) {
-                                try {
-                                    const audioWithHeader = SynthesisAdapterBase.addHeader(connectionMessage.binaryBody, this.privSynthesisTurn.audioOutputFormat);
-                                    const ev: SpeechSynthesisEventArgs = new SpeechSynthesisEventArgs(
-                                        new SpeechSynthesisResult(
-                                            this.privSynthesisTurn.requestId,
-                                            ResultReason.SynthesizingAudio,
-                                            audioWithHeader));
-                                    this.privSpeechSynthesizer.synthesizing(this.privSpeechSynthesizer, ev);
-                                } catch (error) {
-                                    // Not going to let errors in the event handler
-                                    // trip things up.
-                                }
-                            }
+                            this.onSynthesizing(connectionMessage.binaryBody);
                             if (this.privSessionAudioDestination !== undefined) {
                                 this.privSessionAudioDestination.write(connectionMessage.binaryBody);
                             }
@@ -363,7 +337,6 @@ export class SynthesisAdapterBase implements IDisposable {
                                 case MetadataType.WordBoundary:
                                 case MetadataType.SentenceBoundary:
                                     this.privSynthesisTurn.onTextBoundaryEvent(metadata);
-
                                     const wordBoundaryEventArgs: SpeechSynthesisWordBoundaryEventArgs = new SpeechSynthesisWordBoundaryEventArgs(
                                         metadata.Data.Offset,
                                         metadata.Data.Duration,
@@ -372,29 +345,13 @@ export class SynthesisAdapterBase implements IDisposable {
                                         metadata.Type === MetadataType.WordBoundary
                                             ? this.privSynthesisTurn.currentTextOffset : this.privSynthesisTurn.currentSentenceOffset,
                                         metadata.Data.text.BoundaryType);
-
-                                    if (!!this.privSpeechSynthesizer.wordBoundary) {
-                                        try {
-                                            this.privSpeechSynthesizer.wordBoundary(this.privSpeechSynthesizer, wordBoundaryEventArgs);
-                                        } catch (error) {
-                                            // Not going to let errors in the event handler
-                                            // trip things up.
-                                        }
-                                    }
+                                    this.onWordBoundary(wordBoundaryEventArgs);
                                     break;
                                 case MetadataType.Bookmark:
                                     const bookmarkEventArgs: SpeechSynthesisBookmarkEventArgs = new SpeechSynthesisBookmarkEventArgs(
                                         metadata.Data.Offset,
                                         metadata.Data.Bookmark);
-
-                                    if (!!this.privSpeechSynthesizer.bookmarkReached) {
-                                        try {
-                                            this.privSpeechSynthesizer.bookmarkReached(this.privSpeechSynthesizer, bookmarkEventArgs);
-                                        } catch (error) {
-                                            // Not going to let errors in the event handler
-                                            // trip things up.
-                                        }
-                                    }
+                                    this.onBookmarkReached(bookmarkEventArgs);
                                     break;
                                 case MetadataType.Viseme:
                                     this.privSynthesisTurn.onVisemeMetadataReceived(metadata);
@@ -403,16 +360,11 @@ export class SynthesisAdapterBase implements IDisposable {
                                             metadata.Data.Offset,
                                             metadata.Data.VisemeId,
                                             this.privSynthesisTurn.getAndClearVisemeAnimation());
-
-                                        if (!!this.privSpeechSynthesizer.visemeReceived) {
-                                            try {
-                                                this.privSpeechSynthesizer.visemeReceived(this.privSpeechSynthesizer, visemeEventArgs);
-                                            } catch (error) {
-                                                // Not going to let errors in the event handler
-                                                // trip things up.
-                                            }
-                                        }
+                                        this.onVisemeReceived(visemeEventArgs);
                                     }
+                                    break;
+                                case MetadataType.AvatarSignal:
+                                    this.onAvatarEvent(metadata);
                                     break;
                                 case MetadataType.SessionEnd:
                                     this.privSynthesisTurn.onSessionEnd(metadata);
@@ -424,15 +376,7 @@ export class SynthesisAdapterBase implements IDisposable {
                         this.privSynthesisTurn.onServiceTurnEndResponse();
                         let result: SpeechSynthesisResult;
                         try {
-                            const audioBuffer: ArrayBuffer = await this.privSynthesisTurn.getAllReceivedAudioWithHeader();
-                            result = new SpeechSynthesisResult(
-                                this.privSynthesisTurn.requestId,
-                                ResultReason.SynthesizingAudioCompleted,
-                                audioBuffer,
-                                undefined,
-                                undefined,
-                                this.privSynthesisTurn.audioDuration
-                            );
+                            result = await this.privSynthesisTurn.constructSynthesisResult();
                             if (!!this.privSuccessCallback) {
                                 this.privSuccessCallback(result);
                             }
@@ -441,21 +385,10 @@ export class SynthesisAdapterBase implements IDisposable {
                                 this.privErrorCallback(error as string);
                             }
                         }
-                        if (this.privSpeechSynthesizer.synthesisCompleted) {
-                            try {
-                                this.privSpeechSynthesizer.synthesisCompleted(
-                                    this.privSpeechSynthesizer,
-                                    new SpeechSynthesisEventArgs(result)
-                                );
-                            } catch (e) {
-                                // Not going to let errors in the event handler
-                                // trip things up.
-                            }
-                        }
+                        this.onSynthesisCompleted(result);
                         break;
 
                     default:
-
                         if (!this.processTypeSpecificMessages(connectionMessage)) {
                             // here are some messages that the derived class has not processed, dispatch them to connect class
                             if (!!this.privServiceEvents) {
@@ -474,6 +407,7 @@ export class SynthesisAdapterBase implements IDisposable {
     }
 
     protected sendSynthesisContext(connection: IConnection): Promise<void> {
+        this.setSynthesisContextSynthesisSection();
         const synthesisContextJson = this.synthesisContext.toJSON();
 
         if (synthesisContextJson) {
@@ -484,6 +418,12 @@ export class SynthesisAdapterBase implements IDisposable {
                 "application/json",
                 synthesisContextJson));
         }
+        return;
+    }
+
+    protected abstract setSynthesisContextSynthesisSection(): void;
+
+    protected setSpeechConfigSynthesisSection(): void {
         return;
     }
 
@@ -527,7 +467,9 @@ export class SynthesisAdapterBase implements IDisposable {
                 return this.connectImpl(true);
             } else {
                 this.privSynthesisTurn.onConnectionEstablishCompleted(response.statusCode);
-                return Promise.reject(`Unable to contact server. StatusCode: ${response.statusCode}, ${this.privSynthesizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint)} Reason: ${response.reason}`);
+                return Promise.reject(
+                    `Unable to contact server. StatusCode: ${response.statusCode},
+                    ${this.privSynthesizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_Url)} Reason: ${response.reason}`);
             }
         }, (error: string): Promise<IConnection> => {
             this.privSynthesisTurn.onAuthCompleted(true);
@@ -586,7 +528,41 @@ export class SynthesisAdapterBase implements IDisposable {
         if (this.configConnectionOverride !== undefined) {
             return this.configConnectionOverride(connection);
         }
+        this.setSpeechConfigSynthesisSection();
         await this.sendSpeechServiceConfig(connection, this.privSynthesizerConfig.SpeechServiceConfig.serialize());
         return connection;
     }
+
+    protected onAvatarEvent(_metadata: ISynthesisMetadata): void {
+        return;
+    }
+
+    protected onSynthesisStarted(_requestId: string): void {
+        return;
+    }
+
+    protected onSynthesizing(_audio: ArrayBuffer): void {
+        return;
+    }
+
+    protected onSynthesisCancelled(_result: SpeechSynthesisResult): void {
+        return;
+    }
+
+    protected onSynthesisCompleted(_result: SpeechSynthesisResult): void {
+        return;
+    }
+
+    protected onWordBoundary(_wordBoundaryEventArgs: SpeechSynthesisWordBoundaryEventArgs): void {
+        return;
+    }
+
+    protected onVisemeReceived(_visemeEventArgs: SpeechSynthesisVisemeEventArgs): void {
+        return;
+    }
+
+    protected onBookmarkReached(_bookmarkEventArgs: SpeechSynthesisBookmarkEventArgs): void {
+        return;
+    }
+
 }
