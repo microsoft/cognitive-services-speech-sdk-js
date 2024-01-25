@@ -33,20 +33,6 @@ jobs:
   - bash: npm ci && npm run civersion
     displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
   - bash: |
-      echo ConverstationTranscriptionKeyWestUSOnline=$(ConverstationTranscriptionKeyWestUSOnline) >>variablegroup.txt
-      echo DialogSubscriptionKey = $(DialogSubscriptionKey) >>variablegroup.txt
-      echo luis-westus-s0-201809-key1 = $(luis-westus-s0-201809-key1) >>variablegroup.txt
-      echo SpeakerRecognition-WestUS-Key = $(SpeakerRecognition-WestUS-Key) >>variablegroup.txt
-      echo speech-ne-s0-key1 = $(speech-ne-s0-key1) >>variablegroup.txt
-      echo WestCentralUSKeySkyMan = $(WestCentralUSKeySkyMan) >>variablegroup.txt
-    displayName: debug variable group values 
-  - task: PublishBuildArtifacts@1
-    displayName: Publish variable group
-    inputs:
-      PathtoPublish: variablegroup.txt
-      ArtifactName: VariableGroup
-      publishLocation: Container
-  - bash: |
       F=src/common.speech/SpeechServiceConfig.ts
       [[ -f $F ]] || exit 1
       perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
