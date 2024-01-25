@@ -16,7 +16,7 @@ resources:
 jobs:
 - job: Build
   pool:
-    name: CarbonWS2022Compliant
+    name: SkymanWS2022Compliant
   timeoutInMinutes: 60
   variables:
     ArtifactOut: $(Build.ArtifactStagingDirectory)/Out/JavaScript
