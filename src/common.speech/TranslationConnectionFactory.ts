@@ -76,12 +76,14 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         return StringUtils.formatString(endpointUrl, { region });
     }
 
-    public setQueryParams(queryParams: IStringDictionary<string>, config: RecognizerConfig, endpointUrl: string): void {
+    public setQueryParams(queryParams: IStringDictionary<string>, config: RecognizerConfig, endpointUrl: string, setScenario: boolean = true): void {
 
         queryParams.from = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
         queryParams.to = config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages);
-        queryParams.scenario = config.recognitionMode === RecognitionMode.Interactive ? "interactive" :
-            config.recognitionMode === RecognitionMode.Conversation ? "conversation" : "";
+        if (setScenario) {
+            queryParams.scenario = config.recognitionMode === RecognitionMode.Interactive ? "interactive" :
+                config.recognitionMode === RecognitionMode.Conversation ? "conversation" : "";
+        }
 
         this.setCommonUrlParams(config, queryParams, endpointUrl);
         this.setUrlParameter(

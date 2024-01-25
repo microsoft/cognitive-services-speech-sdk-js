@@ -116,7 +116,7 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
             endpointUrl = connFactory.getEndpointUrl(config, true);
             endpointUrl = StringUtils.formatString(endpointUrl, replacementValues);
 
-            connFactory.setQueryParams(queryParams, config, endpointUrl);
+            connFactory.setQueryParams(queryParams, config, endpointUrl, false);
         }
 
         headers[HeaderNames.ConnectionId] = connectionId;
