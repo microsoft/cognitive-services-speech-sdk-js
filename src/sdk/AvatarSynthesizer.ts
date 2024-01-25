@@ -93,6 +93,21 @@ export class AvatarSynthesizer extends Synthesizer {
                 iceGatheringDone.resolve();
             }
         };
+        peerConnection.onicecandidate = (event: RTCPeerConnectionIceEvent): void => {
+            if (event.candidate) {
+                Events.instance.onEvent(new PlatformEvent("peer connection: ice candidate: " + event.candidate.candidate, EventType.Debug));
+            } else {
+                Events.instance.onEvent(new PlatformEvent("peer connection: ice candidate: complete", EventType.Debug));
+                iceGatheringDone.resolve();
+            }
+        };
+        // Set a timeout for ice gathering, currently 2 seconds.
+        setTimeout((): void => {
+            if (peerConnection.iceGatheringState !== "complete") {
+                Events.instance.onEvent(new PlatformEvent("peer connection: ice gathering timeout.", EventType.Warning));
+                iceGatheringDone.resolve();
+            }
+        }, 2000);
         const sdp: RTCSessionDescriptionInit = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(sdp);
         await iceGatheringDone.promise;

@@ -1,7 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { PropertyCollection, ResultReason, SynthesisResult, VoiceInfo } from "./Exports.js";
+import {
+    IVoiceJson,
+    PropertyCollection,
+    ResultReason,
+    SynthesisResult,
+    VoiceInfo,
+} from "./Exports.js";
 
 /**
  * Defines result of speech synthesis.
@@ -22,7 +28,7 @@ export class SynthesisVoicesResult extends SynthesisResult {
             super(requestId, ResultReason.VoicesListRetrieved, undefined, new PropertyCollection());
             this.privVoices = [];
             for (const item of json) {
-                this.privVoices.push(new VoiceInfo(item as { Name: string; LocalName: string; DisplayName: string; LocaleName: string; ShortName: string; Gender: string; VoiceType: string; Locale: string; StyleList: string[] }));
+                this.privVoices.push(new VoiceInfo(item as IVoiceJson));
             }
         } else {
             super(requestId, ResultReason.Canceled, errorDetails ? errorDetails : "Error information unavailable", new PropertyCollection());
