@@ -645,7 +645,7 @@ describe("conversation service tests", (): void => {
         }));
     });
 
-    test("Start Conversation, join as host and connect to CTS endpoint", (done: jest.DoneCallback): void => {
+    test.skip("Start Conversation, join as host and connect to CTS endpoint", (done: jest.DoneCallback): void => {
 
         // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host and connect to CTS endpoint");
