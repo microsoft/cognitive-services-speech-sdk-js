@@ -17,7 +17,7 @@ export class RawWebsocketMessage {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if (messageType === MessageType.Binary && payload.__proto__.constructor.name !== "ArrayBuffer") {
+        if (messageType === MessageType.Binary && Object.getPrototypeOf(payload).constructor.name !== "ArrayBuffer") {
             throw new InvalidOperationError("Payload must be ArrayBuffer");
         }
 
