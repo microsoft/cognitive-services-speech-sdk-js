@@ -30,7 +30,9 @@ jobs:
         eq(variables['System.DefinitionId'], '198'),
         eq(variables['Build.SourceBranch'], 'refs/heads/master'),
         or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')))
-  - bash: npm ci && npm run civersion
+  - bash: |
+      npm ci && npm run civersion
+      echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
     displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
   - bash: |
       F=src/common.speech/SpeechServiceConfig.ts
@@ -72,6 +74,7 @@ jobs:
   - bash: |
         set -e
         cd tests/packaging
+        echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
         npm ci
         npm install ../../microsoft-cognitiveservices-speech-sdk-$SPEECHSDK_SEMVER2NOMETA.tgz
         npm run bundle
