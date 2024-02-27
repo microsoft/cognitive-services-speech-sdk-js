@@ -32,6 +32,8 @@ jobs:
         or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')))
   - bash: |
       npm ci && npm run civersion
+      echo "COLLECTION_ID=$(System.CollectionId)"
+      echo "DEFINITION_ID=$(System.DefinitionId)"
       echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
     displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
   - bash: |
