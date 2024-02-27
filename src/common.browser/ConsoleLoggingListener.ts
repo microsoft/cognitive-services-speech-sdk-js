@@ -12,6 +12,8 @@ export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
     private privLogPath: fs.PathLike = undefined;
     private privEnableConsoleOutput: boolean = true;
 
+    public logCallback: (s: string) => void;
+
     public constructor(logLevelFilter: LogLevel = LogLevel.None) { // Console output disabled by default
         this.privLogLevelFilter = logLevelFilter;
     }
@@ -28,6 +30,9 @@ export class ConsoleLoggingListener implements IEventListener<PlatformEvent> {
     public onEvent(event: PlatformEvent): void {
         if (event.eventType >= this.privLogLevelFilter) {
             const log = this.toString(event);
+            if (!!this.logCallback) {
+                this.logCallback(log);
+            }
             if (!!this.privLogPath) {
                 fs.writeFileSync(this.privLogPath, log + "\n", { flag: "a+" });
             }

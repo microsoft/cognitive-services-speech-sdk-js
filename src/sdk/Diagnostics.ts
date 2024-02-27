@@ -7,6 +7,8 @@ import { ConsoleLoggingListener } from "../common.browser/Exports.js";
 import { Events } from "../common/Exports.js";
 import { LogLevel } from "./LogLevel.js";
 
+type LogCallback = (s: string) => void;
+
 /**
  * Defines diagnostics API for managing console output
  * Added in version 1.21.0
@@ -38,6 +40,13 @@ export class Diagnostics {
             }
         } else {
             throw new Error("File system logging not available in browser.");
+        }
+    }
+
+
+    public static set onLogOutput( callback: LogCallback ) {
+        if (!!this.privListener) {
+            this.privListener.logCallback = callback;
         }
     }
 
