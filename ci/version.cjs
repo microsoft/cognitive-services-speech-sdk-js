@@ -26,8 +26,8 @@
     var buildType = "dev"
     var inAzureDevOps = false
 
-    if (process.env.SYSTEM_COLLECTIONID === "19422243-19b9-4d85-9ca6-bc961861d287" &&
-         process.env.SYSTEM_DEFINITIONID === "7863") {
+    if (process.env.SYSTEM_COLLECTIONID === "26f8e8b1-373f-4f65-96fc-d17a59b38306" &&
+         process.env.SYSTEM_DEFINITIONID === "198") {
 
         inAzureDevOps = true
 
