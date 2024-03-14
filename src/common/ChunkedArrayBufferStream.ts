@@ -35,7 +35,9 @@ export class ChunkedArrayBufferStream extends Stream<ArrayBuffer> {
             // Find out how many bytes we can copy into the read buffer.
             const bytesToCopy: number = Math.min(chunk.buffer.byteLength - bytesCopiedFromBuffer, this.privTargetChunkSize - this.privNextBufferReadyBytes);
             const targetView: Uint8Array = new Uint8Array(this.privNextBufferToWrite);
-            const sourceView: Uint8Array = new Uint8Array(chunk.buffer.slice(bytesCopiedFromBuffer, bytesToCopy + bytesCopiedFromBuffer));
+            const sourceView: Uint8Array = ArrayBuffer.isView(chunk.buffer) ?
+              new Uint8Array(chunk.buffer.buffer, chunk.buffer.byteOffset + bytesCopiedFromBuffer, bytesToCopy) :
+              new Uint8Array(chunk.buffer.slice(bytesCopiedFromBuffer, bytesToCopy + bytesCopiedFromBuffer));
 
             targetView.set(sourceView, this.privNextBufferReadyBytes);
             this.privNextBufferReadyBytes += bytesToCopy;
