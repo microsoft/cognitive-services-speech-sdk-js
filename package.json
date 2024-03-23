@@ -103,7 +103,7 @@
     "@types/webrtc": "^0.0.37",
     "agent-base": "^6.0.1",
     "bent": "^7.3.12",
-    "https-proxy-agent": "^4.0.0",
+    "https-proxy-agent": "^5.0.0",
     "uuid": "^9.0.0",
     "ws": "^7.5.6"
   },
