@@ -129,7 +129,7 @@ export abstract class Synthesizer {
             ["en-PH"]: "en-PH-JamesNeural",
             ["en-SG"]: "en-SG-LunaNeural",
             ["en-TZ"]: "en-TZ-ElimuNeural",
-            ["en-US"]: "en-US-JennyNeural",
+            ["en-US"]: "en-US-AvaMultilingualNeural",
             ["en-ZA"]: "en-ZA-LeahNeural",
             ["es-AR"]: "es-AR-ElenaNeural",
             ["es-BO"]: "es-BO-MarceloNeural",
