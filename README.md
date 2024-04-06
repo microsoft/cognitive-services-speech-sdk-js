@@ -29,7 +29,7 @@ npm install microsoft-cognitiveservices-speech-sdk
 
 ## Building
 
-This source code for the Cognitive Services Speeck SDK (JavaScript) is available in a public [GitHub repository](https://github.com/Microsoft/cognitive-services-speech-sdk-js). You are not required to go through the build process. We create prebuilt packages tuned for your use-cases. These are updated in regular intervals.
+This source code for the Cognitive Services Speech SDK (JavaScript) is available in a public [GitHub repository](https://github.com/Microsoft/cognitive-services-speech-sdk-js). You are not required to go through the build process. We create prebuilt packages tuned for your use-cases. These are updated in regular intervals.
 
 In order to build the Speech SDK, ensure that you have [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/) installed. Version requirement for Node: 12.44.0 or higher (or 14.17.0 or higher for Node 14).
 
@@ -93,7 +93,7 @@ you want to run. For example, to only run tests defined in `AutoSourceLangDetect
     ```javascript
     import { Settings } from "../tests/Settings";
     Settings.SpeechSubscriptionKey = "0123456789abcdef0123456789abcdef";
-    Settings.SpeechRegion = "westcentralus"; 
+    Settings.SpeechRegion = "westcentralus";
     ```
     Then to run the tests type `RunTests.cmd` in the root of the repo.
 

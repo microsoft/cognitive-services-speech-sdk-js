@@ -105,8 +105,8 @@ export class Settings {
     private static IsSettingsInitialized: boolean = false;
     public static SettingsClassLock: Settings;
 
-    public static CustomVoiceEndpointId: string = "6b231818-6b8c-4452-9a69-2009355d5d7a";
-    public static CustomVoiceVoiceName: string = "sdk-test";
+    public static CustomVoiceEndpointId: string = "8d4cf211-8602-40b7-833c-56a2f1060f89";
+    public static CustomVoiceVoiceName: string = "carbonTestNeural";
     public static testIfDOMCondition: jest.It = (typeof window === "undefined") ? test.skip : test;
     public static testIfNode: jest.It = (typeof window !== "undefined") ? test.skip : test;
 
