@@ -13,6 +13,8 @@ export enum AudioFormatTag {
     ALaw,
     FLAC,
     OPUS,
+    AMR_WB,
+    G722,
 }
 
 /**

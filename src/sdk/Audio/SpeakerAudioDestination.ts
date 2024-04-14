@@ -23,6 +23,8 @@ const AudioFormatToMimeType: INumberDictionary<string> = {
     [AudioFormatTag.WEBM_OPUS]: "audio/webm; codecs=opus",
     [AudioFormatTag.ALaw]: "audio/x-wav",
     [AudioFormatTag.FLAC]: "audio/flac",
+    [AudioFormatTag.AMR_WB]: "audio/amr-wb",
+    [AudioFormatTag.G722]: "audio/G722",
 };
 
 /**
