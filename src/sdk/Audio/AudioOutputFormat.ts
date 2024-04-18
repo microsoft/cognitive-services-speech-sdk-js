@@ -50,6 +50,8 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
         [SpeechSynthesisOutputFormat.Riff22050Hz16BitMonoPcm]: "riff-22050hz-16bit-mono-pcm",
         [SpeechSynthesisOutputFormat.Raw44100Hz16BitMonoPcm]: "raw-44100hz-16bit-mono-pcm",
         [SpeechSynthesisOutputFormat.Riff44100Hz16BitMonoPcm]: "riff-44100hz-16bit-mono-pcm",
+        [SpeechSynthesisOutputFormat.AmrWb16000Hz]: "amr-wb-16000hz",
+        [SpeechSynthesisOutputFormat.G72216Khz64Kbps]: "g722-16khz-64kbps",
     };
     private priAudioFormatString: string;
     /**
@@ -519,6 +521,28 @@ export class AudioOutputFormatImpl extends AudioStreamFormatImpl {
                     speechSynthesisOutputFormatString,
                     "raw-44100hz-16bit-mono-pcm",
                     true);
+            case "amr-wb-16000h":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.AMR_WB,
+                    1,
+                    16000,
+                    3052,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
+            case "g722-16khz-64kbps":
+                return new AudioOutputFormatImpl(
+                    AudioFormatTag.G722,
+                    1,
+                    16000,
+                    8000,
+                    2,
+                    16,
+                    speechSynthesisOutputFormatString,
+                    speechSynthesisOutputFormatString,
+                    false);
             case "riff-16khz-16bit-mono-pcm":
             default:
                 return new AudioOutputFormatImpl(

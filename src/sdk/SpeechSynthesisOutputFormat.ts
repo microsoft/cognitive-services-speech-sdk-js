@@ -251,5 +251,20 @@ export enum SpeechSynthesisOutputFormat {
      * Added in version 1.22.0
      * @member SpeechSynthesisOutputFormat.Riff44100Hz16BitMonoPcm
      */
-    Riff44100Hz16BitMonoPcm
+    Riff44100Hz16BitMonoPcm,
+
+    /**
+     * amr-wb-16000hz
+     * AMR-WB audio at 16kHz sampling rate.
+     * Added in version 1.38.0
+     * @member SpeechSynthesisOutputFormat.AmrWb16000Hz
+     */
+    AmrWb16000Hz,
+
+    /**
+     * g722-16khz-64kbps
+     * G.722 audio at 16kHz sampling rate and 64kbps bitrate.
+     * Added in version 1.38.0
+     */
+    G72216Khz64Kbps
 }
