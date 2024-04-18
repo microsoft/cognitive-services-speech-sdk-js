@@ -162,6 +162,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 this.privSetTimeout = window.setTimeout.bind(window);
             }
+            if (typeof globalThis !== "undefined") {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                this.privSetTimeout = globalThis.setTimeout.bind(globalThis);
+            }
         }
 
         this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
