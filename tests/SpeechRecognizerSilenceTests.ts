@@ -90,30 +90,29 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     return s;
 };
 
-describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
+describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void => {
 
-    beforeAll(() => {
+    beforeAll((): void => {
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
     });
 
-    afterAll(() => {
+    afterAll((): void => {
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
-    describe("Intiial Silence Tests", () => {
-        test("InitialSilenceTimeout (pull)", (done: jest.DoneCallback) => {
+    describe("Intiial Silence Tests", (): void => {
+        test("InitialSilenceTimeout (pull)", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (pull)");
-            let p: sdk.PullAudioInputStream;
             let bytesSent: number = 0;
 
             // To make sure we don't send a ton of extra data.
             // For reference, before the throttling was implemented, we sent 6-10x the required data.
             const startTime: number = Date.now();
 
-            p = sdk.AudioInputStream.createPullStream(
+            const p = sdk.AudioInputStream.createPullStream(
                 {
-                    close: () => { return; },
+                    close: (): void => { return; },
                     read: (buffer: ArrayBuffer): number => {
                         bytesSent += buffer.byteLength;
                         return buffer.byteLength;
@@ -122,7 +121,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
             const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
-            testInitialSilenceTimeout(config, done, (): void => {
+            testInitialSilenceTimeout(config, done, 2, (): void => {
                 const elapsed: number = Date.now() - startTime;
 
                 // We should have sent 5 seconds of audio unthrottled and then 2x the time reco took until we got a response.
@@ -132,7 +131,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             });
         }, 15000);
 
-        test("InitialSilenceTimeout (push)", (done: jest.DoneCallback) => {
+        test("InitialSilenceTimeout (push)", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (push)");
             const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -145,7 +144,41 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             testInitialSilenceTimeout(config, done);
         }, 15000);
 
-        Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
+        test.only("Multi-turn silence test", (done: jest.DoneCallback) => {
+            // eslint-disable-next-line no-console
+            console.info("Name: Multi-turn silence test");
+            const s: sdk.SpeechConfig = BuildSpeechConfig();
+            objsToClose.push(s);
+
+            s.setProperty(sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "3000");
+
+            const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+            objsToClose.push(p);
+            p.write(new ArrayBuffer(2 * 16000 * 5)); // 5 seconds of silence
+            p.close();
+
+            const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, sdk.AudioConfig.fromStreamInput(p));
+            objsToClose.push(r);
+
+            let lastOffset: number = 0;
+
+            r.speechEndDetected = (r: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+                lastOffset = e.offset;
+            };
+
+            r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+                if (lastOffset !== 50000000) {
+                    done("Got unexpected offset: " + lastOffset.toString());
+                } else {
+                    done();
+                }
+            };
+
+            r.startContinuousRecognitionAsync();
+
+        }, 25000);
+
+        Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (File)");
             const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
@@ -157,7 +190,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             testInitialSilenceTimeout(config, done);
         }, 15000);
 
-        const testInitialSilenceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, addedChecks?: () => void): void => {
+        const testInitialSilenceTimeout = (config: sdk.AudioConfig, done: jest.DoneCallback, expectedNumReports: number = 2, addedChecks?: () => void): void => {
             const s: sdk.SpeechConfig = BuildSpeechConfig();
             objsToClose.push(s);
 
@@ -171,11 +204,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
 
             let numReports: number = 0;
 
-            r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+            r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
                 done(e.errorDetails);
             };
 
-            r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
+            r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
                 try {
                     const res: sdk.SpeechRecognitionResult = e.result;
                     expect(res).not.toBeUndefined();
@@ -195,7 +228,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
             };
 
             r.recognizeOnceAsync(
-                (p2: sdk.SpeechRecognitionResult) => {
+                (p2: sdk.SpeechRecognitionResult): void => {
                     try {
                         const res: sdk.SpeechRecognitionResult = p2;
                         numReports++;
@@ -213,11 +246,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean) => {
                         done(error);
                     }
                 },
-                (error: string) => {
+                (error: string): void => {
                     fail(error);
                 });
 
-            WaitForCondition(() => (numReports === 2), () => {
+            WaitForCondition((): boolean => (numReports === expectedNumReports), (): void => {
                 try {
                     if (!!addedChecks) {
                         addedChecks();
