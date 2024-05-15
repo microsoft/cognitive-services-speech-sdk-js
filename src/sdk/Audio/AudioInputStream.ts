@@ -224,7 +224,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
             manufacturer: "Speech SDK",
             model: "PushStream",
             samplerate: this.privFormat.samplesPerSec,
-            type: type.Stream,
+            type: type.File,
         });
     }
 
@@ -413,7 +413,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
             manufacturer: "Speech SDK",
             model: "PullStream",
             samplerate: this.privFormat.samplesPerSec,
-            type: type.Stream,
+            type: type.File,
         });
     }
 
