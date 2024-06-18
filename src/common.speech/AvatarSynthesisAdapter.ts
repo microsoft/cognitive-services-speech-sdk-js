@@ -64,12 +64,15 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
                 name: "WebRTC",
                 webrtcConfig: {
                     clientDescription: btoa(this.privSynthesizerConfig.parameters.getProperty(PropertyId.TalkingAvatarService_WebRTC_SDP)),
-                    iceServers: this.privAvatarSynthesizer.iceServers,
+                    iceServers: this.privAvatarConfig.remoteICEServers ?? this.privAvatarSynthesizer.iceServers,
                 },
             },
             talkingAvatar: {
                 background: {
                     color: this.privAvatarConfig.backgroundColor,
+                    image: {
+                        url: this.privAvatarConfig.backgroundImage?.toString(),
+                    }
                 },
                 character: this.privAvatarConfig.character,
                 customized: this.privAvatarConfig.customized,
