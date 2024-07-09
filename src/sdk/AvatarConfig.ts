@@ -15,7 +15,7 @@ export class AvatarConfig {
     private privCustomized: boolean = false;
     private privBackgroundColor: string;
     private privBackgroundImage: URL;
-    private privRemoteICEServers: RTCIceServer[];
+    private privRemoteIceServers: RTCIceServer[];
 
     /**
      * Defines the avatar character.
@@ -73,8 +73,8 @@ export class AvatarConfig {
         this.privBackgroundImage = value;
     }
 
-    public get remoteICEServers(): RTCIceServer[] {
-        return this.privRemoteICEServers;
+    public get remoteIceServers(): RTCIceServer[] {
+        return this.privRemoteIceServers;
     }
 
     /**
@@ -84,8 +84,8 @@ export class AvatarConfig {
      * different in client and server side.
      * @param {RTCIceServer[]} value - The remote ICE servers.
      */
-    public set remoteICEServers(value: RTCIceServer[]) {
-        this.privRemoteICEServers = value;
+    public set remoteIceServers(value: RTCIceServer[]) {
+        this.privRemoteIceServers = value;
     }
 
     /**

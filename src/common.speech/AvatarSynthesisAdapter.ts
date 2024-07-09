@@ -64,7 +64,7 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
                 name: "WebRTC",
                 webrtcConfig: {
                     clientDescription: btoa(this.privSynthesizerConfig.parameters.getProperty(PropertyId.TalkingAvatarService_WebRTC_SDP)),
-                    iceServers: this.privAvatarConfig.remoteICEServers ?? this.privAvatarSynthesizer.iceServers,
+                    iceServers: this.privAvatarConfig.remoteIceServers ?? this.privAvatarSynthesizer.iceServers,
                 },
             },
             talkingAvatar: {
