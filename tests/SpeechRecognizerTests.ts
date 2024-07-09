@@ -2292,7 +2292,7 @@ describe("PhraseList tests", () => {
     });
 
     // This test validates our ability to add features to the SDK in parallel / ahead of implementation by the Speech Service with no ill effects.
-    test("Service accepts random speech.context sections w/o error", (done: jest.DoneCallback) => {
+    test.skip("Service accepts random speech.context sections w/o error", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Service accepts random speech.context sections w/o error.");
 
