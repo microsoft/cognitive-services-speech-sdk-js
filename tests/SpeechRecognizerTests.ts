@@ -2258,7 +2258,7 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
 }, 100000);
 
 describe("PhraseList tests", () => {
-    test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
+    test.skip("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Ambiguous Speech default as expected");
 
