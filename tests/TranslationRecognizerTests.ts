@@ -161,7 +161,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect(secondRes.translations.languages.includes("es")).toBeTruthy();
                         expect(secondRes.translations.languages.includes("fr")).toBeTruthy();
                         expect(secondRes.translations.languages.includes("de")).toBeFalsy();
-                        expect("¿Cómo es el clima?").toEqual(secondRes.translations.get("es", ""));
+                        expect("¿Qué tiempo hace?").toEqual(secondRes.translations.get("es", ""));
                         done();
                     },
                     (error: string) => {
