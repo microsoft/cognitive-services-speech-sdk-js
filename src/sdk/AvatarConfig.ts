@@ -14,6 +14,8 @@ import { AvatarVideoFormat } from "./Exports.js";
 export class AvatarConfig {
     private privCustomized: boolean = false;
     private privBackgroundColor: string;
+    private privBackgroundImage: URL;
+    private privRemoteIceServers: RTCIceServer[];
 
     /**
      * Defines the avatar character.
@@ -43,17 +45,52 @@ export class AvatarConfig {
     }
 
     /**
-     * Sets the background color.
+     * Gets the background color.
      */
     public get backgroundColor(): string {
         return this.privBackgroundColor;
     }
 
     /**
-     * Gets the background color.
+     * Sets the background color.
      */
     public set backgroundColor(value: string) {
         this.privBackgroundColor = value;
+    }
+
+    /**
+     * Gets the background image.
+     */
+    public get backgroundImage(): URL {
+        return this.privBackgroundImage;
+    }
+
+    /**
+     * Sets the background image.
+     * @param {URL} value - The background image.
+     */
+    public set backgroundImage(value: URL) {
+        this.privBackgroundImage = value;
+    }
+
+    /**
+     * Gets the remote ICE servers.
+     * @remarks This method is designed to be used internally in the SDK.
+     * @returns {RTCIceServer[]} The remote ICE servers.
+     */
+    public get remoteIceServers(): RTCIceServer[] {
+        return this.privRemoteIceServers;
+    }
+
+    /**
+     * Sets the remote ICE servers.
+     * @remarks Normally, the ICE servers are gathered from the PeerConnection,
+     * set this property to override the ICE servers. E.g., the ICE servers are
+     * different in client and server side.
+     * @param {RTCIceServer[]} value - The remote ICE servers.
+     */
+    public set remoteIceServers(value: RTCIceServer[]) {
+        this.privRemoteIceServers = value;
     }
 
     /**
