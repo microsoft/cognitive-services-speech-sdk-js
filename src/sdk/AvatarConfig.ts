@@ -73,6 +73,11 @@ export class AvatarConfig {
         this.privBackgroundImage = value;
     }
 
+    /**
+     * Gets the remote ICE servers.
+     * @remarks This method is designed to be used internally in the SDK.
+     * @returns {RTCIceServer[]} The remote ICE servers.
+     */
     public get remoteIceServers(): RTCIceServer[] {
         return this.privRemoteIceServers;
     }
