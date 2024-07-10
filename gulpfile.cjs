@@ -14,9 +14,9 @@
   gulp.task('build', gulp.series(function build() {
     return gulp.src([
       'src/**/*.ts',
+      'microsoft.cognitiveservices.speech.sdk.ts',
       '!src/common.browser/__mocks__/',
-      '!src/common.browser/__mocks__/**',
-      'microsoft.cognitiveservices.speech.sdk.ts'],
+      '!src/common.browser/__mocks__/**'],
       { base: '.' })
       .pipe(eslint({
         formatter: 'prose',
@@ -36,10 +36,10 @@
   gulp.task('bundle', gulp.series('build', function bundle() {
     return gulp.src('bundleApp.js')
       .pipe(webpack({
-        entry: { 
+        entry: {
           'microsoft.cognitiveservices.speech.sdk.bundle': './bundleApp.js',
         },
-        output: { 
+        output: {
           filename: '[name].js',
         },
         devtool: 'source-map',
