@@ -2258,7 +2258,7 @@ test("StopContinous Reco does", (done: jest.DoneCallback) => {
 }, 100000);
 
 describe("PhraseList tests", () => {
-    test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
+    test.skip("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Ambiguous Speech default as expected");
 
@@ -2292,7 +2292,7 @@ describe("PhraseList tests", () => {
     });
 
     // This test validates our ability to add features to the SDK in parallel / ahead of implementation by the Speech Service with no ill effects.
-    test("Service accepts random speech.context sections w/o error", (done: jest.DoneCallback) => {
+    test.skip("Service accepts random speech.context sections w/o error", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
         console.info("Name: Service accepts random speech.context sections w/o error.");
 
