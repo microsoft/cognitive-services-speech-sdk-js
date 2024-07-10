@@ -7,7 +7,7 @@ import * as http from "http";
 import * as net from "net";
 import * as tls from "tls";
 import Agent from "agent-base";
-import HttpsProxyAgent from "https-proxy-agent";
+import { HttpsProxyAgent, HttpsProxyAgentOptions } from "https-proxy-agent";
 
 import ws from "ws";
 import { HeaderNames } from "../common.speech/HeaderNames.js";
@@ -341,7 +341,7 @@ export class WebsocketMessageAdapter {
     }
 
     private static GetProxyAgent(proxyInfo: ProxyInfo): HttpsProxyAgent {
-        const httpProxyOptions: HttpsProxyAgent.HttpsProxyAgentOptions = {
+        const httpProxyOptions: HttpsProxyAgentOptions = {
             host: proxyInfo.HostName,
             port: proxyInfo.Port,
         };
