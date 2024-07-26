@@ -11,7 +11,7 @@ export class ChunkedArrayBufferStream extends Stream<ArrayBuffer> {
 
     public constructor(targetChunkSize: number, streamId?: string) {
         super(streamId);
-        this.privTargetChunkSize = targetChunkSize;
+        this.privTargetChunkSize = Math.round(targetChunkSize);
         this.privNextBufferReadyBytes = 0;
     }
 
