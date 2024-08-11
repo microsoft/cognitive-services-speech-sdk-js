@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.37.0-alpha.0.1",
+  "version": "1.40.0-rc.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
@@ -62,7 +62,7 @@
     "dts-bundle-webpack": "^1.0.2",
     "eslint": "^8.16.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jsdoc": "^39.3.2",
+    "eslint-plugin-jsdoc": "^50.0.0",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "gulp": "^5.0.0",
     "gulp-eslint": "^6.0.0",
@@ -100,6 +100,7 @@
     "includeConsoleOutput": true
   },
   "dependencies": {
+    "@es-joy/jsdoccomment": "^0.46.0",
     "@types/webrtc": "^0.0.37",
     "agent-base": "^6.0.1",
     "bent": "^7.3.12",
