@@ -134,80 +134,97 @@ test("testGetParameters", () => {
     expect(r.endpointId === r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, null)); // todo: is this really the correct mapping?
 });
 
-test("testTranscriptionFromPushStreamAsync", (done: jest.DoneCallback) => {
-    // eslint-disable-next-line no-console
-    console.info("Name: testTranscriptionFromPushStreamAsync");
+describe.each([[true], [false]])("Checking intermediate diazatation", (intermediateDiazaration: boolean) => {
 
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
-    objsToClose.push(s);
+    test("testTranscriptionFromPushStreamAsync", (done: jest.DoneCallback) => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testTranscriptionFromPushStreamAsync");
 
-    const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
-    const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps);
+        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        objsToClose.push(s);
 
-    const fileBuff: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFileSingleChannel);
-    ps.write(fileBuff);
-    ps.write(new ArrayBuffer(1024 * 32));
-    ps.write(fileBuff);
-    ps.close();
-
-    const r: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(s, audio);
-    objsToClose.push(r);
-
-    let recoCount: number = 0;
-    let canceled: boolean = false;
-    let hypoCounter: number = 0;
-    let sessionId: string;
-    let guestFound: boolean = false;
-
-    r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-        sessionId = e.sessionId;
-    };
-
-    r.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
-        try {
-            // eslint-disable-next-line no-console
-            console.info("[Transcribed] SpeakerId: " + e.result.speakerId + " Text: " + e.result.text);
-            recoCount++;
-            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-            expect(e.result.properties).not.toBeUndefined();
-            expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
-            expect(e.result.speakerId).not.toBeUndefined();
-            if (e.result.speakerId.startsWith("Guest")) {
-                guestFound = true;
-            }
-
-        } catch (error) {
-            done(error);
+        if (intermediateDiazaration) {
+            s.setProperty(sdk.PropertyId.SpeechServiceResponse_DiarizeIntermediateResults, "true");
         }
-    };
 
-    r.transcribing = (s: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs): void => {
-        hypoCounter++;
-    };
+        const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+        const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps);
 
-    r.canceled = (o: sdk.ConversationTranscriber, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-        try {
-            canceled = true;
-            expect(e.errorDetails).toBeUndefined();
-            expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
-        } catch (error) {
-            done(error);
-        }
-    };
+        const fileBuff: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFileSingleChannel);
+        ps.write(fileBuff);
+        ps.write(new ArrayBuffer(1024 * 32));
+        ps.write(fileBuff);
+        ps.close();
 
-    r.startTranscribingAsync(
-        () => WaitForCondition(() => (canceled), () => {
+        const r: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(s, audio);
+        objsToClose.push(r);
+
+        let recoCount: number = 0;
+        let canceled: boolean = false;
+        let hypoCounter: number = 0;
+        let sessionId: string;
+        let guestFound: boolean = false;
+        let intermediateGuestFound: boolean = false;
+
+        r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+            sessionId = e.sessionId;
+        };
+
+        r.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
             try {
-                expect(guestFound);
-                done();
-            } catch (err) {
-                done(err);
+                // eslint-disable-next-line no-console
+                console.info("[Transcribed] SpeakerId: " + e.result.speakerId + " Text: " + e.result.text);
+                recoCount++;
+                expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                expect(e.result.properties).not.toBeUndefined();
+                expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                expect(e.result.speakerId).not.toBeUndefined();
+                if (e.result.speakerId.startsWith("Guest")) {
+                    guestFound = true;
+                }
+
+            } catch (error) {
+                done(error);
             }
-        }),
-        (err: string) => {
-            done(err);
-        });
-}, 45000);
+        };
+
+        r.transcribing = (s: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs): void => {
+            hypoCounter++;
+            console.info("[Transcribing] SpeakerId: " + e.result.speakerId + " Text: " + e.result.text);
+            if (e.result.speakerId.startsWith("Guest")) {
+                intermediateGuestFound = true;
+            }
+        };
+
+        r.canceled = (o: sdk.ConversationTranscriber, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                canceled = true;
+                expect(e.errorDetails).toBeUndefined();
+                expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.startTranscribingAsync(
+            () => WaitForCondition(() => (canceled), () => {
+                try {
+                    expect(guestFound).toBeTruthy();
+                    console.info("intermediateDiazaration: ");
+                    console.info( intermediateDiazaration ? "true" : "false");
+                    console.info(" intermediateGuestFound: ");
+                    console.info(intermediateGuestFound ? "true" : "false");
+                    expect(intermediateDiazaration).toEqual(intermediateGuestFound);
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            }),
+            (err: string) => {
+                done(err);
+            });
+    }, 45000);
+});
 
 test("testTranscriptionFromPullStreamAsync", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
@@ -215,28 +232,28 @@ test("testTranscriptionFromPullStreamAsync", (done: jest.DoneCallback) => {
 
     const s: sdk.SpeechConfig = BuildSpeechConfig();
     objsToClose.push(s);
-    
+
     const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFileSingleChannel);
     let bytesSent: number = 0;
     let p: sdk.PullAudioInputStream;
 
     p = sdk.AudioInputStream.createPullStream(
-    {
-        close: () => { return; },
-        read: (buffer: ArrayBuffer): number => {
-            const copyArray: Uint8Array = new Uint8Array(buffer);
-            const start: number = bytesSent;
-            const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
-            copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
-            bytesSent += (end - start);
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start);
 
-            if (bytesSent === fileBuffer.byteLength) {
-                p.close();
-            }
+                if (bytesSent === fileBuffer.byteLength) {
+                    p.close();
+                }
 
-            return (end - start);
-        },
-    });
+                return (end - start);
+            },
+        });
 
     const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -542,7 +559,7 @@ test("testTranscriptionWithContinuousLanguageIdentificationAsync", (done: jest.D
     let a: sdk.AutoDetectSourceLanguageConfig = sdk.AutoDetectSourceLanguageConfig.fromSourceLanguageConfigs(configs);
     a.mode = sdk.LanguageIdMode.Continuous;
     expect(a.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_LanguageIdMode)).toEqual("Continuous");
-    objsToClose.push(a);    
+    objsToClose.push(a);
 
     const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
     const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps);
