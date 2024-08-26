@@ -73,6 +73,7 @@ export interface SpeakerDiarization {
     audioSessionId?: string;
     audioOffsetMs?: number;
     identityProvider?: string;
+    diarizeIntermediates?: boolean;
 }
 
 export interface Segmentation {

@@ -345,6 +345,16 @@ export enum PropertyId {
     SpeechServiceResponse_RequestSentenceBoundary,
 
     /**
+     * Determines if intermediate results contain speaker identification.
+     * Allowed values are "true" or "false". If set to "true", the intermediate results will contain speaker identification.
+     * The default value if unset or set to an invalid value is "false".
+     * This is currently only supported for scenarios using the ConversationTranscriber".
+     * @member PropertyId.SpeechServiceResponse_DiarizeIntermediateResults
+     * Adding in version 1.41.
+     */
+    SpeechServiceResponse_DiarizeIntermediateResults,
+
+    /**
      * Identifier used to connect to the backend service.
      * @member PropertyId.Conversation_ApplicationId
      */

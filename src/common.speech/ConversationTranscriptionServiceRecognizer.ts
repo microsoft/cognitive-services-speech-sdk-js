@@ -54,6 +54,7 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
             speakerDiarization.mode = "Anonymous";
             speakerDiarization.audioSessionId = this.privDiarizationSessionId;
             speakerDiarization.audioOffsetMs = 0;
+            speakerDiarization.diarizeIntermediates = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_DiarizeIntermediateResults, "false") === "true";
             phraseDetection.speakerDiarization = speakerDiarization;
             this.privSpeechContext.setSection("phraseDetection", phraseDetection);
         }
@@ -80,7 +81,7 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
                     offset,
                     hypothesis.Language,
                     hypothesis.LanguageDetectionConfidence,
-                    undefined, // Speaker Id
+                    hypothesis.SpeakerId,
                     undefined,
                     connectionMessage.textBody,
                     resultProps);
