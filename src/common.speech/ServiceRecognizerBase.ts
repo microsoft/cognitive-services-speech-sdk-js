@@ -666,7 +666,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     private updateSpeakerDiarizationAudioOffset(): void {
         const bytesSent: number = this.privRequestSession.recognitionBytesSent;
-        const audioOffsetMs: number = bytesSent / this.privAverageBytesPerMs;
+        const audioOffsetMs: number = this.privAverageBytesPerMs != 0 ? bytesSent / this.privAverageBytesPerMs : 0;
         this.privSpeechContext.setSpeakerDiarizationAudioOffsetMs(audioOffsetMs);
     }
 
