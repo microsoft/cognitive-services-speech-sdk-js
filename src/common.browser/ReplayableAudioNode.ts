@@ -30,7 +30,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 
     // Reads and returns the next chunk of audio buffer.
     // If replay of existing buffers are needed, read() will first seek and replay
-    // existing content, and upoin completion it will read new content from the underlying
+    // existing content, and upon completion it will read new content from the underlying
     // audio node, saving that content into the replayable buffers.
     public read(): Promise<IStreamChunk<ArrayBuffer>> {
         // if there is a replay request to honor.
@@ -46,13 +46,14 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             }
 
             let i: number = 0;
-
             while (i < this.privBuffers.length && bytesToSeek >= this.privBuffers[i].chunk.buffer.byteLength) {
                 bytesToSeek -= this.privBuffers[i++].chunk.buffer.byteLength;
             }
 
             if (i < this.privBuffers.length) {
                 const retVal: ArrayBuffer = this.privBuffers[i].chunk.buffer.slice(bytesToSeek);
+                const timeReceived = this.privBuffers[i].chunk.timeReceived;
+                const isEnd: boolean = false;
 
                 this.privReplayOffset += (retVal.byteLength / this.privBytesPerSecond) * 1e+7;
 
@@ -63,8 +64,8 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 
                 return Promise.resolve<IStreamChunk<ArrayBuffer>>({
                     buffer: retVal,
-                    isEnd: false,
-                    timeReceived: this.privBuffers[i].chunk.timeReceived,
+                    isEnd,
+                    timeReceived,
                 });
             }
         }
@@ -85,10 +86,14 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     }
 
     public replay(): void {
-        if (this.privBuffers && 0 !== this.privBuffers.length) {
+        if (!this.isEmpty()) {
             this.privReplay = true;
             this.privReplayOffset = this.privLastShrinkOffset;
         }
+    }
+
+    public isEmpty(): boolean {
+        return !this.privBuffers || this.privBuffers.length === 0;
     }
 
     // Shrinks the existing audio buffers to start at the new offset, or at the
