@@ -118,7 +118,7 @@ export class SpeechSynthesizer extends Synthesizer {
      * @param {SpeechConfig} speechConfig - An set of initial properties for this synthesizer.
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the synthesizer.
      */
-    public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig) {
+    public constructor(speechConfig: SpeechConfig, audioConfig?: AudioConfig | null) {
         super(speechConfig);
 
         if (audioConfig !== null) {
@@ -140,7 +140,7 @@ export class SpeechSynthesizer extends Synthesizer {
      * @param {AutoDetectSourceLanguageConfig} autoDetectSourceLanguageConfig - An source language detection configuration associated with the synthesizer
      * @param {AudioConfig} audioConfig - An optional audio configuration associated with the synthesizer
      */
-    public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): SpeechSynthesizer {
+    public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig | null): SpeechSynthesizer {
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
         autoDetectSourceLanguageConfig.properties.mergeTo(speechConfigImpl.properties);
         return new SpeechSynthesizer(speechConfig, audioConfig);
