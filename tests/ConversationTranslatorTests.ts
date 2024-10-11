@@ -549,7 +549,8 @@ describe("conversation service tests", (): void => {
 
     }, 60000);
 
-    test("Start Conversation, join as host and set service property", (done: jest.DoneCallback): void => {
+    // Test is failing due to a service timeout.
+    test.skip("Start Conversation, join as host and set service property", (done: jest.DoneCallback): void => {
 
         // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host and set service property");
@@ -640,6 +641,7 @@ describe("conversation service tests", (): void => {
                     }
                 });
                 ct.transcribed = ((s: sdk.ConversationTranslator, e: sdk.ConversationTranslationEventArgs): void => {
+                    console.info("Transcribed " + e.result.text);
                     expect(e.result.text).toContain("weather");
                 });
 
