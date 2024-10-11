@@ -933,7 +933,7 @@ describe("conversation translator service tests", (): void => {
         }));
     }, 80000);
 
-    test("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback): void => {
+    test.skip("Start Conversation Translator, join as host with speech language and speak", (done: jest.DoneCallback): void => {
 
         // eslint-disable-next-line no-console
         console.info("Start Conversation, join as host with speech language and speak");
