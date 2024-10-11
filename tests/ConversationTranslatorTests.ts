@@ -314,9 +314,9 @@ describe("conversation service tests", (): void => {
                                 done(e);
                             });
                     },
-                    (e: string): void => {
-                        done(e);
-                    });
+                        (e: string): void => {
+                            done(e);
+                        });
                 }
             });
 
@@ -343,9 +343,9 @@ describe("conversation service tests", (): void => {
                                             done(e);
                                         });
                                 },
-                                (e: string): void => {
-                                    done(e);
-                                });
+                                    (e: string): void => {
+                                        done(e);
+                                    });
                             } catch (e) {
                                 done(e);
                             }
@@ -483,7 +483,7 @@ describe("conversation service tests", (): void => {
                             done,
                             (e: string) => { done(e); });
                     },
-                    (e: string) => { done(e); });
+                        (e: string) => { done(e); });
                 }
             });
             ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs): void => {
@@ -507,9 +507,9 @@ describe("conversation service tests", (): void => {
                         c.endConversationAsync(() => {
                             ejected++;
                         },
-                        (e: string) => { done(e); });
+                            (e: string) => { done(e); });
                     },
-                    (e: string) => { done(e); });
+                        (e: string) => { done(e); });
                 }
             });
 
@@ -562,6 +562,8 @@ describe("conversation service tests", (): void => {
         const c: sdk.Conversation = sdk.Conversation.createConversationAsync(config, ((): void => {
             objsToClose.push(c);
 
+            console.info("Conversation Created");
+
             // audio config
             const audioConfig: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
             objsToClose.push(audioConfig);
@@ -577,18 +579,22 @@ describe("conversation service tests", (): void => {
 
             ct.setServiceProperty(propName, propValue);
 
+            console.info("Property set");
             const currentProperties: IStringDictionary<string> = JSON.parse(ct.properties.getProperty(ServicePropertiesPropertyName, "{}")) as IStringDictionary<string>;
             expect(currentProperties[propName]).toEqual(propValue);
 
             c.startConversationAsync((): void => {
+                console.info("Conversation Started")
                 // Check that uri for service connection contains service property and value
                 const detachObject: IDetachable = Events.instance.attachListener({
                     onEvent: (event: PlatformEvent): void => {
                         if (event instanceof ConnectionStartEvent) {
+                            console.info("Connection started")
                             const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
                             const uri: string = connectionEvent.uri;
                             expect(uri).not.toBeUndefined();
-                            if(!uri.includes("capito")){
+                            if (!uri.includes("capito")) {
+                                console.info("Checking URL " + uri)
                                 // Make sure there's only a single ? in the URL.
                                 expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
                                 expect(uri).toContain(`${propName}=${propValue}`);
@@ -599,6 +605,7 @@ describe("conversation service tests", (): void => {
                 });
                 ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs): void => {
                     try {
+                        console.info("Starting transcription");
                         ct.startTranscribingAsync();
                     } catch (error) {
                         done(error);
@@ -606,9 +613,11 @@ describe("conversation service tests", (): void => {
                 });
                 ct.recognized = ((s: sdk.ConversationTranslator, e: sdk.TranslationRecognitionEventArgs): void => {
                     if (e.result.text !== "") {
+                        console.info("Recongized " + e.result.text);
                         expect(e.result.text).toContain("weather");
                         ct.stopTranscribingAsync(
                             (): void => {
+                                console.info("Stopping transcription");
                                 ct.leaveConversationAsync((): void => {
                                     c.endConversationAsync(
                                         done,
@@ -616,9 +625,9 @@ describe("conversation service tests", (): void => {
                                             done(e);
                                         });
                                 },
-                                (e: string): void => {
-                                    done(e);
-                                });
+                                    (e: string): void => {
+                                        done(e);
+                                    });
                             },
                             (e: string): void => {
                                 done(e);
@@ -640,9 +649,10 @@ describe("conversation service tests", (): void => {
                     }));
             });
         }),
-        ((error: any): void => {
-            done();
-        }));
+            ((error: any): void => {
+                console.warn("Error starting conversation: " + error);
+                done();
+            }));
     });
 
     test.skip("Start Conversation, join as host and connect to CTS endpoint", (done: jest.DoneCallback): void => {
@@ -685,7 +695,7 @@ describe("conversation service tests", (): void => {
                             const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
                             const uri: string = connectionEvent.uri;
                             expect(uri).not.toBeUndefined();
-                            if(!uri.includes("capito")){
+                            if (!uri.includes("capito")) {
                                 // Make sure there's only a single ? in the URL.
                                 expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
                                 expect(uri).toContain(`${propName}=${propValue}`);
@@ -713,9 +723,9 @@ describe("conversation service tests", (): void => {
                                             done(e);
                                         });
                                 },
-                                (e: string): void => {
-                                    done(e);
-                                });
+                                    (e: string): void => {
+                                        done(e);
+                                    });
                             },
                             (e: string): void => {
                                 done(e);
@@ -734,9 +744,9 @@ describe("conversation service tests", (): void => {
                     }));
             });
         }),
-        ((error: any): void => {
-            done();
-        }));
+            ((error: any): void => {
+                done();
+            }));
     });
 });
 // Conversation Translator tests: begin
@@ -846,22 +856,22 @@ describe("conversation translator service tests", (): void => {
                             c.endConversationAsync((): void => {
                                 errorMessage = error as string;
                             },
-                            (error: any): void => {
-                                done();
-                            });
+                                (error: any): void => {
+                                    done();
+                                });
                         } catch (e) {
                             done(e);
                         }
                     });
             },
+                (error: any): void => {
+                    done();
+                });
+
+        },
             (error: any): void => {
                 done();
             });
-
-        },
-        (error: any): void => {
-            done();
-        });
 
         WaitForCondition((): boolean => (errorMessage !== ""), done);
 
@@ -903,9 +913,9 @@ describe("conversation translator service tests", (): void => {
                             c.endConversationAsync(() => {
                                 errorMessage = error;
                             },
-                            (error: any) => {
-                                done();
-                            });
+                                (error: any) => {
+                                    done();
+                                });
                         } catch (e) {
                             done(e);
                         }
@@ -962,9 +972,9 @@ describe("conversation translator service tests", (): void => {
                                         done(e);
                                     });
                             },
-                            (e: string): void => {
-                                done(e);
-                            });
+                                (e: string): void => {
+                                    done(e);
+                                });
                         },
                         (e: string): void => {
                             done(e);
