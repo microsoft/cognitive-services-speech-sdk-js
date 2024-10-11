@@ -606,14 +606,19 @@ describe("conversation service tests", (): void => {
                 ct.participantsChanged = ((s: sdk.ConversationTranslator, e: sdk.ConversationParticipantsChangedEventArgs): void => {
                     try {
                         console.info("Starting transcription");
-                        ct.startTranscribingAsync();
+                        ct.startTranscribingAsync((): void => {
+                            console.info("Transcribing started");
+                        }, (e: string): void => {
+                            done(e);
+                        });
                     } catch (error) {
                         done(error);
                     }
                 });
                 ct.recognized = ((s: sdk.ConversationTranslator, e: sdk.TranslationRecognitionEventArgs): void => {
+                    console.info("Recongized " + e.result.text);
+                    console.info(e.result);
                     if (e.result.text !== "") {
-                        console.info("Recongized " + e.result.text);
                         expect(e.result.text).toContain("weather");
                         ct.stopTranscribingAsync(
                             (): void => {
