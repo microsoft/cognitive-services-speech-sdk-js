@@ -2132,7 +2132,6 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
         try {
             const res: sdk.SpeechRecognitionResult = e.result;
-            console.info(res);
             expect(res).not.toBeUndefined();
             expect(disconnected).toEqual(false);
             expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
