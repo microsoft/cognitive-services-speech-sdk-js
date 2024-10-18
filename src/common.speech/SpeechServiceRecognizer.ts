@@ -102,51 +102,55 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                         EnumTranslation.implTranslateErrorDetails(cancellationErrorCode));
 
                 } else {
-                    if (!(this.privRequestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
-                        if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
-                            result = new SpeechRecognitionResult(
-                                this.privRequestSession.requestId,
-                                resultReason,
-                                simple.DisplayText,
-                                simple.Duration,
-                                simple.Offset + this.privRequestSession.currentTurnAudioOffset,
-                                simple.Language,
-                                simple.LanguageDetectionConfidence,
-                                undefined, // Speaker Id
-                                undefined,
-                                connectionMessage.textBody,
-                                resultProps);
-                        } else {
-                            const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody);
-                            const totalOffset: number = detailed.Offset + this.privRequestSession.currentTurnAudioOffset;
-                            const offsetCorrectedJson: string = detailed.getJsonWithCorrectedOffsets(totalOffset);
+                    // Like the native SDK's, don't event / return an EndOfDictation message.
+                    if (simple.RecognitionStatus === RecognitionStatus.EndOfDictation) {
+                        break;
+                    }
 
-                            result = new SpeechRecognitionResult(
-                                this.privRequestSession.requestId,
-                                resultReason,
-                                detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : undefined,
-                                detailed.Duration,
-                                totalOffset,
-                                detailed.Language,
-                                detailed.LanguageDetectionConfidence,
-                                undefined, // Speaker Id
-                                undefined,
-                                offsetCorrectedJson,
-                                resultProps);
-                        }
+                    if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
+                        result = new SpeechRecognitionResult(
+                            this.privRequestSession.requestId,
+                            resultReason,
+                            simple.DisplayText,
+                            simple.Duration,
+                            simple.Offset + this.privRequestSession.currentTurnAudioOffset,
+                            simple.Language,
+                            simple.LanguageDetectionConfidence,
+                            undefined, // Speaker Id
+                            undefined,
+                            connectionMessage.textBody,
+                            resultProps);
+                    } else {
+                        const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody);
+                        const totalOffset: number = detailed.Offset + this.privRequestSession.currentTurnAudioOffset;
+                        const offsetCorrectedJson: string = detailed.getJsonWithCorrectedOffsets(totalOffset);
 
-                        const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
+                        result = new SpeechRecognitionResult(
+                            this.privRequestSession.requestId,
+                            resultReason,
+                            detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : undefined,
+                            detailed.Duration,
+                            totalOffset,
+                            detailed.Language,
+                            detailed.LanguageDetectionConfidence,
+                            undefined, // Speaker Id
+                            undefined,
+                            offsetCorrectedJson,
+                            resultProps);
+                    }
 
-                        if (!!this.privSpeechRecognizer.recognized) {
-                            try {
-                                this.privSpeechRecognizer.recognized(this.privSpeechRecognizer, event);
-                                /* eslint-disable no-empty */
-                            } catch (error) {
-                                // Not going to let errors in the event handler
-                                // trip things up.
-                            }
+                    const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
+
+                    if (!!this.privSpeechRecognizer.recognized) {
+                        try {
+                            this.privSpeechRecognizer.recognized(this.privSpeechRecognizer, event);
+                            /* eslint-disable no-empty */
+                        } catch (error) {
+                            // Not going to let errors in the event handler
+                            // trip things up.
                         }
                     }
+
 
                     if (!!this.privSuccessCallback) {
                         try {

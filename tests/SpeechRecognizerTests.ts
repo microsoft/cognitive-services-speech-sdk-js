@@ -2088,7 +2088,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     let sessionId: string;
 
     const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
-    const p: PullAudioInputStream = pullStreamSource.PullStream;;
+    const p: PullAudioInputStream = pullStreamSource.PullStream;
 
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -2134,12 +2134,9 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
             const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();
             expect(disconnected).toEqual(false);
-            if (0 !== recoCount % 2) {
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.NoMatch]);
-            } else {
-                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-                expect(res.text).toContain("the weather like?");
-            }
+            expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(res.text).toContain("the weather like?");
+
             recoCount++;
         } catch (error) {
             done(error);
@@ -2168,7 +2165,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback) => 
     });
 
     WaitForCondition(() => {
-        return recoCount === 3;
+        return recoCount === 2;
     }, () => {
         r.stopContinuousRecognitionAsync(() => {
             done();
