@@ -134,6 +134,18 @@ test("testGetParameters", () => {
     expect(r.endpointId === r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, null)); // todo: is this really the correct mapping?
 });
 
+test("testStrategy", () => {
+    // eslint-disable-next-line no-console
+    console.info("Name: testStrategy");
+    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const segStrategy = "semantic";
+    s.setProperty(sdk.PropertyId.Speech_SegmentationStrategy, "semantic");
+    objsToClose.push(s);
+    const r: sdk.ConversationTranscriber = BuildTranscriberFromWaveFile(s);
+    objsToClose.push(r);
+    expect(segStrategy === r.properties.getProperty(sdk.PropertyId.Speech_SegmentationStrategy, null));
+});
+
 describe.each([[true], [false]])("Checking intermediate diazatation", (intermediateDiazaration: boolean) => {
 
     test("testTranscriptionFromPushStreamAsync", (done: jest.DoneCallback) => {

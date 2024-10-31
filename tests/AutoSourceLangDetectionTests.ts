@@ -454,7 +454,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         const s: sdk.SpeechTranslationConfig = BuildSpeechTranslationConfig();
         const segSilenceTimeoutMs = 1100;
+        const segMaximumTimeMs = 5000;
+        s.setProperty(sdk.PropertyId.Speech_SegmentationStrategy, "Semantic"); // Supposed to be overriden by time based segmentation configs
         s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, segSilenceTimeoutMs.toString());
+        s.setProperty(sdk.PropertyId.Speech_SegmentationMaximumTimeMs, segMaximumTimeMs.toString());
         objsToClose.push(s);
 
         const r: sdk.TranslationRecognizer = BuildTranslationRecognizer(s, a);
@@ -466,6 +469,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
         const expectedRecognitionMode = "CONVERSATION";
         const segmentationField = "segmentation";
+        const expectedSegmentationMode = "Custom";
 
         con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
             if (args.message.path === "speech.context" && args.message.isTextMessage) {
@@ -477,7 +481,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(message.languageId.Priority).not.toBeUndefined();
                     expect(message.languageId.Priority).toEqual("PrioritizeLatency");
                     expect(message.phraseDetection.mode).toEqual(expectedRecognitionMode);
+                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].mode).toEqual(expectedSegmentationMode);
                     expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationSilenceTimeoutMs).toEqual(segSilenceTimeoutMs);
+                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationMaximumTimeMs).toEqual(segMaximumTimeMs);
                     speechContextSent = true;
                 } catch (error) {
                     done(error);
@@ -563,7 +569,10 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         objsToClose.push(a);
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         const segSilenceTimeoutMs = 1100;
+        const segMaximumTimeMs = 5000;
+        s.setProperty(sdk.PropertyId.Speech_SegmentationStrategy, "Semantic"); // Supposed to be overriden by time based segmentation configs
         s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, segSilenceTimeoutMs.toString());
+        s.setProperty(sdk.PropertyId.Speech_SegmentationMaximumTimeMs, segMaximumTimeMs.toString());
         objsToClose.push(s);
         const r: sdk.SpeechRecognizer = BuildRecognizer(s, a);
         objsToClose.push(r);
@@ -574,6 +583,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
         const expectedRecognitionMode = "CONVERSATION";
         const segmentationField = "segmentation";
+        const expectedSegmentationMode = "Custom";
 
         con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
             if (args.message.path === "speech.context" && args.message.isTextMessage) {
@@ -585,7 +595,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(message.languageId.Priority).not.toBeUndefined();
                     expect(message.languageId.Priority).toEqual("PrioritizeLatency");
                     expect(message.phraseDetection.mode).toEqual(expectedRecognitionMode);
+                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].mode).toEqual(expectedSegmentationMode);
                     expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationSilenceTimeoutMs).toEqual(segSilenceTimeoutMs);
+                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationMaximumTimeMs).toEqual(segMaximumTimeMs);
                     speechContextSent = true;
                 } catch (error) {
                     done(error);

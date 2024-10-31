@@ -10,6 +10,8 @@ export class QueryParameterNames {
     public static EnableWordLevelTimestamps: string = "wordLevelTimestamps";
     public static EndSilenceTimeoutMs: string = "endSilenceTimeoutMs";
     public static SegmentationSilenceTimeoutMs: string = "segmentationSilenceTimeoutMs";
+    public static SegmentationMaximumTimeMs: string = "segmentationMaximumTimeMs";
+    public static SegmentationStrategy: string = "segmentationStrategy";
     public static Format: string = "format";
     public static InitialSilenceTimeoutMs: string = "initialSilenceTimeoutMs";
     public static Language: string = "language";

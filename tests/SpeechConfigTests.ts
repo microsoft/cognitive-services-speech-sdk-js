@@ -877,6 +877,40 @@ describe("Connection URL Tests", (): void => {
                     );
                 });
 
+                test("segmentationMaximumTimeMs", (done: jest.DoneCallback): void => {
+                    // eslint-disable-next-line no-console
+                    console.info("Name: segmentationMaximumTimeMs");
+
+                    const propName: string = "segmentationMaximumTimeMs";
+                    const val: string = "1004";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProperty(sdk.PropertyId[sdk.PropertyId.Speech_SegmentationMaximumTimeMs], val);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                });
+                
+                test("segmentationStrategy", (done: jest.DoneCallback): void => {
+                    // eslint-disable-next-line no-console
+                    console.info("Name: segmentationStrategy");
+
+                    const propName: string = "segmentationStrategy";
+                    const val: string = "semantic";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProperty(sdk.PropertyId[sdk.PropertyId.Speech_SegmentationStrategy], val);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                });
+
                 test("stableIntermediateThreshold", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: stableIntermediateThreshold");

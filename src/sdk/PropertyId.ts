@@ -255,6 +255,33 @@ export enum PropertyId {
     Speech_SegmentationSilenceTimeoutMs,
 
     /**
+    * SegmentationMaximumTimeMs represents the maximum length of a spoken phrase when using the Time segmentation strategy.
+	* As the length of a spoken phrase approaches this value, the @member Speech_SegmentationSilenceTimeoutMs will be reduced until either 
+	* the phrase silence timeout is reached or the phrase reaches the maximum length.
+    * 
+    * Added in version 1.41.0.
+    */
+	Speech_SegmentationMaximumTimeMs,
+
+    /**
+	* SegmentationStrategy defines the strategy used to determine when a spoken phrase has ended and a final Recognized result should be generated.
+	* Allowed values are "Default", "Time", and "Semantic".
+	*
+	* Valid values:
+	* - "Default": Uses the default strategy and settings as determined by the Speech Service. Suitable for most situations.
+	* - "Time": Uses a time-based strategy where the amount of silence between speech determines when to generate a final result.
+	* - "Semantic": Uses an AI model to determine the end of a spoken phrase based on the phrase's content.
+	*
+	* Additional Notes:
+	* - When using the Time strategy, @member Speech_SegmentationSilenceTimeoutMs can be adjusted to modify the required silence duration for ending a phrase, 
+	*   and @member Speech_SegmentationMaximumTimeMs can be adjusted to set the maximum length of a spoken phrase.
+	* - The Semantic strategy does not have any adjustable properties.
+    * 
+    * Added in version 1.41.0.
+    */
+	Speech_SegmentationStrategy,
+
+    /**
      * A boolean value specifying whether audio logging is enabled in the service or not.
      * Audio and content logs are stored either in Microsoft-owned storage, or in your own storage account linked
      * to your Cognitive Services subscription (Bring Your Own Storage (BYOS) enabled Speech resource).
