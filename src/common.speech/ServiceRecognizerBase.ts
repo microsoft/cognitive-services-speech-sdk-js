@@ -222,12 +222,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const speechSegmentationSilenceTimeoutMs: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
         const speechSegmentationMaximumTimeMs: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationMaximumTimeMs, undefined);
         const speechSegmentationStrategy: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationStrategy, undefined);
-        let configuredSegment = false;
-        let segmentation: Segmentation = {
+        const segmentation: Segmentation = {
             segmentation: {
                 mode: ""
             }
         };
+        let configuredSegment = false;
 
         if (speechSegmentationStrategy !== undefined) {
             configuredSegment = true;
@@ -241,12 +241,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 case "semantic":
                     segMode = "Semantic";
                     break;
-            };
-            
+            }
+
             segmentation.segmentation.mode = segMode;
         }
-        
-        
+
         if (speechSegmentationSilenceTimeoutMs !== undefined) {
             configuredSegment = true;
             const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationSilenceTimeoutMs, 10);
@@ -258,12 +257,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             configuredSegment = true;
             const segmentationMaximumTimeMs: number = parseInt(speechSegmentationMaximumTimeMs, 10);
             segmentation.segmentation.mode = "Custom";
-            segmentation.segmentation.segmentationForcedTimeoutMs = segmentationMaximumTimeMs;      
+            segmentation.segmentation.segmentationForcedTimeoutMs = segmentationMaximumTimeMs;
         }
-        
+
         if (configuredSegment) {
             const recoMode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
-                this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";  
+                this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
             const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
             phraseDetection.mode = recoMode;
             phraseDetection[recoMode] = segmentation;

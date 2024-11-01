@@ -483,7 +483,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(message.phraseDetection.mode).toEqual(expectedRecognitionMode);
                     expect(message.phraseDetection[expectedRecognitionMode][segmentationField].mode).toEqual(expectedSegmentationMode);
                     expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationSilenceTimeoutMs).toEqual(segSilenceTimeoutMs);
-                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationMaximumTimeMs).toEqual(segMaximumTimeMs);
+                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationForcedTimeoutMs).toEqual(segMaximumTimeMs);
                     speechContextSent = true;
                 } catch (error) {
                     done(error);
@@ -597,7 +597,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                     expect(message.phraseDetection.mode).toEqual(expectedRecognitionMode);
                     expect(message.phraseDetection[expectedRecognitionMode][segmentationField].mode).toEqual(expectedSegmentationMode);
                     expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationSilenceTimeoutMs).toEqual(segSilenceTimeoutMs);
-                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationMaximumTimeMs).toEqual(segMaximumTimeMs);
+                    expect(message.phraseDetection[expectedRecognitionMode][segmentationField].segmentationForcedTimeoutMs).toEqual(segMaximumTimeMs);
                     speechContextSent = true;
                 } catch (error) {
                     done(error);
