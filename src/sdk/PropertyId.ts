@@ -259,7 +259,7 @@ export enum PropertyId {
      * As the length of a spoken phrase approaches this value, the @member Speech_SegmentationSilenceTimeoutMs will be reduced until either
      * the phrase silence timeout is reached or the phrase reaches the maximum length.
      *
-     * Added in version 1.41.1.
+     * Added in version 1.42.0.
      */
     Speech_SegmentationMaximumTimeMs,
 
@@ -277,7 +277,7 @@ export enum PropertyId {
      * and @member Speech_SegmentationMaximumTimeMs can be adjusted to set the maximum length of a spoken phrase.
      * - The Semantic strategy does not have any adjustable properties.
      *
-     * Added in version 1.41.1.
+     * Added in version 1.42.0.
      */
     Speech_SegmentationStrategy,
 
