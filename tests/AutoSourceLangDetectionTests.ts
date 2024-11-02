@@ -454,7 +454,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         const s: sdk.SpeechTranslationConfig = BuildSpeechTranslationConfig();
         const segSilenceTimeoutMs = 1100;
-        const segMaximumTimeMs = 5000;
+        const segMaximumTimeMs = 25000;
         s.setProperty(sdk.PropertyId.Speech_SegmentationStrategy, "Semantic"); // Supposed to be overriden by time based segmentation configs
         s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, segSilenceTimeoutMs.toString());
         s.setProperty(sdk.PropertyId.Speech_SegmentationMaximumTimeMs, segMaximumTimeMs.toString());
@@ -569,7 +569,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         objsToClose.push(a);
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         const segSilenceTimeoutMs = 1100;
-        const segMaximumTimeMs = 5000;
+        const segMaximumTimeMs = 25000;
         s.setProperty(sdk.PropertyId.Speech_SegmentationStrategy, "Semantic"); // Supposed to be overriden by time based segmentation configs
         s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, segSilenceTimeoutMs.toString());
         s.setProperty(sdk.PropertyId.Speech_SegmentationMaximumTimeMs, segMaximumTimeMs.toString());
