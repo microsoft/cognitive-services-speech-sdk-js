@@ -78,7 +78,7 @@ test("GetOutputVoiceName", () => {
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    const voice: string = "Microsoft Server Speech Text to Speech Voice (de-DE, Hedda)";
+    const voice: string = "de-DE-KatjaNeural";
     s.voiceName = voice;
 
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
@@ -93,7 +93,7 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    s.voiceName = "Microsoft Server Speech Text to Speech Voice (de-DE, Hedda)";
+    s.voiceName = "de-DE-KatjaNeural";
 
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
     objsToClose.push(r);
@@ -252,7 +252,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    s.voiceName = "Microsoft Server Speech Text to Speech Voice (de-DE, Hedda)";
+    s.voiceName = "de-DE-KatjaNeural";
 
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
     objsToClose.push(r);
@@ -368,7 +368,7 @@ test.skip("MultiPhrase", (done: jest.DoneCallback) => {
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    s.voiceName = "Microsoft Server Speech Text to Speech Voice (de-DE, Hedda)";
+    s.voiceName = "de-DE-KatjaNeural";
     s.addTargetLanguage("de-DE");
     s.speechRecognitionLanguage = Settings.WaveFileLanguage;
 
@@ -542,7 +542,7 @@ test("Config is copied on construction", () => {
     // Change them.
     s.speechRecognitionLanguage = "de-DE";
     s.setProperty("RandomProperty", Math.random.toString());
-    s.voiceName = "Microsoft Server Speech Text to Speech Voice (de-DE, Hedda)";
+    s.voiceName = "de-DE-KatjaNeural";
 
     // Validate no change.
     expect(r.speechRecognitionLanguage).toEqual("en-US");
