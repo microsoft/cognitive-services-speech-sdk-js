@@ -78,8 +78,9 @@ export interface SpeakerDiarization {
 
 export interface Segmentation {
     segmentation: {
-        mode: "Custom";
-        segmentationSilenceTimeoutMs: number;
+        mode: string;
+        segmentationSilenceTimeoutMs?: number;
+        segmentationForcedTimeoutMs?: number;
     };
 }
 
@@ -218,19 +219,53 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected setSpeechSegmentationTimeoutJson(): void {
-        const speechSegmentationTimeout: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
-        if (speechSegmentationTimeout !== undefined) {
-            const mode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
+        const speechSegmentationSilenceTimeoutMs: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, undefined);
+        const speechSegmentationMaximumTimeMs: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationMaximumTimeMs, undefined);
+        const speechSegmentationStrategy: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationStrategy, undefined);
+        const segmentation: Segmentation = {
+            segmentation: {
+                mode: ""
+            }
+        };
+        let configuredSegment = false;
+
+        if (speechSegmentationStrategy !== undefined) {
+            configuredSegment = true;
+            let segMode: string = "";
+            switch (speechSegmentationStrategy.toLowerCase()) {
+                case "default":
+                    break;
+                case "time":
+                    segMode = "Custom";
+                    break;
+                case "semantic":
+                    segMode = "Semantic";
+                    break;
+            }
+
+            segmentation.segmentation.mode = segMode;
+        }
+
+        if (speechSegmentationSilenceTimeoutMs !== undefined) {
+            configuredSegment = true;
+            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationSilenceTimeoutMs, 10);
+            segmentation.segmentation.mode = "Custom";
+            segmentation.segmentation.segmentationSilenceTimeoutMs = segmentationSilenceTimeoutMs;
+        }
+
+        if (speechSegmentationMaximumTimeMs !== undefined) {
+            configuredSegment = true;
+            const segmentationMaximumTimeMs: number = parseInt(speechSegmentationMaximumTimeMs, 10);
+            segmentation.segmentation.mode = "Custom";
+            segmentation.segmentation.segmentationForcedTimeoutMs = segmentationMaximumTimeMs;
+        }
+
+        if (configuredSegment) {
+            const recoMode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
                 this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
-            const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationTimeout, 10);
             const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
-            phraseDetection.mode = mode;
-            phraseDetection[mode] = {
-                segmentation: {
-                    mode: "Custom",
-                    segmentationSilenceTimeoutMs
-                }
-            };
+            phraseDetection.mode = recoMode;
+            phraseDetection[recoMode] = segmentation;
             this.privSpeechContext.setSection("phraseDetection", phraseDetection);
         }
     }
