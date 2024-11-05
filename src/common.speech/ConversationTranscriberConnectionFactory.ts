@@ -89,8 +89,6 @@ export class ConversationTranscriberConnectionFactory extends ConnectionFactoryB
 
         const propertyIdToParameterMap: Map<number, string> = new Map([
             [PropertyId.Speech_SegmentationSilenceTimeoutMs, QueryParameterNames.SegmentationSilenceTimeoutMs],
-            [PropertyId.Speech_SegmentationMaximumTimeMs, QueryParameterNames.SegmentationMaximumTimeMs],
-            [PropertyId.Speech_SegmentationStrategy, QueryParameterNames.SegmentationStrategy],
             [PropertyId.SpeechServiceConnection_EnableAudioLogging, QueryParameterNames.EnableAudioLogging],
             [PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, QueryParameterNames.EndSilenceTimeoutMs],
             [PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, QueryParameterNames.InitialSilenceTimeoutMs],
