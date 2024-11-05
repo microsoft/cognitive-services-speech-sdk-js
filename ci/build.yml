@@ -64,7 +64,8 @@ jobs:
         ConversationTranscriptionKey:$(ConverstationTranscriptionKeyWestUSOnline) ^
         ConversationTranscriptionRegion:westus ^
         CustomVoiceSubscriptionKey:$(speech-ne-s0-key1) ^
-        CustomVoiceRegion:northeurope
+        CustomVoiceRegion:northeurope ^
+        ExecuteLongRunningTests = "true"
     displayName: Run tests
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
   - task: PublishTestResults@2

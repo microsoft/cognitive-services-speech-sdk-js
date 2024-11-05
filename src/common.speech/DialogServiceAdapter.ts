@@ -89,7 +89,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privTurnStateManager = new DialogServiceTurnStateManager();
         this.recognizeOverride =
             (recoMode: RecognitionMode, successCallback: (e: SpeechRecognitionResult) => void, errorCallback: (e: string) => void): Promise<void> =>
-            this.listenOnce(recoMode, successCallback, errorCallback);
+                this.listenOnce(recoMode, successCallback, errorCallback);
         this.postConnectImplOverride = (connection: Promise<IConnection>): Promise<IConnection> => this.dialogConnectImpl(connection);
         this.configConnectionOverride = (connection: IConnection): Promise<IConnection> => this.configConnection(connection);
         this.disconnectOverride = (): Promise<void> => this.privDisconnect();
@@ -152,9 +152,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.phrase":
-                const speechPhrase: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
+                const speechPhrase: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
-                this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + speechPhrase.Offset + speechPhrase.Duration);
+                this.privRequestSession.onPhraseRecognized(speechPhrase.Offset + speechPhrase.Duration);
 
                 if (speechPhrase.RecognitionStatus !== RecognitionStatus.TooManyRequests && speechPhrase.RecognitionStatus !== RecognitionStatus.Error) {
                     const args: SpeechRecognitionEventArgs = this.fireEventForResult(speechPhrase, resultProps);
@@ -173,25 +173,24 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 processed = true;
                 break;
             case "speech.hypothesis":
-                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
-                const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
+                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
                 result = new SpeechRecognitionResult(
                     this.privRequestSession.requestId,
                     ResultReason.RecognizingSpeech,
                     hypothesis.Text,
                     hypothesis.Duration,
-                    offset,
+                    hypothesis.Offset,
                     hypothesis.Language,
                     hypothesis.LanguageDetectionConfidence,
                     undefined,
                     undefined,
-                    connectionMessage.textBody,
+                    hypothesis.asJson(),
                     resultProps);
 
-                this.privRequestSession.onHypothesis(offset);
+                this.privRequestSession.onHypothesis(hypothesis.Offset);
 
-                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
+                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Offset, this.privRequestSession.sessionId);
 
                 if (!!this.privDialogServiceConnector.recognizing) {
                     try {
@@ -205,7 +204,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 processed = true;
                 break;
             case "speech.keyword":
-                const keyword: SpeechKeyword = SpeechKeyword.fromJSON(connectionMessage.textBody);
+                const keyword: SpeechKeyword = SpeechKeyword.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
                 result = new SpeechRecognitionResult(
                     this.privRequestSession.requestId,
@@ -217,7 +216,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                     undefined,
                     undefined,
                     undefined,
-                    connectionMessage.textBody,
+                    keyword.asJson(),
                     resultProps);
 
                 if (keyword.Status !== "Accepted") {
@@ -259,7 +258,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             case "response":
                 {
                     this.handleResponseMessage(connectionMessage);
-
                 }
                 processed = true;
                 break;
@@ -421,7 +419,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                         break;
 
                     case "speech.startdetected":
-                        const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
+                        const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
                         const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
 
@@ -442,11 +440,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                             json = "{ Offset: 0 }";
                         }
 
-                        const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
+                        const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json, this.privRequestSession.currentTurnAudioOffset);
 
-                        this.privRequestSession.onServiceRecognized(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset);
+                        this.privRequestSession.onServiceRecognized(speechStopDetected.Offset);
 
-                        const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
+                        const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset, this.privRequestSession.sessionId);
 
                         if (!!this.privRecognizer.speechEndDetected) {
                             this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
@@ -610,22 +608,20 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private fireEventForResult(serviceResult: SimpleSpeechPhrase, properties: PropertyCollection): SpeechRecognitionEventArgs {
         const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(serviceResult.RecognitionStatus);
 
-        const offset: number = serviceResult.Offset + this.privRequestSession.currentTurnAudioOffset;
-
         const result = new SpeechRecognitionResult(
             this.privRequestSession.requestId,
             resultReason,
             serviceResult.DisplayText,
             serviceResult.Duration,
-            offset,
+            serviceResult.Offset,
             serviceResult.Language,
             serviceResult.LanguageDetectionConfidence,
             undefined,
             undefined,
-            JSON.stringify(serviceResult),
+            serviceResult.asJson(),
             properties);
 
-        const ev = new SpeechRecognitionEventArgs(result, offset, this.privRequestSession.sessionId);
+        const ev = new SpeechRecognitionEventArgs(result, serviceResult.Offset, this.privRequestSession.sessionId);
         return ev;
     }
 

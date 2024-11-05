@@ -17,21 +17,22 @@ export interface ITranslationHypothesis {
 export class TranslationHypothesis implements ITranslationHypothesis {
     private privTranslationHypothesis: ITranslationHypothesis;
 
-    private constructor(hypothesis: ITranslationHypothesis) {
+    private constructor(hypothesis: ITranslationHypothesis, baseOffset: number) {
         this.privTranslationHypothesis = hypothesis;
-        this.privTranslationHypothesis.Translation.TranslationStatus = TranslationStatus[this.privTranslationHypothesis.Translation.TranslationStatus as unknown as keyof typeof TranslationStatus];
+        this.privTranslationHypothesis.Offset += baseOffset;
+        this.privTranslationHypothesis.Translation.TranslationStatus = this.mapTranslationStatus(this.privTranslationHypothesis.Translation.TranslationStatus);
     }
 
-    public static fromJSON(json: string): TranslationHypothesis {
-        return new TranslationHypothesis(JSON.parse(json) as ITranslationHypothesis);
+    public static fromJSON(json: string, baseOffset: number): TranslationHypothesis {
+        return new TranslationHypothesis(JSON.parse(json) as ITranslationHypothesis, baseOffset);
     }
 
-    public static fromTranslationResponse(translationHypothesis: { SpeechHypothesis: ITranslationHypothesis }): TranslationHypothesis {
+    public static fromTranslationResponse(translationHypothesis: { SpeechHypothesis: ITranslationHypothesis }, baseOffset: number): TranslationHypothesis {
         Contracts.throwIfNullOrUndefined(translationHypothesis, "translationHypothesis");
         const hypothesis: ITranslationHypothesis = translationHypothesis.SpeechHypothesis;
         translationHypothesis.SpeechHypothesis = undefined;
         hypothesis.Translation = (translationHypothesis as unknown as ITranslations);
-        return new TranslationHypothesis(hypothesis);
+        return new TranslationHypothesis(hypothesis, baseOffset);
     }
 
     public get Duration(): number {
@@ -52,5 +53,23 @@ export class TranslationHypothesis implements ITranslationHypothesis {
 
     public get Language(): string {
         return this.privTranslationHypothesis.PrimaryLanguage?.Language;
+    }
+
+    public asJson(): string {
+        const jsonObj = { ...this.privTranslationHypothesis };
+        // Convert the enum value to its string representation for serialization purposes.
+
+        return jsonObj.Translation !== undefined ? JSON.stringify({
+            ...jsonObj,
+            TranslationStatus: TranslationStatus[jsonObj.Translation.TranslationStatus] as keyof typeof TranslationStatus
+        }) : JSON.stringify(jsonObj);
+    }
+
+    private mapTranslationStatus(status: any): TranslationStatus {
+        if (typeof status === "string") {
+            return TranslationStatus[status as keyof typeof TranslationStatus];
+        } else if (typeof status === "number") {
+            return status;
+        }
     }
 }

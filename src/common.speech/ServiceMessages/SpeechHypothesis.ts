@@ -10,17 +10,27 @@ export interface ISpeechHypothesis {
     Duration: number;
     PrimaryLanguage?: IPrimaryLanguage;
     SpeakerId?: string;
+    [key: string]: any;
 }
 
 export class SpeechHypothesis implements ISpeechHypothesis {
     private privSpeechHypothesis: ISpeechHypothesis;
 
-    private constructor(json: string) {
+    private constructor(json: string, baseOffset: number) {
         this.privSpeechHypothesis = JSON.parse(json) as ISpeechHypothesis;
+        this.updateOffset(baseOffset);
     }
 
-    public static fromJSON(json: string): SpeechHypothesis {
-        return new SpeechHypothesis(json);
+    public static fromJSON(json: string, baseOffset: number): SpeechHypothesis {
+        return new SpeechHypothesis(json, baseOffset);
+    }
+
+    private updateOffset(baseOffset: number): void {
+        this.privSpeechHypothesis.Offset += baseOffset;
+    }
+
+    public asJson(): string {
+        return JSON.stringify(this.privSpeechHypothesis);
     }
 
     public get Text(): string {

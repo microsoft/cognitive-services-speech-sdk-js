@@ -19,25 +19,26 @@ export interface ITranslationPhrase {
 export class TranslationPhrase implements ITranslationPhrase {
     private privTranslationPhrase: ITranslationPhrase;
 
-    private constructor(phrase: ITranslationPhrase) {
+    private constructor(phrase: ITranslationPhrase, baseOffset: number) {
         this.privTranslationPhrase = phrase;
-        this.privTranslationPhrase.RecognitionStatus = RecognitionStatus[this.privTranslationPhrase.RecognitionStatus as unknown as keyof typeof RecognitionStatus];
+        this.privTranslationPhrase.Offset += baseOffset;
+        this.privTranslationPhrase.RecognitionStatus = this.mapRecognitionStatus(this.privTranslationPhrase.RecognitionStatus);
         if (this.privTranslationPhrase.Translation !== undefined) {
-            this.privTranslationPhrase.Translation.TranslationStatus = TranslationStatus[this.privTranslationPhrase.Translation.TranslationStatus as unknown as keyof typeof TranslationStatus];
+            this.privTranslationPhrase.Translation.TranslationStatus = this.mapTranslationStatus(this.privTranslationPhrase.Translation.TranslationStatus);
         }
     }
 
-    public static fromJSON(json: string): TranslationPhrase {
-        return new TranslationPhrase(JSON.parse(json) as ITranslationPhrase);
+    public static fromJSON(json: string, baseOffset: number): TranslationPhrase {
+        return new TranslationPhrase(JSON.parse(json) as ITranslationPhrase, baseOffset);
     }
 
-    public static fromTranslationResponse(translationResponse: { SpeechPhrase: ITranslationPhrase }): TranslationPhrase {
+    public static fromTranslationResponse(translationResponse: { SpeechPhrase: ITranslationPhrase }, baseOffset: number): TranslationPhrase {
         Contracts.throwIfNullOrUndefined(translationResponse, "translationResponse");
         const phrase: ITranslationPhrase = translationResponse.SpeechPhrase;
         translationResponse.SpeechPhrase = undefined;
         phrase.Translation = (translationResponse as unknown as ITranslations);
         phrase.Text = phrase.DisplayText;
-        return new TranslationPhrase(phrase);
+        return new TranslationPhrase(phrase, baseOffset);
     }
 
     public get RecognitionStatus(): RecognitionStatus {
@@ -66,5 +67,41 @@ export class TranslationPhrase implements ITranslationPhrase {
 
     public get Translation(): ITranslations | undefined {
         return this.privTranslationPhrase.Translation;
+    }
+
+    public asJson(): string {
+        const jsonObj = { ...this.privTranslationPhrase };
+
+        // Convert the enum values to their string representations for serialization
+        const serializedObj: any = {
+            ...jsonObj,
+            RecognitionStatus: RecognitionStatus[jsonObj.RecognitionStatus]
+        };
+
+        if (jsonObj.Translation) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            serializedObj.Translation = {
+                ...jsonObj.Translation,
+                TranslationStatus: TranslationStatus[jsonObj.Translation.TranslationStatus]
+            };
+        }
+
+        return JSON.stringify(serializedObj);
+    }
+
+    private mapRecognitionStatus(status: any): RecognitionStatus {
+        if (typeof status === "string") {
+            return RecognitionStatus[status as keyof typeof RecognitionStatus];
+        } else if (typeof status === "number") {
+            return status;
+        }
+    }
+
+    private mapTranslationStatus(status: any): TranslationStatus {
+        if (typeof status === "string") {
+            return TranslationStatus[status as keyof typeof TranslationStatus];
+        } else if (typeof status === "number") {
+            return status;
+        }
     }
 }

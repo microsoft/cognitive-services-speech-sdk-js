@@ -48,32 +48,33 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         let result: SpeechRecognitionResult;
+
         const resultProps: PropertyCollection = new PropertyCollection();
-        resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, connectionMessage.textBody);
+
         let processed: boolean = false;
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
             case "speech.fragment":
-                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
-                const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
+                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, hypothesis.asJson());
 
                 result = new SpeechRecognitionResult(
                     this.privRequestSession.requestId,
                     ResultReason.RecognizingSpeech,
                     hypothesis.Text,
                     hypothesis.Duration,
-                    offset,
+                    hypothesis.Offset,
                     hypothesis.Language,
                     hypothesis.LanguageDetectionConfidence,
                     undefined, // Speaker Id
                     undefined,
-                    connectionMessage.textBody,
+                    hypothesis.asJson(),
                     resultProps);
 
-                this.privRequestSession.onHypothesis(offset);
+                this.privRequestSession.onHypothesis(hypothesis.Offset);
 
-                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
+                const ev = new SpeechRecognitionEventArgs(result, hypothesis.Offset, this.privRequestSession.sessionId);
 
                 if (!!this.privSpeechRecognizer.recognizing) {
                     try {
@@ -87,10 +88,12 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 processed = true;
                 break;
             case "speech.phrase":
-                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
+                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, simple.asJson());
+
                 const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus, this.privExpectContentAssessmentResponse);
 
-                this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + simple.Offset + simple.Duration);
+                this.privRequestSession.onPhraseRecognized(simple.Offset + simple.Duration);
 
                 if (ResultReason.Canceled === resultReason) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
@@ -113,29 +116,27 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                             resultReason,
                             simple.DisplayText,
                             simple.Duration,
-                            simple.Offset + this.privRequestSession.currentTurnAudioOffset,
+                            simple.Offset,
                             simple.Language,
                             simple.LanguageDetectionConfidence,
                             undefined, // Speaker Id
                             undefined,
-                            connectionMessage.textBody,
+                            simple.asJson(),
                             resultProps);
                     } else {
-                        const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody);
-                        const totalOffset: number = detailed.Offset + this.privRequestSession.currentTurnAudioOffset;
-                        const offsetCorrectedJson: string = detailed.getJsonWithCorrectedOffsets(totalOffset);
+                        const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
                         result = new SpeechRecognitionResult(
                             this.privRequestSession.requestId,
                             resultReason,
-                            detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : undefined,
+                            detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : "",
                             detailed.Duration,
-                            totalOffset,
+                            detailed.Offset,
                             detailed.Language,
                             detailed.LanguageDetectionConfidence,
                             undefined, // Speaker Id
                             undefined,
-                            offsetCorrectedJson,
+                            detailed.asJson(),
                             resultProps);
                     }
 
