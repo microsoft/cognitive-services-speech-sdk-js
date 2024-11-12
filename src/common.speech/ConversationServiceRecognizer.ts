@@ -10,7 +10,6 @@ import {
     SpeechRecognitionResult
 } from "../sdk/Exports.js";
 import {
-    DetailedSpeechPhrase,
     EnumTranslation,
     IAuthentication,
     IConnectionFactory,
@@ -18,8 +17,7 @@ import {
     RecognitionStatus,
     RecognizerConfig,
     ServiceRecognizerBase,
-    SimpleSpeechPhrase,
-    SpeechHypothesis
+    SpeechPhrase,
 } from "./Exports.js";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
@@ -93,7 +91,7 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
 
     protected async handleSpeechPhrase(textBody: string): Promise<void> {
 
-        const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(textBody, this.privRequestSession.currentTurnAudioOffset);
+        const simple: SpeechPhrase = SpeechPhrase.fromJSON(textBody, this.privRequestSession.currentTurnAudioOffset);
         const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
         let result: SpeechRecognitionResult;
         const resultProps: PropertyCollection = new PropertyCollection();
@@ -111,44 +109,27 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
                 EnumTranslation.implTranslateErrorDetails(cancellationErrorCode));
 
         } else {
-            if (simple.RecognitionStatus !== RecognitionStatus.EndOfDictation) {
-                if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
-                    result = new SpeechRecognitionResult(
-                        this.privRequestSession.requestId,
-                        resultReason,
-                        simple.DisplayText,
-                        simple.Duration,
-                        simple.Offset,
-                        simple.Language,
-                        simple.LanguageDetectionConfidence,
-                        simple.SpeakerId,
-                        undefined,
-                        simple.asJson(),
-                        resultProps);
-                } else {
-                    const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(textBody, this.privRequestSession.currentTurnAudioOffset);
 
-                    result = new SpeechRecognitionResult(
-                        this.privRequestSession.requestId,
-                        resultReason,
-                        detailed.Text,
-                        detailed.Duration,
-                        detailed.Offset,
-                        detailed.Language,
-                        detailed.LanguageDetectionConfidence,
-                        detailed.SpeakerId,
-                        undefined,
-                        detailed.asJson(),
-                        resultProps);
-                }
+            result = new SpeechRecognitionResult(
+                this.privRequestSession.requestId,
+                resultReason,
+                simple.Text,
+                simple.Duration,
+                simple.Offset,
+                simple.Language,
+                simple.LanguageDetectionConfidence,
+                simple.SpeakerId,
+                undefined,
+                simple.asJson(),
+                resultProps);
 
-                this.handleRecognizedCallback(result, result.offset, this.privRequestSession.sessionId);
-            }
+            this.handleRecognizedCallback(result, result.offset, this.privRequestSession.sessionId);
         }
     }
 
+
     protected handleSpeechHypothesis(textBody: string): void {
-        const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(textBody, this.privRequestSession.currentTurnAudioOffset);
+        const hypothesis: SpeechPhrase = SpeechPhrase.fromJSON(textBody, this.privRequestSession.currentTurnAudioOffset);
         const resultProps: PropertyCollection = new PropertyCollection();
         resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, textBody);
 

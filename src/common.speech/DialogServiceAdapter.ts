@@ -47,9 +47,8 @@ import {
     ISpeechConfigAudioDevice,
     RecognitionStatus,
     ServiceRecognizerBase,
-    SimpleSpeechPhrase,
+    SpeechPhrase,
     SpeechDetected,
-    SpeechHypothesis,
     SpeechKeyword,
 } from "./Exports.js";
 import { IAuthentication } from "./IAuthentication.js";
@@ -152,7 +151,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.phrase":
-                const speechPhrase: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                const speechPhrase: SpeechPhrase = SpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
                 this.privRequestSession.onPhraseRecognized(speechPhrase.Offset + speechPhrase.Duration);
 
@@ -173,7 +172,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 processed = true;
                 break;
             case "speech.hypothesis":
-                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                const hypothesis: SpeechPhrase = SpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
                 result = new SpeechRecognitionResult(
                     this.privRequestSession.requestId,
@@ -605,13 +604,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             agentContextJson));
     }
 
-    private fireEventForResult(serviceResult: SimpleSpeechPhrase, properties: PropertyCollection): SpeechRecognitionEventArgs {
+    private fireEventForResult(serviceResult: SpeechPhrase, properties: PropertyCollection): SpeechRecognitionEventArgs {
         const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(serviceResult.RecognitionStatus);
 
         const result = new SpeechRecognitionResult(
             this.privRequestSession.requestId,
             resultReason,
-            serviceResult.DisplayText,
+            serviceResult.Text,
             serviceResult.Duration,
             serviceResult.Offset,
             serviceResult.Language,

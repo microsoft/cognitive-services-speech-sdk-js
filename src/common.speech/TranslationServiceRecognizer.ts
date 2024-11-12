@@ -28,7 +28,6 @@ import {
     EnumTranslation,
     ITranslationHypothesis,
     RecognitionStatus,
-    SimpleSpeechPhrase,
     SynthesisStatus,
     TranslationHypothesis,
     TranslationPhrase,

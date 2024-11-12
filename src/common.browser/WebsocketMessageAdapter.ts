@@ -117,7 +117,8 @@ export class WebsocketMessageAdapter {
 
                 this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
-                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression };
+                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression, followRedirects: true };
+
                 // The ocsp library will handle validation for us and fail the connection if needed.
                 this.privCertificateValidatedDeferral.resolve();
 
@@ -329,7 +330,7 @@ export class WebsocketMessageAdapter {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private getAgent(): http.Agent {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo } ;
+        const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo };
 
         if (this.proxyInfo !== undefined &&
             this.proxyInfo.HostName !== undefined &&

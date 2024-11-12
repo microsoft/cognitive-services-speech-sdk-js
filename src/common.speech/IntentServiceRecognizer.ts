@@ -23,8 +23,7 @@ import {
     EnumTranslation,
     IntentResponse,
     ServiceRecognizerBase,
-    SimpleSpeechPhrase,
-    SpeechHypothesis,
+    SpeechPhrase,
 } from "./Exports.js";
 import { IAuthentication } from "./IAuthentication.js";
 import { IConnectionFactory } from "./IConnectionFactory.js";
@@ -69,7 +68,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
-                const speechHypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                const speechHypothesis: SpeechPhrase = SpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
                 result = new IntentRecognitionResult(
                     undefined,
@@ -100,12 +99,12 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 processed = true;
                 break;
             case "speech.phrase":
-                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                const simple: SpeechPhrase = SpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
                 result = new IntentRecognitionResult(
                     undefined,
                     this.privRequestSession.requestId,
                     EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus),
-                    simple.DisplayText,
+                    simple.Text,
                     simple.Duration,
                     simple.Offset,
                     simple.Language,

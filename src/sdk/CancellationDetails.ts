@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { CancellationErrorCodePropertyName, EnumTranslation, SimpleSpeechPhrase } from "../common.speech/Exports.js";
+import { CancellationErrorCodePropertyName, EnumTranslation, SpeechPhrase } from "../common.speech/Exports.js";
 import { CancellationDetailsBase } from "./CancellationDetailsBase.js";
 import {
     CancellationErrorCode,
@@ -33,7 +33,7 @@ export class CancellationDetails extends CancellationDetailsBase {
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
 
         if (result instanceof RecognitionResult && !!result.json) {
-            const simpleSpeech: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(result.json, 0); // Offset fixups are already done.
+            const simpleSpeech: SpeechPhrase = SpeechPhrase.fromJSON(result.json, 0); // Offset fixups are already done.
             reason = EnumTranslation.implTranslateCancelResult(simpleSpeech.RecognitionStatus);
         }
 

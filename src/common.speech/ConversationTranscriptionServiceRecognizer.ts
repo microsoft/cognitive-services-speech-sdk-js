@@ -16,13 +16,11 @@ import {
 } from "../sdk/Exports.js";
 import {
     CancellationErrorCodePropertyName,
-    DetailedSpeechPhrase,
     EnumTranslation,
     OutputFormatPropertyName,
     RecognitionStatus,
     ServiceRecognizerBase,
-    SimpleSpeechPhrase,
-    SpeechHypothesis,
+    SpeechPhrase,
 } from "./Exports.js";
 import { IAuthentication } from "./IAuthentication.js";
 import { IConnectionFactory } from "./IConnectionFactory.js";
@@ -70,7 +68,7 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
             case "speech.fragment":
-                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                const hypothesis: SpeechPhrase = SpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
                 result = new ConversationTranscriptionResult(
                     this.privRequestSession.requestId,
@@ -101,7 +99,8 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
                 processed = true;
                 break;
             case "speech.phrase":
-                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                processed = true;
+                const simple: SpeechPhrase = SpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
                 const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
 
                 this.privRequestSession.onPhraseRecognized(simple.Offset + simple.Duration);
@@ -116,54 +115,41 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
                         EnumTranslation.implTranslateErrorDetails(cancellationErrorCode));
 
                 } else {
-                    if (!(this.privRequestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
-                        if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
-                            result = new ConversationTranscriptionResult(
-                                this.privRequestSession.requestId,
-                                resultReason,
-                                simple.DisplayText,
-                                simple.Duration,
-                                simple.Offset,
-                                simple.Language,
-                                simple.LanguageDetectionConfidence,
-                                simple.SpeakerId,
-                                undefined,
-                                simple.asJson(),
-                                resultProps);
-                        } else {
-                            const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                    // Like the native SDK's, don't event / return an EndOfDictation message.
+                    if (simple.RecognitionStatus === RecognitionStatus.EndOfDictation) {
+                        break;
+                    }
 
-                            result = new ConversationTranscriptionResult(
-                                this.privRequestSession.requestId,
-                                resultReason,
-                                detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : undefined,
-                                detailed.Duration,
-                                detailed.Offset,
-                                detailed.Language,
-                                detailed.LanguageDetectionConfidence,
-                                simple.SpeakerId,
-                                undefined,
-                                detailed.asJson(),
-                                resultProps);
-                        }
+                    result = new ConversationTranscriptionResult(
+                        this.privRequestSession.requestId,
+                        resultReason,
+                        simple.Text,
+                        simple.Duration,
+                        simple.Offset,
+                        simple.Language,
+                        simple.LanguageDetectionConfidence,
+                        simple.SpeakerId,
+                        undefined,
+                        simple.asJson(),
+                        resultProps);
 
-                        const event: ConversationTranscriptionEventArgs = new ConversationTranscriptionEventArgs(result, result.offset, this.privRequestSession.sessionId);
 
-                        if (!!this.privConversationTranscriber.transcribed) {
-                            try {
-                                this.privConversationTranscriber.transcribed(this.privConversationTranscriber, event);
-                                /* eslint-disable no-empty */
-                            } catch (error) {
-                                // Not going to let errors in the event handler
-                                // trip things up.
-                            }
+                    const event: ConversationTranscriptionEventArgs = new ConversationTranscriptionEventArgs(result, result.offset, this.privRequestSession.sessionId);
+
+                    if (!!this.privConversationTranscriber.transcribed) {
+                        try {
+                            this.privConversationTranscriber.transcribed(this.privConversationTranscriber, event);
+                            /* eslint-disable no-empty */
+                        } catch (error) {
+                            // Not going to let errors in the event handler
+                            // trip things up.
                         }
                     }
                 }
-                processed = true;
                 break;
             default:
                 break;
+
         }
         return processed;
     }

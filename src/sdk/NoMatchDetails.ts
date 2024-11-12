@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RecognitionStatus, SimpleSpeechPhrase } from "../../src/common.speech/Exports.js";
+import { RecognitionStatus, SpeechPhrase } from "../../src/common.speech/Exports.js";
 import { IntentRecognitionResult, NoMatchReason, SpeechRecognitionResult, TranslationRecognitionResult } from "./Exports.js";
 
 /**
@@ -30,7 +30,7 @@ export class NoMatchDetails {
      * @returns {NoMatchDetails} The no match details object being created.
      */
     public static fromResult(result: SpeechRecognitionResult | IntentRecognitionResult | TranslationRecognitionResult): NoMatchDetails {
-        const simpleSpeech: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(result.json, 0); // Offset fixups are already done.
+        const simpleSpeech: SpeechPhrase = SpeechPhrase.fromJSON(result.json, 0); // Offset fixups are already done.
 
         let reason: NoMatchReason = NoMatchReason.NotRecognized;
 

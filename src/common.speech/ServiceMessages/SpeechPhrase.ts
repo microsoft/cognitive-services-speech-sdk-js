@@ -1,10 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IPrimaryLanguage, RecognitionStatus } from "../Exports.js";
+import { RecognitionStatus } from "../Exports.js";
+
+export interface IPrimaryLanguage {
+    Language: string;
+    Confidence: string;
+}
 
 // speech.phrase for detailed
-export interface IDetailedSpeechPhrase {
+export interface ISpeechPhrase {
     RecognitionStatus: RecognitionStatus;
     NBest: IPhrase[];
     Duration?: number;
@@ -32,17 +37,17 @@ export interface IWord {
     Duration: number;
 }
 
-export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
-    private privDetailedSpeechPhrase: IDetailedSpeechPhrase;
+export class SpeechPhrase implements ISpeechPhrase {
+    private privDetailedSpeechPhrase: ISpeechPhrase;
 
     private constructor(json: string, baseOffset: number) {
-        this.privDetailedSpeechPhrase = JSON.parse(json) as IDetailedSpeechPhrase;
+        this.privDetailedSpeechPhrase = JSON.parse(json) as ISpeechPhrase;
         this.privDetailedSpeechPhrase.RecognitionStatus = this.mapRecognitionStatus(this.privDetailedSpeechPhrase.RecognitionStatus);
         this.updateOffsets(baseOffset);
     }
 
-    public static fromJSON(json: string, baseOffset: number): DetailedSpeechPhrase {
-        return new DetailedSpeechPhrase(json, baseOffset);
+    public static fromJSON(json: string, baseOffset: number): SpeechPhrase {
+        return new SpeechPhrase(json, baseOffset);
     }
 
     private updateOffsets(baseOffset: number): void {

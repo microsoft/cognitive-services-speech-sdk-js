@@ -16,13 +16,10 @@ import {
 } from "../sdk/Exports.js";
 import {
     CancellationErrorCodePropertyName,
-    DetailedSpeechPhrase,
     EnumTranslation,
-    OutputFormatPropertyName,
     RecognitionStatus,
     ServiceRecognizerBase,
-    SimpleSpeechPhrase,
-    SpeechHypothesis,
+    SpeechPhrase
 } from "./Exports.js";
 import { IAuthentication } from "./IAuthentication.js";
 import { IConnectionFactory } from "./IConnectionFactory.js";
@@ -56,7 +53,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
             case "speech.fragment":
-                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                const hypothesis: SpeechPhrase = SpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
                 resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, hypothesis.asJson());
 
                 result = new SpeechRecognitionResult(
@@ -88,16 +85,16 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 processed = true;
                 break;
             case "speech.phrase":
-                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
-                resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, simple.asJson());
+                const phrase: SpeechPhrase = SpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, phrase.asJson());
 
-                const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus, this.privExpectContentAssessmentResponse);
+                const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(phrase.RecognitionStatus, this.privExpectContentAssessmentResponse);
 
-                this.privRequestSession.onPhraseRecognized(simple.Offset + simple.Duration);
+                this.privRequestSession.onPhraseRecognized(phrase.Offset + phrase.Duration);
 
                 if (ResultReason.Canceled === resultReason) {
-                    const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
-                    const cancellationErrorCode: CancellationErrorCode = EnumTranslation.implTranslateCancelErrorCode(simple.RecognitionStatus);
+                    const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(phrase.RecognitionStatus);
+                    const cancellationErrorCode: CancellationErrorCode = EnumTranslation.implTranslateCancelErrorCode(phrase.RecognitionStatus);
 
                     await this.cancelRecognitionLocal(
                         cancelReason,
@@ -106,40 +103,22 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
                 } else {
                     // Like the native SDK's, don't event / return an EndOfDictation message.
-                    if (simple.RecognitionStatus === RecognitionStatus.EndOfDictation) {
+                    if (phrase.RecognitionStatus === RecognitionStatus.EndOfDictation) {
                         break;
                     }
 
-                    if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
-                        result = new SpeechRecognitionResult(
-                            this.privRequestSession.requestId,
-                            resultReason,
-                            simple.DisplayText,
-                            simple.Duration,
-                            simple.Offset,
-                            simple.Language,
-                            simple.LanguageDetectionConfidence,
-                            undefined, // Speaker Id
-                            undefined,
-                            simple.asJson(),
-                            resultProps);
-                    } else {
-                        const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
-                        resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, detailed.asJson());
-
-                        result = new SpeechRecognitionResult(
-                            this.privRequestSession.requestId,
-                            resultReason,
-                            detailed.RecognitionStatus === RecognitionStatus.Success ? detailed.NBest[0].Display : "",
-                            detailed.Duration,
-                            detailed.Offset,
-                            detailed.Language,
-                            detailed.LanguageDetectionConfidence,
-                            undefined, // Speaker Id
-                            undefined,
-                            detailed.asJson(),
-                            resultProps);
-                    }
+                    result = new SpeechRecognitionResult(
+                        this.privRequestSession.requestId,
+                        resultReason,
+                        phrase.RecognitionStatus === RecognitionStatus.Success ? phrase.NBest && phrase.NBest[0] && phrase.NBest[0].Display : "",
+                        phrase.Duration,
+                        phrase.Offset,
+                        phrase.Language,
+                        phrase.LanguageDetectionConfidence,
+                        undefined, // Speaker Id
+                        undefined,
+                        phrase.asJson(),
+                        resultProps);
 
                     const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
 
