@@ -125,6 +125,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                             resultProps);
                     } else {
                         const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                        resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, detailed.asJson());
 
                         result = new SpeechRecognitionResult(
                             this.privRequestSession.requestId,

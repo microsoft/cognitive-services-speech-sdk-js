@@ -35,7 +35,7 @@ import bent, { BentResponse } from "bent";
 
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
-import { ServiceRecognizerBase, SimpleSpeechPhrase } from "../src/common.speech/Exports";
+import { DetailedSpeechPhrase, IPhrase, IWord, ServiceRecognizerBase, SimpleSpeechPhrase } from "../src/common.speech/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
 import { ConnectionStartEvent, createNoDashGuid, IDetachable } from "../src/common/Exports";
@@ -2443,16 +2443,20 @@ describe("PhraseList tests", (): void => {
         });
     }, 20000);
 
-    describe.only.each([sdk.OutputFormat.Simple, sdk.OutputFormat.Detailed])("Output Format", (outptuFormat: sdk.OutputFormat): void => {
+    describe.only.each([sdk.OutputFormat.Simple, sdk.OutputFormat.Detailed])("Output Format", (outputFormat: sdk.OutputFormat): void => {
         test("Multi-Turn offset verification", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
-            console.info("Name: Multiple Phrase Latency Reporting");
+            console.info("Multi-Turn offset verification");
 
             const s: sdk.SpeechConfig = BuildSpeechConfig();
             objsToClose.push(s);
 
             s.speechRecognitionLanguage = "en-US";
-            s.outputFormat = outptuFormat;
+            s.outputFormat = outputFormat;
+
+            if (sdk.OutputFormat.Detailed === outputFormat) {
+                s.requestWordLevelTimestamps();
+            }
 
             const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
             const p: sdk.PullAudioInputStream = pullStreamSource.PullStream;
@@ -2522,6 +2526,24 @@ describe("PhraseList tests", (): void => {
 
                     simpleResult = SimpleSpeechPhrase.fromJSON(e.result.json, 0);
                     expect(simpleResult.Offset).toBeGreaterThanOrEqual(lastOffset);
+
+                    if (outputFormat === sdk.OutputFormat.Detailed && e.result.text !== "") {
+                        let detailedResult: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult), 0);
+
+                        detailedResult.NBest.forEach((phrase: IPhrase): void => {
+                            phrase.Words.forEach((word: IWord): void => {
+                                expect(word.Offset).toBeGreaterThanOrEqual(lastOffset);
+                            });
+                        });
+
+                        detailedResult = DetailedSpeechPhrase.fromJSON(e.result.json, 0);
+
+                        detailedResult.NBest.forEach((phrase: IPhrase): void => {
+                            phrase.Words.forEach((word: IWord): void => {
+                                expect(word.Offset).toBeGreaterThanOrEqual(lastOffset);
+                            });
+                        });
+                    }
 
                     lastOffset = e.offset;
                 } catch (error) {

@@ -49,25 +49,15 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
         this.privDetailedSpeechPhrase.Offset += baseOffset;
 
         if (!!this.privDetailedSpeechPhrase.NBest) {
-            let firstWordOffset: number;
             for (const phrase of this.privDetailedSpeechPhrase.NBest) {
-                if (!!phrase.Words && !!phrase.Words[0]) {
-                    firstWordOffset = phrase.Words[0].Offset;
-                    break;
-                }
-            }
-            if (!!firstWordOffset && firstWordOffset < baseOffset) {
-                const offset: number = baseOffset - firstWordOffset;
-                for (const details of this.privDetailedSpeechPhrase.NBest) {
-                    if (!!details.Words) {
-                        for (const word of details.Words) {
-                            word.Offset += offset;
-                        }
+                if (!!phrase.Words) {
+                    for (const word of phrase.Words) {
+                        word.Offset += baseOffset;
                     }
-                    if (!!details.DisplayWords) {
-                        for (const word of details.DisplayWords) {
-                            word.Offset += offset;
-                        }
+                }
+                if (!!phrase.DisplayWords) {
+                    for (const word of phrase.DisplayWords) {
+                        word.Offset += baseOffset;
                     }
                 }
             }
