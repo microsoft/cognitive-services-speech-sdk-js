@@ -2443,7 +2443,7 @@ describe("PhraseList tests", (): void => {
         });
     }, 20000);
 
-    describe.only.each([sdk.OutputFormat.Simple, sdk.OutputFormat.Detailed])("Output Format", (outputFormat: sdk.OutputFormat): void => {
+    describe.each([sdk.OutputFormat.Simple, sdk.OutputFormat.Detailed])("Output Format", (outputFormat: sdk.OutputFormat): void => {
         test("Multi-Turn offset verification", (done: jest.DoneCallback): void => {
             // eslint-disable-next-line no-console
             console.info("Multi-Turn offset verification");
