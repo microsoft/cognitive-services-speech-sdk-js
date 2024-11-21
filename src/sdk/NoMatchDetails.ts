@@ -30,7 +30,7 @@ export class NoMatchDetails {
      * @returns {NoMatchDetails} The no match details object being created.
      */
     public static fromResult(result: SpeechRecognitionResult | IntentRecognitionResult | TranslationRecognitionResult): NoMatchDetails {
-        const simpleSpeech: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(result.json);
+        const simpleSpeech: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(result.json, 0); // Offset fixups are already done.
 
         let reason: NoMatchReason = NoMatchReason.NotRecognized;
 
@@ -45,7 +45,6 @@ export class NoMatchDetails {
                 reason = NoMatchReason.NotRecognized;
                 break;
         }
-
         return new NoMatchDetails(reason);
     }
 

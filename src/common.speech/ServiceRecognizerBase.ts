@@ -643,7 +643,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         break;
 
                     case "speech.startdetected":
-                        const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody);
+                        const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
                         const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
                         if (!!this.privRecognizer.speechStartDetected) {
                             this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
@@ -658,7 +658,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             // If the request was empty, the JSON returned is empty.
                             json = "{ Offset: 0 }";
                         }
-                        const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json);
+                        const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json, this.privRequestSession.currentTurnAudioOffset);
                         const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
                         if (!!this.privRecognizer.speechEndDetected) {
                             this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);

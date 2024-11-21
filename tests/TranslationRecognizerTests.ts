@@ -6,6 +6,7 @@ import {
     ConsoleLoggingListener,
     WebsocketMessageAdapter,
 } from "../src/common.browser/Exports";
+import { TranslationHypothesis, TranslationPhrase } from "../src/common.speech/Exports";
 import {
     Events,
 } from "../src/common/Exports";
@@ -13,20 +14,21 @@ import {
 import { Settings } from "./Settings";
 import {
     closeAsyncObjects,
-    WaitForCondition
+    WaitForCondition,
+    RepeatingPullStream
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // Override inputs, if necessary
     Settings.LoadSettings();
     Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
     // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
@@ -68,15 +70,15 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig, 
 const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     expect(s).not.toBeUndefined();
+
+    if (undefined !== Settings.proxyServer) {
+        s.setProxy(Settings.proxyServer, Settings.proxyPort);
+    }
+
     return s;
 };
 
-const FIRST_EVENT_ID: number = 1;
-const Recognizing: string = "Recognizing";
-const Recognized: string = "Recognized";
-const Canceled: string = "Canceled";
-
-test("GetTargetLanguages", () => {
+test("GetTargetLanguages", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: GetTargetLanguages");
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
@@ -88,7 +90,7 @@ test("GetTargetLanguages", () => {
     expect(r.targetLanguages[0]).toEqual(r.properties.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages]));
 });
 
-test.skip("GetOutputVoiceNameNoSetting", () => {
+test.skip("GetOutputVoiceNameNoSetting", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: GetOutputVoiceNameNoSetting");
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
@@ -96,7 +98,7 @@ test.skip("GetOutputVoiceNameNoSetting", () => {
     expect(r.voiceName).not.toBeUndefined();
 });
 
-test("GetParameters", () => {
+test("GetParameters", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: GetParameters");
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile();
@@ -110,18 +112,18 @@ test("GetParameters", () => {
     expect(r.targetLanguages[0]).toEqual(r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages));
 });
 
-describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
+describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): void => {
 
-    beforeEach(() => {
+    beforeEach((): void => {
         // eslint-disable-next-line no-console
-        console.info("forceNodeWebSocket: " + forceNodeWebSocket);
+        console.info("forceNodeWebSocket: " + forceNodeWebSocket.toString());
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
     });
-    afterAll(() => {
+    afterAll((): void => {
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
-    test("Translate Multiple Targets", (done: jest.DoneCallback) => {
+    test("Translate Multiple Targets", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Translate Multiple Targets");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -140,7 +142,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.recognizeOnceAsync(
-            (res: sdk.TranslationRecognitionResult) => {
+            (res: sdk.TranslationRecognitionResult): void => {
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
@@ -153,7 +155,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 r.addTargetLanguage("es-MX");
                 expect(r.targetLanguages.includes("es-MX")).toBeTruthy();
                 r.recognizeOnceAsync(
-                    (secondRes: sdk.TranslationRecognitionResult) => {
+                    (secondRes: sdk.TranslationRecognitionResult): void => {
                         expect(secondRes).not.toBeUndefined();
                         expect(secondRes.errorDetails).toBeUndefined();
                         expect(sdk.ResultReason[secondRes.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
@@ -164,16 +166,16 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                         expect("¿Cómo es el clima?").toEqual(secondRes.translations.get("es", ""));
                         done();
                     },
-                    (error: string) => {
+                    (error: string): void => {
                         done(error);
                     });
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 30000);
 
-    test("Translate Bad Language", (done: jest.DoneCallback) => {
+    test("Translate Bad Language", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Translate Bad Language");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -188,7 +190,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         expect(r instanceof sdk.Recognizer).toEqual(true);
 
-        r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs) => {
+        r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs): void => {
             try {
                 if (e.result.reason === sdk.ResultReason.Canceled) {
                     done(sdk.ResultReason[e.result.reason]);
@@ -199,19 +201,19 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
 
         r.recognizeOnceAsync(
-            (res: sdk.TranslationRecognitionResult) => {
+            (res: sdk.TranslationRecognitionResult): void => {
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).not.toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.text).toEqual("What's the weather like?");
                 done();
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     });
 
-    test("RecognizeOnce Bad Language", (done: jest.DoneCallback) => {
+    test("RecognizeOnce Bad Language", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: RecognizeOnce Bad Language");
         const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -223,7 +225,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         objsToClose.push(r);
         let doneCount: number = 0;
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
+        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.BadRequestParameters]);
@@ -234,7 +236,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             }
         };
 
-        r.recognizeOnceAsync((result: sdk.TranslationRecognitionResult) => {
+        r.recognizeOnceAsync((result: sdk.TranslationRecognitionResult): void => {
             try {
                 const e: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
@@ -246,10 +248,10 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             }
         });
 
-        WaitForCondition(() => (doneCount === 2), done);
+        WaitForCondition((): boolean => (doneCount === 2), done);
     }, 15000);
 
-    test("fromEndPoint with Subscription key", (done: jest.DoneCallback) => {
+    test("fromEndPoint with Subscription key", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: fromEndPoint with Subscription key");
 
@@ -271,7 +273,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             }
         };
         r.recognizeOnceAsync(
-            (res: sdk.TranslationRecognitionResult) => {
+            (res: sdk.TranslationRecognitionResult): void => {
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
@@ -280,12 +282,12 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(res.text).toEqual("What's the weather like?");
                 done();
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 12000);
 
-    test("fromV2EndPoint with Subscription key", (done: jest.DoneCallback) => {
+    test("fromV2EndPoint with Subscription key", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: fromV2EndPoint with Subscription key");
 
@@ -309,7 +311,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             }
         };
         r.recognizeOnceAsync(
-            (res: sdk.TranslationRecognitionResult) => {
+            (res: sdk.TranslationRecognitionResult): void => {
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
@@ -318,8 +320,107 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(res.text).toEqual("What's the weather like?");
                 done();
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 12000);
+
+    test("Multi-Turn offset verification", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: Multiple Phrase Latency Reporting");
+
+        const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+        objsToClose.push(s);
+        s.addTargetLanguage("de-DE");
+        s.speechRecognitionLanguage = "en-US";
+
+        const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
+        const p: sdk.PullAudioInputStream = pullStreamSource.PullStream;
+
+        const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+        const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, config);
+        objsToClose.push(r);
+
+        expect(r).not.toBeUndefined();
+        expect(r instanceof sdk.Recognizer);
+
+        let recoCount: number = 0;
+        let lastOffset: number = 0;
+
+        r.speechEndDetected = (r: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+            try {
+                expect(e.offset).toBeGreaterThan(lastOffset);
+            } catch (error) {
+                done(error);
+            }
+            recoCount++;
+            pullStreamSource.StartRepeat();
+        };
+
+        r.speechStartDetected = (r: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+            try {
+                expect(e.offset).toBeGreaterThan(lastOffset);
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.recognizing = (r: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+            try {
+                expect(e.result).not.toBeUndefined();
+                expect(e.offset).toBeGreaterThan(lastOffset);
+
+                // Use some implementation details from the SDK to test the JSON has been exported correctly.
+                let simpleResult: TranslationHypothesis = TranslationHypothesis.fromJSON(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult), 0);
+                expect(simpleResult.Offset).toBeGreaterThanOrEqual(lastOffset);
+
+                simpleResult = TranslationHypothesis.fromJSON(e.result.json, 0);
+                expect(simpleResult.Offset).toBeGreaterThanOrEqual(lastOffset);
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.recognized = (r: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+            try {
+                const res: sdk.SpeechRecognitionResult = e.result;
+                expect(res).not.toBeUndefined();
+                expect(e.offset).toBeGreaterThan(lastOffset);
+
+                // Use some implementation details from the SDK to test the JSON has been exported correctly.
+                let simpleResult: TranslationPhrase = TranslationPhrase.fromJSON(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult), 0);
+                expect(simpleResult.Offset).toBeGreaterThanOrEqual(lastOffset);
+
+                simpleResult = TranslationPhrase.fromJSON(e.result.json, 0);
+                expect(simpleResult.Offset).toBeGreaterThanOrEqual(lastOffset);
+
+                lastOffset = e.offset;
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.startContinuousRecognitionAsync(
+            undefined,
+            (error: string): void => {
+                done(error);
+            });
+
+        WaitForCondition((): boolean => (recoCount === 3), (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
+                done();
+            }, (error: string): void => {
+                done(error);
+            });
+        });
+    }, 1000 * 60 * 2);
 });

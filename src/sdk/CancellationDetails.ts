@@ -33,7 +33,7 @@ export class CancellationDetails extends CancellationDetailsBase {
         let errorCode: CancellationErrorCode = CancellationErrorCode.NoError;
 
         if (result instanceof RecognitionResult && !!result.json) {
-            const simpleSpeech: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(result.json);
+            const simpleSpeech: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(result.json, 0); // Offset fixups are already done.
             reason = EnumTranslation.implTranslateCancelResult(simpleSpeech.RecognitionStatus);
         }
 

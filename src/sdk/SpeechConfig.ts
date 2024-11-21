@@ -498,6 +498,7 @@ export class SpeechConfigImpl extends SpeechConfig {
     }
     public requestWordLevelTimestamps(): void {
         this.privProperties.setProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "true");
+        this.privProperties.setProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Detailed]);
     }
     public enableDictation(): void {
         this.privProperties.setProperty(ForceDictationPropertyName, "true");

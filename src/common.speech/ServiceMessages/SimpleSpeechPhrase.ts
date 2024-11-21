@@ -11,6 +11,7 @@ export interface ISimpleSpeechPhrase {
     Duration?: number;
     PrimaryLanguage?: IPrimaryLanguage;
     SpeakerId?: string;
+    [key: string]: any;
 }
 
 export interface IPrimaryLanguage {
@@ -21,13 +22,27 @@ export interface IPrimaryLanguage {
 export class SimpleSpeechPhrase implements ISimpleSpeechPhrase {
     private privSimpleSpeechPhrase: ISimpleSpeechPhrase;
 
-    private constructor(json: string) {
+    private constructor(json: string, baseOffset: number = 0) {
         this.privSimpleSpeechPhrase = JSON.parse(json) as ISimpleSpeechPhrase;
-        this.privSimpleSpeechPhrase.RecognitionStatus = RecognitionStatus[this.privSimpleSpeechPhrase.RecognitionStatus as unknown as keyof typeof RecognitionStatus];
+        this.privSimpleSpeechPhrase.RecognitionStatus = this.mapRecognitionStatus(this.privSimpleSpeechPhrase.RecognitionStatus); // RecognitionStatus[this.privSimpleSpeechPhrase.RecognitionStatus as unknown as keyof typeof RecognitionStatus];
+        this.updateOffset(baseOffset);
     }
 
-    public static fromJSON(json: string): SimpleSpeechPhrase {
-        return new SimpleSpeechPhrase(json);
+    public static fromJSON(json: string, baseOffset: number): SimpleSpeechPhrase {
+        return new SimpleSpeechPhrase(json, baseOffset);
+    }
+
+    private updateOffset(baseOffset: number): void {
+        this.privSimpleSpeechPhrase.Offset += baseOffset;
+    }
+
+    public asJson(): string {
+        const jsonObj = { ...this.privSimpleSpeechPhrase };
+        // Convert the enum value to its string representation for serialization purposes.
+        return JSON.stringify({
+            ...jsonObj,
+            RecognitionStatus: RecognitionStatus[jsonObj.RecognitionStatus] as keyof typeof RecognitionStatus
+        });
     }
 
     public get RecognitionStatus(): RecognitionStatus {
@@ -56,5 +71,13 @@ export class SimpleSpeechPhrase implements ISimpleSpeechPhrase {
 
     public get SpeakerId(): string {
         return this.privSimpleSpeechPhrase.SpeakerId;
+    }
+
+    private mapRecognitionStatus(status: any): RecognitionStatus {
+        if (typeof status === "string") {
+            return RecognitionStatus[status as keyof typeof RecognitionStatus];
+        } else if (typeof status === "number") {
+            return status;
+        }
     }
 }

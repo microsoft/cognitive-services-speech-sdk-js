@@ -9,12 +9,13 @@ export interface ISpeechDetected {
 export class SpeechDetected implements ISpeechDetected {
     private privSpeechStartDetected: ISpeechDetected;
 
-    private constructor(json: string) {
+    private constructor(json: string, baseOffset: number) {
         this.privSpeechStartDetected = JSON.parse(json) as ISpeechDetected;
+        this.privSpeechStartDetected.Offset += baseOffset;
     }
 
-    public static fromJSON(json: string): SpeechDetected {
-        return new SpeechDetected(json);
+    public static fromJSON(json: string, baseOffset: number): SpeechDetected {
+        return new SpeechDetected(json, baseOffset);
     }
 
     public get Offset(): number {
