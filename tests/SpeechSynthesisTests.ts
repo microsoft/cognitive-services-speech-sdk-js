@@ -224,6 +224,10 @@ test("testGetVoicesAsyncUS", async () => {
     expect(voicesResult.voices.length).toBeGreaterThan(0);
     expect(voicesResult.reason).toEqual(sdk.ResultReason.VoicesListRetrieved);
     expect(voicesResult.voices.filter((item: any) => item.locale !== locale).length).toEqual(0);
+    const ava: sdk.VoiceInfo = voicesResult.voices.find((item: sdk.VoiceInfo) => item.shortName === "en-US-AvaNeural");
+    expect(ava).not.toBeUndefined();
+    expect(ava.voiceTag.TailoredScenarios).not.toBeUndefined();
+    expect(ava.voiceTag.TailoredScenarios[0]).toEqual("Chat");
 });
 
 Settings.testIfDOMCondition("testSpeechSynthesizer1", () => {
@@ -654,7 +658,7 @@ describe("Service based tests", () => {
         console.info("Name: testSpeechSynthesizer synthesis with SSML.");
         const speechConfig: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(speechConfig);
-        speechConfig.speechSynthesisVoiceName = "en-US-AriaRUS";
+        speechConfig.speechSynthesisVoiceName = "en-US-AvaNeural";
 
         const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
         expect(s).not.toBeUndefined();
@@ -672,7 +676,7 @@ describe("Service based tests", () => {
 
         const ssml: string =
             `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
-<voice name='Microsoft Server Speech Text to Speech Voice (en-US, AriaRUS)'>hello world.</voice></speak>`;
+<voice name='Microsoft Server Speech Text to Speech Voice (en-US, AvaNeural)'>hello world.</voice></speak>`;
         s.speakSsmlAsync(ssml, (result: sdk.SpeechSynthesisResult): void => {
             // eslint-disable-next-line no-console
             console.info("speaking ssml finished.");

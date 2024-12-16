@@ -20,3 +20,4 @@ test*.mp3
 # ignore files generated in tests
 report[\.0-9]*json
 junit.xml
+TEST_LOG.txt

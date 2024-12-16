@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IVoiceJson } from "./IVoiceJson";
+import { IVoiceJson, IVoiceTag } from "./IVoiceJson";
 
 /**
  * Defines the gender of synthesis voices.
@@ -56,6 +56,7 @@ export class VoiceInfo {
     private privWordsPerMinute: IVoiceJson["WordsPerMinute"];
     private privSecondaryLocaleList: IVoiceJson["SecondaryLocaleList"];
     private privRolePlayList: IVoiceJson["RolePlayList"];
+    private privVoiceTag: IVoiceTag;
 
     public constructor(json: IVoiceJson) {
         if (!!json) {
@@ -90,6 +91,10 @@ export class VoiceInfo {
 
             if (Array.isArray(json.RolePlayList)) {
                 this.privRolePlayList = [...json.RolePlayList];
+            }
+
+            if (json.VoiceTag) {
+                this.privVoiceTag = json.VoiceTag;
             }
         }
     }
@@ -153,5 +158,9 @@ export class VoiceInfo {
 
     public get rolePlayList(): IVoiceJson["RolePlayList"] {
         return this.privRolePlayList;
+    }
+
+    public get voiceTag(): IVoiceTag {
+        return this.privVoiceTag;
     }
 }
