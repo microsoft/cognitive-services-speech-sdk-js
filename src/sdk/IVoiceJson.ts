@@ -1,6 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+export interface IVoiceTag {
+    TailoredScenarios?: string[];
+    VoicePersonalities?: string[];
+}
+
 export interface IVoiceJson {
     Name: string;
     LocalName: string;
@@ -14,7 +19,8 @@ export interface IVoiceJson {
     SampleRateHertz: string;
     Status: string;
     ExtendedPropertyMap?: any;
-    WordsPerMinute: string;
+    WordsPerMinute: number;
     SecondaryLocaleList?: string[];
     RolePlayList?: string[];
+    VoiceTag?: IVoiceTag;
 }
