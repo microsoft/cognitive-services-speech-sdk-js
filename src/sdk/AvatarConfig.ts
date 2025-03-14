@@ -12,7 +12,6 @@ import { AvatarVideoFormat } from "./Exports.js";
  * @experimental This feature is experimental and might change or have limited support.
  */
 export class AvatarConfig {
-    private privRemoteIceServers: RTCIceServer[];
     private privCustomized: boolean = false;
     private privBackgroundColor: string;
     private privBackgroundImage: URL;
@@ -30,20 +29,6 @@ export class AvatarConfig {
      * Defines the talking avatar output video format.
      */
     public videoFormat: AvatarVideoFormat;
-
-    /**
-     * Gets the remote ICE servers.
-     */
-    public get remoteIceServers(): RTCIceServer[] {
-        return this.privRemoteIceServers;
-    }
-
-    /**
-     * Sets the remote ICE servers.
-     */
-    public set remoteIceServers(value: RTCIceServer[]) {
-        this.privRemoteIceServers = value;
-    }
 
     /**
      * Indicates if the talking avatar is customized.
