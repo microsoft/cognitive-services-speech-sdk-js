@@ -69,7 +69,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
 
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
-                const speechHypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody);
+                const speechHypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
                 result = new IntentRecognitionResult(
                     undefined,
@@ -77,16 +77,16 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                     ResultReason.RecognizingIntent,
                     speechHypothesis.Text,
                     speechHypothesis.Duration,
-                    speechHypothesis.Offset + this.privRequestSession.currentTurnAudioOffset,
+                    speechHypothesis.Offset,
                     speechHypothesis.Language,
                     speechHypothesis.LanguageDetectionConfidence,
                     undefined,
-                    connectionMessage.textBody,
+                    speechHypothesis.asJson(),
                     resultProps);
 
                 this.privRequestSession.onHypothesis(result.offset);
 
-                ev = new IntentRecognitionEventArgs(result, speechHypothesis.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
+                ev = new IntentRecognitionEventArgs(result, speechHypothesis.Offset, this.privRequestSession.sessionId);
 
                 if (!!this.privIntentRecognizer.recognizing) {
                     try {
@@ -100,18 +100,18 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
                 processed = true;
                 break;
             case "speech.phrase":
-                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody);
+                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
                 result = new IntentRecognitionResult(
                     undefined,
                     this.privRequestSession.requestId,
                     EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus),
                     simple.DisplayText,
                     simple.Duration,
-                    simple.Offset + this.privRequestSession.currentTurnAudioOffset,
+                    simple.Offset,
                     simple.Language,
                     simple.LanguageDetectionConfidence,
                     undefined,
-                    connectionMessage.textBody,
+                    simple.asJson(),
                     resultProps);
 
                 ev = new IntentRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);

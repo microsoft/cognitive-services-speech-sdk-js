@@ -83,25 +83,23 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
         cancellationReason: CancellationReason,
         errorCode: CancellationErrorCode,
         error: string): void {
-            // Implementing to allow inheritance
-            void sessionId;
-            void requestId;
-            void cancellationReason;
-            void errorCode;
-            void error;
-        }
+        // Implementing to allow inheritance
+        void sessionId;
+        void requestId;
+        void cancellationReason;
+        void errorCode;
+        void error;
+    }
 
     protected async handleSpeechPhrase(textBody: string): Promise<void> {
 
-        const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(textBody);
+        const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(textBody, this.privRequestSession.currentTurnAudioOffset);
         const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
         let result: SpeechRecognitionResult;
         const resultProps: PropertyCollection = new PropertyCollection();
         resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, textBody);
-        const simpleOffset = simple.Offset + this.privRequestSession.currentTurnAudioOffset;
-        let offset = simpleOffset;
 
-        this.privRequestSession.onPhraseRecognized(this.privRequestSession.currentTurnAudioOffset + simple.Offset + simple.Duration);
+        this.privRequestSession.onPhraseRecognized(simple.Offset + simple.Duration);
 
         if (ResultReason.Canceled === resultReason) {
             const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
@@ -113,49 +111,44 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
                 EnumTranslation.implTranslateErrorDetails(cancellationErrorCode));
 
         } else {
-            if (!(this.privRequestSession.isSpeechEnded && resultReason === ResultReason.NoMatch && simple.RecognitionStatus !== RecognitionStatus.InitialSilenceTimeout)) {
+            if (simple.RecognitionStatus !== RecognitionStatus.EndOfDictation) {
                 if (this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName) === OutputFormat[OutputFormat.Simple]) {
                     result = new SpeechRecognitionResult(
                         this.privRequestSession.requestId,
                         resultReason,
                         simple.DisplayText,
                         simple.Duration,
-                        simpleOffset,
+                        simple.Offset,
                         simple.Language,
                         simple.LanguageDetectionConfidence,
                         simple.SpeakerId,
                         undefined,
-                        textBody,
+                        simple.asJson(),
                         resultProps);
                 } else {
-                    const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(textBody);
-                    const totalOffset: number = detailed.Offset + this.privRequestSession.currentTurnAudioOffset;
-                    const offsetCorrectedJson: string = detailed.getJsonWithCorrectedOffsets(totalOffset);
+                    const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(textBody, this.privRequestSession.currentTurnAudioOffset);
 
                     result = new SpeechRecognitionResult(
                         this.privRequestSession.requestId,
                         resultReason,
                         detailed.Text,
                         detailed.Duration,
-                        totalOffset,
+                        detailed.Offset,
                         detailed.Language,
                         detailed.LanguageDetectionConfidence,
                         detailed.SpeakerId,
                         undefined,
-                        offsetCorrectedJson,
+                        detailed.asJson(),
                         resultProps);
-
-                        offset = result.offset;
                 }
 
-                this.handleRecognizedCallback(result, offset, this.privRequestSession.sessionId);
+                this.handleRecognizedCallback(result, result.offset, this.privRequestSession.sessionId);
             }
         }
     }
 
     protected handleSpeechHypothesis(textBody: string): void {
-        const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(textBody);
-        const offset: number = hypothesis.Offset + this.privRequestSession.currentTurnAudioOffset;
+        const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(textBody, this.privRequestSession.currentTurnAudioOffset);
         const resultProps: PropertyCollection = new PropertyCollection();
         resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, textBody);
 
@@ -164,15 +157,15 @@ export class ConversationServiceRecognizer extends ServiceRecognizerBase {
             ResultReason.RecognizingSpeech,
             hypothesis.Text,
             hypothesis.Duration,
-            offset,
+            hypothesis.Offset,
             hypothesis.Language,
             hypothesis.LanguageDetectionConfidence,
             hypothesis.SpeakerId,
             undefined,
-            textBody,
+            hypothesis.asJson(),
             resultProps);
 
-        this.privRequestSession.onHypothesis(offset);
+        this.privRequestSession.onHypothesis(hypothesis.Offset);
 
         this.handleRecognizingCallback(result, hypothesis.Duration, this.privRequestSession.sessionId);
     }

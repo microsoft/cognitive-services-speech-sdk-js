@@ -7,17 +7,19 @@ export interface ISpeechKeyword {
     Text: string;
     Offset: number;
     Duration: number;
+    [key: string]: any;
 }
 
 export class SpeechKeyword implements ISpeechKeyword {
     private privSpeechKeyword: ISpeechKeyword;
 
-    private constructor(json: string) {
+    private constructor(json: string, baseOffset: number) {
         this.privSpeechKeyword = JSON.parse(json) as ISpeechKeyword;
+        this.privSpeechKeyword.Offset += baseOffset;
     }
 
-    public static fromJSON(json: string): SpeechKeyword {
-        return new SpeechKeyword(json);
+    public static fromJSON(json: string, baseOffset: number): SpeechKeyword {
+        return new SpeechKeyword(json, baseOffset);
     }
 
     public get Status(): string {
@@ -34,5 +36,9 @@ export class SpeechKeyword implements ISpeechKeyword {
 
     public get Duration(): number {
         return this.privSpeechKeyword.Duration;
+    }
+
+    public asJson(): string {
+        return JSON.stringify(this.privSpeechKeyword);
     }
 }

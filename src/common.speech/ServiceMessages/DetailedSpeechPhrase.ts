@@ -12,6 +12,7 @@ export interface IDetailedSpeechPhrase {
     PrimaryLanguage?: IPrimaryLanguage;
     DisplayText?: string;
     SpeakerId?: string;
+    [key: string]: any;
 }
 
 export interface IPhrase {
@@ -34,41 +35,42 @@ export interface IWord {
 export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
     private privDetailedSpeechPhrase: IDetailedSpeechPhrase;
 
-    private constructor(json: string) {
+    private constructor(json: string, baseOffset: number) {
         this.privDetailedSpeechPhrase = JSON.parse(json) as IDetailedSpeechPhrase;
-        this.privDetailedSpeechPhrase.RecognitionStatus = RecognitionStatus[this.privDetailedSpeechPhrase.RecognitionStatus as unknown as keyof typeof RecognitionStatus];
+        this.privDetailedSpeechPhrase.RecognitionStatus = this.mapRecognitionStatus(this.privDetailedSpeechPhrase.RecognitionStatus);
+        this.updateOffsets(baseOffset);
     }
 
-    public static fromJSON(json: string): DetailedSpeechPhrase {
-        return new DetailedSpeechPhrase(json);
+    public static fromJSON(json: string, baseOffset: number): DetailedSpeechPhrase {
+        return new DetailedSpeechPhrase(json, baseOffset);
     }
 
-    public getJsonWithCorrectedOffsets(baseOffset: number): string {
+    private updateOffsets(baseOffset: number): void {
+        this.privDetailedSpeechPhrase.Offset += baseOffset;
+
         if (!!this.privDetailedSpeechPhrase.NBest) {
-            let firstWordOffset: number;
             for (const phrase of this.privDetailedSpeechPhrase.NBest) {
-                if (!!phrase.Words && !!phrase.Words[0]) {
-                    firstWordOffset = phrase.Words[0].Offset;
-                    break;
-                }
-            }
-            if (!!firstWordOffset && firstWordOffset < baseOffset) {
-                const offset: number = baseOffset - firstWordOffset;
-                for (const details of this.privDetailedSpeechPhrase.NBest) {
-                    if (!!details.Words) {
-                        for (const word of details.Words) {
-                            word.Offset += offset;
-                        }
+                if (!!phrase.Words) {
+                    for (const word of phrase.Words) {
+                        word.Offset += baseOffset;
                     }
-                    if (!!details.DisplayWords) {
-                        for (const word of details.DisplayWords) {
-                            word.Offset += offset;
-                        }
+                }
+                if (!!phrase.DisplayWords) {
+                    for (const word of phrase.DisplayWords) {
+                        word.Offset += baseOffset;
                     }
                 }
             }
         }
-        return JSON.stringify(this.privDetailedSpeechPhrase);
+    }
+
+    public asJson(): string {
+        const jsonObj = { ...this.privDetailedSpeechPhrase };
+        // Convert the enum value to its string representation for serialization purposes.
+        return JSON.stringify({
+            ...jsonObj,
+            RecognitionStatus: RecognitionStatus[jsonObj.RecognitionStatus] as keyof typeof RecognitionStatus
+        });
     }
 
     public get RecognitionStatus(): RecognitionStatus {
@@ -97,5 +99,12 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
     }
     public get SpeakerId(): string {
         return this.privDetailedSpeechPhrase.SpeakerId;
+    }
+    private mapRecognitionStatus(status: any): RecognitionStatus {
+        if (typeof status === "string") {
+            return RecognitionStatus[status as keyof typeof RecognitionStatus];
+        } else if (typeof status === "number") {
+            return status;
+        }
     }
 }

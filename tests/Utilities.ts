@@ -57,7 +57,8 @@ export class RepeatingPullStream {
 
         this.pullStream = sdk.AudioInputStream.createPullStream(
             {
-                close: () => { return; },
+                // eslint-disable-next-line @typescript-eslint/no-empty-function
+                close: (): void => {},
                 read: (buffer: ArrayBuffer): number => {
 
                     if (!!this.sendSilence) {

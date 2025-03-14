@@ -70,6 +70,9 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
             talkingAvatar: {
                 background: {
                     color: this.privAvatarConfig.backgroundColor,
+                    image: {
+                        url: this.privAvatarConfig.backgroundImage?.toString(),
+                    }
                 },
                 character: this.privAvatarConfig.character,
                 customized: this.privAvatarConfig.customized,
