@@ -167,6 +167,7 @@ export interface ISynthesisSectionVideo {
     talkingAvatar: {
         character: string;
         customized: boolean;
+        useBuiltInVoice: boolean;
         style: string;
         background: {
             color: string;

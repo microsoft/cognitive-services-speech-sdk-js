@@ -76,6 +76,7 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
                 },
                 character: this.privAvatarConfig.character,
                 customized: this.privAvatarConfig.customized,
+                useBuiltInVoice: this.privAvatarConfig.useBuiltInVoice,
                 style: this.privAvatarConfig.style,
             }
         } as ISynthesisSectionVideo;
