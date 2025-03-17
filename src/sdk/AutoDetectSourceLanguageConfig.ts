@@ -29,10 +29,10 @@ export class AutoDetectSourceLanguageConfig {
      * @member AutoDetectSourceLanguageConfig.fromOpenRange
      * @function
      * @public
-     * Only [[SpeechSynthesizer]] supports source language auto detection from open range,
-     * for [[Recognizer]], please use AutoDetectSourceLanguageConfig with specific source languages.
      * @return {AutoDetectSourceLanguageConfig} Instance of AutoDetectSourceLanguageConfig
      * @summary Creates an instance of the AutoDetectSourceLanguageConfig with open range.
+     * Only [[SpeechSynthesizer]] supports source language auto detection from open range,
+     * for [[Recognizer]], please use AutoDetectSourceLanguageConfig with specific source languages.
      */
     public static fromOpenRange(): AutoDetectSourceLanguageConfig {
         const config = new AutoDetectSourceLanguageConfig();
