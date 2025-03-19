@@ -13,6 +13,7 @@ import { AvatarVideoFormat } from "./Exports.js";
  */
 export class AvatarConfig {
     private privCustomized: boolean = false;
+    private privUseBuiltInVoice: boolean = false;
     private privBackgroundColor: string;
     private privBackgroundImage: URL;
     private privRemoteIceServers: RTCIceServer[];
@@ -42,6 +43,20 @@ export class AvatarConfig {
      */
     public set customized(value: boolean) {
         this.privCustomized = value;
+    }
+
+    /**
+     * Indicates whether to use built-in voice for custom avatar.
+     */
+    public get useBuiltInVoice(): boolean {
+        return this.privUseBuiltInVoice;
+    }
+
+    /**
+     * Sets whether to use built-in voice for custom avatar.
+     */
+    public set useBuiltInVoice(value: boolean) {
+        this.privUseBuiltInVoice = value;
     }
 
     /**
