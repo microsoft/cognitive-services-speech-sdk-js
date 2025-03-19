@@ -96,11 +96,6 @@ export class VoiceInfo {
             this.privLocaleName = json.LocaleName;
             this.privDisplayName = json.DisplayName;
             this.privLocalName = json.LocalName;
-            if (json.VoiceType.toLowerCase() === "neuralhd") {
-                this.privVoiceType = SynthesisVoiceType.OnlineNeuralHD;
-            } else {
-                this.privVoiceType = SynthesisVoiceType.OnlineNeural;
-            }
             this.privVoiceType = VOICE_TYPE_LOOKUP[json.VoiceType] || SynthesisVoiceType.Unknown;
             this.privGender = GENDER_LOOKUP[json.Gender] || SynthesisVoiceGender.Unknown;
 
