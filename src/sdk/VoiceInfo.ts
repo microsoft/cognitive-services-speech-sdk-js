@@ -62,7 +62,7 @@ const GENDER_LOOKUP: Record<string, SynthesisVoiceGender> = {
 
 const VOICE_TYPE_LOOKUP: Record<string, SynthesisVoiceType> = {
     Neural: SynthesisVoiceType.OnlineNeural,
-    NeuralHD: SynthesisVoiceType.OnlineStandard,
+    NeuralHD: SynthesisVoiceType.OnlineNeuralHD,
 };
 
 /**
