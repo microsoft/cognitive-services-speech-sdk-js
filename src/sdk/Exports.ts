@@ -98,7 +98,7 @@ export { SpeechSynthesisBookmarkEventArgs } from "./SpeechSynthesisBookmarkEvent
 export { SpeechSynthesisVisemeEventArgs } from "./SpeechSynthesisVisemeEventArgs.js";
 export { SpeechSynthesisBoundaryType } from "./SpeechSynthesisBoundaryType.js";
 export { SynthesisVoicesResult } from "./SynthesisVoicesResult.js";
-export { VoiceInfo } from "./VoiceInfo.js";
+export { SynthesisVoiceGender, SynthesisVoiceType, VoiceInfo } from "./VoiceInfo.js";
 export { IPlayer } from "./Audio/IPlayer.js";
 export { SpeakerAudioDestination } from "./Audio/SpeakerAudioDestination.js";
 export { CancellationEventArgs } from "./CancellationEventArgs.js";
