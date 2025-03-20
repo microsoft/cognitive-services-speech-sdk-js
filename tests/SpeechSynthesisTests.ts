@@ -165,6 +165,16 @@ test("testGetVoicesAsyncDefault", async () => {
     expect(voicesResult.resultId).not.toBeUndefined();
     expect(voicesResult.voices.length).toBeGreaterThan(0);
     expect(voicesResult.reason).toEqual(sdk.ResultReason.VoicesListRetrieved);
+
+    for (const voice of voicesResult.voices) {
+        expect(voice.name).not.toBeUndefined();
+        expect(voice.locale).not.toBeUndefined();
+        expect(voice.shortName).not.toBeUndefined();
+        expect(voice.displayName).not.toBeUndefined();
+        expect(voice.localName).not.toBeUndefined();
+        expect(voice.gender).not.toEqual(sdk.SynthesisVoiceGender.Unknown);
+        expect(voice.voiceType).not.toEqual(sdk.SynthesisVoiceType.Unknown);
+    }
 });
 
 test("testGetVoicesAsyncAuthWithToken", async () => {
@@ -228,6 +238,8 @@ test("testGetVoicesAsyncUS", async () => {
     expect(ava).not.toBeUndefined();
     expect(ava.voiceTag.TailoredScenarios).not.toBeUndefined();
     expect(ava.voiceTag.TailoredScenarios[0]).toEqual("Chat");
+    expect(ava.gender).toEqual(sdk.SynthesisVoiceGender.Female);
+    expect(ava.voiceType).toEqual(sdk.SynthesisVoiceType.OnlineNeural);
 });
 
 Settings.testIfDOMCondition("testSpeechSynthesizer1", () => {
