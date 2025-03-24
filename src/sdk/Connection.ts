@@ -115,7 +115,8 @@ export class Connection {
             if (path.toLowerCase() !== "speech.context") {
                 throw new Error("Only speech.context message property sets are currently supported for recognizer");
             } else {
-                this.privInternalData.speechContext.setSection(propertyName, propertyValue);
+                const context = this.privInternalData.speechContext.getContext();
+                context[propertyName] = propertyValue;
             }
         } else if (this.privInternalData instanceof SynthesisAdapterBase) {
             if (path.toLowerCase() !== "synthesis.context") {

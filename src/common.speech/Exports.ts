@@ -42,7 +42,6 @@ export * from "./ServiceMessages/SpeakerResponse.js";
 export * from "./RequestSession.js";
 export * from "./SpeechContext.js";
 export * from "./DynamicGrammarBuilder.js";
-export * from "./DynamicGrammarInterfaces.js";
 export * from "./DialogServiceAdapter.js";
 export * from "./AgentConfig.js";
 export * from "./Transcription/Exports.js";
