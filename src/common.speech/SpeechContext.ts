@@ -3,66 +3,28 @@
 
 import {
     DynamicGrammarBuilder,
-    IDynamicGrammar,
 } from "./Exports.js";
+import { Dgi } from "./ServiceMessages/Dgi/Dgi.js";
+import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
+import { OutputFormat, PhraseOption } from "./ServiceMessages/PhraseOutput/PhraseOutput.js";
+import { PronunciationAssessmentOptions } from "./ServiceMessages/PronunciationScore/PronunciationAssessmentOptions.js";
 
-interface Context {
-    [section: string]: any;
-}
-
-interface PhraseContext {
-    [section: string]: any;
-    phraseDetection?: {
-        enrichment?: {
-            pronunciationAssessment: any;
-            contentAssessment?: {
-                topic: string;
-            };
-        };
-        speakerDiarization?: {
-            mode?: string;
-            audioSessionId?: string;
-            audioOffsetMs?: number;
-            identityProvider?: string;
-        };
-        mode?: string;
-    };
-    phraseOutput?: {
-        detailed?: {
-            options?: string[];
-        };
-        format?: any;
-    };
-}
+import { SpeechContext as SpeechServiceContext } from "./ServiceMessages/SpeechContext.js";
 
 /**
  * Represents the JSON used in the speech.context message sent to the speech service.
  * The dynamic grammar is always refreshed from the encapsulated dynamic grammar object.
  */
 export class SpeechContext {
-    private privContext: PhraseContext = {};
+    private privContext: SpeechServiceContext = {};
     private privDynamicGrammar: DynamicGrammarBuilder;
 
     public constructor(dynamicGrammar: DynamicGrammarBuilder) {
         this.privDynamicGrammar = dynamicGrammar;
     }
 
-    /**
-     * Gets a section of the speech.context object.
-     * @param sectionName Name of the section to get.
-     * @return string or Context JSON serializable object that represents the value.
-     */
-    public getSection(sectionName: string): string | Context {
-        return (this.privContext[sectionName] || {}) as string | Context;
-    }
-
-    /**
-     * Adds a section to the speech.context object.
-     * @param sectionName Name of the section to add.
-     * @param value JSON serializable object that represents the value.
-     */
-    public setSection(sectionName: string, value: string | Context): void {
-        this.privContext[sectionName] = value;
+    public getContext(): SpeechServiceContext {
+        return this.privContext;
     }
 
     /**
@@ -85,20 +47,20 @@ export class SpeechContext {
                 pronunciationAssessment: {}
             };
         }
-        this.privContext.phraseDetection.enrichment.pronunciationAssessment = JSON.parse(params) as Context;
+        this.privContext.phraseDetection.enrichment.pronunciationAssessment = JSON.parse(params) as PronunciationAssessmentOptions || {};
         if (isSpeakerDiarizationEnabled) {
-            this.privContext.phraseDetection.mode = "Conversation";
+            this.privContext.phraseDetection.mode = RecognitionMode.Conversation;
         }
         this.setWordLevelTimings();
-        this.privContext.phraseOutput.detailed.options.push("PronunciationAssessment");
-        if (this.privContext.phraseOutput.detailed.options.indexOf("SNR") === -1) {
-            this.privContext.phraseOutput.detailed.options.push("SNR");
+        this.privContext.phraseOutput.detailed.options.push(PhraseOption.PronunciationAssessment);
+        if (this.privContext.phraseOutput.detailed.options.indexOf(PhraseOption.SNR) === -1) {
+            this.privContext.phraseOutput.detailed.options.push(PhraseOption.SNR);
         }
         if (!!contentAssessmentTopic) {
             this.privContext.phraseDetection.enrichment.contentAssessment = {
                 topic: contentAssessmentTopic
             };
-            this.privContext.phraseOutput.detailed.options.push("ContentAssessment");
+            this.privContext.phraseOutput.detailed.options.push(PhraseOption.ContentAssessment);
         }
     }
 
@@ -107,8 +69,7 @@ export class SpeechContext {
             this.privContext.phraseOutput = {
                 detailed: {
                     options: []
-                },
-                format: {}
+                }
             };
         }
         if (this.privContext.phraseOutput.detailed === undefined) {
@@ -116,7 +77,7 @@ export class SpeechContext {
                 options: []
             };
         }
-        this.privContext.phraseOutput.format = "Detailed";
+        this.privContext.phraseOutput.format = OutputFormat.Detailed;
     }
 
     public setWordLevelTimings(): void {
@@ -124,8 +85,7 @@ export class SpeechContext {
             this.privContext.phraseOutput = {
                 detailed: {
                     options: []
-                },
-                format: {}
+                }
             };
         }
         if (this.privContext.phraseOutput.detailed === undefined) {
@@ -133,9 +93,9 @@ export class SpeechContext {
                 options: []
             };
         }
-        this.privContext.phraseOutput.format = "Detailed";
-        if (this.privContext.phraseOutput.detailed.options.indexOf("WordTimings") === -1) {
-            this.privContext.phraseOutput.detailed.options.push("WordTimings");
+        this.privContext.phraseOutput.format = OutputFormat.Detailed;
+        if (this.privContext.phraseOutput.detailed.options.indexOf(PhraseOption.WordTimings) === -1) {
+            this.privContext.phraseOutput.detailed.options.push(PhraseOption.WordTimings);
         }
     }
 
@@ -145,8 +105,8 @@ export class SpeechContext {
 
     public toJSON(): string {
 
-        const dgi: IDynamicGrammar = this.privDynamicGrammar.generateGrammarObject();
-        this.setSection("dgi", dgi);
+        const dgi: Dgi = this.privDynamicGrammar.generateGrammarObject();
+        this.privContext.dgi = dgi;
 
         const ret: string = JSON.stringify(this.privContext);
         return ret;

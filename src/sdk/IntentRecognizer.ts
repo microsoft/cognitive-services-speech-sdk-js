@@ -7,11 +7,11 @@ import {
     IConnectionFactory,
     IntentConnectionFactory,
     IntentServiceRecognizer,
-    RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechServiceConfig
 } from "../common.speech/Exports.js";
+import { RecognitionMode } from "../common.speech/ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 import { marshalPromiseToCallbacks } from "../common/Exports.js";
 import { AudioConfigImpl } from "./Audio/AudioConfig.js";
 import { Contracts } from "./Contracts.js";
@@ -151,7 +151,7 @@ export class IntentRecognizer extends Recognizer {
         if (Object.keys(this.privAddedLmIntents).length !== 0 || undefined !== this.privUmbrellaIntent) {
             const context: IIntentContext = this.buildSpeechContext();
 
-            this.privReco.speechContext.setSection("intent", context.Intent);
+            this.privReco.speechContext.getContext().intent = context.Intent;
             this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
 
             const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;
@@ -174,7 +174,7 @@ export class IntentRecognizer extends Recognizer {
         if (Object.keys(this.privAddedLmIntents).length !== 0 || undefined !== this.privUmbrellaIntent) {
             const context: IIntentContext = this.buildSpeechContext();
 
-            this.privReco.speechContext.setSection("intent", context.Intent);
+            this.privReco.speechContext.getContext().intent = context.Intent;
             this.privReco.dynamicGrammar.addReferenceGrammar(context.ReferenceGrammars);
 
             const intentReco: IntentServiceRecognizer = this.privReco as IntentServiceRecognizer;

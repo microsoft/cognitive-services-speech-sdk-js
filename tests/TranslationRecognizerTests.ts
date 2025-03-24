@@ -325,6 +325,66 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
             });
     }, 12000);
 
+    test.only("Multilingual Translation with OpenRange Test", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: Multilingual Translation with OpenRange Test");
+
+        const endpoint = `wss://${Settings.SpeechRegion}.stt.speech.microsoft.com/speech/universal/v2`;
+
+        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), Settings.SpeechSubscriptionKey);
+        objsToClose.push(s);
+
+        s.setProxy("localhost", 8888);
+        // Add target languages
+        s.addTargetLanguage("fr");
+        s.addTargetLanguage("es");
+
+        // Create auto detect source language config with open range
+        const autoDetectSourceLanguageConfig = sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
+
+        // Get German audio file for testing - use the default wav file which should be a German utterance
+        const audioConfig: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFileDe);
+
+        // Create translation recognizer with auto language detection
+        const r: sdk.TranslationRecognizer = sdk.TranslationRecognizer.FromConfig(s, autoDetectSourceLanguageConfig, audioConfig);
+        objsToClose.push(r);
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.recognizeOnceAsync(
+            (res: sdk.TranslationRecognitionResult): void => {
+                try {
+                    expect(res).not.toBeUndefined();
+                    expect(res.errorDetails).toBeUndefined();
+                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
+
+                    // Verify that language was detected
+                    const autoDetectResult: sdk.AutoDetectSourceLanguageResult = sdk.AutoDetectSourceLanguageResult.fromResult(res);
+                    const languageDetected = autoDetectResult.language;
+                    expect(languageDetected).not.toBeUndefined();
+                    expect(languageDetected).toEqual("de");
+
+                    // Verify all target languages were included
+                    expect(res.translations.languages.length).toEqual(2);
+                    expect(res.translations.languages.includes("fr")).toBeTruthy();
+                    expect(res.translations.languages.includes("es")).toBeTruthy();
+
+                    done();
+                } catch (error) {
+                    done(error);
+                }
+            },
+            (error: string): void => {
+                done(error);
+            });
+    }, 30000);
+
     test("Multi-Turn offset verification", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Multiple Phrase Latency Reporting");

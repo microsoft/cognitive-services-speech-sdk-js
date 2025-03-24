@@ -95,7 +95,7 @@ export class WebsocketMessageAdapter {
         return this.privConnectionState;
     }
 
-    public open(): Promise<ConnectionOpenResponse> {
+    public async open(): Promise<ConnectionOpenResponse> {
         if (this.privConnectionState === ConnectionState.Disconnected) {
             return Promise.reject<ConnectionOpenResponse>(`Cannot open a connection that is in ${this.privConnectionState} state`);
         }
@@ -110,7 +110,21 @@ export class WebsocketMessageAdapter {
         this.privConnectionState = ConnectionState.Connecting;
 
         try {
+/*
+            // Make a GET request to the URI before opening the WebSocket connection.
+            const response = await fetch(this.privUri, { method: "GET", redirect: "manual" });
 
+            if (response.status >= 300 && response.status < 400) {
+                // Handle the redirect logic here if needed
+                const redirectUrl = response.headers.get("Location");
+                if (redirectUrl) {
+                    // eslint-disable-next-line no-console
+                    console.info(`Redirected to: ${redirectUrl}`);
+                    // You can update this.privUri with redirectUrl or handle the redirect as needed
+                    this.privUri = redirectUrl; // Or handle it differently
+                }
+            }
+*/
             if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 // Browser handles cert checks.
                 this.privCertificateValidatedDeferral.resolve();
@@ -329,7 +343,7 @@ export class WebsocketMessageAdapter {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private getAgent(): http.Agent {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo } ;
+        const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo };
 
         if (this.proxyInfo !== undefined &&
             this.proxyInfo.HostName !== undefined &&

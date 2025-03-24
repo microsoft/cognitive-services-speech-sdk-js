@@ -5,12 +5,7 @@
 
 import { PropertyCollection, PropertyId } from "../sdk/Exports.js";
 import { Context, SpeechServiceConfig } from "./Exports.js";
-
-export enum RecognitionMode {
-    Interactive,
-    Conversation,
-    Dictation,
-}
+import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 
 export enum SpeechResultFormat {
     Simple,
