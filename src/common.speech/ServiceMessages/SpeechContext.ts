@@ -82,4 +82,10 @@ export interface SpeechContext {
      * The pronunciaion score configuration.
      */
     pronunciationScore?: PronunciationScoreContext;
+
+    /**
+     * Allow adding ability to add custom context attributes.
+     * This is useful for adding custom context attributes that are not part of the Speech SDK.
+     */
+    [key: string]: any;
 }

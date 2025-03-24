@@ -115,7 +115,12 @@ export class Connection {
             if (path.toLowerCase() !== "speech.context") {
                 throw new Error("Only speech.context message property sets are currently supported for recognizer");
             } else {
-                this.privInternalData.speechContext.setSection(propertyName, propertyValue);
+                // Parse the JSON string
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const parsedValue: { [key: string]: any } = JSON.parse(propertyValue as string);
+
+                const context = this.privInternalData.speechContext.getContext();
+                context[propertyName] = parsedValue;
             }
         } else if (this.privInternalData instanceof SynthesisAdapterBase) {
             if (path.toLowerCase() !== "synthesis.context") {
