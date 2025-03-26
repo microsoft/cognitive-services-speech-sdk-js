@@ -552,6 +552,85 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             });
     }, 30000); // testTranslationContinuousRecoWithContinuousLID
 
+    test("testTranslationContinuousOpenRange", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testTranslationContinuousOpenRange");
+
+        const a: sdk.AutoDetectSourceLanguageConfig = sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
+        objsToClose.push(a);
+
+        const s: sdk.SpeechTranslationConfig = BuildSpeechTranslationConfig();
+        objsToClose.push(s);
+
+        s.addTargetLanguage("en-US");
+
+        const r: sdk.TranslationRecognizer = BuildTranslationRecognizer(s, a, Settings.LongGermanWaveFile);
+        objsToClose.push(r);
+
+        let speechTranslated: boolean = false;
+
+        r.recognizing = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+            try {
+                expect(e.result).not.toBeUndefined();
+                expect(e.result.properties).not.toBeUndefined();
+                expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                expect(e.result.translations).not.toBeUndefined();
+                expect(e.result.translations.languages[0]).toEqual("en-US");
+                expect(e.result.translations.get("en-US")).toBeDefined();
+                expect(e.result.language).not.toBeUndefined();
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+            try {
+                if (e.result.reason === sdk.ResultReason.TranslatedSpeech) {
+                    speechTranslated = true;
+                    expect(e.result.properties).not.toBeUndefined();
+                    expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    expect(e.result.translations).not.toBeUndefined();
+                    expect(e.result.translations.languages[0]).toEqual("en-US");
+                    expect(e.result.translations.get("en-US")).toBeDefined();
+                    const autoDetectResult: sdk.AutoDetectSourceLanguageResult = sdk.AutoDetectSourceLanguageResult.fromResult(e.result);
+                    expect(autoDetectResult).not.toBeUndefined();
+                    expect(autoDetectResult.language).not.toBeUndefined();
+                    expect(autoDetectResult.language).toEqual("de");
+                    expect(autoDetectResult.languageDetectionConfidence).not.toBeUndefined();
+                } else if (e.result.reason === sdk.ResultReason.NoMatch) {
+                    expect(speechTranslated).toEqual(true);
+                }
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.startContinuousRecognitionAsync((): void => {
+            WaitForCondition((): boolean => speechTranslated, (): void => {
+                r.stopContinuousRecognitionAsync((): void => {
+                    try {
+                        done();
+                    } catch (error) {
+                        done(error);
+                    }
+                }, (error: string): void => {
+                    done(error);
+                });
+            });
+        },
+            (err: string): void => {
+                done(err);
+            });
+    }, 30000); // testTranslationContinuousOpenRange
+
     // TODO: Update this test to use multilingual WAV file and check for language detection results
     // TODO: Test that the connection URL uses v2 endpoint
     test.skip("testContinuousRecoWithContinuousLID", (done: jest.DoneCallback) => {
