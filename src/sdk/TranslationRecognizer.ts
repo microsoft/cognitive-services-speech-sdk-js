@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {
+    AutoDetectSourceLanguagesOpenRangeOptionName,
     IAuthentication,
     IConnectionFactory,
     RecognitionMode,
@@ -108,6 +109,10 @@ export class TranslationRecognizer extends Recognizer {
     public static FromConfig(speechTranslationConfig: SpeechTranslationConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): TranslationRecognizer {
         const speechTranslationConfigImpl: SpeechTranslationConfigImpl = speechTranslationConfig as SpeechTranslationConfigImpl;
         autoDetectSourceLanguageConfig.properties.mergeTo(speechTranslationConfigImpl.properties);
+
+        if (autoDetectSourceLanguageConfig.properties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, undefined) === AutoDetectSourceLanguagesOpenRangeOptionName) {
+            speechTranslationConfigImpl.properties.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-US");
+        }
         return new TranslationRecognizer(speechTranslationConfig, audioConfig);
     }
 
@@ -323,12 +328,12 @@ export class TranslationRecognizer extends Recognizer {
     private updateLanguages(languages: string[]): void {
         const conn: Connection = Connection.fromRecognizer(this);
         if (!!conn) {
-            conn.setMessageProperty("speech.context", "translationcontext", {to: languages});
+            conn.setMessageProperty("speech.context", "translationcontext", { to: languages });
             conn.sendMessageAsync("event", JSON.stringify({
                 id: "translation",
                 name: "updateLanguage",
                 to: languages
-                }));
+            }));
         }
     }
 

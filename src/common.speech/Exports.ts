@@ -63,4 +63,4 @@ export const OutputFormatPropertyName: string = "OutputFormat";
 export const CancellationErrorCodePropertyName: string = "CancellationErrorCode";
 export const ServicePropertiesPropertyName: string = "ServiceProperties";
 export const ForceDictationPropertyName: string = "ForceDictation";
-export const AutoDetectSourceLanguagesOpenRangeOptionName: string = "OpenRange";
+export const AutoDetectSourceLanguagesOpenRangeOptionName: string = "UND";
