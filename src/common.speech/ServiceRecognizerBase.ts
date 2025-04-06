@@ -151,10 +151,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
             if (connectionEvent.name === "ConnectionClosedEvent") {
                 const connectionClosedEvent = connectionEvent as ConnectionClosedEvent;
-                if (connectionClosedEvent.statusCode === 1003 ||
-                    connectionClosedEvent.statusCode === 1007 ||
-                    connectionClosedEvent.statusCode === 1002 ||
-                    connectionClosedEvent.statusCode === 4000 ||
+                if (connectionClosedEvent.statusCode !== 1000 ||
                     this.privRequestSession.numConnectionAttempts > this.privRecognizerConfig.maxRetryCount
                 ) {
                     void this.cancelRecognitionLocal(CancellationReason.Error,
