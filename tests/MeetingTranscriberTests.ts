@@ -6,7 +6,8 @@ import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener } from "../src/common.browser/Exports";
 import {
     Events,
-    EventType
+    EventType,
+    Timeout
 } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
@@ -16,9 +17,7 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
-function sleep(milliseconds: number): Promise<any> {
-    return new Promise((resolve: any) => setTimeout(resolve, milliseconds));
-}
+const sleep = (milliseconds: number): Promise<any> => new Promise((resolve: any): Timeout => setTimeout(resolve, milliseconds));
 
 beforeAll((): void => {
     // Override inputs, if necessary
@@ -60,7 +59,7 @@ const CreateMeeting: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.Meeting
 };
 
 const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
-    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeakerIDSubscriptionKey, Settings.SpeakerIDRegion);
+    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     expect(s).not.toBeUndefined();
     return s;
 };
@@ -115,7 +114,7 @@ const GetParticipantSteve: () => sdk.IParticipant = (): sdk.IParticipant => {
     return steve;
 };
 
-test("CreateMeeting", () => {
+test("CreateMeeting", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: CreateMeeting");
     const m: sdk.Meeting = CreateMeeting();
@@ -123,21 +122,21 @@ test("CreateMeeting", () => {
     expect(m.properties).not.toBeUndefined();
 });
 
-test("NullMeetingId", () => {
-    let s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+test("NullMeetingId", (): void => {
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     // Since we're not going to return it, mark it for closure.
     objsToClose.push(s);
-    expect(() => sdk.Meeting.createMeetingAsync(s, null)).toThrow();
+    expect((): sdk.Meeting => sdk.Meeting.createMeetingAsync(s, null)).toThrow();
 });
 
-test("EmptyMeetingId", () => {
-    let s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+test("EmptyMeetingId", (): void => {
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     // Since we're not going to return it, mark it for closure.
     objsToClose.push(s);
-    expect(() => sdk.Meeting.createMeetingAsync(s, "")).toThrow();
+    expect((): sdk.Meeting => sdk.Meeting.createMeetingAsync(s, "")).toThrow();
 });
 
-test("CreateMeetingTranscriber", () => {
+test("CreateMeetingTranscriber", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: CreateMeetingTranscriber");
     const t: sdk.MeetingTranscriber = BuildMeetingTranscriber();
@@ -145,7 +144,7 @@ test("CreateMeetingTranscriber", () => {
     expect(t.properties).not.toBeUndefined();
 });
 
-test("Create Meeting and join to Transcriber", (done: jest.DoneCallback) => {
+test("Create Meeting and join to Transcriber", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Meeting and join to Transcriber");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -156,7 +155,7 @@ test("Create Meeting and join to Transcriber", (done: jest.DoneCallback) => {
 
     const t: sdk.MeetingTranscriber = BuildMeetingTranscriber();
     t.joinMeetingAsync(m,
-        () => {
+        (): void => {
             try {
                 expect(t.properties).not.toBeUndefined();
                 done();
@@ -164,12 +163,12 @@ test("Create Meeting and join to Transcriber", (done: jest.DoneCallback) => {
                 done(error);
             }
         },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 });
 
-test("Create Meeting and add participants", (done: jest.DoneCallback) => {
+test("Create Meeting and add participants", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Meeting and add participants");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -179,14 +178,14 @@ test("Create Meeting and add participants", (done: jest.DoneCallback) => {
     objsToClose.push(m);
 
     const t: sdk.MeetingTranscriber = BuildMeetingTranscriber();
-    t.sessionStopped = (o: sdk.MeetingTranscriber, e: sdk.SessionEventArgs) => {
+    t.sessionStopped = (o: sdk.MeetingTranscriber, e: sdk.SessionEventArgs): void => {
         try {
             done();
         } catch (error) {
             done(error);
         }
     };
-    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs) => {
+    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
             expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
@@ -195,7 +194,7 @@ test("Create Meeting and add participants", (done: jest.DoneCallback) => {
         }
     };
 
-    t.transcribed = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs) => {
+    t.transcribed = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs): void => {
         try {
             expect(e).not.toBeUndefined();
             expect(e.result).not.toBeUndefined();
@@ -210,17 +209,17 @@ test("Create Meeting and add participants", (done: jest.DoneCallback) => {
     };
 
     t.joinMeetingAsync(m,
-        () => {
+        (): void => {
             try {
                 expect(t.properties).not.toBeUndefined();
                 m.addParticipantAsync(GetParticipantKatie(),
-                    () => {
+                    (): void => {
                         try {
                             expect(m.participants).not.toBeUndefined();
                             expect(m.participants.length).toEqual(1);
                             // Adds steve as a participant to the conversation.
                             m.addParticipantAsync(GetParticipantSteve(),
-                                () => {
+                                (): void => {
                                     try {
                                         expect(m.participants).not.toBeUndefined();
                                         expect(m.participants.length).toEqual(2);
@@ -230,9 +229,9 @@ test("Create Meeting and add participants", (done: jest.DoneCallback) => {
 
                                     /* eslint-disable:no-empty */
                                     t.startTranscribingAsync(
-                                        /* eslint-disable:no-empty */
-                                        () => {},
-                                        (err: string) => {
+                                        // eslint-disable-next-line @typescript-eslint/no-empty-function
+                                        (): void => { },
+                                        (err: string): void => {
                                             done(err);
                                         });
                                 });
@@ -244,12 +243,12 @@ test("Create Meeting and add participants", (done: jest.DoneCallback) => {
                 done(error);
             }
         },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 }, 50000);
 
-test("Leave Meeting", (done: jest.DoneCallback) => {
+test("Leave Meeting", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Leave Meeting");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -259,15 +258,15 @@ test("Leave Meeting", (done: jest.DoneCallback) => {
     objsToClose.push(m);
 
     const t: sdk.MeetingTranscriber = BuildMeetingTranscriber();
-    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs) => {
+    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs): void => {
         done(e.errorDetails);
     };
 
-    t.transcribed = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs) => {
+    t.transcribed = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs): void => {
         done(e.result.text);
     };
 
-    t.transcribing = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs) => {
+    t.transcribing = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs): void => {
         done(e.result.text);
     };
 
@@ -304,7 +303,7 @@ test("Leave Meeting", (done: jest.DoneCallback) => {
                                                     },
                                                     (err: string): void => {
                                                         done(err);
-                                                });
+                                                    });
                                             },
                                             (err: string): void => {
                                                 done(err);
@@ -312,11 +311,11 @@ test("Leave Meeting", (done: jest.DoneCallback) => {
                                     } catch (error) {
                                         done(error as string);
                                     }
-                            });
+                                });
                         } catch (error) {
                             done(error as string);
                         }
-                });
+                    });
             } catch (error) {
                 done(error as string);
             }
@@ -359,7 +358,7 @@ test.skip("Create Conversation with one channel audio (aligned)", (done: jest.Do
     let canceled: boolean = false;
 
     const t: sdk.MeetingTranscriber = BuildMonoWaveTranscriber();
-    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs) => {
+    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
             expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
@@ -368,7 +367,7 @@ test.skip("Create Conversation with one channel audio (aligned)", (done: jest.Do
             done(error);
         }
     };
-    t.sessionStopped = (o: sdk.MeetingTranscriber, e: sdk.SessionEventArgs) => {
+    t.sessionStopped = (o: sdk.MeetingTranscriber, e: sdk.SessionEventArgs): void => {
         try {
             expect(canceled).toEqual(true);
             expect(e.sessionId).not.toBeUndefined();
@@ -378,7 +377,7 @@ test.skip("Create Conversation with one channel audio (aligned)", (done: jest.Do
             done(error);
         }
     };
-    t.sessionStarted = (o: sdk.MeetingTranscriber, e: sdk.SessionEventArgs) => {
+    t.sessionStarted = (o: sdk.MeetingTranscriber, e: sdk.SessionEventArgs): void => {
         try {
             expect(e.sessionId).not.toBeUndefined();
             sessionId = e.sessionId;
@@ -387,7 +386,7 @@ test.skip("Create Conversation with one channel audio (aligned)", (done: jest.Do
         }
     };
 
-    t.transcribed = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs) => {
+    t.transcribed = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs): void => {
         try {
             expect(e.result).not.toBeUndefined();
             expect(e.result.text).not.toBeUndefined();
@@ -397,20 +396,20 @@ test.skip("Create Conversation with one channel audio (aligned)", (done: jest.Do
         }
     };
 
-    t.transcribing = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs) => {
+    t.transcribing = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionEventArgs): void => {
         done(e.result.errorDetails);
     };
 
     t.joinMeetingAsync(m,
-        () => {
+        (): void => {
             try {
                 expect(t.properties).not.toBeUndefined();
                 m.addParticipantAsync(GetParticipantKatie(),
-                    () => {
+                    (): void => {
                         /* eslint-disable:no-empty */
                         t.startTranscribingAsync(
                             /* eslint-disable:no-empty */
-                            () => { },
+                            (): void => { },
                             (err: string) => {
                                 done(err);
                             });
@@ -427,7 +426,7 @@ test.skip("Create Conversation with one channel audio (aligned)", (done: jest.Do
         });
 });
 
-test("Create Meeting and create PhraseListGrammar", (done: jest.DoneCallback) => {
+test("Create Meeting and create PhraseListGrammar", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Meeting and create PhraseListGrammar");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -452,7 +451,7 @@ test("Create Meeting and create PhraseListGrammar", (done: jest.DoneCallback) =>
         });
 });
 
-test("Create Meeting and force disconnect", (done: jest.DoneCallback) => {
+test("Create Meeting and force disconnect", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Create Meeting and force disconnect");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -464,7 +463,7 @@ test("Create Meeting and force disconnect", (done: jest.DoneCallback) => {
     objsToClose.push(m);
 
     const t: sdk.MeetingTranscriber = BuildMeetingTranscriber();
-    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs) => {
+    t.canceled = (o: sdk.MeetingTranscriber, e: sdk.MeetingTranscriptionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
             expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
@@ -495,7 +494,7 @@ test("Create Meeting and force disconnect", (done: jest.DoneCallback) => {
 
                                     t.startTranscribingAsync(
                                         // eslint-disable-next-line @typescript-eslint/no-empty-function
-                                        (): void => {},
+                                        (): void => { },
                                         (err: string): void => {
                                             done(err);
                                         });

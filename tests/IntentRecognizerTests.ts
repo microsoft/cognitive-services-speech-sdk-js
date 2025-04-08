@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 import { setTimeout } from "timers";
 
+import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
+
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { Events } from "../src/common/Exports";
@@ -15,19 +17,16 @@ import {
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
-import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
-
-
 let objsToClose: any[];
 let bufferSize: number;
 
-beforeAll(() => {
+beforeAll((): void => {
     // override inputs, if necessary
     Settings.LoadSettings();
     Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
     // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
@@ -79,9 +78,9 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     return s;
 };
 
-describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
+describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): void => {
 
-    beforeEach(() => {
+    beforeEach((): void => {
         // eslint-disable-next-line no-console
         console.info("forceNodeWebSocket: " + forceNodeWebSocket);
         WebsocketMessageAdapter.forceNpmWebSocket = forceNodeWebSocket;
@@ -91,7 +90,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
-    test("NoIntentsRecognizesSpeech", (done: jest.DoneCallback) => {
+    test("NoIntentsRecognizesSpeech", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: NoIntentsRecognizesSpeech");
         const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile();
@@ -106,7 +105,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.recognizeOnceAsync(
-            (p2: sdk.IntentRecognitionResult) => {
+            (p2: sdk.IntentRecognitionResult): void => {
 
                 const res: sdk.IntentRecognitionResult = p2;
                 expect(res).not.toBeUndefined();
@@ -118,30 +117,30 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                 done();
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     });
 
-    test("AddNullIntent", () => {
+    test("AddNullIntent", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: AddNullIntent");
         const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile();
         objsToClose.push(r);
 
-        expect(() => r.addIntent("phrase", null)).toThrow();
+        expect((): void => r.addIntent("phrase", null)).toThrow();
     });
 
-    test("AddNullPhrase", () => {
+    test("AddNullPhrase", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: AddNullPhrase");
         const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile();
         objsToClose.push(r);
 
-        expect(() => r.addIntent(null, "ID")).toThrow();
+        expect((): void => r.addIntent(null, "ID")).toThrow();
     });
 
-    test("RoundTripWithGoodIntent", (done: jest.DoneCallback) => {
+    test("RoundTripWithGoodIntent", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: RoundTripWithGoodIntent");
 
@@ -161,7 +160,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.recognizeOnceAsync(
-            (p2: sdk.IntentRecognitionResult) => {
+            (p2: sdk.IntentRecognitionResult): void => {
                 const res: sdk.IntentRecognitionResult = p2;
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
@@ -172,7 +171,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 ValidateResultMatchesWaveFile(res);
                 done();
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 20000);
@@ -184,7 +183,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         public appId: string;
     }
 
-    test("AddIntentWithBadModel", () => {
+    test("AddIntentWithBadModel", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: AddIntentWithBadModel");
         const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile();
@@ -193,10 +192,10 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         const langModel: BadLangModel = new BadLangModel();
         langModel.appId = "";
 
-        expect(() => r.addIntentWithLanguageModel("IntentId", langModel, "IntentName")).toThrow();
+        expect((): void => r.addIntentWithLanguageModel("IntentId", langModel, "IntentName")).toThrow();
     });
 
-    test("InitialSilenceTimeout (pull)", (done: jest.DoneCallback) => {
+    test("InitialSilenceTimeout (pull)", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (pull)");
         let p: sdk.PullAudioInputStream;
@@ -208,7 +207,8 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         p = sdk.AudioInputStream.createPullStream(
             {
-                close: () => { return; },
+                // eslint-disable-next-line @typescript-eslint/no-empty-function
+                close: (): void => { },
                 read: (buffer: ArrayBuffer): number => {
                     bytesSent += buffer.byteLength;
                     return buffer.byteLength;
@@ -226,7 +226,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     }, 20000);
 
-    test("InitialSilenceTimeout (push)", (done: jest.DoneCallback) => {
+    test("InitialSilenceTimeout (push)", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (push)");
 
@@ -240,7 +240,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         testInitialSilenceTimeout(config, done);
     }, 20000);
 
-    Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback) => {
+    Settings.testIfDOMCondition("InitialSilenceTimeout (File)", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (File)");
         const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
@@ -265,11 +265,11 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         let numReports: number = 0;
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs) => {
+        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs): void => {
             done(e.errorDetails);
         };
 
-        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs) => {
+        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
             try {
                 const res: sdk.SpeechRecognitionResult = e.result;
                 expect(res).not.toBeUndefined();
@@ -289,7 +289,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.recognizeOnceAsync(
-            (p2: sdk.IntentRecognitionResult) => {
+            (p2: sdk.IntentRecognitionResult): void => {
                 const res: sdk.IntentRecognitionResult = p2;
                 numReports++;
 
@@ -303,11 +303,11 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
                 expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
             },
-            (error: string) => {
+            (error: string): void => {
                 fail(error);
             });
 
-        WaitForCondition(() => (numReports === 2), () => {
+        WaitForCondition((): boolean => (numReports === 2), (): void => {
             setTimeout(done, 1);
             if (!!addedChecks) {
                 addedChecks();
@@ -315,7 +315,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     };
 
-    test("Continous Recog With Intent", (done: jest.DoneCallback) => {
+    test("Continous Recog With Intent", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Continous Recog With Intent");
 
@@ -325,7 +325,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         const lm: sdk.LanguageUnderstandingModel = sdk.LanguageUnderstandingModel.fromSubscription(Settings.LuisAppKey, Settings.LuisAppId, Settings.LuisRegion);
         r.addIntentWithLanguageModel(Settings.LuisValidIntentId, lm);
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs) => {
+        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
@@ -342,7 +342,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             }
         };
 
-        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs) => {
+        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
             try {
                 const res: sdk.IntentRecognitionResult = e.result;
                 expect(res).not.toBeUndefined();
@@ -353,9 +353,9 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
                 ValidateResultMatchesWaveFile(res);
 
-                r.stopContinuousRecognitionAsync(() => {
+                r.stopContinuousRecognitionAsync((): void => {
                     done();
-                }, (error: string) => {
+                }, (error: string): void => {
                     done(error);
                 });
             } catch (error) {
@@ -364,14 +364,14 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.startContinuousRecognitionAsync(
-            /* tslint:disable:no-empty */
-            () => { },
-            (error: string) => {
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            (): void => { },
+            (error: string): void => {
                 done(error);
             });
     }, 20000);
 
-    test("RoundTripWithGoodModelWrongIntent", (done: jest.DoneCallback) => {
+    test("RoundTripWithGoodModelWrongIntent", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: RoundTripWithGoodModelWrongIntent");
 
@@ -391,7 +391,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.recognizeOnceAsync(
-            (p2: sdk.IntentRecognitionResult) => {
+            (p2: sdk.IntentRecognitionResult): void => {
                 const res: sdk.IntentRecognitionResult = p2;
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
@@ -422,7 +422,6 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         r.addAllIntents(lm);
 
-        /*
         r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
@@ -430,25 +429,28 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 done(error);
             }
         };
-        */
 
         r.recognizeOnceAsync(
-            (p2: sdk.IntentRecognitionResult) => {
-                const res: sdk.IntentRecognitionResult = p2;
-                expect(res).not.toBeUndefined();
-                expect(res.errorDetails).toBeUndefined();
-                expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
-                expect(res.properties).not.toBeUndefined();
-                expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+            (p2: sdk.IntentRecognitionResult): void => {
+                try {
+                    const res: sdk.IntentRecognitionResult = p2;
+                    expect(res).not.toBeUndefined();
+                    expect(res.errorDetails).toBeUndefined();
+                    expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                done();
+                    done();
+                } catch (error) {
+                    done(error);
+                }
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 20000);
 
-    test("MultiPhrase Intent", (done: jest.DoneCallback) => {
+    test("MultiPhrase Intent", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: MultiPhrase Intent");
 
@@ -488,7 +490,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         let inTurn: boolean = false;
         let canceled: boolean = false;
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs) => {
+        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs): void => {
             try {
                 switch (e.reason) {
                     case sdk.CancellationReason.Error:
@@ -511,7 +513,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             inTurn = false;
         });
 
-        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs) => {
+        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
             try {
                 const res: sdk.IntentRecognitionResult = e.result;
                 expect(res).not.toBeUndefined();
@@ -531,15 +533,13 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             }
         };
 
-        r.startContinuousRecognitionAsync(() => {
-            WaitForCondition(() => {
-                return (canceled && !inTurn);
-            }, () => {
+        r.startContinuousRecognitionAsync((): void => {
+            WaitForCondition((): boolean => (canceled && !inTurn), (): void => {
                 try {
                     expect(numIntents).toEqual(numPhrases);
-                    r.stopContinuousRecognitionAsync(() => {
+                    r.stopContinuousRecognitionAsync((): void => {
                         done();
-                    }, (error: string) => {
+                    }, (error: string): void => {
                         done(error);
                     });
                 } catch (error) {
@@ -547,12 +547,12 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 }
             });
         },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 20000);
 
-    test("IntentAlias", (done: jest.DoneCallback) => {
+    test("IntentAlias", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: IntentAlias");
 
@@ -573,7 +573,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.recognizeOnceAsync(
-            (p2: sdk.IntentRecognitionResult) => {
+            (p2: sdk.IntentRecognitionResult): void => {
                 const res: sdk.IntentRecognitionResult = p2;
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
@@ -585,12 +585,12 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 ValidateResultMatchesWaveFile(res);
                 done();
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 20000);
 
-    test("Add All Intents", (done: jest.DoneCallback) => {
+    test("Add All Intents", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Add All Intents");
 
@@ -610,7 +610,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.recognizeOnceAsync(
-            (p2: sdk.IntentRecognitionResult) => {
+            (p2: sdk.IntentRecognitionResult): void => {
                 const res: sdk.IntentRecognitionResult = p2;
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
@@ -623,12 +623,12 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 expect(res.properties.getProperty(sdk.PropertyId.LanguageUnderstandingServiceResponse_JsonResult)).not.toBeUndefined();
                 done();
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 20000);
 
-    test("Add All Intents with alias", (done: jest.DoneCallback) => {
+    test("Add All Intents with alias", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Add All Intents with alias");
 
@@ -648,7 +648,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         };
 
         r.recognizeOnceAsync(
-            (p2: sdk.IntentRecognitionResult) => {
+            (p2: sdk.IntentRecognitionResult): void => {
                 const res: sdk.IntentRecognitionResult = p2;
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
@@ -660,12 +660,12 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 ValidateResultMatchesWaveFile(res);
                 done();
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 20000);
 
-    test("Audio Config is optional", () => {
+    test("Audio Config is optional", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Audio Config is optional");
 
@@ -679,7 +679,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         expect(r instanceof sdk.Recognizer).toEqual(true);
     });
 
-    test("Default mic is used when audio config is not specified.", () => {
+    test("Default mic is used when audio config is not specified.", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Default mic is used when audio config is not specified.");
 
@@ -690,20 +690,20 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         let r: sdk.IntentRecognizer = new sdk.IntentRecognizer(s);
         expect(r instanceof sdk.Recognizer).toEqual(true);
         // Node.js doesn't have a microphone natively. So we'll take the specific message that indicates that microphone init failed as evidence it was attempted.
-        r.recognizeOnceAsync(() => fail("RecognizeOnceAsync returned success when it should have failed"),
+        r.recognizeOnceAsync((): void => fail("RecognizeOnceAsync returned success when it should have failed"),
             (error: string): void => {
                 expect(error).toEqual("Error: Browser does not support Web Audio API (AudioContext is not available).");
             });
 
         r = new sdk.IntentRecognizer(s);
 
-        r.startContinuousRecognitionAsync(() => fail("startContinuousRecognitionAsync returned success when it should have failed"),
+        r.startContinuousRecognitionAsync((): void => fail("startContinuousRecognitionAsync returned success when it should have failed"),
             (error: string): void => {
                 expect(error).toEqual("Error: Browser does not support Web Audio API (AudioContext is not available).");
             });
     });
 
-    test("Connection Errors Propogate Async", (done: jest.DoneCallback) => {
+    test("Connection Errors Propogate Async", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Connection Errors Propogate Async");
 
@@ -712,7 +712,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(s);
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs) => {
+        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs): void => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
@@ -726,7 +726,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
     }, 15000);
 
-    test("Connection Errors Propogate Sync", (done: jest.DoneCallback) => {
+    test("Connection Errors Propogate Sync", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Connection Errors Propogate Sync");
 
@@ -737,7 +737,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         objsToClose.push(r);
 
         let doneCount: number = 0;
-        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs) => {
+        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs): void => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
@@ -748,7 +748,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             }
         };
 
-        r.recognizeOnceAsync((result: sdk.IntentRecognitionResult) => {
+        r.recognizeOnceAsync((result: sdk.IntentRecognitionResult): void => {
             try {
                 const e: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
@@ -765,7 +765,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 15000);
 
     // Bing Speech does not behave the same as Unified Speech for a bad language. It closes the connection far more gracefully.
-    test.skip("RecognizeOnce Bad Language", (done: jest.DoneCallback) => {
+    test.skip("RecognizeOnce Bad Language", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: RecognizeOnce Bad Language");
 
@@ -777,7 +777,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         objsToClose.push(r);
         let doneCount: number = 0;
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs) => {
+        r.canceled = (o: sdk.Recognizer, e: sdk.IntentRecognitionCanceledEventArgs): void => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
@@ -788,7 +788,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             }
         };
 
-        r.recognizeOnceAsync((result: sdk.IntentRecognitionResult) => {
+        r.recognizeOnceAsync((result: sdk.IntentRecognitionResult): void => {
             try {
                 const e: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
@@ -799,11 +799,11 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 done(error);
             }
 
-            WaitForCondition(() => (doneCount === 2), done);
+            WaitForCondition((): boolean => (doneCount === 2), done);
         });
     }, 15000);
 
-    test("Silence After Speech", (done: jest.DoneCallback) => {
+    test("Silence After Speech", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Silence After Speech");
 
@@ -828,7 +828,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         let inTurn = false;
         let canceled: boolean = false;
 
-        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs) => {
+        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
             try {
                 if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
                     expect(speechRecognized).toEqual(false);
@@ -871,13 +871,14 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             inTurn = false;
         });
 
-        r.startContinuousRecognitionAsync(() => { },
-            (err: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        r.startContinuousRecognitionAsync((): void => { },
+            (err: string): void => {
                 done(err);
             });
 
-        WaitForCondition(() => (canceled && !inTurn), () => {
-            r.stopContinuousRecognitionAsync(() => {
+        WaitForCondition((): boolean => (canceled && !inTurn), (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
                 try {
                     expect(speechEnded).toEqual(noMatchCount + 1); // +1 for the end of the valid speech.
                     expect(noMatchCount).toEqual(7); // 5 seconds for intent based reco.
@@ -886,14 +887,14 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                     done(error);
                 }
 
-            }, (error: string) => {
+            }, (error: string): void => {
                 done(error);
             });
         });
 
     }, 35000);
 
-    test("Silence Then Speech", (done: jest.DoneCallback) => {
+    test("Silence Then Speech", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Silence Then Speech");
 
@@ -917,7 +918,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         let canceled: boolean = false;
         let inTurn: boolean = false;
 
-        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs) => {
+        r.recognized = (o: sdk.Recognizer, e: sdk.IntentRecognitionEventArgs): void => {
             try {
                 if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
                     expect(speechRecognized).toEqual(false);
@@ -956,12 +957,13 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
             speechEnded++;
         };
 
-        r.startContinuousRecognitionAsync(() => { },
-            (err: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        r.startContinuousRecognitionAsync((): void => { },
+            (err: string): void => {
                 done(err);
             });
 
-        WaitForCondition(() => (canceled && !inTurn), () => {
+        WaitForCondition((): boolean => (canceled && !inTurn), (): void => {
             try {
                 expect(speechEnded).toEqual(noMatchCount + 1);
                 expect(noMatchCount).toEqual(6); // 5 seconds for intent based reco.
@@ -969,9 +971,9 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 done(error);
             }
 
-            r.stopContinuousRecognitionAsync(() => {
+            r.stopContinuousRecognitionAsync((): void => {
                 done();
-            }, (error: string) => {
+            }, (error: string): void => {
                 done(error);
             });
         });
@@ -979,7 +981,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
     }, 35000);
 });
 
-test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
+test("Ambiguous Speech default as expected", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Ambiguous Speech default as expected");
 
@@ -995,7 +997,7 @@ test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
     };
 
     r.recognizeOnceAsync(
-        (p2: sdk.IntentRecognitionResult) => {
+        (p2: sdk.IntentRecognitionResult): void => {
 
             const res: sdk.IntentRecognitionResult = p2;
             expect(res.errorDetails).toBeUndefined();
@@ -1004,12 +1006,12 @@ test("Ambiguous Speech default as expected", (done: jest.DoneCallback) => {
             expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Recognize speech");
             done();
         },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 });
 
-test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
+test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Phraselist assists speech Reco.");
 
@@ -1028,7 +1030,7 @@ test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
     };
 
     r.recognizeOnceAsync(
-        (p2: sdk.IntentRecognitionResult) => {
+        (p2: sdk.IntentRecognitionResult): void => {
 
             const res: sdk.IntentRecognitionResult = p2;
             expect(res.errorDetails).toBeUndefined();
@@ -1037,12 +1039,12 @@ test.skip("Phraselist assists speech Reco.", (done: jest.DoneCallback) => {
             expect(res.text).toEqual("Wreck a nice beach.");
             done();
         },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 });
 
-test("Phraselist Clear works.", (done: jest.DoneCallback) => {
+test("Phraselist Clear works.", (done: jest.DoneCallback): void => {
 
     // eslint-disable-next-line no-console
     console.info("Name: Phraselist Clear works.");
@@ -1092,31 +1094,27 @@ test("Phraselist Clear works.", (done: jest.DoneCallback) => {
 
     r.recognizeOnceAsync(
         undefined,
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => {
-        return recoCount === 1;
-    }, () => {
+    WaitForCondition((): boolean => recoCount === 1, (): void => {
         dynamicPhrase.clear();
         phraseAdded = false;
         pullStreamSource.StartRepeat();
         r.startContinuousRecognitionAsync(
             undefined,
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     });
 
-    WaitForCondition(() => {
-        return recoCount === 2;
-    }, () => {
+    WaitForCondition((): boolean => recoCount === 2, (): void => {
         done();
     });
 }, 20000);
 
-test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback) => {
+test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Phraselist extra phraselists have no effect.");
 
@@ -1136,7 +1134,7 @@ test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallba
     };
 
     r.recognizeOnceAsync(
-        (p2: sdk.IntentRecognitionResult) => {
+        (p2: sdk.IntentRecognitionResult): void => {
 
             const res: sdk.IntentRecognitionResult = p2;
             expect(res.errorDetails).toBeUndefined();
@@ -1145,7 +1143,7 @@ test.skip("Phraselist extra phraselists have no effect.", (done: jest.DoneCallba
             expect(res.text).toEqual("Wreck a nice beach.");
             done();
         },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 });

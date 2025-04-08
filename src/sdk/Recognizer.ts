@@ -8,11 +8,11 @@ import {
     IAuthentication,
     IConnectionFactory,
     OS,
-    RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechServiceConfig,
 } from "../common.speech/Exports.js";
+import { RecognitionMode } from "../common.speech/ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 import {
     Deferred,
     marshalPromiseToCallbacks

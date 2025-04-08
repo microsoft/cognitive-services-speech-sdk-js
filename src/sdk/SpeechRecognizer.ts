@@ -5,13 +5,13 @@ import {
     IAuthentication,
     IConnectionFactory,
     OutputFormatPropertyName,
-    RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechConnectionFactory,
     SpeechServiceConfig,
     SpeechServiceRecognizer,
 } from "../common.speech/Exports.js";
+import { RecognitionMode } from "../common.speech/ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 import { marshalPromiseToCallbacks } from "../common/Exports.js";
 import { AudioConfigImpl } from "./Audio/AudioConfig.js";
 import { Contracts } from "./Contracts.js";

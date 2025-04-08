@@ -37,6 +37,7 @@ export class AutoDetectSourceLanguageConfig {
     public static fromOpenRange(): AutoDetectSourceLanguageConfig {
         const config = new AutoDetectSourceLanguageConfig();
         config.properties.setProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, AutoDetectSourceLanguagesOpenRangeOptionName);
+        config.properties.setProperty(PropertyId.SpeechServiceConnection_RecoLanguage, "en-US");
         return config;
     }
 

@@ -23,13 +23,13 @@ import {
 import {
     IAuthentication,
     IConnectionFactory,
-    RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechServiceConfig,
     TranscriberConnectionFactory,
     TranscriptionServiceRecognizer,
 } from "../Exports.js";
+import { RecognitionMode } from "../ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 
 export class TranscriberRecognizer extends Recognizer {
 

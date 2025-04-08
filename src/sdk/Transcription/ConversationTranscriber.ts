@@ -5,7 +5,6 @@ import {
     IAuthentication,
     IConnectionFactory,
     OutputFormatPropertyName,
-    RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
     // SpeechConnectionFactory,
@@ -13,6 +12,7 @@ import {
     SpeechServiceConfig,
     ConversationTranscriptionServiceRecognizer,
 } from "../../common.speech/Exports.js";
+import { RecognitionMode } from "../../common.speech/ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 import { marshalPromiseToCallbacks } from "../../common/Exports.js";
 import { AudioConfigImpl } from "../Audio/AudioConfig.js";
 import { Contracts } from "../Contracts.js";
