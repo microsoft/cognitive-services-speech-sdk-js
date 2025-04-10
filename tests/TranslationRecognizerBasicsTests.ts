@@ -717,7 +717,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
         });
     }, 15000);
 
-    test.only("Silence After Speech", (done: jest.DoneCallback): void => {
+    test("Silence After Speech", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: Silence After Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
@@ -742,13 +742,14 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
 
         r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
             try {
-                if (e.result.reason === sdk.ResultReason.TranslatedSpeech) {
+                console.info("Recognized event: " + sdk.ResultReason[e.result.reason]);
+                if (e.result.reason === sdk.ResultReason.TranslatedSpeech && !speechRecognized) {
                     expect(speechRecognized).toEqual(false);
                     speechRecognized = true;
                     expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
                     expect(e.result.text).toEqual("What's the weather like?");
-                } else if (e.result.reason === sdk.ResultReason.NoMatch) {
-                    expect(speechRecognized).toEqual(true);
+                } else {
+                    expect(e.result.text).toEqual("");
                     noMatchCount++;
                 }
             } catch (error) {
@@ -859,14 +860,16 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean) => {
                 const res: sdk.TranslationRecognitionResult = e.result;
                 expect(res).not.toBeUndefined();
                 if (res.reason === sdk.ResultReason.TranslatedSpeech) {
-                    expect(speechRecognized).toEqual(false);
-                    expect(noMatchCount).toBeGreaterThanOrEqual(1);
-                    speechRecognized = true;
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                    expect(res.text).toEqual("What's the weather like?");
-                } else if (res.reason === sdk.ResultReason.NoMatch) {
-                    expect(speechRecognized).toEqual(false);
-                    noMatchCount++;
+                    if (res.text !== undefined && res.text !== "") {
+                        expect(speechRecognized).toEqual(false);
+                        expect(noMatchCount).toBeGreaterThanOrEqual(1);
+                        speechRecognized = true;
+                        expect(res.text).toEqual("What's the weather like?");
+                    } else {
+                        expect(speechRecognized).toEqual(false);
+                        noMatchCount++;
+                    }
                 }
             } catch (error) {
                 done(error);
