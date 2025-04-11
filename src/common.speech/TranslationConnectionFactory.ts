@@ -39,9 +39,7 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
 
         const queryParams: IStringDictionary<string> = {};
 
-        if (config.autoDetectSourceLanguages !== undefined) {
-            queryParams[QueryParameterNames.EnableLanguageId] = "true";
-        }
+        // Determine if we're using V1 or V2 endpoint
         this.setQueryParams(queryParams, config, endpoint);
 
         const headers: IStringDictionary<string> = {};
@@ -112,7 +110,8 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         const translationVoice: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
         if (translationVoice !== undefined) {
             queryParams.voice = translationVoice;
-            queryParams.features = "texttospeech";
+            // Updated to match C++ implementation
+            queryParams.features = "requireVoice";
         }
     }
 }
