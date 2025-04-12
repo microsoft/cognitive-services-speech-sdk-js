@@ -54,8 +54,11 @@ import {
 } from "./Exports.js";
 import { IAuthentication } from "./IAuthentication.js";
 import { IConnectionFactory } from "./IConnectionFactory.js";
-import { RecognitionMode, RecognizerConfig } from "./RecognizerConfig.js";
+import { RecognizerConfig } from "./RecognizerConfig.js";
 import { ActivityPayloadResponse } from "./ServiceMessages/ActivityResponsePayload.js";
+import { InvocationSource } from "./ServiceMessages/InvocationSource.js";
+import { ClientDetectedKeyword, KeywordDetectionType, OnRejectAction } from "./ServiceMessages/KeywordDetection/KeywordDetection.js";
+import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 
 export class DialogServiceAdapter extends ServiceRecognizerBase {
@@ -698,12 +701,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         const keywordOffsets = keywordOffsetPropertyValue === undefined ? [] : keywordOffsetPropertyValue.split(";");
         const keywordDurations = keywordDurationPropertyValue === undefined ? [] : keywordDurationPropertyValue.split(";");
 
-        const keywordDefinitionArray = [];
+        const keywordDefinitionArray: ClientDetectedKeyword[] = [];
         for (let i = 0; i < keywords.length; i++) {
-            const definition: { [section: string]: any } = {};
-            definition.text = keywords[i];
+            const definition: ClientDetectedKeyword = {
+                text: keywords[i]
+            };
             if (i < keywordOffsets.length) {
-                definition.offset = Number(keywordOffsets[i]);
+                definition.startOffset = Number(keywordOffsets[i]);
             }
             if (i < keywordDurations.length) {
                 definition.duration = Number(keywordDurations[i]);
@@ -711,11 +715,11 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             keywordDefinitionArray.push(definition);
         }
 
-        this.speechContext.setSection("invocationSource", "VoiceActivationWithKeyword");
-        this.speechContext.setSection("keywordDetection", [{
+        this.speechContext.getContext().invocationSource = InvocationSource.VoiceActivationWithKeyword;
+        this.speechContext.getContext().keywordDetection = [{
             clientDetectedKeywords: keywordDefinitionArray,
-            onReject: { action: "EndOfTurn" },
-            type: "startTrigger"
-        }]);
+            onReject: { action: OnRejectAction.EndOfTurn },
+            type: KeywordDetectionType.StartTrigger
+        }];
     }
 }

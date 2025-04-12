@@ -62,13 +62,13 @@ console.info = (...args: any[]): void => {
         const milliseconds = date.getMilliseconds();
 
         return "[" +
-            ((hour < 10) ? "0" + hour : hour) +
+            ((hour < 10) ? "0" + hour.toString() : hour).toString() +
             ":" +
-            ((minutes < 10) ? "0" + minutes : minutes) +
+            ((minutes < 10) ? "0" + minutes.toString() : minutes).toString() +
             ":" +
-            ((seconds < 10) ? "0" + seconds : seconds) +
+            ((seconds < 10) ? "0" + seconds.toString() : seconds).toString() +
             "." +
-            ("00" + milliseconds).slice(-3) +
+            ("00" + milliseconds.toString()).slice(-3) +
             "] ";
     };
     const timestamp = formatConsoleDate(); //  `[${new Date().toTimeString()}]`;
@@ -77,13 +77,13 @@ console.info = (...args: any[]): void => {
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // Override inputs, if necessary
     Settings.LoadSettings();
     Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
     // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
@@ -97,6 +97,7 @@ afterEach(async (): Promise<void> => {
     await closeAsyncObjects(objsToClose);
 });
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function BuildCommandsServiceConfig(): sdk.DialogServiceConfig {
     const config: sdk.CustomCommandsConfig = sdk.CustomCommandsConfig.fromSubscription(Settings.BotSecret, Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
@@ -110,6 +111,7 @@ function BuildCommandsServiceConfig(): sdk.DialogServiceConfig {
     return config;
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function BuildBotFrameworkConfig(): sdk.BotFrameworkConfig {
     const config: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, Settings.BotRegion);
 
@@ -121,6 +123,7 @@ function BuildBotFrameworkConfig(): sdk.BotFrameworkConfig {
     return config;
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function BuildConnectorFromWaveFile(dialogServiceConfig?: sdk.DialogServiceConfig, audioFileName?: string): sdk.DialogServiceConnector {
     let connectorConfig: sdk.DialogServiceConfig = dialogServiceConfig;
     if (connectorConfig === undefined) {
@@ -143,41 +146,38 @@ function BuildConnectorFromWaveFile(dialogServiceConfig?: sdk.DialogServiceConfi
     return connector;
 }
 
-function PostDoneTest(done: jest.DoneCallback, ms: number): any {
-    return setTimeout((): void => {
+const PostDoneTest = (done: jest.DoneCallback, ms: number): any => setTimeout((): void => {
         done();
     }, ms);
-}
 
-function PostFailTest(done: jest.DoneCallback, ms: number, error?: string): any {
-    return setTimeout((): void => {
+const PostFailTest = (done: jest.DoneCallback, ms: number, error?: string): any => setTimeout((): void => {
         done(error);
     }, ms);
-}
+
 
 const sleep = (milliseconds: number): Promise<any> => new Promise((resolve: Callback): NodeJS.Timeout => setTimeout(resolve, milliseconds));
 
 // DialogServiceConfig tests: begin
-test("Create BotFrameworkConfig from subscription, null params", () => {
+test("Create BotFrameworkConfig from subscription, null params", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Create BotFrameworkConfig from subscription, null params");
     expect((): sdk.BotFrameworkConfig => sdk.BotFrameworkConfig.fromSubscription(null, null)).toThrowError();
 });
 
-test("Create BotFrameworkConfig from subscription, null Region", () => {
+test("Create BotFrameworkConfig from subscription, null Region", (): void => {
     expect((): sdk.BotFrameworkConfig => sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, null)).toThrowError();
 });
 
-test("Create BotFrameworkConfig from subscription, null subscription", () => {
+test("Create BotFrameworkConfig from subscription, null subscription", (): void => {
     expect((): sdk.BotFrameworkConfig => sdk.BotFrameworkConfig.fromSubscription(null, Settings.BotRegion)).toThrowError();
 });
 
-test("Create BotFrameworkConfig, null optional botId", () => {
+test("Create BotFrameworkConfig, null optional botId", (): void => {
     const connectorConfig: sdk.BotFrameworkConfig = sdk.BotFrameworkConfig.fromSubscription(Settings.BotSubscription, Settings.BotRegion, "");
     expect(connectorConfig).not.toBeUndefined();
 });
 
-test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () => {
+test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Create DialogServiceConnector, BotFrameworkConfig.fromSubscription");
 
@@ -193,7 +193,7 @@ test("Create DialogServiceConnector, BotFrameworkConfig.fromSubscription", () =>
     expect(connector instanceof sdk.DialogServiceConnector);
 });
 
-test("Output format, default", () => {
+test("Output format, default", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Output format, default");
 
@@ -203,7 +203,7 @@ test("Output format, default", () => {
     expect(dialogConfig.outputFormat === sdk.OutputFormat.Simple);
 });
 
-test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback) => {
+test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Create BotFrameworkConfig, invalid optional botId");
 
@@ -214,7 +214,7 @@ test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallba
 
     // the service should return an error if an invalid botId was specified, even though the subscription is valid
     connector.listenOnceAsync(
-        (successResult: sdk.SpeechRecognitionResult) => {
+        (successResult: sdk.SpeechRecognitionResult): void => {
             if (successResult.reason !== sdk.ResultReason.Canceled) {
                 done(`listenOnceAsync shouldn't have reason '${successResult.reason}' with this config`);
             } else {
@@ -230,7 +230,7 @@ test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallba
         });
 }, 15000);
 
-test("Connect / Disconnect", (done: jest.DoneCallback) => {
+test("Connect / Disconnect", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Connect / Disconnect");
 
@@ -246,16 +246,16 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
 
     expect(connector).not.toBeUndefined();
 
-    connector.canceled = (sender: sdk.DialogServiceConnector, args: sdk.SpeechRecognitionCanceledEventArgs) => {
+    connector.canceled = (sender: sdk.DialogServiceConnector, args: sdk.SpeechRecognitionCanceledEventArgs): void => {
         // eslint-disable-next-line no-console
         console.info("Error code: %d, error details: %s, error reason: %d", args.errorCode, args.errorDetails, args.reason);
     };
 
-    connection.connected = (args: sdk.ConnectionEventArgs) => {
+    connection.connected = (args: sdk.ConnectionEventArgs): void => {
         connected = true;
     };
 
-    connection.disconnected = (args: sdk.ConnectionEventArgs) => {
+    connection.disconnected = (args: sdk.ConnectionEventArgs): void => {
         disconnected = true;
     };
 
@@ -263,8 +263,8 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
         done(error);
     });
 
-    WaitForCondition(() => connected, () => {
-        connection.closeConnection(() => {
+    WaitForCondition((): boolean => connected, (): void => {
+        connection.closeConnection((): void => {
             if (!!disconnected) {
                 done();
             } else {
@@ -274,7 +274,7 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
     });
 });
 
-test("GetDetailedOutputFormat", (done: jest.DoneCallback) => {
+test("GetDetailedOutputFormat", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: GetDetailedOutputFormat");
 
@@ -286,21 +286,21 @@ test("GetDetailedOutputFormat", (done: jest.DoneCallback) => {
     objsToClose.push(connector);
 
     let recoCounter: number = 0;
-    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         expect(result).not.toBeUndefined();
 
         const resultProps = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
         (expect(resultProps).toContain("NBest"));
         recoCounter++;
     },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => (recoCounter === 1), done);
+    WaitForCondition((): boolean => (recoCounter === 1), done);
 });
 
-test("ListenOnceAsync", (done: jest.DoneCallback) => {
+test("ListenOnceAsync", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: ListenOnceAsync");
 
@@ -323,7 +323,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         hypoCounter++;
     };
 
-    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs): void => {
         try {
             expect(e.activity).not.toBeNull();
         } catch (error) {
@@ -331,11 +331,11 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.recognized = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs) => {
+    connector.recognized = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionEventArgs): void => {
         recoCounter++;
     };
 
-    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
@@ -343,7 +343,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.turnStatusReceived = (sender: sdk.DialogServiceConnector, e: sdk.TurnStatusReceivedEventArgs) => {
+    connector.turnStatusReceived = (sender: sdk.DialogServiceConnector, e: sdk.TurnStatusReceivedEventArgs): void => {
         turnStatusCounter++;
         try {
             expect(e.statusCode === 200);
@@ -352,11 +352,11 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
         expect(e.sessionId).toEqual(sessionId);
     };
 
-    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         expect(result).not.toBeUndefined();
         expect(result.errorDetails).toBeUndefined();
         expect(result.text).not.toBeUndefined();
@@ -364,15 +364,15 @@ test("ListenOnceAsync", (done: jest.DoneCallback) => {
         expect(recoCounter).toEqual(1);
         recoCounter++;
     },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => (recoCounter === 2), done);
-    WaitForCondition(() => (turnStatusCounter === 1), done);
+    WaitForCondition((): boolean => (recoCounter === 2), done);
+    WaitForCondition((): boolean => (turnStatusCounter === 1), done);
 });
 
-Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: ListenOnceAsync with audio response");
 
@@ -409,8 +409,8 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
     // };
 
     const audioBuffer = new ArrayBuffer(320);
-    const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-        audioStream.read(audioBuffer).then((bytesRead: number) => {
+    const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback): void => {
+        audioStream.read(audioBuffer).then((bytesRead: number): void => {
             try {
                 if (bytesRead === 0) {
                     PostDoneTest(done, 2000);
@@ -428,7 +428,7 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
         });
     };
 
-    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs): void => {
         try {
             expect(e.activity).not.toBeNull();
             if (e.activity.type === "message") {
@@ -442,7 +442,7 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
         }
     };
 
-    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             // done(e.errorDetails);
         } catch (error) {
@@ -450,21 +450,21 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
         }
     };
 
-    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
         expect(e.sessionId).toEqual(sessionId);
     };
 
-    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         expect(result).not.toBeUndefined();
         expect(result.errorDetails).toBeUndefined();
         expect(result.text).not.toBeUndefined();
     },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 }, 15000);
 
-Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (done: jest.DoneCallback) => {
+Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Successive ListenOnceAsync with audio response");
 
@@ -487,8 +487,8 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
     };
 
     const audioBuffer = new ArrayBuffer(320);
-    const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback) => {
-        audioStream.read(audioBuffer).then((bytesRead: number) => {
+    const audioReadLoop = (audioStream: PullAudioOutputStream, done: jest.DoneCallback): void => {
+        audioStream.read(audioBuffer).then((bytesRead: number): void => {
             try {
                 if (bytesRead === 0) {
                     PostDoneTest(done, 2000);
@@ -500,12 +500,12 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
             if (bytesRead > 0) {
                 audioReadLoop(audioStream, done);
             }
-        }, (error: string) => {
+        }, (error: string): void => {
             done(error);
         });
     };
 
-    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs): void => {
         try {
             expect(e.activity).not.toBeNull();
             if (e.activity.type === "message") {
@@ -519,7 +519,7 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
         }
     };
 
-    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             // done(e.errorDetails);
         } catch (error) {
@@ -527,33 +527,33 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
         }
     };
 
-    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
         expect(e.sessionId).toEqual(sessionId);
     };
 
-    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         expect(result).not.toBeUndefined();
         expect(result.errorDetails).toBeUndefined();
         expect(result.text).not.toBeUndefined();
         firstReco = true;
     },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => firstReco, () => {
-        connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    WaitForCondition((): boolean => firstReco, (): void => {
+        connector.listenOnceAsync((result: sdk.SpeechRecognitionResult): void => {
             expect(result).not.toBeUndefined();
             expect(result.errorDetails).toBeUndefined();
             expect(result.text).not.toBeUndefined();
         },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     });
 }, 15000);
 
-test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
+test("Successive ListenOnceAsync calls", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Successive ListenOnceAsync calls");
 
@@ -578,7 +578,7 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
         sessionId = e.sessionId;
     };
 
-    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs): void => {
         try {
             expect(e.activity).not.toBeNull();
         } catch (error) {
@@ -586,7 +586,7 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
@@ -594,22 +594,22 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
         expect(e.sessionId).toEqual(sessionId);
     };
 
-    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         expect(result).not.toBeUndefined();
         expect(result.errorDetails).toBeUndefined();
         expect(result.text).not.toBeUndefined();
         firstReco = true;
     },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => firstReco, () => {
-        connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult) => {
+    WaitForCondition((): boolean => firstReco, (): void => {
+        connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult): void => {
             try {
                 const recoResult: sdk.SpeechRecognitionResult = result2;
                 expect(recoResult).not.toBeUndefined();
@@ -619,13 +619,13 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback) => {
                 done(error);
             }
         },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     });
 }, 15000);
 
-test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
+test("ListenOnceAsync with silence returned", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: ListenOnceAsync with silence returned");
 
@@ -650,7 +650,7 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
         sessionId = e.sessionId;
     };
 
-    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs): void => {
         try {
             expect(e.activity).not.toBeNull();
         } catch (error) {
@@ -658,7 +658,7 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
@@ -666,21 +666,21 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
         expect(e.sessionId).toEqual(sessionId);
     };
 
-    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         expect(result.reason).not.toBeUndefined();
         expect(result.errorDetails).toBeUndefined();
         firstReco = true;
     },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => firstReco, () => {
-        connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult) => {
+    WaitForCondition((): boolean => firstReco, (): void => {
+        connector.listenOnceAsync((result2: sdk.SpeechRecognitionResult): void => {
             try {
                 expect(connected).toEqual(1);
                 done();
@@ -688,13 +688,13 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback) => {
                 done(error);
             }
         },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     });
 }, 15000);
 
-test("Send/Receive messages", (done: jest.DoneCallback) => {
+test("Send/Receive messages", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Send/Receive messages");
 
@@ -711,7 +711,7 @@ test("Send/Receive messages", (done: jest.DoneCallback) => {
     };
 
     let activityCount: number = 0;
-    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs): void => {
         try {
             expect(e.activity).not.toBeNull();
             activityCount++;
@@ -720,7 +720,7 @@ test("Send/Receive messages", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
@@ -728,17 +728,17 @@ test("Send/Receive messages", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
         expect(e.sessionId).toEqual(sessionId);
     };
 
     const message: string = JSON.stringify(simpleMessageObj);
     connector.sendActivityAsync(message);
 
-    WaitForCondition(() => (activityCount >= 1), done);
+    WaitForCondition((): boolean => (activityCount >= 1), done);
 });
 
-test("Send multiple messages", (done: jest.DoneCallback) => {
+test("Send multiple messages", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Send multiple messages");
 
@@ -755,7 +755,7 @@ test("Send multiple messages", (done: jest.DoneCallback) => {
     };
 
     let activityCount: number = 0;
-    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs): void => {
         try {
             expect(e.activity).not.toBeNull();
             activityCount++;
@@ -764,7 +764,7 @@ test("Send multiple messages", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
@@ -772,7 +772,7 @@ test("Send multiple messages", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
         expect(e.sessionId).toEqual(sessionId);
     };
 
@@ -784,10 +784,10 @@ test("Send multiple messages", (done: jest.DoneCallback) => {
     }
 
     // TODO improve, needs a more accurate verification
-    WaitForCondition(() => (activityCount >= 4), done);
+    WaitForCondition((): boolean => (activityCount >= 4), done);
 });
 
-test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
+test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Send/Receive messages during ListenOnce");
 
@@ -805,7 +805,7 @@ test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
     };
 
     let activityCount: number = 0;
-    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs) => {
+    connector.activityReceived = (sender: sdk.DialogServiceConnector, e: sdk.ActivityReceivedEventArgs): void => {
         try {
             expect(e.activity).not.toBeNull();
             activityCount++;
@@ -823,7 +823,7 @@ test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    connector.canceled = (sender: sdk.DialogServiceConnector, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
@@ -831,24 +831,24 @@ test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback) => {
         }
     };
 
-    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs) => {
+    connector.speechEndDetected = (sender: sdk.DialogServiceConnector, e: sdk.RecognitionEventArgs): void => {
         expect(e.sessionId).toEqual(sessionId);
     };
 
-    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    connector.listenOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         expect(result).not.toBeUndefined();
         expect(result.errorDetails).toBeUndefined();
         expect(result.text).not.toBeUndefined();
         recoDone = true;
     },
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => (activityCount > 1 && recoDone), done);
+    WaitForCondition((): boolean => (activityCount > 1 && recoDone), done);
 });
 
-test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) => {
+test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: SendActivity fails with invalid JSON object");
 
@@ -859,21 +859,21 @@ test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback) =>
     objsToClose.push(connector);
 
     const malformedJSON: string = "{speak: \"This is speech\", \"text\" : \"This is JSON is malformed\", \"type\": \"message\" };";
-    connector.sendActivityAsync(malformedJSON, () => {
+    connector.sendActivityAsync(malformedJSON, (): void => {
         done("Should have failed");
-    }, (error: string) => {
+    }, (error: string): void => {
         expect(error).toContain("Unexpected token");
         done();
     });
 });
 
-describe("Agent config message tests", () => {
+describe("Agent config message tests", (): void => {
     let eventListener: IDetachable;
     let observedAgentConfig: AgentConfig;
 
-    beforeEach(() => {
+    beforeEach((): void => {
         eventListener = Events.instance.attachListener({
-            onEvent: (event: PlatformEvent) => {
+            onEvent: (event: PlatformEvent): void => {
                 if (event instanceof SendingAgentContextMessageEvent) {
                     const agentContextEvent = event;
                     observedAgentConfig = agentContextEvent.agentConfig;
@@ -882,7 +882,7 @@ describe("Agent config message tests", () => {
         });
     });
 
-    afterEach(async () => {
+    afterEach(async (): Promise<void> => {
         await eventListener.detach();
         observedAgentConfig = undefined;
     });
@@ -896,7 +896,7 @@ describe("Agent config message tests", () => {
         objsToClose.push(connector);
 
         connector.listenOnceAsync(
-            () => {
+            (): void => {
                 try {
                     expect(observedAgentConfig).not.toBeUndefined();
                     expect(observedAgentConfig.get().botInfo.connectionId).toEqual(testConnectionId);
@@ -905,7 +905,7 @@ describe("Agent config message tests", () => {
                     done(error);
                 }
             },
-            (failureMessage: string) => {
+            (failureMessage: string): void => {
                 done(`ListenOnceAsync unexpectedly failed: ${failureMessage}`);
             });
     });
@@ -1026,7 +1026,7 @@ describe.each([
     applicationId: string = undefined,
     authToken: string = undefined,
     endpoint: URL = undefined,
-) => {
+): void => {
     let observedUri: string;
     let eventListener: IDetachable;
     let connector: sdk.DialogServiceConnector;
@@ -1038,7 +1038,7 @@ describe.each([
         }
     }
 
-    beforeEach(() => {
+    beforeEach((): void => {
         eventListener = Events.instance.attachListener({
             onEvent: (event: PlatformEvent) => {
                 if (event instanceof ConnectionStartEvent) {
@@ -1049,7 +1049,7 @@ describe.each([
         });
     });
 
-    afterEach(async () => {
+    afterEach(async (): Promise<void> => {
         await eventListener.detach();
         observedUri = undefined;
     });
@@ -1099,7 +1099,7 @@ describe.each([
         return result;
     }
 
-    test(`Validate: ${description}`, (done: jest.DoneCallback) => {
+    test(`Validate: ${description}`, (done: jest.DoneCallback): void => {
         try {
             const config = getConfig();
             connector = new sdk.DialogServiceConnector(config);
@@ -1173,7 +1173,7 @@ describe.each([
     successExpected: boolean,
 ) => {
 
-    test(`${description}`, (done: jest.DoneCallback) => {
+    test(`${description}`, (done: jest.DoneCallback): void => {
         const config: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         config.setProperty("SPEECH-KeywordsToDetect", keywords);
         if (durations !== undefined) {
@@ -1199,7 +1199,7 @@ describe.each([
         };
 
         connector.listenOnceAsync(
-            (successfulResult: sdk.SpeechRecognitionResult) => {
+            (successfulResult: sdk.SpeechRecognitionResult): void => {
                 expect(keywordResultReceived).toBe(successExpected ? 1 : 0);
                 expect(noMatchesReceived).toBe(successExpected ? 0 : 1);
                 expect(speechRecognizedReceived).toBe(successExpected ? 1 : 0);
@@ -1207,7 +1207,7 @@ describe.each([
                     successExpected ? ResultReason.RecognizedSpeech : ResultReason.NoMatch);
                 done();
             },
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     }, 30000);

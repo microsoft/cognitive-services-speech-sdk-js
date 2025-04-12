@@ -35,9 +35,9 @@ import {
 import { Callback } from "../sdk/Transcription/IConversation.js";
 import {
     AgentConfig,
+    AutoDetectSourceLanguagesOpenRangeOptionName,
     DynamicGrammarBuilder,
     ISpeechConfigAudioDevice,
-    RecognitionMode,
     RequestSession,
     SpeechContext,
     SpeechDetected,
@@ -51,38 +51,16 @@ import {
 import { IConnectionFactory } from "./IConnectionFactory.js";
 import { RecognizerConfig } from "./RecognizerConfig.js";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
-
-interface CustomModel {
-    language: string;
-    endpoint: string;
-}
-
-export interface PhraseDetection {
-    customModels?: CustomModel[];
-    onInterim?: { action: string };
-    onSuccess?: { action: string };
-    mode?: string;
-    INTERACTIVE?: Segmentation;
-    CONVERSATION?: Segmentation;
-    DICTATION?: Segmentation;
-    speakerDiarization?: SpeakerDiarization;
-}
-
-export interface SpeakerDiarization {
-    mode?: string;
-    audioSessionId?: string;
-    audioOffsetMs?: number;
-    identityProvider?: string;
-    diarizeIntermediates?: boolean;
-}
-
-export interface Segmentation {
-    segmentation: {
-        mode: string;
-        segmentationSilenceTimeoutMs?: number;
-        segmentationForcedTimeoutMs?: number;
-    };
-}
+import { Segmentation, SegmentationMode } from "./ServiceMessages/PhraseDetection/Segmentation.js";
+import { CustomLanguageMappingEntry, PhraseDetectionContext, RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
+import { NextAction as NextTranslationAction } from "./ServiceMessages/Translation/OnSuccess.js";
+import { Mode } from "./ServiceMessages/Translation/InterimResults.js";
+import { LanguageIdDetectionMode, LanguageIdDetectionPriority } from "./ServiceMessages/LanguageId/LanguageIdContext.js";
+import { NextAction as NextLangaugeIdAction } from "./ServiceMessages/LanguageId/OnSuccess.js";
+import { OnUnknownAction } from "./ServiceMessages/LanguageId/OnUnknown.js";
+import { ResultType } from "./ServiceMessages/PhraseOutput/InterimResults.js";
+import { PhraseResultOutputType } from "./ServiceMessages/PhraseOutput/PhraseResults.js";
+import { NextAction as NextPhraseDetectionAction } from "./ServiceMessages/PhraseDetection/OnSuccess.js";
 
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
@@ -198,22 +176,22 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const targetLanguages: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined);
         if (targetLanguages !== undefined) {
             const languages = targetLanguages.split(",");
-            const translationVoice: string =  this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
-            const action = ( translationVoice !== undefined ) ? "Synthesize" : "None";
-            this.privSpeechContext.setSection("translation", {
+            const translationVoice: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
+            const action = (translationVoice !== undefined) ? NextTranslationAction.Synthesize : NextTranslationAction.None;
+            this.privSpeechContext.getContext().translation = {
                 onSuccess: { action },
-                output: { interimResults: { mode: "Always" } },
+                output: { interimResults: { mode: Mode.Always } },
                 targetLanguages: languages,
-            });
+            };
 
             if (translationVoice !== undefined) {
                 const languageToVoiceMap: { [key: string]: string } = {};
                 for (const lang of languages) {
                     languageToVoiceMap[lang] = translationVoice;
                 }
-                this.privSpeechContext.setSection("synthesis", {
+                this.privSpeechContext.getContext().synthesis = {
                     defaultVoices: languageToVoiceMap
-                });
+                };
             }
         }
     }
@@ -223,102 +201,121 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const speechSegmentationMaximumTimeMs: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationMaximumTimeMs, undefined);
         const speechSegmentationStrategy: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationStrategy, undefined);
         const segmentation: Segmentation = {
-            segmentation: {
-                mode: ""
-            }
+            mode: SegmentationMode.Normal,
+            segmentationForcedTimeoutMs: 0,
+            segmentationSilenceTimeoutMs: 0,
         };
+
         let configuredSegment = false;
 
         if (speechSegmentationStrategy !== undefined) {
             configuredSegment = true;
-            let segMode: string = "";
+            let segMode: SegmentationMode = SegmentationMode.Normal;
             switch (speechSegmentationStrategy.toLowerCase()) {
                 case "default":
                     break;
                 case "time":
-                    segMode = "Custom";
+                    segMode = SegmentationMode.Custom;
                     break;
                 case "semantic":
-                    segMode = "Semantic";
+                    segMode = SegmentationMode.Semantic;
                     break;
             }
 
-            segmentation.segmentation.mode = segMode;
+            segmentation.mode = segMode;
         }
 
         if (speechSegmentationSilenceTimeoutMs !== undefined) {
             configuredSegment = true;
             const segmentationSilenceTimeoutMs: number = parseInt(speechSegmentationSilenceTimeoutMs, 10);
-            segmentation.segmentation.mode = "Custom";
-            segmentation.segmentation.segmentationSilenceTimeoutMs = segmentationSilenceTimeoutMs;
+            segmentation.mode = SegmentationMode.Custom;
+            segmentation.segmentationSilenceTimeoutMs = segmentationSilenceTimeoutMs;
         }
 
         if (speechSegmentationMaximumTimeMs !== undefined) {
             configuredSegment = true;
             const segmentationMaximumTimeMs: number = parseInt(speechSegmentationMaximumTimeMs, 10);
-            segmentation.segmentation.mode = "Custom";
-            segmentation.segmentation.segmentationForcedTimeoutMs = segmentationMaximumTimeMs;
+            segmentation.mode = SegmentationMode.Custom;
+            segmentation.segmentationForcedTimeoutMs = segmentationMaximumTimeMs;
         }
 
         if (configuredSegment) {
-            const recoMode = this.recognitionMode === RecognitionMode.Conversation ? "CONVERSATION" :
-                this.recognitionMode === RecognitionMode.Dictation ? "DICTATION" : "INTERACTIVE";
-            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
-            phraseDetection.mode = recoMode;
-            phraseDetection[recoMode] = segmentation;
-            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+            const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+            phraseDetection.mode = this.recognitionMode;
+
+            switch (this.recognitionMode) {
+                case RecognitionMode.Conversation:
+                    phraseDetection.conversation = phraseDetection.conversation ?? { segmentation: {} };
+                    phraseDetection.conversation.segmentation = segmentation;
+
+                    break;
+                case RecognitionMode.Interactive:
+                    phraseDetection.interactive = phraseDetection.interactive ?? { segmentation: {} };
+                    phraseDetection.interactive.segmentation = segmentation;
+                    break;
+                case RecognitionMode.Dictation:
+                    phraseDetection.dictation = phraseDetection.dictation ?? {};
+                    phraseDetection.dictation.segmentation = segmentation;
+
+                    break;
+            }
+            this.privSpeechContext.getContext().phraseDetection = phraseDetection;
         }
     }
 
     protected setLanguageIdJson(): void {
-        const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
         if (this.privRecognizerConfig.autoDetectSourceLanguages !== undefined) {
             const sourceLanguages: string[] = this.privRecognizerConfig.autoDetectSourceLanguages.split(",");
 
-            let speechContextLidMode;
-            if (this.privRecognizerConfig.languageIdMode === "Continuous") {
-                speechContextLidMode = "DetectContinuous";
-            } else {// recognizerConfig.languageIdMode === "AtStart"
-                speechContextLidMode = "DetectAtAudioStart";
+            if (sourceLanguages.length === 1 && sourceLanguages[0] === AutoDetectSourceLanguagesOpenRangeOptionName) {
+                sourceLanguages[0] = "UND";
             }
 
-            this.privSpeechContext.setSection("languageId", {
-                Priority: "PrioritizeLatency",
+            let speechContextLidMode;
+            if (this.privRecognizerConfig.languageIdMode === "Continuous") {
+                speechContextLidMode = LanguageIdDetectionMode.DetectContinuous;
+            } else {// recognizerConfig.languageIdMode === "AtStart"
+                speechContextLidMode = LanguageIdDetectionMode.DetectAtAudioStart;
+            }
+
+            this.privSpeechContext.getContext().languageId = {
                 languages: sourceLanguages,
                 mode: speechContextLidMode,
-                onSuccess: { action: "Recognize" },
-                onUnknown: { action: "None" }
-            });
-            this.privSpeechContext.setSection("phraseOutput", {
+                onSuccess: { action: NextLangaugeIdAction.Recognize },
+                onUnknown: { action: OnUnknownAction.None },
+                priority: LanguageIdDetectionPriority.PrioritizeLatency
+            };
+            this.privSpeechContext.getContext().phraseOutput = {
                 interimResults: {
-                    resultType: "Auto"
+                    resultType: ResultType.Auto
                 },
                 phraseResults: {
-                    resultType: "Always"
+                    resultType: PhraseResultOutputType.Always
                 }
-            });
-            const customModels: CustomModel[] = this.privRecognizerConfig.sourceLanguageModels;
+            };
+            const customModels: CustomLanguageMappingEntry[] = this.privRecognizerConfig.sourceLanguageModels;
             if (customModels !== undefined) {
                 phraseDetection.customModels = customModels;
-                phraseDetection.onInterim = { action: "None" };
-                phraseDetection.onSuccess = { action: "None" };
+                phraseDetection.onInterim = { action: NextPhraseDetectionAction.None };
+                phraseDetection.onSuccess = { action: NextPhraseDetectionAction.None };
             }
         }
         const targetLanguages: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined);
         if (targetLanguages !== undefined) {
-            phraseDetection.onInterim = { action: "Translate" };
-            phraseDetection.onSuccess = { action: "Translate" };
-            this.privSpeechContext.setSection("phraseOutput", {
+            phraseDetection.onInterim = { action: NextPhraseDetectionAction.Translate };
+            phraseDetection.onSuccess = { action: NextPhraseDetectionAction.Translate };
+            this.privSpeechContext.getContext().phraseOutput = {
                 interimResults: {
-                    resultType: "None"
+                    resultType: ResultType.None
                 },
                 phraseResults: {
-                    resultType: "None"
+                    resultType: PhraseResultOutputType.None
                 }
-            });
+            };
         }
 
-        this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
     }
 
     protected setOutputDetailLevelJson(): void {
@@ -709,6 +706,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (this.privEnableSpeakerId) {
             this.updateSpeakerDiarizationAudioOffset();
         }
+
         const speechContextJson = this.speechContext.toJSON();
         if (generateNewRequestId) {
             this.privRequestSession.onSpeechContext();

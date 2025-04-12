@@ -18,12 +18,12 @@ import {
 } from "./ConnectionFactoryBase.js";
 import {
     AuthInfo,
-    RecognitionMode,
     RecognizerConfig,
     WebsocketMessageFormatter,
 } from "./Exports.js";
 import { HeaderNames } from "./HeaderNames.js";
 import { QueryParameterNames } from "./QueryParameterNames.js";
+import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 
 export class TranslationConnectionFactory extends ConnectionFactoryBase {
 

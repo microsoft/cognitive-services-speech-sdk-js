@@ -3,7 +3,7 @@
 
 export class Settings {
 
-    public static RetryCount: number = 3;
+    public static RetryCount: number = 1;
     // subscription
     public static SpeechSubscriptionKey: string = "<<YOUR_SUBSCRIPTION_KEY>>";
     public static SpeechRegion: string = "<<YOUR_REGION>>";
@@ -75,6 +75,7 @@ export class Settings {
     public static WaveFile44k: string = Settings.InputDir + "whatstheweatherlike.44khz.wav";
     public static WaveFileMulaw: string = Settings.InputDir + "whatstheweatherlike.mulaw";
     public static WaveFileAlaw: string = Settings.InputDir + "whatstheweatherlike.alaw";
+    public static WaveFileDe: string = Settings.InputDir + "howistheweather.wav";
     public static LongerWaveFile: string = Settings.InputDir + "StreamingEnrollment.wav";
     public static LongGermanWaveFile: string = Settings.InputDir + "longer_german.wav";
     public static PronunciationFallWaveFile: string = Settings.InputDir + "PronunciationAssessmentFall.wav";
