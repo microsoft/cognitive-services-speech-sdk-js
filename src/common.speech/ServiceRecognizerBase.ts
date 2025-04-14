@@ -151,7 +151,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.connectionEvents.attach((connectionEvent: ConnectionEvent): void => {
             if (connectionEvent.name === "ConnectionClosedEvent") {
                 const connectionClosedEvent = connectionEvent as ConnectionClosedEvent;
-                if (connectionClosedEvent.statusCode !== 1000 ||
+                if (connectionClosedEvent.statusCode === 1003 ||
+                    connectionClosedEvent.statusCode === 1007 ||
+                    connectionClosedEvent.statusCode === 1002 ||
+                    connectionClosedEvent.statusCode === 4000 ||
                     this.privRequestSession.numConnectionAttempts > this.privRecognizerConfig.maxRetryCount
                 ) {
                     void this.cancelRecognitionLocal(CancellationReason.Error,
@@ -941,6 +944,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         let lastReason: string = "";
 
         while (this.privRequestSession.numConnectionAttempts <= this.privRecognizerConfig.maxRetryCount) {
+            this.privRequestSession.onRetryConnection();
 
             // Get the auth information for the connection. This is a bit of overkill for the current API surface, but leaving the plumbing in place to be able to raise a developer-customer
             // facing event when a connection fails to let them try and provide new auth information.
@@ -971,8 +975,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
             lastStatusCode = response.statusCode;
             lastReason = response.reason;
-
-            this.privRequestSession.onRetryConnection();
         }
 
         await this.privRequestSession.onConnectionEstablishCompleted(lastStatusCode, lastReason);
