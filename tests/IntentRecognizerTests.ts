@@ -16,6 +16,8 @@ import {
     WaitForCondition
 } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
+import { ConfigLoader } from "./ConfigLoader";
+import { SubscriptionRegion, SubscriptionsRegionsKeys } from "./SubscriptionRegion";
 
 let objsToClose: any[];
 let bufferSize: number;
@@ -412,7 +414,9 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         // eslint-disable-next-line no-console
         console.info("Name: RecognizedReceivedWithValidNonLUISKey");
 
-        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeakerIDSubscriptionKey, Settings.SpeakerIDRegion);
+        const sub: SubscriptionRegion = ConfigLoader.instance.getSubscriptionRegion("SpeechSubscriptionWestUS");
+
+        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(sub.Key, sub.Region);
         objsToClose.push(s);
 
         const r: sdk.IntentRecognizer = BuildRecognizerFromWaveFile(s, Settings.AmbiguousWaveFile);

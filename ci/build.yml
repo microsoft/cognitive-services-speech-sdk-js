@@ -50,21 +50,9 @@ jobs:
   - bash: "echo '##vso[task.setvariable variable=SPEECHSDK_RUN_TESTS]false'"
     condition: or(failed(), canceled())
     displayName: Skip tests on build failure
+  - template: generate-subscription-file.yml
   - script: |
-      RunTests.cmd ^
-        SpeechSubscriptionKey:$(WestCentralUSKeySkyMan) ^
-        SpeechRegion:westcentralus ^
-        LuisSubscriptionKey:$(luis-westus-s0-201809-key1) ^
-        LuisRegion:westus ^
-        SpeechTestEndpointId:ec3432b2-8584-4736-865a-556213b9f6fd ^
-        BotSubscription:$(DialogSubscriptionKey) ^
-        BotRegion:$(DialogRegion) ^
-        SpeakerIDSubscriptionKey:$(SpeakerRecognition-WestUS-Key) ^
-        SpeakerIDRegion:westus ^
-        ConversationTranscriptionKey:$(ConverstationTranscriptionKeyWestUSOnline) ^
-        ConversationTranscriptionRegion:westus ^
-        CustomVoiceSubscriptionKey:$(speech-ne-s0-key1) ^
-        CustomVoiceRegion:northeurope
+      RunTests.cmd
     displayName: Run tests
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
   - task: PublishTestResults@2
