@@ -1,6 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { ConfigLoader } from "./ConfigLoader";
+import { SubscriptionsRegionsKeys } from "./SubscriptionRegion";
+
 export class Settings {
 
     public static RetryCount: number = 1;
@@ -118,9 +121,69 @@ export class Settings {
         Settings.LoadSettings();
     }
 
-    public static LoadSettings = () => {
+    public static LoadSettings(): void {
         if (Settings.IsSettingsInitialized) {
             return;
+        }
+
+        // Initialize the config loader to load the secrets and endpoints
+        const configLoader = ConfigLoader.instance;
+        const initialized = configLoader.initialize();
+
+        if (initialized) {
+            // Load the unified speech subscription
+            const unifiedSpeechSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
+            if (unifiedSpeechSub) {
+                Settings.SpeechSubscriptionKey = unifiedSpeechSub.Key;
+                Settings.SpeechRegion = unifiedSpeechSub.Region;
+                /* Skip for now until endpoing is fully supported
+                if (unifiedSpeechSub.Endpoint) {
+                    Settings.SpeechEndpoint = unifiedSpeechSub.Endpoint;
+                }
+                */
+            }
+
+            // Load the LUIS subscription
+            const luisSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.LUIS_SUBSCRIPTION);
+            if (luisSub) {
+                Settings.LuisSubscriptionKey = luisSub.Key;
+                Settings.LuisRegion = luisSub.Region;
+            }
+
+            // Load the speaker recognition subscription
+            const speakerIdSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.SPEAKER_RECOGNITION_SUBSCRIPTION);
+            if (speakerIdSub) {
+                Settings.SpeakerIDSubscriptionKey = speakerIdSub.Key;
+                Settings.SpeakerIDRegion = speakerIdSub.Region;
+            }
+
+            // Load the conversation transcription subscription
+            const conversationTranscriptionSub = configLoader.getSubscriptionRegion(
+                SubscriptionsRegionsKeys.CONVERSATION_TRANSCRIPTION_SUBSCRIPTION);
+            if (conversationTranscriptionSub) {
+                Settings.ConversationTranscriptionKey = conversationTranscriptionSub.Key;
+                Settings.ConversationTranscriptionRegion = conversationTranscriptionSub.Region;
+            }
+
+            // Load the custom voice subscription
+            const customVoiceSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.CUSTOM_VOICE_SUBSCRIPTION);
+            if (customVoiceSub) {
+                Settings.CustomVoiceSubscriptionKey = customVoiceSub.Key;
+                Settings.CustomVoiceRegion = customVoiceSub.Region;
+            }
+
+            // Load the conversation translator settings
+            const conversationTranslatorSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.CONVERSATION_TRANSLATOR);
+            if (conversationTranslatorSub) {
+                // These might be set from other configuration values
+                // but we'll use the region and key if available
+            }
+
+            const botSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.DIALOG_SUBSCRIPTION);
+            if (botSub) {
+                Settings.BotSubscription = botSub.Key;
+                Settings.BotRegion = botSub.Region;
+            }
         }
 
         if (undefined === Settings.LuisAppKey) {
