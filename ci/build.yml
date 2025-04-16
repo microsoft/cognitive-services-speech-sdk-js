@@ -123,81 +123,81 @@ jobs:
         npm run bundle
     displayName: Run Test Bundle
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
-  - job: RunConnectionTests
-    dependsOn: Build
-    pool:
-      name: CarbonUbuntu2204Hosted
-    timeoutInMinutes: 60
-    condition: and(eq(variables['SPEECHSDK_RUN_TESTS']), 'true'), eq(variables['Build.Reason'], 'PullRequest'))
-    variables:
-      SPEECHSDK_RUN_TESTS: true
-    steps:
-    - bash: ./ci/check-git-head.sh
-      displayName: Repository checks
-    - bash: |
-        npm ci && npm run civersion
-        echo "COLLECTION_ID=$(System.CollectionId)"
-        echo "DEFINITION_ID=$(System.DefinitionId)"
-        echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
-      displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
-    - bash: |
-        F=src/common.speech/SpeechServiceConfig.ts
-        [[ -f $F ]] || exit 1
-        perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
-        E=$?
-        rm -f "$F.bak"
-        git diff
-        exit $E
-      displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
-    - template: generate-subscription-file.yml
-    - bash: |
-        # Define new Docker data directory  
-        NEW_DOCKER_DIR="/mnt/docker"  
-          
-        # Stop Docker service  
-        echo "Stopping Docker service..."  
-        sudo systemctl stop docker  
-          
-        # Create new Docker directory  
-        echo "Creating new Docker directory at $NEW_DOCKER_DIR..."  
-        sudo mkdir -p "$NEW_DOCKER_DIR"  
-          
-        # Update Docker daemon configuration  
-        echo "Updating Docker daemon configuration..."  
-        DOCKER_CONFIG_FILE="/etc/docker/daemon.json"  
-        sudo touch "$DOCKER_CONFIG_FILE"  
-        sudo chmod 666 "$DOCKER_CONFIG_FILE" # Temporarily change permissions to write  
-          
-        cat <<EOL | sudo tee "$DOCKER_CONFIG_FILE"  
-        {  
-          "data-root": "$NEW_DOCKER_DIR/docker"  
-        }  
-        EOL
+- job: RunConnectionTests
+  dependsOn: Build
+  pool:
+    name: CarbonUbuntu2204Hosted
+  timeoutInMinutes: 60
+  condition: and(eq(variables['SPEECHSDK_RUN_TESTS']), 'true'), eq(variables['Build.Reason'], 'PullRequest'))
+  variables:
+    SPEECHSDK_RUN_TESTS: true
+  steps:
+  - bash: ./ci/check-git-head.sh
+    displayName: Repository checks
+  - bash: |
+      npm ci && npm run civersion
+      echo "COLLECTION_ID=$(System.CollectionId)"
+      echo "DEFINITION_ID=$(System.DefinitionId)"
+      echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
+    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+  - bash: |
+      F=src/common.speech/SpeechServiceConfig.ts
+      [[ -f $F ]] || exit 1
+      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
+      E=$?
+      rm -f "$F.bak"
+      git diff
+      exit $E
+    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+  - template: generate-subscription-file.yml
+  - bash: |
+      # Define new Docker data directory  
+      NEW_DOCKER_DIR="/mnt/docker"  
+        
+      # Stop Docker service  
+      echo "Stopping Docker service..."  
+      sudo systemctl stop docker  
+        
+      # Create new Docker directory  
+      echo "Creating new Docker directory at $NEW_DOCKER_DIR..."  
+      sudo mkdir -p "$NEW_DOCKER_DIR"  
+        
+      # Update Docker daemon configuration  
+      echo "Updating Docker daemon configuration..."  
+      DOCKER_CONFIG_FILE="/etc/docker/daemon.json"  
+      sudo touch "$DOCKER_CONFIG_FILE"  
+      sudo chmod 666 "$DOCKER_CONFIG_FILE" # Temporarily change permissions to write  
+        
+      cat <<EOL | sudo tee "$DOCKER_CONFIG_FILE"  
+      {  
+        "data-root": "$NEW_DOCKER_DIR/docker"  
+      }  
+      EOL
 
-        sudo chmod 644 "$DOCKER_CONFIG_FILE" # Restore permissions 
+      sudo chmod 644 "$DOCKER_CONFIG_FILE" # Restore permissions 
 
-        # Start Docker service  
-        echo "Starting Docker service..."
+      # Start Docker service  
+      echo "Starting Docker service..."
 
-        # Actually restart the docker service, because it can have auto-started after the stop command  
-        sudo systemctl restart docker  
+      # Actually restart the docker service, because it can have auto-started after the stop command  
+      sudo systemctl restart docker  
 
-        sudo systemctl status docker  
-          
-        # Verify the change  
-        echo "Verifying Docker configuration..."  
+      sudo systemctl status docker  
+        
+      # Verify the change  
+      echo "Verifying Docker configuration..."  
 
-        docker info
+      docker info
 
-        DOCKER_ROOT_DIR=$(docker info | grep "Docker Root Dir" | awk '{print $4}')  
-        if [ "$DOCKER_ROOT_DIR" == "$NEW_DOCKER_DIR/docker" ]; then  
-          echo "Docker data successfully moved to $DOCKER_ROOT_DIR"  
-        else  
-          echo "Error: Docker data directory is not set correctly."  
-          exit 1  
-        fi
+      DOCKER_ROOT_DIR=$(docker info | grep "Docker Root Dir" | awk '{print $4}')  
+      if [ "$DOCKER_ROOT_DIR" == "$NEW_DOCKER_DIR/docker" ]; then  
+        echo "Docker data successfully moved to $DOCKER_ROOT_DIR"  
+      else  
+        echo "Error: Docker data directory is not set correctly."  
+        exit 1  
+      fi
 
-        sudo df
+      sudo df
     displayName: Move Docker data directory to /mnt
   - template: get-docker-image.yml
     parameters:
