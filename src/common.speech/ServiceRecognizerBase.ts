@@ -944,6 +944,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         let lastReason: string = "";
 
         while (this.privRequestSession.numConnectionAttempts <= this.privRecognizerConfig.maxRetryCount) {
+            this.privRequestSession.onRetryConnection();
 
             // Get the auth information for the connection. This is a bit of overkill for the current API surface, but leaving the plumbing in place to be able to raise a developer-customer
             // facing event when a connection fails to let them try and provide new auth information.
@@ -974,8 +975,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
             lastStatusCode = response.statusCode;
             lastReason = response.reason;
-
-            this.privRequestSession.onRetryConnection();
         }
 
         await this.privRequestSession.onConnectionEstablishCompleted(lastStatusCode, lastReason);
