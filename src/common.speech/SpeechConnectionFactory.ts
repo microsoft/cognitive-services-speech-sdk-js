@@ -102,6 +102,7 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
             headers[authInfo.headerName] = authInfo.token;
         }
         headers[HeaderNames.ConnectionId] = connectionId;
+        headers.connectionId = connectionId;
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
 

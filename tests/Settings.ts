@@ -6,7 +6,7 @@ import { SubscriptionsRegionsKeys } from "./SubscriptionRegion";
 
 export class Settings {
 
-    public static RetryCount: number = 1;
+    public static RetryCount: number = 0;
     // subscription
     public static SpeechSubscriptionKey: string = "<<YOUR_SUBSCRIPTION_KEY>>";
     public static SpeechRegion: string = "<<YOUR_REGION>>";

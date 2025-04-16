@@ -370,9 +370,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public async dispose(reason?: string): Promise<void> {
         this.privIsDisposed = true;
-        if (this.privConnectionConfigurationPromise !== undefined) {
+        if (this.privConnectionPromise !== undefined) {
             try {
-                const connection: IConnection = await this.privConnectionConfigurationPromise;
+                const connection: IConnection = await this.privConnectionPromise;
                 await connection.dispose(reason);
             } catch (error) {
                 // The connection is in a bad state. But we're trying to kill it, so...

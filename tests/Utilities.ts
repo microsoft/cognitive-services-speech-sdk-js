@@ -1,22 +1,30 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
+import { Timeout } from "../src/common/Timeout";
 import {
     WaveFileAudioInput
 } from "./WaveFileAudioInputStream";
 
-export function WaitForCondition(condition: () => boolean, after: () => void): void {
+export const WaitForCondition = (condition: () => boolean, after: () => void): void => {
     if (condition() === true) {
         after();
     } else {
-        setTimeout(() => WaitForCondition(condition, after), 500);
+        setTimeout((): void => WaitForCondition(condition, after), 500);
     }
-}
+};
 
-export function sleep(ms: number): Promise<void> {
-    return new Promise((resolve: (_: void) => void) => setTimeout(resolve, ms));
-}
+export const WaitForConditionAsync = async (condition: () => boolean, after: () => Promise<void>): Promise<void> => {
+    if (condition() === true) {
+        await after();
+    } else {
+        setTimeout((): Promise<void> => WaitForConditionAsync(condition, after), 500);
+    }
+};
 
+export const sleep = (ms: number): Promise<void> => new Promise((resolve: (_: void) => void): Timeout => setTimeout(resolve, ms));
+
+// This one is already an arrow function, so it stays the same
 export const WaitForPromise = (condition: () => boolean, rejectMessage: string, timeout: number = 60 * 1000): Promise<void> => {
     return new Promise(async (resolve: (value: void) => void, reject: (reason: string) => void): Promise<void> => {
         const endTime: number = Date.now() + timeout;
@@ -33,7 +41,7 @@ export const WaitForPromise = (condition: () => boolean, rejectMessage: string, 
     });
 };
 
-export async function closeAsyncObjects(objsToClose: any[]): Promise<void> {
+export const closeAsyncObjects = async (objsToClose: any[]): Promise<void> => {
     for (const current of objsToClose) {
         if (typeof current.close === "function") {
             if (current.close.length === 2) {
@@ -45,7 +53,7 @@ export async function closeAsyncObjects(objsToClose: any[]): Promise<void> {
             }
         }
     }
-}
+};
 
 export class RepeatingPullStream {
     private bytesSent: number = 0x0;
@@ -58,7 +66,7 @@ export class RepeatingPullStream {
         this.pullStream = sdk.AudioInputStream.createPullStream(
             {
                 // eslint-disable-next-line @typescript-eslint/no-empty-function
-                close: (): void => {},
+                close: (): void => { },
                 read: (buffer: ArrayBuffer): number => {
 
                     if (!!this.sendSilence) {

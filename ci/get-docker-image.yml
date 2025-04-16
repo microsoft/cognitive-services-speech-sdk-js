@@ -1,0 +1,43 @@
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+#
+
+parameters:
+- name: DockerImages
+  type: string
+  # Space-separated base name of the images
+  default: ''
+
+steps:
+# Single-image case
+- ${{ if not(contains(parameters.DockerImages, ' ')) }}:
+  - task: Docker@1
+    displayName: (Docker) Pull image
+    inputs:
+      command: pull
+      arguments: ${{ parameters.DockerImages }}
+
+# Multiple-image case
+- ${{ if contains(parameters.DockerImages, ' ') }}:
+  - bash: |
+      set -u -e -o pipefail
+      
+      forPull=()
+      for i in ${{ parameters.DockerImages }}; do
+        forPull+=("$i")
+      done
+
+      # First do all the pulls in parallel, for up to 2 times.
+      maxAttempts=2
+      attempt=0
+      [[ ${#forPull[@]} = 0 ]] ||
+        while ((++attempt <= maxAttempts)); do
+          printf "%s\0" "${forPull[@]}" |
+            xargs --verbose --no-run-if-empty --max-args=1 --null --max-procs=4 \
+              docker pull &&
+                break ||
+                  continue # needed because of "set -e"
+      done
+      ((attempt <= maxAttempts)) || exitWithError "Could not pull all images"
+    displayName: (Docker) Pull images
