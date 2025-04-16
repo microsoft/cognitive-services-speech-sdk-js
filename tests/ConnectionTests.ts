@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as fs from "fs";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener
@@ -11,7 +12,7 @@ import {
     IDetachable,
     PlatformEvent
 } from "../src/common/Exports";
-
+import { SpeechContext } from "../src/common.speech/ServiceMessages/SpeechContext";
 import {
     Settings
 } from "./Settings";
@@ -20,18 +21,16 @@ import {
     WaveFileAudioInput
 } from "./WaveFileAudioInputStream";
 
-import * as fs from "fs";
-
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // override inputs, if necessary
     Settings.LoadSettings();
     Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
     // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
@@ -87,7 +86,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     return s;
 };
 
-test("Connect / Disconnect", (done: jest.DoneCallback) => {
+test("Connect / Disconnect", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Connect / Disconnect");
 
@@ -100,24 +99,22 @@ test("Connect / Disconnect", (done: jest.DoneCallback) => {
     let connected: boolean = false;
     const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
-    connection.connected = (args: sdk.ConnectionEventArgs) => {
+    connection.connected = (args: sdk.ConnectionEventArgs): void => {
         connected = true;
     };
 
-    connection.disconnected = (args: sdk.ConnectionEventArgs) => {
+    connection.disconnected = (args: sdk.ConnectionEventArgs): void => {
         done();
     };
 
     connection.openConnection();
 
-    WaitForCondition(() => {
-        return connected;
-    }, () => {
+    WaitForCondition((): boolean => connected, (): void => {
         connection.closeConnection();
     });
 });
 
-test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
+test("Disconnect during reco cancels.", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Disconnect during reco cancels.");
 
@@ -157,7 +154,7 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
         }
     };
 
-    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
             expect(e.errorDetails).toContain("Disconnect");
@@ -169,19 +166,17 @@ test("Disconnect during reco cancels.", (done: jest.DoneCallback) => {
 
     r.startContinuousRecognitionAsync(
         undefined,
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => {
-        return recoCount === 1;
-    }, () => {
+    WaitForCondition((): boolean => recoCount === 1, (): void => {
         connection.closeConnection();
     });
 
 }, 10000);
 
-test("Open during reco has no effect.", (done: jest.DoneCallback) => {
+test("Open during reco has no effect.", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Open during reco has no effect.");
 
@@ -221,7 +216,7 @@ test("Open during reco has no effect.", (done: jest.DoneCallback) => {
         }
     };
 
-    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
             expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
@@ -233,26 +228,22 @@ test("Open during reco has no effect.", (done: jest.DoneCallback) => {
 
     r.startContinuousRecognitionAsync(
         undefined,
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => {
-        return recoCount === 1;
-    }, () => {
+    WaitForCondition((): boolean => recoCount === 1, (): void => {
         connection.openConnection();
         pullStreamSource.StartRepeat();
     });
 
-    WaitForCondition(() => {
-        return recoCount === 2;
-    }, () => {
+    WaitForCondition((): boolean => recoCount === 2, (): void => {
         p.close();
     });
 
 }, 10000);
 
-test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
+test("Connecting before reco works for cont", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Connecting before reco works for cont");
 
@@ -311,20 +302,16 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
 
     connection.openConnection();
 
-    WaitForCondition(() => {
-        return connected === 1;
-    }, () => {
+    WaitForCondition((): boolean => connected === 1, (): void => {
         r.startContinuousRecognitionAsync(
             undefined,
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     });
 
-    WaitForCondition(() => {
-        return recoCount === 1;
-    }, () => {
-        r.stopContinuousRecognitionAsync(() => {
+    WaitForCondition((): boolean => recoCount === 1, (): void => {
+        r.stopContinuousRecognitionAsync((): void => {
             try {
                 expect(connected).toEqual(1);
                 done();
@@ -336,7 +323,7 @@ test("Connecting before reco works for cont", (done: jest.DoneCallback) => {
 
 }, 10000);
 
-test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCallback) => {
+test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Switch RecoModes during a connection (cont->single)");
 
@@ -390,33 +377,29 @@ test.skip("Switch RecoModes during a connection (cont->single)", (done: jest.Don
 
     r.startContinuousRecognitionAsync(
         undefined,
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => {
-        return recoCount === 1;
-    }, () => {
-        r.stopContinuousRecognitionAsync(() => {
+    WaitForCondition((): boolean => recoCount === 1, (): void => {
+        r.stopContinuousRecognitionAsync((): void => {
 
             pullStreamSource.StartRepeat();
 
             r.recognizeOnceAsync(
                 undefined,
-                (error: string) => {
+                (error: string): void => {
                     done(error);
                 });
         });
     });
 
-    WaitForCondition(() => {
-        return recoCount === 2;
-    }, () => {
+    WaitForCondition((): boolean => recoCount === 2, (): void => {
         done();
     });
 }, 20000);
 
-test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCallback) => {
+test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Switch RecoModes during a connection (single->cont)");
 
@@ -466,37 +449,31 @@ test.skip("Switch RecoModes during a connection (single->cont)", (done: jest.Don
 
     r.recognizeOnceAsync(
         undefined,
-        (error: string) => {
+        (error: string): void => {
             done(error);
         });
 
-    WaitForCondition(() => {
-        return recoCount === 1;
-    }, () => {
+    WaitForCondition((): boolean => recoCount === 1, (): void => {
 
         pullStreamSource.StartRepeat();
 
         r.startContinuousRecognitionAsync(
             undefined,
-            (error: string) => {
+            (error: string): void => {
                 done(error);
             });
     });
 
-    WaitForCondition(() => {
-        return recoCount === 2;
-    }, () => {
+    WaitForCondition((): boolean => recoCount === 2, (): void => {
         pullStreamSource.StartRepeat();
     });
 
-    WaitForCondition(() => {
-        return recoCount === 3;
-    }, () => {
+    WaitForCondition((): boolean => recoCount === 3, (): void => {
         done();
     });
 }, 20000);
 
-test("testAudioMessagesSent", (done: jest.DoneCallback) => {
+test("testAudioMessagesSent", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: testAudioMessagesSent");
 
@@ -532,7 +509,7 @@ test("testAudioMessagesSent", (done: jest.DoneCallback) => {
         }
     };
 
-    r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         try {
             expect(result).not.toBeUndefined();
             expect(result.text).toEqual(Settings.WaveFileText);
@@ -566,12 +543,12 @@ test("testAudioMessagesSent", (done: jest.DoneCallback) => {
         } catch (error) {
             done(error);
         }
-    }, (error: string) => {
+    }, (error: string): void => {
         done(error);
     });
 }, 10000);
 
-test("testModifySpeechContext", (done: jest.DoneCallback) => {
+test("testModifySpeechContext", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: testModifySpeechContext");
 
@@ -588,9 +565,9 @@ test("testModifySpeechContext", (done: jest.DoneCallback) => {
 
     con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
         if (args.message.path === "speech.context" && args.message.isTextMessage) {
-            const message = JSON.parse(args.message.TextMessage);
+            const message: SpeechContext = JSON.parse(args.message.TextMessage) as SpeechContext;
             try {
-                expect(message.RandomName).toEqual("RandomValue");
+                expect(message["RandomName"]).toEqual("RandomValue");
                 expect(args.message.TextMessage).toContain("Some phrase"); // make sure it's not overwritten...
                 done();
             } catch (error) {
@@ -610,7 +587,7 @@ test("testModifySpeechContext", (done: jest.DoneCallback) => {
         }
     };
 
-    r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+    r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         try {
             expect(result).not.toBeUndefined();
             expect(result.text).toEqual(Settings.WaveFileText);
@@ -619,12 +596,12 @@ test("testModifySpeechContext", (done: jest.DoneCallback) => {
         } catch (error) {
             done(error);
         }
-    }, (error: string) => {
+    }, (error: string): void => {
         done(error);
     });
 }, 10000);
 
-test("testModifySynthesisContext", (done: jest.DoneCallback) => {
+test("testModifySynthesisContext", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: testModifySynthesisContext");
 
@@ -643,7 +620,7 @@ test("testModifySynthesisContext", (done: jest.DoneCallback) => {
 
     con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
         if (args.message.path === "synthesis.context" && args.message.isTextMessage) {
-            const message = JSON.parse(args.message.TextMessage);
+            const message: SpeechContext = JSON.parse(args.message.TextMessage) as SpeechContext;
             try {
                 expect(message.RandomName).toEqual("RandomValue");
                 expect(args.message.TextMessage).toContain("wordBoundaryEnabled"); // make sure it's not overwritten...
@@ -668,11 +645,11 @@ test("testModifySynthesisContext", (done: jest.DoneCallback) => {
         done(e);
     });
 
-    WaitForCondition(() => doneCount === 2, done);
+    WaitForCondition((): boolean => doneCount === 2, done);
 
 }, 10000);
 
-test("Test SendMessage Basic", (done: jest.DoneCallback) => {
+test("Test SendMessage Basic", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Test SendMessage Basic");
 
@@ -698,7 +675,7 @@ test("Test SendMessage Basic", (done: jest.DoneCallback) => {
 
 });
 
-test("Test SendMessage Binary", (done: jest.DoneCallback) => {
+test("Test SendMessage Binary", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Test SendMessage Binary");
 
@@ -722,7 +699,7 @@ test("Test SendMessage Binary", (done: jest.DoneCallback) => {
     con.sendMessageAsync("speech.testmessage", new ArrayBuffer(50), undefined, done.fail);
 });
 
-test("Test InjectMessage", (done: jest.DoneCallback) => {
+test("Test InjectMessage", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Test InjectMessage");
 
@@ -766,13 +743,13 @@ test("Test InjectMessage", (done: jest.DoneCallback) => {
         }
     };
 
-    r.canceled = (s: sdk.SpeechRecognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+    r.canceled = (s: sdk.SpeechRecognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
         done();
     };
 
-    r.startContinuousRecognitionAsync(() => {
-        con.sendMessageAsync("speech.testmessage", new ArrayBuffer(50), () => {
-            WaitForCondition(() => turnStarted, () => {
+    r.startContinuousRecognitionAsync((): void => {
+        con.sendMessageAsync("speech.testmessage", new ArrayBuffer(50), (): void => {
+            WaitForCondition((): boolean => turnStarted, (): void => {
                 const data: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
                 ps.write(data);
                 ps.close();
@@ -781,39 +758,38 @@ test("Test InjectMessage", (done: jest.DoneCallback) => {
     }, done.fail);
 });
 
-describe("Connection errors are retried", () => {
+describe("Connection errors are retried", (): void => {
     let errorCount: number;
     let detachObject: IDetachable;
 
-    beforeEach(() => {
+    beforeEach((): void => {
         errorCount = 0;
         detachObject = Events.instance.attachListener({
-            onEvent: (event: PlatformEvent) => {
+            onEvent: (event: PlatformEvent): void => {
                 if (event instanceof ConnectionErrorEvent) {
-                    const connectionEvent: ConnectionErrorEvent = event as ConnectionErrorEvent;
                     errorCount++;
                 }
             },
         });
     });
 
-    afterEach(() => {
+    afterEach((): void => {
         if (undefined !== detachObject) {
-            detachObject.detach().catch((error: string) => {
+            detachObject.detach().catch((error: string): void => {
                 throw new Error(error);
             });
             detachObject = undefined;
         }
     });
 
-    test("Bad Auth", (done: jest.DoneCallback) => {
+    test("Bad Auth", (done: jest.DoneCallback): void => {
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("badKey", Settings.SpeechRegion);
         const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
 
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, sdk.AudioConfig.fromStreamInput(ps));
         objsToClose.push(r);
 
-        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult) => {
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult): void => {
             try {
                 expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
                 const canceledDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
@@ -824,7 +800,7 @@ describe("Connection errors are retried", () => {
             } catch (e) {
                 done(e);
             }
-        }, (e: string) => {
+        }, (e: string): void => {
             done(e);
         });
     }, 15000);

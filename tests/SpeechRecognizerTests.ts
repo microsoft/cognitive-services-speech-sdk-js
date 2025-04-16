@@ -2262,8 +2262,8 @@ describe("PhraseList tests", (): void => {
         const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
         objsToClose.push(r);
 
-        const serviceBase: ServiceRecognizerBase = r.internalData as ServiceRecognizerBase;
-        serviceBase.speechContext.setSection("BogusSection", { Value: "Some Text." });
+        const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
+        con.setMessageProperty("speech.context", "BogusSection", { Value: "Some Text." });
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
