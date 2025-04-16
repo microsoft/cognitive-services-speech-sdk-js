@@ -5,13 +5,13 @@ import {
     AutoDetectSourceLanguagesOpenRangeOptionName,
     IAuthentication,
     IConnectionFactory,
-    RecognitionMode,
     RecognizerConfig,
     ServiceRecognizerBase,
     SpeechServiceConfig,
     TranslationConnectionFactory,
     TranslationServiceRecognizer
 } from "../common.speech/Exports.js";
+import { RecognitionMode } from "../common.speech/ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 import { marshalPromiseToCallbacks } from "../common/Exports.js";
 import { AudioConfigImpl } from "./Audio/AudioConfig.js";
 import { Connection } from "./Connection.js";
