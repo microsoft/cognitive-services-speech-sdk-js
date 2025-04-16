@@ -81,7 +81,7 @@ jobs:
   pool:
     name: $(WindowsPipelineName)
   timeoutInMinutes: 60
-  condition: and(eq(variables['SPEECHSDK_RUN_TESTS']), 'true'), eq(variables['Build.Reason'], 'PullRequest'))
+  condition: and(eq(variables['SPEECHSDK_RUN_TESTS'], 'true'), eq(variables['Build.Reason'], 'PullRequest'))
   variables:
     SPEECHSDK_RUN_TESTS: true
   dependsOn: Build
