@@ -114,12 +114,18 @@ jobs:
       testRunner: JUnit
       testResultsFiles: 'test-javascript-junit.xml'
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  - task: DownloadBuildArtifacts@0
+    displayName: Download artifacts
+    inputs:
+      buildType: current
+      downloadPath: $(Pipeline.Workspace)
+      downloadArtifactName: JavaScript
   - bash: |
         set -e
         cd tests/packaging
         echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
         npm ci
-        npm install ../../microsoft-cognitiveservices-speech-sdk-$SPEECHSDK_SEMVER2NOMETA.tgz
+        npm install $(Pipeline.Workspace)/JavaScript/npm/microsoft-cognitiveservices-speech-sdk-$SPEECHSDK_SEMVER2NOMETA.tgz
         npm run bundle
     displayName: Run Test Bundle
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
@@ -205,7 +211,7 @@ jobs:
   - bash: |
       set -u -e -x -o pipefail
       . ci/functions.sh
-      . ci/pipeline/scripts/load-build-secrets.sh
+      . ci/load-build-secrets.sh
 
       tts_port=$(find_free_port)  
       echo "TTS Port: $tts_port"
@@ -222,7 +228,7 @@ jobs:
   - bash: |
       set -u -e -x -o pipefail
       . ci/functions.sh
-      . ci/pipeline/scripts/load-build-secrets.sh
+      . ci/load-build-secrets.sh
 
       sr_port=$(find_free_port)  
       echo "SR Port: $sr_port"
@@ -238,7 +244,7 @@ jobs:
   - bash: |
       set -u -e -x -o pipefail
       . ci/functions.sh
-      . ci/pipeline/scripts/load-build-secrets.sh
+      . ci/load-build-secrets.sh
 
       lid_port=$(find_free_port)  
       echo "LID Port: $lid_port"
@@ -253,9 +259,7 @@ jobs:
     displayName: Create and start LID Container
   - bash: |
       set -u -e -x -o pipefail
-      . ci/pipeline/scripts/functions.sh
-      . ci/pipeline/scripts/load-build-secrets.sh
-
+      
       docker stop tts_container
       docker stop sr_container
       docker stop lid_container
