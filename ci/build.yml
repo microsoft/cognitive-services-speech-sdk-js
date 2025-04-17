@@ -81,7 +81,7 @@ jobs:
   pool:
     name: $(WindowsPipelineName)
   timeoutInMinutes: 60
-  condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
+  condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
   variables:
     SPEECHSDK_RUN_TESTS: true
   dependsOn: Build
@@ -128,7 +128,7 @@ jobs:
   pool:
     name: CarbonUbuntu2204Hosted
   timeoutInMinutes: 60
-  condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
+  condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
   variables:
     SPEECHSDK_RUN_TESTS: true
   steps:
