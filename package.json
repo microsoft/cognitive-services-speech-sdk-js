@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.41.0-alpha.0.1",
+  "version": "1.44.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
@@ -89,7 +89,10 @@
     "linttest": "eslint -c .eslintrc.cjs --ext .ts tests",
     "civersion": "node ci/version.cjs",
     "prepare": "npm run build",
-    "setup": "npm install --package-lock-only --ignore-scripts --no-audit"
+    "setup": "npm install --package-lock-only --ignore-scripts --no-audit",
+    "test:connection": "cross-env RUN_CONNECTION_TYPE_TESTS=true jest ./tests/ConnectionTypeTests.ts",
+    "test:end2end": "jest --config tests/end2end/jest.config.js",
+    "test:end2end:debug": "node --inspect-brk node_modules/.bin/jest --config tests/end2end/jest.config.js --runInBand"
   },
   "jest-junit": {
     "suiteName": "jest tests",
