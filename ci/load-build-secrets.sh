@@ -1,7 +1,7 @@
 
-export JSONSETTINGS_SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"  
+export JSONSETTINGS_SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"  
 
-if [[ ! $(ls "$JSONSETTINGS_SCRIPT_FOLDER/../secrets/test.subscriptions.regions.json") ]]; then
+if [[ ! $(ls "$JSONSETTINGS_SCRIPT_FOLDER/secrets/test.subscriptions.regions.json") ]]; then
   echo "WARNING: No subscriptions JSON found. Skipping all assignment and use of settings from JSON."
 else
   function getSetting() {

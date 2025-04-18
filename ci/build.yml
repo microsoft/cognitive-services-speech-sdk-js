@@ -114,12 +114,12 @@ jobs:
       testRunner: JUnit
       testResultsFiles: 'test-javascript-junit.xml'
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
-  - task: DownloadBuildArtifacts@0
+  - task: DownloadBuildArtifacts@1
     displayName: Download artifacts
     inputs:
       buildType: current
       downloadPath: $(Pipeline.Workspace)
-      downloadArtifactName: JavaScript
+      artifactName: JavaScript
   - bash: |
         set -e
         cd tests/packaging
