@@ -74,6 +74,7 @@
     }
 
     if (inAzureDevOps) {
+        console.log("Setting Azure DevOps build variable SPEECHSDK_SEMVER2NOMETA to " + versionToUse);
         console.log("##vso[task.setvariable variable=SPEECHSDK_SEMVER2NOMETA]" + versionToUse);
     }
 

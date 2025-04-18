@@ -34,7 +34,7 @@ jobs:
       npm ci && npm run civersion
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
-      echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
+      echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
       env
     displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
   - bash: |
@@ -93,7 +93,7 @@ jobs:
       npm ci && npm run civersion
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
-      echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
+      echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
     displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
   - bash: |
       F=src/common.speech/SpeechServiceConfig.ts
@@ -126,7 +126,11 @@ jobs:
         cd tests/packaging
         echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
         npm ci
-        npm install $(Pipeline.Workspace)/JavaScript/npm/microsoft-cognitiveservices-speech-sdk-$SPEECHSDK_SEMVER2NOMETA.tgz
+        PACKAGE_PATH="$(Pipeline.Workspace)/JavaScript/npm/microsoft-cognitiveservices-speech-sdk-$SPEECHSDK_SEMVER2NOMETA.tgz"
+        # Convert Windows path to proper format
+        PACKAGE_PATH=$(echo $PACKAGE_PATH | sed 's/\\/\//g')
+        npm install "$PACKAGE_PATH"
+
         npm run bundle
     displayName: Run Test Bundle
     condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
