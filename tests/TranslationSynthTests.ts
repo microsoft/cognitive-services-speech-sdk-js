@@ -21,13 +21,13 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
-beforeAll(() => {
+beforeAll((): void => {
     // Override inputs, if necessary
     Settings.LoadSettings();
     Events.instance.attachListener(new ConsoleLoggingListener(sdk.LogLevel.Debug));
 });
 
-beforeEach(() => {
+beforeEach((): void => {
     objsToClose = [];
     // eslint-disable-next-line no-console
     console.info("------------------Starting test case: " + expect.getState().currentTestName + "-------------------------");
@@ -72,7 +72,7 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
     return s;
 };
 
-test("GetOutputVoiceName", () => {
+test("GetOutputVoiceName", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: GetOutputVoiceName");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -87,7 +87,7 @@ test("GetOutputVoiceName", () => {
     expect(r.voiceName).toEqual(voice);
 });
 
-test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
+test("TranslateVoiceRoundTrip", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: TranslateVoiceRoundTrip");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -101,9 +101,9 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
     let synthCount: number = 0;
     let synthFragmentCount: number = 0;
 
-    const rEvents: { [id: number]: ArrayBuffer; } = {};
+    const rEvents: { [id: number]: ArrayBuffer } = {};
 
-    r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs) => {
+    r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs): void => {
         switch (e.result.reason) {
             case sdk.ResultReason.Canceled:
                 done(sdk.ResultReason[e.result.reason]);
@@ -121,7 +121,7 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
     let canceled: boolean = false;
     let inTurn: boolean = false;
 
-    r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
+    r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
         try {
             switch (e.reason) {
                 case sdk.CancellationReason.Error:
@@ -148,8 +148,8 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
     r.startContinuousRecognitionAsync();
 
     WaitForCondition((): boolean => (canceled && !inTurn),
-        () => {
-            r.stopContinuousRecognitionAsync(() => {
+        (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
                 let byteCount: number = 0;
 
                 for (let i: number = 0; i < synthFragmentCount; i++) {
@@ -197,7 +197,7 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback) => {
         });
 }, 10000);
 
-test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
+test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: TranslateVoiceInvalidVoice");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -208,7 +208,7 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
     objsToClose.push(r);
 
-    r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs) => {
+    r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs): void => {
         try {
             expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
         } catch (error) {
@@ -220,7 +220,7 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
     let stopReco: boolean = false;
     let pass: boolean = false;
 
-    r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
+    r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
         try {
             stopReco = true;
             if (!pass) {
@@ -237,8 +237,8 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
 
     r.startContinuousRecognitionAsync();
 
-    WaitForCondition(() => stopReco, () => {
-        r.stopContinuousRecognitionAsync(() => {
+    WaitForCondition((): boolean => stopReco, (): void => {
+        r.stopContinuousRecognitionAsync((): void => {
             if (pass) {
                 done();
             }
@@ -246,7 +246,7 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback) => {
     });
 });
 
-test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
+test("TranslateVoiceUSToGerman", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: TranslateVoiceUSToGerman");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -262,7 +262,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
 
     const rEvents: { [id: number]: ArrayBuffer; } = {};
 
-    r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs) => {
+    r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs): void => {
         try {
             switch (e.result.reason) {
                 case sdk.ResultReason.Canceled:
@@ -284,7 +284,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
     let canceled: boolean = false;
     let inTurn: boolean = false;
 
-    r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
+    r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
         try {
             switch (e.reason) {
                 case sdk.CancellationReason.Error:
@@ -322,8 +322,8 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
 
     // wait until we get at least on final result
     WaitForCondition((): boolean => (canceled && !inTurn),
-        () => {
-            r.stopContinuousRecognitionAsync(() => {
+        (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
                 const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
 
                 for (let i: number = 0; i < synthFragmentCount; i++) {
@@ -362,7 +362,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback) => {
 }, 10000);
 
 // TODO: fix and re-enable (Translation service change)
-test.skip("MultiPhrase", (done: jest.DoneCallback) => {
+test.skip("MultiPhrase", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: MultiPhrase");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
@@ -395,7 +395,7 @@ test.skip("MultiPhrase", (done: jest.DoneCallback) => {
 
     const rEvents: { [id: number]: ArrayBuffer; } = {};
 
-    r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs) => {
+    r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs): void => {
         try {
             switch (e.result.reason) {
                 case sdk.ResultReason.Canceled:
@@ -417,7 +417,7 @@ test.skip("MultiPhrase", (done: jest.DoneCallback) => {
     let canceled: boolean = false;
     let inTurn: boolean = false;
 
-    r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
+    r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
         switch (e.reason) {
             case sdk.CancellationReason.Error:
                 done(e.errorDetails);
@@ -439,8 +439,8 @@ test.skip("MultiPhrase", (done: jest.DoneCallback) => {
     r.startContinuousRecognitionAsync();
 
     WaitForCondition((): boolean => (canceled && !inTurn),
-        () => {
-            r.stopContinuousRecognitionAsync(() => {
+        (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
                 const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
 
                 for (let i: number = 0; i < synthFragmentCount; i++) {
@@ -468,7 +468,7 @@ test.skip("MultiPhrase", (done: jest.DoneCallback) => {
                     inTurn = false;
                 });
 
-                r2.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs) => {
+                r2.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
                     try {
                         expect(e.result.text).toEqual("Wie ist das Wetter?");
                         expect(e.result.properties).not.toBeUndefined();
@@ -479,7 +479,7 @@ test.skip("MultiPhrase", (done: jest.DoneCallback) => {
                     }
                 };
 
-                r2.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs) => {
+                r2.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
                     switch (e.reason) {
                         case sdk.CancellationReason.EndOfStream:
                             canceled = true;
@@ -490,10 +490,10 @@ test.skip("MultiPhrase", (done: jest.DoneCallback) => {
                     }
                 };
 
-                r2.startContinuousRecognitionAsync(() => {
-                    WaitForCondition(() => (canceled && !inTurn),
-                        () => {
-                            r2.stopContinuousRecognitionAsync(() => {
+                r2.startContinuousRecognitionAsync((): void => {
+                    WaitForCondition((): boolean => (canceled && !inTurn),
+                        (): void => {
+                            r2.stopContinuousRecognitionAsync((): void => {
                                 try {
                                     expect(synthCount).toBeGreaterThanOrEqual(numPhrases);
                                     expect(numEvents).toEqual(numPhrases);
@@ -502,22 +502,22 @@ test.skip("MultiPhrase", (done: jest.DoneCallback) => {
                                     done(error);
                                 }
 
-                            }, (error: string) => {
+                            }, (error: string): void => {
                                 done(error);
                             });
                         });
                 },
-                    (error: string) => {
+                    (error: string): void => {
                         done(error);
                     });
 
-            }, (error: string) => {
+            }, (error: string): void => {
                 done(error);
             });
         });
 }, 45000);
 
-test("Config is copied on construction", () => {
+test("Config is copied on construction", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Config is copied on construction");
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);

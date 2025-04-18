@@ -49,7 +49,7 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
 
     protected setSpeakerDiarizationJson(): void {
         if (this.privEnableSpeakerId) {
-            const phraseDetection = this.privSpeechContext.getContext().phraseDetection;
+            const phraseDetection = this.privSpeechContext.getContext().phraseDetection || {};
             phraseDetection.mode = RecognitionMode.Conversation;
             const speakerDiarization: SpeakerDiarization = {};
             speakerDiarization.mode = SpeakerDiarizationMode.Anonymous;
