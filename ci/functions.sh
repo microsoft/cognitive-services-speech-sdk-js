@@ -16,3 +16,11 @@ find_free_port() {
       port=$((port + 1))  
   done  
 }
+
+# Ensure now logging of commands to not confuse the agent...
+vsts_setvar() {
+  set +x
+  echo Setting Build Variable $1=$2
+  echo "##vso[task.setvariable variable=$1]$2"
+  export "$1"="$2"
+}

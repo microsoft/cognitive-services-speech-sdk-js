@@ -9,7 +9,7 @@ else
     if [[ ! "${SPEECHSDK_GETSETTING_CMD:-}" ]]; then
       if [[ $(which jq) ]]; then
         # The jq tool is a much more appropriate and efficient means for this; use it if it's available
-        export SPEECHSDK_GETSETTING_CMD="cat \"${JSONSETTINGS_SCRIPT_FOLDER}/../\$1\" | jq -jr \".\$2\""
+        export SPEECHSDK_GETSETTING_CMD="cat \"${JSONSETTINGS_SCRIPT_FOLDER}/\$1\" | jq -jr \".\$2\""
       else
         echo "jq not found, quitting"
         exit -1
