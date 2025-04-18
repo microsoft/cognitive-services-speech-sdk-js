@@ -35,6 +35,7 @@ jobs:
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
       echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
+      env
     displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
   - bash: |
       F=src/common.speech/SpeechServiceConfig.ts
