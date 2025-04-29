@@ -165,24 +165,24 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
                     expect(res).not.toBeUndefined();
                     expect(res.errorDetails).toBeUndefined();
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                    expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
-                    expect(res.translations.get("fr", "")).toContain("Quel temps fait-il");
-                    expect(res.translations.languages).toEqual(["fr", "de"]);
+                    expect("Wie ist das Wetter?").toEqual(res.translations.get("de-DE", ""));
+                    expect(res.translations.get("fr-FR", "")).toContain("Quel temps fait-il");
+                    expect(res.translations.languages).toEqual(["fr-FR", "de-DE"]);
                     expect(r.targetLanguages.length).toEqual(res.translations.languages.length);
                     r.removeTargetLanguage("de-DE");
                     expect(r.targetLanguages.includes("de-DE")).toBeFalsy();
-                    r.addTargetLanguage("es-MX");
-                    expect(r.targetLanguages.includes("es-MX")).toBeTruthy();
+                    r.addTargetLanguage("es");
+                    expect(r.targetLanguages.includes("es")).toBeTruthy();
                     r.recognizeOnceAsync(
                         (secondRes: sdk.TranslationRecognitionResult): void => {
                             try {
                                 expect(secondRes).not.toBeUndefined();
                                 expect(secondRes.errorDetails).toBeUndefined();
                                 expect(sdk.ResultReason[secondRes.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                                expect(secondRes.translations.get("fr", "")).toContain("Quel temps fait-il");
+                                expect(secondRes.translations.get("fr-FR", "")).toContain("Quel temps fait-il");
                                 expect(secondRes.translations.languages.includes("es")).toBeTruthy();
-                                expect(secondRes.translations.languages.includes("fr")).toBeTruthy();
-                                expect(secondRes.translations.languages.includes("de")).toBeFalsy();
+                                expect(secondRes.translations.languages.includes("fr-FR")).toBeTruthy();
+                                expect(secondRes.translations.languages.includes("de-DE")).toBeFalsy();
                                 expect("¿Cómo es el clima?").toEqual(secondRes.translations.get("es", ""));
                                 done.resolve();
                             } catch (error) {

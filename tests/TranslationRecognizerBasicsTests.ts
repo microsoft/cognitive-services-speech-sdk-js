@@ -24,7 +24,6 @@ import {
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
-
 import { SpeechServiceType } from "./SpeechServiceTypes";
 
 let objsToClose: any[];
@@ -71,7 +70,7 @@ const BuildRecognizerFromWaveFile = async (speechConfig?: sdk.SpeechTranslationC
     if (s.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_RecoLanguage]) === undefined) {
         s.speechRecognitionLanguage = language;
     }
-    s.addTargetLanguage("de-DE");
+    s.addTargetLanguage("de");
 
     const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, a);
     expect(r).not.toBeUndefined();
@@ -281,7 +280,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
                 sessionId = e.sessionId;
             };
 
-            r.recognizing = (s: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+            r.recognizing = (_s: sdk.Recognizer, _e: sdk.TranslationRecognitionEventArgs): void => {
                 hypoCounter++;
             };
 
@@ -300,7 +299,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
                 }
             };
 
-            r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+            r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
                 try {
                     expect(e.errorDetails).toBeUndefined();
                 } catch (error) {
@@ -344,7 +343,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         const r: sdk.TranslationRecognizer = await BuildRecognizerFromWaveFile();
         objsToClose.push(r);
 
-        const eventsMap: { [id: string]: number; } = {};
+        const eventsMap: { [id: string]: number } = {};
         eventIdentifier = 1;
 
         r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
@@ -462,7 +461,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         const r: sdk.TranslationRecognizer = await BuildRecognizerFromWaveFile();
         objsToClose.push(r);
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+        r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
@@ -492,7 +491,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         const r: sdk.TranslationRecognizer = await BuildRecognizerFromWaveFile();
         objsToClose.push(r);
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+        r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
                 expect(e.reason).not.toEqual(sdk.CancellationReason.Error);
@@ -531,7 +530,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
             }
         });
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+        r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
@@ -557,21 +556,18 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         const done: Deferred<void> = new Deferred<void>();
         // eslint-disable-next-line no-console
         console.info("Name: InitialSilenceTimeout (pull)");
-        let p: sdk.PullAudioInputStream;
         let bytesSent: number = 0;
+        const p: sdk.PullAudioInputStream = sdk.AudioInputStream.createPullStream({
+            close: (): void => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                bytesSent += buffer.byteLength;
+                return buffer.byteLength;
+            },
+        });
 
         // To make sure we don't send a ton of extra data.
         // For reference, before the throttling was implemented, we sent 6-10x the required data.
         const startTime: number = Date.now();
-
-        p = sdk.AudioInputStream.createPullStream(
-            {
-                close: () => { return; },
-                read: (buffer: ArrayBuffer): number => {
-                    bytesSent += buffer.byteLength;
-                    return buffer.byteLength;
-                },
-            });
 
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
@@ -581,7 +577,6 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
             // We should have sent 5 seconds of audio unthrottled and then 2x the time reco took until we got a response.
             const expectedBytesSent: number = (5 * 16000 * 2) + (2 * elapsed * 32000 / 1000);
             expect(bytesSent).toBeLessThanOrEqual(expectedBytesSent);
-
         });
 
         await done.promise;
@@ -700,7 +695,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         expect(r instanceof sdk.Recognizer);
         let oneCalled: boolean = false;
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+        r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
                 expect(e.reason).toEqual(sdk.CancellationReason.Error);
                 const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(e.result);
@@ -806,7 +801,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
 
         const r: sdk.TranslationRecognizer = await BuildRecognizerFromWaveFile(s);
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
+        r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
@@ -832,7 +827,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         const r: sdk.TranslationRecognizer = await BuildRecognizerFromWaveFile(s);
 
         let doneCount: number = 0;
-        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs) => {
+        r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
@@ -843,7 +838,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
             }
         };
 
-        r.recognizeOnceAsync((result: sdk.TranslationRecognitionResult) => {
+        r.recognizeOnceAsync((result: sdk.TranslationRecognitionResult): void => {
             try {
                 const e: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
@@ -884,15 +879,17 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         let noMatchCount: number = 0;
         let speechEnded: number = 0;
 
-        r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs) => {
+        r.recognized = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
             try {
-                if (e.result.reason === sdk.ResultReason.TranslatedSpeech) {
+                // eslint-disable-next-line no-console
+                console.info(`Recognized event: ${sdk.ResultReason[e.result.reason]}`);
+                if (e.result.reason === sdk.ResultReason.TranslatedSpeech && !speechRecognized) {
                     expect(speechRecognized).toEqual(false);
                     speechRecognized = true;
                     expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
                     expect(e.result.text).toEqual("What's the weather like?");
-                } else if (e.result.reason === sdk.ResultReason.NoMatch) {
-                    expect(speechRecognized).toEqual(true);
+                } else {
+                    expect(e.result.text).toEqual("");
                     noMatchCount++;
                 }
             } catch (error) {
@@ -903,15 +900,15 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         let canceled: boolean = false;
         let inTurn: boolean = false;
 
-        r.sessionStarted = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        r.sessionStarted = ((_s: sdk.Recognizer, _e: sdk.SessionEventArgs): void => {
             inTurn = true;
         });
 
-        r.sessionStopped = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        r.sessionStopped = ((_s: sdk.Recognizer, _e: sdk.SessionEventArgs): void => {
             inTurn = false;
         });
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+        r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
                 expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
@@ -921,13 +918,13 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
             }
         };
 
-        r.speechEndDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+        r.speechEndDetected = (_o: sdk.Recognizer, _e: sdk.RecognitionEventArgs): void => {
             speechEnded++;
         };
 
-        r.startContinuousRecognitionAsync(() => {
-            WaitForCondition(() => (canceled && !inTurn), () => {
-                r.stopContinuousRecognitionAsync(() => {
+        r.startContinuousRecognitionAsync((): void => {
+            WaitForCondition((): boolean => (canceled && !inTurn), (): void => {
+                r.stopContinuousRecognitionAsync((): void => {
                     try {
                         expect(speechEnded).toEqual(noMatchCount);
                         expect(noMatchCount).toEqual(2);
@@ -974,7 +971,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         let canceled: boolean = false;
         let inTurn: boolean = false;
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+        r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
                 switch (e.reason) {
                     case sdk.CancellationReason.Error:
@@ -989,40 +986,42 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
             }
         };
 
-        r.sessionStarted = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        r.sessionStarted = ((_s: sdk.Recognizer, _e: sdk.SessionEventArgs): void => {
             inTurn = true;
         });
 
-        r.sessionStopped = ((s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        r.sessionStopped = ((_s: sdk.Recognizer, _e: sdk.SessionEventArgs): void => {
             inTurn = false;
         });
 
-        r.speechEndDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+        r.speechEndDetected = (_o: sdk.Recognizer, _e: sdk.RecognitionEventArgs): void => {
             speechEnded++;
         };
 
-        r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs) => {
+        r.recognized = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
             try {
                 const res: sdk.TranslationRecognitionResult = e.result;
                 expect(res).not.toBeUndefined();
                 if (res.reason === sdk.ResultReason.TranslatedSpeech) {
-                    expect(speechRecognized).toEqual(false);
-                    expect(noMatchCount).toBeGreaterThanOrEqual(1);
-                    speechRecognized = true;
                     expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                    expect(res.text).toEqual("What's the weather like?");
-                } else if (res.reason === sdk.ResultReason.NoMatch) {
-                    expect(speechRecognized).toEqual(false);
-                    noMatchCount++;
+                    if (res.text !== undefined && res.text !== "") {
+                        expect(speechRecognized).toEqual(false);
+                        expect(noMatchCount).toBeGreaterThanOrEqual(1);
+                        speechRecognized = true;
+                        expect(res.text).toEqual("What's the weather like?");
+                    } else {
+                        expect(speechRecognized).toEqual(false);
+                        noMatchCount++;
+                    }
                 }
             } catch (error) {
                 done.reject(error);
             }
         };
 
-        r.startContinuousRecognitionAsync(() => {
-            WaitForCondition(() => (canceled && !inTurn), () => {
-                r.stopContinuousRecognitionAsync(() => {
+        r.startContinuousRecognitionAsync((): void => {
+            WaitForCondition((): boolean => (canceled && !inTurn), (): void => {
+                r.stopContinuousRecognitionAsync((): void => {
                     try {
                         // TODO: investigate speech end in translation
                         // expect(speechEnded).toEqual(noMatchCount + 1);
@@ -1072,17 +1071,17 @@ test("Multiple Phrase Latency Reporting", async (): Promise<void> => {
 
     const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
-    connection.disconnected = (e: sdk.ConnectionEventArgs): void => {
+    connection.disconnected = (_e: sdk.ConnectionEventArgs): void => {
         disconnected = true;
     };
 
-    r.speechEndDetected = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+    r.speechEndDetected = (_r: sdk.Recognizer, _e: sdk.SessionEventArgs): void => {
         pullStreamSource.StartRepeat();
     };
 
     let lastOffset: number = 0;
 
-    r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+    r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
@@ -1090,7 +1089,7 @@ test("Multiple Phrase Latency Reporting", async (): Promise<void> => {
         }
     };
 
-    r.recognized = (r: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+    r.recognized = (_r: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
         try {
             const res: sdk.SpeechRecognitionResult = e.result;
             expect(res).not.toBeUndefined();

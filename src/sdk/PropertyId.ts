@@ -82,6 +82,12 @@ export enum PropertyId {
     SpeechServiceConnection_TranslationFeatures,
 
     /**
+     * The category ID for translation.
+     * @member PropertyId.SpeechServiceConnection_TranslationCategoryId
+     */
+    SpeechServiceConnection_TranslationCategoryId,
+
+    /**
      * The Language Understanding Service Region. Under normal circumstances, you shouldn't have to use this property directly.
      * Instead, use [[LanguageUnderstandingModel]].
      * @member PropertyId.SpeechServiceConnection_IntentRegion
