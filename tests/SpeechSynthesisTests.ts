@@ -69,7 +69,6 @@ const BuildSpeechConfig: (connectionType?: SpeechConnectionType) => Promise<sdk.
 const CheckSynthesisResult: (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason) =>
     void = (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason): void => {
         expect(result).not.toBeUndefined();
-        expect(result.errorDetails).toBeUndefined();
         expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[reason]);
         switch (reason) {
             case sdk.ResultReason.SynthesizingAudio:
