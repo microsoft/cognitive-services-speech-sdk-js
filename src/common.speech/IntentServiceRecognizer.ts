@@ -48,6 +48,7 @@ export class IntentServiceRecognizer extends ServiceRecognizerBase {
         super(authentication, connectionFactory, audioSource, recognizerConfig, recognizer);
         this.privIntentRecognizer = recognizer;
         this.privIntentDataSent = false;
+        recognizerConfig.recognitionEndpointVersion = "1";
     }
 
     public setIntents(addedIntents: { [id: string]: AddedLmIntent }, umbrellaIntent: AddedLmIntent): void {
