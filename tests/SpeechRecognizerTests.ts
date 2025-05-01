@@ -38,15 +38,17 @@ import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.b
 import { DetailedSpeechPhrase, IPhrase, IWord, ServiceRecognizerBase, SimpleSpeechPhrase } from "../src/common.speech/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
 import { QueryParameterNames } from "../src/common.speech/QueryParameterNames";
-import { ConnectionStartEvent, createNoDashGuid, IDetachable } from "../src/common/Exports";
+import { ConnectionStartEvent, createNoDashGuid, IDetachable, Deferred } from "../src/common/Exports";
 import { Events, PlatformEvent } from "../src/common/Exports";
-
+import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
 import { Settings } from "./Settings";
 import { validateTelemetry } from "./TelemetryUtil";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
-import { closeAsyncObjects, RepeatingPullStream, WaitForCondition } from "./Utilities";
+import { closeAsyncObjects, RepeatingPullStream, WaitForCondition, WaitForConditionAsync } from "./Utilities";
+import { SpeechConnectionType } from "./SpeechConnectionTypes";
+import { SpeechServiceType } from "./SpeechServiceTypes";
 
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
@@ -76,13 +78,14 @@ afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
     await closeAsyncObjects(objsToClose);
+    console.info("------------------Ending test case: " + expect.getState().currentTestName + "-------------------------");
 });
 
-export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => sdk.SpeechRecognizer = (speechConfig?: sdk.SpeechConfig, fileName?: string): sdk.SpeechRecognizer => {
+export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, fileName?: string) => Promise<sdk.SpeechRecognizer> = async (speechConfig?: sdk.SpeechConfig, fileName?: string): Promise<sdk.SpeechRecognizer> => {
 
     let s: sdk.SpeechConfig = speechConfig;
     if (s === undefined) {
-        s = BuildSpeechConfig();
+        s = await BuildSpeechConfig();
         // Since we're not going to return it, mark it for closure.
         objsToClose.push(s);
     }
@@ -99,21 +102,21 @@ export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, file
     return r;
 };
 
-const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
+const BuildSpeechConfig: (connectionType?: SpeechConnectionType) => Promise<sdk.SpeechConfig> = async (connectionType?: SpeechConnectionType): Promise<sdk.SpeechConfig> => {
 
-    let s: sdk.SpeechConfig;
-    if (undefined === Settings.SpeechEndpoint) {
-        s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
-    } else {
-        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
-        s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
+    if (undefined === connectionType) {
+        connectionType = SpeechConnectionType.Subscription;
     }
+
+    const s: sdk.SpeechConfig = await SpeechConfigConnectionFactory.getSpeechRecognitionConfig(connectionType);
+    expect(s).not.toBeUndefined();
+
+    console.info("SpeechConfig created " + s.speechRecognitionLanguage + " " + SpeechConnectionType[connectionType]);
 
     if (undefined !== Settings.proxyServer) {
         s.setProxy(Settings.proxyServer, Settings.proxyPort);
     }
 
-    expect(s).not.toBeUndefined();
     return s;
 };
 
@@ -218,44 +221,44 @@ test("testSpeechRecognizer1", (): void => {
     expect(r instanceof sdk.Recognizer);
 });
 
-test("testGetLanguage1", (): void => {
+test("testGetLanguage1", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetLanguage1");
-    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
+    const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile();
     objsToClose.push(r);
 
     expect(r.speechRecognitionLanguage).not.toBeNull();
 });
 
-test("testGetLanguage2", (): void => {
+test("testGetLanguage2", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetLanguage2");
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = await BuildSpeechConfig();
     objsToClose.push(s);
 
     const language: string = "de-DE";
     s.speechRecognitionLanguage = language;
 
-    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+    const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
     objsToClose.push(r);
 
     expect(r.speechRecognitionLanguage).not.toBeNull();
     expect(language === r.speechRecognitionLanguage);
 });
 
-test("testGetOutputFormatDefault", (): void => {
+test("testGetOutputFormatDefault", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetOutputFormatDefault");
-    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
+    const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile();
     objsToClose.push(r);
 
     expect(r.outputFormat === sdk.OutputFormat.Simple);
 });
 
-test("testGetParameters", (): void => {
+test("testGetParameters", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetParameters");
-    const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
+    const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile();
     objsToClose.push(r);
 
     expect(r.properties).not.toBeUndefined();
@@ -265,12 +268,16 @@ test("testGetParameters", (): void => {
     expect(r.endpointId === r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, null)); // todo: is this really the correct mapping?
 });
 
-test("BadWavFileProducesError", (done: jest.DoneCallback): void => {
+test("BadWavFileProducesError", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: BadWavFileProducesError");
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
-    objsToClose.push(s);
+    const done: Deferred<void> = new Deferred<void>();
 
+    const s: sdk.SpeechConfig = await BuildSpeechConfig();
+    objsToClose.push(s);
+    s.speechRecognitionLanguage = Settings.WaveFileLanguage;
+
+    console.info("SpeechConfig created");
     const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
     let config: sdk.AudioConfig;
     if (typeof File !== "undefined") {
@@ -282,16 +289,21 @@ test("BadWavFileProducesError", (done: jest.DoneCallback): void => {
     }
 
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+    objsToClose.push(r);
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    r.recognizeOnceAsync((): void => { }, (error: string): void => {
+    r.recognizeOnceAsync((): void => {
+        done.reject("Should not have been able to process the file");
+     }, (error: string): void => {
         try {
+            console.info("Error: " + error);
             expect(error).not.toBeUndefined();
-            done();
+            done.resolve();
         } catch (error) {
-            done(error);
+            done.reject(error);
         }
     });
+
+    await done.promise;
 }, 15000);
 
 describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void => {
@@ -304,16 +316,17 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         WebsocketMessageAdapter.forceNpmWebSocket = false;
     });
 
-    test("44Khz Wave File", (done: jest.DoneCallback): void => {
+    test("44Khz Wave File", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: 44Khz Wave File");
+        const done: Deferred<void> = new Deferred<void>();
 
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         s.outputFormat = sdk.OutputFormat.Detailed;
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s, Settings.WaveFile44k);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s, Settings.WaveFile44k);
         objsToClose.push(r);
 
         expect(r.outputFormat === sdk.OutputFormat.Detailed);
@@ -322,7 +335,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -334,25 +347,28 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(result.properties).not.toBeUndefined();
                 expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                done();
+                done.resolve();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         }, (error: string): void => {
-            done(error);
+            done.reject(error);
         });
+
+        await done.promise;
     });
 
-    test("testGetOutputFormatDetailed", (done: jest.DoneCallback): void => {
+    test("testGetOutputFormatDetailed", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: testGetOutputFormatDetailed");
+        const done: Deferred<void> = new Deferred<void>();
 
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         s.outputFormat = sdk.OutputFormat.Detailed;
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
 
         expect(r.outputFormat === sdk.OutputFormat.Detailed);
@@ -361,7 +377,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -373,17 +389,20 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(result.properties).not.toBeUndefined();
                 expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                done();
+                done.resolve();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         }, (error: string): void => {
-            done(error);
+            done.reject(error);
         });
+
+        await done.promise;
     });
 
-    test("testGetOutputFormatDetailed with authorization token", (done: jest.DoneCallback): void => {
+    test("testGetOutputFormatDetailed with authorization token", async (): Promise<void> => {
         console.info("Name: testGetOutputFormatDetailed");
+        const done: Deferred<void> = new Deferred<void>();
 
         const url = `https://${Settings.SpeechRegion}.api.cognitive.microsoft.com/`;
         const path = "sts/v1.0/issueToken";
@@ -402,15 +421,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 resp.text().then((token: string): void => {
                     authToken = token;
                 }).catch((error: any): void => {
-                    done.fail(error as string);
+                    done.reject(error as string);
                 });
             }).catch((error: any): void => {
-                done.fail(error as string);
+                done.reject(error as string);
             });
 
         console.info("Got token");
 
-        WaitForCondition((): boolean => !!authToken, (): void => {
+        await WaitForConditionAsync((): boolean => !!authToken, async (): Promise<void> => {
             const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1";
 
             // note: we use an empty subscription key so that we use the authorization token later.
@@ -422,7 +441,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
             s.outputFormat = sdk.OutputFormat.Detailed;
 
-            const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+            const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
             objsToClose.push(r);
 
             expect(r.outputFormat === sdk.OutputFormat.Detailed);
@@ -431,7 +450,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 try {
                     expect(e.errorDetails).toBeUndefined();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
@@ -442,19 +461,22 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(result.properties).not.toBeUndefined();
                     expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             }, (error: string): void => {
-                done(error);
+                done.reject(error);
             });
         });
+
+        await done.promise;
     }, 20000);
 
-    test("fromEndPoint with Subscription key", (done: jest.DoneCallback): void => {
+    test("fromEndPoint with Subscription key", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: fromEndPoint with Subscription key");
+        const done: Deferred<void> = new Deferred<void>();
 
         const endpoint = "wss://" + Settings.SpeechRegion + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1";
 
@@ -464,7 +486,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
         s.outputFormat = sdk.OutputFormat.Detailed;
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
 
         expect(r.outputFormat === sdk.OutputFormat.Detailed);
@@ -473,7 +495,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -484,13 +506,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(result.properties).not.toBeUndefined();
                 expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                done();
+                done.resolve();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         }, (error: string): void => {
-            done(error);
+            done.reject(error);
         });
+
+        await done.promise;
     });
 
     describe("Counts Telemetry", (): void => {
@@ -499,11 +523,11 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         });
 
         // counts telemetry failing - investigate
-        test.skip("RecognizeOnce", (done: jest.DoneCallback): void => {
+        test.skip("RecognizeOnce", async (done: jest.DoneCallback): Promise<void> => {
             // eslint-disable-next-line no-console
             console.info("Name: RecognizeOnce");
 
-            const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
+            const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile();
             objsToClose.push(r);
 
             let telemetryEvents: number = 0;
@@ -570,11 +594,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 });
         });
 
-        test("testStopContinuousRecognitionAsyncWithTelemetry", (done: jest.DoneCallback): void => {
+        test("testStopContinuousRecognitionAsyncWithTelemetry", async (): Promise<void> => {
             // eslint-disable-next-line no-console
             console.info("Name: testStopContinuousRecognitionAsyncWithTelemetry");
+            const done: Deferred<void> = new Deferred<void>();
 
-            const s: sdk.SpeechConfig = BuildSpeechConfig();
+            const s: sdk.SpeechConfig = await BuildSpeechConfig();
             objsToClose.push(s);
 
             const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -612,7 +637,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     try {
                         validateTelemetry(json, 3, hypoCounter);
                     } catch (error) {
-                        done(error);
+                        done.reject(error);
                     }
                 }
             };
@@ -626,7 +651,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
@@ -640,7 +665,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(e.errorDetails).toBeUndefined();
                     expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
@@ -648,268 +673,304 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 (): void => WaitForCondition((): boolean => ((recoCount === 2) && canceled), (): void => {
                     try {
                         expect(telemetryEvents).toEqual(1);
-                        done();
+                        done.resolve();
                     } catch (err) {
-                        done(err);
+                        done.reject(err);
                     }
                 }),
                 (err: string): void => {
-                    done(err);
+                    done.reject(err);
                 });
+
+            await done.promise;
         });
 
     });
 
-    test("Event Tests (RecognizeOnce)", (done: jest.DoneCallback): void => {
-        // eslint-disable-next-line no-console
-        console.info("Name: Event Tests (RecognizeOnce)");
-        const SpeechStartDetectedEvent = "SpeechStartDetectedEvent";
-        const SpeechEndDetectedEvent = "SpeechEndDetectedEvent";
-        const SessionStartedEvent = "SessionStartedEvent";
-        const SessionStoppedEvent = "SessionStoppedEvent";
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
-        objsToClose.push(r);
+    describe.each([
+        SpeechConnectionType.Subscription,
+        // SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+        // SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
+        // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
+        SpeechConnectionType.LegacyCogSvcsTokenAuth,
+        SpeechConnectionType.LegacyEntraIdTokenAuth,
+        SpeechConnectionType.CloudFromHost,
+        SpeechConnectionType.ContainerFromHost,
+        // SpeechConnectionType.ContainerFromEndpoint,
+        // SpeechConnectionType.PrivateLinkWithKeyAuth,
+        // SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth,
+        // SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
+        SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
+        SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth
+    ])("Speech Recognition Connection Tests", (connectionType: SpeechConnectionType): void => {
 
-        const eventsMap: { [id: string]: number } = {};
-        let eventIdentifier: number = 1;
+        const runTest: jest.It = SpeechConfigConnectionFactory.runConnectionTest(connectionType) as jest.It;
 
-        r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
-            eventsMap[Recognized] = eventIdentifier++;
-        };
+        runTest("Event Tests (RecognizeOnce) " + SpeechConnectionType[connectionType], async (): Promise<void> => {
+            const done: Deferred<void> = new Deferred<void>();
 
-        r.recognizing = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
-            const now: number = eventIdentifier++;
-            eventsMap[Recognizing + "-" + Date.now().toPrecision(4)] = now;
-            eventsMap[Recognizing] = now;
-        };
+            // eslint-disable-next-line no-console
+            console.info("Name: Event Tests (RecognizeOnce) " + SpeechConnectionType[connectionType]);
+            const SpeechStartDetectedEvent = "SpeechStartDetectedEvent";
+            const SpeechEndDetectedEvent = "SpeechEndDetectedEvent";
+            const SessionStartedEvent = "SessionStartedEvent";
+            const SessionStoppedEvent = "SessionStoppedEvent";
+            const s: sdk.SpeechConfig = await BuildSpeechConfig(connectionType);
+            objsToClose.push(s);
+            const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
+            objsToClose.push(r);
 
-        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-            eventsMap[Canceled] = eventIdentifier++;
-            try {
-                expect(e.errorDetails).toBeUndefined();
-            } catch (error) {
-                done(error);
-            }
-        };
+            const eventsMap: { [id: string]: number } = {};
+            let eventIdentifier: number = 1;
 
-        // todo eventType should be renamed and be a function getEventType()
-        r.speechStartDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
-            const now: number = eventIdentifier++;
-            eventsMap[SpeechStartDetectedEvent] = now;
-        };
-        r.speechEndDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
-            const now: number = eventIdentifier++;
-            eventsMap[SpeechEndDetectedEvent] = now;
-        };
+            r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+                eventsMap[Recognized] = eventIdentifier++;
+            };
 
-        r.sessionStarted = (o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-            const now: number = eventIdentifier++;
-            eventsMap[SessionStartedEvent] = now;
-            eventsMap[SessionStartedEvent + "-" + Date.now().toPrecision(4)] = now;
-        };
-        r.sessionStopped = (o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-            const now: number = eventIdentifier++;
-            eventsMap[SessionStoppedEvent] = now;
-            eventsMap[SessionStoppedEvent + "-" + Date.now().toPrecision(4)] = now;
-        };
+            r.recognizing = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+                const now: number = eventIdentifier++;
+                eventsMap[Recognizing + "-" + Date.now().toPrecision(4)] = now;
+                eventsMap[Recognizing] = now;
+            };
 
-        // note: TODO session stopped event not necessarily raised before async operation returns!
-        //       this makes this test flaky
-
-        r.recognizeOnceAsync(
-            (res: sdk.SpeechRecognitionResult): void => {
+            r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+                eventsMap[Canceled] = eventIdentifier++;
                 try {
-                    expect(res).not.toBeUndefined();
-                    expect(res.text).toEqual("What's the weather like?");
-                    expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                    expect(e.errorDetails).toBeUndefined();
+                } catch (error) {
+                    done.reject(error);
+                }
+            };
 
+            // todo eventType should be renamed and be a function getEventType()
+            r.speechStartDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+                const now: number = eventIdentifier++;
+                eventsMap[SpeechStartDetectedEvent] = now;
+            };
+            r.speechEndDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+                const now: number = eventIdentifier++;
+                eventsMap[SpeechEndDetectedEvent] = now;
+            };
+
+            r.sessionStarted = (o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+                const now: number = eventIdentifier++;
+                eventsMap[SessionStartedEvent] = now;
+                eventsMap[SessionStartedEvent + "-" + Date.now().toPrecision(4)] = now;
+            };
+            r.sessionStopped = (o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+                const now: number = eventIdentifier++;
+                eventsMap[SessionStoppedEvent] = now;
+                eventsMap[SessionStoppedEvent + "-" + Date.now().toPrecision(4)] = now;
+            };
+
+            // note: TODO session stopped event not necessarily raised before async operation returns!
+            //       this makes this test flaky
+
+            r.recognizeOnceAsync(
+                (res: sdk.SpeechRecognitionResult): void => {
+                    try {
+                        expect(res).not.toBeUndefined();
+                        expect(res.text).toEqual("What's the weather like?");
+                        expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+
+                        // session events are first and last event
+                        const LAST_RECORDED_EVENT_ID: number = --eventIdentifier;
+
+                        // Event order is:
+                        // SessionStarted
+                        // SpeechStartDetected
+                        // 0 or more Recognizing
+                        // SpeechEnded
+                        // Recognized
+                        // SessionEnded
+
+                        expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
+
+                        // The session started and stopped.
+                        expect(SessionStartedEvent in eventsMap).toEqual(true);
+                        expect(SessionStoppedEvent in eventsMap).toEqual(true);
+
+                        // The session events bookended the rest.
+                        expect(eventsMap[SessionStartedEvent]).toEqual(FIRST_EVENT_ID);
+                        expect(eventsMap[SessionStoppedEvent]).toEqual(LAST_RECORDED_EVENT_ID);
+
+                        // Start always before end.
+                        expect(eventsMap[SessionStartedEvent]).toBeLessThan(eventsMap[SessionStoppedEvent]);
+                        expect(eventsMap[SpeechStartDetectedEvent]).toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
+
+                        // SpeechStart was the 2nd event.
+                        expect((FIRST_EVENT_ID + 1)).toEqual(eventsMap[SpeechStartDetectedEvent]);
+
+                        // make sure, first end of speech, then final result
+                        expect((LAST_RECORDED_EVENT_ID - 2)).toEqual(eventsMap[SpeechEndDetectedEvent]);
+                        expect((LAST_RECORDED_EVENT_ID - 1)).toEqual(eventsMap[Recognized]);
+
+                        // Speech ends before the session stops.
+                        expect(eventsMap[SpeechEndDetectedEvent]).toBeLessThan(eventsMap[SessionStoppedEvent]);
+
+                        // there is no partial result reported after the final result
+                        // (and check that we have intermediate and final results recorded)
+                        if (Recognizing in eventsMap) {
+                            expect(eventsMap[Recognizing]).toBeGreaterThan(eventsMap[SpeechStartDetectedEvent]);
+                            expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
+                        }
+
+                        // make sure events we don't expect, don't get raised
+                        // The canceled event comes *after* the callback.
+                        expect(Canceled in eventsMap).toBeFalsy();
+
+                        done.resolve();
+                    } catch (error) {
+                        done.reject(error);
+                    }
+                }, (error: string): void => {
+                    done.reject(error);
+                });
+
+            await done.promise;
+        }, 15000);
+
+        runTest("Event Tests (Continuous) " + SpeechConnectionType[connectionType], async (): Promise<void> => {
+            // eslint-disable-next-line no-console
+            console.info("Name: Event Tests (Continuous) " + SpeechConnectionType[connectionType]);
+
+            const done: Deferred<void> = new Deferred<void>();
+
+            const SpeechStartDetectedEvent = "SpeechStartDetectedEvent";
+            const SpeechEndDetectedEvent = "SpeechEndDetectedEvent";
+            const SessionStartedEvent = "SessionStartedEvent";
+            const SessionStoppedEvent = "SessionStoppedEvent";
+            const s: sdk.SpeechConfig = await BuildSpeechConfig(connectionType);
+            objsToClose.push(s);
+            const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
+            objsToClose.push(r);
+
+            let sessionStopped: boolean = false;
+
+            const eventsMap: { [id: string]: number } = {};
+            let eventIdentifier: number = 1;
+
+            r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+                eventsMap[Recognized] = eventIdentifier++;
+            };
+
+            r.recognizing = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+                const now: number = eventIdentifier++;
+                eventsMap[Recognizing + "-" + Date.now().toPrecision(4)] = now;
+                eventsMap[Recognizing] = now;
+            };
+
+            r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+                try {
+                    expect(e.errorDetails).toBeUndefined();
+                    expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.NoError]);
+                    expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
+                    eventsMap[Canceled] = eventIdentifier++;
+                } catch (error) {
+                    done.reject(error);
+                }
+            };
+
+            // todo eventType should be renamed and be a function getEventType()
+            r.speechStartDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+                const now: number = eventIdentifier++;
+
+                eventsMap[SpeechStartDetectedEvent] = now;
+            };
+            r.speechEndDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+                const now: number = eventIdentifier++;
+                eventsMap[SpeechEndDetectedEvent] = now;
+            };
+
+            r.sessionStarted = (o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+                const now: number = eventIdentifier++;
+                eventsMap[SessionStartedEvent] = now;
+                eventsMap[SessionStartedEvent + "-" + Date.now().toPrecision(4)] = now;
+            };
+
+            r.sessionStopped = (o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+                const now: number = eventIdentifier++;
+                eventsMap[SessionStoppedEvent] = now;
+                eventsMap[SessionStoppedEvent + "-" + Date.now().toPrecision(4)] = now;
+                sessionStopped = true;
+            };
+
+            r.startContinuousRecognitionAsync();
+
+            WaitForCondition((): boolean => sessionStopped, (): void => {
+                try {
                     // session events are first and last event
                     const LAST_RECORDED_EVENT_ID: number = --eventIdentifier;
-
-                    // Event order is:
-                    // SessionStarted
-                    // SpeechStartDetected
-                    // 0 or more Recognizing
-                    // SpeechEnded
-                    // Recognized
-                    // SessionEnded
-
                     expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
 
-                    // The session started and stopped.
                     expect(SessionStartedEvent in eventsMap).toEqual(true);
-                    expect(SessionStoppedEvent in eventsMap).toEqual(true);
 
-                    // The session events bookended the rest.
                     expect(eventsMap[SessionStartedEvent]).toEqual(FIRST_EVENT_ID);
-                    expect(eventsMap[SessionStoppedEvent]).toEqual(LAST_RECORDED_EVENT_ID);
 
-                    // Start always before end.
-                    expect(eventsMap[SessionStartedEvent]).toBeLessThan(eventsMap[SessionStoppedEvent]);
-                    expect(eventsMap[SpeechStartDetectedEvent]).toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
+                    expect(SessionStoppedEvent in eventsMap).toEqual(true);
+                    expect(LAST_RECORDED_EVENT_ID).toEqual(eventsMap[SessionStoppedEvent]);
 
-                    // SpeechStart was the 2nd event.
+                    // end events come after start events.
+                    if (SessionStoppedEvent in eventsMap) {
+                        expect(eventsMap[SessionStartedEvent])
+                            .toBeLessThan(eventsMap[SessionStoppedEvent]);
+                    }
+
+                    expect(eventsMap[SpeechStartDetectedEvent])
+                        .toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
                     expect((FIRST_EVENT_ID + 1)).toEqual(eventsMap[SpeechStartDetectedEvent]);
 
                     // make sure, first end of speech, then final result
+                    expect((LAST_RECORDED_EVENT_ID - 1)).toEqual(eventsMap[Canceled]);
                     expect((LAST_RECORDED_EVENT_ID - 2)).toEqual(eventsMap[SpeechEndDetectedEvent]);
-                    expect((LAST_RECORDED_EVENT_ID - 1)).toEqual(eventsMap[Recognized]);
+                    expect((LAST_RECORDED_EVENT_ID - 3)).toEqual(eventsMap[Recognized]);
 
-                    // Speech ends before the session stops.
-                    expect(eventsMap[SpeechEndDetectedEvent]).toBeLessThan(eventsMap[SessionStoppedEvent]);
+                    // recognition events come after session start but before session end events
+                    expect(eventsMap[SessionStartedEvent])
+                        .toBeLessThan(eventsMap[SpeechStartDetectedEvent]);
+
+                    if (SessionStoppedEvent in eventsMap) {
+                        expect(eventsMap[SpeechEndDetectedEvent])
+                            .toBeLessThan(eventsMap[SessionStoppedEvent]);
+                    }
 
                     // there is no partial result reported after the final result
                     // (and check that we have intermediate and final results recorded)
                     if (Recognizing in eventsMap) {
-                        expect(eventsMap[Recognizing]).toBeGreaterThan(eventsMap[SpeechStartDetectedEvent]);
-                        expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
+                        expect(eventsMap[Recognizing])
+                            .toBeGreaterThan(eventsMap[SpeechStartDetectedEvent]);
                     }
 
-                    // make sure events we don't expect, don't get raised
-                    // The canceled event comes *after* the callback.
-                    expect(Canceled in eventsMap).toBeFalsy();
+                    // speech should not stop before getting the final result.
+                    expect(eventsMap[Recognized]).toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
 
-                    done();
+                    expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
+
+                    // make sure we got a cancel event.
+                    expect(Canceled in eventsMap).toEqual(true);
+
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
-            }, (error: string): void => {
-                done(error);
             });
 
+            await done.promise;
+        }, 20000);
     });
-
-    test("Event Tests (Continuous)", (done: jest.DoneCallback): void => {
-        // eslint-disable-next-line no-console
-        console.info("Name: Event Tests (Continuous)");
-        const SpeechStartDetectedEvent = "SpeechStartDetectedEvent";
-        const SpeechEndDetectedEvent = "SpeechEndDetectedEvent";
-        const SessionStartedEvent = "SessionStartedEvent";
-        const SessionStoppedEvent = "SessionStoppedEvent";
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
-        objsToClose.push(r);
-
-        let sessionStopped: boolean = false;
-
-        const eventsMap: { [id: string]: number } = {};
-        let eventIdentifier: number = 1;
-
-        r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
-            eventsMap[Recognized] = eventIdentifier++;
-        };
-
-        r.recognizing = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
-            const now: number = eventIdentifier++;
-            eventsMap[Recognizing + "-" + Date.now().toPrecision(4)] = now;
-            eventsMap[Recognizing] = now;
-        };
-
-        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-            try {
-                expect(e.errorDetails).toBeUndefined();
-                expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.NoError]);
-                expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
-                eventsMap[Canceled] = eventIdentifier++;
-            } catch (error) {
-                done(error);
-            }
-        };
-
-        // todo eventType should be renamed and be a function getEventType()
-        r.speechStartDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
-            const now: number = eventIdentifier++;
-
-            eventsMap[SpeechStartDetectedEvent] = now;
-        };
-        r.speechEndDetected = (o: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
-            const now: number = eventIdentifier++;
-            eventsMap[SpeechEndDetectedEvent] = now;
-        };
-
-        r.sessionStarted = (o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-            const now: number = eventIdentifier++;
-            eventsMap[SessionStartedEvent] = now;
-            eventsMap[SessionStartedEvent + "-" + Date.now().toPrecision(4)] = now;
-        };
-
-        r.sessionStopped = (o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-            const now: number = eventIdentifier++;
-            eventsMap[SessionStoppedEvent] = now;
-            eventsMap[SessionStoppedEvent + "-" + Date.now().toPrecision(4)] = now;
-            sessionStopped = true;
-        };
-
-        r.startContinuousRecognitionAsync();
-
-        WaitForCondition((): boolean => sessionStopped, (): void => {
-            try {
-                // session events are first and last event
-                const LAST_RECORDED_EVENT_ID: number = --eventIdentifier;
-                expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
-
-                expect(SessionStartedEvent in eventsMap).toEqual(true);
-
-                expect(eventsMap[SessionStartedEvent]).toEqual(FIRST_EVENT_ID);
-
-                expect(SessionStoppedEvent in eventsMap).toEqual(true);
-                expect(LAST_RECORDED_EVENT_ID).toEqual(eventsMap[SessionStoppedEvent]);
-
-                // end events come after start events.
-                if (SessionStoppedEvent in eventsMap) {
-                    expect(eventsMap[SessionStartedEvent])
-                        .toBeLessThan(eventsMap[SessionStoppedEvent]);
-                }
-
-                expect(eventsMap[SpeechStartDetectedEvent])
-                    .toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
-                expect((FIRST_EVENT_ID + 1)).toEqual(eventsMap[SpeechStartDetectedEvent]);
-
-                // make sure, first end of speech, then final result
-                expect((LAST_RECORDED_EVENT_ID - 1)).toEqual(eventsMap[Canceled]);
-                expect((LAST_RECORDED_EVENT_ID - 2)).toEqual(eventsMap[SpeechEndDetectedEvent]);
-                expect((LAST_RECORDED_EVENT_ID - 3)).toEqual(eventsMap[Recognized]);
-
-                // recognition events come after session start but before session end events
-                expect(eventsMap[SessionStartedEvent])
-                    .toBeLessThan(eventsMap[SpeechStartDetectedEvent]);
-
-                if (SessionStoppedEvent in eventsMap) {
-                    expect(eventsMap[SpeechEndDetectedEvent])
-                        .toBeLessThan(eventsMap[SessionStoppedEvent]);
-                }
-
-                // there is no partial result reported after the final result
-                // (and check that we have intermediate and final results recorded)
-                if (Recognizing in eventsMap) {
-                    expect(eventsMap[Recognizing])
-                        .toBeGreaterThan(eventsMap[SpeechStartDetectedEvent]);
-                }
-
-                // speech should not stop before getting the final result.
-                expect(eventsMap[Recognized]).toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
-
-                expect(eventsMap[Recognizing]).toBeLessThan(eventsMap[Recognized]);
-
-                // make sure we got a cancel event.
-                expect(Canceled in eventsMap).toEqual(true);
-
-                done();
-            } catch (error) {
-                done(error);
-            }
-        });
-    }, 20000);
 
     describe("Disables Telemetry", (): void => {
 
         // Re-enable telemetry
         afterEach((): void => sdk.Recognizer.enableTelemetry(true));
 
-        test("testStopContinuousRecognitionAsyncWithoutTelemetry", (done: jest.DoneCallback): void => {
+        test("testStopContinuousRecognitionAsyncWithoutTelemetry", async (): Promise<void> => {
             // eslint-disable-next-line no-console
             console.info("Name: testStopContinuousRecognitionAsyncWithoutTelemetry");
+            const done: Deferred<void> = new Deferred<void>();
+
             // start with telemetry disabled
-            const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
+            const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile();
             objsToClose.push(r);
 
             let eventDone: boolean = false;
@@ -929,7 +990,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                     expect(e.result.text).toEqual("What's the weather like?");
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
@@ -939,7 +1000,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(e.errorDetails).toBeUndefined();
                     expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
@@ -950,30 +1011,32 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                             // since we disabled, there should be no telemetry
                             // event run through our handler
                             expect(telemetryEvents).toEqual(0);
-                            done();
+                            done.resolve();
                         },
                         (err: string): void => {
-                            done(err);
+                            done.reject(err);
                         });
                 }),
                 (err: string): void => {
-                    done(err);
+                    done.reject(err);
                 });
+
+            await done.promise;
         });
     });
 
-    test("Close with no recognition", (): void => {
+    test("Close with no recognition", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Close with no recognition");
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile();
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile();
         objsToClose.push(r);
     });
 
-    test("Config is copied on construction", (): void => {
+    test("Config is copied on construction", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Config is copied on construction");
 
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         s.speechRecognitionLanguage = "en-US";
@@ -983,7 +1046,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         s.setProperty("RandomProperty", ranVal);
         s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationVoice], "Microsoft Server Speech Text to Speech Voice (en-US, ZiraRUS)");
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
 
         expect(r.speechRecognitionLanguage).toEqual("en-US");
@@ -1002,10 +1065,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
     });
 
-    test("PushStream4KNoDelay", (done: jest.DoneCallback): void => {
+    test("PushStream4KNoDelay", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: PushStream4KNoDelay");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         const f: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
@@ -1032,7 +1097,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1046,21 +1111,25 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
 
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     });
 
-    test("Detailed output continuous recognition stops correctly", (done: jest.DoneCallback): void => {
+    test("Detailed output continuous recognition stops correctly", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Detailed output continuous recognition stops correctly");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
         s.speechRecognitionLanguage = "en-US";
         s.outputFormat = sdk.OutputFormat.Detailed;
@@ -1073,7 +1142,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         expect(r instanceof sdk.Recognizer);
 
         r.sessionStopped = (s: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-            done();
+            done.resolve();
         };
 
         r.recognizing = (s: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
@@ -1081,12 +1150,16 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         };
 
         r.startContinuousRecognitionAsync();
+
+        await done.promise;
     }, 15000);
 
-    test("PushStream start-stop-start continuous recognition on PushStream", (done: jest.DoneCallback): void => {
+    test("PushStream start-stop-start continuous recognition on PushStream", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: PushStream start-stop-start continuous recognition on PushStream");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
         const pushStream: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
 
@@ -1120,7 +1193,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(e.result.properties).not.toBeUndefined();
                 expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                done();
+                done.resolve();
             }
             r.stopContinuousRecognitionAsync();
         };
@@ -1129,17 +1202,21 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
         r.startContinuousRecognitionAsync();
+
+        await done.promise;
     }, 15000);
 
-    test("PushStream44K, muLaw, Alaw files", (done: jest.DoneCallback): void => {
+    test("PushStream44K, muLaw, Alaw files", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: PushStream44K, muLaw, Alaw files");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         let success: number = 0;
@@ -1169,7 +1246,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 try {
                     expect(e.errorDetails).toBeUndefined();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
@@ -1185,22 +1262,28 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
                         success++;
                     } catch (error) {
-                        done(error);
+                        done.reject(error);
                     }
 
                 },
                 (error: string): void => {
-                    done(error);
+                    done.reject(error);
                 });
 
         }
-        WaitForCondition((): boolean => success === 3, done);
+        WaitForCondition((): boolean => success === 3, (): void => {
+            done.resolve();
+        });
+
+        await done.promise;
     });
 
-    test("PushStream4KPostRecognizePush", (done: jest.DoneCallback): void => {
+    test("PushStream4KPostRecognizePush", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: PushStream4KPostRecognizePush");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         const f: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
@@ -1217,7 +1300,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1232,13 +1315,13 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
 
         const sendSize: number = 4096;
@@ -1250,12 +1333,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         p.write(f.slice(i - (sendSize - 1), f.byteLength - 1));
         p.close();
 
+        await done.promise;
     });
 
-    test("PullStreamFullFill", (done: jest.DoneCallback): void => {
+    test("PullStreamFullFill", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: PullStreamFullFill");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
@@ -1292,7 +1378,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1306,20 +1392,24 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     });
 
-    test("PullStream44K", (done: jest.DoneCallback): void => {
+    test("PullStream44K", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: PullStream44K");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile44k);
@@ -1357,7 +1447,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1371,20 +1461,24 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     }, 120000);
 
-    test("PullStreamHalfFill", (done: jest.DoneCallback): void => {
+    test("PullStreamHalfFill", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: PullStreamHalfFill");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
@@ -1421,7 +1515,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1436,25 +1530,29 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     });
 
-    test.skip("emptyFile", (done: jest.DoneCallback): void => {
+    test.skip("emptyFile", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: emptyFile");
+        const done: Deferred<void> = new Deferred<void>();
+
         // Server Responses:
         // turn.start {"context": { "serviceTag": "<tag>"  }}
         // speech.endDetected { }
         // speech.phrase { "RecognitionStatus": "Error", "Offset": 0, "Duration": 0 }
 
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         const blob: Blob[] = [];
@@ -1473,12 +1571,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
 
                 if (true === oneCalled) {
-                    done();
+                    done.resolve();
                 } else {
                     oneCalled = true;
                 }
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1492,24 +1590,28 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(p2.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
                     if (true === oneCalled) {
-                        done();
+                        done.resolve();
                     } else {
                         oneCalled = true;
                     }
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     });
 
     // service returning NoMatch, is this our fault?
-    test.skip("PullStreamSendHalfTheFile", (done: jest.DoneCallback): void => {
+    test.skip("PullStreamSendHalfTheFile", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: PullStreamSendHalfTheFile");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
@@ -1544,7 +1646,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1558,20 +1660,24 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     });
 
-    test("RecognizeOnceAsync is async", (done: jest.DoneCallback): void => {
+    test("RecognizeOnceAsync is async", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: RecognizeOnceAsync is async");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         s.speechRecognitionLanguage = "en-US";
@@ -1592,9 +1698,9 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(e.result.errorDetails).toBeUndefined();
                     expect(e.result.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
                     expect(e.result.text).toEqual(Settings.WaveFileText);
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             });
         };
@@ -1603,7 +1709,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1611,12 +1717,14 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
         expect(resultSeen).toEqual(false);
         postCall = true;
+
+        await done.promise;
     }, 100000);
 
-    test("Audio Config is optional", (): void => {
+    test("Audio Config is optional", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Audio Config is optional");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s);
@@ -1624,10 +1732,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         expect(r instanceof sdk.Recognizer).toEqual(true);
     });
 
-    Settings.testIfDOMCondition("Default mic is used when audio config is not specified.", (): void => {
+    Settings.testIfDOMCondition("Default mic is used when audio config is not specified.", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Default mic is used when audio config is not specified.");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         let r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s);
@@ -1649,10 +1757,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             });
     });
 
-    test("Using disposed recognizer invokes error callbacks.", (done: jest.DoneCallback): void => {
+    test("Using disposed recognizer invokes error callbacks.", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Using disposed recognizer invokes error callbacks.");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s);
@@ -1669,7 +1779,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                         expect(error).toEqual("Error: the object is already disposed");
                         success++;
                     } catch (error) {
-                        done(error);
+                        done.reject(error);
                     }
                 });
 
@@ -1679,7 +1789,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                         expect(error).toEqual("Error: the object is already disposed");
                         success++;
                     } catch (error) {
-                        done(error);
+                        done.reject(error);
                     }
                 });
 
@@ -1689,39 +1799,45 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                         expect(error).toEqual("Error: the object is already disposed");
                         success++;
                     } catch (error) {
-                        done(error);
+                        done.reject(error);
                     }
                 });
 
-            WaitForCondition((): boolean => success === 3, done);
-        }, (error: string): void => done(error));
+            WaitForCondition((): boolean => success === 3, (): void => {
+                done.resolve();
+            });
+        }, (error: string): Deferred<void> => done.reject(error));
+
+        await done.promise;
     });
 
-    test.skip("Endpoint URL Test", (done: jest.DoneCallback): void => {
+    test.skip("Endpoint URL Test", async (): Promise<void> => {
+        const done: Deferred<void> = new Deferred<void>();
+
         let uri: string;
 
         Events.instance.attachListener({
             onEvent: (event: PlatformEvent): void => {
                 if (event instanceof ConnectionStartEvent) {
-                    const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                    const connectionEvent: ConnectionStartEvent = event;
                     uri = connectionEvent.uri;
                 }
             },
         });
 
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         s.endpointId = Settings.SpeechTestEndpointId;
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1737,14 +1853,16 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(uri.search(QueryParameterNames.CustomSpeechDeploymentId + "=" + Settings.SpeechTestEndpointId)).not.toEqual(-1);
                     expect(uri.search(QueryParameterNames.Language)).toEqual(-1);
 
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     });
 
     describe("Connection URL Tests", (): void => {
@@ -1755,7 +1873,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             detachObject = Events.instance.attachListener({
                 onEvent: (event: PlatformEvent): void => {
                     if (event instanceof ConnectionStartEvent) {
-                        const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                        const connectionEvent: ConnectionStartEvent = event;
                         uri = connectionEvent.uri;
                     }
                 },
@@ -1773,14 +1891,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             uri = undefined;
         });
 
-        test.skip("Endpoint URL With Parameter Test", (done: jest.DoneCallback): void => {
+        test.skip("Endpoint URL With Parameter Test", async (): Promise<void> => {
             // eslint-disable-next-line no-console
             console.info("Name: Endpoint URL With Parameter Test");
+            const done: Deferred<void> = new Deferred<void>();
 
             const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL("wss://fake.host.name?somequeryParam=Value"), "fakekey");
             objsToClose.push(s);
 
-            const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+            const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
             objsToClose.push(r);
 
             r.recognizeOnceAsync(
@@ -1796,22 +1915,25 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                         const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
                         expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                         expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
-                        done();
+                        done.resolve();
                     } catch (error) {
-                        done(error);
+                        done.reject(error);
                     }
                 });
+
+            await done.promise;
         }, 100000);
 
-        test("Endpoint URL With Auth Token Bearer added", (done: jest.DoneCallback): void => {
+        test("Endpoint URL With Auth Token Bearer added", async (): Promise<void> => {
             // eslint-disable-next-line no-console
             console.info("Name: Endpoint URL With Auth Token Bearer added");
+            const done: Deferred<void> = new Deferred<void>();
 
             const fakeToken: string = createNoDashGuid();
             const s: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(fakeToken, "westus");
             objsToClose.push(s);
 
-            const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+            const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
             objsToClose.push(r);
 
             r.recognizeOnceAsync(
@@ -1827,43 +1949,50 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                         const cancelDetails: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(p2);
                         expect(sdk.CancellationReason[cancelDetails.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                         expect(sdk.CancellationErrorCode[cancelDetails.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
-                        done();
+                        done.resolve();
                     } catch (error) {
-                        done(error);
+                        done.reject(error);
                     }
                 });
+
+            await done.promise;
         }, 100000);
     });
 
-    test("Connection Errors Propogate Async", (done: jest.DoneCallback): void => {
+    test("Connection Errors Propogate Async", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Connection Errors Propogate Async");
+        const done: Deferred<void> = new Deferred<void>();
+
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("badKey", Settings.SpeechRegion);
         objsToClose.push(s);
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
                 expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
-                done();
+                done.resolve();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
         r.startContinuousRecognitionAsync();
 
+        await done.promise;
     }, 15000);
 
-    test("Connection Errors Propogate Sync", (done: jest.DoneCallback): void => {
+    test("Connection Errors Propogate Sync", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Connection Errors Propogate Sync");
+        const done: Deferred<void> = new Deferred<void>();
+
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("badKey", Settings.SpeechRegion);
         objsToClose.push(s);
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
 
         let doneCount: number = 0;
@@ -1874,7 +2003,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(e.errorDetails).toContain("1006");
                 doneCount++;
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1886,22 +2015,27 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(e.errorDetails).toContain("1006");
                 doneCount++;
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         });
 
-        WaitForCondition((): boolean => (doneCount === 2), done);
+        WaitForCondition((): boolean => (doneCount === 2), (): void => {
+            done.resolve();
+        });
 
+        await done.promise;
     }, 15000);
 
-    test("RecognizeOnce Bad Language", (done: jest.DoneCallback): void => {
+    test("RecognizeOnce Bad Language", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: RecognizeOnce Bad Language");
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
         s.speechRecognitionLanguage = "BadLanguage";
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
         let doneCount: number = 0;
 
@@ -1912,7 +2046,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(e.errorDetails).toContain("1006");
                 doneCount++;
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -1925,18 +2059,23 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
                 doneCount++;
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
-            WaitForCondition((): boolean => (doneCount === 2), done);
+            WaitForCondition((): boolean => (doneCount === 2), (): void => {
+                done.resolve();
+            });
         });
+
+        await done.promise;
     }, 15000);
 });
 
-Settings.testIfDOMCondition("Push Stream Async", (done: jest.DoneCallback): void => {
+Settings.testIfDOMCondition("Push Stream Async", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: Push Stream Async");
+    const done: Deferred<void> = new Deferred<void>();
 
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = await BuildSpeechConfig();
     objsToClose.push(s);
 
     const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
@@ -1955,7 +2094,7 @@ Settings.testIfDOMCondition("Push Stream Async", (done: jest.DoneCallback): void
     expect(r instanceof sdk.Recognizer);
 
     r.canceled = (r: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-        done(e.errorDetails);
+        done.reject(e.errorDetails);
     };
 
     r.recognizeOnceAsync(
@@ -1965,18 +2104,21 @@ Settings.testIfDOMCondition("Push Stream Async", (done: jest.DoneCallback): void
             expect(res).not.toBeUndefined();
             expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
             expect(res.text).toEqual("What's the weather like?");
-            done();
+            done.resolve();
         },
         (error: string): void => {
-            done(error);
+            done.reject(error);
         });
+
+    await done.promise;
 }, 10000);
 
-test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback): void => {
+test("Multiple RecognizeOnce calls share a connection", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: Multiple RecognizeOnce calls share a connection");
+    const done: Deferred<void> = new Deferred<void>();
 
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = await BuildSpeechConfig();
     objsToClose.push(s);
 
     const pullStreamSource: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
@@ -2008,7 +2150,7 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done(error);
+            done.reject(error);
         }
     };
 
@@ -2024,11 +2166,11 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
                 firstReco = true;
                 pullStreamSource.StartRepeat();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         },
         (error: string): void => {
-            done(error);
+            done.reject(error);
         });
 
     WaitForCondition((): boolean => firstReco, (): void => {
@@ -2042,22 +2184,25 @@ test("Multiple RecognizeOnce calls share a connection", (done: jest.DoneCallback
                     expect(res.text).toEqual("What's the weather like?");
                     expect(disconnected).toEqual(false);
                     expect(connected).toEqual(1);
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
     });
+
+    await done.promise;
 }, 15000);
 
-test("Multiple ContReco calls share a connection", (done: jest.DoneCallback): void => {
+test("Multiple ContReco calls share a connection", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: Multiple ContReco calls share a connection");
+    const done: Deferred<void> = new Deferred<void>();
 
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = await BuildSpeechConfig();
     objsToClose.push(s);
 
     let sessionId: string;
@@ -2083,7 +2228,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback): vo
             try {
                 expect(e.sessionId).toEqual(sessionId);
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         }
     };
@@ -2100,7 +2245,7 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback): vo
             console.warn(e);
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done(error);
+            done.reject(error);
         }
     };
 
@@ -2114,14 +2259,14 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback): vo
 
             recoCount++;
         } catch (error) {
-            done(error);
+            done.reject(error);
         }
     };
 
     r.startContinuousRecognitionAsync(
         undefined,
         (error: string): void => {
-            done(error);
+            done.reject(error);
         });
 
     WaitForCondition((): boolean => recoCount === 1, (): void => {
@@ -2132,23 +2277,26 @@ test("Multiple ContReco calls share a connection", (done: jest.DoneCallback): vo
             r.startContinuousRecognitionAsync(
                 undefined,
                 (error: string): void => {
-                    done(error);
+                    done.reject(error);
                 });
         });
     });
 
     WaitForCondition((): boolean => recoCount === 2, (): void => {
         r.stopContinuousRecognitionAsync((): void => {
-            done();
+            done.resolve();
         });
     });
+
+    await done.promise;
 }, 20000);
 
-test("StopContinous Reco does", (done: jest.DoneCallback): void => {
+test("StopContinous Reco does", async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("Name: StopContinous Reco does");
+    const done: Deferred<void> = new Deferred<void>();
 
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = await BuildSpeechConfig();
     objsToClose.push(s);
 
     let recognizing: boolean = true;
@@ -2189,7 +2337,7 @@ test("StopContinous Reco does", (done: jest.DoneCallback): void => {
                 expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.NoMatch]);
             }
         } catch (error) {
-            done(error);
+            done.reject(error);
         }
     };
 
@@ -2197,14 +2345,14 @@ test("StopContinous Reco does", (done: jest.DoneCallback): void => {
         try {
             expect(e.errorDetails).toBeUndefined();
         } catch (error) {
-            done(error);
+            done.reject(error);
         }
     };
 
     r.startContinuousRecognitionAsync(
         undefined,
         (error: string): void => {
-            done(error);
+            done.reject(error);
         });
 
     WaitForCondition((): boolean => recoCount === 1, (): void => {
@@ -2213,26 +2361,28 @@ test("StopContinous Reco does", (done: jest.DoneCallback): void => {
             pullStreamSource.StartRepeat();
 
             setTimeout((): void => {
-                done();
+                done.resolve();
             }, 5000);
         });
     });
 
+    await done.promise;
 }, 100000);
 
 describe("PhraseList tests", (): void => {
-    test.skip("Ambiguous Speech default as expected", (done: jest.DoneCallback): void => {
+    test.skip("Ambiguous Speech default as expected", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Ambiguous Speech default as expected");
+        const done: Deferred<void> = new Deferred<void>();
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
         objsToClose.push(r);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -2244,22 +2394,25 @@ describe("PhraseList tests", (): void => {
                     expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
                     expect(res).not.toBeUndefined();
                     expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Wreck a nice beach");
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     });
 
     // This test validates our ability to add features to the SDK in parallel / ahead of implementation by the Speech Service with no ill effects.
-    test.skip("Service accepts random speech.context sections w/o error", (done: jest.DoneCallback): void => {
+    test.skip("Service accepts random speech.context sections w/o error", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Service accepts random speech.context sections w/o error.");
+        const done: Deferred<void> = new Deferred<void>();
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
         objsToClose.push(r);
 
         const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
@@ -2269,7 +2422,7 @@ describe("PhraseList tests", (): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -2281,21 +2434,24 @@ describe("PhraseList tests", (): void => {
                     expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
                     expect(res).not.toBeUndefined();
                     expect(res.text.replace(/[^\w\s\']|_/g, "")).toEqual("Wreck a nice beach");
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     });
 
-    test("Phraselist assists speech Reco.", (done: jest.DoneCallback): void => {
+    test("Phraselist assists speech Reco.", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Phraselist assists speech Reco.");
+        const done: Deferred<void> = new Deferred<void>();
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
         objsToClose.push(r);
 
         const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
@@ -2305,7 +2461,7 @@ describe("PhraseList tests", (): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -2317,21 +2473,24 @@ describe("PhraseList tests", (): void => {
                     expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
                     expect(res).not.toBeUndefined();
                     expect(res.text).toEqual("Wreck a nice beach.");
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     });
 
-    test("Phraselist extra phraselists have no effect.", (done: jest.DoneCallback): void => {
+    test("Phraselist extra phraselists have no effect.", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Phraselist extra phraselists have no effect.");
+        const done: Deferred<void> = new Deferred<void>();
 
-        const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(undefined, Settings.AmbiguousWaveFile);
         objsToClose.push(r);
 
         const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
@@ -2342,7 +2501,7 @@ describe("PhraseList tests", (): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -2354,23 +2513,25 @@ describe("PhraseList tests", (): void => {
                     expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
                     expect(res).not.toBeUndefined();
                     expect(res.text).toEqual("Wreck a nice beach.");
-                    done();
+                    done.resolve();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             },
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
+
+        await done.promise;
     }, 10000);
 
     // Ambiguous file now gives "wreck a nice beach" without context
-    test.skip("Phraselist Clear works.", (done: jest.DoneCallback): void => {
-
+    test.skip("Phraselist Clear works.", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Phraselist Clear works.");
+        const done: Deferred<void> = new Deferred<void>();
 
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         let gotReco: boolean = false;
@@ -2407,7 +2568,7 @@ describe("PhraseList tests", (): void => {
                 }
 
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
@@ -2415,14 +2576,14 @@ describe("PhraseList tests", (): void => {
             try {
                 expect(e.errorDetails).toBeUndefined();
             } catch (error) {
-                done(error);
+                done.reject(error);
             }
         };
 
         r.recognizeOnceAsync(
             undefined,
             (error: string): void => {
-                done(error);
+                done.reject(error);
             });
 
         WaitForCondition((): boolean => recoCount === 1, (): void => {
@@ -2434,21 +2595,24 @@ describe("PhraseList tests", (): void => {
             r.startContinuousRecognitionAsync(
                 undefined,
                 (error: string): void => {
-                    done(error);
+                    done.reject(error);
                 });
         });
 
         WaitForCondition((): boolean => recoCount === 2, (): void => {
-            done();
+            done.resolve();
         });
+
+        await done.promise;
     }, 20000);
 
     describe.each([sdk.OutputFormat.Simple, sdk.OutputFormat.Detailed])("Output Format", (outputFormat: sdk.OutputFormat): void => {
-        test("Multi-Turn offset verification", (done: jest.DoneCallback): void => {
+        test("Multi-Turn offset verification", async (): Promise<void> => {
             // eslint-disable-next-line no-console
             console.info("Multi-Turn offset verification");
+            const done: Deferred<void> = new Deferred<void>();
 
-            const s: sdk.SpeechConfig = BuildSpeechConfig();
+            const s: sdk.SpeechConfig = await BuildSpeechConfig();
             objsToClose.push(s);
 
             s.speechRecognitionLanguage = "en-US";
@@ -2476,7 +2640,7 @@ describe("PhraseList tests", (): void => {
                 try {
                     expect(e.offset).toBeGreaterThan(lastOffset);
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
                 recoCount++;
                 pullStreamSource.StartRepeat();
@@ -2486,7 +2650,7 @@ describe("PhraseList tests", (): void => {
                 try {
                     expect(e.offset).toBeGreaterThan(lastOffset);
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
@@ -2494,7 +2658,7 @@ describe("PhraseList tests", (): void => {
                 try {
                     expect(e.errorDetails).toBeUndefined();
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
@@ -2510,7 +2674,7 @@ describe("PhraseList tests", (): void => {
                     simpleResult = SimpleSpeechPhrase.fromJSON(e.result.json, 0);
                     expect(simpleResult.Offset).toBeGreaterThanOrEqual(lastOffset);
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
@@ -2547,23 +2711,25 @@ describe("PhraseList tests", (): void => {
 
                     lastOffset = e.offset;
                 } catch (error) {
-                    done(error);
+                    done.reject(error);
                 }
             };
 
             r.startContinuousRecognitionAsync(
                 undefined,
                 (error: string): void => {
-                    done(error);
+                    done.reject(error);
                 });
 
             WaitForCondition((): boolean => (recoCount === 3), (): void => {
                 r.stopContinuousRecognitionAsync((): void => {
-                    done();
+                    done.resolve();
                 }, (error: string): void => {
-                    done(error);
+                    done.reject(error);
                 });
             });
+
+            await done.promise;
         }, 1000 * 60 * 2);
     });
 });

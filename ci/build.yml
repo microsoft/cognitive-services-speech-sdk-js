@@ -34,7 +34,8 @@ jobs:
       npm ci && npm run civersion
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
-      echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
+      echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
+      env
     displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
   - bash: |
       F=src/common.speech/SpeechServiceConfig.ts
@@ -47,29 +48,6 @@ jobs:
     displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
   - bash: npm pack
     displayName: Build and pack SDK
-  - bash: "echo '##vso[task.setvariable variable=SPEECHSDK_RUN_TESTS]false'"
-    condition: or(failed(), canceled())
-    displayName: Skip tests on build failure
-  - template: generate-subscription-file.yml
-  - script: |
-      RunTests.cmd
-    displayName: Run tests
-    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
-  - task: PublishTestResults@2
-    displayName: Publish test results
-    inputs:
-      testRunner: JUnit
-      testResultsFiles: 'test-javascript-junit.xml'
-    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
-  - bash: |
-        set -e
-        cd tests/packaging
-        echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
-        npm ci
-        npm install ../../microsoft-cognitiveservices-speech-sdk-$SPEECHSDK_SEMVER2NOMETA.tgz
-        npm run bundle
-    displayName: Run Test Bundle
-    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
   - bash: |
       set -u -e -o pipefail -x
       PACKAGE_BASE=microsoft-cognitiveservices-speech-sdk
@@ -97,3 +75,248 @@ jobs:
       PathtoPublish: $(ArtifactOut)
       ArtifactName: JavaScript
       publishLocation: Container
+  - bash: "echo '##vso[task.setvariable variable=SPEECHSDK_RUN_TESTS]false'"
+    condition: or(failed(), canceled())
+    displayName: Skip tests on build failure
+- job : RunTest
+  pool:
+    name: $(WindowsPipelineName)
+  timeoutInMinutes: 60
+  condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  variables:
+    SPEECHSDK_RUN_TESTS: true
+  dependsOn: Build
+  steps:
+  - bash: ./ci/check-git-head.sh
+    displayName: Repository checks
+  - bash: |
+      npm ci && npm run civersion
+      echo "COLLECTION_ID=$(System.CollectionId)"
+      echo "DEFINITION_ID=$(System.DefinitionId)"
+      echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
+    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+  - bash: |
+      F=src/common.speech/SpeechServiceConfig.ts
+      [[ -f $F ]] || exit 1
+      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
+      E=$?
+      rm -f "$F.bak"
+      git diff
+      exit $E
+    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+  - template: generate-subscription-file.yml
+  - bash: |
+      set -u -e -x -o pipefail
+      npm run test:non-connection
+    displayName: Run tests
+    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  - task: PublishTestResults@2
+    displayName: Publish test results
+    inputs:
+      testRunner: JUnit
+      testResultsFiles: 'test-javascript-junit.xml'
+      failTaskOnFailedTests: true
+    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  - task: DownloadBuildArtifacts@1
+    displayName: Download artifacts
+    inputs:
+      buildType: current
+      downloadPath: $(Pipeline.Workspace)
+      artifactName: JavaScript
+  - bash: |
+        set -e
+        cd tests/packaging
+        echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
+        npm ci
+        PACKAGE_PATH="$(Pipeline.Workspace)/JavaScript/npm/microsoft-cognitiveservices-speech-sdk-$SPEECHSDK_SEMVER2NOMETA.tgz"
+        # Convert Windows path to proper format
+        PACKAGE_PATH=$(echo $PACKAGE_PATH | sed 's/\\/\//g')
+        npm install "$PACKAGE_PATH"
+
+        npm run bundle
+    displayName: Run Test Bundle
+    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+- job: RunConnectionTests
+  dependsOn: Build
+  pool:
+    name: CarbonUbuntu2204Hosted
+  timeoutInMinutes: 60
+  condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  variables:
+    SPEECHSDK_RUN_TESTS: true
+  steps:
+  - bash: ./ci/check-git-head.sh
+    displayName: Repository checks
+  - bash: |
+      npm ci && npm run civersion
+      echo "COLLECTION_ID=$(System.CollectionId)"
+      echo "DEFINITION_ID=$(System.DefinitionId)"
+      echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
+    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+  - bash: |
+      F=src/common.speech/SpeechServiceConfig.ts
+      [[ -f $F ]] || exit 1
+      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
+      E=$?
+      rm -f "$F.bak"
+      git diff
+      exit $E
+    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+  - template: generate-subscription-file.yml
+  - bash: |
+      # Define new Docker data directory  
+      NEW_DOCKER_DIR="/mnt/docker"  
+        
+      # Stop Docker service  
+      echo "Stopping Docker service..."  
+      sudo systemctl stop docker  
+        
+      # Create new Docker directory  
+      echo "Creating new Docker directory at $NEW_DOCKER_DIR..."  
+      sudo mkdir -p "$NEW_DOCKER_DIR"  
+        
+      # Update Docker daemon configuration  
+      echo "Updating Docker daemon configuration..."  
+      DOCKER_CONFIG_FILE="/etc/docker/daemon.json"  
+      sudo touch "$DOCKER_CONFIG_FILE"  
+      sudo chmod 666 "$DOCKER_CONFIG_FILE" # Temporarily change permissions to write  
+        
+      cat <<EOL | sudo tee "$DOCKER_CONFIG_FILE"  
+      {  
+        "data-root": "$NEW_DOCKER_DIR/docker"  
+      }  
+      EOL
+
+      sudo chmod 644 "$DOCKER_CONFIG_FILE" # Restore permissions 
+
+      # Start Docker service  
+      echo "Starting Docker service..."
+
+      # Actually restart the docker service, because it can have auto-started after the stop command  
+      sudo systemctl restart docker  
+
+      sudo systemctl status docker  
+        
+      # Verify the change  
+      echo "Verifying Docker configuration..."  
+
+      docker info
+
+      DOCKER_ROOT_DIR=$(docker info | grep "Docker Root Dir" | awk '{print $4}')  
+      if [ "$DOCKER_ROOT_DIR" == "$NEW_DOCKER_DIR/docker" ]; then  
+        echo "Docker data successfully moved to $DOCKER_ROOT_DIR"  
+      else  
+        echo "Error: Docker data directory is not set correctly."  
+        exit 1  
+      fi
+
+      sudo df
+    displayName: Move Docker data directory to /mnt
+  - template: get-docker-image.yml
+    parameters:
+      DockerImages: $(DOCKER_IMAGE) mcr.microsoft.com/azure-cognitive-services/speechservices/neural-text-to-speech:latest mcr.microsoft.com/azure-cognitive-services/speechservices/speech-to-text:latest mcr.microsoft.com/azure-cognitive-services/speechservices/language-detection:latest
+  - bash: |
+      set -u -e -x -o pipefail
+      . ci/functions.sh
+      . ci/load-build-secrets.sh
+
+      tts_port=$(find_free_port)  
+      echo "TTS Port: $tts_port"
+
+      host_ip=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')
+      echo "Host IP: $host_ip"
+
+      TTS_URL="ws://$host_ip:$tts_port"  
+      vsts_setvar TTS_CONTAINER_URL "$TTS_URL"
+
+      docker create -p $tts_port:5000 --memory 14g --cpus 4 --name tts_container mcr.microsoft.com/azure-cognitive-services/speechservices/neural-text-to-speech:latest EULA=accept Billing=https://$SPEECHSDK_SPEECH_REGION.api.cognitive.microsoft.com/ ApiKey=$SPEECHSDK_SPEECH_KEY
+      docker start tts_container
+    displayName: Create and start TTS Container
+  - bash: |
+      set -u -e -x -o pipefail
+      . ci/functions.sh
+      . ci/load-build-secrets.sh
+
+      sr_port=$(find_free_port)  
+      echo "SR Port: $sr_port"
+
+      host_ip=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')  
+      echo "Host IP: $host_ip"
+      SR_URL="ws://$host_ip:$sr_port"  
+      vsts_setvar SR_CONTAINER_URL "$SR_URL"
+
+      docker create -p $sr_port:5000 --memory 6g --cpus 4 --name sr_container mcr.microsoft.com/azure-cognitive-services/speechservices/speech-to-text:latest EULA=accept Billing=https://$SPEECHSDK_SPEECH_REGION.api.cognitive.microsoft.com/ ApiKey=$SPEECHSDK_SPEECH_KEY
+      docker start sr_container
+    displayName: Create and start ASR Container
+  - bash: |
+      set -u -e -x -o pipefail
+      . ci/functions.sh
+      . ci/load-build-secrets.sh
+
+      lid_port=$(find_free_port)  
+      echo "LID Port: $lid_port"
+
+      host_ip=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')  
+      echo "Host IP: $host_ip"
+      LID_URL="ws://$host_ip:$lid_port"  
+      vsts_setvar LID_CONTAINER_URL "$LID_URL"
+
+      docker create -p $lid_port:5003   --memory 1g --cpus 4 --name lid_container mcr.microsoft.com/azure-cognitive-services/speechservices/language-detection:latest EULA=accept Billing=https://$SPEECHSDK_SPEECH_REGION.api.cognitive.microsoft.com/ ApiKey=$SPEECHSDK_SPEECH_KEY
+      docker start lid_container
+    displayName: Create and start LID Container
+  - bash: |
+      set -u -e -x -o pipefail
+      export ENABLE_PRIVATE_LINK_TESTS=true
+      npm run test:connection
+    displayName: Run tests
+    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  - task: PublishTestResults@2
+    displayName: Publish test results
+    inputs:
+      testRunner: JUnit
+      testResultsFiles: 'test-javascript-junit.xml'
+      failTaskOnFailedTests: true
+    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  - bash: |
+      set -u -e -x -o pipefail
+      
+      docker stop tts_container
+      docker stop sr_container
+      docker stop lid_container
+
+      docker logs tts_container > tts_container.log
+      ls -l tts_container.log
+
+      docker logs sr_container > sr_container.log
+      ls -l tts_container.log
+
+      docker logs lid_container > lid_container.log
+      ls -l tts_container.log
+
+      docker rm tts_container
+      docker rm sr_container
+      docker rm lid_container
+
+      DOCKER_LOG_DIR=$(Build.ArtifactStagingDirectory)/DockerLogs
+      mkdir -p $DOCKER_LOG_DIR
+      # Copy logs to the artifacts directory
+      cp tts_container.log $DOCKER_LOG_DIR/tts_container.log
+      cp sr_container.log $DOCKER_LOG_DIR/sr_container.log
+      cp lid_container.log $DOCKER_LOG_DIR/lid_container.log
+    displayName: Stop Containers and export logs
+    condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
+  - task: ArchiveFiles@2
+    displayName: Archive Docker container logs
+    inputs:
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/DockerLogs'
+      includeRootFolder: false
+      archiveFile: '*.*'
+      replaceExistingArchive: false
+    condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
+  - task: PublishBuildArtifacts@1  
+    retryCountOnTaskFailure: 5
+    inputs:  
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/DockerLogs'  
+      ArtifactName: TestRunBackup
+    condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
+    displayName: Publish Docker logs

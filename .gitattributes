@@ -13,6 +13,7 @@ LICENSE text
 *.txt text
 *.yml text
 *.html text
+*.ps1 text
 
 # Bash only with Unix line endings
 *.sh text eol=lf
