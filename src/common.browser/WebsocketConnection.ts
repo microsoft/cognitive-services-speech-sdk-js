@@ -112,8 +112,8 @@ export class WebsocketConnection implements IConnection {
         return this.privConnectionMessageAdapter.state;
     }
 
-    public open(): Promise<ConnectionOpenResponse> {
-        return this.privConnectionMessageAdapter.open();
+    public async open(): Promise<ConnectionOpenResponse> {
+        return await this.privConnectionMessageAdapter.open();
     }
 
     public send(message: ConnectionMessage): Promise<void> {

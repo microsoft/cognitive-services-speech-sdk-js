@@ -964,13 +964,17 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 this.connectionEvents.onEvent(event);
             });
 
+            console.log("xitzhang connection.open()");
             const response: ConnectionOpenResponse = await connection.open();
+            console.log("xitzhang connection (first)", response);
             // 200 == everything is fine.
             if (response.statusCode === 200) {
                 await this.privRequestSession.onConnectionEstablishCompleted(response.statusCode);
                 return Promise.resolve(connection);
             } else if (response.statusCode === 1006) {
                 isUnAuthorized = true;
+            } else if (response.statusCode === 301 || response .statusCode === 302) {
+                console.log("xitzhang redirect (first)", response);
             }
 
             lastStatusCode = response.statusCode;

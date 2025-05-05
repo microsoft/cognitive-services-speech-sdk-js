@@ -72,7 +72,7 @@ export class ConversationTranslatorRecognizer extends Recognizer implements Conv
         const conversationImpl = conversation as ConversationImpl;
         Contracts.throwIfNull(conversationImpl, "conversationImpl");
 
-        super(audioConfig, serviceConfigImpl.properties, new ConversationConnectionFactory());
+        super(audioConfig, serviceConfigImpl.properties, new ConversationConnectionFactory(), speechConfig.tokenCredential);
 
         this.privConversation = conversationImpl;
         this.privIsDisposed = false;

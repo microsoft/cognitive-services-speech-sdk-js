@@ -134,8 +134,10 @@ export class Settings {
             // Load the unified speech subscription
             const unifiedSpeechSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
             if (unifiedSpeechSub) {
+                console.log("Fetched unifiedSpeechSub xitzhang (first):", unifiedSpeechSub);
                 Settings.SpeechSubscriptionKey = unifiedSpeechSub.Key;
                 Settings.SpeechRegion = unifiedSpeechSub.Region;
+                Settings.SpeechEndpoint = unifiedSpeechSub.Endpoint;
                 /* Skip for now until endpoing is fully supported
                 if (unifiedSpeechSub.Endpoint) {
                     Settings.SpeechEndpoint = unifiedSpeechSub.Endpoint;

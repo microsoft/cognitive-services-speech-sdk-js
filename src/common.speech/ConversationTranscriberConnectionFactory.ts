@@ -79,6 +79,7 @@ export class ConversationTranscriberConnectionFactory extends ConnectionFactoryB
         const uri: string = webSocketConnection.uri;
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, uri);
 
+        console.log("xitzhang ConversationTranscriberConnectionFactory, created");
         return webSocketConnection;
     }
 

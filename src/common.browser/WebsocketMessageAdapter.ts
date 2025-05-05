@@ -4,6 +4,7 @@
 // Node.JS specific web socket / browser support.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 import * as http from "http";
+import * as https from "https";
 import * as net from "net";
 import * as tls from "tls";
 import Agent from "agent-base";
@@ -57,6 +58,7 @@ export class WebsocketMessageAdapter {
     private privHeaders: { [key: string]: string };
     private privLastErrorReceived: string;
     private privEnableCompression: boolean;
+    private promiseRedirectUri: Promise<string>;
 
     public static forceNpmWebSocket: boolean = false;
 
@@ -89,13 +91,14 @@ export class WebsocketMessageAdapter {
         this.privHeaders[HeaderNames.ConnectionId] = this.privConnectionId;
 
         this.privLastErrorReceived = "";
+        this.promiseRedirectUri = this.resolveWebSocketRedirect(this.privUri);
     }
 
     public get state(): ConnectionState {
         return this.privConnectionState;
     }
 
-    public open(): Promise<ConnectionOpenResponse> {
+    public async open(): Promise<ConnectionOpenResponse> {
         if (this.privConnectionState === ConnectionState.Disconnected) {
             return Promise.reject<ConnectionOpenResponse>(`Cannot open a connection that is in ${this.privConnectionState} state`);
         }
@@ -111,6 +114,8 @@ export class WebsocketMessageAdapter {
 
         try {
 
+            this.privUri = await this.promiseRedirectUri;
+            console.log("xitzhang final uri", this.privUri);
             if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 // Browser handles cert checks.
                 this.privCertificateValidatedDeferral.resolve();
@@ -157,16 +162,19 @@ export class WebsocketMessageAdapter {
                 this.onEvent(new ConnectionEstablishedEvent(this.privConnectionId));
                 this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(200, ""));
             }, (error: string): void => {
+                console.log("xitzhang onopen error", error);
                 this.privConnectionEstablishDeferral.reject(error);
             });
         };
 
         this.privWebsocketClient.onerror = (e: { error: any; message: string; type: string; target: WebSocket | ws }): void => {
             this.onEvent(new ConnectionErrorEvent(this.privConnectionId, e.message, e.type));
+            console.log("xitzhang onerror", e);
             this.privLastErrorReceived = e.message;
         };
 
         this.privWebsocketClient.onclose = (e: { wasClean: boolean; code: number; reason: string; target: WebSocket | ws }): void => {
+            console.log("xitzhang onclose", e);
             if (this.privConnectionState === ConnectionState.Connecting) {
                 this.privConnectionState = ConnectionState.Disconnected;
                 // this.onEvent(new ConnectionEstablishErrorEvent(this.connectionId, e.code, e.reason));
@@ -183,6 +191,7 @@ export class WebsocketMessageAdapter {
         };
 
         this.privWebsocketClient.onmessage = (e: { data: ws.Data; type: string; target: WebSocket | ws }): void => {
+            console.log("xitzhang onmessage", e);
             const networkReceivedTime = new Date().toISOString();
             if (this.privConnectionState === ConnectionState.Connected) {
                 const deferred = new Deferred<ConnectionMessage>();
@@ -399,4 +408,47 @@ export class WebsocketMessageAdapter {
         return this.privWebsocketClient && this.privWebsocketClient.readyState === this.privWebsocketClient.OPEN;
     }
 
+    /**
+     * Resolve redirects and get final WebSocket URI.
+     * @param uri The original WebSocket URI (ws:// or wss://)
+     * @param maxRedirects Max number of redirects to follow
+     */
+    private async resolveWebSocketRedirect(uri: string, maxRedirects: number = 5): Promise<string> {
+        let currentUrl = uri.replace(/^ws/, "http");
+
+        for (let i = 0; i < maxRedirects; i++) {
+            const url = new URL(currentUrl);
+
+            const redirectedUrl: string = await new Promise<string>((resolve: (value: string) => void, reject: (reason?: any) => void): void => {
+                const req = https.request({
+                    headers: {
+                        Host: url.hostname,
+                    },
+                    hostname: url.hostname,
+                    method: "HEAD",
+                    path: url.pathname + url.search,
+                    port: url.port || 443,
+                    protocol: "https:",
+                }, (res: http.IncomingMessage): void => {
+                    console.log("xitzhang res", res);
+                    if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                        resolve(res.headers.location);
+                    } else {
+                        resolve(currentUrl);
+                    }
+                });
+
+                req.on("error", reject);
+                req.end();
+            });
+
+            if (redirectedUrl === currentUrl) {
+                break;
+            }
+
+            currentUrl = redirectedUrl;
+        }
+
+        return currentUrl.replace(/^http/, "ws");
+    }
 }

@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-
+import {
+    TokenCredential
+} from "@azure/core-auth";
 import {
     CognitiveSubscriptionKeyAuthentication,
     CognitiveTokenAuthentication,
@@ -38,6 +40,7 @@ export abstract class Recognizer {
     protected audioConfig: AudioConfig;
     protected privReco: ServiceRecognizerBase;
     protected privProperties: PropertyCollection;
+    protected tokenCredential?: TokenCredential;
     private privConnectionFactory: IConnectionFactory;
 
     /**
@@ -47,11 +50,12 @@ export abstract class Recognizer {
      * @param {PropertyCollection} properties - A set of properties to set on the recognizer
      * @param {IConnectionFactory} connectionFactory - The factory class used to create a custom IConnection for the recognizer
      */
-    protected constructor(audioConfig: AudioConfig, properties: PropertyCollection, connectionFactory: IConnectionFactory) {
+    protected constructor(audioConfig: AudioConfig, properties: PropertyCollection, connectionFactory: IConnectionFactory, tokenCredential?: TokenCredential) {
         this.audioConfig = (audioConfig !== undefined) ? audioConfig : AudioConfig.fromDefaultMicrophoneInput();
         this.privDisposed = false;
         this.privProperties = properties.clone();
         this.privConnectionFactory = connectionFactory;
+        this.tokenCredential = tokenCredential;
         this.implCommonRecognizerSetup();
     }
 
@@ -190,7 +194,7 @@ export abstract class Recognizer {
                 new Context(new OS(osPlatform, osName, osVersion))));
 
         this.privReco = this.createServiceRecognizer(
-            Recognizer.getAuthFromProperties(this.privProperties),
+            Recognizer.getAuth(this.privProperties, this.tokenCredential),
             this.privConnectionFactory,
             this.audioConfig,
             recognizerConfig);
@@ -228,20 +232,36 @@ export abstract class Recognizer {
         return;
     }
 
-    protected static getAuthFromProperties(properties: PropertyCollection): IAuthentication {
+    protected static getAuth(properties: PropertyCollection, tokenCredential?: TokenCredential): IAuthentication {
         const subscriptionKey = properties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
-        const authentication = (subscriptionKey && subscriptionKey !== "") ?
-            new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
-            new CognitiveTokenAuthentication(
-                (): Promise<string> => {
-                    const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                },
-                (): Promise<string> => {
-                    const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
-                    return Promise.resolve(authorizationToken);
-                });
+        if (subscriptionKey && subscriptionKey !== "") {
+            return new CognitiveSubscriptionKeyAuthentication(subscriptionKey);
+        }
 
-        return authentication;
+        if (tokenCredential) {
+            return new CognitiveTokenAuthentication(
+                async (): Promise<string> => {
+                    const tokenResponse = await tokenCredential.getToken("https://cognitiveservices.azure.com/.default");
+                    console.log("Fetched token xitzhang (first):", tokenResponse?.token);
+                    return tokenResponse?.token ?? "";
+                },
+                async (): Promise<string> => {
+                    const tokenResponse = await tokenCredential.getToken("https://cognitiveservices.azure.com/.default");
+                    console.log("Fetched token xitzhang (second):", tokenResponse?.token);
+                    return tokenResponse?.token ?? "";
+                }
+            );
+        }
+
+        return new CognitiveTokenAuthentication(
+            (): Promise<string> => {
+                const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
+                return Promise.resolve(authorizationToken);
+            },
+            (): Promise<string> => {
+                const authorizationToken = properties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
+                return Promise.resolve(authorizationToken);
+            }
+        );
     }
 }
