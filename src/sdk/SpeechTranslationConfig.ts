@@ -93,7 +93,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
      * @param {string} subscriptionKey - The subscription key. If a subscription key is not specified, an authorization token must be set.
      * @returns {SpeechConfig} A speech factory instance.
      */
-    public static fromHost(hostName: URL, subscriptionKey?: string): SpeechConfig {
+    public static fromHost(hostName: URL, subscriptionKey?: string): SpeechTranslationConfig {
         Contracts.throwIfNull(hostName, "hostName");
 
         const speechImpl: SpeechTranslationConfigImpl = new SpeechTranslationConfigImpl();

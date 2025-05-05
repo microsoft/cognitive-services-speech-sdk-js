@@ -89,6 +89,7 @@ export class WebsocketMessageAdapter {
 
         // Add the connection ID to the headers
         this.privHeaders[HeaderNames.ConnectionId] = this.privConnectionId;
+        this.privHeaders.connectionId = this.privConnectionId;
 
         this.privLastErrorReceived = "";
         this.promiseRedirectUri = this.resolveWebSocketRedirect(this.privUri);
@@ -338,7 +339,7 @@ export class WebsocketMessageAdapter {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private getAgent(): http.Agent {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo } ;
+        const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo };
 
         if (this.proxyInfo !== undefined &&
             this.proxyInfo.HostName !== undefined &&

@@ -167,9 +167,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (this.privEnableSpeakerId) {
             this.privDiarizationSessionId = createNoDashGuid();
         }
-
-        this.setLanguageIdJson();
-        this.setOutputDetailLevelJson();
     }
 
     protected setTranslationJson(): void {
@@ -177,12 +174,24 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (targetLanguages !== undefined) {
             const languages = targetLanguages.split(",");
             const translationVoice: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
+            const categoryId: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationCategoryId, undefined);
+
             const action = (translationVoice !== undefined) ? NextTranslationAction.Synthesize : NextTranslationAction.None;
+
             this.privSpeechContext.getContext().translation = {
+                onPassthrough: { action },  // Add onPassthrough with same action
                 onSuccess: { action },
-                output: { interimResults: { mode: Mode.Always } },
+                output: {
+                    includePassThroughResults: true,  // Explicitly set pass-through results
+                    interimResults: { mode: Mode.Always }
+                },
                 targetLanguages: languages,
             };
+
+            // Add category if specified
+            if (categoryId !== undefined) {
+                this.privSpeechContext.getContext().translation.category = categoryId;
+            }
 
             if (translationVoice !== undefined) {
                 const languageToVoiceMap: { [key: string]: string } = {};
@@ -193,6 +202,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     defaultVoices: languageToVoiceMap
                 };
             }
+
+            // Configure phrase detection for translation
+            const phraseDetection = this.privSpeechContext.getContext().phraseDetection || {};
+            phraseDetection.onSuccess = { action: NextPhraseDetectionAction.Translate };
+            phraseDetection.onInterim = { action: NextPhraseDetectionAction.Translate };
+            this.privSpeechContext.getContext().phraseDetection = phraseDetection;
         }
     }
 
@@ -301,19 +316,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 phraseDetection.onSuccess = { action: NextPhraseDetectionAction.None };
             }
         }
-        const targetLanguages: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined);
-        if (targetLanguages !== undefined) {
-            phraseDetection.onInterim = { action: NextPhraseDetectionAction.Translate };
-            phraseDetection.onSuccess = { action: NextPhraseDetectionAction.Translate };
-            this.privSpeechContext.getContext().phraseOutput = {
-                interimResults: {
-                    resultType: ResultType.None
-                },
-                phraseResults: {
-                    resultType: PhraseResultOutputType.None
-                }
-            };
-        }
+        // No longer setting translation-specific configuration here
+        // This is now handled in setTranslationJson and setupTranslationWithLanguageId methods
 
         this.privSpeechContext.getContext().phraseDetection = phraseDetection;
     }
@@ -370,9 +374,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public async dispose(reason?: string): Promise<void> {
         this.privIsDisposed = true;
-        if (this.privConnectionConfigurationPromise !== undefined) {
+        if (this.privConnectionPromise !== undefined) {
             try {
-                const connection: IConnection = await this.privConnectionConfigurationPromise;
+                const connection: IConnection = await this.privConnectionPromise;
                 await connection.dispose(reason);
             } catch (error) {
                 // The connection is in a bad state. But we're trying to kill it, so...
@@ -410,8 +414,21 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         // Clear the existing configuration promise to force a re-transmission of config and context.
         this.privConnectionConfigurationPromise = undefined;
         this.privRecognizerConfig.recognitionMode = recoMode;
-        this.setSpeechSegmentationTimeoutJson();
+
+        // Set language ID (if configured)
+        this.setLanguageIdJson();
+
+        // Then set translation (if configured)
         this.setTranslationJson();
+
+        // Configure the integration between language ID and translation (if both are used)
+        if (this.privRecognizerConfig.autoDetectSourceLanguages !== undefined &&
+            this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined) !== undefined) {
+            this.setupTranslationWithLanguageId();
+        }
+
+        this.setSpeechSegmentationTimeoutJson();
+        this.setOutputDetailLevelJson();
 
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallBack;
@@ -724,6 +741,43 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected sendPrePayloadJSONOverride: (connection: IConnection) => Promise<void> = undefined;
+
+    protected setupTranslationWithLanguageId(): void {
+        const targetLanguages: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, undefined);
+        const hasLanguageId = this.privRecognizerConfig.autoDetectSourceLanguages !== undefined;
+
+        if (targetLanguages !== undefined && hasLanguageId) {
+            // Configure phraseOutput for translation + language ID scenario
+            this.privSpeechContext.getContext().phraseOutput = {
+                interimResults: {
+                    resultType: ResultType.None
+                },
+                phraseResults: {
+                    resultType: PhraseResultOutputType.None
+                }
+            };
+
+            // Handle custom language models and voice mapping
+            const translationContext = this.privSpeechContext.getContext().translation;
+            if (translationContext) {
+                const customModels = this.privRecognizerConfig.sourceLanguageModels;
+                if (customModels !== undefined && customModels.length > 0) {
+                    const phraseDetection = this.privSpeechContext.getContext().phraseDetection || {};
+                    phraseDetection.customModels = customModels;
+                    this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+                }
+
+                const translationVoice = this.privRecognizerConfig.parameters.getProperty(
+                    PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
+
+                if (translationVoice !== undefined) {
+                    // Update translation actions for synthesis
+                    translationContext.onSuccess = { action: NextTranslationAction.Synthesize };
+                    translationContext.onPassthrough = { action: NextTranslationAction.Synthesize };
+                }
+            }
+        }
+    }
 
     protected noOp(): Promise<void> {
         // operation not supported
