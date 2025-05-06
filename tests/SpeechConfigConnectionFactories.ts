@@ -91,11 +91,7 @@ export class SpeechConfigConnectionFactory {
 
             case SpeechConnectionType.LegacyEntraIdTokenAuth:
                 const aadToken = await this.getAadToken(
-<<<<<<< HEAD
-                    SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION
-=======
                     SubscriptionsRegionsKeys.AAD_SPEECH_CLIENT_SECRET
->>>>>>> 330e184 (Add tests for various connection types to TranslationRecognizer, SpechSynthsizer, SpeechRecognizer and LID. (#905))
                 );
                 return this.buildAuthorizationConfig<T>(
                     aadToken,
@@ -138,12 +134,9 @@ export class SpeechConfigConnectionFactory {
             case SpeechConnectionType.LegacyPrivateLinkWithKeyAuth:
                 return this.buildLegacyPrivateLinkWithKeyConfig<T>(isTranslationConfig, serviceType);
 
-<<<<<<< HEAD
-=======
             case SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth:
                 return this.buildLegacyPrivateLinkEndpointWithEntraId<T>(isTranslationConfig, serviceType);
 
->>>>>>> 330e184 (Add tests for various connection types to TranslationRecognizer, SpechSynthsizer, SpeechRecognizer and LID. (#905))
             default:
                 throw new Error(`Unsupported connection type: ${SpeechConnectionType[connectionType]}`);
         }
@@ -426,8 +419,6 @@ export class SpeechConfigConnectionFactory {
         const pathSuffix = this.getPrivateLinkPathSuffix(serviceType);
         return this.buildPrivateLinkWithKeyConfig<T>(pathSuffix, isTranslationConfig);
     }
-<<<<<<< HEAD
-=======
     /**
      * Builds a private link endpoint with Entra ID token.
      */
@@ -460,7 +451,6 @@ export class SpeechConfigConnectionFactory {
 
         return config;
     }
->>>>>>> 330e184 (Add tests for various connection types to TranslationRecognizer, SpechSynthsizer, SpeechRecognizer and LID. (#905))
 
     /**
      * Builds a private link endpoint with Cognitive Services token.
@@ -541,19 +531,11 @@ export class SpeechConfigConnectionFactory {
     private static getPrivateLinkPathSuffix(serviceType: SpeechServiceType): string {
         switch (serviceType) {
             case SpeechServiceType.TextToSpeech:
-<<<<<<< HEAD
-                return "/tts/speech";
-            case SpeechServiceType.SpeechRecognition:
-            case SpeechServiceType.LanguageIdentification:
-            default:
-                return "/stt/speech";
-=======
                 return "/tts/cognitiveservices/websocket/v1";
             case SpeechServiceType.SpeechRecognition:
             case SpeechServiceType.LanguageIdentification:
             default:
                 return "/stt/speech/universal/v2";
->>>>>>> 330e184 (Add tests for various connection types to TranslationRecognizer, SpechSynthsizer, SpeechRecognizer and LID. (#905))
         }
     }
 

@@ -293,11 +293,7 @@ test("BadWavFileProducesError", async (): Promise<void> => {
 
     r.recognizeOnceAsync((): void => {
         done.reject("Should not have been able to process the file");
-<<<<<<< HEAD
-     }, (error: string): void => {
-=======
     }, (error: string): void => {
->>>>>>> 330e184 (Add tests for various connection types to TranslationRecognizer, SpechSynthsizer, SpeechRecognizer and LID. (#905))
         try {
             console.info("Error: " + error);
             expect(error).not.toBeUndefined();
@@ -906,22 +902,6 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     // session events are first and last event
                     const LAST_RECORDED_EVENT_ID: number = --eventIdentifier;
                     expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
-<<<<<<< HEAD
-
-                    expect(SessionStartedEvent in eventsMap).toEqual(true);
-
-                    expect(eventsMap[SessionStartedEvent]).toEqual(FIRST_EVENT_ID);
-
-                    expect(SessionStoppedEvent in eventsMap).toEqual(true);
-                    expect(LAST_RECORDED_EVENT_ID).toEqual(eventsMap[SessionStoppedEvent]);
-
-                    // end events come after start events.
-                    if (SessionStoppedEvent in eventsMap) {
-                        expect(eventsMap[SessionStartedEvent])
-                            .toBeLessThan(eventsMap[SessionStoppedEvent]);
-                    }
-
-=======
                     expect(SessionStartedEvent in eventsMap).toEqual(true);
                     expect(eventsMap[SessionStartedEvent]).toEqual(FIRST_EVENT_ID);
                     expect(SessionStoppedEvent in eventsMap).toEqual(true);
@@ -933,20 +913,14 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                             .toBeLessThan(eventsMap[SessionStoppedEvent]);
                     }
 
->>>>>>> 330e184 (Add tests for various connection types to TranslationRecognizer, SpechSynthsizer, SpeechRecognizer and LID. (#905))
                     expect(eventsMap[SpeechStartDetectedEvent])
                         .toBeLessThan(eventsMap[SpeechEndDetectedEvent]);
                     expect((FIRST_EVENT_ID + 1)).toEqual(eventsMap[SpeechStartDetectedEvent]);
 
                     // make sure, first end of speech, then final result
                     expect((LAST_RECORDED_EVENT_ID - 1)).toEqual(eventsMap[Canceled]);
-<<<<<<< HEAD
-                    expect((LAST_RECORDED_EVENT_ID - 2)).toEqual(eventsMap[SpeechEndDetectedEvent]);
-                    expect((LAST_RECORDED_EVENT_ID - 3)).toEqual(eventsMap[Recognized]);
-=======
                     expect((LAST_RECORDED_EVENT_ID - 3)).toEqual(eventsMap[Recognized]);
                     expect((LAST_RECORDED_EVENT_ID - 2)).toEqual(eventsMap[SpeechEndDetectedEvent]);
->>>>>>> 330e184 (Add tests for various connection types to TranslationRecognizer, SpechSynthsizer, SpeechRecognizer and LID. (#905))
 
                     // recognition events come after session start but before session end events
                     expect(eventsMap[SessionStartedEvent])
