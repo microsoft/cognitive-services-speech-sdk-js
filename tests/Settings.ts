@@ -136,9 +136,11 @@ export class Settings {
             if (unifiedSpeechSub) {
                 Settings.SpeechSubscriptionKey = unifiedSpeechSub.Key;
                 Settings.SpeechRegion = unifiedSpeechSub.Region;
+                /* Skip for now until endpoing is fully supported
                 if (unifiedSpeechSub.Endpoint) {
                     Settings.SpeechEndpoint = unifiedSpeechSub.Endpoint;
                 }
+                */
             }
 
             // Load the LUIS subscription
