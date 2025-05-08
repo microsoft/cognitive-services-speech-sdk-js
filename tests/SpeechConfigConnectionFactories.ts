@@ -507,11 +507,16 @@ export class SpeechConfigConnectionFactory {
         endpoint: string,
         isTranslationConfig: boolean
     ): T {
+
+        let config: T;
+
         if (isTranslationConfig) {
-            return sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
+            config = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
         } else {
-            return sdk.SpeechConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
+            config = sdk.SpeechConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
         }
+
+        return config;
     }
 
     /**

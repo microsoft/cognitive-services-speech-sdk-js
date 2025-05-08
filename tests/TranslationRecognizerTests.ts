@@ -379,9 +379,15 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
 
     describe.each([
         SpeechConnectionType.Subscription,
+        SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+        // SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
+        // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,
         SpeechConnectionType.LegacyEntraIdTokenAuth,
         SpeechConnectionType.CloudFromHost,
+        SpeechConnectionType.PrivateLinkWithKeyAuth,
+        // SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth,
+        // SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
         SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth
     ])("Translation Recognition Connection Tests", (connectionType: SpeechConnectionType): void => {

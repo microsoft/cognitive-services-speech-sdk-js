@@ -689,7 +689,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
     describe.each([
         SpeechConnectionType.Subscription,
-        // SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+        SpeechConnectionType.CloudFromEndpointWithKeyAuth,
         // SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
         // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,
@@ -697,7 +697,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         SpeechConnectionType.CloudFromHost,
         SpeechConnectionType.ContainerFromHost,
         // SpeechConnectionType.ContainerFromEndpoint,
-        // SpeechConnectionType.PrivateLinkWithKeyAuth,
+        SpeechConnectionType.PrivateLinkWithKeyAuth,
         // SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth,
         // SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,

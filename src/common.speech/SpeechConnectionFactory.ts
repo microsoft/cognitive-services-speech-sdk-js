@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { get } from "request";
 import {
     ProxyInfo,
     WebsocketConnection,
@@ -10,6 +11,8 @@ import {
     OutputFormatPropertyName,
 } from "../common.speech/Exports.js";
 import {
+    ConnectionRedirectEvent,
+    Events,
     IConnection,
     IStringDictionary
 } from "../common/Exports.js";
@@ -36,12 +39,12 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
     private readonly interactiveRelativeUri: string = "/speech/recognition/interactive/cognitiveservices/v1";
     private readonly conversationRelativeUri: string = "/speech/recognition/conversation/cognitiveservices/v1";
     private readonly dictationRelativeUri: string = "/speech/recognition/dictation/cognitiveservices/v1";
-    private readonly universalUri: string = "/speech/universal/v";
+    private readonly universalUri: string = "/stt/speech/universal/v";
 
-    public create(
+    public async create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection {
+        connectionId?: string): Promise<IConnection> {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
@@ -70,6 +73,18 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         }
 
         this.setCommonUrlParams(config, queryParams, endpoint);
+
+        if (!!endpoint) {
+            const endpointUrl = new URL(endpoint);
+            const pathName = endpointUrl.pathname;
+
+            if (pathName === "" || pathName === "/") {
+                // We need to generate the path, and we need to check for a redirect.
+                endpointUrl.pathname = this.universalUri + config.recognitionEndpointVersion;
+
+                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString());
+            }
+        }
 
         if (!endpoint) {
             switch (config.recognitionMode) {
@@ -115,4 +130,7 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
 
         return webSocketConnection;
     }
+
+
 }
+

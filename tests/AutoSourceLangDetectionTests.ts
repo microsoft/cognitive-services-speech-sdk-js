@@ -840,10 +840,15 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 // Add multi-connection tests using connection types
 describe.each([
     SpeechConnectionType.Subscription,
+    SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+    // SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
+    // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
     SpeechConnectionType.LegacyCogSvcsTokenAuth,
     SpeechConnectionType.LegacyEntraIdTokenAuth,
     SpeechConnectionType.CloudFromHost,
-    // SpeechConnectionType.ContainerFromHost,
+    SpeechConnectionType.PrivateLinkWithKeyAuth,
+    // SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth,
+    // SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
     SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
     SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth
 ])("Language Detection Connection Tests", (connectionType: SpeechConnectionType): void => {

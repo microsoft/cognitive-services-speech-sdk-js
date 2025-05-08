@@ -6,6 +6,8 @@ import {
     WebsocketConnection,
 } from "../common.browser/Exports.js";
 import {
+    ConnectionRedirectEvent,
+    Events,
     IConnection,
     IStringDictionary,
 } from "../common/Exports.js";
@@ -27,20 +29,32 @@ import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetecti
 
 export class TranslationConnectionFactory extends ConnectionFactoryBase {
 
-    private readonly universalUri: string = "/speech/universal/v2";
+    private readonly universalUri: string = "/stt/speech/universal/v2";
     private readonly translationV1Uri: string = "/speech/translation/cognitiveservices/v1";
 
-    public create(
+    public async create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection {
+        connectionId?: string): Promise<IConnection> {
 
-        const endpoint: string = this.getEndpointUrl(config);
+        let endpoint: string = this.getEndpointUrl(config);
 
         const queryParams: IStringDictionary<string> = {};
 
         // Determine if we're using V1 or V2 endpoint
         this.setQueryParams(queryParams, config, endpoint);
+
+        if (!!endpoint) {
+            const endpointUrl = new URL(endpoint);
+            const pathName = endpointUrl.pathname;
+
+            if (pathName === "" || pathName === "/") {
+                // We need to generate the path, and we need to check for a redirect.
+                endpointUrl.pathname = this.universalUri;
+
+                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString());
+            }
+        }
 
         const headers: IStringDictionary<string> = {};
         if (authInfo.token !== undefined && authInfo.token !== "") {
@@ -51,7 +65,9 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+        const webSocketConnection = new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+
+        return webSocketConnection;
     }
 
     public getEndpointUrl(config: RecognizerConfig, returnRegionPlaceholder?: boolean): string {

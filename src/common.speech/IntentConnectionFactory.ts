@@ -27,7 +27,7 @@ export class IntentConnectionFactory extends ConnectionFactoryBase {
     public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection {
+        connectionId?: string): Promise<IConnection> {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
         if (!endpoint) {
@@ -53,7 +53,7 @@ export class IntentConnectionFactory extends ConnectionFactoryBase {
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+        return Promise.resolve(new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId));
     }
 
     private getSpeechRegionFromIntentRegion(intentRegion: string): string {

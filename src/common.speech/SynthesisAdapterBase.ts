@@ -452,7 +452,7 @@ export abstract class SynthesisAdapterBase implements IDisposable {
         this.privConnectionPromise = authPromise.then(async (result: AuthInfo): Promise<IConnection> => {
             this.privSynthesisTurn.onAuthCompleted(false);
 
-            const connection: IConnection = this.privConnectionFactory.create(this.privSynthesizerConfig, result, this.privConnectionId);
+            const connection: IConnection = await this.privConnectionFactory.create(this.privSynthesizerConfig, result, this.privConnectionId);
 
             // Attach to the underlying event. No need to hold onto the detach pointers as in the event the connection goes away,
             // it'll stop sending events.
