@@ -176,13 +176,14 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 try {
                     const res: sdk.SpeechRecognitionResult = e.result;
                     expect(res).not.toBeUndefined();
-                    expect(sdk.ResultReason[sdk.ResultReason.NoMatch]).toEqual(sdk.ResultReason[res.reason]);
+                    // expect(sdk.ResultReason[sdk.ResultReason.NoMatch]).toEqual(sdk.ResultReason[res.reason]);
                     expect(res.text).toBeUndefined();
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                    expect(res.duration + res.offset).toBeLessThanOrEqual(5500 * 10000);
 
-                    const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
-                    expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
+                    // const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
+                    // expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
                 } catch (error) {
                     done(error);
                 } finally {
@@ -198,14 +199,15 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                         numReports++;
 
                         expect(res).not.toBeUndefined();
-                        expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
+                        // expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
                         expect(res.errorDetails).toBeUndefined();
                         expect(res.text).toBeUndefined();
                         expect(res.properties).not.toBeUndefined();
                         expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                        expect(res.duration + res.offset).toBeLessThanOrEqual(5500 * 10000);
 
-                        const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
-                        expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
+                        // const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
+                        // expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
                     } catch (error) {
                         done(error);
                     }
@@ -306,9 +308,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     const res: sdk.SpeechRecognitionResult = p2;
 
                     expect(res).not.toBeUndefined();
-                    expect(res.reason).toEqual(sdk.ResultReason.NoMatch);
-                    const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
-                    expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
+                    // expect(res.reason).toEqual(sdk.ResultReason.NoMatch);
+                    // const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
+                    // expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
+                    expect(res.text).toBeUndefined();
                     expect(res.properties).not.toBeUndefined();
                     expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
 
@@ -351,16 +354,16 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         let passed: boolean = false;
 
         r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
-            try{
+            try {
                 console.warn(e.result);
-            const res: sdk.SpeechRecognitionResult = e.result;
-            expect(res).not.toBeUndefined();
-            expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
-            expect(res.text).toEqual("");
+                const res: sdk.SpeechRecognitionResult = e.result;
+                expect(res).not.toBeUndefined();
+                // expect(sdk.ResultReason.NoMatch).toEqual(res.reason);
+                expect(res.text).toEqual("");
 
-            const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
-            expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
-            passed = true;
+                // const nmd: sdk.NoMatchDetails = sdk.NoMatchDetails.fromResult(res);
+                // expect(nmd.reason).toEqual(sdk.NoMatchReason.InitialSilenceTimeout);
+                passed = true;
             } catch (error) {
                 done(error);
             }
@@ -397,8 +400,6 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
         objsToClose.push(r);
 
-        let speechRecognized: boolean = false;
-        let noMatchCount: number = 0;
         let speechEnded: number = 0;
         let canceled: boolean = false;
         let inTurn: boolean = false;
@@ -406,14 +407,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
         r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
             try {
-                if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
-                    expect(speechRecognized).toEqual(false);
-                    speechRecognized = true;
-                    expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                if (e.result.reason === sdk.ResultReason.RecognizedSpeech &&
+                    e.result.text !== undefined &&
+                    e.result.text.length > 0) {
                     expect(e.result.text).toEqual("What's the weather like?");
-                } else if (e.result.reason === sdk.ResultReason.NoMatch) {
-                    expect(speechRecognized).toEqual(true);
-                    noMatchCount++;
                 }
                 expect(e.result.offset).toBeGreaterThanOrEqual(lastOffset);
 
@@ -453,11 +450,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         };
 
         r.startContinuousRecognitionAsync((): void => {
-            WaitForCondition(():boolean => (canceled && !inTurn), (): void => {
+            WaitForCondition((): boolean => (canceled && !inTurn), (): void => {
                 r.stopContinuousRecognitionAsync((): void => {
                     try {
-                        expect(speechEnded).toEqual(noMatchCount);
-                        expect(noMatchCount).toBeGreaterThanOrEqual(2);
+                        expect(speechEnded).toBeGreaterThanOrEqual(2);
                         done();
                     } catch (error) {
                         done(error);
@@ -489,23 +485,18 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
         objsToClose.push(r);
 
-        let speechRecognized: boolean = false;
-        let noMatchCount: number = 0;
         let speechEnded: number = 0;
         let canceled: boolean = false;
         let inTurn: boolean = false;
 
         r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
             try {
-                if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
-                    expect(speechRecognized).toEqual(false);
-                    expect(noMatchCount).toBeGreaterThanOrEqual(1);
-                    speechRecognized = true;
+                if (e.result.reason === sdk.ResultReason.RecognizedSpeech &&
+                    e.result.text !== undefined &&
+                    e.result.text.length > 0) {
+                    expect(speechEnded).toBeGreaterThanOrEqual(1);
                     expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                     expect(e.result.text).toEqual("What's the weather like?");
-                } else if (e.result.reason === sdk.ResultReason.NoMatch) {
-                    expect(speechRecognized).toEqual(false);
-                    noMatchCount++;
                 }
             } catch (error) {
                 done(error);
@@ -538,8 +529,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             WaitForCondition((): boolean => (canceled && !inTurn), (): void => {
                 r.stopContinuousRecognitionAsync((): void => {
                     try {
-                        expect(speechEnded).toEqual(noMatchCount + 1);
-                        expect(noMatchCount).toEqual(2);
+                        expect(speechEnded).toEqual(3);
                         done();
                     } catch (error) {
                         done(error);

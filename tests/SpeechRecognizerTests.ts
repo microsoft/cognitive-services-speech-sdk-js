@@ -293,7 +293,7 @@ test("BadWavFileProducesError", async (): Promise<void> => {
 
     r.recognizeOnceAsync((): void => {
         done.reject("Should not have been able to process the file");
-     }, (error: string): void => {
+    }, (error: string): void => {
         try {
             console.info("Error: " + error);
             expect(error).not.toBeUndefined();
@@ -902,11 +902,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     // session events are first and last event
                     const LAST_RECORDED_EVENT_ID: number = --eventIdentifier;
                     expect(LAST_RECORDED_EVENT_ID).toBeGreaterThan(FIRST_EVENT_ID);
-
                     expect(SessionStartedEvent in eventsMap).toEqual(true);
-
                     expect(eventsMap[SessionStartedEvent]).toEqual(FIRST_EVENT_ID);
-
                     expect(SessionStoppedEvent in eventsMap).toEqual(true);
                     expect(LAST_RECORDED_EVENT_ID).toEqual(eventsMap[SessionStoppedEvent]);
 
@@ -922,8 +919,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
                     // make sure, first end of speech, then final result
                     expect((LAST_RECORDED_EVENT_ID - 1)).toEqual(eventsMap[Canceled]);
-                    expect((LAST_RECORDED_EVENT_ID - 2)).toEqual(eventsMap[SpeechEndDetectedEvent]);
                     expect((LAST_RECORDED_EVENT_ID - 3)).toEqual(eventsMap[Recognized]);
+                    expect((LAST_RECORDED_EVENT_ID - 2)).toEqual(eventsMap[SpeechEndDetectedEvent]);
 
                     // recognition events come after session start but before session end events
                     expect(eventsMap[SessionStartedEvent])
@@ -2042,8 +2039,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
-                expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
-                expect(e.errorDetails).toContain("1006");
+                expect(sdk.CancellationErrorCode[e.errorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.BadRequestParameters]);
+                expect(e.errorDetails).toContain("1007");
                 doneCount++;
             } catch (error) {
                 done.reject(error);
@@ -2054,8 +2051,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             try {
                 const e: sdk.CancellationDetails = sdk.CancellationDetails.fromResult(result);
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
-                expect(sdk.CancellationErrorCode[e.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.ConnectionFailure]);
-                expect(e.errorDetails).toContain("1006");
+                expect(sdk.CancellationErrorCode[e.ErrorCode]).toEqual(sdk.CancellationErrorCode[sdk.CancellationErrorCode.BadRequestParameters]);
+                expect(e.errorDetails).toContain("1007");
 
                 doneCount++;
             } catch (error) {
