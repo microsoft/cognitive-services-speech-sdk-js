@@ -17,6 +17,7 @@
 /* eslint-disable no-console */
 
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
+import { DefaultAzureCredential, AzurePipelinesCredential } from "@azure/identity";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { Events, EventType, PlatformEvent } from "../src/common/Exports";
 import { Settings } from "./Settings";
@@ -69,11 +70,13 @@ export const BuildTranscriberFromWaveFile: (speechConfig?: sdk.SpeechConfig, fil
     return r;
 };
 
-const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
+const BuildSpeechConfig = (useTokenCredential: boolean = false): sdk.SpeechConfig => {
 
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechEndpoint) {
         s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    } else if (useTokenCredential) {
+        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), new DefaultAzureCredential());
     } else {
         s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
         s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
@@ -237,6 +240,84 @@ describe.each([[true], [false]])("Checking intermediate diazatation", (intermedi
             });
     }, 45000);
 });
+
+test.skip("testTranscriptionWithAADTokenCredentialAsync", (done: jest.DoneCallback) => {
+    // eslint-disable-next-line no-console
+    console.info("Name: testTranscriptionWithAADTokenCredentialAsync");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfig(true);
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFileSingleChannel);
+    let bytesSent: number = 0;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start);
+
+                if (bytesSent === fileBuffer.byteLength) {
+                    p.close();
+                }
+
+                return (end - start);
+            },
+        });
+
+    const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(s, audio);
+    objsToClose.push(r);
+
+    let recoCount: number = 0;
+    let canceled: boolean = false;
+    let sessionId: string;
+
+    r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        sessionId = e.sessionId;
+    };
+
+    r.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
+        try {
+            // eslint-disable-next-line no-console
+            console.info("[Transcribed] SpeakerId: " + e.result.speakerId + " Text: " + e.result.text);
+            recoCount++;
+            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(e.result.properties).not.toBeUndefined();
+            expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+        } catch (error) {
+            done(error);
+        }
+    };
+
+    r.canceled = (o: sdk.ConversationTranscriber, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            canceled = true;
+            expect(e.errorDetails).toBeUndefined();
+            expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
+        } catch (error) {
+            done(error);
+        }
+    };
+
+    r.startTranscribingAsync(
+        () => WaitForCondition(() => (canceled), () => {
+            try {
+                done();
+            } catch (err) {
+                done(err);
+            }
+        }),
+        (err: string) => {
+            done(err);
+        });
+}, 45000);
 
 test("testTranscriptionFromPullStreamAsync", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console

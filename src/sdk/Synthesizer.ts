@@ -3,6 +3,7 @@
 
 /* eslint-disable max-classes-per-file */
 
+import { TokenCredential } from "@azure/core-auth";
 import {
     AutoDetectSourceLanguagesOpenRangeOptionName,
     CognitiveSubscriptionKeyAuthentication,
@@ -20,6 +21,7 @@ import { Contracts } from "./Contracts.js";
 import { PropertyCollection, PropertyId, SpeechConfig, SpeechConfigImpl, SpeechSynthesisResult } from "./Exports.js";
 
 export abstract class Synthesizer {
+    private tokenCredential?: TokenCredential;
     protected privAdapter: SynthesisAdapterBase;
     protected privRestAdapter: SynthesisRestAdapter;
     protected privProperties: PropertyCollection;
@@ -86,6 +88,7 @@ export abstract class Synthesizer {
         this.privDisposed = false;
         this.privSynthesizing = false;
         this.synthesisRequestQueue = new Queue<SynthesisRequest>();
+        this.tokenCredential = speechConfig.tokenCredential;
     }
 
     public buildSsml(text: string): string {
@@ -310,9 +313,28 @@ export abstract class Synthesizer {
                 new Context(new OS(osPlatform, osName, osVersion))));
 
         const subscriptionKey = this.privProperties.getProperty(PropertyId.SpeechServiceConnection_Key, undefined);
-        const authentication = (subscriptionKey && subscriptionKey !== "") ?
-            new CognitiveSubscriptionKeyAuthentication(subscriptionKey) :
-            new CognitiveTokenAuthentication(
+        const authentication = (subscriptionKey && subscriptionKey !== "")
+        ? new CognitiveSubscriptionKeyAuthentication(subscriptionKey)
+        : (this.tokenCredential)
+            ? new CognitiveTokenAuthentication(
+                async (): Promise<string> => {
+                    try {
+                        const tokenResponse = await this.tokenCredential.getToken("https://cognitiveservices.azure.com/.default");
+                        return tokenResponse?.token ?? "";
+                    } catch (err) {
+                        throw err;
+                    }
+                },
+                async (): Promise<string> => {
+                    try {
+                        const tokenResponse = await this.tokenCredential.getToken("https://cognitiveservices.azure.com/.default");
+                        return tokenResponse?.token ?? "";
+                    } catch (err) {
+                        throw err;
+                    }
+                }
+            )
+            : new CognitiveTokenAuthentication(
                 (): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return Promise.resolve(authorizationToken);
@@ -320,7 +342,8 @@ export abstract class Synthesizer {
                 (): Promise<string> => {
                     const authorizationToken = this.privProperties.getProperty(PropertyId.SpeechServiceAuthorization_Token, undefined);
                     return Promise.resolve(authorizationToken);
-                });
+                }
+            );
 
         this.privAdapter = this.createSynthesisAdapter(
             authentication,

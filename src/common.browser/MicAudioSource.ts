@@ -33,12 +33,8 @@ import {
 } from "../sdk/Audio/AudioStreamFormat.js";
 import { IRecorder } from "./IRecorder.js";
 
-// Extending the default definition with browser specific definitions for backward compatibility
-interface INavigator extends Navigator {
-    webkitGetUserMedia: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback | undefined, errorCallback: NavigatorUserMediaErrorCallback) => void;
-    mozGetUserMedia: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback | undefined, errorCallback: NavigatorUserMediaErrorCallback) => void;
-    msGetUserMedia: (constraints: MediaStreamConstraints, successCallback: NavigatorUserMediaSuccessCallback, errorCallback: NavigatorUserMediaErrorCallback) => void;
-}
+type NavigatorUserMediaSuccessCallback = (stream: MediaStream) => void;
+type NavigatorUserMediaErrorCallback = (error: DOMException) => void;
 
 export const AudioWorkletSourceURLPropertyName = "MICROPHONE-WorkletSourceUrl";
 
@@ -101,7 +97,29 @@ export class MicAudioSource implements IAudioSource {
             return this.privInitializeDeferral.promise;
         }
 
-        const nav = window.navigator as INavigator;
+        const nav = window.navigator as unknown as {
+            webkitGetUserMedia?: (
+                constraints: MediaStreamConstraints,
+                successCallback: (stream: MediaStream) => void,
+                errorCallback: (error: any) => void
+            ) => void;
+            mozGetUserMedia?: (
+                constraints: MediaStreamConstraints,
+                successCallback: (stream: MediaStream) => void,
+                errorCallback: (error: any) => void
+            ) => void;
+            msGetUserMedia?: (
+                constraints: MediaStreamConstraints,
+                successCallback: (stream: MediaStream) => void,
+                errorCallback: (error: any) => void
+            ) => void;
+            getUserMedia?: (
+                constraints: MediaStreamConstraints,
+                successCallback: (stream: MediaStream) => void,
+                errorCallback: (error: any) => void
+            ) => void;
+            mediaDevices?: MediaDevices;
+        };
 
         let getUserMedia = (
             // eslint-disable-next-line
