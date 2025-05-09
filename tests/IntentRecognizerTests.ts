@@ -348,7 +348,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
             try {
                 const res: sdk.IntentRecognitionResult = e.result;
                 expect(res).not.toBeUndefined();
-                expect(res.reason).toEqual(sdk.ResultReason.RecognizedIntent);
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedIntent]);
                 expect(res.intentId).toEqual(Settings.LuisValidIntentId);
                 expect(res.properties).not.toBeUndefined();
                 expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
@@ -397,7 +397,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
                 const res: sdk.IntentRecognitionResult = p2;
                 expect(res).not.toBeUndefined();
                 expect(res.errorDetails).toBeUndefined();
-                expect(res.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
                 expect(res.intentId).toBeUndefined();
                 expect(res.properties).not.toBeUndefined();
                 expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();

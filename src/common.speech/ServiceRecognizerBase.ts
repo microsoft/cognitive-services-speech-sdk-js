@@ -415,6 +415,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privConnectionConfigurationPromise = undefined;
         this.privRecognizerConfig.recognitionMode = recoMode;
 
+        if (this.privRecognizerConfig.recognitionEndpointVersion === "2") {
+            const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+            phraseDetection.mode = recoMode;
+            this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+        }
+
         // Set language ID (if configured)
         this.setLanguageIdJson();
 

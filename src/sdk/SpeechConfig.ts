@@ -8,8 +8,8 @@ import {
     OutputFormatPropertyName,
     ServicePropertiesPropertyName
 } from "../common.speech/Exports.js";
-import {IStringDictionary} from "../common/Exports.js";
-import {Contracts} from "./Contracts.js";
+import { IStringDictionary } from "../common/Exports.js";
+import { Contracts } from "./Contracts.js";
 import {
     OutputFormat,
     ProfanityOption,
@@ -146,6 +146,9 @@ export abstract class SpeechConfig {
 
         const speechImpl: SpeechConfigImpl = new SpeechConfigImpl();
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Host, hostName.protocol + "//" + hostName.hostname + (hostName.port === "" ? "" : ":" + hostName.port));
+
+        // Containers do not yet have /stt/speech/universal/v2 routes.
+        speechImpl.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "1");
 
         if (undefined !== subscriptionKey) {
             speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
