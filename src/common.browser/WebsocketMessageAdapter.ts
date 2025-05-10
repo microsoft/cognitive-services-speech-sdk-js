@@ -22,6 +22,7 @@ import {
     ConnectionMessageReceivedEvent,
     ConnectionMessageSentEvent,
     ConnectionOpenResponse,
+    ConnectionRedirectEvent,
     ConnectionStartEvent,
     ConnectionState,
     Deferred,
@@ -118,7 +119,7 @@ export class WebsocketMessageAdapter {
 
                 this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
-                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression };
+                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression, followRedirects: true };
                 // The ocsp library will handle validation for us and fail the connection if needed.
                 this.privCertificateValidatedDeferral.resolve();
 
@@ -133,9 +134,14 @@ export class WebsocketMessageAdapter {
                 } else if (protocol?.toLocaleLowerCase() === "ws:") {
                     protocol = "http:";
                 }
+
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 (options.agent as any).protocol = protocol;
                 this.privWebsocketClient = new ws(this.privUri, options);
+                this.privWebsocketClient.on("redirect", (redirectUrl: string): void => {
+                    const event: ConnectionRedirectEvent = new ConnectionRedirectEvent(this.privConnectionId, redirectUrl, this.privUri, `Getting redirect URL from endpoint ${this.privUri} with redirect URL '${redirectUrl}'`);
+                    Events.instance.onEvent(event);
+                });
             }
 
             this.privWebsocketClient.binaryType = "arraybuffer";
@@ -341,7 +347,7 @@ export class WebsocketMessageAdapter {
         return agent as unknown as http.Agent;
     }
 
-    private static GetProxyAgent(proxyInfo: ProxyInfo): HttpsProxyAgent {
+    public static GetProxyAgent(proxyInfo: ProxyInfo): HttpsProxyAgent {
         const httpProxyOptions: HttpsProxyAgent.HttpsProxyAgentOptions = {
             host: proxyInfo.HostName,
             port: proxyInfo.Port,

@@ -42,7 +42,7 @@ module.exports = {
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "jsdom",
             collectCoverage: false,
-            setupFilesAfterEnv: [configFile],
+            setupFilesAfterEnv: [configFile, './jest.setup.js'],
             testTimeout : 20000,
             globals: {
                 'ts-jest': {
@@ -77,7 +77,7 @@ module.exports = {
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "node",
             collectCoverage: false,
-            setupFilesAfterEnv: [configFile],
+            setupFilesAfterEnv: [configFile, './jest.setup.js'],
             testTimeout : 30000,
             globals: {
                 'ts-jest': {

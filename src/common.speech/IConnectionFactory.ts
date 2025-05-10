@@ -9,5 +9,5 @@ export interface IConnectionFactory {
     create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection;
+        connectionId?: string): Promise<IConnection>;
 }

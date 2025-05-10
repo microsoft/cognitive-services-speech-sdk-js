@@ -48,7 +48,7 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
         this.privConvGetter = convGetter;
     }
 
-    public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
+    public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): Promise<IConnection> {
         const isVirtMicArrayEndpoint = config.parameters.getProperty("ConversationTranslator_MultiChannelAudio", "").toUpperCase() === "TRUE";
 
         const convInfo = this.privConvGetter().room;
@@ -126,6 +126,6 @@ export class ConversationTranslatorConnectionFactory extends ConnectionFactoryBa
         }
 
         const enableCompression = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "").toUpperCase() === "TRUE";
-        return new WebsocketConnection(endpointUrl, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+        return Promise.resolve(new WebsocketConnection(endpointUrl, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId));
     }
 }

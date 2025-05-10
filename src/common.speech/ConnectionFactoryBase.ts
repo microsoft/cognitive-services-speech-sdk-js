@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { ProxyInfo } from "../common.browser/ProxyInfo.js";
 import {
     ServicePropertiesPropertyName,
 } from "../common.speech/Exports.js";
-import { IConnection, IStringDictionary } from "../common/Exports.js";
+import { ConnectionRedirectEvent, Events, IConnection, IStringDictionary } from "../common/Exports.js";
 import { PropertyId } from "../sdk/Exports.js";
 import { AuthInfo, IConnectionFactory, RecognizerConfig } from "./Exports.js";
 import { QueryParameterNames } from "./QueryParameterNames.js";
@@ -26,7 +27,7 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
     public abstract create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection;
+        connectionId?: string): Promise<IConnection>;
 
     protected setCommonUrlParams(
         config: RecognizerConfig,
@@ -69,6 +70,43 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
         //        including e.g. the path portion, or even as a substring of other query parameters
         if (value && (!endpoint || endpoint.search(parameterName) === -1)) {
             queryParams[parameterName] = value.toLocaleLowerCase();
+        }
+    }
+
+    public static async getRedirectUrlFromEndpoint(endpoint: string): Promise<string> {
+
+        let redirectUrlString: string;
+
+        if (typeof window !== "undefined" && typeof window.fetch !== "undefined") {
+            // make a rest call to the endpoint to get the redirect url
+            const redirectUrl: URL = new URL(endpoint);
+            redirectUrl.protocol = "https:";
+            redirectUrl.port = "443";
+            const params: URLSearchParams = redirectUrl.searchParams;
+            params.append("GenerateRedirectResponse", "true");
+
+            const redirectedUrlString: string = redirectUrl.toString();
+            Events.instance.onEvent(new ConnectionRedirectEvent("", redirectedUrlString, undefined, "ConnectionFactoryBase: redirectUrl request"));
+
+            const redirectResponse: Response = await fetch(redirectedUrlString);
+
+            if (redirectResponse.status !== 200) {
+                return endpoint;
+            }
+
+            // Fix: properly read the response text
+            redirectUrlString = await redirectResponse.text();
+        } else {
+            redirectUrlString = endpoint;
+        }
+
+        Events.instance.onEvent(new ConnectionRedirectEvent("", redirectUrlString, endpoint, "ConnectionFactoryBase: redirectUrlString"));
+
+        try {
+            // Validate the URL before returning
+            return new URL(redirectUrlString.trim()).toString();
+        } catch (error) {
+            return endpoint; // Return original endpoint if the redirect URL is invalid
         }
     }
 

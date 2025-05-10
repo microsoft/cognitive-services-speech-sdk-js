@@ -6,6 +6,8 @@ import {
     WebsocketConnection
 } from "../common.browser/Exports.js";
 import {
+    ConnectionRedirectEvent,
+    Events,
     IConnection,
     IStringDictionary
 } from "../common/Exports.js";
@@ -24,12 +26,12 @@ import {
 
 export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFactory {
 
-    private readonly synthesisUri: string = "/cognitiveservices/websocket/v1";
+    private readonly synthesisUri: string = "/tts/cognitiveservices/websocket/v1";
 
-    public create(
+    public async create(
         config: SynthesizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection {
+        connectionId?: string): Promise<IConnection> {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
@@ -54,6 +56,18 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
         if (config.avatarEnabled) {
             if (!endpoint || endpoint.search(QueryParameterNames.EnableAvatar) === -1) {
                 queryParams[QueryParameterNames.EnableAvatar] = "true";
+            }
+        }
+
+        if (!!endpoint) {
+            const endpointUrl = new URL(endpoint);
+            const pathName = endpointUrl.pathname;
+
+            if (pathName === "" || pathName === "/") {
+                // We need to generate the path, and we need to check for a redirect.
+                endpointUrl.pathname = this.synthesisUri;
+
+                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString());
             }
         }
 

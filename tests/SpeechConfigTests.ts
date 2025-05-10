@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { log } from "console";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener,
@@ -895,7 +896,7 @@ describe("Connection URL Tests", (): void => {
                 });
             });
 
-    test("enableDictation (Speech)", (done: jest.DoneCallback): void => {
+    test.only("enableDictation (Speech)", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: enableDictation");
 
@@ -911,6 +912,7 @@ describe("Connection URL Tests", (): void => {
             onEvent: (event: PlatformEvent): void => {
                 if (event instanceof ConnectionStartEvent) {
                     const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
+                    console.info(`ConnectionStartEvent: ${connectionEvent.uri}`);
                     uri = connectionEvent.uri;
                 }
             },

@@ -9,5 +9,5 @@ export interface ISynthesisConnectionFactory {
     create(
         config: SynthesizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection;
+        connectionId?: string): Promise<IConnection>;
 }

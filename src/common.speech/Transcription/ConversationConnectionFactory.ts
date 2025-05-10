@@ -14,9 +14,9 @@ import { ConversationWebsocketMessageFormatter } from "./ConversationWebsocketMe
  * Create a connection to the Conversation Translator websocket for sending instant messages and commands, and for receiving translated messages.
  * The conversation must already have been started or joined.
  */
-export class ConversationConnectionFactory extends ConnectionFactoryBase  {
+export class ConversationConnectionFactory extends ConnectionFactoryBase {
 
-    public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
+    public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): Promise<IConnection> {
 
         const endpointHost: string = config.parameters.getProperty(PropertyId.ConversationTranslator_Host, ConversationConnectionConfig.host);
         const correlationId: string = config.parameters.getProperty(PropertyId.ConversationTranslator_CorrelationId, createGuid());
@@ -30,7 +30,7 @@ export class ConversationConnectionFactory extends ConnectionFactoryBase  {
         queryParams[ConversationConnectionConfig.configParams.token] = token;
         queryParams[ConversationConnectionConfig.configParams.correlationId] = correlationId;
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, {}, new ConversationWebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+        return Promise.resolve(new WebsocketConnection(endpoint, queryParams, {}, new ConversationWebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId));
     }
 
 }

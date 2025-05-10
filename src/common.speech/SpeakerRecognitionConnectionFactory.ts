@@ -30,7 +30,7 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
         config: RecognizerConfig,
         authInfo: AuthInfo,
         endpointPath: string,
-        connectionId?: string): IConnection {
+        connectionId?: string): Promise<IConnection> {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint);
         if (!endpoint) {
@@ -58,7 +58,7 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
         config.parameters.setProperty(PropertyId.SpeechServiceConnection_Url, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+        return Promise.resolve(new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId));
     }
 
     private scenarioToPath(mode: string): string {
@@ -76,13 +76,13 @@ class SpeakerRecognitionConnectionFactoryBase extends ConnectionFactoryBase {
 }
 
 export class SpeakerRecognitionConnectionFactory extends SpeakerRecognitionConnectionFactoryBase {
-    public create( config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
+    public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): Promise<IConnection> {
         return super.create(config, authInfo, "recognition", connectionId);
     }
 }
 
 export class VoiceProfileConnectionFactory extends SpeakerRecognitionConnectionFactoryBase {
-    public create( config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): IConnection {
+    public create(config: RecognizerConfig, authInfo: AuthInfo, connectionId?: string): Promise<IConnection> {
         return super.create(config, authInfo, "profile", connectionId);
     }
 }
