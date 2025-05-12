@@ -84,34 +84,34 @@ export class AvatarSynthesizer extends Synthesizer {
         Contracts.throwIfNullOrUndefined(peerConnection, "peerConnection");
         this.privIceServers = peerConnection.getConfiguration().iceServers;
         Contracts.throwIfNullOrUndefined(this.privIceServers, "Ice servers must be set.");
-        const iceGatheringDone = new Deferred<void>();
-        // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/icegatheringstatechange_event
-        peerConnection.onicegatheringstatechange = (): void => {
-            Events.instance.onEvent(new PlatformEvent("peer connection: ice gathering state: " + peerConnection.iceGatheringState, EventType.Debug));
-            if (peerConnection.iceGatheringState === "complete") {
-                Events.instance.onEvent(new PlatformEvent("peer connection: ice gathering complete.", EventType.Info));
-                iceGatheringDone.resolve();
-            }
-        };
-        peerConnection.onicecandidate = (event: RTCPeerConnectionIceEvent): void => {
-            if (event.candidate) {
-                Events.instance.onEvent(new PlatformEvent("peer connection: ice candidate: " + event.candidate.candidate, EventType.Debug));
-            } else {
-                Events.instance.onEvent(new PlatformEvent("peer connection: ice candidate: complete", EventType.Debug));
-                iceGatheringDone.resolve();
-            }
-        };
-        // Set a timeout for ice gathering, currently 2 seconds.
-        setTimeout((): void => {
-            if (peerConnection.iceGatheringState !== "complete") {
-                Events.instance.onEvent(new PlatformEvent("peer connection: ice gathering timeout.", EventType.Warning));
-                iceGatheringDone.resolve();
-            }
-        }, 2000);
-        const sdp: RTCSessionDescriptionInit = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(sdp);
-        await iceGatheringDone.promise;
-        Events.instance.onEvent(new PlatformEvent("peer connection: got local SDP.", EventType.Info));
+        // const iceGatheringDone = new Deferred<void>();
+        // // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/icegatheringstatechange_event
+        // peerConnection.onicegatheringstatechange = (): void => {
+        //     Events.instance.onEvent(new PlatformEvent("peer connection: ice gathering state: " + peerConnection.iceGatheringState, EventType.Debug));
+        //     if (peerConnection.iceGatheringState === "complete") {
+        //         Events.instance.onEvent(new PlatformEvent("peer connection: ice gathering complete.", EventType.Info));
+        //         iceGatheringDone.resolve();
+        //     }
+        // };
+        // peerConnection.onicecandidate = (event: RTCPeerConnectionIceEvent): void => {
+        //     if (event.candidate) {
+        //         Events.instance.onEvent(new PlatformEvent("peer connection: ice candidate: " + event.candidate.candidate, EventType.Debug));
+        //     } else {
+        //         Events.instance.onEvent(new PlatformEvent("peer connection: ice candidate: complete", EventType.Debug));
+        //         iceGatheringDone.resolve();
+        //     }
+        // };
+        // // Set a timeout for ice gathering, currently 2 seconds.
+        // setTimeout((): void => {
+        //     if (peerConnection.iceGatheringState !== "complete") {
+        //         Events.instance.onEvent(new PlatformEvent("peer connection: ice gathering timeout.", EventType.Warning));
+        //         iceGatheringDone.resolve();
+        //     }
+        // }, 2000);
+        // const sdp: RTCSessionDescriptionInit = await peerConnection.createOffer();
+        // await peerConnection.setLocalDescription(sdp);
+        // await iceGatheringDone.promise;
+        // Events.instance.onEvent(new PlatformEvent("peer connection: got local SDP.", EventType.Info));
         this.privProperties.setProperty(PropertyId.TalkingAvatarService_WebRTC_SDP, JSON.stringify(peerConnection.localDescription));
 
         const result: SpeechSynthesisResult = await this.speak("", false);
