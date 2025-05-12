@@ -841,14 +841,13 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 describe.each([
     SpeechConnectionType.Subscription,
     SpeechConnectionType.CloudFromEndpointWithKeyAuth,
-    // SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
-    // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
+    SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
+    SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
     SpeechConnectionType.LegacyCogSvcsTokenAuth,
     SpeechConnectionType.LegacyEntraIdTokenAuth,
     SpeechConnectionType.CloudFromHost,
     SpeechConnectionType.PrivateLinkWithKeyAuth,
-    // SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth,
-    // SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
+    SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
     SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
     SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth
 ])("Language Detection Connection Tests", (connectionType: SpeechConnectionType): void => {

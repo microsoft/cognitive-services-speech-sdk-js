@@ -283,16 +283,15 @@ describe("Service based tests", (): void => {
     describe.each([
         SpeechConnectionType.Subscription,
         SpeechConnectionType.CloudFromEndpointWithKeyAuth,
-        // SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
-        // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
+        SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
+        SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,
         SpeechConnectionType.LegacyEntraIdTokenAuth,
         SpeechConnectionType.CloudFromHost,
         SpeechConnectionType.ContainerFromHost,
         // SpeechConnectionType.ContainerFromEndpoint,
         SpeechConnectionType.PrivateLinkWithKeyAuth,
-        // SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth,
-        // SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
+        SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
         SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth
     ])("Speech Synthesis Connection Tests", (connectionType: SpeechConnectionType): void => {
