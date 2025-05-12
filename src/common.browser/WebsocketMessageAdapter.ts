@@ -119,11 +119,6 @@ export class WebsocketMessageAdapter {
 
                 this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
-                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression, followRedirects: true };
-                // The ocsp library will handle validation for us and fail the connection if needed.
-                this.privCertificateValidatedDeferral.resolve();
-
-                options.agent = this.getAgent();
                 // Workaround for https://github.com/microsoft/cognitive-services-speech-sdk-js/issues/465
                 // Which is root caused by https://github.com/TooTallNate/node-agent-base/issues/61
                 const uri = new URL(this.privUri);
@@ -134,6 +129,12 @@ export class WebsocketMessageAdapter {
                 } else if (protocol?.toLocaleLowerCase() === "ws:") {
                     protocol = "http:";
                 }
+
+                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression, followRedirects: protocol.toLocaleLowerCase() === "https:" };
+                // The ocsp library will handle validation for us and fail the connection if needed.
+                this.privCertificateValidatedDeferral.resolve();
+
+                options.agent = this.getAgent();
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 (options.agent as any).protocol = protocol;
@@ -347,7 +348,7 @@ export class WebsocketMessageAdapter {
         return agent as unknown as http.Agent;
     }
 
-    public static GetProxyAgent(proxyInfo: ProxyInfo): HttpsProxyAgent {
+    private static GetProxyAgent(proxyInfo: ProxyInfo): HttpsProxyAgent {
         const httpProxyOptions: HttpsProxyAgent.HttpsProxyAgentOptions = {
             host: proxyInfo.HostName,
             port: proxyInfo.Port,

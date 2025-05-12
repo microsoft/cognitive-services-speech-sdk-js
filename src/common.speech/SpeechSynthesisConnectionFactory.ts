@@ -6,8 +6,6 @@ import {
     WebsocketConnection
 } from "../common.browser/Exports.js";
 import {
-    ConnectionRedirectEvent,
-    Events,
     IConnection,
     IStringDictionary
 } from "../common/Exports.js";

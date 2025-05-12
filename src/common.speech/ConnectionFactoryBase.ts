@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { ProxyInfo } from "../common.browser/ProxyInfo.js";
 import {
     ServicePropertiesPropertyName,
 } from "../common.speech/Exports.js";

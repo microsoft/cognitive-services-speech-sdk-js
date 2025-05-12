@@ -1,14 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { get } from "request";
 import {
     ProxyInfo,
     WebsocketConnection,
 } from "../common.browser/Exports.js";
 import {
-    ConnectionRedirectEvent,
-    Events,
     IConnection,
     IStringDictionary
 } from "../common/Exports.js";
