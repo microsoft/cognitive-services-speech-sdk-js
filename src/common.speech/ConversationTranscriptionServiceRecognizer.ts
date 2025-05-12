@@ -28,7 +28,8 @@ import { IAuthentication } from "./IAuthentication.js";
 import { IConnectionFactory } from "./IConnectionFactory.js";
 import { RecognizerConfig } from "./RecognizerConfig.js";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
-import { PhraseDetection, SpeakerDiarization } from "./ServiceRecognizerBase.js";
+import { SpeakerDiarization, SpeakerDiarizationMode } from "./ServiceMessages/PhraseDetection/SpeakerDiarization.js";
+import { PhraseDetectionContext, RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 
 // eslint-disable-next-line max-classes-per-file
 export class ConversationTranscriptionServiceRecognizer extends ServiceRecognizerBase {
@@ -48,15 +49,15 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
 
     protected setSpeakerDiarizationJson(): void {
         if (this.privEnableSpeakerId) {
-            const phraseDetection = this.privSpeechContext.getSection("phraseDetection") as PhraseDetection;
-            phraseDetection.mode = "Conversation";
+            const phraseDetection = this.privSpeechContext.getContext().phraseDetection || {};
+            phraseDetection.mode = RecognitionMode.Conversation;
             const speakerDiarization: SpeakerDiarization = {};
-            speakerDiarization.mode = "Anonymous";
+            speakerDiarization.mode = SpeakerDiarizationMode.Anonymous;
             speakerDiarization.audioSessionId = this.privDiarizationSessionId;
             speakerDiarization.audioOffsetMs = 0;
             speakerDiarization.diarizeIntermediates = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_DiarizeIntermediateResults, "false") === "true";
             phraseDetection.speakerDiarization = speakerDiarization;
-            this.privSpeechContext.setSection("phraseDetection", phraseDetection);
+            this.privSpeechContext.getContext().phraseDetection = phraseDetection;
         }
     }
 

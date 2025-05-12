@@ -23,16 +23,46 @@ export enum SynthesisVoiceGender {
 }
 
 export enum SynthesisVoiceType {
+    /**
+     * Voice type is not known.
+     */
+    Unknown = 0,
+
+    /**
+     * Online neural voices.
+     */
     OnlineNeural = 1,
+
+    /**
+     * Online standard voices. These voices are deprecated.
+     */
     OnlineStandard = 2,
+
+    /**
+     * Offline neural voices.
+     */
     OfflineNeural = 3,
+
+    /**
+     * Offline standard voices.
+     */
     OfflineStandard = 4,
+
+    /**
+     * High definition (HD) voices. Refer to https://learn.microsoft.com/azure/ai-services/speech-service/high-definition-voices
+     */
+    OnlineNeuralHD = 5,
 }
 
 const GENDER_LOOKUP: Record<string, SynthesisVoiceGender> = {
     [SynthesisVoiceGender[SynthesisVoiceGender.Neutral]]: SynthesisVoiceGender.Neutral,
     [SynthesisVoiceGender[SynthesisVoiceGender.Male]]: SynthesisVoiceGender.Male,
     [SynthesisVoiceGender[SynthesisVoiceGender.Female]]: SynthesisVoiceGender.Female,
+};
+
+const VOICE_TYPE_LOOKUP: Record<string, SynthesisVoiceType> = {
+    Neural: SynthesisVoiceType.OnlineNeural,
+    NeuralHD: SynthesisVoiceType.OnlineNeuralHD,
 };
 
 /**
@@ -66,7 +96,7 @@ export class VoiceInfo {
             this.privLocaleName = json.LocaleName;
             this.privDisplayName = json.DisplayName;
             this.privLocalName = json.LocalName;
-            this.privVoiceType = json.VoiceType.endsWith("Standard") ? SynthesisVoiceType.OnlineStandard : SynthesisVoiceType.OnlineNeural;
+            this.privVoiceType = VOICE_TYPE_LOOKUP[json.VoiceType] || SynthesisVoiceType.Unknown;
             this.privGender = GENDER_LOOKUP[json.Gender] || SynthesisVoiceGender.Unknown;
 
             if (!!json.StyleList && Array.isArray(json.StyleList)) {

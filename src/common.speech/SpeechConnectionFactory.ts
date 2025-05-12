@@ -22,7 +22,6 @@ import {
 } from "./ConnectionFactoryBase.js";
 import {
     AuthInfo,
-    RecognitionMode,
     RecognizerConfig,
     WebsocketMessageFormatter
 } from "./Exports.js";
@@ -30,6 +29,7 @@ import { HeaderNames } from "./HeaderNames.js";
 import {
     QueryParameterNames
 } from "./QueryParameterNames.js";
+import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 
 export class SpeechConnectionFactory extends ConnectionFactoryBase {
 
@@ -102,6 +102,7 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
             headers[authInfo.headerName] = authInfo.token;
         }
         headers[HeaderNames.ConnectionId] = connectionId;
+        headers.connectionId = connectionId;
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
 

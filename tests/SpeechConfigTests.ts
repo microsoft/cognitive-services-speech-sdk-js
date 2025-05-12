@@ -370,7 +370,7 @@ test("Translation Recog Nul via prop set for targets", (): void => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     s.setProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_TranslationToLanguages], null);
 
-    expect((): void => s.speechRecognitionLanguage = null ).toThrow();
+    expect((): void => s.speechRecognitionLanguage = null).toThrow();
 
     s.close();
 });
@@ -690,9 +690,9 @@ describe("Connection URL Tests", (): void => {
         if (r instanceof sdk.Recognizer) {
             recognizeOrSynthesizeOnceAsync = (cb: (p2: any) => void): void => {
                 r.recognizeOnceAsync(cb,
-                   (e: string): void => {
-                    done(e);
-                   });
+                    (e: string): void => {
+                        done(e);
+                    });
             };
         } else if (r instanceof sdk.SpeechSynthesizer) {
             recognizeOrSynthesizeOnceAsync = (cb: (p2: any) => void): void => {
@@ -722,8 +722,8 @@ describe("Connection URL Tests", (): void => {
         [sdk.SpeechConfig.fromEndpoint, BuildIntentRecognizerFromWaveFile]])
         ("Common URL Tests",
             (createMethod: any, recognizerCreateMethod: (
-                config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer) => {
-                test("setServiceProperty (single)", (done: jest.DoneCallback) => {
+                config: sdk.SpeechConfig | sdk.SpeechTranslationConfig) => sdk.SpeechRecognizer | sdk.TranslationRecognizer | sdk.IntentRecognizer | sdk.SpeechSynthesizer): void => {
+                test("setServiceProperty (single)", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: setServiceProperty (single)");
 

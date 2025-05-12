@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {
-    IDynamicGrammar,
-    IDynamicGrammarGeneric,
-} from "./Exports.js";
-
+import { Dgi } from "./ServiceMessages/Dgi/Dgi.js";
+import { GroupType } from "./ServiceMessages/Dgi/Group.js";
+import { Item } from "./ServiceMessages/Dgi/Item.js";
 /**
  * Responsible for building the object to be sent to the speech service to support dynamic grammars.
  * @class DynamicGrammarBuilder
@@ -55,24 +53,24 @@ export class DynamicGrammarBuilder {
     // Generates an object that represents the dynamic grammar used by the Speech Service.
     // This is done by building an object with the correct layout based on the phrases and reference grammars added to this instance
     // of a DynamicGrammarBuilder
-    public generateGrammarObject(): IDynamicGrammar {
+    public generateGrammarObject(): Dgi {
         if (this.privGrammars === undefined && this.privPhrases === undefined) {
             return undefined;
         }
 
-        const retObj: IDynamicGrammar = {};
-        retObj.ReferenceGrammars = this.privGrammars;
+        const retObj: Dgi = {};
+        retObj.referenceGrammars = this.privGrammars;
 
         if (undefined !== this.privPhrases && 0 !== this.privPhrases.length) {
-            const retPhrases: IDynamicGrammarGeneric[] = [];
+            const retPhrases: Item[] = [];
 
             this.privPhrases.forEach((value: string): void => {
                 retPhrases.push({
-                    Text: value,
+                    text: value,
                 });
             });
 
-            retObj.Groups = [{ Type: "Generic", Items: retPhrases }];
+            retObj.groups = [{ type: GroupType.Generic, items: retPhrases }];
         }
 
         return retObj;

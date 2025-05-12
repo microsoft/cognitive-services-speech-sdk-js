@@ -18,14 +18,17 @@ import {
 } from "./ConnectionFactoryBase.js";
 import {
     AuthInfo,
-    RecognitionMode,
     RecognizerConfig,
     WebsocketMessageFormatter,
 } from "./Exports.js";
 import { HeaderNames } from "./HeaderNames.js";
 import { QueryParameterNames } from "./QueryParameterNames.js";
+import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 
 export class TranslationConnectionFactory extends ConnectionFactoryBase {
+
+    private readonly universalUri: string = "/speech/universal/v2";
+    private readonly translationV1Uri: string = "/speech/translation/cognitiveservices/v1";
 
     public create(
         config: RecognizerConfig,
@@ -36,9 +39,7 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
 
         const queryParams: IStringDictionary<string> = {};
 
-        if (config.autoDetectSourceLanguages !== undefined) {
-            queryParams[QueryParameterNames.EnableLanguageId] = "true";
-        }
+        // Determine if we're using V1 or V2 endpoint
         this.setQueryParams(queryParams, config, endpoint);
 
         const headers: IStringDictionary<string> = {};
@@ -54,19 +55,31 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
     }
 
     public getEndpointUrl(config: RecognizerConfig, returnRegionPlaceholder?: boolean): string {
-
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region);
         const hostSuffix: string = ConnectionFactoryBase.getHostSuffix(region);
 
+        // First check for an explicitly specified endpoint
         let endpointUrl: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
-        if (!endpointUrl) {
-            if (config.autoDetectSourceLanguages !== undefined) {
-                const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://{region}.stt.speech" + hostSuffix);
-                endpointUrl = host + "/speech/universal/v2";
-            } else {
-                const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://{region}.s2s.speech" + hostSuffix);
-                endpointUrl = host + "/speech/translation/cognitiveservices/v1";
+
+        // If an explicit endpoint is provided, use it
+        if (endpointUrl) {
+            if (returnRegionPlaceholder === true) {
+                return endpointUrl;
             }
+            return StringUtils.formatString(endpointUrl, { region });
+        }
+
+        // Check if V1 endpoint is explicitly requested
+        const forceV1Endpoint: boolean = config.parameters.getProperty("SPEECH-ForceV1Endpoint", "false") === "true";
+
+        if (forceV1Endpoint) {
+            // Use V1 endpoint with s2s.speech host
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://{region}.s2s.speech" + hostSuffix);
+            endpointUrl = host + this.translationV1Uri;
+        } else {
+            // Default to V2 endpoint with stt.speech host
+            const host: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, "wss://{region}.stt.speech" + hostSuffix);
+            endpointUrl = host + this.universalUri;
         }
 
         if (returnRegionPlaceholder === true) {
@@ -77,12 +90,13 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
     }
 
     public setQueryParams(queryParams: IStringDictionary<string>, config: RecognizerConfig, endpointUrl: string): void {
-
+        // Common parameters for both V1 and V2 endpoints
         queryParams.from = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage);
         queryParams.to = config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages);
         queryParams.scenario = config.recognitionMode === RecognitionMode.Interactive ? "interactive" :
             config.recognitionMode === RecognitionMode.Conversation ? "conversation" : "";
 
+        // Set common parameters
         this.setCommonUrlParams(config, queryParams, endpointUrl);
         this.setUrlParameter(
             PropertyId.SpeechServiceResponse_TranslationRequestStablePartialResult,
@@ -92,10 +106,12 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
             endpointUrl
         );
 
-        const translationVoice: string =  config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
+        // Handle translation voice if specified
+        const translationVoice: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
         if (translationVoice !== undefined) {
             queryParams.voice = translationVoice;
-            queryParams.features = "texttospeech";
+            // Updated to match C++ implementation
+            queryParams.features = "requireVoice";
         }
     }
 }

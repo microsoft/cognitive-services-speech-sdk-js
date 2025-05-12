@@ -28,7 +28,8 @@
 
     if (process.env.SYSTEM_COLLECTIONID === "26f8e8b1-373f-4f65-96fc-d17a59b38306" &&
          process.env.SYSTEM_DEFINITIONID === "198") {
-
+        
+        console.log("Running in Azure DevOps build pipeline")
         inAzureDevOps = true
 
         if (process.env.BUILD_SOURCEBRANCH.match("^refs/heads/release/")) {
@@ -38,6 +39,12 @@
              process.env.BUILD_REASON === "Manual")) {
             buildType = "int"
         }
+    } else if (process.env.CI === "true") {
+        console.log("Running in GitHub Actions")
+
+    } else if (process.env.CI === "false") {
+        console.log("Running in local dev environment")
+        buildType = "dev"
     }
 
     // Check our version constraints
@@ -67,6 +74,7 @@
     }
 
     if (inAzureDevOps) {
+        console.log("Setting Azure DevOps build variable SPEECHSDK_SEMVER2NOMETA to " + versionToUse);
         console.log("##vso[task.setvariable variable=SPEECHSDK_SEMVER2NOMETA]" + versionToUse);
     }
 

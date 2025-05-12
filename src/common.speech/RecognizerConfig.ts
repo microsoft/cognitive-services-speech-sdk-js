@@ -5,12 +5,7 @@
 
 import { PropertyCollection, PropertyId } from "../sdk/Exports.js";
 import { Context, SpeechServiceConfig } from "./Exports.js";
-
-export enum RecognitionMode {
-    Interactive,
-    Conversation,
-    Dictation,
-}
+import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 
 export enum SpeechResultFormat {
     Simple,
@@ -71,7 +66,11 @@ export class RecognizerConfig {
     }
 
     public get recognitionEndpointVersion(): string {
-        return this.parameters.getProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, undefined);
+        return this.parameters.getProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "2");
+    }
+
+    public set recognitionEndpointVersion(version: string) {
+        this.parameters.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, version);
     }
 
     public get sourceLanguageModels(): { language: string; endpoint: string }[] {
@@ -82,10 +81,10 @@ export class RecognizerConfig {
                 const customProperty = language + PropertyId.SpeechServiceConnection_EndpointId.toString();
                 const modelId: string = this.parameters.getProperty(customProperty, undefined);
                 if (modelId !== undefined) {
-                    models.push( { language, endpoint: modelId });
+                    models.push({ language, endpoint: modelId });
                     modelsExist = true;
                 } else {
-                    models.push( { language, endpoint: "" } );
+                    models.push({ language, endpoint: "" });
                 }
             }
         }
