@@ -130,7 +130,7 @@ export class SpeechConfigConnectionFactory {
 
             case SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth:
                 return this.buildPrivateLinkEndpointWithEntraId<T>(isTranslationConfig);
-            
+
             case SpeechConnectionType.PrivateLinkWithAADTokenCredential:
                 return this.buildPrivateLinkEndpointWithTokenCredential<T>(isTranslationConfig);
 
@@ -329,7 +329,12 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the subscription");
         }
 
-        return this.buildEndpointWithTokenCredential<T>(undefined, endpoint, isTranslationConfig);
+        const cred: TokenCredential = new CogSvcsTokenCredential(
+            subscriptionRegion.Key,
+            subscriptionRegion.Region
+        );
+
+        return this.buildEndpointWithTokenCredential<T>(cred, endpoint, isTranslationConfig);
     }
 
     /**
@@ -343,9 +348,14 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the AAD subscription");
         }
 
-        return this.buildEndpointWithTokenCredential<T>(undefined, endpoint, isTranslationConfig);
+        const credential = new DefaultAzureCredential();
+        return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
     }
 
+    private static getEntraIdTokenCredetial(): TokenCredential {
+        const subscriptionRegion = this.getSubscriptionRegion(SubscriptionsRegionsKeys.AAD_SPEECH_CLIENT_SECRET);
+
+    }
     /**
      * Builds a container speech config.
      */
