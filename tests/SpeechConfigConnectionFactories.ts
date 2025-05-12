@@ -130,6 +130,9 @@ export class SpeechConfigConnectionFactory {
 
             case SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth:
                 return this.buildPrivateLinkEndpointWithEntraId<T>(isTranslationConfig);
+            
+            case SpeechConnectionType.PrivateLinkWithAADTokenCredential:
+                return this.buildPrivateLinkEndpointWithTokenCredential<T>(isTranslationConfig);
 
             case SpeechConnectionType.LegacyPrivateLinkWithKeyAuth:
                 return this.buildLegacyPrivateLinkWithKeyConfig<T>(isTranslationConfig, serviceType);
@@ -326,12 +329,7 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the subscription");
         }
 
-        const credential = new CogSvcsTokenCredential(
-            subscriptionRegion.Key,
-            subscriptionRegion.Region
-        );
-
-        return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
+        return this.buildEndpointWithTokenCredential<T>(undefined, endpoint, isTranslationConfig);
     }
 
     /**
@@ -345,9 +343,7 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the AAD subscription");
         }
 
-        const credential = new DefaultAzureCredential();
-
-        return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
+        return this.buildEndpointWithTokenCredential<T>(undefined, endpoint, isTranslationConfig);
     }
 
     /**
@@ -467,12 +463,7 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the private link subscription");
         }
 
-        const credential = new CogSvcsTokenCredential(
-            subscriptionRegion.Key,
-            subscriptionRegion.Region
-        );
-
-        return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
+        return this.buildEndpointWithTokenCredential<T>(undefined, endpoint, isTranslationConfig);
     }
 
     /**
@@ -490,8 +481,25 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the AAD private link subscription");
         }
 
-        const credential: DefaultAzureCredential = new DefaultAzureCredential();
+        return this.buildEndpointWithTokenCredential<T>(undefined, endpoint, isTranslationConfig);
+    }
 
+    /**
+     * Builds a private link endpoint with token credential.
+     */
+    private static buildPrivateLinkEndpointWithTokenCredential<T extends ConfigType>(isTranslationConfig: boolean): T {
+        if (!this.checkPrivateLinkTestsEnabled()) {
+            throw new Error("Private link testing is not enabled");
+        }
+
+        const subscriptionRegion = this.getSubscriptionRegion("PrivateLinkSpeechResource");
+        const endpoint = subscriptionRegion.Endpoint;
+
+        if (!endpoint) {
+            throw new Error("Endpoint is not defined for the AAD private link subscription");
+        }
+
+        const credential = new DefaultAzureCredential();
         return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
     }
 
@@ -503,7 +511,7 @@ export class SpeechConfigConnectionFactory {
      * @returns A speech configuration of the requested type.
      */
     private static buildEndpointWithTokenCredential<T extends ConfigType>(
-        cred: TokenCredential,
+        cred: TokenCredential | undefined,
         endpoint: string,
         isTranslationConfig: boolean
     ): T {
@@ -511,9 +519,13 @@ export class SpeechConfigConnectionFactory {
         let config: T;
 
         if (isTranslationConfig) {
-            config = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
+            return cred
+                ? sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), cred) as unknown as T
+                : sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
         } else {
-            config = sdk.SpeechConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
+            return cred
+                ? sdk.SpeechConfig.fromEndpoint(new URL(endpoint), cred) as unknown as T
+                : sdk.SpeechConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
         }
 
         return config;
@@ -565,6 +577,7 @@ export class SpeechConfigConnectionFactory {
                 connectionType === SpeechConnectionType.LegacyPrivateLinkWithKeyAuth ||
                 connectionType === SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth ||
                 connectionType === SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth ||
+                connectionType === SpeechConnectionType.PrivateLinkWithAADTokenCredential ||
                 connectionType === SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth)) {
             return test.skip;
         }

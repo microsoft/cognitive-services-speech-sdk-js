@@ -50,7 +50,7 @@ export class SpeechRecognizer extends Recognizer {
             speechConfigImpl.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        super(audioConfig, speechConfigImpl.properties, new SpeechConnectionFactory());
+        super(audioConfig, speechConfigImpl.properties, new SpeechConnectionFactory(), speechConfig.tokenCredential);
         this.privDisposedRecognizer = false;
     }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 /* eslint-disable max-classes-per-file */
 
+import { TokenCredential } from "@azure/core-auth";
 import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
@@ -30,6 +31,13 @@ export abstract class SpeechConfig {
     protected constructor() {
         return;
     }
+
+    /**
+     * Gets the TokenCredential instance if configured.
+     * Only available if using AAD-based authentication via TokenCredential.
+     * @returns {TokenCredential | undefined}
+     */
+    public abstract get tokenCredential(): TokenCredential | undefined;
 
     /**
      * Static instance of SpeechConfig returned by passing subscriptionKey and service region.
@@ -72,15 +80,49 @@ export abstract class SpeechConfig {
      * @param {string} subscriptionKey - The subscription key. If a subscription key is not specified, an authorization token must be set.
      * @returns {SpeechConfig} A speech factory instance.
      */
-    public static fromEndpoint(endpoint: URL, subscriptionKey?: string): SpeechConfig {
-        Contracts.throwIfNull(endpoint, "endpoint");
+    public static fromEndpoint(endpoint: URL, subscriptionKey?: string): SpeechConfig;
 
-        const speechImpl: SpeechConfigImpl = new SpeechConfigImpl();
+    /**
+     * Creates a speech configuration instance using a specified endpoint and Azure Active Directory (AAD) token credential.
+     * This API supports **SpeechRecognizer** and **ConversationTranscriber**.
+     * Intended for use with **non-standard resource paths** or **custom parameter overrides**.
+     * Query parameters specified in the endpoint URL **are not overridden** by other APIs.
+     * For example, if the URL includes "language=de-DE" but "speechRecognitionLanguage" is set to "en-US",
+     * the value from the URL "de-DE" takes precedence — if the parameter is supported by the scenario.
+     * Parameters **not present in the URL** can still be updated via other APIs.
+     * To authenticate with a **subscription key**, use SpeechConfig.fromEndpoint with a key argument.
+     * @member SpeechConfig.fromEndpoint
+     * @function
+     * @public
+     * @param {URL} endpoint - The full service endpoint URL (e.g., for custom domains or private links).
+     * See: https://learn.microsoft.com/azure/ai-services/speech-service/speech-services-private-link?tabs=portal#create-a-custom-domain-name.
+     * @param {TokenCredential} tokenCredential - The AAD token credential used for authentication and token requests.
+     * @returns {SpeechConfig} A speech factory instance.
+     */
+    public static fromEndpoint(endpoint: URL, tokenCredential: TokenCredential): SpeechConfig;
+
+    /**
+     * Internal implementation of fromEndpoint() overloads. Accepts either a subscription key or a TokenCredential.
+     * @private
+     */
+    public static fromEndpoint(endpoint: URL, auth: string | TokenCredential): SpeechConfig {
+        Contracts.throwIfNull(endpoint, "endpoint");
+        const isValidString = typeof auth === "string" && auth.trim().length > 0;
+        const isTokenCredential = typeof auth === "object" && auth !== null && typeof auth.getToken === "function";
+        if (auth !== undefined && !isValidString && !isTokenCredential) {
+            throw new Error("Invalid 'auth' parameter: must be a non-empty key string or a valid TokenCredential object.");
+        }
+
+        const speechImpl: SpeechConfigImpl = typeof auth === "object"
+            ? new SpeechConfigImpl(auth)
+            : new SpeechConfigImpl();
+
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
 
-        if (undefined !== subscriptionKey) {
-            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
+        if (typeof auth === "string" && auth.trim().length > 0) {
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, auth);
         }
+
         return speechImpl;
     }
 
@@ -400,12 +442,14 @@ export abstract class SpeechConfig {
 export class SpeechConfigImpl extends SpeechConfig {
 
     private privProperties: PropertyCollection;
+    private readonly privTokenCredential?: TokenCredential;
 
-    public constructor() {
+    public constructor(tokenCredential?: TokenCredential) {
         super();
         this.privProperties = new PropertyCollection();
         this.speechRecognitionLanguage = "en-US"; // Should we have a default?
         this.outputFormat = OutputFormat.Simple;
+        this.privTokenCredential = tokenCredential;
     }
 
     public get properties(): PropertyCollection {
@@ -464,6 +508,10 @@ export class SpeechConfigImpl extends SpeechConfig {
         this.privProperties.setProperty(PropertyId.SpeechServiceConnection_EndpointId, value);
     }
 
+    public get tokenCredential(): TokenCredential | undefined {
+        return this.privTokenCredential;
+    }
+
     public setProperty(name: string | PropertyId, value: string): void {
         Contracts.throwIfNull(value, "value");
 
@@ -508,7 +556,7 @@ export class SpeechConfigImpl extends SpeechConfig {
     }
 
     public clone(): SpeechConfigImpl {
-        const ret: SpeechConfigImpl = new SpeechConfigImpl();
+        const ret: SpeechConfigImpl = new SpeechConfigImpl(this.tokenCredential);
         ret.privProperties = this.privProperties.clone();
         return ret;
     }
