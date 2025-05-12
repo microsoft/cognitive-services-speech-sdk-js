@@ -896,7 +896,7 @@ describe("Connection URL Tests", (): void => {
                 });
             });
 
-    test.only("enableDictation (Speech)", (done: jest.DoneCallback): void => {
+    test("enableDictation (Speech)", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: enableDictation");
 

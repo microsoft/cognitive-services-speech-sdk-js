@@ -125,14 +125,8 @@ export class SpeechConfigConnectionFactory {
             case SpeechConnectionType.PrivateLinkWithKeyAuth:
                 return this.buildPrivateLinkWithKeyConfig<T>(undefined, isTranslationConfig);
 
-            case SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth:
-                return this.buildPrivateLinkEndpointWithCogSvcsToken<T>(isTranslationConfig);
-
             case SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth:
                 return this.buildPrivateLinkEndpointWithEntraId<T>(isTranslationConfig);
-
-            case SpeechConnectionType.PrivateLinkWithAADTokenCredential:
-                return this.buildPrivateLinkEndpointWithTokenCredential<T>(isTranslationConfig);
 
             case SpeechConnectionType.LegacyPrivateLinkWithKeyAuth:
                 return this.buildLegacyPrivateLinkWithKeyConfig<T>(isTranslationConfig, serviceType);
@@ -352,10 +346,6 @@ export class SpeechConfigConnectionFactory {
         return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
     }
 
-    private static getEntraIdTokenCredetial(): TokenCredential {
-        const subscriptionRegion = this.getSubscriptionRegion(SubscriptionsRegionsKeys.AAD_SPEECH_CLIENT_SECRET);
-
-    }
     /**
      * Builds a container speech config.
      */
@@ -459,45 +449,9 @@ export class SpeechConfigConnectionFactory {
     }
 
     /**
-     * Builds a private link endpoint with Cognitive Services token.
-     */
-    private static buildPrivateLinkEndpointWithCogSvcsToken<T extends ConfigType>(isTranslationConfig: boolean): T {
-        if (!this.checkPrivateLinkTestsEnabled()) {
-            throw new Error("Private link testing is not enabled");
-        }
-
-        const subscriptionRegion = this.getSubscriptionRegion("PrivateLinkSpeechResource");
-        const endpoint = subscriptionRegion.Endpoint;
-
-        if (!endpoint) {
-            throw new Error("Endpoint is not defined for the private link subscription");
-        }
-
-        return this.buildEndpointWithTokenCredential<T>(undefined, endpoint, isTranslationConfig);
-    }
-
-    /**
      * Builds a private link endpoint with Entra ID token.
      */
     private static buildPrivateLinkEndpointWithEntraId<T extends ConfigType>(isTranslationConfig: boolean): T {
-        if (!this.checkPrivateLinkTestsEnabled()) {
-            throw new Error("Private link testing is not enabled");
-        }
-
-        const subscriptionRegion = this.getSubscriptionRegion("PrivateLinkSpeechResource");
-        const endpoint = subscriptionRegion.Endpoint;
-
-        if (!endpoint) {
-            throw new Error("Endpoint is not defined for the AAD private link subscription");
-        }
-
-        return this.buildEndpointWithTokenCredential<T>(undefined, endpoint, isTranslationConfig);
-    }
-
-    /**
-     * Builds a private link endpoint with token credential.
-     */
-    private static buildPrivateLinkEndpointWithTokenCredential<T extends ConfigType>(isTranslationConfig: boolean): T {
         if (!this.checkPrivateLinkTestsEnabled()) {
             throw new Error("Private link testing is not enabled");
         }

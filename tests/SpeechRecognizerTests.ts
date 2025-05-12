@@ -688,7 +688,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
     });
 
-    describe.only.each([
+    describe.each([
         SpeechConnectionType.Subscription,
         SpeechConnectionType.CloudFromEndpointWithKeyAuth,
         SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
