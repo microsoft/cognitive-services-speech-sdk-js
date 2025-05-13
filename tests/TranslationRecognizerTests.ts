@@ -378,7 +378,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         await done.promise;
     }, 12000);
 
-    test.skip("fromV2EndPoint with token credential", async (): Promise<void> => {
+    test("fromV2EndPoint with token credential", async (): Promise<void> => {
         const done: Deferred<void> = new Deferred<void>();
         // eslint-disable-next-line no-console
         console.info("Name: fromV2EndPoint with token credential");

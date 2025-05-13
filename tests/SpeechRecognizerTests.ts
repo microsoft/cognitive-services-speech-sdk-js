@@ -1401,7 +1401,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         await done.promise;
     });
 
-    test.skip("AADTokenCredential", async (): Promise<void> => {
+    test("AADTokenCredential", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: AADTokenCredential");
         const done: Deferred<void> = new Deferred<void>();

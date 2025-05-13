@@ -241,7 +241,7 @@ describe.each([[true], [false]])("Checking intermediate diazatation", (intermedi
     }, 45000);
 });
 
-test.skip("testTranscriptionWithAADTokenCredentialAsync", (done: jest.DoneCallback) => {
+test("testTranscriptionWithAADTokenCredentialAsync", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: testTranscriptionWithAADTokenCredentialAsync");
 
