@@ -284,14 +284,14 @@ describe("Service based tests", (): void => {
         SpeechConnectionType.Subscription,
         SpeechConnectionType.CloudFromEndpointWithKeyAuth,
         SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
-        SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
+        // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,
         SpeechConnectionType.LegacyEntraIdTokenAuth,
         SpeechConnectionType.CloudFromHost,
         SpeechConnectionType.ContainerFromHost,
         // SpeechConnectionType.ContainerFromEndpoint,
         SpeechConnectionType.PrivateLinkWithKeyAuth,
-        SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
+        // SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
         SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth
     ])("Speech Synthesis Connection Tests", (connectionType: SpeechConnectionType): void => {

@@ -541,7 +541,6 @@ export class SpeechConfigConnectionFactory {
                 connectionType === SpeechConnectionType.LegacyPrivateLinkWithKeyAuth ||
                 connectionType === SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth ||
                 connectionType === SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth ||
-                connectionType === SpeechConnectionType.PrivateLinkWithAADTokenCredential ||
                 connectionType === SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth)) {
             return test.skip;
         }
