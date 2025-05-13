@@ -1014,7 +1014,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             await this.privRequestSession.onAuthCompleted(false);
 
             // Create the connection
-            const connection: IConnection = this.privConnectionFactory.create(this.privRecognizerConfig, auth, this.privConnectionId);
+            const connection: IConnection = await this.privConnectionFactory.create(this.privRecognizerConfig, auth, this.privConnectionId);
             // Attach the telemetry handlers.
             this.privRequestSession.listenForServiceTelemetry(connection.events);
 

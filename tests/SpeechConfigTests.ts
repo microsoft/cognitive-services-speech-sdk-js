@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { log } from "console";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener,
@@ -676,12 +677,17 @@ describe("Connection URL Tests", (): void => {
                 if (event instanceof ConnectionStartEvent) {
                     const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
                     const uri: string = connectionEvent.uri;
-                    expect(uri).not.toBeUndefined();
-                    // Make sure there's only a single ? in the URL.
-                    expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
-                    urlSubStrings.forEach((value: string, index: number, array: string[]): void => {
-                        expect(uri).toContain(value);
-                    });
+                    try {
+                        expect(uri).not.toBeUndefined();
+                        // Make sure there's only a single ? in the URL.
+                        expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+                        urlSubStrings.forEach((value: string, index: number, array: string[]): void => {
+                            expect(uri).toContain(value);
+                        });
+                    } catch (error) {
+                        done(error);
+                    };
+
                     void detachObject.detach();
                 }
             },
@@ -915,6 +921,15 @@ describe("Connection URL Tests", (): void => {
                 }
             },
         });
+
+        r.canceled = (s, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).not.toBeUndefined();
+                expect(sdk.ResultReason[e.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
+            } catch (error) {
+                done(error);
+            }
+        };
 
         r.startContinuousRecognitionAsync(
             (): void => {

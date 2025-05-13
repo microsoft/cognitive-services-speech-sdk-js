@@ -67,11 +67,6 @@ export enum SpeechConnectionType {
     PrivateLinkWithEntraIdTokenAuth,
 
     /**
-     * Connect to a private link resource using aad token credential to authenticate.
-     */
-    PrivateLinkWithAADTokenCredential,
-
-    /**
      * Connect to a private link resource using the legacy path with key authentication.
      */
     LegacyPrivateLinkWithKeyAuth,
