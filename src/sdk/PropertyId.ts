@@ -262,6 +262,7 @@ export enum PropertyId {
 
     /**
      * SegmentationMaximumTimeMs represents the maximum length of a spoken phrase when using the Time segmentation strategy.
+     * @member Speech_SegmentationSilenceTimeoutMs must be set in order to use this setting.
      * As the length of a spoken phrase approaches this value, the @member Speech_SegmentationSilenceTimeoutMs will be reduced until either
      * the phrase silence timeout is reached or the phrase reaches the maximum length.
      *
