@@ -464,7 +464,7 @@ test("bad segmentation silence value", (done: jest.DoneCallback): void => {
     });
 }, 30000);
 
-test.only("Silence timeout only", (done: jest.DoneCallback): void => {
+test("Silence timeout only", (done: jest.DoneCallback): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     objsToClose.push(s);
 

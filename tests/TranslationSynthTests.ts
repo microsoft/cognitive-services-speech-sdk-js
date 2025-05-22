@@ -224,7 +224,7 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback): void => {
         try {
             stopReco = true;
             if (!pass) {
-                expect(e.errorDetails).toEqual("Translation request failed with status code: BadRequest Reason: Unsupported voice Microsoft Server Speech Text to Speech Voice (BadVoice).");
+                expect(e.errorDetails).toEqual("Translation request failed with status code: BadRequest Reason: Unsupported voice name Microsoft Server Speech Text to Speech Voice (BadVoice).");
             } else {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
             }
