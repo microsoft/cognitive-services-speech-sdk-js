@@ -217,8 +217,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const speechSegmentationStrategy: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationStrategy, undefined);
         const segmentation: Segmentation = {
             mode: SegmentationMode.Normal,
-            segmentationForcedTimeoutMs: 0,
-            segmentationSilenceTimeoutMs: 0,
         };
 
         let configuredSegment = false;

@@ -464,6 +464,47 @@ test("bad segmentation silence value", (done: jest.DoneCallback): void => {
     });
 }, 30000);
 
+test("Silence timeout only", (done: jest.DoneCallback): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
+
+    s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, "4000");
+    const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+            expect(e.text).toEqual(Settings.WaveFileText);
+            done();
+        } catch (error) {
+            done(error);
+        }
+    });
+}, 30000);
+
+test("Maximum segmentation only", (done: jest.DoneCallback): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
+
+    s.setProperty(sdk.PropertyId.Speech_SegmentationMaximumTimeMs, "60000");
+    const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+        try {
+            expect(e.errorDetails).toContain("1007");
+            done();
+        } catch (error) {
+            done(error);
+        }
+    });
+}, 30000);
+
 describe("NPM proxy test", (): void => {
 
     afterEach((): void => {
