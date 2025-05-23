@@ -14,6 +14,7 @@ import { AvatarVideoFormat } from "./Exports.js";
 export class AvatarConfig {
     private privCustomized: boolean = false;
     private privUseBuiltInVoice: boolean = false;
+    private privPromptImage: URL;
     private privBackgroundColor: string;
     private privBackgroundImage: URL;
     private privRemoteIceServers: RTCIceServer[];
@@ -57,6 +58,21 @@ export class AvatarConfig {
      */
     public set useBuiltInVoice(value: boolean) {
         this.privUseBuiltInVoice = value;
+    }
+
+    /**
+     * Gets the prompt image.
+     */
+    public get promptImage(): URL {
+        return this.privPromptImage;
+    }
+
+    /**
+     * Sets the prompt image.
+     * @param {URL} value - The prompt image.
+     */
+    public set promptImage(value: URL) {
+        this.privPromptImage = value;
     }
 
     /**

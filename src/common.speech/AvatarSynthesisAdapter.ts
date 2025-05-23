@@ -68,6 +68,11 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
                 },
             },
             talkingAvatar: {
+                prompt: {
+                    image: {
+                        url: this.privAvatarConfig.promptImage?.toString(),
+                    }
+                },
                 background: {
                     color: this.privAvatarConfig.backgroundColor,
                     image: {
