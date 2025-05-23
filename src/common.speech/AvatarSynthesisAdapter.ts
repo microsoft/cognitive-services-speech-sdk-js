@@ -68,11 +68,6 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
                 },
             },
             talkingAvatar: {
-                prompt: {
-                    image: {
-                        url: this.privAvatarConfig.promptImage?.toString(),
-                    }
-                },
                 background: {
                     color: this.privAvatarConfig.backgroundColor,
                     image: {
@@ -81,6 +76,11 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
                 },
                 character: this.privAvatarConfig.character,
                 customized: this.privAvatarConfig.customized,
+                prompt: {
+                    image: {
+                        url: this.privAvatarConfig.promptImage?.toString(),
+                    }
+                },
                 style: this.privAvatarConfig.style,
                 useBuiltInVoice: this.privAvatarConfig.useBuiltInVoice,
             }
