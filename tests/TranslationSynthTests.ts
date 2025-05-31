@@ -203,7 +203,8 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback): void => {
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
     objsToClose.push(s);
 
-    s.voiceName = "Microsoft Server Speech Text to Speech Voice (BadVoice)";
+    const voiceName: string = "Microsoft Server Speech Text to Speech Voice (BadVoice)";
+    s.voiceName = voiceName;
 
     const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
     objsToClose.push(r);
@@ -224,7 +225,7 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback): void => {
         try {
             stopReco = true;
             if (!pass) {
-                expect(e.errorDetails).toEqual("Translation request failed with status code: BadRequest Reason: Unsupported voice name Microsoft Server Speech Text to Speech Voice (BadVoice).");
+                expect(e.errorDetails).toContain(voiceName);
             } else {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
             }

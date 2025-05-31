@@ -72,6 +72,7 @@ export class Settings {
     public static LuisAppId: string = "b687b851-56c5-4d31-816f-35a741a3f0be";
 
     public static WaveFile: string = Settings.InputDir + "whatstheweatherlike.wav";
+    public static WaveFileExplicitPunc: string = Settings.InputDir + "explicitpunc1.wav";
     public static WaveFile8ch: string = Settings.InputDir + "Speech016_30s_xmos_8ch.wav";
     public static WaveFile8ch2: string = Settings.InputDir + "katiesteve.wav";
     public static WaveFileSingleChannel: string = Settings.InputDir + "katiesteve_mono.wav";
