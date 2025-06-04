@@ -71,7 +71,7 @@ export class ReplayableAudioNode implements IAudioStreamNode {
 
         return this.privAudioNode.read()
             .then((result: IStreamChunk<ArrayBuffer>): IStreamChunk<ArrayBuffer> => {
-                if (result && result.buffer) {
+                if (result && result.buffer && this.privBuffers) {
                     this.privBuffers.push(new BufferEntry(result, this.privBufferSerial++, this.privBufferedBytes));
                     this.privBufferedBytes += result.buffer.byteLength;
                 }

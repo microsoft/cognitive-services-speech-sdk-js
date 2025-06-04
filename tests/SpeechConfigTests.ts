@@ -16,7 +16,7 @@ import {
 } from "../src/common/Exports";
 import { createNoDashGuid } from "../src/common/Guid";
 import { Settings } from "./Settings";
-import { closeAsyncObjects } from "./Utilities";
+import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 
@@ -946,12 +946,14 @@ describe("Connection URL Tests", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: enableDictation");
 
+        let recoDone: boolean = false;
+
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         objsToClose.push(s);
 
         s.enableDictation();
 
-        const r: sdk.SpeechRecognizer = BuildSpeechRecognizerFromWaveFile(s);
+        const r: sdk.SpeechRecognizer = BuildSpeechRecognizerFromWaveFile(s, Settings.WaveFileExplicitPunc);
         objsToClose.push(r);
         let uri: string;
         const detachObject: IDetachable = Events.instance.attachListener({
@@ -963,9 +965,21 @@ describe("Connection URL Tests", (): void => {
             },
         });
 
+        r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+            try {
+                const res: sdk.SpeechRecognitionResult = e.result;
+                expect(res).not.toBeUndefined();
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+               // expect(res.text).toContain("If it rains, send me an e-mail.");
+                recoDone = true;
+            } catch (error) {
+                done(error);
+            }
+        };
+
         r.canceled = (s, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
-                expect(e.errorDetails).not.toBeUndefined();
+                expect(e.errorDetails).toBeUndefined();
                 expect(sdk.ResultReason[e.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
             } catch (error) {
                 done(error);
@@ -981,8 +995,6 @@ describe("Connection URL Tests", (): void => {
                     expect(uri).toContain("/dictation/");
                     expect(uri).not.toContain("/conversation/");
                     expect(uri).not.toContain("/interactive/");
-
-                    done();
                 } catch (error) {
                     done(error);
                 } finally {
@@ -990,5 +1002,16 @@ describe("Connection URL Tests", (): void => {
                     uri = undefined;
                 }
             });
+
+        WaitForCondition((): boolean => recoDone, (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
+
+                r.startContinuousRecognitionAsync(
+                    done,
+                    (error: string): void => {
+                        done(error);
+                    });
+            });
+        });
     });
 });
