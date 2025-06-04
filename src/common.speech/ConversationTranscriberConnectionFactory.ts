@@ -29,7 +29,7 @@ import {
 } from "./QueryParameterNames.js";
 
 export class ConversationTranscriberConnectionFactory extends ConnectionFactoryBase {
-    private readonly universalUri: string = "/speech/universal/v2";
+    private readonly universalUri: string = "/stt/speech/universal/v2";
 
     public async create(
         config: RecognizerConfig,
