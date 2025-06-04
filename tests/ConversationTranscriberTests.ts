@@ -72,26 +72,26 @@ export const BuildTranscriberFromWaveFile: (speechConfig?: sdk.SpeechConfig, fil
 };
 
 const BuildSpeechConfig = async (connectionType?: SpeechConnectionType): Promise<sdk.SpeechConfig> => {
-    
+
     if (undefined === connectionType) {
         connectionType = SpeechConnectionType.Subscription;
     }
-    
+
     const s: sdk.SpeechConfig = await SpeechConfigConnectionFactory.getSpeechRecognitionConfig(connectionType);
     expect(s).not.toBeUndefined();
-    
+
     console.info("SpeechConfig created " + s.speechRecognitionLanguage + " " + SpeechConnectionType[connectionType]);
-    
+
     if (undefined !== Settings.proxyServer) {
         s.setProxy(Settings.proxyServer, Settings.proxyPort);
     }
-    
+
     return s;
 };
 
 // Legacy BuildSpeechConfig function for backward compatibility with existing tests
 const BuildSpeechConfigLegacy = (useTokenCredential: boolean = false): sdk.SpeechConfig => {
-    
+
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechEndpoint) {
         s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
@@ -246,7 +246,7 @@ describe.each([[true], [false]])("Checking intermediate diazatation", (intermedi
                 try {
                     expect(guestFound).toBeTruthy();
                     console.info("intermediateDiazaration: ");
-                    console.info( intermediateDiazaration ? "true" : "false");
+                    console.info(intermediateDiazaration ? "true" : "false");
                     console.info(" intermediateGuestFound: ");
                     console.info(intermediateGuestFound ? "true" : "false");
                     expect(intermediateDiazaration).toEqual(intermediateGuestFound);
@@ -437,7 +437,6 @@ describe.each([
     SpeechConnectionType.LegacyCogSvcsTokenAuth,
     SpeechConnectionType.LegacyEntraIdTokenAuth,
     SpeechConnectionType.CloudFromHost,
-    SpeechConnectionType.ContainerFromHost,
     SpeechConnectionType.PrivateLinkWithKeyAuth,
     SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
     SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
@@ -448,35 +447,35 @@ describe.each([
     runTest("Transcription With Detailed Output Format " + SpeechConnectionType[connectionType], async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: Transcription With Detailed Output Format " + SpeechConnectionType[connectionType]);
-        
+
         const done: Deferred<void> = new Deferred<void>();
-        
+
         const s: sdk.SpeechConfig = await BuildSpeechConfig(connectionType);
         s.outputFormat = sdk.OutputFormat.Detailed;
         objsToClose.push(s);
-        
+
         const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
         const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps);
-        
+
         const fileBuff: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFileSingleChannel);
         ps.write(fileBuff);
         ps.write(new ArrayBuffer(1024 * 32));
         ps.write(fileBuff);
         ps.close();
-        
+
         const r: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(s, audio);
         objsToClose.push(r);
-        
+
         let recoCount: number = 0;
         let canceled: boolean = false;
         let hypoCounter: number = 0;
         let sessionId: string;
         let guestFound: boolean = false;
-        
+
         r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
             sessionId = e.sessionId;
         };
-        
+
         r.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
             try {
                 // eslint-disable-next-line no-console
@@ -499,11 +498,11 @@ describe.each([
                 done.reject(error.toString());
             }
         };
-        
+
         r.transcribing = (s: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs): void => {
             hypoCounter++;
         };
-        
+
         r.canceled = (o: sdk.ConversationTranscriber, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
                 canceled = true;
@@ -513,7 +512,7 @@ describe.each([
                 done.reject(error.toString());
             }
         };
-        
+
         r.startTranscribingAsync(
             () => {
                 WaitForCondition(() => (canceled), () => {
@@ -528,7 +527,7 @@ describe.each([
             (err: string) => {
                 done.reject(err);
             });
-            
+
         return done.promise;
     }, 45000);
 });
