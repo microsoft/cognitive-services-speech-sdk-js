@@ -252,9 +252,9 @@ export enum PropertyId {
      * yields results that are too long or too short. Segmentation timeout values that are inappropriately high or low
      * can negatively affect speech-to-text accuracy; this property should be carefully configured and the resulting
      * behavior should be thoroughly validated as intended.
-     * 
+     *
      * Valid range: **100 to 5,000** milliseconds.
-     * 
+     *
      * For more information about timeout configuration that includes discussion of default behaviors, please visit
      * https://aka.ms/csspeech/timeouts.
      *
@@ -269,7 +269,7 @@ export enum PropertyId {
      * the phrase silence timeout is reached or the phrase reaches the maximum length.
      *
      * Valid range: **20,000 to 70,000** milliseconds.
-     * 
+     *
      * Added in version 1.42.0.
      */
     Speech_SegmentationMaximumTimeMs,
@@ -281,8 +281,8 @@ export enum PropertyId {
      * Supported values:
      * - "Default": Uses the Speech Service's default segmentation strategy. Recommended for most use cases.
      * - "Time": Uses a silence-based timeout. A final result is generated after a defined period of silence.
-     *             - Requires @member Speech_SegmentationMaximumTimeMs to be configured appropriately.
-     *             - Optional: Adjust @member Speech_SegmentationSilenceTimeoutMs to control how much silence ends a phrase.
+     *   Requires @member Speech_SegmentationMaximumTimeMs to be configured appropriately.
+     *   Optional: Adjust @member Speech_SegmentationSilenceTimeoutMs to control how much silence ends a phrase.
      * - "Semantic": Uses an AI model to semantically infer phrase boundaries based on content.
      *                - No adjustable parameters are available for this strategy.
      *
