@@ -253,10 +253,8 @@ export enum PropertyId {
      * can negatively affect speech-to-text accuracy; this property should be carefully configured and the resulting
      * behavior should be thoroughly validated as intended.
      *
-     * Valid range: **100 to 5,000** milliseconds.
-     *
-     * For more information about timeout configuration that includes discussion of default behaviors, please visit
-     * https://aka.ms/csspeech/timeouts.
+     * Refer to the documentation for valid value ranges and additional details:
+     * https://learn.microsoft.com/azure/ai-services/speech-service/how-to-recognize-speech?pivots=programming-language-csharp#change-how-silence-is-handled
      *
      * Added in version 1.42.0.
      */
