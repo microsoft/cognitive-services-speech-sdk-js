@@ -282,7 +282,7 @@ export enum PropertyId {
      * Requires @member Speech_SegmentationMaximumTimeMs to be configured appropriately.
      * Optional: Adjust @member Speech_SegmentationSilenceTimeoutMs to control how much silence ends a phrase.
      * - "Semantic": Uses an AI model to semantically infer phrase boundaries based on content.
-     *                - No adjustable parameters are available for this strategy.
+     * No adjustable parameters are available for this strategy.
      *
      * Introduced in version 1.42.0.
      */
