@@ -253,10 +253,10 @@ export enum PropertyId {
      * can negatively affect speech-to-text accuracy; this property should be carefully configured and the resulting
      * behavior should be thoroughly validated as intended.
      *
-     * For more information about timeout configuration that includes discussion of default behaviors, please visit
-     * https://aka.ms/csspeech/timeouts.
+     * Refer to the documentation for valid value ranges and additional details:
+     * https://learn.microsoft.com/azure/ai-services/speech-service/how-to-recognize-speech?pivots=programming-language-csharp#change-how-silence-is-handled
      *
-     * Added in version 1.21.0.
+     * Added in version 1.42.0.
      */
     Speech_SegmentationSilenceTimeoutMs,
 
@@ -266,25 +266,25 @@ export enum PropertyId {
      * As the length of a spoken phrase approaches this value, the @member Speech_SegmentationSilenceTimeoutMs will be reduced until either
      * the phrase silence timeout is reached or the phrase reaches the maximum length.
      *
+     * Valid range: **20,000 to 70,000** milliseconds.
+     *
      * Added in version 1.42.0.
      */
     Speech_SegmentationMaximumTimeMs,
 
     /**
-     * SegmentationStrategy defines the strategy used to determine when a spoken phrase has ended and a final Recognized result should be generated.
-     * Allowed values are "Default", "Time", and "Semantic".
+     * Specifies the strategy used to determine when a spoken phrase has ended,
+     * triggering the generation of a final recognition result.
      *
-     * Valid values:
-     * - "Default": Uses the default strategy and settings as determined by the Speech Service. Suitable for most situations.
-     * - "Time": Uses a time-based strategy where the amount of silence between speech determines when to generate a final result.
-     * - "Semantic": Uses an AI model to determine the end of a spoken phrase based on the phrase's content.
+     * Supported values:
+     * - "Default": Uses the Speech Service's default segmentation strategy. Recommended for most use cases.
+     * - "Time": Uses a silence-based timeout. A final result is generated after a defined period of silence.
+     * Requires @member Speech_SegmentationMaximumTimeMs to be configured appropriately.
+     * Optional: Adjust @member Speech_SegmentationSilenceTimeoutMs to control how much silence ends a phrase.
+     * - "Semantic": Uses an AI model to semantically infer phrase boundaries based on content.
+     * No adjustable parameters are available for this strategy.
      *
-     * Additional Notes:
-     * - When using the Time strategy, @member Speech_SegmentationSilenceTimeoutMs can be adjusted to modify the required silence duration for ending a phrase,
-     * and @member Speech_SegmentationMaximumTimeMs can be adjusted to set the maximum length of a spoken phrase.
-     * - The Semantic strategy does not have any adjustable properties.
-     *
-     * Added in version 1.42.0.
+     * Introduced in version 1.42.0.
      */
     Speech_SegmentationStrategy,
 
