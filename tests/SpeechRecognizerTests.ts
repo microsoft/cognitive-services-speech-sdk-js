@@ -48,7 +48,6 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { closeAsyncObjects, RepeatingPullStream, WaitForCondition, WaitForConditionAsync } from "./Utilities";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
-import { SpeechServiceType } from "./SpeechServiceTypes";
 import { DefaultAzureCredential } from "@azure/identity";
 
 const FIRST_EVENT_ID: number = 1;
@@ -691,6 +690,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
     describe.each([
         SpeechConnectionType.Subscription,
         SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+        SpeechConnectionType.CloudFromEndpointWithKeyCredentialAuth,
         SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
         SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,

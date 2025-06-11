@@ -17,6 +17,11 @@ export enum SpeechConnectionType {
     CloudFromEndpointWithKeyAuth,
 
     /**
+     * Connect using a cloud endpoint URL with key credential authentication.
+     */
+    CloudFromEndpointWithKeyCredentialAuth,
+
+    /**
      * Connect using a cloud endpoint URL with Cognitive Services token authentication.
      */
     CloudFromEndpointWithCogSvcsTokenAuth,

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 /* eslint-disable max-classes-per-file */
 
-import { TokenCredential } from "@azure/core-auth";
+import { KeyCredential, TokenCredential } from "@azure/core-auth";
 import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
@@ -83,45 +83,52 @@ export abstract class SpeechConfig {
     public static fromEndpoint(endpoint: URL, subscriptionKey?: string): SpeechConfig;
 
     /**
-     * Creates a speech configuration instance using a specified endpoint and Azure Active Directory (AAD) token credential.
-     * This API supports **SpeechRecognizer** and **ConversationTranscriber**.
-     * Intended for use with **non-standard resource paths** or **custom parameter overrides**.
-     * Query parameters specified in the endpoint URL **are not overridden** by other APIs.
-     * For example, if the URL includes "language=de-DE" but "speechRecognitionLanguage" is set to "en-US",
-     * the value from the URL "de-DE" takes precedence — if the parameter is supported by the scenario.
-     * Parameters **not present in the URL** can still be updated via other APIs.
-     * To authenticate with a **subscription key**, use SpeechConfig.fromEndpoint with a key argument.
+     * Creates an instance of SpeechConfig with a custom endpoint and a credential.
+     * The query parameters specified in the endpoint URI are not changed, even if they are set by any other API call.
+     * For example, if the recognition language is defined in the URI query parameter as "language=de-DE", and the property SpeechRecognitionLanguage is set to "en-US",
+     * the language set in the URI takes precedence, and "de-DE" remains the expected language.
+     * Since parameters included in the endpoint URI take priority, only parameters that are not specified in the endpoint URI can be set by other APIs.
+     * Supported credential types:
+     * - KeyCredential: For API key-based authentication.
+     * - TokenCredential: For Azure AD-based authentication.
+     * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the
+     * fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to use the authorization token.
      * @member SpeechConfig.fromEndpoint
      * @function
      * @public
-     * @param {URL} endpoint - The full service endpoint URL (e.g., for custom domains or private links).
-     * See: https://learn.microsoft.com/azure/ai-services/speech-service/speech-services-private-link?tabs=portal#create-a-custom-domain-name.
-     * @param {TokenCredential} tokenCredential - The AAD token credential used for authentication and token requests.
+     * @param {URL} endpoint - The service endpoint to connect to.
+     * @param {KeyCredential | TokenCredential} credential - The credential used for authentication.
      * @returns {SpeechConfig} A speech factory instance.
      */
-    public static fromEndpoint(endpoint: URL, tokenCredential: TokenCredential): SpeechConfig;
+    public static fromEndpoint(endpoint: URL, credential: KeyCredential | TokenCredential): SpeechConfig;
 
     /**
      * Internal implementation of fromEndpoint() overloads. Accepts either a subscription key or a TokenCredential.
      * @private
      */
-    public static fromEndpoint(endpoint: URL, auth: string | TokenCredential): SpeechConfig {
+    public static fromEndpoint(endpoint: URL, auth: string | TokenCredential | KeyCredential): SpeechConfig {
         Contracts.throwIfNull(endpoint, "endpoint");
         const isValidString = typeof auth === "string" && auth.trim().length > 0;
-        const isTokenCredential = typeof auth === "object" && auth !== null && typeof auth.getToken === "function";
-        if (auth !== undefined && !isValidString && !isTokenCredential) {
-            throw new Error("Invalid 'auth' parameter: must be a non-empty key string or a valid TokenCredential object.");
+        const isTokenCredential = typeof auth === "object" && auth !== null && typeof (auth as TokenCredential).getToken === "function";
+        const isKeyCredential = typeof auth === "object" && auth !== null && typeof (auth as KeyCredential).key === "string";
+        if (auth !== undefined && !isValidString && !isTokenCredential && !isKeyCredential) {
+            throw new Error("Invalid 'auth' parameter: expected a non-empty API key string, a TokenCredential, or a KeyCredential.");
         }
 
-        const speechImpl: SpeechConfigImpl = typeof auth === "object"
-            ? new SpeechConfigImpl(auth)
-            : new SpeechConfigImpl();
+        let speechImpl: SpeechConfigImpl;
+        if (typeof auth === "string") {
+            speechImpl = new SpeechConfigImpl();
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, auth);
+        } else if (typeof auth === "object" && typeof (auth as TokenCredential).getToken === "function") {
+            speechImpl = new SpeechConfigImpl(auth as TokenCredential);
+        } else if (typeof auth === "object" && typeof (auth as KeyCredential).key === "string") {
+            speechImpl = new SpeechConfigImpl();
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, (auth as KeyCredential).key);
+        } else {
+            throw new Error("Unexpected auth type.");
+        }
 
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
-
-        if (typeof auth === "string" && auth.trim().length > 0) {
-            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, auth);
-        }
 
         return speechImpl;
     }
