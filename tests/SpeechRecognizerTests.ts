@@ -49,6 +49,7 @@ import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { closeAsyncObjects, RepeatingPullStream, WaitForCondition, WaitForConditionAsync } from "./Utilities";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
 import { DefaultAzureCredential } from "@azure/identity";
+import { SpeechServiceType } from "./SpeechServiceTypes";
 
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
