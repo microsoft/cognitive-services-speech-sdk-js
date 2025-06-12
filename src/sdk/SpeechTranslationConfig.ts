@@ -168,7 +168,7 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
             speechImpl = new SpeechTranslationConfigImpl();
             speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, (auth as KeyCredential).key);
         } else {
-            throw new Error("Unexpected auth type.");
+            speechImpl = new SpeechTranslationConfigImpl();
         }
 
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);

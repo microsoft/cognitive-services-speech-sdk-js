@@ -125,7 +125,7 @@ export abstract class SpeechConfig {
             speechImpl = new SpeechConfigImpl();
             speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, (auth as KeyCredential).key);
         } else {
-            throw new Error("Unexpected auth type.");
+            speechImpl = new SpeechConfigImpl();
         }
 
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
