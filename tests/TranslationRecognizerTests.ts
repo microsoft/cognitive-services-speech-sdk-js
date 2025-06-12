@@ -424,6 +424,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
     describe.each([
         SpeechConnectionType.Subscription,
         SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+        SpeechConnectionType.CloudFromEndpointWithKeyCredentialAuth,
         SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
         SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,

@@ -432,6 +432,7 @@ test("testTranscriptionFromPullStreamAsync", (done: jest.DoneCallback) => {
 describe.each([
     SpeechConnectionType.Subscription,
     SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+    SpeechConnectionType.CloudFromEndpointWithKeyCredentialAuth,
     SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
     SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
     SpeechConnectionType.LegacyCogSvcsTokenAuth,

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { AzureKeyCredential } from "@azure/core-auth";
 import { DefaultAzureCredential, TokenCredential } from "@azure/identity";
 // We'll use dynamic require instead of static import for fetch
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
@@ -109,6 +110,9 @@ export class SpeechConfigConnectionFactory {
 
             case SpeechConnectionType.CloudFromEndpointWithKeyAuth:
                 return this.buildCloudEndpointKeyConfig<T>(isTranslationConfig);
+            
+            case SpeechConnectionType.CloudFromEndpointWithKeyCredentialAuth:
+                return this.buildCloudEndpointKeyCredentialConfig<T>(isTranslationConfig);
 
             case SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth:
                 return this.buildCloudEndpointConfigWithCogSvcsToken<T>(isTranslationConfig);
@@ -307,6 +311,25 @@ export class SpeechConfigConnectionFactory {
             return sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), key) as unknown as T;
         } else {
             return sdk.SpeechConfig.fromEndpoint(new URL(endpoint), key) as unknown as T;
+        }
+    }
+
+    /**
+     * Builds a cloud endpoint config with key authentication.
+     */
+    private static buildCloudEndpointKeyCredentialConfig<T extends ConfigType>(isTranslationConfig: boolean): T {
+        const subscriptionRegion = this.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
+        const key = subscriptionRegion.Key;
+        const endpoint = subscriptionRegion.Endpoint;
+
+        if (!endpoint) {
+            throw new Error("Endpoint is not defined for the subscription");
+        }
+
+        if (isTranslationConfig) {
+            return sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), new AzureKeyCredential(key)) as unknown as T;
+        } else {
+            return sdk.SpeechConfig.fromEndpoint(new URL(endpoint), new AzureKeyCredential(key)) as unknown as T;
         }
     }
 
