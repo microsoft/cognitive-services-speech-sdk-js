@@ -49,6 +49,7 @@ import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { closeAsyncObjects, RepeatingPullStream, WaitForCondition, WaitForConditionAsync } from "./Utilities";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
 import { SpeechServiceType } from "./SpeechServiceTypes";
+import { DefaultAzureCredential } from "@azure/identity";
 
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
@@ -689,17 +690,16 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
     describe.each([
         SpeechConnectionType.Subscription,
-        // SpeechConnectionType.CloudFromEndpointWithKeyAuth,
-        // SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
-        // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
+        SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+        SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
+        SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,
         SpeechConnectionType.LegacyEntraIdTokenAuth,
         SpeechConnectionType.CloudFromHost,
         SpeechConnectionType.ContainerFromHost,
         // SpeechConnectionType.ContainerFromEndpoint,
-        // SpeechConnectionType.PrivateLinkWithKeyAuth,
-        // SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth,
-        // SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
+        SpeechConnectionType.PrivateLinkWithKeyAuth,
+        SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
         SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth
     ])("Speech Recognition Connection Tests", (connectionType: SpeechConnectionType): void => {
@@ -1339,6 +1339,74 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         const done: Deferred<void> = new Deferred<void>();
 
         const s: sdk.SpeechConfig = await BuildSpeechConfig();
+        objsToClose.push(s);
+
+        const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);
+
+        let bytesSent: number = 0;
+        const p: sdk.PullAudioInputStream = sdk.AudioInputStream.createPullStream(
+            {
+                // eslint-disable-next-line @typescript-eslint/no-empty-function
+                close: (): void => { },
+                read: (buffer: ArrayBuffer): number => {
+                    const copyArray: Uint8Array = new Uint8Array(buffer);
+                    const start: number = bytesSent;
+                    const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
+                    copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                    bytesSent += (end - start);
+
+                    if (bytesSent < buffer.byteLength) {
+                        setTimeout((): void => p.close(), 1000);
+                    }
+
+                    return (end - start);
+                },
+            });
+
+        const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+        objsToClose.push(r);
+
+        expect(r).not.toBeUndefined();
+        expect(r instanceof sdk.Recognizer);
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.reject(error);
+            }
+        };
+
+        r.recognizeOnceAsync(
+            (p2: sdk.SpeechRecognitionResult): void => {
+                const res: sdk.SpeechRecognitionResult = p2;
+                try {
+                    expect(res).not.toBeUndefined();
+                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                    expect(res.text).toEqual("What's the weather like?");
+                    expect(res.properties).not.toBeUndefined();
+                    expect(res.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                    done.resolve();
+                } catch (error) {
+                    done.reject(error);
+                }
+            },
+            (error: string): void => {
+                done.reject(error);
+            });
+
+        await done.promise;
+    });
+
+    test.skip("AADTokenCredential", async (): Promise<void> => {
+        // eslint-disable-next-line no-console
+        console.info("Name: AADTokenCredential");
+        const done: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), new DefaultAzureCredential());
         objsToClose.push(s);
 
         const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);

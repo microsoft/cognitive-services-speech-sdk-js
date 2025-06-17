@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {
+    ForceDictationPropertyName,
     IAuthentication,
     IConnectionFactory,
     OutputFormatPropertyName,
@@ -50,7 +51,7 @@ export class SpeechRecognizer extends Recognizer {
             speechConfigImpl.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        super(audioConfig, speechConfigImpl.properties, new SpeechConnectionFactory());
+        super(audioConfig, speechConfigImpl.properties, new SpeechConnectionFactory(), speechConfig.tokenCredential);
         this.privDisposedRecognizer = false;
     }
 
@@ -195,7 +196,7 @@ export class SpeechRecognizer extends Recognizer {
      * @param err - Callback invoked in case of an error.
      */
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
-        marshalPromiseToCallbacks(this.startContinuousRecognitionAsyncImpl(RecognitionMode.Conversation), cb, err);
+        marshalPromiseToCallbacks(this.startContinuousRecognitionAsyncImpl(this.properties.getProperty(ForceDictationPropertyName, undefined) === undefined ? RecognitionMode.Conversation : RecognitionMode.Dictation), cb, err);
     }
 
     /**

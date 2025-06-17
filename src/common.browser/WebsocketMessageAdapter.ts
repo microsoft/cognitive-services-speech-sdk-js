@@ -22,6 +22,7 @@ import {
     ConnectionMessageReceivedEvent,
     ConnectionMessageSentEvent,
     ConnectionOpenResponse,
+    ConnectionRedirectEvent,
     ConnectionStartEvent,
     ConnectionState,
     Deferred,
@@ -118,11 +119,6 @@ export class WebsocketMessageAdapter {
 
                 this.privWebsocketClient = new WebSocket(this.privUri);
             } else {
-                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression };
-                // The ocsp library will handle validation for us and fail the connection if needed.
-                this.privCertificateValidatedDeferral.resolve();
-
-                options.agent = this.getAgent();
                 // Workaround for https://github.com/microsoft/cognitive-services-speech-sdk-js/issues/465
                 // Which is root caused by https://github.com/TooTallNate/node-agent-base/issues/61
                 const uri = new URL(this.privUri);
@@ -133,9 +129,20 @@ export class WebsocketMessageAdapter {
                 } else if (protocol?.toLocaleLowerCase() === "ws:") {
                     protocol = "http:";
                 }
+
+                const options: ws.ClientOptions = { headers: this.privHeaders, perMessageDeflate: this.privEnableCompression, followRedirects: protocol.toLocaleLowerCase() === "https:" };
+                // The ocsp library will handle validation for us and fail the connection if needed.
+                this.privCertificateValidatedDeferral.resolve();
+
+                options.agent = this.getAgent();
+
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 (options.agent as any).protocol = protocol;
                 this.privWebsocketClient = new ws(this.privUri, options);
+                this.privWebsocketClient.on("redirect", (redirectUrl: string): void => {
+                    const event: ConnectionRedirectEvent = new ConnectionRedirectEvent(this.privConnectionId, redirectUrl, this.privUri, `Getting redirect URL from endpoint ${this.privUri} with redirect URL '${redirectUrl}'`);
+                    Events.instance.onEvent(event);
+                });
             }
 
             this.privWebsocketClient.binaryType = "arraybuffer";

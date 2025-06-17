@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { log } from "console";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener,
@@ -15,7 +16,7 @@ import {
 } from "../src/common/Exports";
 import { createNoDashGuid } from "../src/common/Guid";
 import { Settings } from "./Settings";
-import { closeAsyncObjects } from "./Utilities";
+import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 
@@ -463,6 +464,47 @@ test("bad segmentation silence value", (done: jest.DoneCallback): void => {
     });
 }, 30000);
 
+test("Silence timeout only", (done: jest.DoneCallback): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
+
+    s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, "4000");
+    const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+        try {
+            expect(e.errorDetails).toBeUndefined();
+            expect(e.text).toEqual(Settings.WaveFileText);
+            done();
+        } catch (error) {
+            done(error);
+        }
+    });
+}, 30000);
+
+test("Maximum segmentation only", (done: jest.DoneCallback): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
+
+    s.setProperty(sdk.PropertyId.Speech_SegmentationMaximumTimeMs, "60000");
+    const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+    objsToClose.push(r);
+
+    r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+        try {
+            expect(e.errorDetails).toContain("1007");
+            done();
+        } catch (error) {
+            done(error);
+        }
+    });
+}, 30000);
+
 describe("NPM proxy test", (): void => {
 
     afterEach((): void => {
@@ -676,12 +718,17 @@ describe("Connection URL Tests", (): void => {
                 if (event instanceof ConnectionStartEvent) {
                     const connectionEvent: ConnectionStartEvent = event as ConnectionStartEvent;
                     const uri: string = connectionEvent.uri;
-                    expect(uri).not.toBeUndefined();
-                    // Make sure there's only a single ? in the URL.
-                    expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
-                    urlSubStrings.forEach((value: string, index: number, array: string[]): void => {
-                        expect(uri).toContain(value);
-                    });
+                    try {
+                        expect(uri).not.toBeUndefined();
+                        // Make sure there's only a single ? in the URL.
+                        expect(uri.indexOf("?")).toEqual(uri.lastIndexOf("?"));
+                        urlSubStrings.forEach((value: string, index: number, array: string[]): void => {
+                            expect(uri).toContain(value);
+                        });
+                    } catch (error) {
+                        done(error);
+                    };
+
                     void detachObject.detach();
                 }
             },
@@ -899,12 +946,14 @@ describe("Connection URL Tests", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: enableDictation");
 
+        let recoDone: boolean = false;
+
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
         objsToClose.push(s);
 
         s.enableDictation();
 
-        const r: sdk.SpeechRecognizer = BuildSpeechRecognizerFromWaveFile(s);
+        const r: sdk.SpeechRecognizer = BuildSpeechRecognizerFromWaveFile(s, Settings.WaveFileExplicitPunc);
         objsToClose.push(r);
         let uri: string;
         const detachObject: IDetachable = Events.instance.attachListener({
@@ -916,6 +965,27 @@ describe("Connection URL Tests", (): void => {
             },
         });
 
+        r.recognized = (r: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+            try {
+                const res: sdk.SpeechRecognitionResult = e.result;
+                expect(res).not.toBeUndefined();
+                expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+               // expect(res.text).toContain("If it rains, send me an e-mail.");
+                recoDone = true;
+            } catch (error) {
+                done(error);
+            }
+        };
+
+        r.canceled = (s, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+                expect(sdk.ResultReason[e.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.Canceled]);
+            } catch (error) {
+                done(error);
+            }
+        };
+
         r.startContinuousRecognitionAsync(
             (): void => {
                 try {
@@ -925,8 +995,6 @@ describe("Connection URL Tests", (): void => {
                     expect(uri).toContain("/dictation/");
                     expect(uri).not.toContain("/conversation/");
                     expect(uri).not.toContain("/interactive/");
-
-                    done();
                 } catch (error) {
                     done(error);
                 } finally {
@@ -934,5 +1002,16 @@ describe("Connection URL Tests", (): void => {
                     uri = undefined;
                 }
             });
+
+        WaitForCondition((): boolean => recoDone, (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
+
+                r.startContinuousRecognitionAsync(
+                    done,
+                    (error: string): void => {
+                        done(error);
+                    });
+            });
+        });
     });
 });

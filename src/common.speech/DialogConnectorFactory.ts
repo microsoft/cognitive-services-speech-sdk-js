@@ -22,7 +22,7 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
     public create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection {
+        connectionId?: string): Promise<IConnection> {
 
         const applicationId: string = config.parameters.getProperty(PropertyId.Conversation_ApplicationId, "");
         const dialogType: string = config.parameters.getProperty(PropertyId.Conversation_DialogType);
@@ -73,6 +73,6 @@ export class DialogConnectionFactory extends ConnectionFactoryBase {
         this.setCommonUrlParams(config, queryParams, endpoint);
 
         const enableCompression: boolean = config.parameters.getProperty("SPEECH-EnableWebsocketCompression", "false") === "true";
-        return new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId);
+        return Promise.resolve(new WebsocketConnection(endpoint, queryParams, headers, new WebsocketMessageFormatter(), ProxyInfo.fromRecognizerConfig(config), enableCompression, connectionId));
     }
 }

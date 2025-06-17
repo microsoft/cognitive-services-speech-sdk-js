@@ -217,8 +217,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const speechSegmentationStrategy: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_SegmentationStrategy, undefined);
         const segmentation: Segmentation = {
             mode: SegmentationMode.Normal,
-            segmentationForcedTimeoutMs: 0,
-            segmentationSilenceTimeoutMs: 0,
         };
 
         let configuredSegment = false;
@@ -1014,7 +1012,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             await this.privRequestSession.onAuthCompleted(false);
 
             // Create the connection
-            const connection: IConnection = this.privConnectionFactory.create(this.privRecognizerConfig, auth, this.privConnectionId);
+            const connection: IConnection = await this.privConnectionFactory.create(this.privRecognizerConfig, auth, this.privConnectionId);
             // Attach the telemetry handlers.
             this.privRequestSession.listenForServiceTelemetry(connection.events);
 

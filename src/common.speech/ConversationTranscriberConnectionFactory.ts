@@ -29,12 +29,12 @@ import {
 } from "./QueryParameterNames.js";
 
 export class ConversationTranscriberConnectionFactory extends ConnectionFactoryBase {
-    private readonly universalUri: string = "/speech/universal/v2";
+    private readonly universalUri: string = "/stt/speech/universal/v2";
 
-    public create(
+    public async create(
         config: RecognizerConfig,
         authInfo: AuthInfo,
-        connectionId?: string): IConnection {
+        connectionId?: string): Promise<IConnection> {
 
         let endpoint: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Endpoint, undefined);
         const region: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Region, undefined);
@@ -59,6 +59,18 @@ export class ConversationTranscriberConnectionFactory extends ConnectionFactoryB
         }
 
         this.setV2UrlParams(config, queryParams, endpoint);
+
+        if (!!endpoint) {
+            const endpointUrl = new URL(endpoint);
+            const pathName = endpointUrl.pathname;
+
+            if (pathName === "" || pathName === "/") {
+                // We need to generate the path, and we need to check for a redirect.
+                endpointUrl.pathname = this.universalUri;
+
+                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString());
+            }
+        }
 
         if (!endpoint) {
             endpoint = `${host}${this.universalUri}`;
