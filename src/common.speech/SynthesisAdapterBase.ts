@@ -50,6 +50,10 @@ export abstract class SynthesisAdapterBase implements IDisposable {
     protected privSuccessCallback: (e: SpeechSynthesisResult) => void;
     protected privErrorCallback: (e: string) => void;
 
+    public get synthesizerConfig(): SynthesizerConfig {
+        return this.privSynthesizerConfig;
+    }
+
     public get synthesisContext(): SynthesisContext {
         return this.privSynthesisContext;
     }
