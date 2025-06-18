@@ -48,7 +48,7 @@ export class SynthesizerConfig {
         return this.privSpeechServiceConfig;
     }
 
-    public setContextFromJson(contextJson: string | object) {
+    public setContextFromJson(contextJson: string | object): void {
         const context: Context = JSON.parse(contextJson as string) as Context;
         if (context.system !== null) {
             this.privSpeechServiceConfig.Context.system = context.system;
