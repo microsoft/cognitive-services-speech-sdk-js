@@ -4,6 +4,7 @@
 //
 
 import {
+    Context,
     ServiceRecognizerBase,
     SynthesisAdapterBase,
 } from "../common.speech/Exports.js";
@@ -119,8 +120,14 @@ export class Connection {
                 context[propertyName] = propertyValue;
             }
         } else if (this.privInternalData instanceof SynthesisAdapterBase) {
-            if (path.toLowerCase() !== "synthesis.context") {
-                throw new Error("Only synthesis.context message property sets are currently supported for synthesizer");
+            if (path.toLowerCase() !== "speech.config" && path.toLowerCase() !== "synthesis.context") {
+                throw new Error("Only speech.config and synthesis.context message paths are currently supported for synthesizer");
+            } else if (path.toLowerCase() === "speech.config") {
+                if (propertyName.toLowerCase() !== "context") {
+                    throw new Error("Only context property is currently supported for speech.config message path for synthesizer");
+                } else {
+                    this.privInternalData.synthesizerConfig.setContextFromJson(propertyValue);
+                }
             } else {
                 this.privInternalData.synthesisContext.setSection(propertyName, propertyValue);
             }
