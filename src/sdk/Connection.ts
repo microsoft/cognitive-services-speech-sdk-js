@@ -4,7 +4,6 @@
 //
 
 import {
-    Context,
     ServiceRecognizerBase,
     SynthesisAdapterBase,
 } from "../common.speech/Exports.js";
