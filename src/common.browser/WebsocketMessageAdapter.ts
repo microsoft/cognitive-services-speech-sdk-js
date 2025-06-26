@@ -146,6 +146,9 @@ export class WebsocketMessageAdapter {
             }
 
             this.privWebsocketClient.binaryType = "arraybuffer";
+            console.log("xitzhang privWebsocketClient:" + JSON.stringify(this.privWebsocketClient));
+            console.log("keys:", Object.keys(this.privWebsocketClient));
+            console.dir(this.privWebsocketClient, { depth: null });
             this.privReceivingMessageQueue = new Queue<ConnectionMessage>();
             this.privDisconnectDeferral = new Deferred<void>();
             this.privSendMessageQueue = new Queue<ISendItem>();
@@ -356,7 +359,7 @@ export class WebsocketMessageAdapter {
 
         if (!!proxyInfo.UserName) {
             httpProxyOptions.headers = {
-                "Proxy-Authentication": "Basic " + new Buffer(`${proxyInfo.UserName}:${(proxyInfo.Password === undefined) ? "" : proxyInfo.Password}`).toString("base64"),
+                "Proxy-Authentication": "Basic " + Buffer.from(`${proxyInfo.UserName}:${(proxyInfo.Password === undefined) ? "" : proxyInfo.Password}`).toString("base64"),
             };
         } else {
             httpProxyOptions.headers = {};

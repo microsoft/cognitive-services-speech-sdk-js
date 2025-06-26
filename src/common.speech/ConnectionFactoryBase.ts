@@ -73,31 +73,24 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
     }
 
     public static async getRedirectUrlFromEndpoint(endpoint: string): Promise<string> {
+        // make a rest call to the endpoint to get the redirect url
+        const redirectUrl: URL = new URL(endpoint);
+        redirectUrl.protocol = "https:";
+        redirectUrl.port = "443";
+        const params: URLSearchParams = redirectUrl.searchParams;
+        params.append("GenerateRedirectResponse", "true");
 
-        let redirectUrlString: string;
+        const redirectedUrlString: string = redirectUrl.toString();
+        Events.instance.onEvent(new ConnectionRedirectEvent("", redirectedUrlString, undefined, "ConnectionFactoryBase: redirectUrl request"));
 
-        if (typeof window !== "undefined" && typeof window.fetch !== "undefined") {
-            // make a rest call to the endpoint to get the redirect url
-            const redirectUrl: URL = new URL(endpoint);
-            redirectUrl.protocol = "https:";
-            redirectUrl.port = "443";
-            const params: URLSearchParams = redirectUrl.searchParams;
-            params.append("GenerateRedirectResponse", "true");
+        const redirectResponse: Response = await fetch(redirectedUrlString);
 
-            const redirectedUrlString: string = redirectUrl.toString();
-            Events.instance.onEvent(new ConnectionRedirectEvent("", redirectedUrlString, undefined, "ConnectionFactoryBase: redirectUrl request"));
-
-            const redirectResponse: Response = await fetch(redirectedUrlString);
-
-            if (redirectResponse.status !== 200) {
-                return endpoint;
-            }
-
-            // Fix: properly read the response text
-            redirectUrlString = await redirectResponse.text();
-        } else {
-            redirectUrlString = endpoint;
+        if (redirectResponse.status !== 200) {
+            return endpoint;
         }
+
+        // Fix: properly read the response text
+        const redirectUrlString = await redirectResponse.text();
 
         Events.instance.onEvent(new ConnectionRedirectEvent("", redirectUrlString, endpoint, "ConnectionFactoryBase: redirectUrlString"));
 
