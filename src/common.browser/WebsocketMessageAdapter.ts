@@ -146,9 +146,6 @@ export class WebsocketMessageAdapter {
             }
 
             this.privWebsocketClient.binaryType = "arraybuffer";
-            console.log("xitzhang privWebsocketClient:" + JSON.stringify(this.privWebsocketClient));
-            console.log("keys:", Object.keys(this.privWebsocketClient));
-            console.dir(this.privWebsocketClient, { depth: null });
             this.privReceivingMessageQueue = new Queue<ConnectionMessage>();
             this.privDisconnectDeferral = new Deferred<void>();
             this.privSendMessageQueue = new Queue<ISendItem>();
