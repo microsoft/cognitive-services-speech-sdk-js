@@ -356,7 +356,7 @@ export class WebsocketMessageAdapter {
 
         if (!!proxyInfo.UserName) {
             httpProxyOptions.headers = {
-                "Proxy-Authentication": "Basic " + new Buffer(`${proxyInfo.UserName}:${(proxyInfo.Password === undefined) ? "" : proxyInfo.Password}`).toString("base64"),
+                "Proxy-Authentication": "Basic " + Buffer.from(`${proxyInfo.UserName}:${(proxyInfo.Password === undefined) ? "" : proxyInfo.Password}`).toString("base64"),
             };
         } else {
             httpProxyOptions.headers = {};
