@@ -2522,6 +2522,7 @@ describe("PhraseList tests", (): void => {
 
         const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
         phraseList.addPhrase("Wreck a nice beach");
+        phraseList.setWeight(1.0);  // test with default weight
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
