@@ -40,14 +40,13 @@ jobs:
       env
     displayName: Install packages and set version from package.json
   - bash: |
-      F=src/common.speech/SpeechServiceConfig.ts
-      [[ -f $F ]] || exit 1
-      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
-      E=$?
-      rm -f "$F.bak"
-      git diff
-      exit $E
+      chmod +x ./ci/update-version-in-code.sh
+      ./ci/update-version-in-code.sh
     displayName: Update version in source code
+  - bash: |
+      chmod +x ./ci/update-package-version.sh
+      ./ci/update-package-version.sh
+    displayName: Update version in package.json
   - bash: npm pack
     displayName: Build and pack SDK
   - bash: |
@@ -100,14 +99,9 @@ jobs:
       echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
     displayName: Install packages and set version from package.json
   - bash: |
-      F=src/common.speech/SpeechServiceConfig.ts
-      [[ -f $F ]] || exit 1
-      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
-      E=$?
-      rm -f "$F.bak"
-      git diff
-      exit $E
-    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+      chmod +x ./ci/update-version-in-code.sh
+      ./ci/update-version-in-code.sh
+    displayName: Update version in source code
   - template: generate-subscription-file.yml
   - bash: |
       set -u -e -x -o pipefail
@@ -160,14 +154,9 @@ jobs:
       echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
     displayName: Install packages and set version from package.json
   - bash: |
-      F=src/common.speech/SpeechServiceConfig.ts
-      [[ -f $F ]] || exit 1
-      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
-      E=$?
-      rm -f "$F.bak"
-      git diff
-      exit $E
-    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+      chmod +x ./ci/update-version-in-code.sh
+      ./ci/update-version-in-code.sh
+    displayName: Update version in source code
   - template: generate-subscription-file.yml
   - bash: |
       # Define new Docker data directory  
