@@ -24,3 +24,25 @@ vsts_setvar() {
   echo "##vso[task.setvariable variable=$1]$2"
   export "$1"="$2"
 }
+
+# Set output variable in ADO
+vsts_setoutvar() {
+  set +x
+  echo "Setting Build Output Variable $1=$2"
+  echo "##vso[task.setvariable variable=$1;isOutput=true]${2}"
+  export "$1"="$2"
+}
+
+# Update build number in ADO
+vsts_updatebuildnumber() {
+  set +x
+  echo "Updating build number to $1"
+  echo "##vso[build.updatebuildnumber]$1"
+}
+
+# Add build tag in ADO
+vsts_addbuildtag() {
+  set +x
+  echo "Adding build tag $1"
+  echo "##vso[build.addbuildtag]$1"
+}

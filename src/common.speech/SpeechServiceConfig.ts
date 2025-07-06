@@ -63,7 +63,7 @@ export class System {
 
     public constructor() {
         // Note: below will be patched for official builds.
-        const SPEECHSDK_CLIENTSDK_VERSION = "1.44.0-alpha.0.1";
+        const SPEECHSDK_CLIENTSDK_VERSION = "1.44.0-alpha.0.20250706023335";
 
         this.name = "SpeechSDK";
         this.version = SPEECHSDK_CLIENTSDK_VERSION;

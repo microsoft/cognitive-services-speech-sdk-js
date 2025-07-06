@@ -31,12 +31,14 @@ jobs:
         eq(variables['Build.SourceBranch'], 'refs/heads/master'),
         or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')))
   - bash: |
-      npm ci && npm run civersion
+      npm ci
+      chmod +x ./ci/set-version.sh
+      ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
       echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
       env
-    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+    displayName: Install packages and set version from package.json
   - bash: |
       F=src/common.speech/SpeechServiceConfig.ts
       [[ -f $F ]] || exit 1
@@ -45,7 +47,7 @@ jobs:
       rm -f "$F.bak"
       git diff
       exit $E
-    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+    displayName: Update version in source code
   - bash: npm pack
     displayName: Build and pack SDK
   - bash: |
@@ -90,11 +92,13 @@ jobs:
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
-      npm ci && npm run civersion
+      npm ci
+      chmod +x ./ci/set-version.sh
+      ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
       echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
-    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+    displayName: Install packages and set version from package.json
   - bash: |
       F=src/common.speech/SpeechServiceConfig.ts
       [[ -f $F ]] || exit 1
@@ -148,11 +152,13 @@ jobs:
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
-      npm ci && npm run civersion
+      npm ci
+      chmod +x ./ci/set-version.sh
+      ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
       echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
-    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+    displayName: Install packages and set version from package.json
   - bash: |
       F=src/common.speech/SpeechServiceConfig.ts
       [[ -f $F ]] || exit 1
