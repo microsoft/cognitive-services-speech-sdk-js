@@ -40,7 +40,6 @@ jobs:
       env
     displayName: Install packages and set version from package.json
   - bash: |
-      chmod +x ./ci/update-version-in-code.sh
       ./ci/update-version-in-code.sh
     displayName: Update version in source code
   - bash: |
@@ -99,7 +98,6 @@ jobs:
       echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
     displayName: Install packages and set version from package.json
   - bash: |
-      chmod +x ./ci/update-version-in-code.sh
       ./ci/update-version-in-code.sh
     displayName: Update version in source code
   - template: generate-subscription-file.yml
@@ -154,7 +152,6 @@ jobs:
       echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
     displayName: Install packages and set version from package.json
   - bash: |
-      chmod +x ./ci/update-version-in-code.sh
       ./ci/update-version-in-code.sh
     displayName: Update version in source code
   - template: generate-subscription-file.yml
