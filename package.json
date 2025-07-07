@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.44.0-alpha.0.1",
+  "version": "1.45.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
@@ -92,7 +92,7 @@
     "jest": "jest",
     "lint": "eslint -c .eslintrc.cjs --ext .ts src",
     "linttest": "eslint -c .eslintrc.cjs --ext .ts tests",
-    "civersion": "node ci/version.cjs",
+    "setversion": "chmod +x ./ci/set-version.sh && ./ci/set-version.sh",
     "prepare": "npm run build",
     "setup": "npm install --package-lock-only --ignore-scripts --no-audit"
   },
@@ -111,7 +111,7 @@
     "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",
     "uuid": "^9.0.0",
-    "ws": "^7.5.6"
+    "ws": "^8.18.2"
   },
   "overrides": {
     "extend": "3.0.2",
