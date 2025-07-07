@@ -32,7 +32,6 @@ jobs:
         or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')))
   - bash: |
       npm ci
-      chmod +x ./ci/set-version.sh
       ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
@@ -43,7 +42,6 @@ jobs:
       ./ci/update-version-in-code.sh
     displayName: Update version in source code
   - bash: |
-      chmod +x ./ci/update-package-version.sh
       ./ci/update-package-version.sh
     displayName: Update version in package.json
   - bash: npm pack
@@ -91,7 +89,6 @@ jobs:
     displayName: Repository checks
   - bash: |
       npm ci
-      chmod +x ./ci/set-version.sh
       ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
@@ -145,7 +142,6 @@ jobs:
     displayName: Repository checks
   - bash: |
       npm ci
-      chmod +x ./ci/set-version.sh
       ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
