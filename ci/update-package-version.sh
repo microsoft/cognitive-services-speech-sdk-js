@@ -14,6 +14,6 @@ fi
 echo "Updating package.json version to $SPEECHSDK_SEMVER2NOMETA"
 
 # Use npm to update the version in package.json
-npm version "$SPEECHSDK_SEMVER2NOMETA" --no-git-tag-version
+npm version "$SPEECHSDK_SEMVER2NOMETA" --no-git-tag-version  --allow-same-version
 
 echo "Successfully updated package.json version to $SPEECHSDK_SEMVER2NOMETA"
