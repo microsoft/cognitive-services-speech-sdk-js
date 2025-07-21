@@ -2,7 +2,7 @@
   "name": "microsoft-cognitiveservices-speech-sdk",
   "author": "Microsoft Corporation",
   "homepage": "https://docs.microsoft.com/azure/cognitive-services/speech-service/",
-  "version": "1.44.0-alpha.0.1",
+  "version": "1.45.0-alpha.0.1",
   "license": "MIT",
   "description": "Microsoft Cognitive Services Speech SDK for JavaScript",
   "keywords": [
@@ -56,7 +56,7 @@
     "@types/request": "^2.48.3",
     "@types/rimraf": "^3.0.0",
     "@types/uuid": "^9.0.0",
-    "@types/ws": "^6.0.4",
+    "@types/ws": "^7.4.0",
     "@typescript-eslint/eslint-plugin": "^5.26.0",
     "@typescript-eslint/eslint-plugin-tslint": "^5.27.0",
     "@typescript-eslint/parser": "^5.27.0",
@@ -74,13 +74,13 @@
     "gulp-typescript": "^5.0.1",
     "jest": "^27.0.0",
     "jest-junit": "^12.0.0",
-    "node-fetch": "^2.6.7",
+    "node-fetch": "^2.6.1",
     "rimraf": "^3.0.2",
     "semver": "^6.3.0",
     "source-map-loader": "^3.0.1",
     "ts-jest": "^27.0.0",
     "tslint": "^5.20.1",
-    "typescript": "^3.5.3",
+    "typescript": "4.5",
     "webpack": "^5.72.1",
     "webpack-stream": "^7.0.0"
   },
@@ -92,7 +92,7 @@
     "jest": "jest",
     "lint": "eslint -c .eslintrc.cjs --ext .ts src",
     "linttest": "eslint -c .eslintrc.cjs --ext .ts tests",
-    "civersion": "node ci/version.cjs",
+    "setversion": "chmod +x ./ci/set-version.sh && ./ci/set-version.sh",
     "prepare": "npm run build",
     "setup": "npm install --package-lock-only --ignore-scripts --no-audit"
   },
@@ -111,7 +111,7 @@
     "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",
     "uuid": "^9.0.0",
-    "ws": "^7.5.6"
+    "ws": "^8.18.2"
   },
   "overrides": {
     "extend": "3.0.2",

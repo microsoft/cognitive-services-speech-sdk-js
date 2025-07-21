@@ -12,6 +12,7 @@ export class DynamicGrammarBuilder {
 
     private privPhrases: string[];
     private privGrammars: string[];
+    private privWeight: number = 1.0;
 
     // Adds one more reference phrases to the dynamic grammar to send.
     // All added phrases are generic phrases.
@@ -50,6 +51,11 @@ export class DynamicGrammarBuilder {
         this.privGrammars = undefined;
     }
 
+    // Sets the weight for the dynamic grammar.
+    public setWeight(weight: number): void {
+        this.privWeight = weight;
+    }
+
     // Generates an object that represents the dynamic grammar used by the Speech Service.
     // This is done by building an object with the correct layout based on the phrases and reference grammars added to this instance
     // of a DynamicGrammarBuilder
@@ -71,6 +77,7 @@ export class DynamicGrammarBuilder {
             });
 
             retObj.groups = [{ type: GroupType.Generic, items: retPhrases }];
+            retObj.bias = this.privWeight;
         }
 
         return retObj;

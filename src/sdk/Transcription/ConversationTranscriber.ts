@@ -49,7 +49,7 @@ export class ConversationTranscriber extends Recognizer {
             speechConfigImpl.properties.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage),
             PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
 
-        super(audioConfig, speechConfigImpl.properties, new ConversationTranscriberConnectionFactory());
+        super(audioConfig, speechConfigImpl.properties, new ConversationTranscriberConnectionFactory(), speechConfig.tokenCredential);
         this.privProperties.setProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, "2");
         this.privDisposedRecognizer = false;
     }

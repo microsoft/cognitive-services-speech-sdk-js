@@ -154,9 +154,14 @@ test("GetParameters", async (): Promise<void> => {
 
 describe.each([
     SpeechConnectionType.Subscription,
+    SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+    SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
+    SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
     SpeechConnectionType.LegacyCogSvcsTokenAuth,
     SpeechConnectionType.LegacyEntraIdTokenAuth,
     SpeechConnectionType.CloudFromHost,
+    SpeechConnectionType.PrivateLinkWithKeyAuth,
+    SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
     SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
     SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth
 ])("Translation Recognizer Basics Connection Tests", (connectionType: SpeechConnectionType): void => {

@@ -49,6 +49,7 @@ test("Grammar updates", (): void => {
     const speechContext: SpeechContext = new SpeechContext(dgBuilder);
 
     dgBuilder.addPhrase("phrase");
+    dgBuilder.setWeight(2.0);
 
     const ret: string = speechContext.toJSON();
     expect(ret).not.toBeUndefined();
@@ -70,6 +71,7 @@ test("Grammar updates", (): void => {
     const phrase: Item = group.items[0];
     expect(phrase).not.toBeUndefined();
     expect(phrase.text).toEqual("phrase");
+    expect(dgi.bias).toEqual(2.0);
 });
 
 test("Grammar updates post call", (): void => {
