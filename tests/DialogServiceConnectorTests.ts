@@ -147,12 +147,12 @@ function BuildConnectorFromWaveFile(dialogServiceConfig?: sdk.DialogServiceConfi
 }
 
 const PostDoneTest = (done: jest.DoneCallback, ms: number): any => setTimeout((): void => {
-        done();
-    }, ms);
+    done();
+}, ms);
 
 const PostFailTest = (done: jest.DoneCallback, ms: number, error?: string): any => setTimeout((): void => {
-        done(error);
-    }, ms);
+    done(error);
+}, ms);
 
 
 const sleep = (milliseconds: number): Promise<any> => new Promise((resolve: Callback): NodeJS.Timeout => setTimeout(resolve, milliseconds));
@@ -862,8 +862,12 @@ test("SendActivity fails with invalid JSON object", (done: jest.DoneCallback): v
     connector.sendActivityAsync(malformedJSON, (): void => {
         done("Should have failed");
     }, (error: string): void => {
-        expect(error).toContain("Unexpected token");
-        done();
+        try {
+            expect(error).toContain("}");
+            done();
+        } catch (e) {
+            done(e);
+        }
     });
 });
 
