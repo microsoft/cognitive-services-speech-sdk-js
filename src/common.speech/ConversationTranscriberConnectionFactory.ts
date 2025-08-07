@@ -30,6 +30,7 @@ import {
 
 export class ConversationTranscriberConnectionFactory extends ConnectionFactoryBase {
     private readonly universalUri: string = "/stt/speech/universal/v2";
+    private readonly conversationRelativeUriV1: string = "/speech/recognition/conversation/cognitiveservices/v1";
 
     public async create(
         config: RecognizerConfig,
@@ -58,22 +59,26 @@ export class ConversationTranscriberConnectionFactory extends ConnectionFactoryB
             queryParams[QueryParameterNames.EnableLanguageId] = "true";
         }
 
-        this.setV2UrlParams(config, queryParams, endpoint);
-
-        if (!!endpoint) {
-            const endpointUrl = new URL(endpoint);
-            const pathName = endpointUrl.pathname;
-
-            if (pathName === "" || pathName === "/") {
-                // We need to generate the path, and we need to check for a redirect.
-                endpointUrl.pathname = this.universalUri;
-
-                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString());
-            }
-        }
-
-        if (!endpoint) {
+        const apiVersion = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecognitionEndpointVersion, undefined);
+        if (apiVersion === "1") {
             endpoint = `${host}${this.universalUri}`;
+        } else {
+            this.setV2UrlParams(config, queryParams, endpoint);
+            if (!!endpoint) {
+                const endpointUrl = new URL(endpoint);
+                const pathName = endpointUrl.pathname;
+
+                if (pathName === "" || pathName === "/") {
+                    // We need to generate the path, and we need to check for a redirect.
+                    endpointUrl.pathname = this.universalUri;
+
+                    endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString());
+                }
+            }
+
+            if (!endpoint) {
+                endpoint = `${host}${this.conversationRelativeUriV1}`;
+            }
         }
 
         const headers: IStringDictionary<string> = {};
