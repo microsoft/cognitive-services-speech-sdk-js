@@ -240,8 +240,8 @@ export enum PropertyId {
     SpeechServiceConnection_InitialSilenceTimeoutMs,
 
     /**
-     * The end silence timeout value (in milliseconds) used by the service.
-     * Added in version 1.7.0
+     * This property is deprecated.
+     * For current information about silence timeouts, please visit https://aka.ms/csspeech/timeouts.
      */
     SpeechServiceConnection_EndSilenceTimeoutMs,
 
@@ -254,7 +254,7 @@ export enum PropertyId {
      * behavior should be thoroughly validated as intended.
      *
      * Refer to the documentation for valid value ranges and additional details:
-     * https://learn.microsoft.com/azure/ai-services/speech-service/how-to-recognize-speech?pivots=programming-language-csharp#change-how-silence-is-handled
+     * https://aka.ms/csspeech/timeouts
      *
      * Added in version 1.42.0.
      */
