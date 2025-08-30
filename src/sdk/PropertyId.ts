@@ -289,6 +289,12 @@ export enum PropertyId {
     Speech_SegmentationStrategy,
 
     /**
+     * The sensitivity of how soon a potential speech start can be signaled.
+     * Allowed values are "low" (default), "medium" and "high".
+     */
+    Speech_StartEventSensitivity,
+
+    /**
      * A boolean value specifying whether audio logging is enabled in the service or not.
      * Audio and content logs are stored either in Microsoft-owned storage, or in your own storage account linked
      * to your Cognitive Services subscription (Bring Your Own Storage (BYOS) enabled Speech resource).

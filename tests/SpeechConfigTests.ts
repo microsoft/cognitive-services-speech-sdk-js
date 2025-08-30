@@ -924,6 +924,23 @@ describe("Connection URL Tests", (): void => {
                     );
                 });
 
+                test("voiceOnsetSensitivity", (done: jest.DoneCallback): void => {
+                    // eslint-disable-next-line no-console
+                    console.info("Name: voiceOnsetSensitivity");
+
+                    const propName: string = "voiceOnsetSensitivity";
+                    const val: string = "low";
+
+                    testUrlParameter(createMethod,
+                        (s: sdk.SpeechConfig): void => {
+                            s.setProperty(sdk.PropertyId[sdk.PropertyId.Speech_StartEventSensitivity], val);
+                        },
+                        recognizerCreateMethod,
+                        done,
+                        propName + "=" + val
+                    );
+                });
+
                 test("stableIntermediateThreshold", (done: jest.DoneCallback): void => {
                     // eslint-disable-next-line no-console
                     console.info("Name: stableIntermediateThreshold");
