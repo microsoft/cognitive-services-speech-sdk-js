@@ -505,6 +505,33 @@ test("Maximum segmentation only", (done: jest.DoneCallback): void => {
     });
 }, 30000);
 
+test("Speech start event sensitivity", (done: jest.DoneCallback): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
+
+    s.setProperty(sdk.PropertyId.Speech_StartEventSensitivity, "medium");
+    const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+    objsToClose.push(r);
+
+    let detectedSpeechStart: boolean = false;
+
+    r.speechStartDetected = (r: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+        detectedSpeechStart = true;
+    };
+
+    r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+        try {
+            expect(detectedSpeechStart).toEqual(true);
+            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            done();
+        } catch (error) {
+            done(error);
+        }
+    });
+}, 30000);
+
 describe("NPM proxy test", (): void => {
 
     afterEach((): void => {
@@ -917,23 +944,6 @@ describe("Connection URL Tests", (): void => {
                     testUrlParameter(createMethod,
                         (s: sdk.SpeechConfig): void => {
                             s.setProperty(sdk.PropertyId[sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs], val);
-                        },
-                        recognizerCreateMethod,
-                        done,
-                        propName + "=" + val
-                    );
-                });
-
-                test("voiceOnsetSensitivity", (done: jest.DoneCallback): void => {
-                    // eslint-disable-next-line no-console
-                    console.info("Name: voiceOnsetSensitivity");
-
-                    const propName: string = "voiceOnsetSensitivity";
-                    const val: string = "low";
-
-                    testUrlParameter(createMethod,
-                        (s: sdk.SpeechConfig): void => {
-                            s.setProperty(sdk.PropertyId[sdk.PropertyId.Speech_StartEventSensitivity], val);
                         },
                         recognizerCreateMethod,
                         done,

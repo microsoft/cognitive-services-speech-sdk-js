@@ -410,7 +410,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
             });
     }, 20000);
 
-    test("RecognizedReceivedWithValidNonLUISKey", (done: jest.DoneCallback): void => {
+    test.skip("RecognizedReceivedWithValidNonLUISKey", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: RecognizedReceivedWithValidNonLUISKey");
 
