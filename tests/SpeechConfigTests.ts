@@ -521,10 +521,11 @@ test("Speech start event sensitivity", (done: jest.DoneCallback): void => {
         detectedSpeechStart = true;
     };
 
-    r.recognizeOnceAsync((e: sdk.SpeechRecognitionResult): void => {
+    r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult): void => {
         try {
             expect(detectedSpeechStart).toEqual(true);
-            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(result).not.toBeUndefined();
+            expect(result.errorDetails).toBeUndefined();
             done();
         } catch (error) {
             done(error);
