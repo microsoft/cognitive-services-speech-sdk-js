@@ -505,6 +505,34 @@ test("Maximum segmentation only", (done: jest.DoneCallback): void => {
     });
 }, 30000);
 
+test("Speech start event sensitivity", (done: jest.DoneCallback): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    objsToClose.push(s);
+
+    s.setProperty(sdk.PropertyId.Speech_StartEventSensitivity, "medium");
+    const a: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+
+    const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, a);
+    objsToClose.push(r);
+
+    let detectedSpeechStart: boolean = false;
+
+    r.speechStartDetected = (r: sdk.Recognizer, e: sdk.RecognitionEventArgs): void => {
+        detectedSpeechStart = true;
+    };
+
+    r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult): void => {
+        try {
+            expect(detectedSpeechStart).toEqual(true);
+            expect(result).not.toBeUndefined();
+            expect(result.errorDetails).toBeUndefined();
+            done();
+        } catch (error) {
+            done(error);
+        }
+    });
+}, 30000);
+
 describe("NPM proxy test", (): void => {
 
     afterEach((): void => {
