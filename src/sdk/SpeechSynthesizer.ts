@@ -191,6 +191,22 @@ export class SpeechSynthesizer extends Synthesizer {
     }
 
     /**
+     * Speaks text asynchronously. The synthesizer will switch to idle state.
+     * @member SpeechSynthesizer.prototype.stopSpeakingAsync
+     * @function
+     * @async
+     * @public
+     * @returns {Promise<void>} The promise of the void result.
+     */
+    public async stopSpeakingAsync(): Promise<void> {
+        while (this.synthesisRequestQueue.length() > 0) {
+            const request = await this.synthesisRequestQueue.dequeue();
+            request.err("Synthesis is canceled by user.");
+        }
+        return this.privAdapter.stopSpeaking();
+    }
+
+    /**
      * Dispose of associated resources.
      * @member SpeechSynthesizer.prototype.close
      * @function
