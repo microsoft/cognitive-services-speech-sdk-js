@@ -44,19 +44,6 @@ test("testRecognizer2", () => {
     s.close();
 });
 
-test("testRecognizer3", () => {
-    const s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
-    expect(s).not.toBeUndefined();
-
-    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
-
-    const r = new sdk.SpeakerRecognizer(s, config);
-    expect(r).not.toBeUndefined();
-    expect(r instanceof sdk.SpeakerRecognizer);
-
-    r.close();
-    s.close();
-});
 /*
 // TODO does not work with microphone
 test.skip("testRecognizer3", () => {

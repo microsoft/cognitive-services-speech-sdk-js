@@ -26,10 +26,6 @@ Create a file named `test.subscriptions.regions.json` with the following structu
     "Key": "your-luis-subscription-key",
     "Region": "your-region"
   },
-  "SpeakerRecognitionSubscription": {
-    "Key": "your-speaker-id-key",
-    "Region": "your-region"
-  },
   "ConversationTranscriptionPrincetonSubscription": {
     "Key": "your-transcription-key",
     "Region": "your-region"

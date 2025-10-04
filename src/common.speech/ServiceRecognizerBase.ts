@@ -20,7 +20,6 @@ import {
     Timeout
 } from "../common/Exports.js";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat.js";
-import { SpeakerRecognitionModel } from "../sdk/SpeakerRecognitionModel.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -28,7 +27,6 @@ import {
     RecognitionEventArgs,
     Recognizer,
     SessionEventArgs,
-    SpeakerRecognitionResult,
     SpeechRecognitionResult,
     OutputFormat
 } from "../sdk/Exports.js";
@@ -379,10 +377,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privRecognizerConfig.parameters.setProperty(PropertyId.ConversationTranslator_Token, token);
     }
 
-    public set voiceProfileType(type: string) {
-        this.privRecognizerConfig.parameters.setProperty(PropertyId.SpeechServiceConnection_SpeakerIdMode, type);
-    }
-
     public set authentication(auth: IAuthentication) {
         this.privAuthentication = auth;
     }
@@ -417,8 +411,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected recognizeOverride: (recoMode: RecognitionMode, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => Promise<void> = undefined;
-
-    public recognizeSpeaker: (model: SpeakerRecognitionModel) => Promise<SpeakerRecognitionResult> = undefined;
 
     public async recognize(
         recoMode: RecognitionMode,

@@ -35,8 +35,6 @@ export class Settings {
     public static BotSubscription: string = "<<YOUR_BOT_SUBSCRIPTION>>";
     public static BotRegion: string = "<<YOUR_BOT_REGION>>";
 
-    public static SpeakerIDSubscriptionKey: string = "<<YOUR_SPEAKER_ID_SUBSCRIPTION_KEY>>";
-    public static SpeakerIDRegion: string = "<<YOUR_SPEAKER_ID_REGION>>";
     public static ConversationTranscriptionKey: string = "<<YOUR_TRANSCRIPTION_SUBSCRIPTION_KEY>>";
     public static ConversationTranscriptionRegion: string = "<<YOUR_TRANSCRIPTION_REGION>>";
 
@@ -149,13 +147,6 @@ export class Settings {
             if (luisSub) {
                 Settings.LuisSubscriptionKey = luisSub.Key;
                 Settings.LuisRegion = luisSub.Region;
-            }
-
-            // Load the speaker recognition subscription
-            const speakerIdSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.SPEAKER_RECOGNITION_SUBSCRIPTION);
-            if (speakerIdSub) {
-                Settings.SpeakerIDSubscriptionKey = speakerIdSub.Key;
-                Settings.SpeakerIDRegion = speakerIdSub.Region;
             }
 
             // Load the conversation transcription subscription
