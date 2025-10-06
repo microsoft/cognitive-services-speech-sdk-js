@@ -31,7 +31,6 @@ export { PropertyId } from "./PropertyId.js";
 export { Recognizer } from "./Recognizer.js";
 export { SpeechRecognizer } from "./SpeechRecognizer.js";
 export { IntentRecognizer } from "./IntentRecognizer.js";
-export { VoiceProfileType } from "./VoiceProfileType.js";
 export { TranslationRecognizer } from "./TranslationRecognizer.js";
 export { Translations } from "./Translations.js";
 export { NoMatchReason } from "./NoMatchReason.js";
@@ -56,18 +55,9 @@ export { ProfanityOption } from "./ProfanityOption.js";
 export { BaseAudioPlayer } from "./Audio/BaseAudioPlayer.js";
 export { ConnectionMessageEventArgs } from "./ConnectionMessageEventArgs.js";
 export { ConnectionMessage } from "./ConnectionMessage.js";
-export { VoiceProfile } from "./VoiceProfile.js";
-export { VoiceProfileEnrollmentResult, VoiceProfileEnrollmentCancellationDetails } from "./VoiceProfileEnrollmentResult.js";
-export { VoiceProfileResult, VoiceProfileCancellationDetails } from "./VoiceProfileResult.js";
-export { VoiceProfilePhraseResult } from "./VoiceProfilePhraseResult.js";
-export { VoiceProfileClient } from "./VoiceProfileClient.js";
-export { SpeakerRecognizer } from "./SpeakerRecognizer.js";
-export { SpeakerIdentificationModel } from "./SpeakerIdentificationModel.js";
-export { SpeakerVerificationModel } from "./SpeakerVerificationModel.js";
 export { AutoDetectSourceLanguageConfig } from "./AutoDetectSourceLanguageConfig.js";
 export { AutoDetectSourceLanguageResult } from "./AutoDetectSourceLanguageResult.js";
 export { SourceLanguageConfig } from "./SourceLanguageConfig.js";
-export { SpeakerRecognitionResult, SpeakerRecognitionResultType, SpeakerRecognitionCancellationDetails } from "./SpeakerRecognitionResult.js";
 export { Conversation,
     ConversationExpirationEventArgs,
     ConversationInfo,
