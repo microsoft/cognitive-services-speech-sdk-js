@@ -8,8 +8,7 @@
 export enum PropertyId {
 
     /**
-     * The Cognitive Services Speech Service subscription Key. If you are using an intent recognizer, you need to
-     * specify the LUIS endpoint key for your particular LUIS app. Under normal circumstances, you shouldn't
+     * The Cognitive Services Speech Service subscription Key. Under normal circumstances, you shouldn't
      * have to use this property directly.
      * Instead, use [[SpeechConfig.fromSubscription]].
      * @member PropertyId.SpeechServiceConnection_Key
@@ -37,7 +36,7 @@ export enum PropertyId {
      * The Cognitive Services Speech Service authorization token (aka access token). Under normal circumstances,
      * you shouldn't have to use this property directly.
      * Instead, use [[SpeechConfig.fromAuthorizationToken]], [[SpeechRecognizer.authorizationToken]],
-     * [[IntentRecognizer.authorizationToken]], [[TranslationRecognizer.authorizationToken]], [[SpeakerRecognizer.authorizationToken]].
+     * [[TranslationRecognizer.authorizationToken]], [[SpeakerRecognizer.authorizationToken]].
      * @member PropertyId.SpeechServiceAuthorization_Token
      */
     SpeechServiceAuthorization_Token,
@@ -86,13 +85,6 @@ export enum PropertyId {
      * @member PropertyId.SpeechServiceConnection_TranslationCategoryId
      */
     SpeechServiceConnection_TranslationCategoryId,
-
-    /**
-     * The Language Understanding Service Region. Under normal circumstances, you shouldn't have to use this property directly.
-     * Instead, use [[LanguageUnderstandingModel]].
-     * @member PropertyId.SpeechServiceConnection_IntentRegion
-     */
-    SpeechServiceConnection_IntentRegion,
 
     /**
      * The host name of the proxy server used to connect to the Cognitive Services Speech Service. Only relevant in Node.js environments.
@@ -219,12 +211,6 @@ export enum PropertyId {
      * @member PropertyId.CancellationDetails_ReasonDetailedText
      */
     CancellationDetails_ReasonDetailedText,
-
-    /**
-     * The Language Understanding Service response output (in JSON format). Available via [[IntentRecognitionResult]]
-     * @member PropertyId.LanguageUnderstandingServiceResponse_JsonResult
-     */
-    LanguageUnderstandingServiceResponse_JsonResult,
 
     /**
      * The URL string built from speech configuration.

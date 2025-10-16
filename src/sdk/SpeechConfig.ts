@@ -41,7 +41,6 @@ export abstract class SpeechConfig {
 
     /**
      * Static instance of SpeechConfig returned by passing subscriptionKey and service region.
-     * Note: Please use your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
      * @member SpeechConfig.fromSubscription
      * @function
      * @public
@@ -55,7 +54,6 @@ export abstract class SpeechConfig {
 
         const speechImpl: SpeechConfigImpl = new SpeechConfigImpl();
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        speechImpl.setProperty(PropertyId.SpeechServiceConnection_IntentRegion, region);
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
 
         return speechImpl;
@@ -64,7 +62,6 @@ export abstract class SpeechConfig {
     /**
      * Creates an instance of the speech config with specified endpoint and subscription key.
      * This method is intended only for users who use a non-standard service endpoint or parameters.
-     * Note: Please use your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
      * Note: The query parameters specified in the endpoint URL are not changed, even if they are set by any other APIs.
      * For example, if language is defined in the uri as query parameter "language=de-DE", and also set by
      * SpeechConfig.speechRecognitionLanguage = "en-US", the language setting in uri takes precedence,
@@ -167,8 +164,7 @@ export abstract class SpeechConfig {
      * Creates an instance of the speech factory with specified initial authorization token and region.
      * Note: The caller needs to ensure that the authorization token is valid. Before the authorization token
      * expires, the caller needs to refresh it by calling this setter with a new valid token.
-     * Note: Please use a token derived from your LanguageUnderstanding subscription key in case you want
-     * to use the Intent recognizer. As configuration values are copied when creating a new recognizer,
+     * Note: As configuration values are copied when creating a new recognizer,
      * the new token value will not apply to recognizers that have already been created. For recognizers
      * that have been created before, you need to set authorization token of the corresponding recognizer
      * to refresh the token. Otherwise, the recognizers will encounter errors during recognition.
@@ -185,7 +181,6 @@ export abstract class SpeechConfig {
 
         const speechImpl: SpeechConfigImpl = new SpeechConfigImpl();
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        speechImpl.setProperty(PropertyId.SpeechServiceConnection_IntentRegion, region);
         speechImpl.authorizationToken = authorizationToken;
         return speechImpl;
     }

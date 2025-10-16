@@ -6,7 +6,6 @@
 import { InvocationSource } from "./InvocationSource";
 import { KeywordDetection } from "./KeywordDetection/KeywordDetection";
 import { PhraseDetectionContext } from "./PhraseDetection/PhraseDetectionContext";
-import { Intent } from "./Intent/Intent";
 import { Dgi } from "./Dgi/Dgi";
 import { PhraseOutput } from "./PhraseOutput/PhraseOutput";
 import { LanguageIdContext } from "./LanguageId/LanguageIdContext";
@@ -47,11 +46,6 @@ export interface SpeechContext {
      * The phrase detection.
      */
     phraseDetection?: PhraseDetectionContext;
-
-    /**
-     * The intent context
-     */
-    intent?: Intent;
 
     /**
      * Dynamic Grammar Information

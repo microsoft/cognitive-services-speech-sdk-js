@@ -41,7 +41,6 @@ export interface SubscriptionRegion {
  */
 export class SubscriptionsRegionsKeys {
     public static readonly UNIFIED_SPEECH_SUBSCRIPTION: string = "UnifiedSpeechSubscription";
-    public static readonly LUIS_SUBSCRIPTION: string = "LanguageUnderstandingSubscription";
     public static readonly CONVERSATION_TRANSCRIPTION_SUBSCRIPTION: string = "ConversationTranscriptionPrincetonSubscription";
     public static readonly CUSTOM_VOICE_SUBSCRIPTION: string = "CustomVoiceSubscription";
     public static readonly DIALOG_SUBSCRIPTION: string = "DialogSubscription";
