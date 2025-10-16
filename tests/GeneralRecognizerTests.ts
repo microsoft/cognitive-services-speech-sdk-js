@@ -22,20 +22,6 @@ test("testRecognizer1", () => {
 
     const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
 
-    const r = new sdk.IntentRecognizer(s, config);
-    expect(r).not.toBeUndefined();
-    expect(r instanceof sdk.Recognizer);
-
-    r.close();
-    s.close();
-});
-
-test("testRecognizer2", () => {
-    const s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
-    expect(s).not.toBeUndefined();
-
-    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
-
     const r = new sdk.SpeechRecognizer(s, config);
     expect(r).not.toBeUndefined();
     expect(r instanceof sdk.Recognizer);
@@ -46,7 +32,7 @@ test("testRecognizer2", () => {
 
 /*
 // TODO does not work with microphone
-test.skip("testRecognizer3", () => {
+test.skip("testRecognizer2", () => {
     const s = sdk.SpeechFactory.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
     expect(s).not.toBeUndefined();
 

@@ -41,19 +41,6 @@ export enum ResultReason {
     RecognizedKeyword,
 
     /**
-     * Indicates the intent result contains hypothesis text and intent.
-     * @member ResultReason.RecognizingIntent
-     */
-    RecognizingIntent,
-
-    /**
-     * Indicates the intent result contains final text and intent.
-     * Speech Recognition and Intent determination are now complete for this phrase.
-     * @member ResultReason.RecognizedIntent
-     */
-    RecognizedIntent,
-
-    /**
      * Indicates the translation result contains hypothesis text and its translation(s).
      * @member ResultReason.TranslatingSpeech
      */
