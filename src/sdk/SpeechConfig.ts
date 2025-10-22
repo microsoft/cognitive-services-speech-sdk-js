@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 /* eslint-disable max-classes-per-file */
 
-import { TokenCredential } from "@azure/core-auth";
+import { KeyCredential, TokenCredential } from "@azure/core-auth";
 import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
@@ -41,7 +41,6 @@ export abstract class SpeechConfig {
 
     /**
      * Static instance of SpeechConfig returned by passing subscriptionKey and service region.
-     * Note: Please use your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
      * @member SpeechConfig.fromSubscription
      * @function
      * @public
@@ -55,7 +54,6 @@ export abstract class SpeechConfig {
 
         const speechImpl: SpeechConfigImpl = new SpeechConfigImpl();
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        speechImpl.setProperty(PropertyId.SpeechServiceConnection_IntentRegion, region);
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
 
         return speechImpl;
@@ -64,7 +62,6 @@ export abstract class SpeechConfig {
     /**
      * Creates an instance of the speech config with specified endpoint and subscription key.
      * This method is intended only for users who use a non-standard service endpoint or parameters.
-     * Note: Please use your LanguageUnderstanding subscription key in case you want to use the Intent recognizer.
      * Note: The query parameters specified in the endpoint URL are not changed, even if they are set by any other APIs.
      * For example, if language is defined in the uri as query parameter "language=de-DE", and also set by
      * SpeechConfig.speechRecognitionLanguage = "en-US", the language setting in uri takes precedence,
@@ -83,45 +80,52 @@ export abstract class SpeechConfig {
     public static fromEndpoint(endpoint: URL, subscriptionKey?: string): SpeechConfig;
 
     /**
-     * Creates a speech configuration instance using a specified endpoint and Azure Active Directory (AAD) token credential.
-     * This API supports **SpeechRecognizer** and **ConversationTranscriber**.
-     * Intended for use with **non-standard resource paths** or **custom parameter overrides**.
-     * Query parameters specified in the endpoint URL **are not overridden** by other APIs.
-     * For example, if the URL includes "language=de-DE" but "speechRecognitionLanguage" is set to "en-US",
-     * the value from the URL "de-DE" takes precedence — if the parameter is supported by the scenario.
-     * Parameters **not present in the URL** can still be updated via other APIs.
-     * To authenticate with a **subscription key**, use SpeechConfig.fromEndpoint with a key argument.
+     * Creates an instance of SpeechConfig with a custom endpoint and a credential.
+     * The query parameters specified in the endpoint URI are not changed, even if they are set by any other API call.
+     * For example, if the recognition language is defined in the URI query parameter as "language=de-DE", and the property SpeechRecognitionLanguage is set to "en-US",
+     * the language set in the URI takes precedence, and "de-DE" remains the expected language.
+     * Since parameters included in the endpoint URI take priority, only parameters that are not specified in the endpoint URI can be set by other APIs.
+     * Supported credential types:
+     * - KeyCredential: For API key-based authentication.
+     * - TokenCredential: For Azure AD-based authentication.
+     * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the
+     * fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to use the authorization token.
      * @member SpeechConfig.fromEndpoint
      * @function
      * @public
-     * @param {URL} endpoint - The full service endpoint URL (e.g., for custom domains or private links).
-     * See: https://learn.microsoft.com/azure/ai-services/speech-service/speech-services-private-link?tabs=portal#create-a-custom-domain-name.
-     * @param {TokenCredential} tokenCredential - The AAD token credential used for authentication and token requests.
+     * @param {URL} endpoint - The service endpoint to connect to.
+     * @param {KeyCredential | TokenCredential} credential - The credential used for authentication.
      * @returns {SpeechConfig} A speech factory instance.
      */
-    public static fromEndpoint(endpoint: URL, tokenCredential: TokenCredential): SpeechConfig;
+    public static fromEndpoint(endpoint: URL, credential: KeyCredential | TokenCredential): SpeechConfig;
 
     /**
      * Internal implementation of fromEndpoint() overloads. Accepts either a subscription key or a TokenCredential.
      * @private
      */
-    public static fromEndpoint(endpoint: URL, auth: string | TokenCredential): SpeechConfig {
+    public static fromEndpoint(endpoint: URL, auth: string | TokenCredential | KeyCredential): SpeechConfig {
         Contracts.throwIfNull(endpoint, "endpoint");
         const isValidString = typeof auth === "string" && auth.trim().length > 0;
-        const isTokenCredential = typeof auth === "object" && auth !== null && typeof auth.getToken === "function";
-        if (auth !== undefined && !isValidString && !isTokenCredential) {
-            throw new Error("Invalid 'auth' parameter: must be a non-empty key string or a valid TokenCredential object.");
+        const isTokenCredential = typeof auth === "object" && auth !== null && typeof (auth as TokenCredential).getToken === "function";
+        const isKeyCredential = typeof auth === "object" && auth !== null && typeof (auth as KeyCredential).key === "string";
+        if (auth !== undefined && !isValidString && !isTokenCredential && !isKeyCredential) {
+            throw new Error("Invalid 'auth' parameter: expected a non-empty API key string, a TokenCredential, or a KeyCredential.");
         }
 
-        const speechImpl: SpeechConfigImpl = typeof auth === "object"
-            ? new SpeechConfigImpl(auth)
-            : new SpeechConfigImpl();
+        let speechImpl: SpeechConfigImpl;
+        if (typeof auth === "string") {
+            speechImpl = new SpeechConfigImpl();
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, auth);
+        } else if (typeof auth === "object" && typeof (auth as TokenCredential).getToken === "function") {
+            speechImpl = new SpeechConfigImpl(auth as TokenCredential);
+        } else if (typeof auth === "object" && typeof (auth as KeyCredential).key === "string") {
+            speechImpl = new SpeechConfigImpl();
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, (auth as KeyCredential).key);
+        } else {
+            speechImpl = new SpeechConfigImpl();
+        }
 
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
-
-        if (typeof auth === "string" && auth.trim().length > 0) {
-            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, auth);
-        }
 
         return speechImpl;
     }
@@ -160,8 +164,7 @@ export abstract class SpeechConfig {
      * Creates an instance of the speech factory with specified initial authorization token and region.
      * Note: The caller needs to ensure that the authorization token is valid. Before the authorization token
      * expires, the caller needs to refresh it by calling this setter with a new valid token.
-     * Note: Please use a token derived from your LanguageUnderstanding subscription key in case you want
-     * to use the Intent recognizer. As configuration values are copied when creating a new recognizer,
+     * Note: As configuration values are copied when creating a new recognizer,
      * the new token value will not apply to recognizers that have already been created. For recognizers
      * that have been created before, you need to set authorization token of the corresponding recognizer
      * to refresh the token. Otherwise, the recognizers will encounter errors during recognition.
@@ -178,7 +181,6 @@ export abstract class SpeechConfig {
 
         const speechImpl: SpeechConfigImpl = new SpeechConfigImpl();
         speechImpl.setProperty(PropertyId.SpeechServiceConnection_Region, region);
-        speechImpl.setProperty(PropertyId.SpeechServiceConnection_IntentRegion, region);
         speechImpl.authorizationToken = authorizationToken;
         return speechImpl;
     }

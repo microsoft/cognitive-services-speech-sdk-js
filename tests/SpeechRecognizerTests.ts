@@ -48,8 +48,8 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { closeAsyncObjects, RepeatingPullStream, WaitForCondition, WaitForConditionAsync } from "./Utilities";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
-import { SpeechServiceType } from "./SpeechServiceTypes";
 import { DefaultAzureCredential } from "@azure/identity";
+import { SpeechServiceType } from "./SpeechServiceTypes";
 
 const FIRST_EVENT_ID: number = 1;
 const Recognizing: string = "Recognizing";
@@ -691,6 +691,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
     describe.each([
         SpeechConnectionType.Subscription,
         SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+        SpeechConnectionType.CloudFromEndpointWithKeyCredentialAuth,
         SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
         SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,
@@ -2521,6 +2522,7 @@ describe("PhraseList tests", (): void => {
 
         const phraseList: sdk.PhraseListGrammar = sdk.PhraseListGrammar.fromRecognizer(r);
         phraseList.addPhrase("Wreck a nice beach");
+        phraseList.setWeight(1.0);  // test with default weight
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {

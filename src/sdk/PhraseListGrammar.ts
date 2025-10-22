@@ -10,6 +10,7 @@ import {
     MeetingTranscriber,
     Recognizer
 } from "./Exports.js";
+import { Contracts } from "./Contracts.js";
 
 /**
  * Allows additions of new phrases to improve speech recognition.
@@ -54,5 +55,16 @@ export class PhraseListGrammar {
      */
     public clear(): void {
         this.privGrammerBuilder.clearPhrases();
+    }
+
+    /**
+     * Sets the phrase list grammar biasing weight.
+     * The allowed range is [0.0, 2.0].
+     * The default weight is 1.0. Value zero disables the phrase list.
+     * @param weight Phrase list grammar biasing weight.
+     */
+    public setWeight(weight: number): void {
+        Contracts.throwIfNumberOutOfRange(weight, "weight", 0.0, 2.0);
+        this.privGrammerBuilder.setWeight(weight);
     }
 }

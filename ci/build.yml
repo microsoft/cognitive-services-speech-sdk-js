@@ -31,21 +31,19 @@ jobs:
         eq(variables['Build.SourceBranch'], 'refs/heads/master'),
         or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')))
   - bash: |
-      npm ci && npm run civersion
+      npm ci
+      ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
       echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
       env
-    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+    displayName: Install packages and set version from package.json
   - bash: |
-      F=src/common.speech/SpeechServiceConfig.ts
-      [[ -f $F ]] || exit 1
-      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
-      E=$?
-      rm -f "$F.bak"
-      git diff
-      exit $E
-    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+      ./ci/update-version-in-code.sh
+    displayName: Update version in source code
+  - bash: |
+      ./ci/update-package-version.sh
+    displayName: Update version in package.json
   - bash: npm pack
     displayName: Build and pack SDK
   - bash: |
@@ -90,20 +88,15 @@ jobs:
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
-      npm ci && npm run civersion
+      npm ci
+      ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
       echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
-    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+    displayName: Install packages and set version from package.json
   - bash: |
-      F=src/common.speech/SpeechServiceConfig.ts
-      [[ -f $F ]] || exit 1
-      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
-      E=$?
-      rm -f "$F.bak"
-      git diff
-      exit $E
-    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+      ./ci/update-version-in-code.sh
+    displayName: Update version in source code
   - template: generate-subscription-file.yml
   - bash: |
       set -u -e -x -o pipefail
@@ -148,20 +141,15 @@ jobs:
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
-      npm ci && npm run civersion
+      npm ci
+      ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
       echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
-    displayName: Install packages and set version / SPEECHSDK_SEMVER2NOMETA
+    displayName: Install packages and set version from package.json
   - bash: |
-      F=src/common.speech/SpeechServiceConfig.ts
-      [[ -f $F ]] || exit 1
-      perl -i.bak -p -e 'BEGIN { $c = 0 } $c += s/(?<=const SPEECHSDK_CLIENTSDK_VERSION = ")[^"]*/$(SPEECHSDK_SEMVER2NOMETA)/g; END { die "Patched SPEECHSDK_CLIENTSDK_VERSION $c time(s), expected 1.\n" if $c != 1 }' "$F"
-      E=$?
-      rm -f "$F.bak"
-      git diff
-      exit $E
-    displayName: Stamp SPEECHSDK_CLIENTSDK_VERSION
+      ./ci/update-version-in-code.sh
+    displayName: Update version in source code
   - template: generate-subscription-file.yml
   - bash: |
       # Define new Docker data directory  

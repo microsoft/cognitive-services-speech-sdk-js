@@ -24,6 +24,15 @@ export enum RecognitionMode {
 }
 
 /**
+ * The speech start event sensitivity.
+ */
+export enum SpeechStartEventSensitivity {
+    Low = "low",
+    Medium = "medium",
+    High = "high"
+}
+
+/**
  * Defines the phrase detection payload in the speech Context message
  */
 export interface PhraseDetectionContext {
@@ -106,6 +115,11 @@ export interface PhraseDetectionContext {
      * The detection language.
      */
     language?: string;
+
+    /**
+     * The speech start event sensitivity.
+     */
+    voiceOnsetSensitivity?: string;
 }
 
 /**

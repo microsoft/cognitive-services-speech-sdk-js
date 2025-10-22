@@ -343,9 +343,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         });
     });
 
-    test("test Pronunciation Assessment with prosody and content", (done: jest.DoneCallback) => {
+    test("test Pronunciation Assessment with prosody", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
-        console.info("Name: test Pronunciation Assessment with prosody and content");
+        console.info("Name: test Pronunciation Assessment with prosody");
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
@@ -356,7 +356,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             PronunciationAssessmentGradingSystem.HundredMark, PronunciationAssessmentGranularity.Phoneme, true);
         objsToClose.push(p);
         p.enableProsodyAssessment = true;
-        p.enableContentAssessmentWithTopic("greetings");
         p.applyTo(r);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
@@ -384,7 +383,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 expect(pronResult.fluencyScore).toBeGreaterThan(0);
                 expect(pronResult.completenessScore).toBeGreaterThan(0);
                 expect(pronResult.prosodyScore).toBeGreaterThan(0);
-                expect(pronResult.contentAssessmentResult).not.toBeUndefined();
                 done();
             } catch (error) {
                 done(error);
@@ -395,9 +393,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
     });
 
     // Disable until Yulin can correct this
-    test.skip("Continuous pronunciation assessment with content", (done: jest.DoneCallback) => {
+    test.skip("Continuous pronunciation assessment", (done: jest.DoneCallback) => {
         // eslint-disable-next-line no-console
-        console.info("Continuous pronunciation assessment with content");
+        console.info("Continuous pronunciation assessment");
         const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(undefined, Settings.PronunciationFallWaveFile);
         objsToClose.push(r);
 
@@ -405,7 +403,6 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
             PronunciationAssessmentGradingSystem.HundredMark, PronunciationAssessmentGranularity.Phoneme, true);
         objsToClose.push(p);
         p.enableProsodyAssessment = true;
-        p.enableContentAssessmentWithTopic("greetings");
         p.applyTo(r);
 
         let sessionStopped: boolean = false;
@@ -428,14 +425,9 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
                 const firstResult = pronunciationAssessmentResults[0];
                 expect(firstResult).not.toBeUndefined();
                 expect(firstResult.prosodyScore).toBeGreaterThan(0);
-                expect(firstResult.contentAssessmentResult).toBeUndefined();
                 const lastResult = pronunciationAssessmentResults[pronunciationAssessmentResults.length - 1];
                 expect(lastResult).not.toBeUndefined();
                 expect(lastResult.prosodyScore).toBeUndefined();
-                expect(lastResult.contentAssessmentResult).not.toBeUndefined();
-                expect(lastResult.contentAssessmentResult.grammarScore).toBeGreaterThan(0);
-                expect(lastResult.contentAssessmentResult.vocabularyScore).toBeGreaterThan(0);
-                expect(lastResult.contentAssessmentResult.topicScore).toBeGreaterThan(0);
                 done();
             } catch (error) {
                 done(error);

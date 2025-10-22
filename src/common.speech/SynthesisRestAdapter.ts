@@ -13,7 +13,7 @@ import { AuthInfo, IAuthentication, SynthesizerConfig } from "./Exports.js";
 import { HeaderNames } from "./HeaderNames.js";
 
 /**
- * Implements methods for speaker recognition classes, sending requests to endpoint
+ * Implements methods for speech synthesis classes, sending requests to endpoint
  * and parsing response into expected format
  * @class SynthesisRestAdapter
  */
