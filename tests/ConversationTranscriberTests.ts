@@ -17,12 +17,14 @@
 /* eslint-disable no-console */
 
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
+import { DefaultAzureCredential, AzurePipelinesCredential } from "@azure/identity";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
-import { Events, EventType, PlatformEvent } from "../src/common/Exports";
+import { Events, EventType, PlatformEvent, Deferred } from "../src/common/Exports";
 import { Settings } from "./Settings";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import { closeAsyncObjects, RepeatingPullStream, WaitForCondition } from "./Utilities";
-
+import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
+import { SpeechConnectionType } from "./SpeechConnectionTypes";
 
 let objsToClose: any[];
 
@@ -52,7 +54,7 @@ export const BuildTranscriberFromWaveFile: (speechConfig?: sdk.SpeechConfig, fil
 
     let s: sdk.SpeechConfig = speechConfig;
     if (s === undefined) {
-        s = BuildSpeechConfig();
+        s = BuildSpeechConfigLegacy();
         // Since we're not going to return it, mark it for closure.
         objsToClose.push(s);
     }
@@ -69,11 +71,32 @@ export const BuildTranscriberFromWaveFile: (speechConfig?: sdk.SpeechConfig, fil
     return r;
 };
 
-const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
+const BuildSpeechConfig = async (connectionType?: SpeechConnectionType): Promise<sdk.SpeechConfig> => {
+
+    if (undefined === connectionType) {
+        connectionType = SpeechConnectionType.Subscription;
+    }
+
+    const s: sdk.SpeechConfig = await SpeechConfigConnectionFactory.getSpeechRecognitionConfig(connectionType);
+    expect(s).not.toBeUndefined();
+
+    console.info("SpeechConfig created " + s.speechRecognitionLanguage + " " + SpeechConnectionType[connectionType]);
+
+    if (undefined !== Settings.proxyServer) {
+        s.setProxy(Settings.proxyServer, Settings.proxyPort);
+    }
+
+    return s;
+};
+
+// Legacy BuildSpeechConfig function for backward compatibility with existing tests
+const BuildSpeechConfigLegacy = (useTokenCredential: boolean = false): sdk.SpeechConfig => {
 
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechEndpoint) {
         s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    } else if (useTokenCredential) {
+        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), new DefaultAzureCredential());
     } else {
         s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
         s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
@@ -99,7 +122,7 @@ test("testGetLanguage1", () => {
 test("testGetLanguage2", () => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetLanguage2");
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfigLegacy();
     objsToClose.push(s);
 
     const language: string = "de-DE";
@@ -137,7 +160,7 @@ test("testGetParameters", () => {
 test("testStrategy", () => {
     // eslint-disable-next-line no-console
     console.info("Name: testStrategy");
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfigLegacy();
     const segStrategy = "semantic";
     s.setProperty(sdk.PropertyId.Speech_SegmentationStrategy, "semantic");
     objsToClose.push(s);
@@ -152,7 +175,7 @@ describe.each([[true], [false]])("Checking intermediate diazatation", (intermedi
         // eslint-disable-next-line no-console
         console.info("Name: testTranscriptionFromPushStreamAsync");
 
-        const s: sdk.SpeechConfig = BuildSpeechConfig();
+        const s: sdk.SpeechConfig = BuildSpeechConfigLegacy();
         objsToClose.push(s);
 
         if (intermediateDiazaration) {
@@ -223,7 +246,7 @@ describe.each([[true], [false]])("Checking intermediate diazatation", (intermedi
                 try {
                     expect(guestFound).toBeTruthy();
                     console.info("intermediateDiazaration: ");
-                    console.info( intermediateDiazaration ? "true" : "false");
+                    console.info(intermediateDiazaration ? "true" : "false");
                     console.info(" intermediateGuestFound: ");
                     console.info(intermediateGuestFound ? "true" : "false");
                     expect(intermediateDiazaration).toEqual(intermediateGuestFound);
@@ -238,11 +261,89 @@ describe.each([[true], [false]])("Checking intermediate diazatation", (intermedi
     }, 45000);
 });
 
+test.skip("testTranscriptionWithAADTokenCredentialAsync", (done: jest.DoneCallback) => {
+    // eslint-disable-next-line no-console
+    console.info("Name: testTranscriptionWithAADTokenCredentialAsync");
+
+    const s: sdk.SpeechConfig = BuildSpeechConfigLegacy(true);
+    objsToClose.push(s);
+
+    const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFileSingleChannel);
+    let bytesSent: number = 0;
+    let p: sdk.PullAudioInputStream;
+
+    p = sdk.AudioInputStream.createPullStream(
+        {
+            close: () => { return; },
+            read: (buffer: ArrayBuffer): number => {
+                const copyArray: Uint8Array = new Uint8Array(buffer);
+                const start: number = bytesSent;
+                const end: number = buffer.byteLength > (fileBuffer.byteLength - bytesSent) ? (fileBuffer.byteLength) : (bytesSent + buffer.byteLength);
+                copyArray.set(new Uint8Array(fileBuffer.slice(start, end)));
+                bytesSent += (end - start);
+
+                if (bytesSent === fileBuffer.byteLength) {
+                    p.close();
+                }
+
+                return (end - start);
+            },
+        });
+
+    const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
+
+    const r: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(s, audio);
+    objsToClose.push(r);
+
+    let recoCount: number = 0;
+    let canceled: boolean = false;
+    let sessionId: string;
+
+    r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        sessionId = e.sessionId;
+    };
+
+    r.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
+        try {
+            // eslint-disable-next-line no-console
+            console.info("[Transcribed] SpeakerId: " + e.result.speakerId + " Text: " + e.result.text);
+            recoCount++;
+            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+            expect(e.result.properties).not.toBeUndefined();
+            expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+        } catch (error) {
+            done(error);
+        }
+    };
+
+    r.canceled = (o: sdk.ConversationTranscriber, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+        try {
+            canceled = true;
+            expect(e.errorDetails).toBeUndefined();
+            expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
+        } catch (error) {
+            done(error);
+        }
+    };
+
+    r.startTranscribingAsync(
+        () => WaitForCondition(() => (canceled), () => {
+            try {
+                done();
+            } catch (err) {
+                done(err);
+            }
+        }),
+        (err: string) => {
+            done(err);
+        });
+}, 45000);
+
 test("testTranscriptionFromPullStreamAsync", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: testTranscriptionFromPullStreamAsync");
 
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfigLegacy();
     objsToClose.push(s);
 
     const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFileSingleChannel);
@@ -328,93 +429,116 @@ test("testTranscriptionFromPullStreamAsync", (done: jest.DoneCallback) => {
         });
 }, 45000);
 
-test("testTranscriptionWithDetailedOutputFormatAsync", (done: jest.DoneCallback) => {
-    // eslint-disable-next-line no-console
-    console.info("Name: testTranscriptionWithDetailedOutputFormatAsync");
+describe.each([
+    SpeechConnectionType.Subscription,
+    SpeechConnectionType.CloudFromEndpointWithKeyAuth,
+    SpeechConnectionType.CloudFromEndpointWithKeyCredentialAuth,
+    SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
+    SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
+    SpeechConnectionType.LegacyCogSvcsTokenAuth,
+    SpeechConnectionType.LegacyEntraIdTokenAuth,
+    SpeechConnectionType.CloudFromHost,
+    SpeechConnectionType.ContainerFromHost,
+    SpeechConnectionType.PrivateLinkWithKeyAuth,
+    SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
+    SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,
+    SpeechConnectionType.LegacyPrivateLinkWithEntraIdTokenAuth
+])("Conversation Transcription Connection Tests", (connectionType: SpeechConnectionType): void => {
+    const runTest: jest.It = SpeechConfigConnectionFactory.runConnectionTest(connectionType) as jest.It;
 
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
-    s.outputFormat = sdk.OutputFormat.Detailed;
-    objsToClose.push(s);
+    runTest("Transcription With Detailed Output Format " + SpeechConnectionType[connectionType], async (): Promise<void> => {
+        // eslint-disable-next-line no-console
+        console.info("Name: Transcription With Detailed Output Format " + SpeechConnectionType[connectionType]);
 
-    const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
-    const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps);
+        const done: Deferred<void> = new Deferred<void>();
 
-    const fileBuff: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFileSingleChannel);
-    ps.write(fileBuff);
-    ps.write(new ArrayBuffer(1024 * 32));
-    ps.write(fileBuff);
-    ps.close();
+        const s: sdk.SpeechConfig = await BuildSpeechConfig(connectionType);
+        s.outputFormat = sdk.OutputFormat.Detailed;
+        objsToClose.push(s);
 
-    const r: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(s, audio);
-    objsToClose.push(r);
+        const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+        const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps);
 
-    let recoCount: number = 0;
-    let canceled: boolean = false;
-    let hypoCounter: number = 0;
-    let sessionId: string;
-    let guestFound: boolean = false;
+        const fileBuff: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFileSingleChannel);
+        ps.write(fileBuff);
+        ps.write(new ArrayBuffer(1024 * 32));
+        ps.write(fileBuff);
+        ps.close();
 
-    r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
-        sessionId = e.sessionId;
-    };
+        const r: sdk.ConversationTranscriber = new sdk.ConversationTranscriber(s, audio);
+        objsToClose.push(r);
 
-    r.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
-        try {
-            // eslint-disable-next-line no-console
-            console.info("[Transcribed] SpeakerId: " + e.result.speakerId + " Text: " + e.result.text);
-            recoCount++;
-            expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
-            expect(e.result.properties).not.toBeUndefined();
-            expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
-            let jsonResult: string = e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
-            let detailedResultFound: boolean = false;
-            if (jsonResult.search("MaskedITN") > 0) {
-                detailedResultFound = true;
-            }
-            expect(detailedResultFound).toEqual(true);
-            expect(e.result.speakerId).not.toBeUndefined();
-            if (e.result.speakerId.startsWith("Guest")) {
-                guestFound = true;
-            }
+        let recoCount: number = 0;
+        let canceled: boolean = false;
+        let hypoCounter: number = 0;
+        let sessionId: string;
+        let guestFound: boolean = false;
 
-        } catch (error) {
-            done(error);
-        }
-    };
+        r.sessionStarted = (r: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+            sessionId = e.sessionId;
+        };
 
-    r.transcribing = (s: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs): void => {
-        hypoCounter++;
-    };
-
-    r.canceled = (o: sdk.ConversationTranscriber, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
-        try {
-            canceled = true;
-            expect(e.errorDetails).toBeUndefined();
-            expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
-        } catch (error) {
-            done(error);
-        }
-    };
-
-    r.startTranscribingAsync(
-        () => WaitForCondition(() => (canceled), () => {
+        r.transcribed = (o: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs) => {
             try {
-                expect(guestFound).toEqual(true);
-                done();
-            } catch (err) {
-                done(err);
+                // eslint-disable-next-line no-console
+                console.info("[Transcribed] SpeakerId: " + e.result.speakerId + " Text: " + e.result.text);
+                recoCount++;
+                expect(sdk.ResultReason[e.result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.RecognizedSpeech]);
+                expect(e.result.properties).not.toBeUndefined();
+                expect(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+                let jsonResult: string = e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+                let detailedResultFound: boolean = false;
+                if (jsonResult.search("MaskedITN") > 0) {
+                    detailedResultFound = true;
+                }
+                expect(detailedResultFound).toEqual(true);
+                expect(e.result.speakerId).not.toBeUndefined();
+                if (e.result.speakerId.startsWith("Guest")) {
+                    guestFound = true;
+                }
+            } catch (error) {
+                done.reject(error.toString());
             }
-        }),
-        (err: string) => {
-            done(err);
-        });
-}, 45000);
+        };
+
+        r.transcribing = (s: sdk.ConversationTranscriber, e: sdk.ConversationTranscriptionEventArgs): void => {
+            hypoCounter++;
+        };
+
+        r.canceled = (o: sdk.ConversationTranscriber, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                canceled = true;
+                expect(e.errorDetails).toBeUndefined();
+                expect(e.reason).toEqual(sdk.CancellationReason.EndOfStream);
+            } catch (error) {
+                done.reject(error.toString());
+            }
+        };
+
+        r.startTranscribingAsync(
+            () => {
+                WaitForCondition(() => (canceled), () => {
+                    try {
+                        expect(guestFound).toEqual(true);
+                        done.resolve();
+                    } catch (err) {
+                        done.reject(err.toString());
+                    }
+                });
+            },
+            (err: string) => {
+                done.reject(err);
+            });
+
+        return done.promise;
+    }, 45000);
+});
 
 test("testTranscriptionWithWordLevelTimingsAsync", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: testTranscriptionWithWordLevelTimingsAsync");
 
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfigLegacy();
     s.requestWordLevelTimestamps();
     objsToClose.push(s);
 
@@ -563,7 +687,7 @@ test("testTranscriptionWithContinuousLanguageIdentificationAsync", (done: jest.D
     // eslint-disable-next-line no-console
     console.info("Name: testTranscriptionWithContinuousLanguageIdentificationAsync");
 
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfigLegacy();
     objsToClose.push(s);
 
     const configs: sdk.SourceLanguageConfig[] = BuildSourceLanguageConfigs();
@@ -648,7 +772,7 @@ test("testTranscriptionWithContinuousLanguageIdentificationAsync", (done: jest.D
 test("test Conversation Transcriber with Pronunciation Assessment without reference text", (done: jest.DoneCallback) => {
     // eslint-disable-next-line no-console
     console.info("Name: test Conversation Transcriber with Pronunciation Assessment without reference text");
-    const s: sdk.SpeechConfig = BuildSpeechConfig();
+    const s: sdk.SpeechConfig = BuildSpeechConfigLegacy();
     objsToClose.push(s);
 
     const ps: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();

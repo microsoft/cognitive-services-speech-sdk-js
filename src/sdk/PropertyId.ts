@@ -8,8 +8,7 @@
 export enum PropertyId {
 
     /**
-     * The Cognitive Services Speech Service subscription Key. If you are using an intent recognizer, you need to
-     * specify the LUIS endpoint key for your particular LUIS app. Under normal circumstances, you shouldn't
+     * The Cognitive Services Speech Service subscription Key. Under normal circumstances, you shouldn't
      * have to use this property directly.
      * Instead, use [[SpeechConfig.fromSubscription]].
      * @member PropertyId.SpeechServiceConnection_Key
@@ -37,7 +36,7 @@ export enum PropertyId {
      * The Cognitive Services Speech Service authorization token (aka access token). Under normal circumstances,
      * you shouldn't have to use this property directly.
      * Instead, use [[SpeechConfig.fromAuthorizationToken]], [[SpeechRecognizer.authorizationToken]],
-     * [[IntentRecognizer.authorizationToken]], [[TranslationRecognizer.authorizationToken]], [[SpeakerRecognizer.authorizationToken]].
+     * [[TranslationRecognizer.authorizationToken]], [[SpeakerRecognizer.authorizationToken]].
      * @member PropertyId.SpeechServiceAuthorization_Token
      */
     SpeechServiceAuthorization_Token,
@@ -86,13 +85,6 @@ export enum PropertyId {
      * @member PropertyId.SpeechServiceConnection_TranslationCategoryId
      */
     SpeechServiceConnection_TranslationCategoryId,
-
-    /**
-     * The Language Understanding Service Region. Under normal circumstances, you shouldn't have to use this property directly.
-     * Instead, use [[LanguageUnderstandingModel]].
-     * @member PropertyId.SpeechServiceConnection_IntentRegion
-     */
-    SpeechServiceConnection_IntentRegion,
 
     /**
      * The host name of the proxy server used to connect to the Cognitive Services Speech Service. Only relevant in Node.js environments.
@@ -221,12 +213,6 @@ export enum PropertyId {
     CancellationDetails_ReasonDetailedText,
 
     /**
-     * The Language Understanding Service response output (in JSON format). Available via [[IntentRecognitionResult]]
-     * @member PropertyId.LanguageUnderstandingServiceResponse_JsonResult
-     */
-    LanguageUnderstandingServiceResponse_JsonResult,
-
-    /**
      * The URL string built from speech configuration.
      * This property is intended to be read-only. The SDK is using it internally.
      * NOTE: Added in version 1.7.0.
@@ -240,8 +226,8 @@ export enum PropertyId {
     SpeechServiceConnection_InitialSilenceTimeoutMs,
 
     /**
-     * The end silence timeout value (in milliseconds) used by the service.
-     * Added in version 1.7.0
+     * This property is deprecated.
+     * For current information about silence timeouts, please visit https://aka.ms/csspeech/timeouts.
      */
     SpeechServiceConnection_EndSilenceTimeoutMs,
 
@@ -253,39 +239,46 @@ export enum PropertyId {
      * can negatively affect speech-to-text accuracy; this property should be carefully configured and the resulting
      * behavior should be thoroughly validated as intended.
      *
-     * For more information about timeout configuration that includes discussion of default behaviors, please visit
-     * https://aka.ms/csspeech/timeouts.
+     * Refer to the documentation for valid value ranges and additional details:
+     * https://aka.ms/csspeech/timeouts
      *
-     * Added in version 1.21.0.
+     * Added in version 1.42.0.
      */
     Speech_SegmentationSilenceTimeoutMs,
 
     /**
      * SegmentationMaximumTimeMs represents the maximum length of a spoken phrase when using the Time segmentation strategy.
+     * @member Speech_SegmentationSilenceTimeoutMs must be set in order to use this setting.
      * As the length of a spoken phrase approaches this value, the @member Speech_SegmentationSilenceTimeoutMs will be reduced until either
      * the phrase silence timeout is reached or the phrase reaches the maximum length.
+     *
+     * Valid range: **20,000 to 70,000** milliseconds.
      *
      * Added in version 1.42.0.
      */
     Speech_SegmentationMaximumTimeMs,
 
     /**
-     * SegmentationStrategy defines the strategy used to determine when a spoken phrase has ended and a final Recognized result should be generated.
-     * Allowed values are "Default", "Time", and "Semantic".
+     * Specifies the strategy used to determine when a spoken phrase has ended,
+     * triggering the generation of a final recognition result.
      *
-     * Valid values:
-     * - "Default": Uses the default strategy and settings as determined by the Speech Service. Suitable for most situations.
-     * - "Time": Uses a time-based strategy where the amount of silence between speech determines when to generate a final result.
-     * - "Semantic": Uses an AI model to determine the end of a spoken phrase based on the phrase's content.
+     * Supported values:
+     * - "Default": Uses the Speech Service's default segmentation strategy. Recommended for most use cases.
+     * - "Time": Uses a silence-based timeout. A final result is generated after a defined period of silence.
+     * Requires @member Speech_SegmentationMaximumTimeMs to be configured appropriately.
+     * Optional: Adjust @member Speech_SegmentationSilenceTimeoutMs to control how much silence ends a phrase.
+     * - "Semantic": Uses an AI model to semantically infer phrase boundaries based on content.
+     * No adjustable parameters are available for this strategy.
      *
-     * Additional Notes:
-     * - When using the Time strategy, @member Speech_SegmentationSilenceTimeoutMs can be adjusted to modify the required silence duration for ending a phrase,
-     * and @member Speech_SegmentationMaximumTimeMs can be adjusted to set the maximum length of a spoken phrase.
-     * - The Semantic strategy does not have any adjustable properties.
-     *
-     * Added in version 1.42.0.
+     * Introduced in version 1.42.0.
      */
     Speech_SegmentationStrategy,
+
+    /**
+     * The sensitivity of how soon a potential speech start can be signaled.
+     * Allowed values are "low" (default), "medium" and "high".
+     */
+    Speech_StartEventSensitivity,
 
     /**
      * A boolean value specifying whether audio logging is enabled in the service or not.
@@ -310,13 +303,6 @@ export enum PropertyId {
      * Added in version 1.21.0
      */
     SpeechServiceConnection_RecognitionEndpointVersion,
-
-    /**
-    /**
-     * A string value the current speaker recognition scenario/mode (TextIndependentIdentification, etc.).
-     * Added in version 1.23.0
-     */
-    SpeechServiceConnection_SpeakerIdMode,
 
     /**
      * The requested Cognitive Services Speech Service response output profanity setting.
@@ -519,12 +505,6 @@ export enum PropertyId {
      * Added in version 1.15.0
      */
     PronunciationAssessment_Params,
-
-    /**
-     * Version of Speaker Recognition API to use.
-     * Added in version 1.18.0
-     */
-    SpeakerRecognition_Api_Version,
 
     /**
      * Specifies whether to allow load of data URL for web worker

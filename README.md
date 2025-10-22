@@ -74,13 +74,9 @@ At a minimum, invoking `npm run test` will compile/lint the test files to catch 
     RunTests.cmd ^
         SpeechSubscriptionKey:SPEECH_KEY ^
         SpeechRegion:SPEECH_REGION ^
-        LuisSubscriptionKey:LUIS_KEY ^
-        LuisRegion:LUIS_REGION ^
         SpeechTestEndpointId:CUSTOM_ENDPOINT ^
         BotSubscription:BOT_KEY ^
         BotRegion:BOT_REGION ^
-        SpeakerIDSubscriptionKey:SPEAKER_ID_KEY ^
-        SpeakerIDRegion:SPEAKER_ID_SUBSCRIPTION_REGION ^
         CustomVoiceSubscriptionKey:CUSTOM_VOICE_KEY ^
         CustomVoiceRegion:CUSTOM_VOICE_REGION
 

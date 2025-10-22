@@ -152,3 +152,28 @@ export class ConnectionMessageSentEvent extends ConnectionEvent {
         return this.privMessage;
     }
 }
+
+export class ConnectionRedirectEvent extends ConnectionEvent {
+    private privRedirectUrl: string;
+    private privOriginalUrl?: string;
+    private privContext?: string;
+
+    public constructor(connectionId: string, redirectUrl: string, originalUrl?: string, context?: string) {
+        super("ConnectionRedirectEvent", connectionId, EventType.Info);
+        this.privRedirectUrl = redirectUrl;
+        this.privOriginalUrl = originalUrl;
+        this.privContext = context;
+    }
+
+    public get redirectUrl(): string {
+        return this.privRedirectUrl;
+    }
+
+    public get originalUrl(): string | undefined {
+        return this.privOriginalUrl;
+    }
+
+    public get context(): string | undefined {
+        return this.privContext;
+    }
+}

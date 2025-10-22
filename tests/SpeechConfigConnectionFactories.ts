@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { AzureKeyCredential } from "@azure/core-auth";
 import { DefaultAzureCredential, TokenCredential } from "@azure/identity";
 // We'll use dynamic require instead of static import for fetch
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
@@ -109,6 +110,9 @@ export class SpeechConfigConnectionFactory {
 
             case SpeechConnectionType.CloudFromEndpointWithKeyAuth:
                 return this.buildCloudEndpointKeyConfig<T>(isTranslationConfig);
+            
+            case SpeechConnectionType.CloudFromEndpointWithKeyCredentialAuth:
+                return this.buildCloudEndpointKeyCredentialConfig<T>(isTranslationConfig);
 
             case SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth:
                 return this.buildCloudEndpointConfigWithCogSvcsToken<T>(isTranslationConfig);
@@ -124,9 +128,6 @@ export class SpeechConfigConnectionFactory {
 
             case SpeechConnectionType.PrivateLinkWithKeyAuth:
                 return this.buildPrivateLinkWithKeyConfig<T>(undefined, isTranslationConfig);
-
-            case SpeechConnectionType.PrivateLinkWithCogSvcsTokenAuth:
-                return this.buildPrivateLinkEndpointWithCogSvcsToken<T>(isTranslationConfig);
 
             case SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth:
                 return this.buildPrivateLinkEndpointWithEntraId<T>(isTranslationConfig);
@@ -314,6 +315,25 @@ export class SpeechConfigConnectionFactory {
     }
 
     /**
+     * Builds a cloud endpoint config with key authentication.
+     */
+    private static buildCloudEndpointKeyCredentialConfig<T extends ConfigType>(isTranslationConfig: boolean): T {
+        const subscriptionRegion = this.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
+        const key = subscriptionRegion.Key;
+        const endpoint = subscriptionRegion.Endpoint;
+
+        if (!endpoint) {
+            throw new Error("Endpoint is not defined for the subscription");
+        }
+
+        if (isTranslationConfig) {
+            return sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), new AzureKeyCredential(key)) as unknown as T;
+        } else {
+            return sdk.SpeechConfig.fromEndpoint(new URL(endpoint), new AzureKeyCredential(key)) as unknown as T;
+        }
+    }
+
+    /**
      * Builds a cloud endpoint config with Cognitive Services token authentication.
      */
     private static buildCloudEndpointConfigWithCogSvcsToken<T extends ConfigType>(
@@ -326,12 +346,12 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the subscription");
         }
 
-        const credential = new CogSvcsTokenCredential(
+        const cred: TokenCredential = new CogSvcsTokenCredential(
             subscriptionRegion.Key,
             subscriptionRegion.Region
         );
 
-        return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
+        return this.buildEndpointWithTokenCredential<T>(cred, endpoint, isTranslationConfig);
     }
 
     /**
@@ -346,7 +366,6 @@ export class SpeechConfigConnectionFactory {
         }
 
         const credential = new DefaultAzureCredential();
-
         return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
     }
 
@@ -453,29 +472,6 @@ export class SpeechConfigConnectionFactory {
     }
 
     /**
-     * Builds a private link endpoint with Cognitive Services token.
-     */
-    private static buildPrivateLinkEndpointWithCogSvcsToken<T extends ConfigType>(isTranslationConfig: boolean): T {
-        if (!this.checkPrivateLinkTestsEnabled()) {
-            throw new Error("Private link testing is not enabled");
-        }
-
-        const subscriptionRegion = this.getSubscriptionRegion("PrivateLinkSpeechResource");
-        const endpoint = subscriptionRegion.Endpoint;
-
-        if (!endpoint) {
-            throw new Error("Endpoint is not defined for the private link subscription");
-        }
-
-        const credential = new CogSvcsTokenCredential(
-            subscriptionRegion.Key,
-            subscriptionRegion.Region
-        );
-
-        return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
-    }
-
-    /**
      * Builds a private link endpoint with Entra ID token.
      */
     private static buildPrivateLinkEndpointWithEntraId<T extends ConfigType>(isTranslationConfig: boolean): T {
@@ -490,8 +486,7 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the AAD private link subscription");
         }
 
-        const credential: DefaultAzureCredential = new DefaultAzureCredential();
-
+        const credential = new DefaultAzureCredential();
         return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
     }
 
@@ -503,15 +498,24 @@ export class SpeechConfigConnectionFactory {
      * @returns A speech configuration of the requested type.
      */
     private static buildEndpointWithTokenCredential<T extends ConfigType>(
-        cred: TokenCredential,
+        cred: TokenCredential | undefined,
         endpoint: string,
         isTranslationConfig: boolean
     ): T {
+
+        let config: T;
+
         if (isTranslationConfig) {
-            return sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
+            return cred
+                ? sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), cred) as unknown as T
+                : sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
         } else {
-            return sdk.SpeechConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
+            return cred
+                ? sdk.SpeechConfig.fromEndpoint(new URL(endpoint), cred) as unknown as T
+                : sdk.SpeechConfig.fromEndpoint(new URL(endpoint), "") as unknown as T;
         }
+
+        return config;
     }
 
     /**

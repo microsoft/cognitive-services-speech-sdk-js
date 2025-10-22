@@ -71,4 +71,12 @@ export class Contracts {
             throw new Error("throwIfNotUndefined:" + name);
         }
     }
+
+    public static throwIfNumberOutOfRange(value: number, name: string, rangeStart: number, rangeEnd: number): void {
+        Contracts.throwIfNullOrUndefined(value, name);
+
+        if (value < rangeStart || value > rangeEnd) {
+            throw new Error("throwIfNumberOutOfRange:" + name + " (must be between " + rangeStart.toString() + " and " + rangeEnd.toString() + ")");
+        }
+    }
 }

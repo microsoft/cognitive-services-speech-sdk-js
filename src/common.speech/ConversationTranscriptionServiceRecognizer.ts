@@ -29,7 +29,7 @@ import { IConnectionFactory } from "./IConnectionFactory.js";
 import { RecognizerConfig } from "./RecognizerConfig.js";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 import { SpeakerDiarization, SpeakerDiarizationMode } from "./ServiceMessages/PhraseDetection/SpeakerDiarization.js";
-import { PhraseDetectionContext, RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
+import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 
 // eslint-disable-next-line max-classes-per-file
 export class ConversationTranscriptionServiceRecognizer extends ServiceRecognizerBase {

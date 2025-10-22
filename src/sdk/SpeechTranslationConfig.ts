@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 /* eslint-disable max-classes-per-file */
+import { KeyCredential, TokenCredential } from "@azure/core-auth";
 import {
     ForceDictationPropertyName,
     OutputFormatPropertyName,
@@ -120,16 +121,59 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
      * @public
      * @param {URL} endpoint - The service endpoint to connect to.
      * @param {string} subscriptionKey - The subscription key.
-     * @returns {SpeechTranslationConfig} A speech config instance.
+     * @returns {SpeechTranslationConfig} A speech translation config instance.
      */
-    public static fromEndpoint(endpoint: URL, subscriptionKey: string): SpeechTranslationConfig {
-        Contracts.throwIfNull(endpoint, "endpoint");
-        Contracts.throwIfNull(subscriptionKey, "subscriptionKey");
+    public static fromEndpoint(endpoint: URL, subscriptionKey?: string): SpeechTranslationConfig;
 
-        const ret: SpeechTranslationConfigImpl = new SpeechTranslationConfigImpl();
-        ret.properties.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
-        ret.properties.setProperty(PropertyId.SpeechServiceConnection_Key, subscriptionKey);
-        return ret;
+    /**
+     * Creates an instance of a speech translation config with a custom endpoint and a credential.
+     * The query parameters specified in the endpoint URI are not changed, even if they are set by any other API call.
+     * For example, if the recognition language is defined in the URI query parameter as "language=de-DE", and the property SpeechRecognitionLanguage is set to "en-US",
+     * the language set in the URI takes precedence, and "de-DE" remains the expected language.
+     * Since parameters included in the endpoint URI take priority, only parameters that are not specified in the endpoint URI can be set by other APIs.
+     * Supported credential types:
+     * - KeyCredential: For API key-based authentication.
+     * - TokenCredential: For Azure AD-based authentication.
+     * Note: To use authorization token with fromEndpoint, pass an empty string to the subscriptionKey in the
+     * fromEndpoint method, and then set authorizationToken="token" on the created SpeechConfig instance to use the authorization token.
+     * @member SpeechConfig.fromEndpoint
+     * @function
+     * @public
+     * @param {URL} endpoint - The service endpoint to connect to.
+     * @param {KeyCredential | TokenCredential} credential - The credential used for authentication.
+     * @returns {SpeechTranslationConfig} A speech factory instance.
+     */
+    public static fromEndpoint(endpoint: URL, credential: KeyCredential | TokenCredential): SpeechTranslationConfig;
+
+    /**
+     * Internal implementation of fromEndpoint() overloads. Accepts either a subscription key or a TokenCredential.
+     * @private
+     */
+    public static fromEndpoint(endpoint: URL, auth: string | TokenCredential | KeyCredential): SpeechTranslationConfig {
+        Contracts.throwIfNull(endpoint, "endpoint");
+        const isValidString = typeof auth === "string" && auth.trim().length > 0;
+        const isTokenCredential = typeof auth === "object" && auth !== null && typeof (auth as TokenCredential).getToken === "function";
+        const isKeyCredential = typeof auth === "object" && auth !== null && typeof (auth as KeyCredential).key === "string";
+        if (auth !== undefined && !isValidString && !isTokenCredential && !isKeyCredential) {
+            throw new Error("Invalid 'auth' parameter: expected a non-empty API key string, a TokenCredential, or a KeyCredential.");
+        }
+
+        let speechImpl: SpeechTranslationConfigImpl;
+        if (typeof auth === "string") {
+            speechImpl = new SpeechTranslationConfigImpl();
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, auth);
+        } else if (typeof auth === "object" && typeof (auth as TokenCredential).getToken === "function") {
+            speechImpl = new SpeechTranslationConfigImpl(auth as TokenCredential);
+        } else if (typeof auth === "object" && typeof (auth as KeyCredential).key === "string") {
+            speechImpl = new SpeechTranslationConfigImpl();
+            speechImpl.setProperty(PropertyId.SpeechServiceConnection_Key, (auth as KeyCredential).key);
+        } else {
+            speechImpl = new SpeechTranslationConfigImpl();
+        }
+
+        speechImpl.setProperty(PropertyId.SpeechServiceConnection_Endpoint, endpoint.href);
+
+        return speechImpl;
     }
 
     /**
@@ -214,11 +258,13 @@ export abstract class SpeechTranslationConfig extends SpeechConfig {
 export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
 
     private privSpeechProperties: PropertyCollection;
+    private readonly privTokenCredential?: TokenCredential;
 
-    public constructor() {
+    public constructor(tokenCredential?: TokenCredential) {
         super();
         this.privSpeechProperties = new PropertyCollection();
         this.outputFormat = OutputFormat.Simple;
+        this.privTokenCredential = tokenCredential;
     }
     /**
      * Gets/Sets the authorization token.
@@ -374,6 +420,10 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
      */
     public get region(): string {
         return this.privSpeechProperties.getProperty(PropertyId.SpeechServiceConnection_Region);
+    }
+
+    public get tokenCredential(): TokenCredential | undefined {
+        return this.privTokenCredential;
     }
 
     public setProxy(proxyHostName: string, proxyPort: number): void;
