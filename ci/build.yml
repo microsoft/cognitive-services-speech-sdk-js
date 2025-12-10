@@ -6,13 +6,14 @@
 # run on CI or once per day at 8 pm PST
 trigger:
 - master
-- schedules:
-  - cron: "0 4 * * *"
-    displayName: Daily Build
-    branches:
-      include:
-      - master
-    always: true
+
+schedules:
+- cron: "0 4 * * *"
+  displayName: Daily Build
+  branches:
+    include:
+    - master
+  always: true
 
 pr:
 - master
