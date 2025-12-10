@@ -22,11 +22,6 @@ interface DetailResult {
         PronScore: number;
         ProsodyScore: number;
     };
-    ContentAssessment: {
-        GrammarScore: number;
-        VocabularyScore: number;
-        TopicScore: number;
-    };
 }
 
 interface WordResult {
@@ -42,57 +37,6 @@ interface WordResult {
         ErrorType: string;
     };
     Syllables: { Syllable: string }[];
-}
-
-export class ContentAssessmentResult {
-    private privPronJson: DetailResult;
-
-    /**
-     * @Internal
-     * Do not use externally.
-     */
-    public constructor(detailResult: DetailResult) {
-        this.privPronJson = detailResult;
-    }
-
-    /**
-     * Correctness in using grammar and variety of sentence patterns.
-     * Grammatical errors are jointly evaluated by lexical accuracy,
-     * grammatical accuracy and diversity of sentence structures.
-     * @member ContentAssessmentResult.prototype.grammarScore
-     * @function
-     * @public
-     * @returns {number} Grammar score.
-     */
-    public get grammarScore(): number {
-        return this.privPronJson.ContentAssessment.GrammarScore;
-    }
-
-    /**
-     * Proficiency in lexical usage. It evaluates the speaker's effective usage
-     * of words and their appropriateness within the given context to express
-     * ideas accurately, as well as level of lexical complexity.
-     * @member ContentAssessmentResult.prototype.vocabularyScore
-     * @function
-     * @public
-     * @returns {number} Vocabulary score.
-     */
-    public get vocabularyScore(): number {
-        return this.privPronJson.ContentAssessment.VocabularyScore;
-    }
-
-    /**
-     * Level of understanding and engagement with the topic, which provides
-     * insights into the speaker’s ability to express their thoughts and ideas
-     * effectively and the ability to engage with the topic.
-     * @member ContentAssessmentResult.prototype.topicScore
-     * @function
-     * @public
-     * @returns {number} Topic score.
-     */
-    public get topicScore(): number {
-        return this.privPronJson.ContentAssessment.TopicScore;
-    }
 }
 
 /**
@@ -190,20 +134,5 @@ export class PronunciationAssessmentResult {
      */
     public get prosodyScore(): number {
         return this.detailResult.PronunciationAssessment?.ProsodyScore;
-    }
-
-    /**
-     * The concent assessment result.
-     * Only available when content assessment is enabled.
-     * @member PronunciationAssessmentResult.prototype.contentAssessmentResult
-     * @function
-     * @public
-     * @returns {ContentAssessmentResult} Content assessment result.
-     */
-    public get contentAssessmentResult(): ContentAssessmentResult {
-        if (this.detailResult.ContentAssessment === undefined) {
-            return undefined;
-        }
-        return new ContentAssessmentResult(this.detailResult);
     }
 }

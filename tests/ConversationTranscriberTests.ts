@@ -438,6 +438,7 @@ describe.each([
     SpeechConnectionType.LegacyCogSvcsTokenAuth,
     SpeechConnectionType.LegacyEntraIdTokenAuth,
     SpeechConnectionType.CloudFromHost,
+    SpeechConnectionType.ContainerFromHost,
     SpeechConnectionType.PrivateLinkWithKeyAuth,
     SpeechConnectionType.PrivateLinkWithEntraIdTokenAuth,
     SpeechConnectionType.LegacyPrivateLinkWithKeyAuth,

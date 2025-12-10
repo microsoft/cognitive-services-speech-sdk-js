@@ -22,14 +22,6 @@ Create a file named `test.subscriptions.regions.json` with the following structu
     "Region": "your-region",
     "Endpoint": "https://your-region.api.cognitive.microsoft.com/"
   },
-  "LanguageUnderstandingSubscription": {
-    "Key": "your-luis-subscription-key",
-    "Region": "your-region"
-  },
-  "SpeakerRecognitionSubscription": {
-    "Key": "your-speaker-id-key",
-    "Region": "your-region"
-  },
   "ConversationTranscriptionPrincetonSubscription": {
     "Key": "your-transcription-key",
     "Region": "your-region"

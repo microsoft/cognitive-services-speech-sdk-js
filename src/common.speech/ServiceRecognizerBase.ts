@@ -20,7 +20,6 @@ import {
     Timeout
 } from "../common/Exports.js";
 import { AudioStreamFormatImpl } from "../sdk/Audio/AudioStreamFormat.js";
-import { SpeakerRecognitionModel } from "../sdk/SpeakerRecognitionModel.js";
 import {
     CancellationErrorCode,
     CancellationReason,
@@ -28,7 +27,6 @@ import {
     RecognitionEventArgs,
     Recognizer,
     SessionEventArgs,
-    SpeakerRecognitionResult,
     SpeechRecognitionResult,
     OutputFormat
 } from "../sdk/Exports.js";
@@ -52,7 +50,7 @@ import { IConnectionFactory } from "./IConnectionFactory.js";
 import { RecognizerConfig } from "./RecognizerConfig.js";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 import { Segmentation, SegmentationMode } from "./ServiceMessages/PhraseDetection/Segmentation.js";
-import { CustomLanguageMappingEntry, PhraseDetectionContext, RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
+import { CustomLanguageMappingEntry, PhraseDetectionContext, RecognitionMode, SpeechStartEventSensitivity } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 import { NextAction as NextTranslationAction } from "./ServiceMessages/Translation/OnSuccess.js";
 import { Mode } from "./ServiceMessages/Translation/InterimResults.js";
 import { LanguageIdDetectionMode, LanguageIdDetectionPriority } from "./ServiceMessages/LanguageId/LanguageIdContext.js";
@@ -334,6 +332,27 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
+    protected setSpeechStartEventSensitivityJson(): void {
+        const sensitivity: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_StartEventSensitivity, undefined);
+
+        if (sensitivity !== undefined) {
+            let configuredSensitivity = false;
+            switch (sensitivity.toLowerCase()) {
+                case SpeechStartEventSensitivity.Low:
+                case SpeechStartEventSensitivity.Medium:
+                case SpeechStartEventSensitivity.High:
+                    configuredSensitivity = true;
+                    break;
+            }
+
+            if (configuredSensitivity) {
+                const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+                phraseDetection.voiceOnsetSensitivity = sensitivity.toLowerCase();
+                this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+            }
+        }
+    }
+
     public get isSpeakerDiarizationEnabled(): boolean {
         return this.privEnableSpeakerId;
     }
@@ -356,10 +375,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     public set conversationTranslatorToken(token: string) {
         this.privRecognizerConfig.parameters.setProperty(PropertyId.ConversationTranslator_Token, token);
-    }
-
-    public set voiceProfileType(type: string) {
-        this.privRecognizerConfig.parameters.setProperty(PropertyId.SpeechServiceConnection_SpeakerIdMode, type);
     }
 
     public set authentication(auth: IAuthentication) {
@@ -397,8 +412,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected recognizeOverride: (recoMode: RecognitionMode, sc: (e: SpeechRecognitionResult) => void, ec: (e: string) => void) => Promise<void> = undefined;
 
-    public recognizeSpeaker: (model: SpeakerRecognitionModel) => Promise<SpeakerRecognitionResult> = undefined;
-
     public async recognize(
         recoMode: RecognitionMode,
         successCallback: (e: SpeechRecognitionResult) => void,
@@ -433,6 +446,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         this.setSpeechSegmentationTimeoutJson();
         this.setOutputDetailLevelJson();
+        this.setSpeechStartEventSensitivityJson();
 
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallBack;

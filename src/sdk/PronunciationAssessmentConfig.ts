@@ -32,7 +32,6 @@ export class PronunciationAssessmentConfig {
     private privPhonemeAlphabet: string;
     private privNBestPhonemeCount: number;
     private privEnableProsodyAssessment: boolean;
-    private privContentAssessmentTopic: string;
 
     /**
      * PronunciationAssessmentConfig constructor.
@@ -80,11 +79,8 @@ export class PronunciationAssessmentConfig {
     public applyTo(recognizer: Recognizer): void {
         this.updateJson();
         const recoBase = recognizer.internalData as ServiceRecognizerBase;
-        recoBase.expectContentAssessmentResponse = !!this.privContentAssessmentTopic;
         recoBase.speechContext.setPronunciationAssessmentParams(
-            this.properties.getProperty(PropertyId.PronunciationAssessment_Params),
-            this.privContentAssessmentTopic,
-            recoBase.isSpeakerDiarizationEnabled);
+            this.properties.getProperty(PropertyId.PronunciationAssessment_Params), recoBase.isSpeakerDiarizationEnabled);
     }
 
     /**
@@ -172,18 +168,6 @@ export class PronunciationAssessmentConfig {
      */
     public set enableProsodyAssessment(enableProsodyAssessment: boolean) {
         this.privEnableProsodyAssessment = enableProsodyAssessment;
-    }
-
-    /**
-     * Enables content assessment and sets the topic.
-     * Added in version 1.34.0
-     * @member PronunciationAssessmentConfig.prototype.enableContentAssessmentWithTopic
-     * @function
-     * @public
-     * @param {string} topic - Topic for content assessment.
-     */
-    public enableContentAssessmentWithTopic(topic: string): void {
-        this.privContentAssessmentTopic = topic;
     }
 
     /**

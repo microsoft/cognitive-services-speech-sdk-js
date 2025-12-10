@@ -32,9 +32,7 @@ export class SpeechContext {
      * This is only used by pronunciation assessment config.
      * Do not use externally, object returned will change without warning or notice.
      */
-    public setPronunciationAssessmentParams(params: string,
-        contentAssessmentTopic: string,
-        isSpeakerDiarizationEnabled: boolean = false): void {
+    public setPronunciationAssessmentParams(params: string, isSpeakerDiarizationEnabled: boolean = false): void {
         if (this.privContext.phraseDetection === undefined) {
             this.privContext.phraseDetection = {
                 enrichment: {
@@ -55,12 +53,6 @@ export class SpeechContext {
         this.privContext.phraseOutput.detailed.options.push(PhraseOption.PronunciationAssessment);
         if (this.privContext.phraseOutput.detailed.options.indexOf(PhraseOption.SNR) === -1) {
             this.privContext.phraseOutput.detailed.options.push(PhraseOption.SNR);
-        }
-        if (!!contentAssessmentTopic) {
-            this.privContext.phraseDetection.enrichment.contentAssessment = {
-                topic: contentAssessmentTopic
-            };
-            this.privContext.phraseOutput.detailed.options.push(PhraseOption.ContentAssessment);
         }
     }
 

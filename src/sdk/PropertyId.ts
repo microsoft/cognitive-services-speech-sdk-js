@@ -8,8 +8,7 @@
 export enum PropertyId {
 
     /**
-     * The Cognitive Services Speech Service subscription Key. If you are using an intent recognizer, you need to
-     * specify the LUIS endpoint key for your particular LUIS app. Under normal circumstances, you shouldn't
+     * The Cognitive Services Speech Service subscription Key. Under normal circumstances, you shouldn't
      * have to use this property directly.
      * Instead, use [[SpeechConfig.fromSubscription]].
      * @member PropertyId.SpeechServiceConnection_Key
@@ -37,7 +36,7 @@ export enum PropertyId {
      * The Cognitive Services Speech Service authorization token (aka access token). Under normal circumstances,
      * you shouldn't have to use this property directly.
      * Instead, use [[SpeechConfig.fromAuthorizationToken]], [[SpeechRecognizer.authorizationToken]],
-     * [[IntentRecognizer.authorizationToken]], [[TranslationRecognizer.authorizationToken]], [[SpeakerRecognizer.authorizationToken]].
+     * [[TranslationRecognizer.authorizationToken]], [[SpeakerRecognizer.authorizationToken]].
      * @member PropertyId.SpeechServiceAuthorization_Token
      */
     SpeechServiceAuthorization_Token,
@@ -86,13 +85,6 @@ export enum PropertyId {
      * @member PropertyId.SpeechServiceConnection_TranslationCategoryId
      */
     SpeechServiceConnection_TranslationCategoryId,
-
-    /**
-     * The Language Understanding Service Region. Under normal circumstances, you shouldn't have to use this property directly.
-     * Instead, use [[LanguageUnderstandingModel]].
-     * @member PropertyId.SpeechServiceConnection_IntentRegion
-     */
-    SpeechServiceConnection_IntentRegion,
 
     /**
      * The host name of the proxy server used to connect to the Cognitive Services Speech Service. Only relevant in Node.js environments.
@@ -221,12 +213,6 @@ export enum PropertyId {
     CancellationDetails_ReasonDetailedText,
 
     /**
-     * The Language Understanding Service response output (in JSON format). Available via [[IntentRecognitionResult]]
-     * @member PropertyId.LanguageUnderstandingServiceResponse_JsonResult
-     */
-    LanguageUnderstandingServiceResponse_JsonResult,
-
-    /**
      * The URL string built from speech configuration.
      * This property is intended to be read-only. The SDK is using it internally.
      * NOTE: Added in version 1.7.0.
@@ -240,8 +226,8 @@ export enum PropertyId {
     SpeechServiceConnection_InitialSilenceTimeoutMs,
 
     /**
-     * The end silence timeout value (in milliseconds) used by the service.
-     * Added in version 1.7.0
+     * This property is deprecated.
+     * For current information about silence timeouts, please visit https://aka.ms/csspeech/timeouts.
      */
     SpeechServiceConnection_EndSilenceTimeoutMs,
 
@@ -254,7 +240,7 @@ export enum PropertyId {
      * behavior should be thoroughly validated as intended.
      *
      * Refer to the documentation for valid value ranges and additional details:
-     * https://learn.microsoft.com/azure/ai-services/speech-service/how-to-recognize-speech?pivots=programming-language-csharp#change-how-silence-is-handled
+     * https://aka.ms/csspeech/timeouts
      *
      * Added in version 1.42.0.
      */
@@ -289,6 +275,12 @@ export enum PropertyId {
     Speech_SegmentationStrategy,
 
     /**
+     * The sensitivity of how soon a potential speech start can be signaled.
+     * Allowed values are "low" (default), "medium" and "high".
+     */
+    Speech_StartEventSensitivity,
+
+    /**
      * A boolean value specifying whether audio logging is enabled in the service or not.
      * Audio and content logs are stored either in Microsoft-owned storage, or in your own storage account linked
      * to your Cognitive Services subscription (Bring Your Own Storage (BYOS) enabled Speech resource).
@@ -311,13 +303,6 @@ export enum PropertyId {
      * Added in version 1.21.0
      */
     SpeechServiceConnection_RecognitionEndpointVersion,
-
-    /**
-    /**
-     * A string value the current speaker recognition scenario/mode (TextIndependentIdentification, etc.).
-     * Added in version 1.23.0
-     */
-    SpeechServiceConnection_SpeakerIdMode,
 
     /**
      * The requested Cognitive Services Speech Service response output profanity setting.
@@ -520,12 +505,6 @@ export enum PropertyId {
      * Added in version 1.15.0
      */
     PronunciationAssessment_Params,
-
-    /**
-     * Version of Speaker Recognition API to use.
-     * Added in version 1.18.0
-     */
-    SpeakerRecognition_Api_Version,
 
     /**
      * Specifies whether to allow load of data URL for web worker

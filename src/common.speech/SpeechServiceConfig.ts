@@ -169,6 +169,7 @@ export interface ISynthesisSectionVideo {
         customized: boolean;
         useBuiltInVoice: boolean;
         style: string;
+        photoAvatarBaseModel: string;
         background: {
             color: string;
         };

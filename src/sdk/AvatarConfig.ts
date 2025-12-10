@@ -14,6 +14,7 @@ import { AvatarVideoFormat } from "./Exports.js";
 export class AvatarConfig {
     private privCustomized: boolean = false;
     private privUseBuiltInVoice: boolean = false;
+    private privPhotoAvatarBaseModel: string;
     private privBackgroundColor: string;
     private privBackgroundImage: URL;
     private privRemoteIceServers: RTCIceServer[];
@@ -57,6 +58,20 @@ export class AvatarConfig {
      */
     public set useBuiltInVoice(value: boolean) {
         this.privUseBuiltInVoice = value;
+    }
+
+    /**
+     * Gets the photo avatar base model name.
+     */
+    public get photoAvatarBaseModel(): string {
+        return this.privPhotoAvatarBaseModel;
+    }
+
+    /**
+     * Sets the photo avatar base model name.
+     */
+    public set photoAvatarBaseModel(value: string) {
+        this.privPhotoAvatarBaseModel = value;
     }
 
     /**
