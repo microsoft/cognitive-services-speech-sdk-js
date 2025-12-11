@@ -93,10 +93,11 @@ export class TranslationRecognizer extends Recognizer {
             this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages),
             PropertyId[PropertyId.SpeechServiceConnection_TranslationToLanguages]);
 
-        Contracts.throwIfNullOrWhitespace(this.properties.getProperty(
-            PropertyId.SpeechServiceConnection_RecoLanguage),
-            PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
-
+        if (this.properties.getProperty(PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, undefined) === undefined) {
+            Contracts.throwIfNullOrWhitespace(this.properties.getProperty(
+                PropertyId.SpeechServiceConnection_RecoLanguage),
+                PropertyId[PropertyId.SpeechServiceConnection_RecoLanguage]);
+        }
     }
 
     /**

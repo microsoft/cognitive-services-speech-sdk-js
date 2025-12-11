@@ -1,9 +1,9 @@
+# Microsoft Cognitive Services Speech SDK for JavaScript
+
 [![npm version](https://badge.fury.io/js/microsoft-cognitiveservices-speech-sdk.svg)](https://badge.fury.io/js/microsoft-cognitiveservices-speech-sdk)
 [![Downloads](https://img.shields.io/npm/dm/microsoft-cognitiveservices-speech-sdk.svg)](https://www.npmjs.com/package/microsoft-cognitiveservices-speech-sdk)
 
-# Microsoft Cognitive Services Speech SDK for JavaScript
-
-The Microsoft Cognitive Services Speech SDK for JavaScript is the JavaScript version of the Microsoft Cognitive Services Speech SDK. An in-depth description of feature set, functionality, supported platforms, as well as installation options is available [here](https://aka.ms/csspeech).
+The Microsoft Cognitive Services Speech SDK for JavaScript is the JavaScript version of the Microsoft Cognitive Services Speech SDK. An [in-depth description of feature set, functionality, supported platforms, as well as installation options](https://aka.ms/csspeech) is available.
 
 The JavaScript versions of the Cognitive Services Speech SDK supports browser scenarios as well as the Node.js environment.
 
@@ -47,19 +47,19 @@ cd cognitive-services-speech-sdk-js
 
 Run setup to pull updated dependency versions:
 
-```
+``` bash | powershell
 npm run setup
 ```
 
 Install the required packages:
 
-```
+``` bash | powershell
 npm install
 ```
 
 Run the build:
 
-```
+``` bash | powershell
 npm run build
 ```
 
@@ -71,14 +71,16 @@ Run tests (see [ci/build.yml](ci/build.yml)) -- complete results require several
 
 At a minimum, invoking `npm run test` will compile/lint the test files to catch early problems in test code changes.
 
-    RunTests.cmd ^
-        SpeechSubscriptionKey:SPEECH_KEY ^
-        SpeechRegion:SPEECH_REGION ^
-        SpeechTestEndpointId:CUSTOM_ENDPOINT ^
-        BotSubscription:BOT_KEY ^
-        BotRegion:BOT_REGION ^
-        CustomVoiceSubscriptionKey:CUSTOM_VOICE_KEY ^
-        CustomVoiceRegion:CUSTOM_VOICE_REGION
+``` batch
+RunTests.cmd ^
+SpeechSubscriptionKey:SPEECH_KEY ^
+SpeechRegion:SPEECH_REGION ^
+SpeechTestEndpointId:CUSTOM_ENDPOINT ^
+BotSubscription:BOT_KEY ^
+BotRegion:BOT_REGION ^
+CustomVoiceSubscriptionKey:CUSTOM_VOICE_KEY ^
+CustomVoiceRegion:CUSTOM_VOICE_REGION
+```
 
 ### Run a subset of tests
 
@@ -86,17 +88,21 @@ At a minimum, invoking `npm run test` will compile/lint the test files to catch 
 you want to run. For example, to only run tests defined in `AutoSourceLangDetectionTests.ts`, replace it with `testRegex: "tests/AutoSourceLangDetectionTests.ts"`. Do this is for the two project `jsdom` and `node`.
 
 * Option 1: Use a secrets file. Create the file `secrets\TestConfiguration.ts`. It should import the default configuration settings and define the values of the mandatory ones for this test, as well as and any additional optional settings. For example, to run the `AutoSourceLangDetectionTests.ts` tests, the required mandatory values are the speech key and region (using a fake key here as an example):
+
     ```javascript
     import { Settings } from "../tests/Settings";
     Settings.SpeechSubscriptionKey = "0123456789abcdef0123456789abcdef";
     Settings.SpeechRegion = "westcentralus";
     ```
+
     Then to run the tests type `RunTests.cmd` in the root of the repo.
 
 * Option 2: Use command line arguments. Instead of creating `secrets\TestConfiguration.ts`, pass the values directly to `RunTests.cmd`. For the above example, this would be:
-    ```
+
+    ``` Batch
     RunTests.cmd SpeechSubscriptionKey:0123456789abcdef0123456789abcdef SpeechRegion:westcentralus
     ```
+
 * Option 3: Edit the file `tests\Settings.ts` directly and enter values needed to run the test.
 
 * See summary of the test results in `test-javascript-junit.xml`.
@@ -120,7 +126,7 @@ We strongly recommend you keep telemetry enabled. With telemetry enabled you tra
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.microsoft.com.
+the rights to use your contribution. For details, visit <https://cla.microsoft.com>.
 
 When you submit a pull request, a CLA-bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions
 provided by the bot. You will only need to do this once across all repos using our CLA.
