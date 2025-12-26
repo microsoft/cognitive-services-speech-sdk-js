@@ -96,6 +96,7 @@ export { PronunciationAssessmentResult } from "./PronunciationAssessmentResult.j
 export { LanguageIdMode } from "./LanguageIdMode.js";
 export { AvatarConfig } from "./AvatarConfig.js";
 export { AvatarEventArgs } from "./AvatarEventArgs.js";
+export { AvatarSceneConfig } from "./AvatarSceneConfig.js";
 export { AvatarSynthesizer } from "./AvatarSynthesizer.js";
 export { AvatarVideoFormat, Coordinate } from "./AvatarVideoFormat.js";
 export { AvatarWebRTCConnectionResult } from "./AvatarWebRTCConnectionResult.js";

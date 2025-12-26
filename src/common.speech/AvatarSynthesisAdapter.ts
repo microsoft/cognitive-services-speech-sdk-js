@@ -41,6 +41,32 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
     }
 
     protected setSpeechConfigSynthesisSection(): void {
+        const talkingAvatarConfig: ISynthesisSectionVideo["talkingAvatar"] = {
+            background: {
+                color: this.privAvatarConfig.backgroundColor,
+                image: {
+                    url: this.privAvatarConfig.backgroundImage?.toString(),
+                }
+            },
+            character: this.privAvatarConfig.character,
+            customized: this.privAvatarConfig.customized,
+            photoAvatarBaseModel: this.privAvatarConfig.photoAvatarBaseModel,
+            style: this.privAvatarConfig.style,
+            useBuiltInVoice: this.privAvatarConfig.useBuiltInVoice,
+        };
+
+        // Add scene configuration if provided
+        if (this.privAvatarConfig.scene) {
+            talkingAvatarConfig.scene = {
+                zoom: this.privAvatarConfig.scene.zoom,
+                positionX: this.privAvatarConfig.scene.positionX,
+                positionY: this.privAvatarConfig.scene.positionY,
+                rotationX: this.privAvatarConfig.scene.rotationX,
+                rotationY: this.privAvatarConfig.scene.rotationY,
+                rotationZ: this.privAvatarConfig.scene.rotationZ,
+            };
+        }
+
         this.privSynthesizerConfig.synthesisVideoSection = {
             format: {
                 bitrate: this.privAvatarConfig.videoFormat?.bitrate,
@@ -67,19 +93,7 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
                     iceServers: this.privAvatarConfig.remoteIceServers ?? this.privAvatarSynthesizer.iceServers,
                 },
             },
-            talkingAvatar: {
-                background: {
-                    color: this.privAvatarConfig.backgroundColor,
-                    image: {
-                        url: this.privAvatarConfig.backgroundImage?.toString(),
-                    }
-                },
-                character: this.privAvatarConfig.character,
-                customized: this.privAvatarConfig.customized,
-                photoAvatarBaseModel: this.privAvatarConfig.photoAvatarBaseModel,
-                style: this.privAvatarConfig.style,
-                useBuiltInVoice: this.privAvatarConfig.useBuiltInVoice,
-            }
+            talkingAvatar: talkingAvatarConfig,
         } as ISynthesisSectionVideo;
     }
 

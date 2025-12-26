@@ -16,6 +16,7 @@ import { AudioOutputFormatImpl } from "./Audio/AudioOutputFormat.js";
 import {
     AvatarConfig,
     AvatarEventArgs,
+    AvatarSceneConfig,
     PropertyCollection,
     PropertyId,
     ResultReason,
@@ -185,6 +186,33 @@ export class AvatarSynthesizer extends Synthesizer {
             request.err("Synthesis is canceled by user.");
         }
         return this.privAdapter.stopSpeaking();
+    }
+
+    /**
+     * Updates the avatar scene configuration at runtime.
+     * This allows changing the avatar's position, zoom, and rotation while the session is active.
+     * @member AvatarSynthesizer.prototype.updateSceneAsync
+     * @function
+     * @public
+     * @param {AvatarSceneConfig} sceneConfig - The new scene configuration to apply.
+     * @returns {Promise<void>} The promise of the void result.
+     */
+    public async updateSceneAsync(sceneConfig: AvatarSceneConfig): Promise<void> {
+        Contracts.throwIfDisposed(this.privDisposed);
+        Contracts.throwIfNullOrUndefined(sceneConfig, "sceneConfig");
+
+        const sceneMessage = {
+            avatarScene: {
+                zoom: sceneConfig.zoom,
+                positionX: sceneConfig.positionX,
+                positionY: sceneConfig.positionY,
+                rotationX: sceneConfig.rotationX,
+                rotationY: sceneConfig.rotationY,
+                rotationZ: sceneConfig.rotationZ
+            }
+        };
+
+        return this.privAdapter.sendNetworkMessage("synthesis.control", JSON.stringify(sceneMessage));
     }
 
     /**
