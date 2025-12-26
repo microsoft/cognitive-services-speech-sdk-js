@@ -203,12 +203,12 @@ export class AvatarSynthesizer extends Synthesizer {
 
         const sceneMessage = {
             avatarScene: {
-                zoom: sceneConfig.zoom,
                 positionX: sceneConfig.positionX,
                 positionY: sceneConfig.positionY,
                 rotationX: sceneConfig.rotationX,
                 rotationY: sceneConfig.rotationY,
-                rotationZ: sceneConfig.rotationZ
+                rotationZ: sceneConfig.rotationZ,
+                zoom: sceneConfig.zoom,
             }
         };
 
