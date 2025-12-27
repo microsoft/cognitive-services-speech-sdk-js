@@ -172,6 +172,17 @@ export interface ISynthesisSectionVideo {
         photoAvatarBaseModel: string;
         background: {
             color: string;
+            image?: {
+                url: string;
+            };
+        };
+        scene?: {
+            zoom: number;
+            positionX: number;
+            positionY: number;
+            rotationX: number;
+            rotationY: number;
+            rotationZ: number;
         };
     };
 }
