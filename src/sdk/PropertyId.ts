@@ -519,4 +519,20 @@ export enum PropertyId {
      * Added in version 1.33.0
      */
     TalkingAvatarService_WebRTC_SDP,
+
+    /**
+     * The timeout (in milliseconds) for stopping a recognizer.
+     * When set, if stopContinuousRecognitionAsync() doesn't complete within this time
+     * (due to the service being behind in processing audio), the operation will be
+     * cancelled and an error will be thrown.
+     *
+     * If not set or set to 0, the stop operation will wait indefinitely for the service
+     * to complete (existing behavior).
+     *
+     * Note: This timeout only applies to the graceful stop operation. It does not affect
+     * the disconnect() method which always cancels immediately.
+     *
+     * Added in version 1.44.0
+     */
+    Recognizer_StopTimeoutMs,
 }
