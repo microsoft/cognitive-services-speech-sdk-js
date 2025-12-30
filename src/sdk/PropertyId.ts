@@ -532,7 +532,7 @@ export enum PropertyId {
      * Note: This timeout only applies to the graceful stop operation. It does not affect
      * the disconnect() method which always cancels immediately.
      *
-     * Added in version 1.44.0
+     * Added in version 1.48.0
      */
     Recognizer_StopTimeoutMs,
 }
