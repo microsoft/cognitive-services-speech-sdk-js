@@ -102,7 +102,7 @@ export const BuildTranslationRecognizer: (speechTranslationConfig?: sdk.SpeechTr
     const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
 
     const language: string = Settings.WaveFileLanguage;
-    if (s.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_RecoLanguage]) === undefined) {
+    if (s.getProperty(sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_RecoLanguage]) === undefined && autoConfig === undefined) {
         s.speechRecognitionLanguage = language;
     }
     s.addTargetLanguage(defaultTargetLanguage);
@@ -194,7 +194,7 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
 
         const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
-
+        
         const r: sdk.SpeechRecognizer = await BuildRecognizer(s);
         objsToClose.push(r);
 

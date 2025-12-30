@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { Contracts } from "./Contracts.js";
-import { AvatarVideoFormat } from "./Exports.js";
+import { AvatarSceneConfig, AvatarVideoFormat } from "./Exports.js";
 
 /**
  * Defines the talking avatar configuration.
@@ -18,6 +18,7 @@ export class AvatarConfig {
     private privBackgroundColor: string;
     private privBackgroundImage: URL;
     private privRemoteIceServers: RTCIceServer[];
+    private privScene: AvatarSceneConfig;
 
     /**
      * Defines the avatar character.
@@ -121,6 +122,22 @@ export class AvatarConfig {
      */
     public set remoteIceServers(value: RTCIceServer[]) {
         this.privRemoteIceServers = value;
+    }
+
+    /**
+     * Gets the scene configuration for avatar positioning and orientation.
+     * @returns {AvatarSceneConfig} The scene configuration.
+     */
+    public get scene(): AvatarSceneConfig {
+        return this.privScene;
+    }
+
+    /**
+     * Sets the scene configuration for avatar positioning and orientation.
+     * @param {AvatarSceneConfig} value - The scene configuration.
+     */
+    public set scene(value: AvatarSceneConfig) {
+        this.privScene = value;
     }
 
     /**
