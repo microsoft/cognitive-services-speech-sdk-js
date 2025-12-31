@@ -4,6 +4,10 @@
 # ignore auto-generated (transpiled) js files
 src/**/*.js
 tests/**/*.js
+src/**/*.d.ts
+tests/**/*.d.ts
+src/**/*.map
+tests/**/*.map
 !tests/AudioPlayerTests/server/server.js
 distrib/*
 secrets/*
