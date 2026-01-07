@@ -183,6 +183,7 @@ export interface ISynthesisSectionVideo {
             rotationX: number;
             rotationY: number;
             rotationZ: number;
+            amplitude: number;
         };
     };
 }

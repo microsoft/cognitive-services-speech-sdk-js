@@ -190,7 +190,7 @@ export class AvatarSynthesizer extends Synthesizer {
 
     /**
      * Updates the avatar scene configuration at runtime.
-     * This allows changing the avatar's position, zoom, and rotation while the session is active.
+     * This allows changing the avatar's zoom, position, amplitude, and rotation while the session is active.
      * @member AvatarSynthesizer.prototype.updateSceneAsync
      * @function
      * @public
@@ -203,6 +203,7 @@ export class AvatarSynthesizer extends Synthesizer {
 
         const sceneMessage = {
             avatarScene: {
+                amplitude: sceneConfig.amplitude,
                 positionX: sceneConfig.positionX,
                 positionY: sceneConfig.positionY,
                 rotationX: sceneConfig.rotationX,
