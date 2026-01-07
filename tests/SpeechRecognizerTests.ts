@@ -1152,6 +1152,43 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         await done.promise;
     }, 15000);
 
+    test("Stop Timeout", async (): Promise<void> => {
+        // eslint-disable-next-line no-console
+        console.info("Stop Timeout");
+        const done: Deferred<void> = new Deferred<void>();
+        const recognizedSpeech: Deferred<void> = new Deferred<void>();
+
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
+        objsToClose.push(s);
+        s.speechRecognitionLanguage = "en-US";
+        s.outputFormat = sdk.OutputFormat.Detailed;
+        s.setProperty(sdk.PropertyId.Recognizer_StopTimeoutMs, "100");
+        s.setProperty("SPEECH-TransmitLengthBeforThrottleMs", "60000"); // large value to avoid throttling 
+
+        const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.InputDir + "aboutSpeechSdk.wav");
+
+        const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
+        objsToClose.push(r);
+        expect(r).not.toBeUndefined();
+        expect(r instanceof sdk.Recognizer);
+
+        r.recognized = (s: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+            console.info("Stopping recognition.");
+            r.stopContinuousRecognitionAsync((): void => {
+                // eslint-disable-next-line no-console
+                console.info("Stopped recognition successfully.");
+            }, (err: string): void => {
+                console.info("Failed to stop recognition: " + err);
+                done.resolve();
+            }
+            )
+        };
+
+        r.startContinuousRecognitionAsync();
+
+        await done.promise;
+    }, 15000);
+
     test("PushStream start-stop-start continuous recognition on PushStream", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: PushStream start-stop-start continuous recognition on PushStream");
@@ -2025,9 +2062,9 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         }, 100000);
     });
 
-    test("Connection Errors Propogate Async", async (): Promise<void> => {
+    test("Connection Errors Propagate Async", async (): Promise<void> => {
         // eslint-disable-next-line no-console
-        console.info("Name: Connection Errors Propogate Async");
+        console.info("Name: Connection Errors Propagate Async");
         const done: Deferred<void> = new Deferred<void>();
 
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("badKey", Settings.SpeechRegion);
@@ -2050,9 +2087,9 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         await done.promise;
     }, 15000);
 
-    test("Connection Errors Propogate Sync", async (): Promise<void> => {
+    test("Connection Errors Propagate Sync", async (): Promise<void> => {
         // eslint-disable-next-line no-console
-        console.info("Name: Connection Errors Propogate Sync");
+        console.info("Name: Connection Errors Propagate Sync");
         const done: Deferred<void> = new Deferred<void>();
 
         const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription("badKey", Settings.SpeechRegion);

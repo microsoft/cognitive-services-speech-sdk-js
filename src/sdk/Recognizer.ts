@@ -227,9 +227,48 @@ export abstract class Recognizer {
 
     protected async implRecognizerStop(): Promise<void> {
         if (this.privReco) {
+            // Get timeout property - undefined/empty means no timeout (existing behavior)
+            const timeoutProperty = this.privProperties.getProperty(
+                PropertyId.Recognizer_StopTimeoutMs,
+                undefined
+            );
+
+            // Only apply timeout if explicitly set to a positive value
+            if (timeoutProperty !== undefined && timeoutProperty !== "") {
+                const timeoutMs = parseInt(timeoutProperty, 10);
+
+                if (timeoutMs > 0) {
+                    // User wants timeout protection
+                    try {
+                        await this.withTimeout(
+                            this.privReco.stopRecognizing(),
+                            timeoutMs,
+                            `Stop operation timed out after ${timeoutMs}ms waiting for service to complete turn`
+                        );
+                    } catch (error) {
+                        // On timeout, use existing disconnect() which cancels immediately
+                        await this.privReco.disconnect();
+                        throw error;
+                    }
+                    return;
+                }
+            }
+
+            // No timeout configured - use existing behavior (wait indefinitely)
             await this.privReco.stopRecognizing();
         }
         return;
+    }
+
+    private withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+        return Promise.race([
+            promise,
+            new Promise<T>((_: (value: T) => void, reject: (reason: Error) => void): void => {
+                setTimeout((): void => {
+                    reject(new Error(errorMessage));
+                }, timeoutMs);
+            })
+        ]);
     }
 
     protected static getAuth(properties: PropertyCollection, tokenCredential?: TokenCredential): IAuthentication {
