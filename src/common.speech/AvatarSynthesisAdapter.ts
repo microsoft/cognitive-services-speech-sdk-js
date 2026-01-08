@@ -58,6 +58,7 @@ export class AvatarSynthesisAdapter extends SynthesisAdapterBase {
         // Add scene configuration if provided
         if (this.privAvatarConfig.scene) {
             talkingAvatarConfig.scene = {
+                amplitude: this.privAvatarConfig.scene.amplitude,
                 positionX: this.privAvatarConfig.scene.positionX,
                 positionY: this.privAvatarConfig.scene.positionY,
                 rotationX: this.privAvatarConfig.scene.rotationX,
