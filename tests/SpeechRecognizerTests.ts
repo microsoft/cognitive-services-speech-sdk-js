@@ -401,6 +401,68 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         await done.promise;
     });
 
+    test("Recognition latency is available on results", async (): Promise<void> => {
+        // eslint-disable-next-line no-console
+        console.info("Name: Recognition latency is available on results");
+        const done: Deferred<void> = new Deferred<void>();
+
+        const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile();
+        objsToClose.push(r);
+
+        let recognizingLatencyFound: boolean = false;
+
+        r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
+            try {
+                expect(e.errorDetails).toBeUndefined();
+            } catch (error) {
+                done.reject(error);
+            }
+        };
+
+        r.recognizing = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
+            try {
+                // Check that latency property is set on hypothesis results
+                const latency = e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_RecognitionLatencyMs);
+                if (latency !== undefined && latency !== "") {
+                    const latencyValue = parseInt(latency, 10);
+                    expect(latencyValue).toBeGreaterThan(0);
+                    recognizingLatencyFound = true;
+                }
+            } catch (error) {
+                done.reject(error);
+            }
+        };
+
+        r.recognizeOnceAsync((result: sdk.SpeechRecognitionResult): void => {
+            try {
+                expect(result).not.toBeUndefined();
+                expect(result.errorDetails).toBeUndefined();
+                expect(result.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+
+                // Check that latency property is set on final result
+                const latency = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_RecognitionLatencyMs);
+                expect(latency).not.toBeUndefined();
+                expect(latency).not.toEqual("");
+
+                const latencyValue = parseInt(latency, 10);
+                expect(latencyValue).toBeGreaterThan(0);
+                // Latency should be reasonable (less than 30 seconds)
+                expect(latencyValue).toBeLessThan(30000);
+
+                // Verify we also got latency on at least one recognizing event
+                expect(recognizingLatencyFound).toBe(true);
+
+                done.resolve();
+            } catch (error) {
+                done.reject(error);
+            }
+        }, (error: string): void => {
+            done.reject(error);
+        });
+
+        await done.promise;
+    });
+
     test("testGetOutputFormatDetailed with authorization token", async (): Promise<void> => {
         console.info("Name: testGetOutputFormatDetailed");
         const done: Deferred<void> = new Deferred<void>();

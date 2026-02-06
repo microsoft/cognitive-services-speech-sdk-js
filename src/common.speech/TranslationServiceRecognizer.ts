@@ -70,7 +70,11 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
 
         const handleTranslationPhrase = async (translatedPhrase: TranslationPhrase): Promise<void> => {
             resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, translatedPhrase.asJson());
-            this.privRequestSession.onPhraseRecognized(translatedPhrase.Offset + translatedPhrase.Duration);
+
+            const phraseLatencyMs = this.privRequestSession.onPhraseRecognized(translatedPhrase.Offset + translatedPhrase.Duration);
+            if (phraseLatencyMs > 0) {
+                resultProps.setProperty(PropertyId.SpeechServiceResponse_RecognitionLatencyMs, phraseLatencyMs.toString());
+            }
 
             if (translatedPhrase.RecognitionStatus === RecognitionStatus.Success) {
 
@@ -165,8 +169,12 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
         const handleTranslationHypothesis = (hypothesis: TranslationHypothesis): void => {
             resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, hypothesis.asJson());
 
+            const hypothesisLatencyMs = this.privRequestSession.onHypothesis(hypothesis.Offset);
+            if (hypothesisLatencyMs > 0) {
+                resultProps.setProperty(PropertyId.SpeechServiceResponse_RecognitionLatencyMs, hypothesisLatencyMs.toString());
+            }
+
             const result: TranslationRecognitionEventArgs = this.fireEventForResult(hypothesis, resultProps);
-            this.privRequestSession.onHypothesis(result.offset);
 
             if (!!this.privTranslationRecognizer.recognizing) {
                 try {
