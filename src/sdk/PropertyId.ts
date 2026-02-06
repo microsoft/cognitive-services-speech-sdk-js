@@ -535,4 +535,14 @@ export enum PropertyId {
      * Added in version 1.48.0
      */
     Recognizer_StopTimeoutMs,
+
+    /**
+     * The recognition latency in milliseconds. Read-only, available on speech/translation recognition results.
+     * This measures the latency between when an audio input is received by the SDK, and the moment the result
+     * is received from the service.
+     * The SDK computes the time difference between the last audio fragment from the audio input that is
+     * contributing to the result, and the time the result is received from the speech service.
+     * Added in version 1.48.0
+     */
+    SpeechServiceResponse_RecognitionLatencyMs,
 }

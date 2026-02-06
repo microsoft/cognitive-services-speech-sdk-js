@@ -73,6 +73,11 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
             case "speech.fragment":
                 const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
+                const hypothesisLatencyMs = this.privRequestSession.onHypothesis(hypothesis.Offset);
+                if (hypothesisLatencyMs > 0) {
+                    resultProps.setProperty(PropertyId.SpeechServiceResponse_RecognitionLatencyMs, hypothesisLatencyMs.toString());
+                }
+
                 result = new ConversationTranscriptionResult(
                     this.privRequestSession.requestId,
                     ResultReason.RecognizingSpeech,
@@ -85,8 +90,6 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
                     undefined,
                     hypothesis.asJson(),
                     resultProps);
-
-                this.privRequestSession.onHypothesis(hypothesis.Offset);
 
                 const ev = new ConversationTranscriptionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
 
@@ -105,7 +108,10 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
                 const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
                 const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus);
 
-                this.privRequestSession.onPhraseRecognized(simple.Offset + simple.Duration);
+                const phraseLatencyMs = this.privRequestSession.onPhraseRecognized(simple.Offset + simple.Duration);
+                if (phraseLatencyMs > 0) {
+                    resultProps.setProperty(PropertyId.SpeechServiceResponse_RecognitionLatencyMs, phraseLatencyMs.toString());
+                }
 
                 if (ResultReason.Canceled === resultReason) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);
