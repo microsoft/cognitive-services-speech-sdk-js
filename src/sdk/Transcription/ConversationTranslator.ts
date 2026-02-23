@@ -21,6 +21,7 @@ import {
     AudioConfig,
     CancellationErrorCode,
     CancellationReason,
+    PhraseListGrammar,
     ProfanityOption,
     PropertyCollection,
     PropertyId,
@@ -235,6 +236,18 @@ export class ConversationTranslator extends ConversationCommon implements IConve
         currentProperties[name] = value;
 
         this.privProperties.setProperty(ServicePropertiesPropertyName, JSON.stringify(currentProperties));
+    }
+
+    public getPhraseListGrammarAsync(cb?: Callback, err?: Callback): void {
+        marshalPromiseToCallbacks((async (): Promise<PhraseListGrammar> => {
+            if (this.privCTRecognizer === undefined) {
+                await this.connectTranslatorRecognizer();
+            }
+
+            Contracts.throwIfNullOrUndefined(this.privCTRecognizer, this.privErrors.permissionDeniedSend);
+
+            return PhraseListGrammar.fromRecognizer(this.privCTRecognizer);
+        })(), cb, err);
     }
 
     /**
