@@ -60,6 +60,11 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
 
     }
 
+    public async primaryTargetLanguageChanged(): Promise<void> {
+        this.setTranslationJson();
+        await this.resetTurn();
+    }
+
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
 
         const resultProps: PropertyCollection = new PropertyCollection();

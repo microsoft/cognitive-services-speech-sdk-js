@@ -249,6 +249,14 @@ export class TranslationRecognizer extends Recognizer {
                 languages.splice(index, 1);
                 this.properties.setProperty(PropertyId.SpeechServiceConnection_TranslationToLanguages, languages.join(","));
                 this.updateLanguages(languages);
+                if (index === 0 &&
+                    languages.length > 0 &&
+                    this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined) !== undefined) {
+                    // If we're removing the first language, synthesis has been requested, we need to re-sync with the service to update the synthesis language.
+                    // But we want to wait for the net phrase boundary to avoid unnecessary service calls.
+                    const tr: TranslationServiceRecognizer = this.privReco as TranslationServiceRecognizer;
+                    void tr.primaryTargetLanguageChanged();
+                }
             }
         }
     }
