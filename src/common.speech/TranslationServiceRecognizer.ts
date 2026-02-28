@@ -42,6 +42,7 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 // eslint-disable-next-line max-classes-per-file
 export class TranslationServiceRecognizer extends ConversationServiceRecognizer {
     private privTranslationRecognizer: TranslationRecognizer;
+    private privPrimaryLanguageChanged: boolean = false;
 
     public constructor(
         authentication: IAuthentication,
@@ -58,6 +59,11 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
             }
         });
 
+    }
+
+    public primaryTargetLanguageChanged(): void {
+        this.setTranslationJson();
+        this.privPrimaryLanguageChanged = true;
     }
 
     protected async processTypeSpecificMessages(connectionMessage: SpeechConnectionMessage): Promise<boolean> {
@@ -77,6 +83,12 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
             }
 
             if (translatedPhrase.RecognitionStatus === RecognitionStatus.Success) {
+
+                if (this.privPrimaryLanguageChanged) {
+                    // If the primary language was changed mid-recognition, we need to update the service with the new language.
+                    await this.resetTurn();
+                    this.privPrimaryLanguageChanged = false;
+                }
 
                 // OK, the recognition was successful. How'd the translation do?
                 const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, resultProps);

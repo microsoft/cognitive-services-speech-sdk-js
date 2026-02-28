@@ -168,6 +168,19 @@ export class RequestSession {
         }
     }
 
+    public onSDKEndTurn(): void {
+        if (this.privInTurn) {
+            this.privInTurn = false;
+        }
+        if (!!this.privTurnDeferral) {
+            this.privTurnDeferral.resolve();
+        }
+
+        // Start a new request set.
+        this.privTurnStartAudioOffset = this.privLastRecoOffset;
+        this.privAudioNode.replay();
+    }
+
     public onSpeechContext(): void {
         this.privRequestId = createNoDashGuid();
     }

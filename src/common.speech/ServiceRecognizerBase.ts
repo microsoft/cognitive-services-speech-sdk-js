@@ -731,6 +731,17 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
+    protected async resetTurn(): Promise<void> {
+        if ((this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) ||
+            (!this.privRecognizerConfig.isContinuousRecognition || this.privRequestSession.isSpeechEnded || !this.privRequestSession.isRecognizing)) {
+            return;
+        }
+
+        this.privRequestSession.onSDKEndTurn();
+        const connection = await this.fetchConnection();
+        await this.sendPrePayloadJSON(connection);
+    }
+
     private updateSpeakerDiarizationAudioOffset(): void {
         const bytesSent: number = this.privRequestSession.recognitionBytesSent;
         const audioOffsetMs: number = this.privAverageBytesPerMs !== 0 ? bytesSent / this.privAverageBytesPerMs : 0;
