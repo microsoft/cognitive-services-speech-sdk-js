@@ -545,4 +545,67 @@ export enum PropertyId {
      * Added in version 1.48.0
      */
     SpeechServiceResponse_RecognitionLatencyMs,
+
+    /**
+     * The pitch of the voice for a speech synthesis request.
+     * Added in version 1.37.0
+     * @member PropertyId.SpeechSynthesisRequest_Pitch
+     */
+    SpeechSynthesisRequest_Pitch,
+
+    /**
+     * The speaking rate of the voice for a speech synthesis request.
+     * Added in version 1.37.0
+     * @member PropertyId.SpeechSynthesisRequest_Rate
+     */
+    SpeechSynthesisRequest_Rate,
+
+    /**
+     * The volume of the voice for a speech synthesis request.
+     * Added in version 1.37.0
+     * @member PropertyId.SpeechSynthesisRequest_Volume
+     */
+    SpeechSynthesisRequest_Volume,
+
+    /**
+     * The style of the voice for a speech synthesis request.
+     * Added in version 1.37.0
+     * @member PropertyId.SpeechSynthesisRequest_Style
+     */
+    SpeechSynthesisRequest_Style,
+
+    /**
+     * The temperature of the voice synthesis for a speech synthesis request.
+     * Added in version 1.37.0
+     * @member PropertyId.SpeechSynthesisRequest_Temperature
+     */
+    SpeechSynthesisRequest_Temperature,
+
+    /**
+     * The custom lexicon URL for a speech synthesis request.
+     * Added in version 1.37.0
+     * @member PropertyId.SpeechSynthesisRequest_CustomLexiconUrl
+     */
+    SpeechSynthesisRequest_CustomLexiconUrl,
+
+    /**
+     * The preferred locales for a speech synthesis request.
+     * Added in version 1.37.0
+     * @member PropertyId.SpeechSynthesisRequest_PreferLocales
+     */
+    SpeechSynthesisRequest_PreferLocales,
+
+    /**
+     * The frame timeout interval (in ticks) for speech synthesis.
+     * Added in version 1.37.0
+     * @member PropertyId.SpeechSynthesis_FrameTimeoutInterval
+     */
+    SpeechSynthesis_FrameTimeoutInterval,
+
+    /**
+     * The RTF (Real-Time Factor) timeout threshold for speech synthesis.
+     * Added in version 1.37.0
+     * @member PropertyId.SpeechSynthesis_RtfTimeoutThreshold
+     */
+    SpeechSynthesis_RtfTimeoutThreshold,
 }
