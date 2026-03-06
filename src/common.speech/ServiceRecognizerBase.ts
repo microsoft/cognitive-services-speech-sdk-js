@@ -319,15 +319,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected setOutputDetailLevelJson(): void {
-        if (this.privEnableSpeakerId) {
-            const requestWordLevelTimestamps: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase();
-            if (requestWordLevelTimestamps === "true") {
-                this.privSpeechContext.setWordLevelTimings();
-            } else {
-                const outputFormat: string = this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
-                if (outputFormat === OutputFormat[OutputFormat.Detailed].toLocaleLowerCase()) {
-                    this.privSpeechContext.setDetailedOutputFormat();
-                }
+        const requestWordLevelTimestamps: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase();
+        if (requestWordLevelTimestamps === "true") {
+            this.privSpeechContext.setWordLevelTimings();
+        } else {
+            const outputFormat: string = this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
+            if (outputFormat === OutputFormat[OutputFormat.Detailed].toLocaleLowerCase()) {
+                this.privSpeechContext.setDetailedOutputFormat();
             }
         }
     }
