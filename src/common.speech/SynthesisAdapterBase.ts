@@ -430,6 +430,7 @@ export abstract class SynthesisAdapterBase implements IDisposable {
                         let result: SpeechSynthesisResult;
                         try {
                             result = await this.privSynthesisTurn.constructSynthesisResult();
+                            this.onSynthesisCompleted(result);
                             if (!!this.privSuccessCallback) {
                                 this.privSuccessCallback(result);
                             }
@@ -438,7 +439,6 @@ export abstract class SynthesisAdapterBase implements IDisposable {
                                 this.privErrorCallback(error as string);
                             }
                         }
-                        this.onSynthesisCompleted(result);
                         break;
 
                     default:
