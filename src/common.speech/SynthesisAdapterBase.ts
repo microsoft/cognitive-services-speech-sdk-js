@@ -28,6 +28,7 @@ import {
     SpeechSynthesisWordBoundaryEventArgs,
     Synthesizer,
 } from "../sdk/Exports.js";
+import { SpeechSynthesisRequest } from "../sdk/SpeechSynthesisRequest.js";
 import {
     AgentConfig,
     CancellationErrorCodePropertyName,
@@ -243,6 +244,53 @@ export abstract class SynthesisAdapterBase implements IDisposable {
         ));
     }
 
+    /**
+     * Performs text streaming synthesis using a SpeechSynthesisRequest.
+     * Text pieces are sent over WebSocket as they arrive via the request's input stream.
+     */
+    public async SpeakStream(
+        request: SpeechSynthesisRequest,
+        requestId: string,
+        successCallback: (e: SpeechSynthesisResult) => void,
+        errorCallBack: (e: string) => void,
+        audioDestination: IAudioDestination,
+    ): Promise<void> {
+
+        this.privSuccessCallback = successCallback;
+        this.privErrorCallback = errorCallBack;
+
+        this.privSynthesisTurn.startNewSynthesis(requestId, "", false, audioDestination);
+
+        try {
+            await this.connectImpl();
+            const connection: IConnection = await this.fetchConnection();
+
+            // Send synthesis.context with streaming input section embedded
+            await this.sendStreamingSynthesisContext(connection, request, requestId);
+
+            this.onSynthesisStarted(requestId);
+
+            // Set up text piece callback - each piece is sent as an ssml.text message
+            request.onTextPiece = (text: string): void => {
+                this.sendTextPiece(connection, text, requestId).catch((e: unknown): void => {
+                    this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, e as string);
+                });
+            };
+
+            // Set up close callback - sends the finish signal
+            request.onClose = (): void => {
+                this.sendTextStreamEnd(connection, requestId).catch((e: unknown): void => {
+                    this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, e as string);
+                });
+            };
+
+            void this.receiveMessage();
+        } catch (e) {
+            this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, e as string);
+            return Promise.reject(e);
+        }
+    }
+
     // Cancels synthesis.
     protected cancelSynthesis(
         requestId: string,
@@ -381,6 +429,7 @@ export abstract class SynthesisAdapterBase implements IDisposable {
                         let result: SpeechSynthesisResult;
                         try {
                             result = await this.privSynthesisTurn.constructSynthesisResult();
+                            this.onSynthesisCompleted(result);
                             if (!!this.privSuccessCallback) {
                                 this.privSuccessCallback(result);
                             }
@@ -389,7 +438,6 @@ export abstract class SynthesisAdapterBase implements IDisposable {
                                 this.privErrorCallback(error as string);
                             }
                         }
-                        this.onSynthesisCompleted(result);
                         break;
 
                     default:
@@ -505,6 +553,110 @@ export abstract class SynthesisAdapterBase implements IDisposable {
             requestId,
             "application/ssml+xml",
             ssml));
+    }
+
+    /**
+     * Sends the synthesis.context message for text streaming mode.
+     * Includes the standard audio/language sections plus an input section
+     * with bidirectionalStreamingMode, voice name, and per-request properties.
+     */
+    protected async sendStreamingSynthesisContext(
+        connection: IConnection,
+        request: SpeechSynthesisRequest,
+        requestId: string
+    ): Promise<void> {
+        // Build the standard synthesis context first
+        this.setSynthesisContextSynthesisSection();
+
+        // Build the streaming input section
+        const inputSection: { [key: string]: any } = {
+            bidirectionalStreamingMode: true,
+        };
+
+        // Add voice name and language from synthesizer properties
+        const voiceName = this.privSynthesizerConfig.parameters.getProperty(
+            PropertyId.SpeechServiceConnection_SynthVoice, "");
+        const language = this.privSynthesizerConfig.parameters.getProperty(
+            PropertyId.SpeechServiceConnection_SynthLanguage, "en-US");
+
+        if (voiceName) {
+            inputSection.voiceName = voiceName;
+        }
+        inputSection.language = language;
+
+        // Add per-request voice properties
+        const pitch = request.properties.getProperty(PropertyId.SpeechSynthesisRequest_Pitch, undefined);
+        const rate = request.properties.getProperty(PropertyId.SpeechSynthesisRequest_Rate, undefined);
+        const volume = request.properties.getProperty(PropertyId.SpeechSynthesisRequest_Volume, undefined);
+        const style = request.properties.getProperty(PropertyId.SpeechSynthesisRequest_Style, undefined);
+        const temperature = request.properties.getProperty(PropertyId.SpeechSynthesisRequest_Temperature, undefined);
+        const customLexiconUrl = request.properties.getProperty(PropertyId.SpeechSynthesisRequest_CustomLexiconUrl, undefined);
+        const preferLocales = request.properties.getProperty(PropertyId.SpeechSynthesisRequest_PreferLocales, undefined);
+
+        if (pitch !== undefined) {
+            inputSection.pitch = pitch;
+        }
+        if (rate !== undefined) {
+            inputSection.rate = rate;
+        }
+        if (volume !== undefined) {
+            inputSection.volume = volume;
+        }
+        if (style !== undefined) {
+            inputSection.style = style;
+        }
+        if (temperature !== undefined) {
+            inputSection.temperature = temperature;
+        }
+        if (customLexiconUrl !== undefined) {
+            inputSection.customLexiconUrl = customLexiconUrl;
+        }
+        if (preferLocales !== undefined) {
+            inputSection.preferLocales = preferLocales;
+        }
+
+        // Add the input section to the synthesis context
+        const existingSynthesis = this.privSynthesisContext.getSection("synthesis") as Record<string, unknown> || {};
+        this.privSynthesisContext.setSection("synthesis", {
+            ...existingSynthesis,
+            input: inputSection,
+        } as Record<string, unknown>);
+
+        const synthesisContextJson = this.privSynthesisContext.toJSON();
+        if (synthesisContextJson) {
+            return connection.send(new SpeechConnectionMessage(
+                MessageType.Text,
+                "synthesis.context",
+                requestId,
+                "application/json",
+                synthesisContextJson));
+        }
+    }
+
+    /**
+     * Sends a text piece for streaming synthesis.
+     * Path: text.piece, Content-Type: text/plain, Body: raw text
+     */
+    protected async sendTextPiece(connection: IConnection, text: string, requestId: string): Promise<void> {
+        return connection.send(new SpeechConnectionMessage(
+            MessageType.Text,
+            "text.piece",
+            requestId,
+            "text/plain",
+            text));
+    }
+
+    /**
+     * Sends the end-of-stream signal for text streaming synthesis.
+     * Path: text.end, Content-Type: text/plain, Body: empty
+     */
+    protected async sendTextStreamEnd(connection: IConnection, requestId: string): Promise<void> {
+        return connection.send(new SpeechConnectionMessage(
+            MessageType.Text,
+            "text.end",
+            requestId,
+            "text/plain",
+            ""));
     }
 
     private async fetchConnection(): Promise<IConnection> {

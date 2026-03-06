@@ -44,7 +44,8 @@ import {
     Synthesizer
 } from "./Exports.js";
 import { SpeechConfigImpl } from "./SpeechConfig.js";
-import { SynthesisRequest } from "./Synthesizer.js";
+import { SpeechSynthesisRequest } from "./SpeechSynthesisRequest.js";
+import { StreamingSynthesisRequest, SynthesisRequest } from "./Synthesizer.js";
 
 /**
  * Defines the class SpeechSynthesizer for text to speech.
@@ -174,6 +175,79 @@ export class SpeechSynthesizer extends Synthesizer {
      */
     public speakSsmlAsync(ssml: string, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, stream?: AudioOutputStream | PushAudioOutputStreamCallback | PathLike): void {
         this.speakImpl(ssml, true, cb, err, stream);
+    }
+
+    /**
+     * Performs synthesis using a SpeechSynthesisRequest, which supports text streaming.
+     * This method is in preview and may be subject to change in future versions.
+     * Added in version 1.37.0
+     * @member SpeechSynthesizer.prototype.speakAsync
+     * @function
+     * @public
+     * @param request - The speech synthesis request (supports text streaming input).
+     * @param cb - Callback that received the SpeechSynthesisResult.
+     * @param err - Callback invoked in case of an error.
+     * @param stream - AudioOutputStream to receive the synthesized audio.
+     */
+    public speakAsync(
+        request: SpeechSynthesisRequest,
+        cb?: (e: SpeechSynthesisResult) => void,
+        err?: (e: string) => void,
+        stream?: AudioOutputStream | PushAudioOutputStreamCallback | PathLike
+    ): void {
+        try {
+            Contracts.throwIfDisposed(this.privDisposed);
+            const requestId = createNoDashGuid();
+            let audioDestination;
+            if (stream instanceof PushAudioOutputStreamCallback) {
+                audioDestination = new PushAudioOutputStreamImpl(stream);
+            } else if (stream instanceof PullAudioOutputStream) {
+                audioDestination = stream as PullAudioOutputStreamImpl;
+            } else if (stream !== undefined) {
+                audioDestination = new AudioFileWriter(stream as PathLike);
+            } else {
+                audioDestination = undefined;
+            }
+
+            const streamingRequest = new StreamingSynthesisRequest(
+                requestId,
+                request,
+                (e: SpeechSynthesisResult): void => {
+                    this.privSynthesizing = false;
+                    if (!!cb) {
+                        try {
+                            cb(e);
+                        } catch (e) {
+                            if (!!err) {
+                                err(e as string);
+                            }
+                        }
+                    }
+                    cb = undefined;
+                },
+                (e: string): void => {
+                    if (!!err) {
+                        err(e);
+                    }
+                },
+                audioDestination
+            );
+
+            /* eslint-disable no-empty-function */
+            this.adapterSpeakStream(streamingRequest).catch((): void => { });
+        } catch (error) {
+            if (!!err) {
+                if (error instanceof Error) {
+                    const typedError: Error = error;
+                    err(typedError.name + ": " + typedError.message);
+                } else {
+                    err(error as string);
+                }
+            }
+            // Destroy the synthesizer.
+            /* eslint-disable no-empty */
+            this.dispose(true).catch((): void => { });
+        }
     }
 
     /**

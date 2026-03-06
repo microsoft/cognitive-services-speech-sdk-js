@@ -19,6 +19,7 @@ import {
 import { IAudioDestination, IStringDictionary, Queue } from "../common/Exports.js";
 import { Contracts } from "./Contracts.js";
 import { PropertyCollection, PropertyId, SpeechConfig, SpeechConfigImpl, SpeechSynthesisResult } from "./Exports.js";
+import { SpeechSynthesisRequest } from "./SpeechSynthesisRequest.js";
 
 export abstract class Synthesizer {
     private tokenCredential?: TokenCredential;
@@ -271,6 +272,19 @@ export abstract class Synthesizer {
         }
     }
 
+    protected async adapterSpeakStream(request: StreamingSynthesisRequest): Promise<void> {
+        if (!this.privDisposed && !this.privSynthesizing) {
+            this.privSynthesizing = true;
+            return this.privAdapter.SpeakStream(
+                request.speechSynthesisRequest,
+                request.requestId,
+                request.cb,
+                request.err,
+                request.dataStream
+            );
+        }
+    }
+
     //
     // ################################################################################################################
     // IMPLEMENTATION.
@@ -376,6 +390,28 @@ export class SynthesisRequest {
         this.requestId = requestId;
         this.text = text;
         this.isSSML = isSSML;
+        this.cb = cb;
+        this.err = err;
+        this.dataStream = dataStream;
+    }
+}
+
+export class StreamingSynthesisRequest {
+    public requestId: string;
+    public speechSynthesisRequest: SpeechSynthesisRequest;
+    public cb: (e: SpeechSynthesisResult) => void;
+    public err: (e: string) => void;
+    public dataStream: IAudioDestination;
+
+    public constructor(
+        requestId: string,
+        speechSynthesisRequest: SpeechSynthesisRequest,
+        cb?: (e: SpeechSynthesisResult) => void,
+        err?: (e: string) => void,
+        dataStream?: IAudioDestination
+    ) {
+        this.requestId = requestId;
+        this.speechSynthesisRequest = speechSynthesisRequest;
         this.cb = cb;
         this.err = err;
         this.dataStream = dataStream;

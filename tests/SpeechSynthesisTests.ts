@@ -278,6 +278,162 @@ test("testSetAndGetParameters", async (): Promise<void> => {
         .toEqual(sdk.SpeechSynthesisOutputFormat[sdk.SpeechSynthesisOutputFormat.Audio16Khz128KBitRateMonoMp3]);
 });
 
+describe("SpeechSynthesisRequest unit tests", (): void => {
+
+    test("SpeechSynthesisRequest: create with TextStream input type", (): void => {
+        console.info("Name: SpeechSynthesisRequest create with TextStream input type");
+        const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+        expect(request).not.toBeUndefined();
+        expect(request.inputType).toEqual(sdk.SpeechSynthesisRequestInputType.TextStream);
+        expect(request.inputStream).not.toBeUndefined();
+        expect(request.properties).not.toBeUndefined();
+    });
+
+    test("SpeechSynthesisRequest: only TextStream input type is supported", (): void => {
+        console.info("Name: SpeechSynthesisRequest only TextStream input type is supported");
+        expect((): void => {
+            new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.Text);
+        }).toThrow("Only TextStream input type is supported in this version.");
+        expect((): void => {
+            new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.SSML);
+        }).toThrow("Only TextStream input type is supported in this version.");
+    });
+
+    test("SpeechSynthesisRequest: set and get properties", (): void => {
+        console.info("Name: SpeechSynthesisRequest set and get properties");
+        const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+
+        request.pitch = "high";
+        request.rate = "fast";
+        request.volume = "loud";
+        request.style = "cheerful";
+        request.temperature = 0.8;
+        request.customLexiconUrl = "https://example.com/lexicon";
+        request.preferLocales = "en-US,zh-CN";
+
+        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_Pitch)).toEqual("high");
+        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_Rate)).toEqual("fast");
+        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_Volume)).toEqual("loud");
+        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_Style)).toEqual("cheerful");
+        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_Temperature)).toEqual("0.8");
+        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_CustomLexiconUrl)).toEqual("https://example.com/lexicon");
+        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_PreferLocales)).toEqual("en-US,zh-CN");
+    });
+
+    test("SpeechSynthesisRequestInputStream: write and close", (): void => {
+        console.info("Name: SpeechSynthesisRequestInputStream write and close");
+        const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+        const stream = request.inputStream;
+
+        expect(stream.isClosed).toBe(false);
+
+        // Write should not throw on open stream
+        stream.write("hello ");
+        stream.write("world");
+
+        // Close the stream
+        stream.close();
+        expect(stream.isClosed).toBe(true);
+
+        // Write after close should throw
+        expect((): void => {
+            stream.write("more text");
+        }).toThrow("Cannot write to a closed input stream.");
+    });
+
+    test("SpeechSynthesisRequestInputStream: close is idempotent", (): void => {
+        console.info("Name: SpeechSynthesisRequestInputStream close is idempotent");
+        const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+        const stream = request.inputStream;
+
+        stream.close();
+        expect(stream.isClosed).toBe(true);
+
+        // Second close should not throw
+        stream.close();
+        expect(stream.isClosed).toBe(true);
+    });
+
+    test("SpeechSynthesisRequest: text pieces buffered before callback is set", (): void => {
+        console.info("Name: SpeechSynthesisRequest text pieces buffered before callback is set");
+        const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+        const stream = request.inputStream;
+
+        // Write text pieces before setting callback
+        stream.write("piece1");
+        stream.write("piece2");
+        stream.write("piece3");
+
+        // Now set callback, buffered pieces should be flushed
+        const receivedPieces: string[] = [];
+        request.onTextPiece = (text: string): void => {
+            receivedPieces.push(text);
+        };
+
+        expect(receivedPieces).toEqual(["piece1", "piece2", "piece3"]);
+
+        // Subsequent writes should trigger callback immediately
+        stream.write("piece4");
+        expect(receivedPieces).toEqual(["piece1", "piece2", "piece3", "piece4"]);
+    });
+
+    test("SpeechSynthesisRequest: text pieces delivered immediately when callback is set", (): void => {
+        console.info("Name: SpeechSynthesisRequest text pieces delivered immediately when callback is set");
+        const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+        const stream = request.inputStream;
+
+        const receivedPieces: string[] = [];
+        request.onTextPiece = (text: string): void => {
+            receivedPieces.push(text);
+        };
+
+        stream.write("hello ");
+        stream.write("world");
+
+        expect(receivedPieces).toEqual(["hello ", "world"]);
+    });
+
+    test("SpeechSynthesisRequest: close event buffered before callback is set", (): void => {
+        console.info("Name: SpeechSynthesisRequest close event buffered before callback is set");
+        const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+        const stream = request.inputStream;
+
+        // Close before setting callback
+        stream.close();
+
+        let closeCalled = false;
+        request.onClose = (): void => {
+            closeCalled = true;
+        };
+
+        // Callback should fire immediately since stream was already closed
+        expect(closeCalled).toBe(true);
+    });
+
+    test("SpeechSynthesisRequest: close event fires when callback is set first", (): void => {
+        console.info("Name: SpeechSynthesisRequest close event fires when callback is set first");
+        const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+        const stream = request.inputStream;
+
+        let closeCalled = false;
+        request.onClose = (): void => {
+            closeCalled = true;
+        };
+
+        expect(closeCalled).toBe(false);
+
+        stream.close();
+        expect(closeCalled).toBe(true);
+    });
+
+    test("SpeechSynthesisRequestInputType: enum values", (): void => {
+        console.info("Name: SpeechSynthesisRequestInputType enum values");
+        expect(sdk.SpeechSynthesisRequestInputType.Text).toEqual(1);
+        expect(sdk.SpeechSynthesisRequestInputType.SSML).toEqual(2);
+        expect(sdk.SpeechSynthesisRequestInputType.TextStream).toEqual(3);
+    });
+});
+
 describe("Service based tests", (): void => {
 
     describe.each([
@@ -1135,6 +1291,465 @@ describe("Service based tests", (): void => {
             done(error);
         });
     });
+
+    // Helper: builds a SpeechConfig pointing at the v2 WebSocket endpoint required for text input streaming.
+    const BuildStreamingSpeechConfig = async (): Promise<sdk.SpeechConfig> => {
+        // Text input streaming (bidirectional) requires the v2 WebSocket endpoint.
+        const v2Endpoint = `wss://${Settings.SpeechRegion}.tts.speech.microsoft.com/cognitiveservices/websocket/v2`;
+        const streamConfig = sdk.SpeechConfig.fromEndpoint(new URL(v2Endpoint), Settings.SpeechSubscriptionKey);
+        streamConfig.speechSynthesisLanguage = "en-US";
+        streamConfig.speechSynthesisVoiceName = "en-US-AvaMultilingualNeural";
+        if (undefined !== Settings.proxyServer) {
+            streamConfig.setProxy(Settings.proxyServer, Settings.proxyPort);
+        }
+        return streamConfig;
+    };
+
+    test("testSpeechSynthesizer: text streaming with speakAsync", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizer text streaming with speakAsync");
+        BuildStreamingSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+            objsToClose.push(s);
+            expect(s).not.toBeUndefined();
+
+            const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+            const stream = request.inputStream;
+
+            s.speakAsync(request, (result: sdk.SpeechSynthesisResult): void => {
+                // eslint-disable-next-line no-console
+                console.info("Streaming synthesis completed.");
+                CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                done();
+            }, (e: string): void => {
+                done(e);
+            });
+
+            // Send text pieces with a small delay to simulate streaming
+            setTimeout((): void => {
+                stream.write("hello ");
+            }, 100);
+            setTimeout((): void => {
+                stream.write("world.");
+            }, 200);
+            setTimeout((): void => {
+                stream.close();
+            }, 300);
+        }).catch((error: string): void => {
+            done(error);
+        });
+    }, 30000);
+
+    test("testSpeechSynthesizer: text streaming with events", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizer text streaming with events");
+        BuildStreamingSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+            speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+            objsToClose.push(s);
+            expect(s).not.toBeUndefined();
+
+            let startEventCount: number = 0;
+            let synthesizingEventCount: number = 0;
+            let completeEventCount: number = 0;
+
+            s.synthesisStarted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
+                console.info("Streaming synthesis started.");
+                startEventCount += 1;
+            };
+
+            s.synthesizing = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
+                console.info("Streaming audio received with length of " + e.result.audioData.byteLength.toString());
+                synthesizingEventCount += 1;
+            };
+
+            s.synthesisCompleted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
+                console.info("Streaming synthesis completed with length of " + e.result.audioData.byteLength.toString());
+                completeEventCount += 1;
+            };
+
+            const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+            const inputStream = request.inputStream;
+
+            s.speakAsync(request, (result: sdk.SpeechSynthesisResult): void => {
+                try {
+                    CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                    expect(startEventCount).toEqual(1);
+                    expect(synthesizingEventCount).toBeGreaterThan(0);
+                    expect(completeEventCount).toEqual(1);
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            }, (e: string): void => {
+                done(e);
+            });
+
+            setTimeout((): void => {
+                inputStream.write("Today is a nice day.");
+            }, 100);
+            setTimeout((): void => {
+                inputStream.close();
+            }, 200);
+        }).catch((error: string): void => {
+            done(error);
+        });
+    }, 30000);
+
+    test("testSpeechSynthesizer: text streaming to file", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizer text streaming to file");
+        BuildStreamingSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+            objsToClose.push(s);
+            expect(s).not.toBeUndefined();
+
+            const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+            const inputStream = request.inputStream;
+
+            s.speakAsync(request, (result: sdk.SpeechSynthesisResult): void => {
+                console.info("Streaming synthesis to file completed.");
+                try {
+                    CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                    // wait for async file writing to finish
+                    setTimeout((): void => {
+                        const fileLength = fs.statSync("test_streaming.wav").size;
+                        expect(fileLength).toBeGreaterThan(0);
+                        // Clean up
+                        fs.unlinkSync("test_streaming.wav");
+                        done();
+                    }, 2000);
+                } catch (e) {
+                    done(e);
+                }
+            }, (e: string): void => {
+                done(e);
+            }, "test_streaming.wav");
+
+            setTimeout((): void => {
+                inputStream.write("hello world.");
+            }, 100);
+            setTimeout((): void => {
+                inputStream.close();
+            }, 200);
+        }).catch((error: string): void => {
+            done(error);
+        });
+    }, 30000);
+
+    test("testSpeechSynthesizer: text streaming with request properties", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizer text streaming with request properties");
+        BuildStreamingSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+            objsToClose.push(s);
+            expect(s).not.toBeUndefined();
+
+            const con: sdk.Connection = sdk.Connection.fromSynthesizer(s);
+
+            let contextMessageReceived = false;
+            con.messageSent = (args: sdk.ConnectionMessageEventArgs): void => {
+                if (args.message.path === "synthesis.context" && args.message.isTextMessage) {
+                    try {
+                        const contextJson = args.message.TextMessage;
+                        expect(contextJson).toContain("bidirectionalStreamingMode");
+                        contextMessageReceived = true;
+                    } catch (error) {
+                        done(error);
+                    }
+                }
+            };
+
+            const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+            request.rate = "fast";
+            request.pitch = "high";
+            request.style = "cheerful";
+
+            const inputStream = request.inputStream;
+
+            s.speakAsync(request, (result: sdk.SpeechSynthesisResult): void => {
+                try {
+                    CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                    expect(contextMessageReceived).toBe(true);
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            }, (e: string): void => {
+                done(e);
+            });
+
+            setTimeout((): void => {
+                inputStream.write("hello world.");
+            }, 100);
+            setTimeout((): void => {
+                inputStream.close();
+            }, 200);
+        }).catch((error: string): void => {
+            done(error);
+        });
+    }, 30000);
+
+    test("testSpeechSynthesizer: text streaming multiple pieces", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizer text streaming multiple pieces");
+        BuildStreamingSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+            objsToClose.push(s);
+            expect(s).not.toBeUndefined();
+
+            let wordBoundaryCount: number = 0;
+            s.wordBoundary = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisWordBoundaryEventArgs): void => {
+                try {
+                    expect(e).not.toBeUndefined();
+                    expect(e.text).not.toBeUndefined();
+                } catch (e) {
+                    done(e);
+                }
+                wordBoundaryCount += 1;
+            };
+
+            const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+            const inputStream = request.inputStream;
+
+            s.speakAsync(request, (result: sdk.SpeechSynthesisResult): void => {
+                try {
+                    CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                    expect(wordBoundaryCount).toBeGreaterThan(0);
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            }, (e: string): void => {
+                done(e);
+            });
+
+            // Send multiple text pieces to simulate streaming from an LLM
+            const pieces = ["The quick ", "brown fox ", "jumps over ", "the lazy dog."];
+            pieces.forEach((piece: string, index: number): void => {
+                setTimeout((): void => {
+                    inputStream.write(piece);
+                }, 100 * (index + 1));
+            });
+            setTimeout((): void => {
+                inputStream.close();
+            }, 100 * (pieces.length + 1));
+        }).catch((error: string): void => {
+            done(error);
+        });
+    }, 30000);
+
+    test("testSpeechSynthesizer: text input streaming receives progressive audio stream", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizer text input streaming receives progressive audio stream");
+        BuildStreamingSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+            speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+            objsToClose.push(s);
+            expect(s).not.toBeUndefined();
+
+            // Track when audio chunks arrive relative to text piece sends
+            const audioChunkTimestamps: number[] = [];
+            const textPieceSendTimestamps: number[] = [];
+            let totalAudioLength: number = 0;
+            let audioReceivedBeforeAllTextSent: boolean = false;
+
+            s.synthesisStarted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
+                console.info("Streaming synthesis started at " + Date.now().toString());
+            };
+
+            s.synthesizing = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
+                const now = Date.now();
+                audioChunkTimestamps.push(now);
+                const chunkSize = e.result.audioData.byteLength;
+                totalAudioLength += chunkSize;
+                console.info("Audio chunk received at " + now.toString() +
+                    ", size: " + chunkSize.toString() +
+                    ", total: " + totalAudioLength.toString());
+
+                // Check if audio is arriving while we're still sending text pieces
+                // (last text piece is sent after 4 * 500ms = 2000ms delay)
+                if (textPieceSendTimestamps.length < 4) {
+                    audioReceivedBeforeAllTextSent = true;
+                }
+
+                // Each audio chunk should have valid data
+                try {
+                    expect(chunkSize).toBeGreaterThan(0);
+                } catch (e) {
+                    done(e);
+                }
+            };
+
+            const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+            const inputStream = request.inputStream;
+
+            s.speakAsync(request, (result: sdk.SpeechSynthesisResult): void => {
+                try {
+                    CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+
+                    // Verify audio chunks were received
+                    expect(audioChunkTimestamps.length).toBeGreaterThan(0);
+
+                    // Verify total audio data is non-trivial
+                    expect(result.audioData.byteLength).toBeGreaterThan(0);
+
+                    // Verify all text pieces were sent
+                    expect(textPieceSendTimestamps.length).toEqual(4);
+
+                    // Key assertion: audio started arriving before all text was sent,
+                    // proving progressive/streaming audio response.
+                    expect(audioReceivedBeforeAllTextSent).toBe(true);
+
+                    // Verify audio chunks arrived over time (not all at once)
+                    if (audioChunkTimestamps.length >= 2) {
+                        const firstChunkTime = audioChunkTimestamps[0];
+                        const lastChunkTime = audioChunkTimestamps[audioChunkTimestamps.length - 1];
+                        expect(lastChunkTime).toBeGreaterThan(firstChunkTime);
+                    }
+
+                    console.info("Progressive streaming verified: " +
+                        audioChunkTimestamps.length.toString() + " audio chunks received, " +
+                        "audio started before all " + textPieceSendTimestamps.length.toString() +
+                        " text pieces were sent.");
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            }, (e: string): void => {
+                done(e);
+            });
+
+            // Send text pieces with 500ms intervals to allow audio to start arriving
+            // before all text is sent, demonstrating true streaming behavior
+            const textPieces = [
+                "This is the first sentence for streaming. ",
+                "Here comes the second part of the text. ",
+                "The third piece continues the narrative. ",
+                "And finally the last piece of text to synthesize."
+            ];
+
+            textPieces.forEach((piece: string, index: number): void => {
+                setTimeout((): void => {
+                    textPieceSendTimestamps.push(Date.now());
+                    console.info("Sending text piece " + (index + 1).toString() +
+                        " at " + Date.now().toString() + ": \"" + piece + "\"");
+                    inputStream.write(piece);
+                }, 500 * (index + 1));
+            });
+
+            // Close the stream after all pieces are sent
+            setTimeout((): void => {
+                console.info("Closing input stream at " + Date.now().toString());
+                inputStream.close();
+            }, 500 * (textPieces.length + 1));
+        }).catch((error: string): void => {
+            done(error);
+        });
+    }, 60000);
+
+    test("testSpeechSynthesizer: text streaming with push audio output stream", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizer text streaming with push audio output stream");
+        BuildStreamingSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+
+            const pushStream = new PushAudioOutputStreamTestCallback();
+            const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamOutput(pushStream);
+            expect(audioConfig).not.toBeUndefined();
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+            objsToClose.push(s);
+            expect(s).not.toBeUndefined();
+
+            const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+            const inputStream = request.inputStream;
+
+            s.speakAsync(request, (result: sdk.SpeechSynthesisResult): void => {
+                try {
+                    CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                    // Verify audio was written to the push stream
+                    expect(pushStream.length).toBeGreaterThan(0);
+                    // In streaming mode, output collected by push callback and result.audioData can
+                    // differ by a small container/header size (for example 44-byte RIFF header).
+                    expect(
+                        pushStream.length === result.audioData.byteLength ||
+                        pushStream.length === result.audioData.byteLength - 44
+                    ).toBe(true);
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            }, (e: string): void => {
+                done(e);
+            });
+
+            setTimeout((): void => {
+                inputStream.write("hello world.");
+            }, 100);
+            setTimeout((): void => {
+                inputStream.close();
+            }, 200);
+        }).catch((error: string): void => {
+            done(error);
+        });
+    }, 30000);
+
+    test("testSpeechSynthesizer: text streaming with pull audio output stream", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizer text streaming with pull audio output stream");
+        BuildStreamingSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+
+            const stream = sdk.AudioOutputStream.createPullStream();
+            const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamOutput(stream);
+            expect(audioConfig).not.toBeUndefined();
+
+            // Start reading from pull stream in parallel
+            setTimeout((): void => {
+                ReadPullAudioOutputStream(stream, undefined, done);
+            }, 0);
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+            objsToClose.push(s);
+            expect(s).not.toBeUndefined();
+
+            const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
+            const inputStream = request.inputStream;
+
+            s.speakAsync(request, (result: sdk.SpeechSynthesisResult): void => {
+                try {
+                    CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+                    s.close();
+                } catch (e) {
+                    done(e);
+                }
+            }, (e: string): void => {
+                done(e);
+            });
+
+            setTimeout((): void => {
+                inputStream.write("hello world.");
+            }, 100);
+            setTimeout((): void => {
+                inputStream.close();
+            }, 200);
+        }).catch((error: string): void => {
+            done(error);
+        });
+    }, 30000);
 
     test("testSpeechSynthesizerUsingCustomVoice", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
