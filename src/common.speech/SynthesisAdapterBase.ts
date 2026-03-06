@@ -29,7 +29,6 @@ import {
     Synthesizer,
 } from "../sdk/Exports.js";
 import { SpeechSynthesisRequest } from "../sdk/SpeechSynthesisRequest.js";
-import { PersonalVoiceSynthesisRequest } from "../sdk/PersonalVoiceSynthesisRequest.js";
 import {
     AgentConfig,
     CancellationErrorCodePropertyName,
@@ -614,11 +613,6 @@ export abstract class SynthesisAdapterBase implements IDisposable {
         }
         if (preferLocales !== undefined) {
             inputSection.preferLocales = preferLocales;
-        }
-
-        // Add personal voice info if applicable
-        if (request instanceof PersonalVoiceSynthesisRequest) {
-            inputSection.personalVoiceName = request.personalVoiceName;
         }
 
         // Add the input section to the synthesis context

@@ -426,43 +426,6 @@ describe("SpeechSynthesisRequest unit tests", (): void => {
         expect(closeCalled).toBe(true);
     });
 
-    test("PersonalVoiceSynthesisRequest: create and get properties", (): void => {
-        console.info("Name: PersonalVoiceSynthesisRequest create and get properties");
-        const request = new sdk.PersonalVoiceSynthesisRequest(
-            sdk.SpeechSynthesisRequestInputType.TextStream,
-            "my-personal-voice",
-            "DragonLatestNeural"
-        );
-
-        expect(request).not.toBeUndefined();
-        expect(request.inputType).toEqual(sdk.SpeechSynthesisRequestInputType.TextStream);
-        expect(request.personalVoiceName).toEqual("my-personal-voice");
-        expect(request.modelName).toEqual("DragonLatestNeural");
-        expect(request.inputStream).not.toBeUndefined();
-        expect(request.properties).not.toBeUndefined();
-    });
-
-    test("PersonalVoiceSynthesisRequest: inherits SpeechSynthesisRequest properties", (): void => {
-        console.info("Name: PersonalVoiceSynthesisRequest inherits SpeechSynthesisRequest properties");
-        const request = new sdk.PersonalVoiceSynthesisRequest(
-            sdk.SpeechSynthesisRequestInputType.TextStream,
-            "my-voice",
-            "PhoenixLatestNeural"
-        );
-
-        // Should support property setters from base class
-        request.pitch = "medium";
-        request.rate = "slow";
-        request.style = "calm";
-
-        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_Pitch)).toEqual("medium");
-        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_Rate)).toEqual("slow");
-        expect(request.properties.getProperty(sdk.PropertyId.SpeechSynthesisRequest_Style)).toEqual("calm");
-
-        // Verify it's an instance of SpeechSynthesisRequest
-        expect(request instanceof sdk.SpeechSynthesisRequest).toBe(true);
-    });
-
     test("SpeechSynthesisRequestInputType: enum values", (): void => {
         console.info("Name: SpeechSynthesisRequestInputType enum values");
         expect(sdk.SpeechSynthesisRequestInputType.Text).toEqual(1);

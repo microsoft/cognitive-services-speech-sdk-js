@@ -84,7 +84,6 @@ export { SpeechSynthesisVisemeEventArgs } from "./SpeechSynthesisVisemeEventArgs
 export { SpeechSynthesisBoundaryType } from "./SpeechSynthesisBoundaryType.js";
 export { SpeechSynthesisRequest, SpeechSynthesisRequestInputStream } from "./SpeechSynthesisRequest.js";
 export { SpeechSynthesisRequestInputType } from "./SpeechSynthesisRequestInputType.js";
-export { PersonalVoiceSynthesisRequest } from "./PersonalVoiceSynthesisRequest.js";
 export { SynthesisVoicesResult } from "./SynthesisVoicesResult.js";
 export { SynthesisVoiceGender, SynthesisVoiceType, VoiceInfo } from "./VoiceInfo.js";
 export { IPlayer } from "./Audio/IPlayer.js";
