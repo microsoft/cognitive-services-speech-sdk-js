@@ -30,6 +30,7 @@ export abstract class Synthesizer {
     protected privDisposed: boolean;
     protected privSynthesizing: boolean;
     protected synthesisRequestQueue: Queue<SynthesisRequest>;
+    protected streamingSynthesisRequestQueue: Queue<StreamingSynthesisRequest>;
 
     /**
      * Gets the authorization token used to communicate with the service.
@@ -89,6 +90,7 @@ export abstract class Synthesizer {
         this.privDisposed = false;
         this.privSynthesizing = false;
         this.synthesisRequestQueue = new Queue<SynthesisRequest>();
+        this.streamingSynthesisRequestQueue = new Queue<StreamingSynthesisRequest>();
         this.tokenCredential = speechConfig.tokenCredential;
     }
 
@@ -272,9 +274,10 @@ export abstract class Synthesizer {
         }
     }
 
-    protected async adapterSpeakStream(request: StreamingSynthesisRequest): Promise<void> {
+    protected async adapterSpeakStream(): Promise<void> {
         if (!this.privDisposed && !this.privSynthesizing) {
             this.privSynthesizing = true;
+            const request: StreamingSynthesisRequest = await this.streamingSynthesisRequestQueue.dequeue();
             return this.privAdapter.SpeakStream(
                 request.speechSynthesisRequest,
                 request.requestId,

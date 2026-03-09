@@ -16,6 +16,7 @@ import {
 } from "../common.speech/Exports.js";
 import {
     createNoDashGuid,
+    IAudioDestination,
     marshalPromiseToCallbacks,
 } from "../common/Exports.js";
 import { AudioOutputConfigImpl } from "./Audio/AudioConfig.js";
@@ -197,64 +198,24 @@ export class SpeechSynthesizer extends Synthesizer {
         try {
             Contracts.throwIfDisposed(this.privDisposed);
             const requestId = createNoDashGuid();
-            let audioDestination;
-            if (stream instanceof PushAudioOutputStreamCallback) {
-                audioDestination = new PushAudioOutputStreamImpl(stream);
-            } else if (stream instanceof PullAudioOutputStream) {
-                audioDestination = stream as PullAudioOutputStreamImpl;
-            } else if (stream !== undefined) {
-                audioDestination = new AudioFileWriter(stream as PathLike);
-            } else {
-                audioDestination = undefined;
-            }
+            const audioDestination = this.resolveAudioDestination(stream);
+            const { onSuccess, onError } = this.createSynthesisCallbacks(cb, err, (): void => {
+                /* eslint-disable no-empty */
+                this.adapterSpeakStream().catch((): void => { });
+            });
 
-            const streamingRequest = new StreamingSynthesisRequest(
+            this.streamingSynthesisRequestQueue.enqueue(new StreamingSynthesisRequest(
                 requestId,
                 request,
-                (e: SpeechSynthesisResult): void => {
-                    this.privSynthesizing = false;
-                    if (!!cb) {
-                        try {
-                            cb(e);
-                        } catch (e) {
-                            if (!!err) {
-                                err(e as string);
-                            }
-                        }
-                    }
-                    cb = undefined;
-                },
-                (e: string): void => {
-                    this.privSynthesizing = false;
-                    if (!!err) {
-                        err(e);
-                    }
-                },
+                onSuccess,
+                onError,
                 audioDestination
-            );
+            ));
 
-            this.adapterSpeakStream(streamingRequest).catch((error: unknown): void => {
-                this.privSynthesizing = false;
-                if (!!err) {
-                    if (error instanceof Error) {
-                        err(error.name + ": " + error.message);
-                    } else {
-                        err(error as string);
-                    }
-                }
-            });
+            /* eslint-disable no-empty-function */
+            this.adapterSpeakStream().catch((): void => { });
         } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error as string);
-                }
-            }
-            // Destroy the synthesizer.
-            /* eslint-disable no-empty */
-            this.dispose(true).catch((): void => { });
+            this.handleSpeakError(error, err);
         }
     }
 
@@ -325,55 +286,76 @@ export class SpeechSynthesizer extends Synthesizer {
         try {
             Contracts.throwIfDisposed(this.privDisposed);
             const requestId = createNoDashGuid();
-            let audioDestination;
-            if (dataStream instanceof PushAudioOutputStreamCallback) {
-                audioDestination = new PushAudioOutputStreamImpl(dataStream);
-            } else if (dataStream instanceof PullAudioOutputStream) {
-                audioDestination = dataStream as PullAudioOutputStreamImpl;
-            } else if (dataStream !== undefined) {
-                audioDestination = new AudioFileWriter(dataStream as PathLike);
-            } else {
-                audioDestination = undefined;
-            }
-            this.synthesisRequestQueue.enqueue(new SynthesisRequest(requestId, text, IsSsml, (e: SpeechSynthesisResult): void => {
+            const audioDestination = this.resolveAudioDestination(dataStream);
+            const { onSuccess, onError } = this.createSynthesisCallbacks(cb, err, (): void => {
+                /* eslint-disable no-empty */
+                this.adapterSpeak().catch((): void => { });
+            });
+
+            this.synthesisRequestQueue.enqueue(new SynthesisRequest(requestId, text, IsSsml, onSuccess, onError, audioDestination));
+
+            /* eslint-disable no-empty-function */
+            this.adapterSpeak().catch((): void => { });
+        } catch (error) {
+            this.handleSpeakError(error, err);
+        }
+    }
+
+    private resolveAudioDestination(stream?: AudioOutputStream | PushAudioOutputStreamCallback | PathLike): IAudioDestination | undefined {
+        if (stream instanceof PushAudioOutputStreamCallback) {
+            return new PushAudioOutputStreamImpl(stream);
+        } else if (stream instanceof PullAudioOutputStream) {
+            return stream as PullAudioOutputStreamImpl;
+        } else if (stream !== undefined) {
+            return new AudioFileWriter(stream as PathLike);
+        }
+        return undefined;
+    }
+
+    private createSynthesisCallbacks(
+        cb?: (e: SpeechSynthesisResult) => void,
+        err?: (e: string) => void,
+        processNext?: () => void
+    ): { onSuccess: (e: SpeechSynthesisResult) => void; onError: (e: string) => void } {
+        let successCb = cb;
+        return {
+            onError: (e: string): void => {
                 this.privSynthesizing = false;
-                if (!!cb) {
+                if (!!err) {
+                    err(e);
+                }
+            },
+            onSuccess: (e: SpeechSynthesisResult): void => {
+                this.privSynthesizing = false;
+                if (!!successCb) {
                     try {
-                        cb(e);
+                        successCb(e);
                     } catch (e) {
                         if (!!err) {
                             err(e as string);
                         }
                     }
                 }
-                cb = undefined;
-                /* eslint-disable no-empty */
-                this.adapterSpeak().catch((): void => { });
-
-            }, (e: string): void => {
-                this.privSynthesizing = false;
-                if (!!err) {
-                    err(e);
-                }
-            }, audioDestination));
-
-            /* eslint-disable no-empty-function */
-            this.adapterSpeak().catch((): void => { });
-
-        } catch (error) {
-            if (!!err) {
-                if (error instanceof Error) {
-                    const typedError: Error = error;
-                    err(typedError.name + ": " + typedError.message);
-                } else {
-                    err(error as string);
+                successCb = undefined;
+                if (processNext) {
+                    processNext();
                 }
             }
+        };
+    }
 
-            // Destroy the synthesizer.
-            /* eslint-disable no-empty */
-            this.dispose(true).catch((): void => { });
+    private handleSpeakError(error: unknown, err?: (e: string) => void): void {
+        if (!!err) {
+            if (error instanceof Error) {
+                const typedError: Error = error;
+                err(typedError.name + ": " + typedError.message);
+            } else {
+                err(error as string);
+            }
         }
+        // Destroy the synthesizer.
+        /* eslint-disable no-empty */
+        this.dispose(true).catch((): void => { });
     }
 
     protected async getVoices(locale: string): Promise<SynthesisVoicesResult> {
