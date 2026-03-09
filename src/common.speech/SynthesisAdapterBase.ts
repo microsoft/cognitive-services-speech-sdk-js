@@ -616,7 +616,7 @@ export abstract class SynthesisAdapterBase implements IDisposable {
         }
 
         // Add the input section to the synthesis context
-        const existingSynthesis = this.privSynthesisContext.getSection("synthesis") as Record<string, unknown> || {};
+        const existingSynthesis = this.privSynthesisContext.getSection<Record<string, unknown>>("synthesis") ?? {};
         this.privSynthesisContext.setSection("synthesis", {
             ...existingSynthesis,
             input: inputSection,

@@ -1564,7 +1564,6 @@ describe("Service based tests", (): void => {
             const audioChunkTimestamps: number[] = [];
             const textPieceSendTimestamps: number[] = [];
             let totalAudioLength: number = 0;
-            let audioReceivedBeforeAllTextSent: boolean = false;
 
             s.synthesisStarted = (o: sdk.SpeechSynthesizer, e: sdk.SpeechSynthesisEventArgs): void => {
                 console.info("Streaming synthesis started at " + Date.now().toString());
@@ -1578,12 +1577,6 @@ describe("Service based tests", (): void => {
                 console.info("Audio chunk received at " + now.toString() +
                     ", size: " + chunkSize.toString() +
                     ", total: " + totalAudioLength.toString());
-
-                // Check if audio is arriving while we're still sending text pieces
-                // (last text piece is sent after 4 * 500ms = 2000ms delay)
-                if (textPieceSendTimestamps.length < 4) {
-                    audioReceivedBeforeAllTextSent = true;
-                }
 
                 // Each audio chunk should have valid data
                 try {
@@ -1609,21 +1602,24 @@ describe("Service based tests", (): void => {
                     // Verify all text pieces were sent
                     expect(textPieceSendTimestamps.length).toEqual(4);
 
-                    // Key assertion: audio started arriving before all text was sent,
-                    // proving progressive/streaming audio response.
-                    expect(audioReceivedBeforeAllTextSent).toBe(true);
+                    // Key assertion: the first audio chunk arrived before the last
+                    // text piece was sent, proving progressive/streaming audio response.
+                    // Comparing concrete timestamps is more robust than checking array
+                    // lengths inside a callback, which is subject to timing races.
+                    const firstAudioChunkTime = audioChunkTimestamps[0];
+                    const lastTextPieceSendTime = textPieceSendTimestamps[textPieceSendTimestamps.length - 1];
+                    expect(firstAudioChunkTime).toBeLessThan(lastTextPieceSendTime);
 
                     // Verify audio chunks arrived over time (not all at once)
                     if (audioChunkTimestamps.length >= 2) {
-                        const firstChunkTime = audioChunkTimestamps[0];
                         const lastChunkTime = audioChunkTimestamps[audioChunkTimestamps.length - 1];
-                        expect(lastChunkTime).toBeGreaterThan(firstChunkTime);
+                        expect(lastChunkTime).toBeGreaterThan(firstAudioChunkTime);
                     }
 
                     console.info("Progressive streaming verified: " +
                         audioChunkTimestamps.length.toString() + " audio chunks received, " +
-                        "audio started before all " + textPieceSendTimestamps.length.toString() +
-                        " text pieces were sent.");
+                        "first audio at " + firstAudioChunkTime.toString() +
+                        " before last text send at " + lastTextPieceSendTime.toString() + ".");
                     done();
                 } catch (e) {
                     done(e);

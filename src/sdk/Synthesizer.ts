@@ -390,9 +390,11 @@ export class SynthesisRequest {
         this.requestId = requestId;
         this.text = text;
         this.isSSML = isSSML;
-        this.cb = cb;
-        this.err = err;
-        this.dataStream = dataStream;
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        this.cb = cb ?? ((): void => { });
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        this.err = err ?? ((): void => { });
+        this.dataStream = dataStream ?? undefined;
     }
 }
 
@@ -412,8 +414,10 @@ export class StreamingSynthesisRequest {
     ) {
         this.requestId = requestId;
         this.speechSynthesisRequest = speechSynthesisRequest;
-        this.cb = cb;
-        this.err = err;
-        this.dataStream = dataStream;
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        this.cb = cb ?? ((): void => { });
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        this.err = err ?? ((): void => { });
+        this.dataStream = dataStream ?? undefined;
     }
 }

@@ -180,7 +180,6 @@ export class SpeechSynthesizer extends Synthesizer {
     /**
      * Performs synthesis using a SpeechSynthesisRequest, which supports text streaming.
      * This method is in preview and may be subject to change in future versions.
-     * Added in version 1.37.0
      * @member SpeechSynthesizer.prototype.speakAsync
      * @function
      * @public
@@ -226,6 +225,7 @@ export class SpeechSynthesizer extends Synthesizer {
                     cb = undefined;
                 },
                 (e: string): void => {
+                    this.privSynthesizing = false;
                     if (!!err) {
                         err(e);
                     }
@@ -233,8 +233,16 @@ export class SpeechSynthesizer extends Synthesizer {
                 audioDestination
             );
 
-            /* eslint-disable no-empty-function */
-            this.adapterSpeakStream(streamingRequest).catch((): void => { });
+            this.adapterSpeakStream(streamingRequest).catch((error: unknown): void => {
+                this.privSynthesizing = false;
+                if (!!err) {
+                    if (error instanceof Error) {
+                        err(error.name + ": " + error.message);
+                    } else {
+                        err(error as string);
+                    }
+                }
+            });
         } catch (error) {
             if (!!err) {
                 if (error instanceof Error) {
@@ -343,6 +351,7 @@ export class SpeechSynthesizer extends Synthesizer {
                 this.adapterSpeak().catch((): void => { });
 
             }, (e: string): void => {
+                this.privSynthesizing = false;
                 if (!!err) {
                     err(e);
                 }

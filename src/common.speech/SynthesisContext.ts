@@ -37,8 +37,8 @@ export class SynthesisContext {
      * Gets a previously set section by name.
      * @param sectionName Name of the section to retrieve.
      */
-    public getSection(sectionName: string): any {
-        return this.privContext[sectionName];
+    public getSection<T = string | object>(sectionName: string): T | undefined {
+        return this.privContext[sectionName] as T | undefined;
     }
 
     public setSynthesisSection(speechSynthesizer: SpeechSynthesizer): void {
