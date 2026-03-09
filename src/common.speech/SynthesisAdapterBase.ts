@@ -270,7 +270,7 @@ export abstract class SynthesisAdapterBase implements IDisposable {
 
             this.onSynthesisStarted(requestId);
 
-            // Set up text piece callback - each piece is sent as an ssml.text message
+            // Set up text piece callback - each piece is sent as a text.piece message
             request.onTextPiece = (text: string): void => {
                 this.sendTextPiece(connection, text, requestId).catch((e: unknown): void => {
                     this.cancelSynthesisLocal(CancellationReason.Error, CancellationErrorCode.ConnectionFailure, e as string);

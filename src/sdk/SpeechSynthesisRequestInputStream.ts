@@ -5,7 +5,7 @@
  * @internal
  * Interface for the parent request that the input stream delegates to.
  */
-export interface ISpeechSynthesisRequestInputStreamHost {
+interface ISpeechSynthesisRequestInputStreamHost {
     onTextPieceReceived(text: string): void;
     onInputStreamClosed(): void;
 }
