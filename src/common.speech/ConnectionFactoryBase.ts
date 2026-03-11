@@ -97,7 +97,7 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
         try {
             // Validate the URL before returning
             const redirectUrl = new URL(redirectUrlString.trim());
-            if(redirectUrl.protocol === "https:") {
+            if (redirectUrl.protocol === "https:") {
                 redirectUrl.protocol = "wss:";
             } else if (redirectUrl.protocol === "http:") {
                 redirectUrl.protocol = "ws:";
