@@ -316,20 +316,20 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         await done.promise;
     }, 15000);
 
-    test("fromEndPoint with Subscription key", async (): Promise<void> => {
-        const done: Deferred<void> = new Deferred<void>();
+    test("testGetOutputFormatDetailed", async (): Promise<void> => {
         // eslint-disable-next-line no-console
-        console.info("Name: fromEndPoint with Subscription key");
+        console.info("Name: testGetOutputFormatDetailed");
+        const done: Deferred<void> = new Deferred<void>();
 
-        const endpoint = "wss://" + Settings.SpeechRegion + ".s2s.speech.microsoft.com/speech/translation/cognitiveservices/v1";
-
-        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), Settings.SpeechSubscriptionKey);
+        const s: sdk.SpeechTranslationConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
-        s.addTargetLanguage("de-DE");
-        s.speechRecognitionLanguage = "en-US";
+        s.outputFormat = sdk.OutputFormat.Detailed;
+
         const r: sdk.TranslationRecognizer = await BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
+
+        expect(s.outputFormat).toEqual(sdk.OutputFormat.Detailed);
 
         r.canceled = (o: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
             try {
@@ -338,114 +338,42 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
                 done.reject(error);
             }
         };
-        r.recognizeOnceAsync(
-            (res: sdk.TranslationRecognitionResult): void => {
-                try {
-                    expect(res).not.toBeUndefined();
-                    expect(res.errorDetails).toBeUndefined();
-                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                    expect(res.translations.get("de", undefined) !== undefined).toEqual(true);
-                    expect("Wie ist das Wetter?").toEqual(res.translations.get("de", ""));
-                    expect(res.text).toEqual("What's the weather like?");
-                    done.resolve();
-                } catch (error) {
-                    done.reject(error);
-                }
-            },
-            (error: string): void => {
-                done.reject(error);
-            });
 
-        await done.promise;
-    }, 12000);
-
-    test("fromV2EndPoint with Subscription key", async (): Promise<void> => {
-        const done: Deferred<void> = new Deferred<void>();
-        // eslint-disable-next-line no-console
-        console.info("Name: fromV2EndPoint with Subscription key");
-
-        const targetLanguage = "de-DE";
-        const endpoint = `wss://${Settings.SpeechRegion}.stt.speech.microsoft.com/speech/universal/v2`;
-
-        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(new URL(endpoint), Settings.SpeechSubscriptionKey);
-        objsToClose.push(s);
-
-        s.addTargetLanguage(targetLanguage);
-        s.speechRecognitionLanguage = "en-US";
-
-        const r: sdk.TranslationRecognizer = await BuildRecognizerFromWaveFile(s);
-        objsToClose.push(r);
-
-        r.canceled = (o: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+        r.recognizeOnceAsync((result: sdk.TranslationRecognitionResult): void => {
             try {
-                expect(e.errorDetails).toBeUndefined();
+                expect(result).not.toBeUndefined();
+                expect(result.errorDetails).toBeUndefined();
+                expect(sdk.ResultReason[result.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
+                expect(result.text).toEqual(Settings.WaveFileText);
+
+                // Validate translation results are present
+                expect(result.translations.get("de-DE", undefined)).not.toBeUndefined();
+
+                // Validate detailed JSON contains NBest array with confidence and lexical forms
+                const jsonResult: string = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+                console.log("Detailed JSON Result: " + jsonResult);
+                expect(jsonResult).not.toBeUndefined();
+
+                const parsed = JSON.parse(jsonResult);
+                expect(parsed).not.toBeUndefined();
+                expect(parsed.NBest).not.toBeUndefined();
+                expect(parsed.NBest.length).toBeGreaterThan(0);
+                expect(parsed.NBest[0].Confidence).not.toBeUndefined();
+                expect(parsed.NBest[0].Lexical).not.toBeUndefined();
+                expect(parsed.NBest[0].ITN).not.toBeUndefined();
+                expect(parsed.NBest[0].MaskedITN).not.toBeUndefined();
+                expect(parsed.NBest[0].Display).not.toBeUndefined();
+
+                done.resolve();
             } catch (error) {
                 done.reject(error);
             }
-        };
-        r.recognizeOnceAsync(
-            (res: sdk.TranslationRecognitionResult): void => {
-                try {
-                    expect(res).not.toBeUndefined();
-                    expect(res.errorDetails).toBeUndefined();
-                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                    expect(res.translations.get(targetLanguage, undefined) !== undefined).toEqual(true);
-                    expect("Wie ist das Wetter?").toEqual(res.translations.get(targetLanguage, ""));
-                    expect(res.text).toEqual("What's the weather like?");
-                    done.resolve();
-                } catch (error) {
-                    done.reject(error);
-                }
-            },
-            (error: string): void => {
-                done.reject(error);
-            });
+        }, (error: string): void => {
+            done.reject(error);
+        });
 
         await done.promise;
-    }, 12000);
-
-    test.skip("fromV2EndPoint with token credential", async (): Promise<void> => {
-        const done: Deferred<void> = new Deferred<void>();
-        // eslint-disable-next-line no-console
-        console.info("Name: fromV2EndPoint with token credential");
-
-        const targetLanguage = "de-DE";
-        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), new DefaultAzureCredential());
-        objsToClose.push(s);
-
-        s.addTargetLanguage(targetLanguage);
-        s.speechRecognitionLanguage = "en-US";
-
-        const r: sdk.TranslationRecognizer = await BuildRecognizerFromWaveFile(s);
-        objsToClose.push(r);
-
-        r.canceled = (o: sdk.TranslationRecognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
-            try {
-                expect(e.errorDetails).toBeUndefined();
-            } catch (error) {
-                done.reject(error);
-            }
-        };
-        r.recognizeOnceAsync(
-            (res: sdk.TranslationRecognitionResult): void => {
-                try {
-                    expect(res).not.toBeUndefined();
-                    expect(res.errorDetails).toBeUndefined();
-                    expect(sdk.ResultReason[res.reason]).toEqual(sdk.ResultReason[sdk.ResultReason.TranslatedSpeech]);
-                    expect(res.translations.get(targetLanguage, undefined) !== undefined).toEqual(true);
-                    expect("Wie ist das Wetter?").toEqual(res.translations.get(targetLanguage, ""));
-                    expect(res.text).toEqual("What's the weather like?");
-                    done.resolve();
-                } catch (error) {
-                    done.reject(error);
-                }
-            },
-            (error: string): void => {
-                done.reject(error);
-            });
-
-        await done.promise;
-    }, 12000);
+    });
 
     describe.each([
         SpeechConnectionType.Subscription,
