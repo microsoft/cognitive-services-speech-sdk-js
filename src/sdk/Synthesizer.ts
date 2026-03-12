@@ -399,7 +399,7 @@ export class StreamingSynthesisRequest {
     public speechSynthesisRequest: SpeechSynthesisRequest;
     public cb: (e: SpeechSynthesisResult) => void;
     public err: (e: string) => void;
-    public dataStream: IAudioDestination;
+    public dataStream: IAudioDestination | undefined;
 
     public constructor(
         requestId: string,
