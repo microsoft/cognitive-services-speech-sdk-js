@@ -3,7 +3,6 @@
 
 /**
  * Defines the input type of speech synthesis request.
- * Added in version 1.37.0
  * @enum SpeechSynthesisRequestInputType
  */
 export enum SpeechSynthesisRequestInputType {

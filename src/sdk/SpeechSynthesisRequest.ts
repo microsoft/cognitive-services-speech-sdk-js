@@ -10,7 +10,6 @@ export { SpeechSynthesisRequestInputStream } from "./SpeechSynthesisRequestInput
 /**
  * Represents a speech synthesis request with support for text streaming.
  * Note: This class is in preview and may be subject to change in future versions.
- * Added in version 1.37.0
  * @class SpeechSynthesisRequest
  */
 export class SpeechSynthesisRequest {

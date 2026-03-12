@@ -13,7 +13,6 @@ interface ISpeechSynthesisRequestInputStreamHost {
 /**
  * Represents an input stream for speech synthesis request text streaming.
  * Note: This class is in preview and may be subject to change in future versions.
- * Added in version 1.37.0
  * @class SpeechSynthesisRequestInputStream
  */
 export class SpeechSynthesisRequestInputStream {
