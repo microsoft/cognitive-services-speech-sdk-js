@@ -324,6 +324,9 @@ export class SpeechSynthesizer extends Synthesizer {
                 if (!!err) {
                     err(e);
                 }
+                if (processNext) {
+                    processNext();
+                }
             },
             onSuccess: (e: SpeechSynthesisResult): void => {
                 this.privSynthesizing = false;

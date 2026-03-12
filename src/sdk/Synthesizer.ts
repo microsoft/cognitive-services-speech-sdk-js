@@ -380,7 +380,7 @@ export class SynthesisRequest {
     public isSSML: boolean;
     public cb: (e: SpeechSynthesisResult) => void;
     public err: (e: string) => void;
-    public dataStream: IAudioDestination;
+    public dataStream: IAudioDestination | undefined;
 
     public constructor(requestId: string, text: string, isSSML: boolean, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, dataStream?: IAudioDestination) {
         this.requestId = requestId;

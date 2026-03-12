@@ -195,7 +195,7 @@ export abstract class SynthesisAdapterBase implements IDisposable {
         requestId: string,
         successCallback: (e: SpeechSynthesisResult) => void,
         errorCallBack: (e: string) => void,
-        audioDestination: IAudioDestination,
+        audioDestination: IAudioDestination | undefined,
     ): Promise<void> {
 
         let ssml: string;
@@ -251,7 +251,7 @@ export abstract class SynthesisAdapterBase implements IDisposable {
         requestId: string,
         successCallback: (e: SpeechSynthesisResult) => void,
         errorCallBack: (e: string) => void,
-        audioDestination: IAudioDestination,
+        audioDestination: IAudioDestination | undefined,
     ): Promise<void> {
 
         this.privSuccessCallback = successCallback;
