@@ -201,10 +201,10 @@ export class SpeechSynthesizer extends Synthesizer {
             const audioDestination = this.resolveAudioDestination(stream);
             const { onSuccess, onError } = this.createSynthesisCallbacks(cb, err, (): void => {
                 /* eslint-disable no-empty */
-                this.adapterSpeakStream().catch((): void => { });
+                this.adapterSpeak().catch((): void => { });
             });
 
-            this.streamingSynthesisRequestQueue.enqueue(new StreamingSynthesisRequest(
+            this.synthesisRequestQueue.enqueue(new StreamingSynthesisRequest(
                 requestId,
                 request,
                 onSuccess,
@@ -213,7 +213,7 @@ export class SpeechSynthesizer extends Synthesizer {
             ));
 
             /* eslint-disable no-empty-function */
-            this.adapterSpeakStream().catch((): void => { });
+            this.adapterSpeak().catch((): void => { });
         } catch (error) {
             this.handleSpeakError(error, err);
         }

@@ -29,8 +29,7 @@ export abstract class Synthesizer {
     protected privConnectionFactory: ISynthesisConnectionFactory;
     protected privDisposed: boolean;
     protected privSynthesizing: boolean;
-    protected synthesisRequestQueue: Queue<SynthesisRequest>;
-    protected streamingSynthesisRequestQueue: Queue<StreamingSynthesisRequest>;
+    protected synthesisRequestQueue: Queue<SynthesisRequest | StreamingSynthesisRequest>;
 
     /**
      * Gets the authorization token used to communicate with the service.
@@ -89,8 +88,7 @@ export abstract class Synthesizer {
         this.privProperties = speechConfigImpl.properties.clone();
         this.privDisposed = false;
         this.privSynthesizing = false;
-        this.synthesisRequestQueue = new Queue<SynthesisRequest>();
-        this.streamingSynthesisRequestQueue = new Queue<StreamingSynthesisRequest>();
+        this.synthesisRequestQueue = new Queue<SynthesisRequest | StreamingSynthesisRequest>();
         this.tokenCredential = speechConfig.tokenCredential;
     }
 
@@ -269,22 +267,17 @@ export abstract class Synthesizer {
     protected async adapterSpeak(): Promise<void> {
         if (!this.privDisposed && !this.privSynthesizing) {
             this.privSynthesizing = true;
-            const request: SynthesisRequest = await this.synthesisRequestQueue.dequeue();
+            const request = await this.synthesisRequestQueue.dequeue();
+            if (request instanceof StreamingSynthesisRequest) {
+                return this.privAdapter.SpeakStream(
+                    request.speechSynthesisRequest,
+                    request.requestId,
+                    request.cb,
+                    request.err,
+                    request.dataStream
+                );
+            }
             return this.privAdapter.Speak(request.text, request.isSSML, request.requestId, request.cb, request.err, request.dataStream);
-        }
-    }
-
-    protected async adapterSpeakStream(): Promise<void> {
-        if (!this.privDisposed && !this.privSynthesizing) {
-            this.privSynthesizing = true;
-            const request: StreamingSynthesisRequest = await this.streamingSynthesisRequestQueue.dequeue();
-            return this.privAdapter.SpeakStream(
-                request.speechSynthesisRequest,
-                request.requestId,
-                request.cb,
-                request.err,
-                request.dataStream
-            );
         }
     }
 
