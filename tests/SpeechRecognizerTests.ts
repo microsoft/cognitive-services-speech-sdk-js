@@ -244,7 +244,7 @@ test("testGetLanguage2", async (): Promise<void> => {
     objsToClose.push(r);
 
     expect(r.speechRecognitionLanguage).not.toBeNull();
-    expect(language === r.speechRecognitionLanguage);
+    expect(r.speechRecognitionLanguage).toEqual(language);
 });
 
 test("testGetOutputFormatDefault", async (): Promise<void> => {
@@ -253,7 +253,7 @@ test("testGetOutputFormatDefault", async (): Promise<void> => {
     const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile();
     objsToClose.push(r);
 
-    expect(r.outputFormat === sdk.OutputFormat.Simple);
+    expect(r.outputFormat).toEqual(sdk.OutputFormat.Simple);
 });
 
 test("testGetParameters", async (): Promise<void> => {
@@ -266,7 +266,7 @@ test("testGetParameters", async (): Promise<void> => {
     // expect(r.language ==  r.properties.getProperty(RecognizerParameterNames.SpeechRecognitionLanguage));
     // expect(r.deploymentId == r.properties.getProperty(RecognizerParameterNames.SpeechMspeechConfigImpl// TODO: is this really the correct mapping?
     expect(r.speechRecognitionLanguage).not.toBeUndefined();
-    expect(r.endpointId === r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, null)); // todo: is this really the correct mapping?
+    expect(r.endpointId).toEqual(r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, "00000000-0000-0000-0000-000000000000")); // todo: is this really the correct mapping?
 });
 
 test("BadWavFileProducesError", async (): Promise<void> => {
@@ -330,7 +330,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s, Settings.WaveFile44k);
         objsToClose.push(r);
 
-        expect(r.outputFormat === sdk.OutputFormat.Detailed);
+        expect(r.outputFormat).toEqual(sdk.OutputFormat.Detailed);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
@@ -346,7 +346,18 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(result.errorDetails).toBeUndefined();
                 expect(result.text).toEqual(Settings.WaveFileText);
                 expect(result.properties).not.toBeUndefined();
-                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                const jsonResult: string = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+                expect(jsonResult).not.toBeUndefined();
+
+                const parsed = JSON.parse(jsonResult);
+                expect(parsed.NBest).not.toBeUndefined();
+                expect(parsed.NBest.length).toBeGreaterThan(0);
+                expect(parsed.NBest[0].Confidence).not.toBeUndefined();
+                expect(parsed.NBest[0].Lexical).not.toBeUndefined();
+                expect(parsed.NBest[0].ITN).not.toBeUndefined();
+                expect(parsed.NBest[0].MaskedITN).not.toBeUndefined();
+                expect(parsed.NBest[0].Display).not.toBeUndefined();
 
                 done.resolve();
             } catch (error) {
@@ -372,7 +383,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
 
-        expect(r.outputFormat === sdk.OutputFormat.Detailed);
+        expect(r.outputFormat).toEqual(sdk.OutputFormat.Detailed);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
@@ -388,7 +399,18 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(result.errorDetails).toBeUndefined();
                 expect(result.text).toEqual(Settings.WaveFileText);
                 expect(result.properties).not.toBeUndefined();
-                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                const jsonResult: string = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+                expect(jsonResult).not.toBeUndefined();
+
+                const parsed = JSON.parse(jsonResult);
+                expect(parsed.NBest).not.toBeUndefined();
+                expect(parsed.NBest.length).toBeGreaterThan(0);
+                expect(parsed.NBest[0].Confidence).not.toBeUndefined();
+                expect(parsed.NBest[0].Lexical).not.toBeUndefined();
+                expect(parsed.NBest[0].ITN).not.toBeUndefined();
+                expect(parsed.NBest[0].MaskedITN).not.toBeUndefined();
+                expect(parsed.NBest[0].Display).not.toBeUndefined();
 
                 done.resolve();
             } catch (error) {
@@ -507,7 +529,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
             objsToClose.push(r);
 
-            expect(r.outputFormat === sdk.OutputFormat.Detailed);
+            expect(r.outputFormat).toEqual(sdk.OutputFormat.Detailed);
 
             r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
                 try {
@@ -522,7 +544,14 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                     expect(result).not.toBeUndefined();
                     expect(result.text).toEqual(Settings.WaveFileText);
                     expect(result.properties).not.toBeUndefined();
-                    expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                    const jsonResult: string = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+                    expect(jsonResult).not.toBeUndefined();
+
+                    const parsed = JSON.parse(jsonResult);
+                    expect(parsed.NBest).not.toBeUndefined();
+                    expect(parsed.NBest.length).toBeGreaterThan(0);
+                    expect(parsed.NBest[0].Confidence).not.toBeUndefined();
 
                     done.resolve();
                 } catch (error) {
@@ -552,7 +581,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         const r: sdk.SpeechRecognizer = await BuildRecognizerFromWaveFile(s);
         objsToClose.push(r);
 
-        expect(r.outputFormat === sdk.OutputFormat.Detailed);
+        expect(r.outputFormat).toEqual(sdk.OutputFormat.Detailed);
 
         r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
             try {
@@ -567,7 +596,14 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(result).not.toBeUndefined();
                 expect(result.text).toEqual(Settings.WaveFileText);
                 expect(result.properties).not.toBeUndefined();
-                expect(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)).not.toBeUndefined();
+
+                const jsonResult: string = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult);
+                expect(jsonResult).not.toBeUndefined();
+
+                const parsed = JSON.parse(jsonResult);
+                expect(parsed.NBest).not.toBeUndefined();
+                expect(parsed.NBest.length).toBeGreaterThan(0);
+                expect(parsed.NBest[0].Confidence).not.toBeUndefined();
 
                 done.resolve();
             } catch (error) {
