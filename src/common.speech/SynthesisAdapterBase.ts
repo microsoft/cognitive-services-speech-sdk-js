@@ -216,7 +216,6 @@ export abstract class SynthesisAdapterBase implements IDisposable {
         this.privSynthesisTurn.startNewSynthesis(requestId, text, isSSML, audioDestination);
 
         try {
-            await this.connectImpl();
             const connection: IConnection = await this.fetchConnection();
             await this.sendSynthesisContext(connection);
             await this.sendSsmlMessage(connection, ssml, requestId);
@@ -230,7 +229,6 @@ export abstract class SynthesisAdapterBase implements IDisposable {
     }
 
     public async stopSpeaking(): Promise<void> {
-        await this.connectImpl();
         const connection: IConnection = await this.fetchConnection();
 
         return connection.send(new SpeechConnectionMessage(
@@ -262,7 +260,6 @@ export abstract class SynthesisAdapterBase implements IDisposable {
         this.privSynthesisTurn.startNewSynthesis(requestId, "", false, audioDestination);
 
         try {
-            await this.connectImpl();
             const connection: IConnection = await this.fetchConnection();
 
             // Send synthesis.context with streaming input section embedded
