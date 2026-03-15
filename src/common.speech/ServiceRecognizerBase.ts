@@ -66,11 +66,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     // A promise for a configured connection.
     // Do not consume directly, call fetchConnection instead.
-    private privConnectionConfigurationPromise: Promise<IConnection> = undefined;
+    private privConnectionConfigurationPromise?: Promise<IConnection> = undefined;
 
     // A promise for a connection, but one that has not had the speech context sent yet.
     // Do not consume directly, call fetchConnection instead.
-    private privConnectionPromise: Promise<IConnection> = undefined;
+    private privConnectionPromise?: Promise<IConnection> = undefined;
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
     private privMustReportEndOfStream: boolean;
@@ -86,7 +86,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privAverageBytesPerMs: number = 0;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
-    protected privConnectionId: string;
+    protected privConnectionId?: string | null;
     protected privDiarizationSessionId: string;
     protected privRecognizerConfig: RecognizerConfig;
     protected privRecognizer: Recognizer;
@@ -825,23 +825,25 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected postConnectImplOverride: (connection: Promise<IConnection>) => Promise<IConnection> = undefined;
 
+    private reconnect(): Promise<IConnection> {
+        if (this.privConnectionPromise !== undefined && !this.privServiceHasSentMessage) {
+            return this.privConnectionPromise;
+        }
+        this.privConnectionId = null;
+        this.privConnectionPromise = undefined;
+        this.privServiceHasSentMessage = false;
+        return this.connectImpl();
+    }
+
     // Establishes a websocket connection to the end point.
     protected connectImpl(): Promise<IConnection> {
         if (this.privConnectionPromise !== undefined) {
             return this.privConnectionPromise.then((connection: IConnection): Promise<IConnection> => {
                 if (connection.state() === ConnectionState.Disconnected) {
-                    this.privConnectionId = null;
-                    this.privConnectionPromise = undefined;
-                    this.privServiceHasSentMessage = false;
-                    return this.connectImpl();
+                    return this.reconnect();
                 }
                 return this.privConnectionPromise;
-            }, (): Promise<IConnection> => {
-                this.privConnectionId = null;
-                this.privConnectionPromise = undefined;
-                this.privServiceHasSentMessage = false;
-                return this.connectImpl();
-            });
+            }, (): Promise<IConnection> => this.reconnect());
         }
 
         this.privConnectionPromise = this.retryableConnect();
@@ -900,16 +902,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (this.privConnectionConfigurationPromise !== undefined) {
             return this.privConnectionConfigurationPromise.then((connection: IConnection): Promise<IConnection> => {
                 if (connection.state() === ConnectionState.Disconnected) {
-                    this.privConnectionId = null;
                     this.privConnectionConfigurationPromise = undefined;
-                    this.privServiceHasSentMessage = false;
                     return this.fetchConnection();
                 }
                 return this.privConnectionConfigurationPromise;
             }, (): Promise<IConnection> => {
-                this.privConnectionId = null;
                 this.privConnectionConfigurationPromise = undefined;
-                this.privServiceHasSentMessage = false;
                 return this.fetchConnection();
             });
         }
