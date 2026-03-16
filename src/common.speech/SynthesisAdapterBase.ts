@@ -172,8 +172,12 @@ export abstract class SynthesisAdapterBase implements IDisposable {
             this.privSessionAudioDestination.close();
         }
         if (this.privConnectionConfigurationPromise !== undefined) {
-            const connection: IConnection = await this.privConnectionConfigurationPromise;
-            await connection.dispose(reason);
+            try {
+                const connection: IConnection = await this.privConnectionConfigurationPromise;
+                await connection.dispose(reason);
+            } catch {
+                // Connection was never successfully established, nothing to dispose
+            }
         }
     }
 
