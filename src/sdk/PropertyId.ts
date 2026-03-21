@@ -547,7 +547,6 @@ export enum PropertyId {
     SpeechServiceResponse_RecognitionLatencyMs,
 
     /**
-<<<<<<< rhurey/latency_measures
      * The speech synthesis first byte latency in milliseconds. Read-only, available on speech synthesis results.
      * This measures the time from when the synthesis request is sent to when the first audio byte is received
      * from the service, including network latency.
@@ -580,7 +579,8 @@ export enum PropertyId {
      * back the first audio chunk.
      */
     SpeechServiceResponse_SynthesisServiceLatencyMs,
-=======
+
+    /*
      * The pitch of the voice for a speech synthesis request.
      * @member PropertyId.SpeechSynthesisRequest_Pitch
      */
@@ -633,5 +633,4 @@ export enum PropertyId {
      * @member PropertyId.SpeechSynthesis_RtfTimeoutThreshold
      */
     SpeechSynthesis_RtfTimeoutThreshold,
->>>>>>> master
 }
