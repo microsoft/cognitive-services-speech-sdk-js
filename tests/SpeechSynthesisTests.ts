@@ -675,6 +675,109 @@ describe("Service based tests", (): void => {
         });
     });
 
+    // Mirrors Carbon synthesizer_utils.cpp:346-350
+    test("testSynthesisLatencyProperties", (done: jest.DoneCallback): void => {
+        console.info("Name: testSynthesisLatencyProperties");
+        BuildSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+            speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, undefined);
+            objsToClose.push(s);
+
+            s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+                CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+
+                const firstByteLatency = parseInt(result.properties.getProperty(
+                    sdk.PropertyId.SpeechServiceResponse_SynthesisFirstByteLatencyMs), 10);
+                const finishLatency = parseInt(result.properties.getProperty(
+                    sdk.PropertyId.SpeechServiceResponse_SynthesisFinishLatencyMs), 10);
+                const networkLatency = parseInt(result.properties.getProperty(
+                    sdk.PropertyId.SpeechServiceResponse_SynthesisNetworkLatencyMs), 10);
+                const serviceLatency = parseInt(result.properties.getProperty(
+                    sdk.PropertyId.SpeechServiceResponse_SynthesisServiceLatencyMs), 10);
+
+                expect(firstByteLatency).toBeGreaterThanOrEqual(0);
+                expect(finishLatency).toBeGreaterThanOrEqual(firstByteLatency);
+                expect(networkLatency).toBeGreaterThan(0);
+                expect(serviceLatency).toBeGreaterThanOrEqual(0);
+
+                done();
+            }, (e: string): void => {
+                done(e);
+            });
+        }).catch((error: string): void => {
+            done(error);
+        });
+    });
+
+    // Mirrors Carbon speech_synthesizer_tests.cpp:444-461
+    // Verifies connection reuse (2nd request has connectionLatency === 0) and
+    // the additive identity: firstByteLatency === connectionLatency + networkLatency + serviceLatency
+    test("testSynthesisLatencyPropertiesConnectionReuse", (done: jest.DoneCallback): void => {
+        console.info("Name: testSynthesisLatencyPropertiesConnectionReuse");
+        BuildSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
+            objsToClose.push(speechConfig);
+            speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
+
+            const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, undefined);
+            objsToClose.push(s);
+
+            const assertLatencies = (result: sdk.SpeechSynthesisResult, isFirstRequest: boolean): void => {
+                CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+
+                const firstByteLatency = parseInt(result.properties.getProperty(
+                    sdk.PropertyId.SpeechServiceResponse_SynthesisFirstByteLatencyMs), 10);
+                const connectionLatency = parseInt(result.properties.getProperty(
+                    sdk.PropertyId.SpeechServiceResponse_SynthesisConnectionLatencyMs), 10);
+                const networkLatency = parseInt(result.properties.getProperty(
+                    sdk.PropertyId.SpeechServiceResponse_SynthesisNetworkLatencyMs), 10);
+                const serviceLatency = parseInt(result.properties.getProperty(
+                    sdk.PropertyId.SpeechServiceResponse_SynthesisServiceLatencyMs), 10);
+
+                if (isFirstRequest) {
+                    expect(connectionLatency).toBeGreaterThan(0);
+                } else {
+                    // Connection should be reused on the second request.
+                    expect(connectionLatency).toEqual(0);
+                }
+
+                expect(networkLatency).toBeGreaterThan(0);
+                // Service is fast when cache is hit, so only check it is not negative.
+                expect(serviceLatency).toBeGreaterThanOrEqual(0);
+                // Additive identity: firstByte = connection + network + service
+                expect(firstByteLatency).toEqual(connectionLatency + networkLatency + serviceLatency);
+            };
+
+            s.speakTextAsync("hello world 1.", (result: sdk.SpeechSynthesisResult): void => {
+                console.info("speaking finished, turn 1");
+                try {
+                    assertLatencies(result, /* isFirstRequest */ true);
+                } catch (e) {
+                    done(e);
+                    return;
+                }
+            }, (e: string): void => {
+                done(e);
+            });
+
+            s.speakTextAsync("hello world 2.", (result: sdk.SpeechSynthesisResult): void => {
+                console.info("speaking finished, turn 2");
+                try {
+                    assertLatencies(result, /* isFirstRequest */ false);
+                } catch (e) {
+                    done(e);
+                    return;
+                }
+                done();
+            }, (e: string): void => {
+                done(e);
+            });
+        }).catch((error: string): void => {
+            done(error);
+        });
+    });
+
     test("testSpeechSynthesizerToFile", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerToFile");

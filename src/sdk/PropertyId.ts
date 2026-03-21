@@ -547,6 +547,40 @@ export enum PropertyId {
     SpeechServiceResponse_RecognitionLatencyMs,
 
     /**
+     * The speech synthesis first byte latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the time from when the synthesis request is sent to when the first audio byte is received
+     * from the service, including network latency.
+     */
+    SpeechServiceResponse_SynthesisFirstByteLatencyMs,
+
+    /**
+     * The speech synthesis finish latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the time from when the synthesis request is sent to when the full synthesized audio is
+     * received from the service, including network latency.
+     */
+    SpeechServiceResponse_SynthesisFinishLatencyMs,
+
+    /**
+     * The speech synthesis connection latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the time to establish the WebSocket connection to the service.
+     * If the connection is reused from a previous synthesis, this value is 0.
+     */
+    SpeechServiceResponse_SynthesisConnectionLatencyMs,
+
+    /**
+     * The speech synthesis network latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the network round-trip time between the client and the Azure TTS service.
+     */
+    SpeechServiceResponse_SynthesisNetworkLatencyMs,
+
+    /**
+     * The speech synthesis service latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the time from when the Azure TTS service receives the synthesis request to when it sends
+     * back the first audio chunk.
+     */
+    SpeechServiceResponse_SynthesisServiceLatencyMs,
+
+    /*
      * The pitch of the voice for a speech synthesis request.
      * @member PropertyId.SpeechSynthesisRequest_Pitch
      */
