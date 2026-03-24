@@ -19,6 +19,7 @@ import {
 import { IAudioDestination, IStringDictionary, Queue } from "../common/Exports.js";
 import { Contracts } from "./Contracts.js";
 import { PropertyCollection, PropertyId, SpeechConfig, SpeechConfigImpl, SpeechSynthesisResult } from "./Exports.js";
+import { SpeechSynthesisRequest } from "./SpeechSynthesisRequest.js";
 
 export abstract class Synthesizer {
     private tokenCredential?: TokenCredential;
@@ -28,7 +29,7 @@ export abstract class Synthesizer {
     protected privConnectionFactory: ISynthesisConnectionFactory;
     protected privDisposed: boolean;
     protected privSynthesizing: boolean;
-    protected synthesisRequestQueue: Queue<SynthesisRequest>;
+    protected synthesisRequestQueue: Queue<SynthesisRequest | StreamingSynthesisRequest>;
 
     /**
      * Gets the authorization token used to communicate with the service.
@@ -87,7 +88,7 @@ export abstract class Synthesizer {
         this.privProperties = speechConfigImpl.properties.clone();
         this.privDisposed = false;
         this.privSynthesizing = false;
-        this.synthesisRequestQueue = new Queue<SynthesisRequest>();
+        this.synthesisRequestQueue = new Queue<SynthesisRequest | StreamingSynthesisRequest>();
         this.tokenCredential = speechConfig.tokenCredential;
     }
 
@@ -266,7 +267,16 @@ export abstract class Synthesizer {
     protected async adapterSpeak(): Promise<void> {
         if (!this.privDisposed && !this.privSynthesizing) {
             this.privSynthesizing = true;
-            const request: SynthesisRequest = await this.synthesisRequestQueue.dequeue();
+            const request = await this.synthesisRequestQueue.dequeue();
+            if (request instanceof StreamingSynthesisRequest) {
+                return this.privAdapter.SpeakStream(
+                    request.speechSynthesisRequest,
+                    request.requestId,
+                    request.cb,
+                    request.err,
+                    request.dataStream
+                );
+            }
             return this.privAdapter.Speak(request.text, request.isSSML, request.requestId, request.cb, request.err, request.dataStream);
         }
     }
@@ -370,14 +380,40 @@ export class SynthesisRequest {
     public isSSML: boolean;
     public cb: (e: SpeechSynthesisResult) => void;
     public err: (e: string) => void;
-    public dataStream: IAudioDestination;
+    public dataStream: IAudioDestination | undefined;
 
     public constructor(requestId: string, text: string, isSSML: boolean, cb?: (e: SpeechSynthesisResult) => void, err?: (e: string) => void, dataStream?: IAudioDestination) {
         this.requestId = requestId;
         this.text = text;
         this.isSSML = isSSML;
-        this.cb = cb;
-        this.err = err;
-        this.dataStream = dataStream;
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        this.cb = cb ?? ((): void => { });
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        this.err = err ?? ((): void => { });
+        this.dataStream = dataStream ?? undefined;
+    }
+}
+
+export class StreamingSynthesisRequest {
+    public requestId: string;
+    public speechSynthesisRequest: SpeechSynthesisRequest;
+    public cb: (e: SpeechSynthesisResult) => void;
+    public err: (e: string) => void;
+    public dataStream: IAudioDestination | undefined;
+
+    public constructor(
+        requestId: string,
+        speechSynthesisRequest: SpeechSynthesisRequest,
+        cb?: (e: SpeechSynthesisResult) => void,
+        err?: (e: string) => void,
+        dataStream?: IAudioDestination
+    ) {
+        this.requestId = requestId;
+        this.speechSynthesisRequest = speechSynthesisRequest;
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        this.cb = cb ?? ((): void => { });
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        this.err = err ?? ((): void => { });
+        this.dataStream = dataStream ?? undefined;
     }
 }
