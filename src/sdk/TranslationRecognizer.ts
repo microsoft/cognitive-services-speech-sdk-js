@@ -330,12 +330,30 @@ export class TranslationRecognizer extends Recognizer {
         const conn: Connection = Connection.fromRecognizer(this);
         if (!!conn) {
             conn.setMessageProperty("speech.context", "translationcontext", { to: languages });
-            conn.sendMessageAsync("event", JSON.stringify({
-                id: "translation",
-                name: "updateLanguage",
-                to: languages
-            }));
+
+            const voiceName: string = this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
+            let payload: string;
+
+            if (!!voiceName) {
+                const languageToVoiceMap: { [key: string]: string } = {};
+                for (const lang of languages) {
+                    languageToVoiceMap[lang] = voiceName;
+                }
+                payload = JSON.stringify({
+                    id: "translation",
+                    name: "updateLanguage",
+                    synthesis: { defaultVoices: languageToVoiceMap },
+                    to: languages,
+                });
+            } else {
+                payload = JSON.stringify({
+                    id: "translation",
+                    name: "updateLanguage",
+                    to: languages
+                });
+            }
+
+            conn.sendMessageAsync("event", payload);
         }
     }
-
 }
