@@ -351,6 +351,33 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
+    protected setPostProcessingOptionJson(): void {
+        const postProcessingOption: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_PostProcessingOption, undefined);
+        if (postProcessingOption !== undefined) {
+            const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+            phraseDetection.enrichment = phraseDetection.enrichment || {};
+
+            // Pass the developer-provided value directly to the service without modification.
+            // Input validation is handled on the service side.
+            switch (this.recognitionMode) {
+                case RecognitionMode.Conversation:
+                    phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
+                    phraseDetection.enrichment.conversation.postprocessingoption = postProcessingOption;
+                    break;
+                case RecognitionMode.Interactive:
+                    phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive || {};
+                    phraseDetection.enrichment.interactive.postprocessingoption = postProcessingOption;
+                    break;
+                case RecognitionMode.Dictation:
+                    phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation || {};
+                    phraseDetection.enrichment.dictation.postprocessingoption = postProcessingOption;
+                    break;
+            }
+
+            this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+        }
+    }
+
     public get isSpeakerDiarizationEnabled(): boolean {
         return this.privEnableSpeakerId;
     }
@@ -445,6 +472,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.setSpeechSegmentationTimeoutJson();
         this.setOutputDetailLevelJson();
         this.setSpeechStartEventSensitivityJson();
+        this.setPostProcessingOptionJson();
 
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallBack;
