@@ -38,4 +38,9 @@ export interface DictationEnrichmentOptions {
      * The disfluency mode for intermediate results.
      */
     intermediateDisfluencyMode?: DisfluencyMode;
+
+    /**
+     * The post processing option passed directly to the service.
+     */
+    postprocessingoption?: string;
 }
