@@ -59,6 +59,10 @@ import { OnUnknownAction } from "./ServiceMessages/LanguageId/OnUnknown.js";
 import { ResultType } from "./ServiceMessages/PhraseOutput/InterimResults.js";
 import { PhraseResultOutputType } from "./ServiceMessages/PhraseOutput/PhraseResults.js";
 import { NextAction as NextPhraseDetectionAction } from "./ServiceMessages/PhraseDetection/OnSuccess.js";
+import { InteractivePunctuationMode } from "./ServiceMessages/PhraseDetection/InteractiveEnrichmentOptions.js";
+import { ConversationPunctuationMode } from "./ServiceMessages/PhraseDetection/ConversationEnrichmentOptions.js";
+import { DictationPunctuationMode } from "./ServiceMessages/PhraseDetection/DictationEnrichmentOptions.js";
+import { DisfluencyMode } from "./ServiceMessages/PhraseDetection/DisfluencyMode.js";
 
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
@@ -357,7 +361,33 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
             phraseDetection.enrichment = phraseDetection.enrichment || {};
 
-            // Pass the developer-provided value directly to the service without modification.
+            if (postProcessingOption.toLowerCase() === "truetext") {
+                switch (this.recognitionMode) {
+                    case RecognitionMode.Conversation:
+                        phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
+                        phraseDetection.enrichment.conversation.punctuationMode = ConversationPunctuationMode.Implicit;
+                        phraseDetection.enrichment.conversation.disfluencyMode = DisfluencyMode.Removed;
+                        phraseDetection.enrichment.conversation.intermediatePunctuationMode = ConversationPunctuationMode.Implicit;
+                        (phraseDetection.enrichment.conversation as Record<string, unknown>)["intermediatedisfluencymode"] = DisfluencyMode.Removed;
+                        break;
+                    case RecognitionMode.Interactive:
+                        phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive || {};
+                        phraseDetection.enrichment.interactive.punctuationMode = InteractivePunctuationMode.Implicit;
+                        phraseDetection.enrichment.interactive.disfluencyMode = DisfluencyMode.Removed;
+                        phraseDetection.enrichment.interactive.intermediatePunctuationMode = InteractivePunctuationMode.Implicit;
+                        (phraseDetection.enrichment.interactive as Record<string, unknown>)["intermediatedisfluencymode"] = DisfluencyMode.Removed;
+                        break;
+                    case RecognitionMode.Dictation:
+                        phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation || {};
+                        phraseDetection.enrichment.dictation.punctuationMode = DictationPunctuationMode.Implicit;
+                        phraseDetection.enrichment.dictation.disfluencyMode = DisfluencyMode.Removed;
+                        phraseDetection.enrichment.dictation.intermediatePunctuationMode = DictationPunctuationMode.Implicit;
+                        (phraseDetection.enrichment.dictation as Record<string, unknown>)["intermediatedisfluencymode"] = DisfluencyMode.Removed;
+                        break;
+                }
+            }
+
+            // Pass the developer-provided value directly to the service.
             // Input validation is handled on the service side.
             switch (this.recognitionMode) {
                 case RecognitionMode.Conversation:

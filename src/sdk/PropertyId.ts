@@ -313,7 +313,7 @@ export enum PropertyId {
 
     /**
      * A string value specifying which post processing option should be used by service.
-     * The value is passed directly to the service without modification.
+     * Allowed values are "TrueText".
      * Added in version 1.7.0
      */
     SpeechServiceResponse_PostProcessingOption,
