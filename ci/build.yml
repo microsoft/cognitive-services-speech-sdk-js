@@ -161,50 +161,61 @@ jobs:
     displayName: Update version in source code
   - template: generate-subscription-file.yml
   - bash: |
-      # Define new Docker data directory  
-      NEW_DOCKER_DIR="/mnt/docker"  
-        
-      # Stop Docker service  
-      echo "Stopping Docker service..."  
-      sudo systemctl stop docker  
-        
-      # Create new Docker directory  
-      echo "Creating new Docker directory at $NEW_DOCKER_DIR..."  
-      sudo mkdir -p "$NEW_DOCKER_DIR"  
-        
-      # Update Docker daemon configuration  
-      echo "Updating Docker daemon configuration..."  
-      DOCKER_CONFIG_FILE="/etc/docker/daemon.json"  
-      sudo touch "$DOCKER_CONFIG_FILE"  
-      sudo chmod 666 "$DOCKER_CONFIG_FILE" # Temporarily change permissions to write  
-        
-      cat <<EOL | sudo tee "$DOCKER_CONFIG_FILE"  
-      {  
-        "data-root": "$NEW_DOCKER_DIR/docker"  
-      }  
-      EOL
+      set -u -e -o pipefail -x
 
-      sudo chmod 644 "$DOCKER_CONFIG_FILE" # Restore permissions 
+      # Define new Docker data directory
+      NEW_DOCKER_DIR="/mnt/docker"
 
-      # Start Docker service  
+      # Stop Docker service
+      echo "Stopping Docker service..."
+      sudo systemctl stop docker || true
+
+      # Create new Docker directory
+      echo "Creating new Docker directory at $NEW_DOCKER_DIR..."
+      sudo mkdir -p "$NEW_DOCKER_DIR"
+
+      # Update Docker daemon configuration
+      echo "Updating Docker daemon configuration..."
+      DOCKER_CONFIG_FILE="/etc/docker/daemon.json"
+      echo "{\"data-root\": \"$NEW_DOCKER_DIR/docker\"}" | sudo tee "$DOCKER_CONFIG_FILE" > /dev/null
+
+      # Verify daemon.json content
+      echo "daemon.json content:"
+      cat "$DOCKER_CONFIG_FILE"
+
+      # Actually restart the docker service, because it can have auto-started after the stop command
       echo "Starting Docker service..."
+      sudo systemctl restart docker
 
-      # Actually restart the docker service, because it can have auto-started after the stop command  
-      sudo systemctl restart docker  
+      # Wait for Docker daemon to be ready
+      echo "Waiting for Docker daemon to be ready..."
+      for i in $(seq 1 30); do
+        if docker info > /dev/null 2>&1; then
+          echo "Docker daemon is ready after $i seconds."
+          break
+        fi
+        if [ "$i" -eq 30 ]; then
+          echo "Error: Docker daemon did not become ready in time."
+          sudo systemctl status docker
+          exit 1
+        fi
+        sleep 1
+      done
 
-      sudo systemctl status docker  
-        
-      # Verify the change  
-      echo "Verifying Docker configuration..."  
+      sudo systemctl status docker
 
+      # Verify the change
+      echo "Verifying Docker configuration..."
       docker info
 
-      DOCKER_ROOT_DIR=$(docker info | grep "Docker Root Dir" | awk '{print $4}')  
-      if [ "$DOCKER_ROOT_DIR" == "$NEW_DOCKER_DIR/docker" ]; then  
-        echo "Docker data successfully moved to $DOCKER_ROOT_DIR"  
-      else  
-        echo "Error: Docker data directory is not set correctly."  
-        exit 1  
+      DOCKER_ROOT_DIR=$(docker info --format '{{.DockerRootDir}}')
+      echo "Expected: $NEW_DOCKER_DIR/docker"
+      echo "Actual:   $DOCKER_ROOT_DIR"
+      if [ "$DOCKER_ROOT_DIR" == "$NEW_DOCKER_DIR/docker" ]; then
+        echo "Docker data successfully moved to $DOCKER_ROOT_DIR"
+      else
+        echo "Error: Docker data directory is not set correctly."
+        exit 1
       fi
 
       sudo df
