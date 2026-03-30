@@ -177,6 +177,7 @@ jobs:
       # Update Docker daemon configuration
       echo "Updating Docker daemon configuration..."
       DOCKER_CONFIG_FILE="/etc/docker/daemon.json"
+      sudo mkdir -p /etc/docker
       echo "{\"data-root\": \"$NEW_DOCKER_DIR/docker\"}" | sudo tee "$DOCKER_CONFIG_FILE" > /dev/null
 
       # Verify daemon.json content
