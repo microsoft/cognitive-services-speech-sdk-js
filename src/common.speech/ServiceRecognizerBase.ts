@@ -362,6 +362,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             phraseDetection.enrichment = phraseDetection.enrichment || {};
 
             if (postProcessingOption.toLowerCase() === "truetext") {
+                // Client-side expansion for "truetext" - set specific properties
                 switch (this.recognitionMode) {
                     case RecognitionMode.Conversation:
                         phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
@@ -385,23 +386,25 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         (phraseDetection.enrichment.dictation as Record<string, unknown>)["intermediatedisfluencymode"] = DisfluencyMode.Removed;
                         break;
                 }
-            }
-
-            // Pass the developer-provided value directly to the service.
-            // Input validation is handled on the service side.
-            switch (this.recognitionMode) {
-                case RecognitionMode.Conversation:
-                    phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
-                    phraseDetection.enrichment.conversation.postprocessingoption = postProcessingOption;
-                    break;
-                case RecognitionMode.Interactive:
-                    phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive || {};
-                    phraseDetection.enrichment.interactive.postprocessingoption = postProcessingOption;
-                    break;
-                case RecognitionMode.Dictation:
-                    phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation || {};
-                    phraseDetection.enrichment.dictation.postprocessingoption = postProcessingOption;
-                    break;
+                // Don't set postprocessingoption - we've expanded "truetext" into specific settings
+            } else {
+                // Service-side handling for all other strings
+                // Pass the developer-provided value directly to the service.
+                // Input validation is handled on the service side.
+                switch (this.recognitionMode) {
+                    case RecognitionMode.Conversation:
+                        phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
+                        phraseDetection.enrichment.conversation.postprocessingoption = postProcessingOption;
+                        break;
+                    case RecognitionMode.Interactive:
+                        phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive || {};
+                        phraseDetection.enrichment.interactive.postprocessingoption = postProcessingOption;
+                        break;
+                    case RecognitionMode.Dictation:
+                        phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation || {};
+                        phraseDetection.enrichment.dictation.postprocessingoption = postProcessingOption;
+                        break;
+                }
             }
 
             this.privSpeechContext.getContext().phraseDetection = phraseDetection;
