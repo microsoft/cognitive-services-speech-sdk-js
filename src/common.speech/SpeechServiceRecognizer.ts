@@ -59,6 +59,11 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
                 resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, hypothesis.asJson());
 
+                const hypothesisLatencyMs = this.privRequestSession.onHypothesis(hypothesis.Offset);
+                if (hypothesisLatencyMs > 0) {
+                    resultProps.setProperty(PropertyId.SpeechServiceResponse_RecognitionLatencyMs, hypothesisLatencyMs.toString());
+                }
+
                 result = new SpeechRecognitionResult(
                     this.privRequestSession.requestId,
                     ResultReason.RecognizingSpeech,
@@ -71,8 +76,6 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     undefined,
                     hypothesis.asJson(),
                     resultProps);
-
-                this.privRequestSession.onHypothesis(hypothesis.Offset);
 
                 const ev = new SpeechRecognitionEventArgs(result, hypothesis.Offset, this.privRequestSession.sessionId);
 
@@ -93,7 +96,10 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
 
                 const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus, this.privExpectContentAssessmentResponse);
 
-                this.privRequestSession.onPhraseRecognized(simple.Offset + simple.Duration);
+                const phraseLatencyMs = this.privRequestSession.onPhraseRecognized(simple.Offset + simple.Duration);
+                if (phraseLatencyMs > 0) {
+                    resultProps.setProperty(PropertyId.SpeechServiceResponse_RecognitionLatencyMs, phraseLatencyMs.toString());
+                }
 
                 if (ResultReason.Canceled === resultReason) {
                     const cancelReason: CancellationReason = EnumTranslation.implTranslateCancelResult(simple.RecognitionStatus);

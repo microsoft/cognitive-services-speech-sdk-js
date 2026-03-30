@@ -485,7 +485,7 @@ test("testAudioMessagesSent", (done: jest.DoneCallback): void => {
     const r: sdk.SpeechRecognizer = BuildRecognizerFromWaveFile(s);
     objsToClose.push(r);
 
-    expect(r.outputFormat === sdk.OutputFormat.Detailed);
+    expect(r.outputFormat).toEqual(sdk.OutputFormat.Detailed);
 
     const sourceAudio: ArrayBuffer = fs.readFileSync(Settings.WaveFile);
 
@@ -729,7 +729,7 @@ test("Test InjectMessage", (done: jest.DoneCallback): void => {
             }
         } else if (message.message.path === "audio") {
             try {
-                expect(messageSeen || audioSeen === 0).toBeTruthy();
+                expect(messageSeen || (audioSeen === 0)).toBe(true);
                 audioSeen++;
             } catch (err) {
                 done(err);

@@ -41,6 +41,7 @@ if [[ $VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)\.([0-9]+)(\.([0
   MAJOR_VERSION="${BASH_REMATCH[1]}"
   MINOR_VERSION="${BASH_REMATCH[2]}"
   PATCH_VERSION="${BASH_REMATCH[3]}"
+  ORIGINAL_PRERELEASE="${BASH_REMATCH[4]}"  # e.g., "-rc.1" or "-alpha.0.1"
   
   # Base version without prerelease tags
   SPEECHSDK_MAJOR_MINOR_PATCH_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
@@ -64,8 +65,8 @@ case $CARBONSDK_BUILD_TYPE in
     META="+$_BUILD_COMMIT"
     ;;
   prod)
-    # For prod builds, use exactly what's in package.json
-    PRERELEASE_VERSION=""
+    # For prod builds, use exactly what's in package.json (including any prerelease tag)
+    PRERELEASE_VERSION="$ORIGINAL_PRERELEASE"
     META=""
     ;;
 esac

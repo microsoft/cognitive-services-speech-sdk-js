@@ -184,16 +184,20 @@ export class RequestSession {
         this.privTurnDeferral = new Deferred<void>();
     }
 
-    public onHypothesis(offset: number): void {
+    public onHypothesis(offset: number): number {
+        const audioReceivedTime = this.privAudioNode.findTimeAtOffset(offset);
         if (!this.privHypothesisReceived) {
             this.privHypothesisReceived = true;
-            this.privServiceTelemetryListener.hypothesisReceived(this.privAudioNode.findTimeAtOffset(offset));
+            this.privServiceTelemetryListener.hypothesisReceived(audioReceivedTime);
         }
+        return audioReceivedTime > 0 ? Date.now() - audioReceivedTime : 0;
     }
 
-    public onPhraseRecognized(offset: number): void {
-        this.privServiceTelemetryListener.phraseReceived(this.privAudioNode.findTimeAtOffset(offset));
+    public onPhraseRecognized(offset: number): number {
+        const audioReceivedTime = this.privAudioNode.findTimeAtOffset(offset);
+        this.privServiceTelemetryListener.phraseReceived(audioReceivedTime);
         this.onServiceRecognized(offset);
+        return audioReceivedTime > 0 ? Date.now() - audioReceivedTime : 0;
     }
 
     public onServiceRecognized(offset: number): void {
