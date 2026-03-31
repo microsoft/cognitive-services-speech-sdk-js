@@ -161,54 +161,64 @@ jobs:
     displayName: Update version in source code
   - template: generate-subscription-file.yml
   - bash: |
-      # Define new Docker data directory  
-      NEW_DOCKER_DIR="/mnt/docker"  
-        
-      # Stop Docker service  
-      echo "Stopping Docker service..."  
-      sudo systemctl stop docker  
-        
-      # Create new Docker directory  
-      echo "Creating new Docker directory at $NEW_DOCKER_DIR..."  
-      sudo mkdir -p "$NEW_DOCKER_DIR"  
-        
-      # Update Docker daemon configuration  
-      echo "Updating Docker daemon configuration..."  
-      DOCKER_CONFIG_FILE="/etc/docker/daemon.json"  
-      sudo touch "$DOCKER_CONFIG_FILE"  
-      sudo chmod 666 "$DOCKER_CONFIG_FILE" # Temporarily change permissions to write  
-        
-      cat <<EOL | sudo tee "$DOCKER_CONFIG_FILE"  
-      {  
-        "data-root": "$NEW_DOCKER_DIR/docker"  
-      }  
-      EOL
+      set -euo pipefail
+      # Move Docker and containerd data directories to the larger /mnt disk to avoid
+      # out-of-space errors when pulling images. Docker's data-root alone is not enough
+      # because containerd stores image layers and content under /var/lib/containerd/
+      # on the (small) OS root disk.
+      NEW_DOCKER_DIR="/mnt/docker"
+      DOCKER_CONFIG_FILE="/etc/docker/daemon.json"
+      NEW_CONTAINERD_ROOT="/mnt/containerd"
+      CONTAINERD_CONFIG_FILE="/etc/containerd/config.toml"
 
-      sudo chmod 644 "$DOCKER_CONFIG_FILE" # Restore permissions 
-
-      # Start Docker service  
-      echo "Starting Docker service..."
-
-      # Actually restart the docker service, because it can have auto-started after the stop command  
-      sudo systemctl restart docker  
-
-      sudo systemctl status docker  
-        
-      # Verify the change  
-      echo "Verifying Docker configuration..."  
-
-      docker info
-
-      DOCKER_ROOT_DIR=$(docker info | grep "Docker Root Dir" | awk '{print $4}')  
-      if [ "$DOCKER_ROOT_DIR" == "$NEW_DOCKER_DIR/docker" ]; then  
-        echo "Docker data successfully moved to $DOCKER_ROOT_DIR"  
-      else  
-        echo "Error: Docker data directory is not set correctly."  
-        exit 1  
+      # Only relocate if not already done
+      CURRENT_ROOT=$(docker info 2>/dev/null | grep "Docker Root Dir" | awk '{print $4}')
+      if [ "$CURRENT_ROOT" = "$NEW_DOCKER_DIR/docker" ]; then
+        echo "Docker data already at $CURRENT_ROOT – skipping relocation."
+        exit 0
       fi
 
-      sudo df
-    displayName: Move Docker data directory to /mnt
+      echo "Relocating Docker and containerd data to /mnt..."
+      sudo systemctl stop docker
+      sudo systemctl stop containerd || true
+
+      # --- Docker data-root ---
+      sudo mkdir -p "$NEW_DOCKER_DIR"
+      sudo mkdir -p "$(dirname "$DOCKER_CONFIG_FILE")"
+      sudo touch "$DOCKER_CONFIG_FILE"
+      sudo chmod 666 "$DOCKER_CONFIG_FILE"
+      cat <<EOL | sudo tee "$DOCKER_CONFIG_FILE"
+      {
+        "data-root": "$NEW_DOCKER_DIR/docker"
+      }
+      EOL
+      sudo chmod 644 "$DOCKER_CONFIG_FILE"
+
+      # --- containerd root (image layers + content store) ---
+      sudo mkdir -p "$NEW_CONTAINERD_ROOT"
+      sudo mkdir -p "$(dirname "$CONTAINERD_CONFIG_FILE")"
+      if [ ! -f "$CONTAINERD_CONFIG_FILE" ]; then
+        containerd config default | sudo tee "$CONTAINERD_CONFIG_FILE" > /dev/null
+      fi
+      if grep -q '^root\s*=' "$CONTAINERD_CONFIG_FILE"; then
+        sudo sed -i "s|^root\s*=.*|root = \"$NEW_CONTAINERD_ROOT\"|" "$CONTAINERD_CONFIG_FILE"
+      else
+        sudo sed -i "1i root = \"$NEW_CONTAINERD_ROOT\"" "$CONTAINERD_CONFIG_FILE"
+      fi
+
+      sudo systemctl restart containerd || true
+      sudo systemctl restart docker
+
+      DOCKER_ROOT_DIR=$(docker info | grep "Docker Root Dir" | awk '{print $4}')
+      if [ "$DOCKER_ROOT_DIR" == "$NEW_DOCKER_DIR/docker" ]; then
+        echo "Docker data successfully moved to $DOCKER_ROOT_DIR"
+      else
+        echo "Error: Docker data directory is not set correctly."
+        exit 1
+      fi
+      echo "containerd root set to: $NEW_CONTAINERD_ROOT"
+      df -h / /mnt
+    displayName: (Docker) Relocate data to larger disk
   - template: get-docker-image.yml
     parameters:
       DockerImages: $(DOCKER_IMAGE) mcr.microsoft.com/azure-cognitive-services/speechservices/neural-text-to-speech:latest mcr.microsoft.com/azure-cognitive-services/speechservices/speech-to-text:latest mcr.microsoft.com/azure-cognitive-services/speechservices/language-detection:latest
