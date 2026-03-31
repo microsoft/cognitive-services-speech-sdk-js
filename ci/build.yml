@@ -172,7 +172,21 @@ jobs:
 
       # Create new Docker directory
       echo "Creating new Docker directory at $NEW_DOCKER_DIR..."
-      sudo mkdir -p "$NEW_DOCKER_DIR"
+      sudo mkdir -p "$NEW_DOCKER_DIR/docker"
+
+      # Move existing Docker data to the new location
+      OLD_DOCKER_DIR="/var/lib/docker"
+      if [ -d "$OLD_DOCKER_DIR" ]; then
+        echo "Moving existing Docker data from $OLD_DOCKER_DIR to $NEW_DOCKER_DIR/docker..."
+        sudo rsync -aHAXx --remove-source-files "$OLD_DOCKER_DIR/" "$NEW_DOCKER_DIR/docker/"
+        sudo rm -rf "$OLD_DOCKER_DIR"
+        echo "Docker data moved successfully."
+      else
+        echo "No existing Docker data found at $OLD_DOCKER_DIR, skipping move."
+      fi
+
+      echo "Disk usage after move:"
+      sudo df -h /dev/root /mnt || true
 
       # Update Docker daemon configuration
       echo "Updating Docker daemon configuration..."
