@@ -113,7 +113,9 @@ export class WebsocketMessageAdapter {
 
         try {
 
-            if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
+            const proxyConfiguredInNode: boolean = typeof window === "undefined" && !!this.proxyInfo?.HostName;
+
+            if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket && !proxyConfiguredInNode) {
                 // Browser handles cert checks.
                 this.privCertificateValidatedDeferral.resolve();
 
