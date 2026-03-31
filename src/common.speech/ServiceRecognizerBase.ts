@@ -59,6 +59,10 @@ import { OnUnknownAction } from "./ServiceMessages/LanguageId/OnUnknown.js";
 import { ResultType } from "./ServiceMessages/PhraseOutput/InterimResults.js";
 import { PhraseResultOutputType } from "./ServiceMessages/PhraseOutput/PhraseResults.js";
 import { NextAction as NextPhraseDetectionAction } from "./ServiceMessages/PhraseDetection/OnSuccess.js";
+import { InteractivePunctuationMode } from "./ServiceMessages/PhraseDetection/InteractiveEnrichmentOptions.js";
+import { ConversationPunctuationMode } from "./ServiceMessages/PhraseDetection/ConversationEnrichmentOptions.js";
+import { DictationPunctuationMode } from "./ServiceMessages/PhraseDetection/DictationEnrichmentOptions.js";
+import { DisfluencyMode } from "./ServiceMessages/PhraseDetection/DisfluencyMode.js";
 
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
@@ -66,11 +70,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     // A promise for a configured connection.
     // Do not consume directly, call fetchConnection instead.
-    private privConnectionConfigurationPromise: Promise<IConnection> = undefined;
+    private privConnectionConfigurationPromise?: Promise<IConnection> = undefined;
 
     // A promise for a connection, but one that has not had the speech context sent yet.
     // Do not consume directly, call fetchConnection instead.
-    private privConnectionPromise: Promise<IConnection> = undefined;
+    private privConnectionPromise?: Promise<IConnection> = undefined;
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
     private privMustReportEndOfStream: boolean;
@@ -86,7 +90,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privAverageBytesPerMs: number = 0;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
-    protected privConnectionId: string;
+    protected privConnectionId?: string | null;
     protected privDiarizationSessionId: string;
     protected privRecognizerConfig: RecognizerConfig;
     protected privRecognizer: Recognizer;
@@ -319,15 +323,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     }
 
     protected setOutputDetailLevelJson(): void {
-        if (this.privEnableSpeakerId) {
-            const requestWordLevelTimestamps: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase();
-            if (requestWordLevelTimestamps === "true") {
-                this.privSpeechContext.setWordLevelTimings();
-            } else {
-                const outputFormat: string = this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
-                if (outputFormat === OutputFormat[OutputFormat.Detailed].toLocaleLowerCase()) {
-                    this.privSpeechContext.setDetailedOutputFormat();
-                }
+        const requestWordLevelTimestamps: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase();
+        if (requestWordLevelTimestamps === "true") {
+            this.privSpeechContext.setWordLevelTimings();
+        } else {
+            const outputFormat: string = this.privRecognizerConfig.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
+            if (outputFormat === OutputFormat[OutputFormat.Detailed].toLocaleLowerCase()) {
+                this.privSpeechContext.setDetailedOutputFormat();
             }
         }
     }
@@ -350,6 +352,62 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 phraseDetection.voiceOnsetSensitivity = sensitivity.toLowerCase();
                 this.privSpeechContext.getContext().phraseDetection = phraseDetection;
             }
+        }
+    }
+
+    protected setPostProcessingOptionJson(): void {
+        const postProcessingOption: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_PostProcessingOption, undefined);
+        if (postProcessingOption !== undefined) {
+            const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+            phraseDetection.enrichment = phraseDetection.enrichment || {};
+
+            if (postProcessingOption.toLowerCase() === "truetext") {
+                // Client-side expansion for "truetext" - set specific properties
+                switch (this.recognitionMode) {
+                    case RecognitionMode.Conversation:
+                        phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
+                        phraseDetection.enrichment.conversation.punctuationMode = ConversationPunctuationMode.Implicit;
+                        phraseDetection.enrichment.conversation.disfluencyMode = DisfluencyMode.Removed;
+                        phraseDetection.enrichment.conversation.intermediatePunctuationMode = ConversationPunctuationMode.Implicit;
+                        (phraseDetection.enrichment.conversation as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
+                        break;
+                    case RecognitionMode.Interactive:
+                        phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive || {};
+                        phraseDetection.enrichment.interactive.punctuationMode = InteractivePunctuationMode.Implicit;
+                        phraseDetection.enrichment.interactive.disfluencyMode = DisfluencyMode.Removed;
+                        phraseDetection.enrichment.interactive.intermediatePunctuationMode = InteractivePunctuationMode.Implicit;
+                        (phraseDetection.enrichment.interactive as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
+                        break;
+                    case RecognitionMode.Dictation:
+                        phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation || {};
+                        phraseDetection.enrichment.dictation.punctuationMode = DictationPunctuationMode.Implicit;
+                        phraseDetection.enrichment.dictation.disfluencyMode = DisfluencyMode.Removed;
+                        phraseDetection.enrichment.dictation.intermediatePunctuationMode = DictationPunctuationMode.Implicit;
+                        (phraseDetection.enrichment.dictation as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
+                        break;
+                }
+                // Don't set postprocessingoption - we've expanded "truetext" into specific settings
+            } else {
+                // Service-side handling for all other strings
+                // Pass the developer-provided value directly to the service.
+                // Input validation is handled on the service side.
+                switch (this.recognitionMode) {
+                    case RecognitionMode.Conversation:
+                        phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
+                        phraseDetection.enrichment.conversation.postprocessingoption = postProcessingOption;
+                        break;
+                    case RecognitionMode.Interactive:
+                        phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive || {};
+                        phraseDetection.enrichment.interactive.postprocessingoption = postProcessingOption;
+                        break;
+                    case RecognitionMode.Dictation:
+                        phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation || {};
+                        phraseDetection.enrichment.dictation.postprocessingoption = postProcessingOption;
+                        break;
+                }
+            }
+
+            this.privSpeechContext.getContext().phraseDetection = phraseDetection;
         }
     }
 
@@ -447,6 +505,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.setSpeechSegmentationTimeoutJson();
         this.setOutputDetailLevelJson();
         this.setSpeechStartEventSensitivityJson();
+        this.setPostProcessingOptionJson();
 
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallBack;
@@ -827,23 +886,25 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected postConnectImplOverride: (connection: Promise<IConnection>) => Promise<IConnection> = undefined;
 
+    private reconnect(): Promise<IConnection> {
+        if (this.privConnectionPromise !== undefined && !this.privServiceHasSentMessage) {
+            return this.privConnectionPromise;
+        }
+        this.privConnectionId = null;
+        this.privConnectionPromise = undefined;
+        this.privServiceHasSentMessage = false;
+        return this.connectImpl();
+    }
+
     // Establishes a websocket connection to the end point.
     protected connectImpl(): Promise<IConnection> {
         if (this.privConnectionPromise !== undefined) {
             return this.privConnectionPromise.then((connection: IConnection): Promise<IConnection> => {
                 if (connection.state() === ConnectionState.Disconnected) {
-                    this.privConnectionId = null;
-                    this.privConnectionPromise = undefined;
-                    this.privServiceHasSentMessage = false;
-                    return this.connectImpl();
+                    return this.reconnect();
                 }
                 return this.privConnectionPromise;
-            }, (): Promise<IConnection> => {
-                this.privConnectionId = null;
-                this.privConnectionPromise = undefined;
-                this.privServiceHasSentMessage = false;
-                return this.connectImpl();
-            });
+            }, (): Promise<IConnection> => this.reconnect());
         }
 
         this.privConnectionPromise = this.retryableConnect();
@@ -902,16 +963,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         if (this.privConnectionConfigurationPromise !== undefined) {
             return this.privConnectionConfigurationPromise.then((connection: IConnection): Promise<IConnection> => {
                 if (connection.state() === ConnectionState.Disconnected) {
-                    this.privConnectionId = null;
                     this.privConnectionConfigurationPromise = undefined;
-                    this.privServiceHasSentMessage = false;
                     return this.fetchConnection();
                 }
                 return this.privConnectionConfigurationPromise;
             }, (): Promise<IConnection> => {
-                this.privConnectionId = null;
                 this.privConnectionConfigurationPromise = undefined;
-                this.privServiceHasSentMessage = false;
                 return this.fetchConnection();
             });
         }
