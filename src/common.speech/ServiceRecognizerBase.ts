@@ -369,21 +369,21 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         phraseDetection.enrichment.conversation.punctuationMode = ConversationPunctuationMode.Implicit;
                         phraseDetection.enrichment.conversation.disfluencyMode = DisfluencyMode.Removed;
                         phraseDetection.enrichment.conversation.intermediatePunctuationMode = ConversationPunctuationMode.Implicit;
-                        (phraseDetection.enrichment.conversation as Record<string, unknown>)["intermediatedisfluencymode"] = DisfluencyMode.Removed;
+                        (phraseDetection.enrichment.conversation as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
                         break;
                     case RecognitionMode.Interactive:
                         phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive || {};
                         phraseDetection.enrichment.interactive.punctuationMode = InteractivePunctuationMode.Implicit;
                         phraseDetection.enrichment.interactive.disfluencyMode = DisfluencyMode.Removed;
                         phraseDetection.enrichment.interactive.intermediatePunctuationMode = InteractivePunctuationMode.Implicit;
-                        (phraseDetection.enrichment.interactive as Record<string, unknown>)["intermediatedisfluencymode"] = DisfluencyMode.Removed;
+                        (phraseDetection.enrichment.interactive as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
                         break;
                     case RecognitionMode.Dictation:
                         phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation || {};
                         phraseDetection.enrichment.dictation.punctuationMode = DictationPunctuationMode.Implicit;
                         phraseDetection.enrichment.dictation.disfluencyMode = DisfluencyMode.Removed;
                         phraseDetection.enrichment.dictation.intermediatePunctuationMode = DictationPunctuationMode.Implicit;
-                        (phraseDetection.enrichment.dictation as Record<string, unknown>)["intermediatedisfluencymode"] = DisfluencyMode.Removed;
+                        (phraseDetection.enrichment.dictation as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
                         break;
                 }
                 // Don't set postprocessingoption - we've expanded "truetext" into specific settings
