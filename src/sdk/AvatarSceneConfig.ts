@@ -60,7 +60,7 @@ export class AvatarSceneConfig {
      * @param {number} rotationX - The rotation around the X axis in radians (default 0.0).
      * @param {number} rotationY - The rotation around the Y axis in radians (default 0.0).
      * @param {number} rotationZ - The rotation around the Z axis in radians (default 0.0).
-     * @param {number} amplitude - The amplitude of the avatar's movements (0 to 1, default 1.0).
+     * @param {number} amplitude - The amplitude of the avatar's movements (0 to 1, default 0.6).
      */
     public constructor(
         zoom: number = 1.0,
@@ -69,7 +69,7 @@ export class AvatarSceneConfig {
         rotationX: number = 0.0,
         rotationY: number = 0.0,
         rotationZ: number = 0.0,
-        amplitude: number = 1.0
+        amplitude: number = 0.6
     ) {
         this.zoom = zoom;
         this.positionX = positionX;
