@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {
+    AutoDetectSourceLanguagesOpenRangeOptionName,
     ForceDictationPropertyName,
     IAuthentication,
     IConnectionFactory,
@@ -64,6 +65,17 @@ export class SpeechRecognizer extends Recognizer {
      */
     public static FromConfig(speechConfig: SpeechConfig, autoDetectSourceLanguageConfig: AutoDetectSourceLanguageConfig, audioConfig?: AudioConfig): SpeechRecognizer {
         const speechConfigImpl: SpeechConfigImpl = speechConfig as SpeechConfigImpl;
+
+        const isOpenRange = autoDetectSourceLanguageConfig.properties.getProperty(
+            PropertyId.SpeechServiceConnection_AutoDetectSourceLanguages, undefined) === AutoDetectSourceLanguagesOpenRangeOptionName;
+        const isMRS = speechConfigImpl.properties.getProperty(
+            PropertyId.SpeechServiceResponse_PostProcessingOption, undefined) === "PostRefinement";
+
+        if (isOpenRange && !isMRS) {
+            throw new Error("Recognizer doesn't support auto detection source language from open range. " +
+                "Please set specific languages using AutoDetectSourceLanguageConfig.fromLanguages() or AutoDetectSourceLanguageConfig.fromSourceLanguageConfigs()");
+        }
+
         autoDetectSourceLanguageConfig.properties.mergeTo(speechConfigImpl.properties);
         const recognizer = new SpeechRecognizer(speechConfig, audioConfig);
         return recognizer;

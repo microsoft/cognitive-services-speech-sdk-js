@@ -569,6 +569,28 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         await done.promise;
     }, 30000); // testTranslationContinuousRecoWithContinuousLID
 
+    test("testSpeechRecognizerOpenRangeThrowsWithoutPostRefinement", async (): Promise<void> => {
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
+        objsToClose.push(s);
+        const a: sdk.AutoDetectSourceLanguageConfig = sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
+        const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+
+        expect(() => sdk.SpeechRecognizer.FromConfig(s, a, config))
+            .toThrow("doesn't support auto detection source language from open range");
+    });
+
+    test("testSpeechRecognizerOpenRangeWithPostRefinement", async (): Promise<void> => {
+        const s: sdk.SpeechConfig = await BuildSpeechConfig();
+        s.setProperty(sdk.PropertyId.SpeechServiceResponse_PostProcessingOption, "PostRefinement");
+        objsToClose.push(s);
+        const a: sdk.AutoDetectSourceLanguageConfig = sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
+        const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
+
+        const r: sdk.SpeechRecognizer = sdk.SpeechRecognizer.FromConfig(s, a, config);
+        expect(r).not.toBeUndefined();
+        objsToClose.push(r);
+    });
+
     test("testTranslationContinuousOpenRange", async (): Promise<void> => {
         const done: Deferred<void> = new Deferred<void>();
         // eslint-disable-next-line no-console
