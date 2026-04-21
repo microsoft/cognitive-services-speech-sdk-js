@@ -38,4 +38,9 @@ export interface ConversationEnrichmentOptions {
      * The disfluency mode for intermediate results.
      */
     intermediateDisfluencyMode?: DisfluencyMode;
+
+    /**
+     * The post-processing option.
+     */
+    postprocessingoption?: string;
 }
