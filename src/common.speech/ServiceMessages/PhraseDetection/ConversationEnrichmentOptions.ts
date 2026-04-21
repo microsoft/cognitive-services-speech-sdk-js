@@ -40,7 +40,7 @@ export interface ConversationEnrichmentOptions {
     intermediateDisfluencyMode?: DisfluencyMode;
 
     /**
-     * The post-processing option.
+     * The post processing option passed directly to the service.
      */
     postprocessingoption?: string;
 }

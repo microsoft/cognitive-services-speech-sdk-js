@@ -61,7 +61,7 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
             const endpointUrl = new URL(endpoint);
             const pathName = endpointUrl.pathname;
 
-            if (pathName === "" || pathName === "/") {
+            if (pathName === "" || pathName === "/" || pathName.toLowerCase() === this.synthesisUri) {
                 // We need to generate the path, and we need to check for a redirect.
                 endpointUrl.pathname = this.synthesisUri;
 
