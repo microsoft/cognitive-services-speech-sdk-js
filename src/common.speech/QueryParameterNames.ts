@@ -20,6 +20,7 @@ export class QueryParameterNames {
     public static StableIntermediateThreshold: string = "stableIntermediateThreshold";
     public static StableTranslation: string = "stableTranslation";
     public static TestHooks: string = "testhooks";
+    public static Postprocessing: string = "postprocessing";
     public static CtsMeetingId: string = "meetingId";
     public static CtsDeviceId: string = "deviceId";
     public static CtsIsParticipant: string = "isParticipant";
