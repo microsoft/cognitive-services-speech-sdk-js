@@ -76,8 +76,12 @@ export class WebsocketConnection implements IConnection {
             }
         }
 
-        this.privUri = uri + queryParams;
         this.privId = connectionId ? connectionId : createNoDashGuid();
+
+        queryParams += ((i === 0) && (uri.indexOf("?") === -1)) ? "?" : "&";
+        queryParams += encodeURIComponent(this.privId);
+
+        this.privUri = uri + queryParams;
 
         this.privConnectionMessageAdapter = new WebsocketMessageAdapter(
             this.privUri,
