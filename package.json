@@ -111,7 +111,7 @@
     "agent-base": "^6.0.1",
     "bent": "^7.3.12",
     "https-proxy-agent": "^4.0.0",
-    "uuid": "^9.0.0",
+    "uuid": "^14.0.0",
     "ws": "^8.18.2"
   },
   "overrides": {
