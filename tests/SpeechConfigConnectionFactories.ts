@@ -523,6 +523,9 @@ export class SpeechConfigConnectionFactory {
      */
     private static checkPrivateLinkTestsEnabled(): boolean {
         const plEnabled = process.env.ENABLE_PRIVATE_LINK_TESTS;
+
+        // eslint-disable-next-line no-console
+        console.info("Private link tests enabled: " + plEnabled);
         if (!plEnabled || plEnabled.toLowerCase() !== "true") {
             return false;
         }
