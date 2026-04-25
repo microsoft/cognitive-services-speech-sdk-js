@@ -51,6 +51,11 @@ import { RecognizerConfig } from "./RecognizerConfig.js";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 import { Segmentation, SegmentationMode } from "./ServiceMessages/PhraseDetection/Segmentation.js";
 import { CustomLanguageMappingEntry, PhraseDetectionContext, RecognitionMode, SpeechStartEventSensitivity } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
+import { ProfanityHandlingMode } from "./ServiceMessages/PhraseDetection/Enrichment.js";
+import { DisfluencyMode } from "./ServiceMessages/PhraseDetection/DisfluencyMode.js";
+import { InteractivePunctuationMode } from "./ServiceMessages/PhraseDetection/InteractiveEnrichmentOptions.js";
+import { ConversationPunctuationMode } from "./ServiceMessages/PhraseDetection/ConversationEnrichmentOptions.js";
+import { DictationPunctuationMode } from "./ServiceMessages/PhraseDetection/DictationEnrichmentOptions.js";
 import { NextAction as NextTranslationAction } from "./ServiceMessages/Translation/OnSuccess.js";
 import { Mode } from "./ServiceMessages/Translation/InterimResults.js";
 import { LanguageIdDetectionMode, LanguageIdDetectionPriority } from "./ServiceMessages/LanguageId/LanguageIdContext.js";
@@ -59,10 +64,6 @@ import { OnUnknownAction } from "./ServiceMessages/LanguageId/OnUnknown.js";
 import { ResultType } from "./ServiceMessages/PhraseOutput/InterimResults.js";
 import { PhraseResultOutputType } from "./ServiceMessages/PhraseOutput/PhraseResults.js";
 import { NextAction as NextPhraseDetectionAction } from "./ServiceMessages/PhraseDetection/OnSuccess.js";
-import { InteractivePunctuationMode } from "./ServiceMessages/PhraseDetection/InteractiveEnrichmentOptions.js";
-import { ConversationPunctuationMode } from "./ServiceMessages/PhraseDetection/ConversationEnrichmentOptions.js";
-import { DictationPunctuationMode } from "./ServiceMessages/PhraseDetection/DictationEnrichmentOptions.js";
-import { DisfluencyMode } from "./ServiceMessages/PhraseDetection/DisfluencyMode.js";
 
 export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthentication: IAuthentication;
@@ -355,60 +356,139 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
     }
 
-    protected setPostProcessingOptionJson(): void {
-        const postProcessingOption: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_PostProcessingOption, undefined);
-        if (postProcessingOption !== undefined) {
-            const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
-            phraseDetection.enrichment = phraseDetection.enrichment || {};
+    protected setLanguageJson(): void {
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
 
-            if (postProcessingOption.toLowerCase() === "truetext") {
-                // Client-side expansion for "truetext" - set specific properties
-                switch (this.recognitionMode) {
-                    case RecognitionMode.Conversation:
-                        phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
-                        phraseDetection.enrichment.conversation.punctuationMode = ConversationPunctuationMode.Implicit;
-                        phraseDetection.enrichment.conversation.disfluencyMode = DisfluencyMode.Removed;
-                        phraseDetection.enrichment.conversation.intermediatePunctuationMode = ConversationPunctuationMode.Implicit;
-                        (phraseDetection.enrichment.conversation as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
-                        break;
-                    case RecognitionMode.Interactive:
-                        phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive || {};
-                        phraseDetection.enrichment.interactive.punctuationMode = InteractivePunctuationMode.Implicit;
-                        phraseDetection.enrichment.interactive.disfluencyMode = DisfluencyMode.Removed;
-                        phraseDetection.enrichment.interactive.intermediatePunctuationMode = InteractivePunctuationMode.Implicit;
-                        (phraseDetection.enrichment.interactive as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
-                        break;
-                    case RecognitionMode.Dictation:
-                        phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation || {};
-                        phraseDetection.enrichment.dictation.punctuationMode = DictationPunctuationMode.Implicit;
-                        phraseDetection.enrichment.dictation.disfluencyMode = DisfluencyMode.Removed;
-                        phraseDetection.enrichment.dictation.intermediatePunctuationMode = DictationPunctuationMode.Implicit;
-                        (phraseDetection.enrichment.dictation as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
-                        break;
-                }
-                // Don't set postprocessingoption - we've expanded "truetext" into specific settings
-            } else {
-                // Service-side handling for all other strings
-                // Pass the developer-provided value directly to the service.
-                // Input validation is handled on the service side.
-                switch (this.recognitionMode) {
-                    case RecognitionMode.Conversation:
-                        phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
-                        phraseDetection.enrichment.conversation.postprocessingoption = postProcessingOption;
-                        break;
-                    case RecognitionMode.Interactive:
-                        phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive || {};
-                        phraseDetection.enrichment.interactive.postprocessingoption = postProcessingOption;
-                        break;
-                    case RecognitionMode.Dictation:
-                        phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation || {};
-                        phraseDetection.enrichment.dictation.postprocessingoption = postProcessingOption;
-                        break;
-                }
-            }
-
+        if (this.privRecognizerConfig.autoDetectSourceLanguages !== undefined &&
+            this.privRecognizerConfig.autoDetectSourceLanguages !== AutoDetectSourceLanguagesOpenRangeOptionName) {
+            // Language ID is active (non-open-range) — skip setting explicit language
+            delete phraseDetection.language;
             this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+            return;
         }
+
+        const language: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, undefined);
+        if (language !== undefined) {
+            phraseDetection.language = language;
+        } else {
+            delete phraseDetection.language;
+        }
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+    }
+
+    protected setInitialSilenceTimeoutJson(): void {
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+        const value: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, undefined);
+
+        if (value !== undefined) {
+            const timeout: number = parseInt(value, 10);
+            if (!isNaN(timeout) && timeout >= 0) {
+                phraseDetection.initialSilenceTimeout = timeout;
+            }
+        } else {
+            delete phraseDetection.initialSilenceTimeout;
+        }
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+    }
+
+    protected setEndSilenceTimeoutJson(): void {
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+        const value: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, undefined);
+
+        if (value !== undefined) {
+            const timeout: number = parseInt(value, 10);
+            if (!isNaN(timeout) && timeout >= 0) {
+                phraseDetection.trailingSilenceTimeout = timeout;
+            }
+        } else {
+            delete phraseDetection.trailingSilenceTimeout;
+        }
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+    }
+
+    protected setProfanityOptionJson(): void {
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+        const value: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_ProfanityOption, undefined);
+
+        if (value !== undefined) {
+            phraseDetection.enrichment = phraseDetection.enrichment ?? {};
+            phraseDetection.enrichment.profanity = value as ProfanityHandlingMode;
+        } else {
+            if (phraseDetection.enrichment) {
+                delete phraseDetection.enrichment.profanity;
+            }
+        }
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+    }
+
+    protected setStableIntermediateThresholdJson(): void {
+        const value: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_StablePartialResultThreshold, undefined);
+
+        if (value !== undefined) {
+            const threshold: number = parseInt(value, 10);
+            if (!isNaN(threshold) && threshold >= 0) {
+                const phraseOutput = this.privSpeechContext.getContext().phraseOutput ?? {};
+                phraseOutput.interimResults = phraseOutput.interimResults ?? {};
+                phraseOutput.interimResults.stableThreshold = threshold;
+                this.privSpeechContext.getContext().phraseOutput = phraseOutput;
+            }
+        } else {
+            const phraseOutput = this.privSpeechContext.getContext().phraseOutput;
+            if (phraseOutput?.interimResults) {
+                delete phraseOutput.interimResults.stableThreshold;
+            }
+        }
+    }
+
+    protected setPostProcessingOptionJson(): void {
+        const value: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_PostProcessingOption, undefined);
+        if (value === undefined) {
+            return;
+        }
+
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+        phraseDetection.enrichment = phraseDetection.enrichment ?? {};
+
+        const mode = this.recognitionMode;
+        const isTrueText = value.toLowerCase() === "truetext";
+
+        switch (mode) {
+            case RecognitionMode.Interactive:
+                phraseDetection.enrichment.interactive = phraseDetection.enrichment.interactive ?? {};
+                if (isTrueText) {
+                    phraseDetection.enrichment.interactive.punctuationMode = InteractivePunctuationMode.Implicit;
+                    phraseDetection.enrichment.interactive.disfluencyMode = DisfluencyMode.Removed;
+                    phraseDetection.enrichment.interactive.intermediatePunctuationMode = InteractivePunctuationMode.Implicit;
+                    phraseDetection.enrichment.interactive.intermediateDisfluencyMode = DisfluencyMode.Removed;
+                } else {
+                    phraseDetection.enrichment.interactive.postprocessingoption = value;
+                }
+                break;
+            case RecognitionMode.Conversation:
+                phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation ?? {};
+                if (isTrueText) {
+                    phraseDetection.enrichment.conversation.punctuationMode = ConversationPunctuationMode.Implicit;
+                    phraseDetection.enrichment.conversation.disfluencyMode = DisfluencyMode.Removed;
+                    phraseDetection.enrichment.conversation.intermediatePunctuationMode = ConversationPunctuationMode.Implicit;
+                    phraseDetection.enrichment.conversation.intermediateDisfluencyMode = DisfluencyMode.Removed;
+                } else {
+                    phraseDetection.enrichment.conversation.postprocessingoption = value;
+                }
+                break;
+            case RecognitionMode.Dictation:
+                phraseDetection.enrichment.dictation = phraseDetection.enrichment.dictation ?? {};
+                if (isTrueText) {
+                    phraseDetection.enrichment.dictation.punctuationMode = DictationPunctuationMode.Implicit;
+                    phraseDetection.enrichment.dictation.disfluencyMode = DisfluencyMode.Removed;
+                    phraseDetection.enrichment.dictation.intermediatePunctuationMode = DictationPunctuationMode.Implicit;
+                    phraseDetection.enrichment.dictation.intermediateDisfluencyMode = DisfluencyMode.Removed;
+                } else {
+                    phraseDetection.enrichment.dictation.postprocessingoption = value;
+                }
+                break;
+        }
+
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
     }
 
     public get isSpeakerDiarizationEnabled(): boolean {
@@ -490,6 +570,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             this.privSpeechContext.getContext().phraseDetection = phraseDetection;
         }
 
+        // Set recognition language (if not using language ID)
+        this.setLanguageJson();
+
         // Set language ID (if configured)
         this.setLanguageIdJson();
 
@@ -505,6 +588,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.setSpeechSegmentationTimeoutJson();
         this.setOutputDetailLevelJson();
         this.setSpeechStartEventSensitivityJson();
+        this.setInitialSilenceTimeoutJson();
+        this.setEndSilenceTimeoutJson();
+        this.setProfanityOptionJson();
+        this.setStableIntermediateThresholdJson();
         this.setPostProcessingOptionJson();
 
         this.privSuccessCallback = successCallback;
