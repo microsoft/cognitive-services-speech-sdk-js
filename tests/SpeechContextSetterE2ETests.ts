@@ -20,9 +20,9 @@
  *   - The test audio files in tests/input/audio/
  *
  * INPUT → OUTPUT SUMMARY:
- *   ┌──────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┐
- *   │  SDK Property (INPUT)                        │  speech.context JSON field (OUTPUT)                         │
- *   ├──────────────────────────────────────────────┼──────────────────────────────────────────────────────────────┤
+ *   ┌──────────────────────────────────────────────┬────────────────────────────────────────────────────────────┐
+ *   │  SDK Property (INPUT)                        │  speech.context JSON field (OUTPUT)                        │
+ *   ├──────────────────────────────────────────────┼────────────────────────────────────────────────────────────┤
  *   │  speechRecognitionLanguage = "en-US"         │  phraseDetection.language = "en-US"                        │
  *   │  InitialSilenceTimeoutMs = "5000"            │  phraseDetection.initialSilenceTimeout = 5000              │
  *   │  EndSilenceTimeoutMs = "2000"                │  phraseDetection.trailingSilenceTimeout = 2000             │
@@ -34,7 +34,7 @@
  *   │                                              │    .disfluencyMode = "Removed"                             │
  *   │                                              │    (postprocessingoption must NOT be set)                  │
  *   │  StablePartialResultThreshold = "3"          │  phraseOutput.interimResults.stableThreshold = 3           │
- *   └──────────────────────────────────────────────┴──────────────────────────────────────────────────────────────┘
+ *   └──────────────────────────────────────────────┴────────────────────────────────────────────────────────────┘
  */
 
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
