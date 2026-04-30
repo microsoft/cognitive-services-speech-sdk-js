@@ -253,7 +253,10 @@ export class TranslationRecognizer extends Recognizer {
                     languages.length > 0 &&
                     this.properties.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined) !== undefined) {
                     // If we're removing the first language, synthesis has been requested, we need to re-sync with the service to update the synthesis language.
-                    // But we want to wait for the net phrase boundary to avoid unnecessary service calls.
+                    // But we want to wait for the next completed synthesis before resetting things to ensure no audio response is lost.
+                    // This does introduce a timing risk that if synthesis begins to run behind translation the next phrase may be lost.
+                    // If that happens in practice the client solution will need to become more complex and wind down the current turn before updating languages.
+
                     const tr: TranslationServiceRecognizer = this.privReco as TranslationServiceRecognizer;
                     void tr.primaryTargetLanguageChanged();
                 } else {

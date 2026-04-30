@@ -84,12 +84,6 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
 
             if (translatedPhrase.RecognitionStatus === RecognitionStatus.Success) {
 
-                if (this.privPrimaryLanguageChanged) {
-                    // If the primary language was changed mid-recognition, we need to update the service with the new language.
-                    await this.resetTurn();
-                    this.privPrimaryLanguageChanged = false;
-                }
-
                 // OK, the recognition was successful. How'd the translation do?
                 const result: TranslationRecognitionEventArgs = this.fireEventForResult(translatedPhrase, resultProps);
                 if (!!this.privTranslationRecognizer.recognized) {
@@ -268,6 +262,13 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                         }
                         break;
                     case SynthesisStatus.Success:
+
+                        if (this.privPrimaryLanguageChanged) {
+                            // If the primary language was changed mid-recognition, we need to update the service with the new language.
+                            await this.resetTurn();
+                            this.privPrimaryLanguageChanged = false;
+                        }
+
                         this.sendSynthesisAudio(undefined, this.privRequestSession.sessionId);
                         break;
                     default:
