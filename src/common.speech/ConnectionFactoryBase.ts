@@ -38,7 +38,6 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
             [PropertyId.SpeechServiceConnection_EnableAudioLogging, QueryParameterNames.EnableAudioLogging],
             [PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, QueryParameterNames.EndSilenceTimeoutMs],
             [PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, QueryParameterNames.InitialSilenceTimeoutMs],
-            [PropertyId.SpeechServiceResponse_PostProcessingOption, QueryParameterNames.Postprocessing],
             [PropertyId.SpeechServiceResponse_ProfanityOption, QueryParameterNames.Profanity],
             [PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, QueryParameterNames.EnableWordLevelTimestamps],
             [PropertyId.SpeechServiceResponse_StablePartialResultThreshold, QueryParameterNames.StableIntermediateThreshold],
@@ -96,7 +95,14 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
 
         try {
             // Validate the URL before returning
-            return new URL(redirectUrlString.trim()).toString();
+            const redirectUrl = new URL(redirectUrlString.trim());
+            if (redirectUrl.protocol === "https:") {
+                redirectUrl.protocol = "wss:";
+            } else if (redirectUrl.protocol === "http:") {
+                redirectUrl.protocol = "ws:";
+            }
+
+            return redirectUrl.toString();
         } catch (error) {
             return endpoint; // Return original endpoint if the redirect URL is invalid
         }

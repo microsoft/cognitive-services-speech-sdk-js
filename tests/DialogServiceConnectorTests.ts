@@ -200,7 +200,7 @@ test("Output format, default", (): void => {
     const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
     objsToClose.push(dialogConfig);
 
-    expect(dialogConfig.outputFormat === sdk.OutputFormat.Simple);
+    expect(dialogConfig.outputFormat).toEqual(sdk.OutputFormat.Simple);
 });
 
 test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback): void => {
@@ -346,7 +346,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback): void => {
     connector.turnStatusReceived = (sender: sdk.DialogServiceConnector, e: sdk.TurnStatusReceivedEventArgs): void => {
         turnStatusCounter++;
         try {
-            expect(e.statusCode === 200);
+            expect(e.statusCode).toEqual(200);
         } catch (error) {
             done(error);
         }

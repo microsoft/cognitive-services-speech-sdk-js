@@ -132,7 +132,7 @@ test("testGetLanguage2", () => {
     objsToClose.push(r);
 
     expect(r.speechRecognitionLanguage).not.toBeNull();
-    expect(language === r.speechRecognitionLanguage);
+    expect(r.speechRecognitionLanguage).toEqual(language);
 });
 
 test("testGetOutputFormatDefault", () => {
@@ -141,7 +141,7 @@ test("testGetOutputFormatDefault", () => {
     const r: sdk.ConversationTranscriber = BuildTranscriberFromWaveFile();
     objsToClose.push(r);
 
-    expect(r.outputFormat === sdk.OutputFormat.Simple);
+    expect(r.outputFormat).toEqual(sdk.OutputFormat.Simple);
 });
 
 test("testGetParameters", () => {
@@ -154,7 +154,7 @@ test("testGetParameters", () => {
     // expect(r.language ==  r.properties.getProperty(RecognizerParameterNames.SpeechRecognitionLanguage));
     // expect(r.deploymentId == r.properties.getProperty(RecognizerParameterNames.SpeechMspeechConfigImpl// TODO: is this really the correct mapping?
     expect(r.speechRecognitionLanguage).not.toBeUndefined();
-    expect(r.endpointId === r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, null)); // todo: is this really the correct mapping?
+    expect(r.endpointId).toEqual(r.properties.getProperty(sdk.PropertyId.SpeechServiceConnection_EndpointId, "00000000-0000-0000-0000-000000000000")); // todo: is this really the correct mapping?
 });
 
 test("testStrategy", () => {
@@ -166,7 +166,7 @@ test("testStrategy", () => {
     objsToClose.push(s);
     const r: sdk.ConversationTranscriber = BuildTranscriberFromWaveFile(s);
     objsToClose.push(r);
-    expect(segStrategy === r.properties.getProperty(sdk.PropertyId.Speech_SegmentationStrategy, null));
+    expect(r.properties.getProperty(sdk.PropertyId.Speech_SegmentationStrategy, null)).toEqual(segStrategy);
 });
 
 describe.each([[true], [false]])("Checking intermediate diazatation", (intermediateDiazaration: boolean) => {

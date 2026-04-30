@@ -125,6 +125,13 @@ export class SynthesisTurn {
     private privAudioDuration: number;
     private privWebRTCSDP: string;
 
+    // Latency tracking
+    private privSynthesisStartTime: number = 0;
+    private privConnectionLatency: number = -1;
+    private privNetworkLatency: number = -1;
+    private privFirstByteLatency: number = -1;
+    private privServiceLatency: number = -1;
+
     public constructor() {
         this.privRequestId = createNoDashGuid();
         this.privTurnDeferral = new Deferred<void>();
@@ -177,6 +184,12 @@ export class SynthesisTurn {
         this.privNextSearchSentenceIndex = 0;
         this.privPartialVisemeAnimation = "";
         this.privWebRTCSDP = "";
+        // Reset latency tracking for this synthesis request
+        this.privSynthesisStartTime = Date.now();
+        this.privConnectionLatency = -1;
+        this.privNetworkLatency = -1;
+        this.privFirstByteLatency = -1;
+        this.privServiceLatency = -1;
         if (audioDestination !== undefined) {
             this.privTurnAudioDestination = audioDestination;
             this.privTurnAudioDestination.format = this.privAudioOutputFormat;
@@ -197,6 +210,7 @@ export class SynthesisTurn {
 
     public onConnectionEstablishCompleted(statusCode: number): void {
         if (statusCode === 200) {
+            this.privConnectionLatency = Date.now() - this.privSynthesisStartTime;
             this.onEvent(new SynthesisStartedEvent(this.requestId, this.privAuthFetchEventId));
             this.privBytesReceived = 0;
             return;
@@ -226,6 +240,11 @@ export class SynthesisTurn {
         }
         this.privInTurn = true;
         this.privTurnDeferral = new Deferred<void>();
+        // If connection was reused, onConnectionEstablishCompleted was never called; treat as 0.
+        if (this.privConnectionLatency < 0) {
+            this.privConnectionLatency = 0;
+        }
+        this.privNetworkLatency = Date.now() - this.privSynthesisStartTime - this.privConnectionLatency;
         const response: ISynthesisResponse = JSON.parse(responseJson) as ISynthesisResponse;
         if (!!response.webrtc) {
             this.privWebRTCSDP = response.webrtc.connectionString;
@@ -234,6 +253,12 @@ export class SynthesisTurn {
 
     public onAudioChunkReceived(data: ArrayBuffer): void {
         if (this.isSynthesizing) {
+            if (this.privFirstByteLatency < 0) {
+                this.privFirstByteLatency = Date.now() - this.privSynthesisStartTime;
+                if (this.privNetworkLatency >= 0) {
+                    this.privServiceLatency = this.privFirstByteLatency - this.privConnectionLatency - this.privNetworkLatency;
+                }
+            }
             this.privAudioOutputStream.write(data);
             this.privBytesReceived += data.byteLength;
             if (this.privTurnAudioDestination !== undefined) {
@@ -257,13 +282,23 @@ export class SynthesisTurn {
     }
 
     public async constructSynthesisResult(): Promise<SpeechSynthesisResult> {
+        const finishLatency = Date.now() - this.privSynthesisStartTime;
         const audioBuffer: ArrayBuffer = await this.getAllReceivedAudioWithHeader();
+        const properties = new PropertyCollection();
+        if (!!this.privWebRTCSDP) {
+            properties.setProperty(PropertyId.TalkingAvatarService_WebRTC_SDP, this.privWebRTCSDP);
+        }
+        properties.setProperty(PropertyId.SpeechServiceResponse_SynthesisFirstByteLatencyMs, String(Math.max(0, this.privFirstByteLatency)));
+        properties.setProperty(PropertyId.SpeechServiceResponse_SynthesisFinishLatencyMs, String(finishLatency));
+        properties.setProperty(PropertyId.SpeechServiceResponse_SynthesisConnectionLatencyMs, String(Math.max(0, this.privConnectionLatency)));
+        properties.setProperty(PropertyId.SpeechServiceResponse_SynthesisNetworkLatencyMs, String(Math.max(0, this.privNetworkLatency)));
+        properties.setProperty(PropertyId.SpeechServiceResponse_SynthesisServiceLatencyMs, String(Math.max(0, this.privServiceLatency)));
         return new SpeechSynthesisResult(
             this.requestId,
             ResultReason.SynthesizingAudioCompleted,
             audioBuffer,
             undefined,
-            this.extraProperties,
+            properties,
             this.audioDuration
         );
     }

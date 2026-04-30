@@ -545,4 +545,92 @@ export enum PropertyId {
      * Added in version 1.48.0
      */
     SpeechServiceResponse_RecognitionLatencyMs,
+
+    /**
+     * The speech synthesis first byte latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the time from when the synthesis request is sent to when the first audio byte is received
+     * from the service, including network latency.
+     */
+    SpeechServiceResponse_SynthesisFirstByteLatencyMs,
+
+    /**
+     * The speech synthesis finish latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the time from when the synthesis request is sent to when the full synthesized audio is
+     * received from the service, including network latency.
+     */
+    SpeechServiceResponse_SynthesisFinishLatencyMs,
+
+    /**
+     * The speech synthesis connection latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the time to establish the WebSocket connection to the service.
+     * If the connection is reused from a previous synthesis, this value is 0.
+     */
+    SpeechServiceResponse_SynthesisConnectionLatencyMs,
+
+    /**
+     * The speech synthesis network latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the network round-trip time between the client and the Azure TTS service.
+     */
+    SpeechServiceResponse_SynthesisNetworkLatencyMs,
+
+    /**
+     * The speech synthesis service latency in milliseconds. Read-only, available on speech synthesis results.
+     * This measures the time from when the Azure TTS service receives the synthesis request to when it sends
+     * back the first audio chunk.
+     */
+    SpeechServiceResponse_SynthesisServiceLatencyMs,
+
+    /*
+     * The pitch of the voice for a speech synthesis request.
+     * @member PropertyId.SpeechSynthesisRequest_Pitch
+     */
+    SpeechSynthesisRequest_Pitch,
+
+    /**
+     * The speaking rate of the voice for a speech synthesis request.
+     * @member PropertyId.SpeechSynthesisRequest_Rate
+     */
+    SpeechSynthesisRequest_Rate,
+
+    /**
+     * The volume of the voice for a speech synthesis request.
+     * @member PropertyId.SpeechSynthesisRequest_Volume
+     */
+    SpeechSynthesisRequest_Volume,
+
+    /**
+     * The style of the voice for a speech synthesis request.
+     * @member PropertyId.SpeechSynthesisRequest_Style
+     */
+    SpeechSynthesisRequest_Style,
+
+    /**
+     * The temperature of the voice synthesis for a speech synthesis request.
+     * @member PropertyId.SpeechSynthesisRequest_Temperature
+     */
+    SpeechSynthesisRequest_Temperature,
+
+    /**
+     * The custom lexicon URL for a speech synthesis request.
+     * @member PropertyId.SpeechSynthesisRequest_CustomLexiconUrl
+     */
+    SpeechSynthesisRequest_CustomLexiconUrl,
+
+    /**
+     * The preferred locales for a speech synthesis request.
+     * @member PropertyId.SpeechSynthesisRequest_PreferLocales
+     */
+    SpeechSynthesisRequest_PreferLocales,
+
+    /**
+     * The frame timeout interval (in ticks) for speech synthesis.
+     * @member PropertyId.SpeechSynthesis_FrameTimeoutInterval
+     */
+    SpeechSynthesis_FrameTimeoutInterval,
+
+    /**
+     * The RTF (Real-Time Factor) timeout threshold for speech synthesis.
+     * @member PropertyId.SpeechSynthesis_RtfTimeoutThreshold
+     */
+    SpeechSynthesis_RtfTimeoutThreshold,
 }

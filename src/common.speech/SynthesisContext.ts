@@ -33,6 +33,14 @@ export class SynthesisContext {
         return JSON.stringify(this.privContext);
     }
 
+    /**
+     * Gets a previously set section by name.
+     * @param sectionName Name of the section to retrieve.
+     */
+    public getSection<T = string | object>(sectionName: string): T | undefined {
+        return this.privContext[sectionName] as T | undefined;
+    }
+
     public setSynthesisSection(speechSynthesizer: SpeechSynthesizer): void {
         const synthesisSection: ISynthesisSection = this.buildSynthesisContext(speechSynthesizer);
         this.setSection("synthesis", synthesisSection);
