@@ -15,7 +15,6 @@ import {
     closeAsyncObjects,
     RepeatingPullStream,
 } from "./Utilities";
-import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 let objsToClose: any[];
 
@@ -50,346 +49,403 @@ const BuildSpeechConfig = (): sdk.SpeechTranslationConfig => {
     return s;
 };
 
-const BuildRecognizerFromWaveFile = (speechConfig: sdk.SpeechTranslationConfig, fileName?: string): sdk.TranslationRecognizer => {
-    const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(fileName === undefined ? Settings.WaveFile : fileName);
-    const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(speechConfig, config);
-    expect(r).not.toBeUndefined();
-    return r;
+// ----------------------------------------------------------------------------
+// Phase-state-machine helper.
+//
+// These tests guard a regression where mutating target languages mid-turn
+// (during continuous recognition) would silently break the translation
+// synthesis pipeline so that no audio was emitted for subsequent phrases.
+// Asserting that recognized text comes back is NOT sufficient — the recognizer
+// has separate code paths for `updateLanguages()` (non-primary changes) and
+// `primaryTargetLanguageChanged()` + `resetTurn()` (primary change while
+// synthesis is configured), and the latter is the one that previously broke
+// audio delivery. Each test therefore drives a phase machine that requires
+// BOTH a `recognized` event matching the expected language set AND
+// (when synthesis is configured) at least one `SynthesizingAudioCompleted`
+// event before advancing to the next phase. Synth fragments and completions
+// are bucketed to the current phase only after a matching `recognized` has
+// been seen, so audio events from in-flight phrases that crossed a mutation
+// boundary cannot be miscredited to the next phase.
+// ----------------------------------------------------------------------------
+
+interface PhaseSpec {
+    expectSynthesis: boolean;
+    expectedLanguages: string[];
+    transition?: (r: sdk.TranslationRecognizer) => void;
+}
+
+interface PhaseResult {
+    offsets: number[];
+    recognizedCount: number[];
+    synthByteCount: number[];
+    synthCompleteCount: number[];
+    synthFragmentCount: number[];
+}
+
+const PHASE_DEADLINE_MS: number = 25000;
+
+const sameLanguageSet = (actual: string[], expected: string[]): boolean => {
+    if (actual.length !== expected.length) {
+        return false;
+    }
+    const a: string[] = [...actual].sort();
+    const b: string[] = [...expected].sort();
+    return a.every((v: string, i: number): boolean => v === b[i]);
 };
 
-test("Remove primary target language triggers reset with synthesis", async (): Promise<void> => {
-    // eslint-disable-next-line no-console
-    console.info("Name: Remove primary target language triggers reset with synthesis");
-    const done: Deferred<void> = new Deferred<void>();
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
-    objsToClose.push(s);
+const runContinuousLanguageSwapTest = async (
+    speechConfig: sdk.SpeechTranslationConfig,
+    initialLanguages: string[],
+    phases: PhaseSpec[]
+): Promise<PhaseResult> => {
 
-    s.voiceName = "de-DE-KatjaNeural";
-    s.addTargetLanguage("de-DE");
-    s.addTargetLanguage("fr-FR");
-
-    const ps: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
-    const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps.PullStream);
-
-    const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, audioConfig);
-    objsToClose.push(r);
-
-    let removedPrimary: boolean = false;
-    let postResetSuccess: boolean = false;
-
-    r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
-        try {
-            if (e.result.reason === sdk.ResultReason.TranslatedSpeech) {
-
-                if (!removedPrimary) {
-                    // Before removal: verify both languages present
-                    expect(e.result.translations.get("de-DE", "")).toBeTruthy();
-                    expect(e.result.translations.get("fr-FR", "")).toBeTruthy();
-                    // Remove primary language (de-DE at index 0) — triggers resetTurn
-                    r.removeTargetLanguage("de-DE");
-                    removedPrimary = true;
-                    ps.StartRepeat();
-                } else if (!e.result.translations.languages.includes("de-DE")) {
-                    // After reset: de-DE removed, fr-FR still present
-                    expect(e.result.translations.get("fr-FR", "")).toBeTruthy();
-                    postResetSuccess = true;
-                    r.stopContinuousRecognitionAsync(
-                        (): void => {
-                            done.resolve();
-                        },
-                        (err: string): void => {
-                            done.reject(err);
-                        });
-                    return;
-                } else {
-                    // In-flight result may still have old languages
-                    ps.StartRepeat();
-                }
-            }
-        } catch (error) {
-            done.reject(error as string);
-        }
-    };
-
-    r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
-        if (e.reason === sdk.CancellationReason.Error) {
-            done.reject(e.errorDetails);
-        }
-    };
-
-    r.startContinuousRecognitionAsync(
-        (): void => {
-            // started
-        },
-        (err: string): void => {
-            done.reject(err);
-        });
-
-    await done.promise;
-    expect(postResetSuccess).toBeTruthy();
-}, 30000);
-
-test("Remove primary target language without synthesis continues recognition", async (): Promise<void> => {
-    // eslint-disable-next-line no-console
-    console.info("Name: Remove primary target language without synthesis continues recognition");
-    const done: Deferred<void> = new Deferred<void>();
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
-    objsToClose.push(s);
-
-    // No voiceName — synthesis is NOT configured, so resetTurn should not be triggered
-    s.addTargetLanguage("de-DE");
-    s.addTargetLanguage("fr-FR");
-
-    const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
-    objsToClose.push(r);
-
-    r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
-        if (e.reason === sdk.CancellationReason.Error) {
-            done.reject(e.errorDetails);
-        }
-    };
-
-    r.recognizeOnceAsync(
-        (res: sdk.TranslationRecognitionResult): void => {
-            try {
-                expect(res.reason).toEqual(sdk.ResultReason.TranslatedSpeech);
-                expect(res.translations.get("de-DE", "")).toBeTruthy();
-                expect(res.translations.get("fr-FR", "")).toBeTruthy();
-
-                // Remove primary language without synthesis — no resetTurn triggered
-                r.removeTargetLanguage("de-DE");
-                expect(r.targetLanguages.includes("de-DE")).toBeFalsy();
-
-                r.recognizeOnceAsync(
-                    (secondRes: sdk.TranslationRecognitionResult): void => {
-                        try {
-                            expect(secondRes.reason).toEqual(sdk.ResultReason.TranslatedSpeech);
-                            expect(secondRes.translations.get("fr-FR", "")).toBeTruthy();
-                            expect(secondRes.translations.languages.includes("de-DE")).toBeFalsy();
-                            done.resolve();
-                        } catch (error) {
-                            done.reject(error as string);
-                        }
-                    },
-                    (error: string): void => {
-                        done.reject(error);
-                    });
-            } catch (error) {
-                done.reject(error as string);
-            }
-        },
-        (error: string): void => {
-            done.reject(error);
-        });
-
-    await done.promise;
-}, 30000);
-
-test("Remove non-primary target language does not trigger reset", async (): Promise<void> => {
-    // eslint-disable-next-line no-console
-    console.info("Name: Remove non-primary target language does not trigger reset");
-    const done: Deferred<void> = new Deferred<void>();
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
-    objsToClose.push(s);
-
-    s.voiceName = "de-DE-KatjaNeural";
-    s.addTargetLanguage("de-DE");
-    s.addTargetLanguage("fr-FR");
-
-    const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
-    objsToClose.push(r);
-
-    r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
-        if (e.reason === sdk.CancellationReason.Error) {
-            done.reject(e.errorDetails);
-        }
-    };
-
-    r.recognizeOnceAsync(
-        (res: sdk.TranslationRecognitionResult): void => {
-            try {
-                expect(res.reason).toEqual(sdk.ResultReason.TranslatedSpeech);
-                expect(res.translations.get("de-DE", "")).toBeTruthy();
-                expect(res.translations.get("fr-FR", "")).toBeTruthy();
-
-                // Remove non-primary language (fr-FR at index 1) — no resetTurn
-                r.removeTargetLanguage("fr-FR");
-                expect(r.targetLanguages.includes("fr-FR")).toBeFalsy();
-                expect(r.targetLanguages.includes("de-DE")).toBeTruthy();
-
-                r.recognizeOnceAsync(
-                    (secondRes: sdk.TranslationRecognitionResult): void => {
-                        try {
-                            expect(secondRes.reason).toEqual(sdk.ResultReason.TranslatedSpeech);
-                            expect(secondRes.translations.get("de-DE", "")).toBeTruthy();
-                            expect(secondRes.translations.languages.includes("fr-FR")).toBeFalsy();
-                            done.resolve();
-                        } catch (error) {
-                            done.reject(error as string);
-                        }
-                    },
-                    (error: string): void => {
-                        done.reject(error);
-                    });
-            } catch (error) {
-                done.reject(error as string);
-            }
-        },
-        (error: string): void => {
-            done.reject(error);
-        });
-
-    await done.promise;
-}, 30000);
-
-test("Recognition continues with correct offsets after primary language reset", async (): Promise<void> => {
-    // eslint-disable-next-line no-console
-    console.info("Name: Recognition continues with correct offsets after primary language reset");
-    const done: Deferred<void> = new Deferred<void>();
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
-    objsToClose.push(s);
-
-    s.voiceName = "de-DE-KatjaNeural";
-    s.addTargetLanguage("de-DE");
-    s.addTargetLanguage("fr-FR");
+    for (const lang of initialLanguages) {
+        speechConfig.addTargetLanguage(lang);
+    }
 
     const ps: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
     const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps.PullStream);
 
-    const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, audioConfig);
+    const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(speechConfig, audioConfig);
     objsToClose.push(r);
 
-    let recognizedCount: number = 0;
-    const offsets: number[] = [];
+    const result: PhaseResult = {
+        offsets: [],
+        recognizedCount: phases.map((): number => 0),
+        synthByteCount: phases.map((): number => 0),
+        synthCompleteCount: phases.map((): number => 0),
+        synthFragmentCount: phases.map((): number => 0),
+    };
 
-    r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+    const done: Deferred<void> = new Deferred<void>();
+    let currentPhase: number = 0;
+    let recognizedSeen: boolean = false;
+    let synthSeen: boolean = false;
+    let finished: boolean = false;
+    let phaseDeadlineTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const finish = (action: () => void): void => {
+        if (finished) {
+            return;
+        }
+        finished = true;
+        if (phaseDeadlineTimer !== undefined) {
+            clearTimeout(phaseDeadlineTimer);
+            phaseDeadlineTimer = undefined;
+        }
+        action();
+    };
+
+    const fail = (msg: string): void => {
+        finish((): void => {
+            done.reject(msg);
+        });
+    };
+
+    const armPhaseDeadline = (): void => {
+        if (phaseDeadlineTimer !== undefined) {
+            clearTimeout(phaseDeadlineTimer);
+        }
+        const phaseAtArm: number = currentPhase;
+        phaseDeadlineTimer = setTimeout((): void => {
+            if (finished || currentPhase !== phaseAtArm) {
+                return;
+            }
+            const p: PhaseSpec = phases[phaseAtArm];
+            fail(
+                `Phase ${phaseAtArm} deadline (${PHASE_DEADLINE_MS}ms) hit. ` +
+                `expectedLanguages=[${p.expectedLanguages.join(",")}], ` +
+                `expectSynthesis=${String(p.expectSynthesis)}, ` +
+                `recognizedSeen=${String(recognizedSeen)}, synthSeen=${String(synthSeen)}, ` +
+                `recognizedCount=${result.recognizedCount[phaseAtArm]}, ` +
+                `synthFragmentCount=${result.synthFragmentCount[phaseAtArm]}, ` +
+                `synthCompleteCount=${result.synthCompleteCount[phaseAtArm]}.`);
+        }, PHASE_DEADLINE_MS);
+    };
+
+    const tryAdvance = (): boolean => {
+        if (finished || currentPhase >= phases.length) {
+            return false;
+        }
+        const phase: PhaseSpec = phases[currentPhase];
+        if (!recognizedSeen) {
+            return false;
+        }
+        if (phase.expectSynthesis && !synthSeen) {
+            return false;
+        }
+
+        const completed: number = currentPhase;
+        currentPhase++;
+        recognizedSeen = false;
+        synthSeen = false;
+
+        if (currentPhase >= phases.length) {
+            if (phaseDeadlineTimer !== undefined) {
+                clearTimeout(phaseDeadlineTimer);
+                phaseDeadlineTimer = undefined;
+            }
+            r.stopContinuousRecognitionAsync(
+                (): void => finish((): void => {
+                    done.resolve();
+                }),
+                (err: string): void => fail(err));
+            return true;
+        }
+
+        if (phase.transition !== undefined) {
+            try {
+                phase.transition(r);
+            } catch (e) {
+                fail(`Transition from phase ${completed} threw: ${(e as Error).message ?? String(e)}`);
+                return true;
+            }
+        }
+        ps.StartRepeat();
+        armPhaseDeadline();
+        return true;
+    };
+
+    r.recognized = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
+        if (finished) {
+            return;
+        }
         try {
-            if (e.result.reason === sdk.ResultReason.TranslatedSpeech) {
-                recognizedCount++;
-                offsets.push(e.result.offset);
+            if (e.result.reason !== sdk.ResultReason.TranslatedSpeech) {
+                return;
+            }
+            if (currentPhase >= phases.length) {
+                return;
+            }
+            result.offsets.push(e.result.offset);
+            const phase: PhaseSpec = phases[currentPhase];
+            const langs: string[] = e.result.translations.languages;
 
-                if (recognizedCount === 2) {
-                    // Remove primary language after 2nd phrase — triggers resetTurn
-                    r.removeTargetLanguage("de-DE");
+            if (sameLanguageSet(langs, phase.expectedLanguages)) {
+                for (const lang of phase.expectedLanguages) {
+                    expect(e.result.translations.get(lang, "")).toBeTruthy();
                 }
-
-                if (recognizedCount >= 5) {
-                    r.stopContinuousRecognitionAsync(
-                        (): void => {
-                            // Verify offsets are monotonically non-decreasing
-                            for (let i: number = 1; i < offsets.length; i++) {
-                                expect(offsets[i]).toBeGreaterThanOrEqual(offsets[i - 1]);
-                            }
-                            done.resolve();
-                        },
-                        (err: string): void => {
-                            done.reject(err);
-                        });
-                    return;
+                result.recognizedCount[currentPhase]++;
+                recognizedSeen = true;
+                const advanced: boolean = tryAdvance();
+                // For synth-required phases that did not advance (still waiting on
+                // SynthesizingAudioCompleted) we deliberately do NOT pump more audio:
+                // emitting more phrases here would interleave with the pending synth
+                // for the just-recognized phrase and risk mis-bucketing.
+                if (!advanced && !phase.expectSynthesis) {
+                    ps.StartRepeat();
                 }
+            } else {
+                // Transitional / in-flight result: language list reflects the previous
+                // service-side state (the mutation hasn't taken effect yet on the wire).
+                // Pump audio so the service produces another phrase under the new state.
                 ps.StartRepeat();
             }
-        } catch (error) {
-            done.reject(error as string);
+        } catch (err) {
+            fail(`recognized handler error: ${(err as Error).message ?? String(err)}`);
         }
     };
 
-    r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
-        if (e.reason === sdk.CancellationReason.Error) {
-            done.reject(e.errorDetails);
+    r.synthesizing = (_o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs): void => {
+        if (finished) {
+            return;
         }
-    };
-
-    r.startContinuousRecognitionAsync(
-        (): void => {
-            // started
-        },
-        (err: string): void => {
-            done.reject(err);
-        });
-
-    await done.promise;
-    expect(recognizedCount).toBeGreaterThanOrEqual(5);
-}, 60000);
-
-test("Add remove primary add back full lifecycle", async (): Promise<void> => {
-    // eslint-disable-next-line no-console
-    console.info("Name: Add remove primary add back full lifecycle");
-    const done: Deferred<void> = new Deferred<void>();
-    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
-    objsToClose.push(s);
-
-    s.voiceName = "de-DE-KatjaNeural";
-    s.addTargetLanguage("de-DE");
-
-    const ps: RepeatingPullStream = new RepeatingPullStream(Settings.WaveFile);
-    const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(ps.PullStream);
-
-    const r: sdk.TranslationRecognizer = new sdk.TranslationRecognizer(s, audioConfig);
-    objsToClose.push(r);
-
-    let recognizedCount: number = 0;
-    let sawDeOnly: boolean = false;
-
-    r.recognized = (o: sdk.Recognizer, e: sdk.TranslationRecognitionEventArgs): void => {
         try {
-            if (e.result.reason === sdk.ResultReason.TranslatedSpeech) {
-                recognizedCount++;
-                const langs: string[] = e.result.translations.languages;
-
-                // Track phases
-                if (langs.includes("de-DE") && !langs.includes("fr-FR")) {
-                    sawDeOnly = true;
-                }
-
-                switch (recognizedCount) {
-                    case 1:
-                        // Phase 1: [de-DE] → add fr-FR
-                        r.addTargetLanguage("fr-FR");
-                        break;
-                    case 3:
-                        // Phase 2: [de-DE, fr-FR] → remove de-DE (primary, triggers reset)
-                        r.removeTargetLanguage("de-DE");
-                        break;
-                    case 5:
-                        // Phase 3: [fr-FR] → add de-DE back
-                        r.addTargetLanguage("de-DE");
-                        break;
-                    case 7:
-                        // Phase 4: [fr-FR, de-DE] → verify and stop
-                        r.stopContinuousRecognitionAsync(
-                            (): void => {
-                                done.resolve();
-                            },
-                            (err: string): void => {
-                                done.reject(err);
-                            });
+            if (currentPhase >= phases.length) {
+                return;
+            }
+            switch (e.result.reason) {
+                case sdk.ResultReason.SynthesizingAudio:
+                    // Only credit fragments to the current phase once a matching
+                    // `recognized` for this phase has been observed. This prevents
+                    // straggling audio from a transitional/in-flight phrase
+                    // (delivered after a primary-language reset) from being
+                    // miscredited to the next phase.
+                    if (!recognizedSeen) {
                         return;
-                }
-                ps.StartRepeat();
+                    }
+                    expect(e.result.audio).toBeDefined();
+                    expect(e.result.audio.byteLength).toBeGreaterThan(0);
+                    result.synthFragmentCount[currentPhase]++;
+                    result.synthByteCount[currentPhase] += e.result.audio.byteLength;
+                    break;
+                case sdk.ResultReason.SynthesizingAudioCompleted:
+                    if (!recognizedSeen) {
+                        return;
+                    }
+                    result.synthCompleteCount[currentPhase]++;
+                    synthSeen = true;
+                    tryAdvance();
+                    break;
+                case sdk.ResultReason.Canceled:
+                    fail(`Synthesis Canceled at phase ${currentPhase} ` +
+                        `(expectedLanguages=[${phases[currentPhase].expectedLanguages.join(",")}]).`);
+                    break;
+                default:
+                    break;
             }
-        } catch (error) {
-            done.reject(error as string);
+        } catch (err) {
+            fail(`synthesizing handler error: ${(err as Error).message ?? String(err)}`);
         }
     };
 
-    r.canceled = (o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+    r.canceled = (_o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
         if (e.reason === sdk.CancellationReason.Error) {
-            done.reject(e.errorDetails);
+            fail(`Recognition canceled with error at phase ${currentPhase}: ${e.errorDetails}`);
         }
     };
+
+    armPhaseDeadline();
 
     r.startContinuousRecognitionAsync(
-        (): void => {
-            // started
-        },
-        (err: string): void => {
-            done.reject(err);
-        });
+        (): void => { /* started */ },
+        (err: string): void => fail(`startContinuousRecognitionAsync failed: ${err}`));
 
     await done.promise;
+    return result;
+};
 
-    // Verify we observed expected phases
-    expect(sawDeOnly).toBeTruthy();
-    expect(recognizedCount).toBeGreaterThanOrEqual(7);
-}, 60000);
+// ----------------------------------------------------------------------------
+// Tests
+// ----------------------------------------------------------------------------
+
+test("Continuous: remove primary with synthesis - synthesis continues after reset", async (): Promise<void> => {
+    // Primary change with a configured synthesis voice exercises
+    // primaryTargetLanguageChanged() + the deferred resetTurn() path. The
+    // regression we're guarding against was that synthesis events stopped
+    // arriving for phrases produced after the reset.
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+    s.voiceName = "de-DE-KatjaNeural";
+
+    const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE", "fr-FR"], [
+        {            expectSynthesis: true,            expectedLanguages: ["de-DE", "fr-FR"],
+            transition: (r: sdk.TranslationRecognizer): void => r.removeTargetLanguage("de-DE"),
+        },
+        {            expectSynthesis: true,            expectedLanguages: ["fr-FR"],
+        },
+    ]);
+
+    // Each synthesis-required phase must have produced both a completed
+    // synthesis and non-empty audio bytes — proving the synth pipeline
+    // survived the resetTurn().
+    expect(result.recognizedCount[0]).toBeGreaterThan(0);
+    expect(result.recognizedCount[1]).toBeGreaterThan(0);
+    expect(result.synthCompleteCount[0]).toBeGreaterThan(0);
+    expect(result.synthCompleteCount[1]).toBeGreaterThan(0);
+    expect(result.synthFragmentCount[0]).toBeGreaterThan(0);
+    expect(result.synthFragmentCount[1]).toBeGreaterThan(0);
+    expect(result.synthByteCount[0]).toBeGreaterThan(0);
+    expect(result.synthByteCount[1]).toBeGreaterThan(0);
+
+    // Offsets across the entire continuous turn (including the reset boundary)
+    // must remain monotonically non-decreasing.
+    for (let i: number = 1; i < result.offsets.length; i++) {
+        expect(result.offsets[i]).toBeGreaterThanOrEqual(result.offsets[i - 1]);
+    }
+}, 90000);
+
+test("Continuous: remove primary without synthesis - recognition continues, no synth events", async (): Promise<void> => {
+    // Without a configured voice, removing the primary takes the
+    // updateLanguages() path (no resetTurn). Recognition must continue
+    // and no synthesis events of any kind must be emitted.
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+
+    const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE", "fr-FR"], [
+        {            expectSynthesis: false,            expectedLanguages: ["de-DE", "fr-FR"],
+            transition: (r: sdk.TranslationRecognizer): void => r.removeTargetLanguage("de-DE"),
+        },
+        {            expectSynthesis: false,            expectedLanguages: ["fr-FR"],
+        },
+    ]);
+
+    expect(result.recognizedCount[0]).toBeGreaterThan(0);
+    expect(result.recognizedCount[1]).toBeGreaterThan(0);
+
+    const totalSynthFragments: number =
+        result.synthFragmentCount.reduce((a: number, b: number): number => a + b, 0);
+    const totalSynthCompletes: number =
+        result.synthCompleteCount.reduce((a: number, b: number): number => a + b, 0);
+    expect(totalSynthFragments).toBe(0);
+    expect(totalSynthCompletes).toBe(0);
+}, 90000);
+
+test("Continuous: remove non-primary with synthesis - primary synthesis uninterrupted", async (): Promise<void> => {
+    // Removing a non-primary language must NOT trigger resetTurn even with
+    // synthesis configured. The primary's synth events should keep flowing
+    // through the mutation without disruption.
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+    s.voiceName = "de-DE-KatjaNeural";
+
+    const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE", "fr-FR"], [
+        {            expectSynthesis: true,            expectedLanguages: ["de-DE", "fr-FR"],
+            transition: (r: sdk.TranslationRecognizer): void => r.removeTargetLanguage("fr-FR"),
+        },
+        {            expectSynthesis: true,            expectedLanguages: ["de-DE"],
+        },
+    ]);
+
+    expect(result.recognizedCount[0]).toBeGreaterThan(0);
+    expect(result.recognizedCount[1]).toBeGreaterThan(0);
+    expect(result.synthCompleteCount[0]).toBeGreaterThan(0);
+    expect(result.synthCompleteCount[1]).toBeGreaterThan(0);
+    expect(result.synthByteCount[0]).toBeGreaterThan(0);
+    expect(result.synthByteCount[1]).toBeGreaterThan(0);
+}, 90000);
+
+test("Continuous: add language mid-turn with synthesis - synthesis continues", async (): Promise<void> => {
+    // addTargetLanguage always takes the updateLanguages() path. Synth must
+    // continue uninterrupted, and subsequent phrases must include the new
+    // target language.
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+    s.voiceName = "de-DE-KatjaNeural";
+
+    const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE"], [
+        {            expectSynthesis: true,            expectedLanguages: ["de-DE"],
+            transition: (r: sdk.TranslationRecognizer): void => r.addTargetLanguage("fr-FR"),
+        },
+        {            expectSynthesis: true,            expectedLanguages: ["de-DE", "fr-FR"],
+        },
+    ]);
+
+    expect(result.recognizedCount[0]).toBeGreaterThan(0);
+    expect(result.recognizedCount[1]).toBeGreaterThan(0);
+    expect(result.synthCompleteCount[0]).toBeGreaterThan(0);
+    expect(result.synthCompleteCount[1]).toBeGreaterThan(0);
+    expect(result.synthByteCount[0]).toBeGreaterThan(0);
+    expect(result.synthByteCount[1]).toBeGreaterThan(0);
+}, 90000);
+
+test("Continuous: full lifecycle add then remove primary then re-add - synthesis in every phase", async (): Promise<void> => {
+    // Stresses every mutation path inside a single continuous turn: a
+    // non-primary add, a primary remove (resetTurn path), and a primary
+    // re-add. Synthesis events MUST be observed for every phase — that is
+    // the regression the original tests were added to catch.
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfig();
+    objsToClose.push(s);
+    s.voiceName = "de-DE-KatjaNeural";
+
+    const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE"], [
+        {            expectSynthesis: true,            expectedLanguages: ["de-DE"],
+            transition: (r: sdk.TranslationRecognizer): void => r.addTargetLanguage("fr-FR"),
+        },
+        {            expectSynthesis: true,            expectedLanguages: ["de-DE", "fr-FR"],
+            transition: (r: sdk.TranslationRecognizer): void => r.removeTargetLanguage("de-DE"),
+        },
+        {            expectSynthesis: true,            expectedLanguages: ["fr-FR"],
+            transition: (r: sdk.TranslationRecognizer): void => r.addTargetLanguage("de-DE"),
+        },
+        {            expectSynthesis: true,            expectedLanguages: ["fr-FR", "de-DE"],
+        },
+    ]);
+
+    for (let i: number = 0; i < 4; i++) {
+        expect(result.recognizedCount[i]).toBeGreaterThan(0);
+        expect(result.synthCompleteCount[i]).toBeGreaterThan(0);
+        expect(result.synthFragmentCount[i]).toBeGreaterThan(0);
+        expect(result.synthByteCount[i]).toBeGreaterThan(0);
+    }
+}, 150000);
