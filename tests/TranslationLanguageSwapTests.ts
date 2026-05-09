@@ -46,6 +46,9 @@ const BuildSpeechConfig = (): sdk.SpeechTranslationConfig => {
         s.setProxy(Settings.proxyServer, Settings.proxyPort);
     }
     s.speechRecognitionLanguage = Settings.WaveFileLanguage;
+    s.setProperty(sdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, "999999");
+    s.setProperty(sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "9999999");
+
     return s;
 };
 
@@ -99,6 +102,9 @@ const runContinuousLanguageSwapTest = async (
     phases: PhaseSpec[]
 ): Promise<PhaseResult> => {
 
+    // eslint-disable-next-line no-console
+    console.info(`Running test with initialLanguages=[${initialLanguages.join(",")}], phases=[${phases.map((p: PhaseSpec): string => `{expectSynthesis=${String(p.expectSynthesis)}, expectedLanguages=[${p.expectedLanguages.join(",")}]}`).join(", ")}]`);
+
     for (const lang of initialLanguages) {
         speechConfig.addTargetLanguage(lang);
     }
@@ -121,6 +127,7 @@ const runContinuousLanguageSwapTest = async (
     let currentPhase: number = 0;
     let recognizedSeen: boolean = false;
     let synthSeen: boolean = false;
+    let transitionFired: boolean = false;
     let finished: boolean = false;
     let phaseDeadlineTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -175,16 +182,20 @@ const runContinuousLanguageSwapTest = async (
             return false;
         }
 
-        const completed: number = currentPhase;
         currentPhase++;
         recognizedSeen = false;
         synthSeen = false;
+        transitionFired = false;
 
         if (currentPhase >= phases.length) {
+            // eslint-disable-next-line no-console
+            console.info(`All phases completed. Total recognizedCount=${result.recognizedCount.reduce((a: number, b: number): number => a + b, 0)}, synthFragmentCount=${result.synthFragmentCount.reduce((a: number, b: number): number => a + b, 0)}, synthCompleteCount=${result.synthCompleteCount.reduce((a: number, b: number): number => a + b, 0)}.`);
             if (phaseDeadlineTimer !== undefined) {
                 clearTimeout(phaseDeadlineTimer);
                 phaseDeadlineTimer = undefined;
             }
+            // eslint-disable-next-line no-console
+            console.info("Stopping recognition and finishing test.");
             r.stopContinuousRecognitionAsync(
                 (): void => finish((): void => {
                     done.resolve();
@@ -193,14 +204,6 @@ const runContinuousLanguageSwapTest = async (
             return true;
         }
 
-        if (phase.transition !== undefined) {
-            try {
-                phase.transition(r);
-            } catch (e) {
-                fail(`Transition from phase ${completed} threw: ${(e as Error).message ?? String(e)}`);
-                return true;
-            }
-        }
         ps.StartRepeat();
         armPhaseDeadline();
         return true;
@@ -210,11 +213,17 @@ const runContinuousLanguageSwapTest = async (
         if (finished) {
             return;
         }
+        // eslint-disable-next-line no-console
+        console.info(`Recognized event at offset ${e.result.offset}: reason=${sdk.ResultReason[e.result.reason]}, languages=[${e.result.translations.languages.join(",")}], text="${e.result.text}"`);
         try {
             if (e.result.reason !== sdk.ResultReason.TranslatedSpeech) {
+                // eslint-disable-next-line no-console
+                console.info(`Ignoring non-TranslatedSpeech result at offset ${e.result.offset}: ${sdk.ResultReason[e.result.reason]}`);
                 return;
             }
             if (currentPhase >= phases.length) {
+                // eslint-disable-next-line no-console
+                console.info(`Ignoring TranslatedSpeech result at offset ${e.result.offset} after final phase: expectedLanguages=[${phases[phases.length - 1].expectedLanguages.join(",")}], actualLanguages=[${e.result.translations.languages.join(",")}]`);
                 return;
             }
             result.offsets.push(e.result.offset);
@@ -222,26 +231,54 @@ const runContinuousLanguageSwapTest = async (
             const langs: string[] = e.result.translations.languages;
 
             if (sameLanguageSet(langs, phase.expectedLanguages)) {
-                for (const lang of phase.expectedLanguages) {
-                    expect(e.result.translations.get(lang, "")).toBeTruthy();
+                if (e.result.text !== undefined && e.result.text.length > 0) {
+                    for (const lang of phase.expectedLanguages) {
+                        expect(e.result.translations.get(lang, "")).toBeTruthy();
+                    }
+                    result.recognizedCount[currentPhase]++;
+                    recognizedSeen = true;
+
+                    // Fire the phase transition (language mutation) at the moment the
+                    // customer sees finalized translation text — that's when a real
+                    // application would decide to switch languages — rather than
+                    // waiting for synthesis completion.
+                    if (!transitionFired && phase.transition !== undefined) {
+                        transitionFired = true;
+                        const phaseAtFire: number = currentPhase;
+                        try {
+                            // eslint-disable-next-line no-console
+                            console.info(`Phase ${phaseAtFire} firing transition on recognized event at offset ${e.result.offset}.`);
+                            phase.transition(r);
+                        } catch (transitionErr) {
+                            fail(`Transition from phase ${phaseAtFire} threw: ${(transitionErr as Error).message ?? String(transitionErr)}`);
+                            return;
+                        }
+                    }
                 }
-                result.recognizedCount[currentPhase]++;
-                recognizedSeen = true;
+                // eslint-disable-next-line no-console
+                console.info(`Phase ${currentPhase} recognized event matches expected languages. recognizedCount=${result.recognizedCount[currentPhase]}, synthFragmentCount=${result.synthFragmentCount[currentPhase]}, synthCompleteCount=${result.synthCompleteCount[currentPhase]}.`);
+
                 const advanced: boolean = tryAdvance();
                 // For synth-required phases that did not advance (still waiting on
                 // SynthesizingAudioCompleted) we deliberately do NOT pump more audio:
                 // emitting more phrases here would interleave with the pending synth
                 // for the just-recognized phrase and risk mis-bucketing.
                 if (!advanced && !phase.expectSynthesis) {
+                    // eslint-disable-next-line no-console
+                    console.info(`Phase ${currentPhase} did not advance and does not expect synthesis. Restarting repeat.`);
                     ps.StartRepeat();
                 }
             } else {
+                // eslint-disable-next-line no-console
+                console.info(`Recognized event at offset ${e.result.offset} does not match expected languages for phase ${currentPhase}. expectedLanguages=[${phase.expectedLanguages.join(",")}], actualLanguages=[${langs.join(",")}].`);
                 // Transitional / in-flight result: language list reflects the previous
                 // service-side state (the mutation hasn't taken effect yet on the wire).
                 // Pump audio so the service produces another phrase under the new state.
                 ps.StartRepeat();
             }
         } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error(`recognized handler error: ${(err as Error).message ?? String(err)}`);
             fail(`recognized handler error: ${(err as Error).message ?? String(err)}`);
         }
     };
@@ -250,8 +287,13 @@ const runContinuousLanguageSwapTest = async (
         if (finished) {
             return;
         }
+        const audioLen: number = e.result.audio ? e.result.audio.byteLength : 0;
+        // eslint-disable-next-line no-console
+        console.info(`Synthesizing event: reason=${sdk.ResultReason[e.result.reason]}, audioLength=${audioLen}`);
         try {
             if (currentPhase >= phases.length) {
+                // eslint-disable-next-line no-console
+                console.info("Ignoring synthesis event after final phase.");
                 return;
             }
             switch (e.result.reason) {
@@ -270,6 +312,8 @@ const runContinuousLanguageSwapTest = async (
                     result.synthByteCount[currentPhase] += e.result.audio.byteLength;
                     break;
                 case sdk.ResultReason.SynthesizingAudioCompleted:
+                    // eslint-disable-next-line no-console
+                    console.info(`SynthesizingAudioCompleted event for phase ${currentPhase}. synthFragmentCount=${result.synthFragmentCount[currentPhase]}, synthByteCount=${result.synthByteCount[currentPhase]}.`);
                     if (!recognizedSeen) {
                         return;
                     }
@@ -319,10 +363,12 @@ test("Continuous: remove primary with synthesis - synthesis continues after rese
     s.voiceName = "de-DE-KatjaNeural";
 
     const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE", "fr-FR"], [
-        {            expectSynthesis: true,            expectedLanguages: ["de-DE", "fr-FR"],
+        {
+            expectSynthesis: true, expectedLanguages: ["de-DE", "fr-FR"],
             transition: (r: sdk.TranslationRecognizer): void => r.removeTargetLanguage("de-DE"),
         },
-        {            expectSynthesis: true,            expectedLanguages: ["fr-FR"],
+        {
+            expectSynthesis: true, expectedLanguages: ["fr-FR"],
         },
     ]);
 
@@ -353,10 +399,12 @@ test("Continuous: remove primary without synthesis - recognition continues, no s
     objsToClose.push(s);
 
     const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE", "fr-FR"], [
-        {            expectSynthesis: false,            expectedLanguages: ["de-DE", "fr-FR"],
+        {
+            expectSynthesis: false, expectedLanguages: ["de-DE", "fr-FR"],
             transition: (r: sdk.TranslationRecognizer): void => r.removeTargetLanguage("de-DE"),
         },
-        {            expectSynthesis: false,            expectedLanguages: ["fr-FR"],
+        {
+            expectSynthesis: false, expectedLanguages: ["fr-FR"],
         },
     ]);
 
@@ -380,10 +428,12 @@ test("Continuous: remove non-primary with synthesis - primary synthesis uninterr
     s.voiceName = "de-DE-KatjaNeural";
 
     const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE", "fr-FR"], [
-        {            expectSynthesis: true,            expectedLanguages: ["de-DE", "fr-FR"],
+        {
+            expectSynthesis: true, expectedLanguages: ["de-DE", "fr-FR"],
             transition: (r: sdk.TranslationRecognizer): void => r.removeTargetLanguage("fr-FR"),
         },
-        {            expectSynthesis: true,            expectedLanguages: ["de-DE"],
+        {
+            expectSynthesis: true, expectedLanguages: ["de-DE"],
         },
     ]);
 
@@ -404,10 +454,12 @@ test("Continuous: add language mid-turn with synthesis - synthesis continues", a
     s.voiceName = "de-DE-KatjaNeural";
 
     const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE"], [
-        {            expectSynthesis: true,            expectedLanguages: ["de-DE"],
+        {
+            expectSynthesis: true, expectedLanguages: ["de-DE"],
             transition: (r: sdk.TranslationRecognizer): void => r.addTargetLanguage("fr-FR"),
         },
-        {            expectSynthesis: true,            expectedLanguages: ["de-DE", "fr-FR"],
+        {
+            expectSynthesis: true, expectedLanguages: ["de-DE", "fr-FR"],
         },
     ]);
 
@@ -429,16 +481,20 @@ test("Continuous: full lifecycle add then remove primary then re-add - synthesis
     s.voiceName = "de-DE-KatjaNeural";
 
     const result: PhaseResult = await runContinuousLanguageSwapTest(s, ["de-DE"], [
-        {            expectSynthesis: true,            expectedLanguages: ["de-DE"],
+        {
+            expectSynthesis: true, expectedLanguages: ["de-DE"],
             transition: (r: sdk.TranslationRecognizer): void => r.addTargetLanguage("fr-FR"),
         },
-        {            expectSynthesis: true,            expectedLanguages: ["de-DE", "fr-FR"],
+        {
+            expectSynthesis: true, expectedLanguages: ["de-DE", "fr-FR"],
             transition: (r: sdk.TranslationRecognizer): void => r.removeTargetLanguage("de-DE"),
         },
-        {            expectSynthesis: true,            expectedLanguages: ["fr-FR"],
+        {
+            expectSynthesis: true, expectedLanguages: ["fr-FR"],
             transition: (r: sdk.TranslationRecognizer): void => r.addTargetLanguage("de-DE"),
         },
-        {            expectSynthesis: true,            expectedLanguages: ["fr-FR", "de-DE"],
+        {
+            expectSynthesis: true, expectedLanguages: ["fr-FR", "de-DE"],
         },
     ]);
 

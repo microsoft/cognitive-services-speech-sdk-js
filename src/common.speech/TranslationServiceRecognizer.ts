@@ -206,6 +206,12 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
             case "translation.response":
                 const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody) as { SpeechPhrase: ITranslationPhrase };
                 if (!!phrase.SpeechPhrase) {
+                    console.info("Received translation.phrase message. " + this.privPrimaryLanguageChanged.toString());
+                    if (this.privPrimaryLanguageChanged) {
+                        // If the primary language was changed mid-recognition, we need to update the service with the new language.
+                        await this.resetTurn();
+                        this.privPrimaryLanguageChanged = false;
+                    }
                     await handleTranslationPhrase(TranslationPhrase.fromTranslationResponse(phrase, this.privRequestSession.currentTurnAudioOffset));
                 } else {
                     const hypothesis: { SpeechHypothesis: ITranslationHypothesis } = JSON.parse(connectionMessage.textBody) as { SpeechHypothesis: ITranslationHypothesis };
@@ -216,6 +222,11 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                 break;
             case "translation.phrase":
                 await handleTranslationPhrase(TranslationPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset));
+                if (this.privPrimaryLanguageChanged) {
+                    // If the primary language was changed mid-recognition, we need to update the service with the new language.
+                    await this.resetTurn();
+                    this.privPrimaryLanguageChanged = false;
+                }
                 break;
 
             case "translation.synthesis":
@@ -262,13 +273,6 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                         }
                         break;
                     case SynthesisStatus.Success:
-
-                        if (this.privPrimaryLanguageChanged) {
-                            // If the primary language was changed mid-recognition, we need to update the service with the new language.
-                            await this.resetTurn();
-                            this.privPrimaryLanguageChanged = false;
-                        }
-
                         this.sendSynthesisAudio(undefined, this.privRequestSession.sessionId);
                         break;
                     default:

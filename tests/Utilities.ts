@@ -95,6 +95,7 @@ export class RepeatingPullStream {
     }
 
     public StartRepeat(): void {
+        console.log("Starting repeat");
         this.sendSilence = false;
     }
 }
