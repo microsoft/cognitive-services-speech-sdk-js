@@ -43,6 +43,19 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 export class TranslationServiceRecognizer extends ConversationServiceRecognizer {
     private privTranslationRecognizer: TranslationRecognizer;
     private privPrimaryLanguageChanged: boolean = false;
+    // Last translation text observed per language from translation.hypothesis events.
+    // Used to decide, on the Recognized event that follows a primary-language change,
+    // whether a real Synthesizing event is expected before we trigger resetTurn.
+    private privLastRecognizingTranslations: { [language: string]: string } = {};
+    // The primary target language captured at the time of the mutation (i.e., the
+    // language the service is still synthesizing in until resetTurn flushes the
+    // new context). Compared against the same language's text in the Recognized
+    // result to predict whether synthesis audio is on its way.
+    private privPrimaryLanguageBeingReplaced: string | undefined;
+    // When true, the SDK has decided that a Synthesizing event is expected for
+    // the just-Recognized phrase and is deferring resetTurn until that event
+    // (or the synthesis end marker) arrives.
+    private privAwaitingSynthesisForReset: boolean = false;
 
     public constructor(
         authentication: IAuthentication,
@@ -61,8 +74,15 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
 
     }
 
-    public primaryTargetLanguageChanged(): void {
+    public primaryTargetLanguageChanged(removedPrimaryLanguage: string): void {
         this.setTranslationJson();
+        // Only capture the language being replaced on the first mutation in a
+        // pending window; subsequent calls before resetTurn fires shouldn't
+        // overwrite it because the service is still operating against the
+        // original primary on the wire.
+        if (!this.privPrimaryLanguageChanged) {
+            this.privPrimaryLanguageBeingReplaced = removedPrimaryLanguage;
+        }
         this.privPrimaryLanguageChanged = true;
     }
 
@@ -180,6 +200,16 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                 resultProps.setProperty(PropertyId.SpeechServiceResponse_RecognitionLatencyMs, hypothesisLatencyMs.toString());
             }
 
+            // Continuously track the latest intermediate translation text for
+            // every target language. The Recognized handler uses this map to
+            // decide whether a follow-up Synthesizing event is expected before
+            // applying a deferred resetTurn.
+            if (!!hypothesis.Translation && !!hypothesis.Translation.Translations) {
+                for (const t of hypothesis.Translation.Translations) {
+                    this.privLastRecognizingTranslations[t.Language] = t.Text !== undefined ? t.Text : (t.DisplayText !== undefined ? t.DisplayText : "");
+                }
+            }
+
             const result: TranslationRecognitionEventArgs = this.fireEventForResult(hypothesis, resultProps);
 
             if (!!this.privTranslationRecognizer.recognizing) {
@@ -206,13 +236,9 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
             case "translation.response":
                 const phrase: { SpeechPhrase: ITranslationPhrase } = JSON.parse(connectionMessage.textBody) as { SpeechPhrase: ITranslationPhrase };
                 if (!!phrase.SpeechPhrase) {
-                    console.info("Received translation.phrase message. " + this.privPrimaryLanguageChanged.toString());
-                    if (this.privPrimaryLanguageChanged) {
-                        // If the primary language was changed mid-recognition, we need to update the service with the new language.
-                        await this.resetTurn();
-                        this.privPrimaryLanguageChanged = false;
-                    }
-                    await handleTranslationPhrase(TranslationPhrase.fromTranslationResponse(phrase, this.privRequestSession.currentTurnAudioOffset));
+                    const responsePhrase: TranslationPhrase = TranslationPhrase.fromTranslationResponse(phrase, this.privRequestSession.currentTurnAudioOffset);
+                    await handleTranslationPhrase(responsePhrase);
+                    await this.maybeResetTurnAfterRecognized(responsePhrase);
                 } else {
                     const hypothesis: { SpeechHypothesis: ITranslationHypothesis } = JSON.parse(connectionMessage.textBody) as { SpeechHypothesis: ITranslationHypothesis };
                     if (!!hypothesis.SpeechHypothesis) {
@@ -221,17 +247,15 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                 }
                 break;
             case "translation.phrase":
-                await handleTranslationPhrase(TranslationPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset));
-                if (this.privPrimaryLanguageChanged) {
-                    // If the primary language was changed mid-recognition, we need to update the service with the new language.
-                    await this.resetTurn();
-                    this.privPrimaryLanguageChanged = false;
-                }
+                const phraseMessage: TranslationPhrase = TranslationPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                await handleTranslationPhrase(phraseMessage);
+                await this.maybeResetTurnAfterRecognized(phraseMessage);
                 break;
 
             case "translation.synthesis":
             case "audio":
                 this.sendSynthesisAudio(connectionMessage.binaryBody, this.privRequestSession.sessionId);
+                await this.maybeResetTurnAfterSynthesis();
                 processed = true;
                 break;
 
@@ -278,12 +302,77 @@ export class TranslationServiceRecognizer extends ConversationServiceRecognizer 
                     default:
                         break;
                 }
+                // Defensive: if a deferred resetTurn was waiting on a Synthesizing
+                // event but only the synthesis-end marker arrived (e.g., the
+                // service produced a 0-byte / dummy synthesis), still apply the
+                // reset here so we don't strand a pending mutation.
+                await this.maybeResetTurnAfterSynthesis();
                 processed = true;
                 break;
             default:
                 break;
         }
         return processed;
+    }
+
+    // After a Recognized phrase arrives following a primary-language mutation,
+    // decide whether to apply the resetTurn now or defer it until the next
+    // synthesis-related event arrives.
+    //
+    // Heuristic (driven by observed service behavior):
+    //   - If the recognized translation text for the language being replaced
+    //     is non-empty AND differs from the last intermediate translation seen
+    //     for that language, the service is virtually certain to deliver a
+    //     real Synthesizing event next. Defer resetTurn so the synthesis
+    //     audio for this phrase isn't dropped by the new turn boundary.
+    //   - Otherwise, no real synthesis is expected (or only a 0-byte dummy);
+    //     trigger resetTurn immediately.
+    private async maybeResetTurnAfterRecognized(translatedPhrase: TranslationPhrase): Promise<void> {
+        if (!this.privPrimaryLanguageChanged) {
+            return;
+        }
+
+        const language: string | undefined = this.privPrimaryLanguageBeingReplaced;
+        const recognizedText: string = this.getTranslationTextForLanguage(translatedPhrase, language);
+        const intermediateText: string = (language !== undefined && this.privLastRecognizingTranslations[language] !== undefined)
+            ? this.privLastRecognizingTranslations[language]
+            : "";
+
+        // Clear the pending-mutation tracking state regardless of which branch
+        // we take so subsequent phrases aren't re-evaluated against stale data.
+        this.privPrimaryLanguageChanged = false;
+        this.privPrimaryLanguageBeingReplaced = undefined;
+        this.privLastRecognizingTranslations = {};
+
+        if (recognizedText.length > 0 && recognizedText !== intermediateText) {
+            // A real Synthesizing event is expected; wait for it before resetting.
+            this.privAwaitingSynthesisForReset = true;
+        } else {
+            await this.resetTurn();
+        }
+    }
+
+    // If a deferred resetTurn is pending, apply it now. Called from the
+    // synthesis message paths so the reset lands after the synthesis event
+    // for the just-Recognized phrase has been forwarded to the client.
+    private async maybeResetTurnAfterSynthesis(): Promise<void> {
+        if (!this.privAwaitingSynthesisForReset) {
+            return;
+        }
+        this.privAwaitingSynthesisForReset = false;
+        await this.resetTurn();
+    }
+
+    private getTranslationTextForLanguage(translatedPhrase: TranslationPhrase, language: string | undefined): string {
+        if (language === undefined || !translatedPhrase.Translation || !translatedPhrase.Translation.Translations) {
+            return "";
+        }
+        for (const t of translatedPhrase.Translation.Translations) {
+            if (t.Language === language) {
+                return t.Text !== undefined ? t.Text : (t.DisplayText !== undefined ? t.DisplayText : "");
+            }
+        }
+        return "";
     }
 
     // Cancels recognition.

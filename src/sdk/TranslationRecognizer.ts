@@ -258,7 +258,7 @@ export class TranslationRecognizer extends Recognizer {
                     // If that happens in practice the client solution will need to become more complex and wind down the current turn before updating languages.
 
                     const tr: TranslationServiceRecognizer = this.privReco as TranslationServiceRecognizer;
-                    void tr.primaryTargetLanguageChanged();
+                    void tr.primaryTargetLanguageChanged(lang);
                 } else {
                     this.updateLanguages(languages);
                 }
