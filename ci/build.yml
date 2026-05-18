@@ -222,21 +222,6 @@ jobs:
   - template: get-docker-image.yml
     parameters:
       DockerImages: $(DOCKER_IMAGE) mcr.microsoft.com/azure-cognitive-services/speechservices/neural-text-to-speech:latest mcr.microsoft.com/azure-cognitive-services/speechservices/speech-to-text:latest mcr.microsoft.com/azure-cognitive-services/speechservices/language-detection:latest
-  # The carbon4 test_server image lives in a private ACR. Authenticate via the
-  # same Azure subscription endpoint that the carbon pipeline uses
-  # (ci/onebranch/pipeline/steps/get-docker-image.yml in microsoft/carbon)
-  # and pull explicitly. We don't fold this into get-docker-image.yml because
-  # that template's other callers pass only public MCR images.
-  - task: AzureCLI@1
-    displayName: (Docker) Login to test_server ACR
-    inputs:
-      azureSubscription: 'Custom Speech Development (3a96ef56-41a9-40a0-b0f3-fb125c2b8798) - RG csspeechsdk-carbon'
-      scriptLocation: inlineScript
-      inlineScript: az acr login --name csspeechsdkacr201809
-  - bash: |
-      set -u -e -x -o pipefail
-      docker pull csspeechsdkacr201809.azurecr.io/csspeech/test_server:latest
-    displayName: (Docker) Pull test_server image
   - bash: |
       set -u -e -x -o pipefail
       . ci/functions.sh
@@ -288,40 +273,6 @@ jobs:
     displayName: Create and start LID Container
   - bash: |
       set -u -e -x -o pipefail
-      . ci/functions.sh
-
-      ts_port=$(find_free_port)
-      echo "test_server Port: $ts_port"
-
-      host_ip=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')
-      echo "Host IP: $host_ip"
-
-      TEST_SERVER_HTTP_URL="http://$host_ip:$ts_port"
-      TEST_SERVER_WS_URL="ws://$host_ip:$ts_port"
-      vsts_setvar TEST_SERVER_HTTP_URL "$TEST_SERVER_HTTP_URL"
-      vsts_setvar TEST_SERVER_WS_URL   "$TEST_SERVER_WS_URL"
-
-      docker create -p $ts_port:8080 --name test_server csspeechsdkacr201809.azurecr.io/csspeech/test_server:latest
-      docker start test_server
-
-      # Wait for the server's /http/current_time endpoint to respond before
-      # handing off to the test runner (the image's HEALTHCHECK probes the
-      # same endpoint).
-      for i in $(seq 1 30); do
-        if curl -fsS "$TEST_SERVER_HTTP_URL/http/current_time" > /dev/null; then
-          echo "test_server is up after ${i}s"
-          break
-        fi
-        if [ "$i" = "30" ]; then
-          echo "test_server failed to become healthy" >&2
-          docker logs test_server || true
-          exit 1
-        fi
-        sleep 1
-      done
-    displayName: Create and start test_server Container
-  - bash: |
-      set -u -e -x -o pipefail
       export ENABLE_PRIVATE_LINK_TESTS=true
       npm run test:connection
     displayName: Run tests
@@ -339,7 +290,6 @@ jobs:
       docker stop tts_container
       docker stop sr_container
       docker stop lid_container
-      docker stop test_server
 
       docker logs tts_container > tts_container.log
       ls -l tts_container.log
@@ -350,13 +300,9 @@ jobs:
       docker logs lid_container > lid_container.log
       ls -l tts_container.log
 
-      docker logs test_server > test_server.log
-      ls -l test_server.log
-
       docker rm tts_container
       docker rm sr_container
       docker rm lid_container
-      docker rm test_server
 
       DOCKER_LOG_DIR=$(Build.ArtifactStagingDirectory)/DockerLogs
       mkdir -p $DOCKER_LOG_DIR
@@ -364,7 +310,6 @@ jobs:
       cp tts_container.log $DOCKER_LOG_DIR/tts_container.log
       cp sr_container.log $DOCKER_LOG_DIR/sr_container.log
       cp lid_container.log $DOCKER_LOG_DIR/lid_container.log
-      cp test_server.log $DOCKER_LOG_DIR/test_server.log
     displayName: Stop Containers and export logs
     condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
   - task: ArchiveFiles@2
