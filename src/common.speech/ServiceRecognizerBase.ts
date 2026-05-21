@@ -797,6 +797,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         }
 
         this.privRequestSession.onSDKEndTurn();
+        this.setTranslationJson();
         const connection = await this.fetchConnection();
         await this.sendPrePayloadJSON(connection);
     }
