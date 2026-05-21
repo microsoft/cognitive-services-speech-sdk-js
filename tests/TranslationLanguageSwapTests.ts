@@ -64,11 +64,13 @@ const BuildSpeechConfig = (): sdk.SpeechTranslationConfig => {
 // synthesis is configured), and the latter is the one that previously broke
 // audio delivery. Each test therefore drives a phase machine that requires
 // BOTH a `recognized` event matching the expected language set AND
-// (when synthesis is configured) at least one `SynthesizingAudioCompleted`
-// event before advancing to the next phase. Synth fragments and completions
-// are bucketed to the current phase only after a matching `recognized` has
-// been seen, so audio events from in-flight phrases that crossed a mutation
-// boundary cannot be miscredited to the next phase.
+// (when synthesis is configured) at least one `SynthesizingAudio` fragment
+// event before advancing to the next phase. (Note: we gate on fragment
+// arrival, NOT `SynthesizingAudioCompleted`, because the latter fires only
+// once per turn in continuous mode — gating on it would deadlock.) Synth
+// fragments are bucketed to the current phase only after a matching
+// `recognized` has been seen, so audio events from in-flight phrases that
+// crossed a mutation boundary cannot be miscredited to the next phase.
 // ----------------------------------------------------------------------------
 
 interface PhaseSpec {
@@ -310,16 +312,19 @@ const runContinuousLanguageSwapTest = async (
                     expect(e.result.audio.byteLength).toBeGreaterThan(0);
                     result.synthFragmentCount[currentPhase]++;
                     result.synthByteCount[currentPhase] += e.result.audio.byteLength;
-                    break;
-                case sdk.ResultReason.SynthesizingAudioCompleted:
-                    // eslint-disable-next-line no-console
-                    console.info(`SynthesizingAudioCompleted event for phase ${currentPhase}. synthFragmentCount=${result.synthFragmentCount[currentPhase]}, synthByteCount=${result.synthByteCount[currentPhase]}.`);
-                    if (!recognizedSeen) {
-                        return;
-                    }
-                    result.synthCompleteCount[currentPhase]++;
+                    // Fragment arrival proves synthesis is active for this phase.
+                    // Use this as the phase-gate signal because
+                    // SynthesizingAudioCompleted only fires at turn end (not per
+                    // phrase) in continuous mode — gating on it causes a deadlock.
                     synthSeen = true;
                     tryAdvance();
+                    break;
+                case sdk.ResultReason.SynthesizingAudioCompleted:
+                    // Per-turn event (fires only once at turn end in continuous
+                    // mode). Just count it — do not gate phase advancement on it.
+                    // eslint-disable-next-line no-console
+                    console.info(`SynthesizingAudioCompleted event for phase ${currentPhase}. synthFragmentCount=${result.synthFragmentCount[currentPhase]}, synthByteCount=${result.synthByteCount[currentPhase]}.`);
+                    result.synthCompleteCount[currentPhase]++;
                     break;
                 case sdk.ResultReason.Canceled:
                     fail(`Synthesis Canceled at phase ${currentPhase} ` +
@@ -372,13 +377,11 @@ test("Continuous: remove primary with synthesis - synthesis continues after rese
         },
     ]);
 
-    // Each synthesis-required phase must have produced both a completed
-    // synthesis and non-empty audio bytes — proving the synth pipeline
-    // survived the resetTurn().
+    // Each synthesis-required phase must have produced synthesis fragments
+    // with non-empty audio bytes — proving the synth pipeline survived the
+    // resetTurn().
     expect(result.recognizedCount[0]).toBeGreaterThan(0);
     expect(result.recognizedCount[1]).toBeGreaterThan(0);
-    expect(result.synthCompleteCount[0]).toBeGreaterThan(0);
-    expect(result.synthCompleteCount[1]).toBeGreaterThan(0);
     expect(result.synthFragmentCount[0]).toBeGreaterThan(0);
     expect(result.synthFragmentCount[1]).toBeGreaterThan(0);
     expect(result.synthByteCount[0]).toBeGreaterThan(0);
@@ -439,8 +442,8 @@ test("Continuous: remove non-primary with synthesis - primary synthesis uninterr
 
     expect(result.recognizedCount[0]).toBeGreaterThan(0);
     expect(result.recognizedCount[1]).toBeGreaterThan(0);
-    expect(result.synthCompleteCount[0]).toBeGreaterThan(0);
-    expect(result.synthCompleteCount[1]).toBeGreaterThan(0);
+    expect(result.synthFragmentCount[0]).toBeGreaterThan(0);
+    expect(result.synthFragmentCount[1]).toBeGreaterThan(0);
     expect(result.synthByteCount[0]).toBeGreaterThan(0);
     expect(result.synthByteCount[1]).toBeGreaterThan(0);
 }, 90000);
@@ -465,8 +468,8 @@ test("Continuous: add language mid-turn with synthesis - synthesis continues", a
 
     expect(result.recognizedCount[0]).toBeGreaterThan(0);
     expect(result.recognizedCount[1]).toBeGreaterThan(0);
-    expect(result.synthCompleteCount[0]).toBeGreaterThan(0);
-    expect(result.synthCompleteCount[1]).toBeGreaterThan(0);
+    expect(result.synthFragmentCount[0]).toBeGreaterThan(0);
+    expect(result.synthFragmentCount[1]).toBeGreaterThan(0);
     expect(result.synthByteCount[0]).toBeGreaterThan(0);
     expect(result.synthByteCount[1]).toBeGreaterThan(0);
 }, 90000);
@@ -500,7 +503,6 @@ test("Continuous: full lifecycle add then remove primary then re-add - synthesis
 
     for (let i: number = 0; i < 4; i++) {
         expect(result.recognizedCount[i]).toBeGreaterThan(0);
-        expect(result.synthCompleteCount[i]).toBeGreaterThan(0);
         expect(result.synthFragmentCount[i]).toBeGreaterThan(0);
         expect(result.synthByteCount[i]).toBeGreaterThan(0);
     }
