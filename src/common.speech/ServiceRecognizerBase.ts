@@ -51,6 +51,7 @@ import { RecognizerConfig } from "./RecognizerConfig.js";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 import { Segmentation, SegmentationMode } from "./ServiceMessages/PhraseDetection/Segmentation.js";
 import { CustomLanguageMappingEntry, PhraseDetectionContext, RecognitionMode, SpeechStartEventSensitivity } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
+import { ProfanityHandlingMode } from "./ServiceMessages/PhraseDetection/Enrichment.js";
 import { NextAction as NextTranslationAction } from "./ServiceMessages/Translation/OnSuccess.js";
 import { Mode } from "./ServiceMessages/Translation/InterimResults.js";
 import { LanguageIdDetectionMode, LanguageIdDetectionPriority } from "./ServiceMessages/LanguageId/LanguageIdContext.js";
@@ -357,10 +358,25 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     protected setPostProcessingOptionJson(): void {
         const postProcessingOption: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_PostProcessingOption, undefined);
-        if (postProcessingOption !== undefined) {
-            const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
-            phraseDetection.enrichment = phraseDetection.enrichment || {};
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+        phraseDetection.enrichment = phraseDetection.enrichment || {};
 
+        // Clear stale postprocessing fields for the current mode before applying new value.
+        // This prevents leftover fields when switching between truetext/non-truetext/absent across turns.
+        const modeObj = this.recognitionMode === RecognitionMode.Conversation
+            ? phraseDetection.enrichment.conversation
+            : this.recognitionMode === RecognitionMode.Interactive
+                ? phraseDetection.enrichment.interactive
+                : phraseDetection.enrichment.dictation;
+        if (modeObj) {
+            delete modeObj.postprocessingoption;
+            delete modeObj.punctuationMode;
+            delete modeObj.disfluencyMode;
+            delete modeObj.intermediatePunctuationMode;
+            delete (modeObj as Record<string, unknown>).intermediatedisfluencymode;
+        }
+
+        if (postProcessingOption !== undefined) {
             if (postProcessingOption.toLowerCase() === "truetext") {
                 // Client-side expansion for "truetext" - set specific properties
                 switch (this.recognitionMode) {
@@ -386,11 +402,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         (phraseDetection.enrichment.dictation as Record<string, unknown>).intermediatedisfluencymode = DisfluencyMode.Removed;
                         break;
                 }
-                // Don't set postprocessingoption - we've expanded "truetext" into specific settings
             } else {
                 // Service-side handling for all other strings
-                // Pass the developer-provided value directly to the service.
-                // Input validation is handled on the service side.
                 switch (this.recognitionMode) {
                     case RecognitionMode.Conversation:
                         phraseDetection.enrichment.conversation = phraseDetection.enrichment.conversation || {};
@@ -406,9 +419,86 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         break;
                 }
             }
-
-            this.privSpeechContext.getContext().phraseDetection = phraseDetection;
         }
+
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+    }
+
+    protected setLanguageJson(): void {
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+
+        if (this.privRecognizerConfig.autoDetectSourceLanguages !== undefined) {
+            // Auto-detect is configured — language is managed by the language ID subsystem, clear any stale value
+            delete phraseDetection.language;
+        } else {
+            const language: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, undefined);
+            if (language !== undefined) {
+                phraseDetection.language = language;
+            } else {
+                delete phraseDetection.language;
+            }
+        }
+
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+    }
+
+    protected setInitialSilenceTimeoutJson(): void {
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+        const value: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, undefined);
+
+        if (value !== undefined) {
+            phraseDetection.initialSilenceTimeout = parseInt(value, 10);
+        } else {
+            delete phraseDetection.initialSilenceTimeout;
+        }
+
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+    }
+
+    protected setEndSilenceTimeoutJson(): void {
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+        const value: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, undefined);
+
+        if (value !== undefined) {
+            phraseDetection.trailingSilenceTimeout = parseInt(value, 10);
+        } else {
+            delete phraseDetection.trailingSilenceTimeout;
+        }
+
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+    }
+
+    protected setProfanityOptionJson(): void {
+        const phraseDetection: PhraseDetectionContext = this.privSpeechContext.getContext().phraseDetection || {};
+        const value: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_ProfanityOption, undefined);
+
+        if (value !== undefined) {
+            phraseDetection.enrichment = phraseDetection.enrichment || {};
+            phraseDetection.enrichment.profanity = value as ProfanityHandlingMode;
+        } else {
+            if (phraseDetection.enrichment) {
+                delete phraseDetection.enrichment.profanity;
+            }
+        }
+
+        this.privSpeechContext.getContext().phraseDetection = phraseDetection;
+    }
+
+    protected setStableIntermediateThresholdJson(): void {
+        const value: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_StablePartialResultThreshold, undefined);
+        // Deep-merge into existing phraseOutput — setLanguageIdJson may have already initialized it
+        const phraseOutput = this.privSpeechContext.getContext().phraseOutput || {};
+
+        if (value !== undefined) {
+            phraseOutput.interimResults = phraseOutput.interimResults || {};
+            phraseOutput.interimResults.stableThreshold = parseInt(value, 10);
+        } else {
+            if (phraseOutput.interimResults) {
+                delete phraseOutput.interimResults.stableThreshold;
+            }
+        }
+
+        this.privSpeechContext.getContext().phraseOutput = phraseOutput;
     }
 
     public get isSpeakerDiarizationEnabled(): boolean {
@@ -502,10 +592,15 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             this.setupTranslationWithLanguageId();
         }
 
+        this.setLanguageJson();
+        this.setInitialSilenceTimeoutJson();
+        this.setEndSilenceTimeoutJson();
         this.setSpeechSegmentationTimeoutJson();
         this.setOutputDetailLevelJson();
         this.setSpeechStartEventSensitivityJson();
+        this.setProfanityOptionJson();
         this.setPostProcessingOptionJson();
+        this.setStableIntermediateThresholdJson();
 
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallBack;
