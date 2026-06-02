@@ -27,7 +27,8 @@ module.exports = {
                 "(.+)\\.js": "$1"
             },
             transform: {
-                "^.+\\.ts$": ["ts-jest", {
+                "^.+\\.[tj]s$": ["ts-jest", {
+                    tsconfig: "tsconfig.jest.json",
                     // Match source map configuration with project's tsconfig and gulp build
                     sourceMap: true, 
                     inlineSourceMap: false,
@@ -39,6 +40,7 @@ module.exports = {
             },
             testRegex: "tests/.*Tests\\.ts$",
             testPathIgnorePatterns: ["/lib/", "/node_modules/", "/src/"],
+            transformIgnorePatterns: ["/node_modules/(?!(uuid)/)"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "jsdom",
             collectCoverage: false,
@@ -47,7 +49,7 @@ module.exports = {
             globals: {
                 'ts-jest': {
                     // Ensure ts-jest respects the project's tsconfig settings
-                    tsconfig: 'tsconfig.json',
+                    tsconfig: 'tsconfig.jest.json',
                     diagnostics: {
                         // Improve error reporting
                         warnOnly: true,
@@ -62,7 +64,8 @@ module.exports = {
                 "(.+)\\.js": "$1"
             },
             transform: {
-                "^.+\\.ts$": ["ts-jest", {
+                "^.+\\.[tj]s$": ["ts-jest", {
+                    tsconfig: "tsconfig.jest.json",
                     // Match source map configuration with project's tsconfig and gulp build
                     sourceMap: true, 
                     inlineSourceMap: false,
@@ -74,6 +77,7 @@ module.exports = {
             },
             testRegex: "tests/.*Tests\\.ts$",
             testPathIgnorePatterns: ["/lib/", "/node_modules/", "/src/"],
+            transformIgnorePatterns: ["/node_modules/(?!(uuid)/)"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "node",
             collectCoverage: false,
@@ -82,7 +86,7 @@ module.exports = {
             globals: {
                 'ts-jest': {
                     // Ensure ts-jest respects the project's tsconfig settings
-                    tsconfig: 'tsconfig.json',
+                    tsconfig: 'tsconfig.jest.json',
                     diagnostics: {
                         // Improve error reporting
                         warnOnly: true,
