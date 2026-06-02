@@ -22,7 +22,7 @@ export enum ResultReason {
 
     /**
      * Indicates the speech result contains hypothesis text.
-     * @member ResultReason.RecognizedSpeech
+     * @member ResultReason.RecognizingSpeech
      */
     RecognizingSpeech,
 
