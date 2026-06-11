@@ -75,17 +75,21 @@ const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTrans
     return s;
 };
 
-// Derives the translation endpoint from the configured unified speech subscription. The translation
-// recognizer connects over the universal v2 STT route, which is exactly what the unified subscription
-// endpoint points at (carrying the resource's custom-domain name so the service can validate the AAD
-// token against the correct resource), so we can use it as-is for Entra ID token authentication.
+// Derives the translation endpoint from the configured Entra ID speech subscription. The translation
+// recognizer connects over the universal v2 STT route, which is exactly what the subscription endpoint
+// points at (carrying the resource's custom-domain name so the service can validate the AAD token against
+// the correct resource), so we can use it as-is for Entra ID token authentication. On CI the
+// AADSpeechClientSecret resource is provisioned with the RBAC role the test service principal needs (the
+// same entry the STT Entra ID tests use), so we prefer it and fall back to the unified speech subscription
+// for local runs that only have the unified entry configured.
 const BuildEntraIdTokenCredentialEndpoint: () => URL = (): URL => {
     const configLoader: ConfigLoader = ConfigLoader.instance;
     configLoader.initialize();
-    const sub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
+    const aad = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.AAD_SPEECH_CLIENT_SECRET);
+    const sub = (aad && aad.Endpoint) ? aad : configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
     const configured: string = (sub && sub.Endpoint) || Settings.SpeechEndpoint;
     if (!configured) {
-        throw new Error("No endpoint configured for the unified speech subscription.");
+        throw new Error("No endpoint configured for the Entra ID speech subscription.");
     }
     return new URL(configured);
 };

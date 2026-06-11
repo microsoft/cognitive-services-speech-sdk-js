@@ -69,18 +69,30 @@ const BuildSpeechConfig: (connectionType?: SpeechConnectionType) => Promise<sdk.
     return s;
 };
 
-// Derives a token-credential friendly TTS endpoint from the configured unified speech subscription.
+// Resolves the subscription entry used for Entra ID (AAD) token-credential tests. On CI the
+// AADSpeechClientSecret resource is provisioned with the RBAC role the test service principal needs
+// (this is the same entry the STT Entra ID tests use), so we prefer it and fall back to the unified
+// speech subscription for local runs that only have the unified entry configured.
+const ResolveEntraIdSubscriptionRegion = () => {
+    const configLoader: ConfigLoader = ConfigLoader.instance;
+    configLoader.initialize();
+    const aad = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.AAD_SPEECH_CLIENT_SECRET);
+    if (aad && aad.Endpoint) {
+        return aad;
+    }
+    return configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
+};
+
+// Derives a token-credential friendly TTS endpoint from the configured Entra ID speech subscription.
 // The configured endpoint points at the STT universal route (and host), which cannot serve TTS, so we
 // reduce it to the resource's custom-domain host with no path. The synthesis connection factory then
 // appends the TTS websocket route and the REST adapter appends the voices route, both of which work with
 // Entra ID (AAD) token authentication.
 const BuildEntraIdTokenCredentialEndpoint: () => URL = (): URL => {
-    const configLoader: ConfigLoader = ConfigLoader.instance;
-    configLoader.initialize();
-    const sub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
+    const sub = ResolveEntraIdSubscriptionRegion();
     const configured: string = (sub && sub.Endpoint) || Settings.SpeechEndpoint;
     if (!configured) {
-        throw new Error("No endpoint configured for the unified speech subscription.");
+        throw new Error("No endpoint configured for the Entra ID speech subscription.");
     }
 
     const url: URL = new URL(configured);
@@ -96,12 +108,10 @@ const BuildEntraIdTokenCredentialEndpoint: () => URL = (): URL => {
 // TTS host with the v2 route and carry the resource's custom-domain name so the service can validate the
 // AAD token against the correct resource.
 const BuildEntraIdTokenCredentialV2Endpoint: () => URL = (): URL => {
-    const configLoader: ConfigLoader = ConfigLoader.instance;
-    configLoader.initialize();
-    const sub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
+    const sub = ResolveEntraIdSubscriptionRegion();
     const configured: string = (sub && sub.Endpoint) || Settings.SpeechEndpoint;
     if (!configured) {
-        throw new Error("No endpoint configured for the unified speech subscription.");
+        throw new Error("No endpoint configured for the Entra ID speech subscription.");
     }
 
     const url: URL = new URL(configured);
