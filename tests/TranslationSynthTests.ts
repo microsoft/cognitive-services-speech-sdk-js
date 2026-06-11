@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { DefaultAzureCredential } from "@azure/identity";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener,
@@ -11,7 +12,9 @@ import {
 } from "../src/common/Exports";
 
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
+import { ConfigLoader } from "./ConfigLoader";
 import { Settings } from "./Settings";
+import { SubscriptionsRegionsKeys } from "./SubscriptionRegion";
 import {
     closeAsyncObjects,
     WaitForCondition
@@ -68,6 +71,30 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) 
 
 const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    expect(s).not.toBeUndefined();
+    return s;
+};
+
+// Derives the translation endpoint from the configured unified speech subscription. The translation
+// recognizer connects over the universal v2 STT route, which is exactly what the unified subscription
+// endpoint points at (carrying the resource's custom-domain name so the service can validate the AAD
+// token against the correct resource), so we can use it as-is for Entra ID token authentication.
+const BuildEntraIdTokenCredentialEndpoint: () => URL = (): URL => {
+    const configLoader: ConfigLoader = ConfigLoader.instance;
+    configLoader.initialize();
+    const sub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
+    const configured: string = (sub && sub.Endpoint) || Settings.SpeechEndpoint;
+    if (!configured) {
+        throw new Error("No endpoint configured for the unified speech subscription.");
+    }
+    return new URL(configured);
+};
+
+// Builds a SpeechTranslationConfig that authenticates with an Entra ID (AAD) TokenCredential
+// instead of a subscription key. Requires an Entra ID enabled Speech resource.
+const BuildSpeechConfigWithTokenCredential: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
+    const credential: DefaultAzureCredential = new DefaultAzureCredential();
+    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(BuildEntraIdTokenCredentialEndpoint(), credential);
     expect(s).not.toBeUndefined();
     return s;
 };
@@ -193,6 +220,76 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback): void => {
                     expect(speech.text).toEqual("Wie ist das Wetter?");
                     done();
                 }, (error: string) => done(error));
+            }, (error: string) => done(error));
+        });
+}, 10000);
+
+// Requires an Entra ID (AAD) enabled Speech resource and ambient Azure credentials
+// (e.g. Azure CLI login, or AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET).
+test("TranslateVoiceWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
+    // eslint-disable-next-line no-console
+    console.info("Name: TranslateVoiceWithEntraIdTokenCredential");
+    const s: sdk.SpeechTranslationConfig = BuildSpeechConfigWithTokenCredential();
+    objsToClose.push(s);
+
+    s.voiceName = "de-DE-KatjaNeural";
+
+    const r: sdk.TranslationRecognizer = BuildRecognizerFromWaveFile(s);
+    objsToClose.push(r);
+
+    let synthCount: number = 0;
+    let synthFragmentCount: number = 0;
+
+    r.synthesizing = ((o: sdk.Recognizer, e: sdk.TranslationSynthesisEventArgs): void => {
+        switch (e.result.reason) {
+            case sdk.ResultReason.Canceled:
+                done(sdk.ResultReason[e.result.reason]);
+                break;
+            case sdk.ResultReason.SynthesizingAudio:
+                expect(e.result.audio).not.toBeUndefined();
+                expect(e.result.audio.byteLength).toBeGreaterThan(0);
+                synthFragmentCount++;
+                break;
+            case sdk.ResultReason.SynthesizingAudioCompleted:
+                synthCount++;
+                break;
+        }
+    });
+
+    let canceled: boolean = false;
+    let inTurn: boolean = false;
+
+    r.canceled = ((o: sdk.Recognizer, e: sdk.TranslationRecognitionCanceledEventArgs): void => {
+        try {
+            switch (e.reason) {
+                case sdk.CancellationReason.Error:
+                    done(e.errorDetails);
+                    break;
+                case sdk.CancellationReason.EndOfStream:
+                    expect(synthCount).toEqual(1);
+                    expect(synthFragmentCount).toBeGreaterThan(0);
+                    canceled = true;
+                    break;
+            }
+        } catch (error) {
+            done(error);
+        }
+    });
+
+    r.sessionStarted = ((o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        inTurn = true;
+    });
+
+    r.sessionStopped = ((o: sdk.Recognizer, e: sdk.SessionEventArgs): void => {
+        inTurn = false;
+    });
+
+    r.startContinuousRecognitionAsync();
+
+    WaitForCondition((): boolean => (canceled && !inTurn),
+        (): void => {
+            r.stopContinuousRecognitionAsync((): void => {
+                done();
             }, (error: string) => done(error));
         });
 }, 10000);
