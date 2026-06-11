@@ -14,6 +14,8 @@ import {
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { ConfigLoader } from "./ConfigLoader";
 import { Settings } from "./Settings";
+import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
+import { SpeechConnectionType } from "./SpeechConnectionTypes";
 import { SubscriptionsRegionsKeys } from "./SubscriptionRegion";
 import {
     closeAsyncObjects,
@@ -39,6 +41,13 @@ beforeEach((): void => {
 });
 
 jest.retryTimes(Settings.RetryCount);
+
+// Entra ID (AAD) token-credential tests require an AAD-enabled Speech resource and an environment where a
+// managed identity / service principal can be resolved (e.g. the connection-test pipeline that also sets up
+// the right managed identity). They are gated through the exact same runConnectionTest helper the STT
+// connection tests use, so they are skipped on normal CI runs (where DefaultAzureCredential cannot resolve a
+// single identity) and only execute in the dedicated connection-test pipeline.
+const EntraIdTokenCredentialTest: jest.It = SpeechConfigConnectionFactory.runConnectionTest(SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth);
 
 afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
@@ -230,7 +239,9 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback): void => {
 
 // Requires an Entra ID (AAD) enabled Speech resource and ambient Azure credentials
 // (e.g. Azure CLI login, or AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET).
-test("TranslateVoiceWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
+describe("Translation Synthesis Token Credential Connection Tests", (): void => {
+
+EntraIdTokenCredentialTest("TranslateVoiceWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: TranslateVoiceWithEntraIdTokenCredential");
     const s: sdk.SpeechTranslationConfig = BuildSpeechConfigWithTokenCredential();
@@ -297,6 +308,8 @@ test("TranslateVoiceWithEntraIdTokenCredential", (done: jest.DoneCallback): void
             }, (error: string) => done(error));
         });
 }, 10000);
+
+});
 
 test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console

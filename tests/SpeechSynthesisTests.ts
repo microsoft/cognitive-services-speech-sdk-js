@@ -45,6 +45,13 @@ beforeEach((): void => {
 
 jest.retryTimes(Settings.RetryCount);
 
+// Entra ID (AAD) token-credential tests require an AAD-enabled Speech resource and an environment where a
+// managed identity / service principal can be resolved (e.g. the connection-test pipeline that also sets up
+// the right managed identity). They are gated through the exact same runConnectionTest helper the STT
+// connection tests use, so they are skipped on normal CI runs (where DefaultAzureCredential cannot resolve a
+// single identity) and only execute in the dedicated connection-test pipeline.
+const EntraIdTokenCredentialTest: jest.It = SpeechConfigConnectionFactory.runConnectionTest(SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth);
+
 afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
@@ -499,7 +506,7 @@ describe("Service based tests", (): void => {
         SpeechConnectionType.Subscription,
         SpeechConnectionType.CloudFromEndpointWithKeyAuth,
         SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
-        // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
+        SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,
         SpeechConnectionType.LegacyEntraIdTokenAuth,
         SpeechConnectionType.CloudFromHost,
@@ -1401,9 +1408,11 @@ describe("Service based tests", (): void => {
         });
     });
 
+    describe("Speech Synthesis Token Credential Connection Tests", (): void => {
+
     // Requires an Entra ID (AAD) enabled Speech resource and ambient Azure credentials
     // (e.g. AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET).
-    test("testSpeechSynthesizerWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
+    EntraIdTokenCredentialTest("testSpeechSynthesizerWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerWithEntraIdTokenCredential");
 
@@ -1430,7 +1439,7 @@ describe("Service based tests", (): void => {
     // The getVoicesAsync REST call resolves the service redirect for custom-domain / private-link hosts
     // (matching the websocket synthesis path), so the regional voices/list route is reached with the
     // ocp-apim-custom-domain-name parameter required for AAD token auth.
-    test("testGetVoicesAsyncWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
+    EntraIdTokenCredentialTest("testGetVoicesAsyncWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testGetVoicesAsyncWithEntraIdTokenCredential");
 
@@ -1456,7 +1465,7 @@ describe("Service based tests", (): void => {
 
     // Streams synthesized audio to a PullAudioOutputStream while authenticating with an Entra ID token credential.
     // Requires an Entra ID (AAD) enabled Speech resource and ambient Azure credentials.
-    test("testSpeechSynthesizerPullStreamWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
+    EntraIdTokenCredentialTest("testSpeechSynthesizerPullStreamWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerPullStreamWithEntraIdTokenCredential");
 
@@ -1488,7 +1497,7 @@ describe("Service based tests", (): void => {
     // Text streaming requires the universal v2 synthesis route. The synthesis connection factory only rewrites
     // the path to /tts/cognitiveservices/websocket/v1 when no path is supplied, so we provide a fully-formed v2
     // endpoint (regional TTS host + v2 route + custom-domain name) which the factory uses as-is.
-    test("testSpeechSynthesizerTextStreamingWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
+    EntraIdTokenCredentialTest("testSpeechSynthesizerTextStreamingWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerTextStreamingWithEntraIdTokenCredential");
 
@@ -1526,6 +1535,8 @@ describe("Service based tests", (): void => {
             stream.close();
         }, 300);
     }, 30000);
+
+    });
 
     test("test Speech Synthesizer: Language Auto Detection", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
