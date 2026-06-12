@@ -6,8 +6,7 @@
 import * as http from "http";
 import * as net from "net";
 import * as tls from "tls";
-import Agent from "agent-base";
-import HttpsProxyAgent from "https-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
 import ws from "ws";
 import { HeaderNames } from "../common.speech/HeaderNames.js";
@@ -40,6 +39,25 @@ interface ISendItem {
     RawWebsocketMessage: RawWebsocketMessage;
     sendStatusDeferral: Deferred<void>;
 }
+
+type WebsocketAgentConnectParameters = Parameters<HttpsProxyAgent<string>["connect"]>;
+type WebsocketAgentConnectOptions = WebsocketAgentConnectParameters[1] & tls.ConnectionOptions & net.TcpNetConnectOpts & {
+    requestOCSP?: boolean;
+    secureEndpoint?: boolean;
+};
+type DirectWebsocketAgent = http.Agent & {
+    createConnection: (options: WebsocketAgentConnectParameters[1]) => net.Socket;
+};
+
+type WebsocketAgent = ws.ClientOptions["agent"] & {
+    protocol?: string;
+};
+
+const addOcspOptions = (options: WebsocketAgentConnectParameters[1]): WebsocketAgentConnectOptions => ({
+    ...options,
+    requestOCSP: true,
+    servername: options.host,
+} as WebsocketAgentConnectOptions);
 
 export class WebsocketMessageAdapter {
     private privConnectionState: ConnectionState;
@@ -136,10 +154,9 @@ export class WebsocketMessageAdapter {
                 // The ocsp library will handle validation for us and fail the connection if needed.
                 this.privCertificateValidatedDeferral.resolve();
 
-                options.agent = this.getAgent();
-
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                (options.agent as any).protocol = protocol;
+                const agent: WebsocketAgent = this.getAgent(protocol);
+                agent.protocol = protocol;
+                options.agent = agent;
                 this.privWebsocketClient = new ws(this.privUri, options);
                 this.privWebsocketClient.on("redirect", (redirectUrl: string): void => {
                     const event: ConnectionRedirectEvent = new ConnectionRedirectEvent(this.privConnectionId, redirectUrl, this.privUri, `Getting redirect URL from endpoint ${this.privUri} with redirect URL '${redirectUrl}'`);
@@ -336,73 +353,42 @@ export class WebsocketMessageAdapter {
         Events.instance.onEvent(event);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private getAgent(): http.Agent {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        const agent: { proxyInfo: ProxyInfo } = new Agent.Agent(this.createConnection) as unknown as { proxyInfo: ProxyInfo };
-
+    private getAgent(protocol: string): WebsocketAgent {
         if (this.proxyInfo !== undefined &&
             this.proxyInfo.HostName !== undefined &&
             this.proxyInfo.Port > 0) {
-            agent.proxyInfo = this.proxyInfo;
+            return WebsocketMessageAdapter.GetProxyAgent(this.proxyInfo);
         }
 
-        return agent as unknown as http.Agent;
-    }
-
-    private static GetProxyAgent(proxyInfo: ProxyInfo): HttpsProxyAgent {
-        const httpProxyOptions: HttpsProxyAgent.HttpsProxyAgentOptions = {
-            host: proxyInfo.HostName,
-            port: proxyInfo.Port,
-        };
-
-        if (!!proxyInfo.UserName) {
-            httpProxyOptions.headers = {
-                "Proxy-Authentication": "Basic " + Buffer.from(`${proxyInfo.UserName}:${(proxyInfo.Password === undefined) ? "" : proxyInfo.Password}`).toString("base64"),
-            };
-        } else {
-            httpProxyOptions.headers = {};
-        }
-
-        httpProxyOptions.headers.requestOCSP = "true";
-
-        const httpProxyAgent: HttpsProxyAgent = new HttpsProxyAgent(httpProxyOptions);
-        return httpProxyAgent;
-    }
-
-    private createConnection(request: Agent.ClientRequest, options: Agent.RequestOptions): Promise<net.Socket> {
-        let socketPromise: Promise<net.Socket>;
-
-        options = {
-            ...options,
-            ...{
-                requestOCSP: true,
-                servername: options.host
-            }
-        };
-
-        if (!!this.proxyInfo) {
-            const httpProxyAgent: HttpsProxyAgent = WebsocketMessageAdapter.GetProxyAgent(this.proxyInfo);
-            const baseAgent: Agent.Agent = httpProxyAgent as unknown as Agent.Agent;
-
-            socketPromise = new Promise<net.Socket>((resolve: (value: net.Socket) => void, reject: (error: string | Error) => void): void => {
-                baseAgent.callback(request, options, (error: Error, socket: net.Socket): void => {
-                    if (!!error) {
-                        reject(error);
-                    } else {
-                        resolve(socket);
-                    }
-                });
+        const agent: DirectWebsocketAgent = new http.Agent() as DirectWebsocketAgent;
+        agent.createConnection = (options: WebsocketAgentConnectParameters[1]): net.Socket => {
+            const secureEndpoint = (options as WebsocketAgentConnectOptions).secureEndpoint ?? protocol.toLocaleLowerCase() === "https:";
+            const socketOptions: WebsocketAgentConnectOptions = addOcspOptions({
+                ...options,
+                secureEndpoint,
             });
-        } else {
-            if (!!options.secureEndpoint) {
-                socketPromise = Promise.resolve(tls.connect(options));
-            } else {
-                socketPromise = Promise.resolve(net.connect(options));
-            }
+            return socketOptions.secureEndpoint ? tls.connect(socketOptions) : net.connect(socketOptions);
+        };
+
+        return agent;
+    }
+
+    private static GetProxyAgent(proxyInfo: ProxyInfo): WebsocketAgent {
+        const proxyUrl: URL = new URL(`http://${proxyInfo.HostName}:${proxyInfo.Port}`);
+        if (!!proxyInfo.UserName) {
+            const proxyPassword: string = proxyInfo.Password === undefined ? "" : proxyInfo.Password;
+            proxyUrl.username = proxyInfo.UserName;
+            proxyUrl.password = proxyPassword;
         }
 
-        return socketPromise;
+        // https-proxy-agent handles Proxy-Authorization natively from URL credentials.
+        // OCSP stapling is configured via addOcspOptions on the socket options below.
+        const proxyAgent: HttpsProxyAgent<string> = new HttpsProxyAgent(proxyUrl.toString());
+        const connect = proxyAgent.connect.bind(proxyAgent) as (request: WebsocketAgentConnectParameters[0], options: WebsocketAgentConnectOptions) => Promise<net.Socket>;
+        proxyAgent.connect = (request: WebsocketAgentConnectParameters[0], options: WebsocketAgentConnectParameters[1]): Promise<net.Socket> =>
+            connect(request, addOcspOptions(options));
+
+        return proxyAgent as unknown as WebsocketAgent;
     }
 
     private get isWebsocketOpen(): boolean {
