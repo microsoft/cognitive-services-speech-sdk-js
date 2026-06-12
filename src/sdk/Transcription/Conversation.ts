@@ -34,7 +34,6 @@ import {
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
-    ConversationTranslator,
     Participant,
     ParticipantChangedReason,
     ProfanityOption,
@@ -43,6 +42,7 @@ import {
     SpeechTranslationConfig,
 } from "../Exports.js";
 import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig.js";
+import { IConversationServiceHandler } from "./ConversationHandler.js";
 import { Callback, ConversationInfo, ConversationProperties, IConversation } from "./IConversation.js";
 import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant.js";
 
@@ -149,6 +149,11 @@ export abstract class Conversation implements IConversation {
     public abstract unmuteParticipantAsync(userId: string, cb?: Callback, err?: Callback): void;
 }
 
+// Internal handler contract used by ConversationImpl to forward session/participant events and auth tokens to a registered handler.
+interface IConversationServiceHandlerInternal extends IConversationServiceHandler, IDisposable {
+    onToken(token: IAuthentication): void;
+}
+
 export class ConversationImpl extends Conversation implements IDisposable {
 
     private privConfig: SpeechTranslationConfig;
@@ -162,7 +167,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private privIsConnected: boolean;
     private privParticipants: InternalParticipants;
     private privIsReady: boolean;
-    private privConversationTranslator: ConversationTranslator;
+    private privConversationTranslator: IConversationServiceHandlerInternal;
     private privTranscriberRecognizer: TranscriberRecognizer;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
     private privConversationId: string;
@@ -320,10 +325,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
         this.privToken = value;
     }
 
-    public set conversationTranslator(conversationTranslator: ConversationTranslator) {
-        this.privConversationTranslator = conversationTranslator;
-    }
-
     public onToken(token: IAuthentication): void {
         this.privConversationTranslator.onToken(token);
     }
@@ -371,7 +372,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
             this.privParticipants.meId = this.privRoom.participantId;
             this.privConversationRecognizer = ConversationRecognizerFactory.fromConfig(this, this.privConfig);
 
-            // Because ConversationTranslator manually sets up and manages the connection, Conversation
+            // Because the conversation recognizer sets up and manages the connection manually, the conversation
             // has to forward serviceRecognizer connection events that usually get passed automatically
             this.privConversationRecognizer.connected = this.onConnected;
             this.privConversationRecognizer.disconnected = this.onDisconnected;
