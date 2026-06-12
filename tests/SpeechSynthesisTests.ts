@@ -109,11 +109,9 @@ const BuildEntraIdTokenCredentialEndpoint: () => URL = (): URL => {
 };
 
 // Derives a fully-formed v2 TTS websocket endpoint for Entra ID (AAD) token authentication.
-// Text input streaming requires the universal v2 synthesis route. The synthesis connection factory only
-// rewrites the path to /tts/cognitiveservices/websocket/v1 (and resolves a redirect) when the supplied
-// endpoint has no path; when a full v2 path is provided it is used as-is. We therefore build the regional
-// TTS host with the v2 route and carry the resource's custom-domain name so the service can validate the
-// AAD token against the correct resource.
+// Text input streaming requires the universal v2 synthesis route. Like BuildEntraIdTokenCredentialEndpoint,
+// we reduce the configured endpoint to its custom-domain host (which AAD validates the token against) and
+// then point it at the v2 websocket route, which text input streaming requires.
 const BuildEntraIdTokenCredentialV2Endpoint: () => URL = (): URL => {
     const sub = ResolveEntraIdSubscriptionRegion();
     const configured: string = (sub && sub.Endpoint) || Settings.SpeechEndpoint;
@@ -123,13 +121,8 @@ const BuildEntraIdTokenCredentialV2Endpoint: () => URL = (): URL => {
 
     const url: URL = new URL(configured);
     const customDomain: string = url.searchParams.get("ocp-apim-custom-domain-name");
-    const region: string = (sub && sub.Region) || url.hostname.split(".")[0];
-    const ttsHost: string = `${region}.tts.speech.microsoft.com`;
-    const v2: URL = new URL(`wss://${ttsHost}/cognitiveservices/websocket/v2`);
-    if (customDomain) {
-        v2.searchParams.set("Ocp-Apim-Custom-Domain-Name", customDomain);
-    }
-    return v2;
+    const host: string = customDomain || url.hostname;
+    return new URL(`wss://${host}/cognitiveservices/websocket/v2`);
 };
 
 const CheckSynthesisResult: (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason) =>
