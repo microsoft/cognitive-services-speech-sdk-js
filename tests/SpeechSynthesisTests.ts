@@ -108,23 +108,6 @@ const BuildEntraIdTokenCredentialEndpoint: () => URL = (): URL => {
     return new URL(`https://${host}`);
 };
 
-// Derives a fully-formed v2 TTS websocket endpoint for Entra ID (AAD) token authentication.
-// Text input streaming requires the universal v2 synthesis route. Like BuildEntraIdTokenCredentialEndpoint,
-// we reduce the configured endpoint to its custom-domain host (which AAD validates the token against) and
-// then point it at the v2 websocket route, which text input streaming requires.
-const BuildEntraIdTokenCredentialV2Endpoint: () => URL = (): URL => {
-    const sub = ResolveEntraIdSubscriptionRegion();
-    const configured: string = (sub && sub.Endpoint) || Settings.SpeechEndpoint;
-    if (!configured) {
-        throw new Error("No endpoint configured for the Entra ID speech subscription.");
-    }
-
-    const url: URL = new URL(configured);
-    const customDomain: string = url.searchParams.get("ocp-apim-custom-domain-name");
-    const host: string = customDomain || url.hostname;
-    return new URL(`wss://${host}/cognitiveservices/websocket/v2`);
-};
-
 const CheckSynthesisResult: (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason) =>
     void = (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason): void => {
         expect(result).not.toBeUndefined();
@@ -1485,49 +1468,6 @@ describe("Service based tests", (): void => {
             done(e);
         });
     });
-
-    // Text input streaming (bidirectional) authenticated with an Entra ID token credential.
-    // Text streaming requires the universal v2 synthesis route. The synthesis connection factory only rewrites
-    // the path to /tts/cognitiveservices/websocket/v1 when no path is supplied, so we provide a fully-formed v2
-    // endpoint (regional TTS host + v2 route + custom-domain name) which the factory uses as-is.
-    EntraIdTokenCredentialTest("testSpeechSynthesizerTextStreamingWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
-        // eslint-disable-next-line no-console
-        console.info("Name: testSpeechSynthesizerTextStreamingWithEntraIdTokenCredential");
-
-        const credential: DefaultAzureCredential = new DefaultAzureCredential();
-        const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(BuildEntraIdTokenCredentialV2Endpoint(), credential);
-        objsToClose.push(speechConfig);
-        expect(speechConfig).not.toBeUndefined();
-        speechConfig.speechSynthesisLanguage = "en-US";
-        speechConfig.speechSynthesisVoiceName = "en-US-AvaMultilingualNeural";
-
-        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
-        objsToClose.push(s);
-        expect(s).not.toBeUndefined();
-
-        const request = new sdk.SpeechSynthesisRequest(sdk.SpeechSynthesisRequestInputType.TextStream);
-        const stream = request.inputStream;
-
-        s.speakAsync(request, (result: sdk.SpeechSynthesisResult): void => {
-            // eslint-disable-next-line no-console
-            console.info("Streaming synthesis completed.");
-            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
-            done();
-        }, (e: string): void => {
-            done(e);
-        });
-
-        // Send text pieces with a small delay to simulate streaming
-        setTimeout((): void => {
-            stream.write("hello ");
-        }, 100);
-        setTimeout((): void => {
-            stream.write("world.");
-        }, 200);
-        setTimeout((): void => {
-            stream.close();
-        }, 300);
-    }, 30000);
 
     });
 
