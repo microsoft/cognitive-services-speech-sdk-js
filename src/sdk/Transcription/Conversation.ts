@@ -42,7 +42,7 @@ import {
     SpeechTranslationConfig,
 } from "../Exports.js";
 import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig.js";
-import { IConversationTranslator } from "./ConversationHandler.js";
+import { IConversationServiceHandler } from "./ConversationHandler.js";
 import { Callback, ConversationInfo, ConversationProperties, IConversation } from "./IConversation.js";
 import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant.js";
 
@@ -150,7 +150,7 @@ export abstract class Conversation implements IConversation {
 }
 
 // Internal handler contract used by ConversationImpl to forward session/participant events and auth tokens to a registered handler.
-interface IConversationTranslatorPrivate extends IConversationTranslator, IDisposable {
+interface IConversationServiceHandlerInternal extends IConversationServiceHandler, IDisposable {
     onToken(token: IAuthentication): void;
 }
 
@@ -167,7 +167,7 @@ export class ConversationImpl extends Conversation implements IDisposable {
     private privIsConnected: boolean;
     private privParticipants: InternalParticipants;
     private privIsReady: boolean;
-    private privConversationTranslator: IConversationTranslatorPrivate;
+    private privConversationTranslator: IConversationServiceHandlerInternal;
     private privTranscriberRecognizer: TranscriberRecognizer;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
     private privConversationId: string;
@@ -323,10 +323,6 @@ export class ConversationImpl extends Conversation implements IDisposable {
     public set authorizationToken(value: string) {
         Contracts.throwIfNullOrWhitespace(value, "authorizationToken");
         this.privToken = value;
-    }
-
-    public set conversationTranslator(conversationTranslator: IConversationTranslatorPrivate) {
-        this.privConversationTranslator = conversationTranslator;
     }
 
     public onToken(token: IAuthentication): void {

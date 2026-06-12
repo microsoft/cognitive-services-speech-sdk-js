@@ -39,7 +39,7 @@ import {
     SpeechTranslationConfig,
 } from "../Exports.js";
 import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig.js";
-import { IConversationTranslator } from "./ConversationHandler.js";
+import { IConversationServiceHandler } from "./ConversationHandler.js";
 import { Callback, MeetingInfo, MeetingProperties, IMeeting } from "./IMeeting.js";
 import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant.js";
 
@@ -143,7 +143,7 @@ export class MeetingImpl extends Meeting implements IDisposable {
     private privIsConnected: boolean;
     private privParticipants: InternalParticipants;
     private privIsReady: boolean;
-    private privConversationTranslator: IConversationTranslator & IDisposable;
+    private privConversationTranslator: IConversationServiceHandler & IDisposable;
     private privTranscriberRecognizer: TranscriberRecognizer;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
     private privConversationId: string;
