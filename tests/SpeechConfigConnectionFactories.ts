@@ -110,7 +110,7 @@ export class SpeechConfigConnectionFactory {
 
             case SpeechConnectionType.CloudFromEndpointWithKeyAuth:
                 return this.buildCloudEndpointKeyConfig<T>(isTranslationConfig);
-            
+
             case SpeechConnectionType.CloudFromEndpointWithKeyCredentialAuth:
                 return this.buildCloudEndpointKeyCredentialConfig<T>(isTranslationConfig);
 
@@ -118,7 +118,7 @@ export class SpeechConfigConnectionFactory {
                 return this.buildCloudEndpointConfigWithCogSvcsToken<T>(isTranslationConfig);
 
             case SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth:
-                return this.buildCloudEndpointConfigWithEntraId<T>(isTranslationConfig);
+                return this.buildCloudEndpointConfigWithEntraId<T>(isTranslationConfig, serviceType);
 
             case SpeechConnectionType.ContainerFromHost:
                 return this.buildContainerSpeechConfig<T>(serviceType, isTranslationConfig);
@@ -203,7 +203,7 @@ export class SpeechConfigConnectionFactory {
     /**
      * Gets an Azure AD token for the specified subscription key from the SubscriptionsRegionsMap.
      * Uses the DefaultAzureCredential from @azure/identity to acquire tokens.
-     * 
+     *
      * @param subscriptionKey The key in the SubscriptionsRegionsMap that contains AAD configuration
      * @returns A promise that resolves to the access token
      */
@@ -357,7 +357,10 @@ export class SpeechConfigConnectionFactory {
     /**
      * Builds a cloud endpoint config with Entra ID token authentication.
      */
-    private static buildCloudEndpointConfigWithEntraId<T extends ConfigType>(isTranslationConfig: boolean): T {
+    private static buildCloudEndpointConfigWithEntraId<T extends ConfigType>(
+        isTranslationConfig: boolean,
+        serviceType: SpeechServiceType = SpeechServiceType.SpeechRecognition
+    ): T {
         const subscriptionRegion = this.getSubscriptionRegion(SubscriptionsRegionsKeys.AAD_SPEECH_CLIENT_SECRET);
         const endpoint = subscriptionRegion.Endpoint;
 
@@ -365,8 +368,26 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the AAD subscription");
         }
 
+        // The AAD resource endpoint points at the STT universal route/host, which cannot serve TTS. For
+        // synthesis we reduce it to the resource's custom-domain host (no path) so the SDK can append the
+        // correct TTS route while still validating the Entra ID token against the right resource.
+        const resolvedEndpoint = serviceType === SpeechServiceType.TextToSpeech
+            ? this.deriveTextToSpeechEntraIdEndpoint(endpoint)
+            : endpoint;
+
         const credential = new DefaultAzureCredential();
-        return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
+        return this.buildEndpointWithTokenCredential<T>(credential, resolvedEndpoint, isTranslationConfig);
+    }
+
+    /**
+     * Derives a token-credential friendly TTS endpoint from the configured Entra ID speech endpoint by
+     * reducing it to the resource's custom-domain host with no path.
+     */
+    private static deriveTextToSpeechEntraIdEndpoint(endpoint: string): string {
+        const url = new URL(endpoint);
+        const customDomain = url.searchParams.get("ocp-apim-custom-domain-name");
+        const host = customDomain || url.hostname;
+        return `https://${host}`;
     }
 
     /**
