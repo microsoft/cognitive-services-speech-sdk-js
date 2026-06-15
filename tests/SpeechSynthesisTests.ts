@@ -3,6 +3,7 @@
 /* eslint-disable no-console */
 import * as fs from "fs";
 import bent, { BentResponse } from "bent";
+import { DefaultAzureCredential } from "@azure/identity";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener } from "../src/common.browser/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
@@ -18,6 +19,8 @@ import {
     closeAsyncObjects,
     WaitForCondition
 } from "./Utilities";
+import { ConfigLoader } from "./ConfigLoader";
+import { SubscriptionsRegionsKeys } from "./SubscriptionRegion";
 import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
 import { SpeechServiceType } from "./SpeechServiceTypes";
@@ -42,6 +45,13 @@ beforeEach((): void => {
 
 jest.retryTimes(Settings.RetryCount);
 
+// Entra ID (AAD) token-credential tests require an AAD-enabled Speech resource and an environment where a
+// managed identity / service principal can be resolved (e.g. the connection-test pipeline that also sets up
+// the right managed identity). They are gated through the exact same runConnectionTest helper the STT
+// connection tests use, so they are skipped on normal CI runs (where DefaultAzureCredential cannot resolve a
+// single identity) and only execute in the dedicated connection-test pipeline.
+const EntraIdTokenCredentialTest: jest.It = SpeechConfigConnectionFactory.runConnectionTest(SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth);
+
 afterEach(async (): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info("End Time: " + new Date(Date.now()).toLocaleString());
@@ -64,6 +74,38 @@ const BuildSpeechConfig: (connectionType?: SpeechConnectionType) => Promise<sdk.
     }
 
     return s;
+};
+
+// Resolves the subscription entry used for Entra ID (AAD) token-credential tests. On CI the
+// AADSpeechClientSecret resource is provisioned with the RBAC role the test service principal needs
+// (this is the same entry the STT Entra ID tests use), so we prefer it and fall back to the unified
+// speech subscription for local runs that only have the unified entry configured.
+const ResolveEntraIdSubscriptionRegion = () => {
+    const configLoader: ConfigLoader = ConfigLoader.instance;
+    configLoader.initialize();
+    const aad = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.AAD_SPEECH_CLIENT_SECRET);
+    if (aad && aad.Endpoint) {
+        return aad;
+    }
+    return configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
+};
+
+// Derives a token-credential friendly TTS endpoint from the configured Entra ID speech subscription.
+// The configured endpoint points at the STT universal route (and host), which cannot serve TTS, so we
+// reduce it to the resource's custom-domain host with no path. The synthesis connection factory then
+// appends the TTS websocket route and the REST adapter appends the voices route, both of which work with
+// Entra ID (AAD) token authentication.
+const BuildEntraIdTokenCredentialEndpoint: () => URL = (): URL => {
+    const sub = ResolveEntraIdSubscriptionRegion();
+    const configured: string = (sub && sub.Endpoint) || Settings.SpeechEndpoint;
+    if (!configured) {
+        throw new Error("No endpoint configured for the Entra ID speech subscription.");
+    }
+
+    const url: URL = new URL(configured);
+    const customDomain: string = url.searchParams.get("ocp-apim-custom-domain-name");
+    const host: string = customDomain || url.hostname;
+    return new URL(`https://${host}`);
 };
 
 const CheckSynthesisResult: (result: sdk.SpeechSynthesisResult, reason: sdk.ResultReason) =>
@@ -440,7 +482,7 @@ describe("Service based tests", (): void => {
         SpeechConnectionType.Subscription,
         SpeechConnectionType.CloudFromEndpointWithKeyAuth,
         SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth,
-        // SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
+        SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth,
         SpeechConnectionType.LegacyCogSvcsTokenAuth,
         SpeechConnectionType.LegacyEntraIdTokenAuth,
         SpeechConnectionType.CloudFromHost,
@@ -1340,6 +1382,93 @@ describe("Service based tests", (): void => {
                 done(e);
             });
         });
+    });
+
+    describe("Speech Synthesis Token Credential Connection Tests", (): void => {
+
+    // Requires an Entra ID (AAD) enabled Speech resource and ambient Azure credentials
+    // (e.g. AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET).
+    EntraIdTokenCredentialTest("testSpeechSynthesizerWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizerWithEntraIdTokenCredential");
+
+        const credential: DefaultAzureCredential = new DefaultAzureCredential();
+        const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(BuildEntraIdTokenCredentialEndpoint(), credential);
+        objsToClose.push(speechConfig);
+        expect(speechConfig).not.toBeUndefined();
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        objsToClose.push(s);
+        expect(s).not.toBeUndefined();
+
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            // eslint-disable-next-line no-console
+            console.info("speaking text finished.");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            done();
+        }, (e: string): void => {
+            done(e);
+        });
+    });
+
+    // Requires an Entra ID (AAD) enabled Speech resource and ambient Azure credentials.
+    // The getVoicesAsync REST call resolves the service redirect for custom-domain / private-link hosts
+    // (matching the websocket synthesis path), so the regional voices/list route is reached with the
+    // ocp-apim-custom-domain-name parameter required for AAD token auth.
+    EntraIdTokenCredentialTest("testGetVoicesAsyncWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testGetVoicesAsyncWithEntraIdTokenCredential");
+
+        const credential: DefaultAzureCredential = new DefaultAzureCredential();
+        const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(BuildEntraIdTokenCredentialEndpoint(), credential);
+        objsToClose.push(speechConfig);
+        expect(speechConfig).not.toBeUndefined();
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+        objsToClose.push(s);
+        expect(s).not.toBeUndefined();
+
+        s.getVoicesAsync().then((voicesResult: sdk.SynthesisVoicesResult): void => {
+            expect(voicesResult).not.toBeUndefined();
+            expect(voicesResult.resultId).not.toBeUndefined();
+            expect(voicesResult.voices.length).toBeGreaterThan(0);
+            expect(voicesResult.reason).toEqual(sdk.ResultReason.VoicesListRetrieved);
+            done();
+        }).catch((error: any): void => {
+            done(error);
+        });
+    });
+
+    // Streams synthesized audio to a PullAudioOutputStream while authenticating with an Entra ID token credential.
+    // Requires an Entra ID (AAD) enabled Speech resource and ambient Azure credentials.
+    EntraIdTokenCredentialTest("testSpeechSynthesizerPullStreamWithEntraIdTokenCredential", (done: jest.DoneCallback): void => {
+        // eslint-disable-next-line no-console
+        console.info("Name: testSpeechSynthesizerPullStreamWithEntraIdTokenCredential");
+
+        const credential: DefaultAzureCredential = new DefaultAzureCredential();
+        const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(BuildEntraIdTokenCredentialEndpoint(), credential);
+        objsToClose.push(speechConfig);
+        expect(speechConfig).not.toBeUndefined();
+        speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
+
+        const stream = sdk.AudioOutputStream.createPullStream();
+        const audioConfig: sdk.AudioConfig = sdk.AudioConfig.fromStreamOutput(stream);
+        expect(audioConfig).not.toBeUndefined();
+
+        const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+        expect(s).not.toBeUndefined();
+
+        s.speakTextAsync("hello world.", (result: sdk.SpeechSynthesisResult): void => {
+            // eslint-disable-next-line no-console
+            console.info("speaking text finished.");
+            CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
+            s.close();
+            ReadPullAudioOutputStream(stream, result.audioData.byteLength - 44, done);
+        }, (e: string): void => {
+            done(e);
+        });
+    });
+
     });
 
     test("test Speech Synthesizer: Language Auto Detection", (done: jest.DoneCallback): void => {

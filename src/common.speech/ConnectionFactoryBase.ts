@@ -71,7 +71,7 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
         }
     }
 
-    public static async getRedirectUrlFromEndpoint(endpoint: string): Promise<string> {
+    public static async getRedirectUrlFromEndpoint(endpoint: string, useWebSocketProtocol: boolean = true): Promise<string> {
         // make a rest call to the endpoint to get the redirect url
         const redirectUrl: URL = new URL(endpoint);
         redirectUrl.protocol = "https:";
@@ -96,10 +96,13 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
         try {
             // Validate the URL before returning
             const redirectUrl = new URL(redirectUrlString.trim());
-            if (redirectUrl.protocol === "https:") {
-                redirectUrl.protocol = "wss:";
-            } else if (redirectUrl.protocol === "http:") {
-                redirectUrl.protocol = "ws:";
+            // WebSocket callers need the ws(s) scheme; REST callers (e.g. voices/list) must keep http(s).
+            if (useWebSocketProtocol) {
+                if (redirectUrl.protocol === "https:") {
+                    redirectUrl.protocol = "wss:";
+                } else if (redirectUrl.protocol === "http:") {
+                    redirectUrl.protocol = "ws:";
+                }
             }
 
             return redirectUrl.toString();
