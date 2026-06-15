@@ -326,7 +326,9 @@ export class ConversationImpl extends Conversation implements IDisposable {
     }
 
     public onToken(token: IAuthentication): void {
-        this.privConversationTranslator?.onToken(token);
+        if (!!this.privConversationTranslator) {
+            this.privConversationTranslator.onToken(token);
+        }
     }
 
     /**
