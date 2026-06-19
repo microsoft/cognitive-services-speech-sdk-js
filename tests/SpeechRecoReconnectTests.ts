@@ -246,6 +246,11 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
         });
 }, 1000 * 60 * 2);
 
+// The multichannel reliable-reconnect tests require the connection-test environment (the
+// multichannel3-capable endpoint), so they run in the RunConnectionTests CI job. Jest routes
+// them there because this describe block's name contains "Connection Tests".
+describe("Reliable Reconnect Connection Tests", (): void => {
+
 // Recognize a genuine multichannel WAV with the reliable-reconnect protocol enabled and
 // verify the service emits the X-Continuation-Token / X-Continuation-Audio-Streams-1-Offset
 // headers. Uses SpeechRecognizer (not ConversationTranscriber) because multichannel3 is
@@ -688,3 +693,4 @@ test("Reliable reconnect - resends rebased absolute continuation offset and trim
             done(err);
         });
 }, 1000 * 60 * 2);
+});
