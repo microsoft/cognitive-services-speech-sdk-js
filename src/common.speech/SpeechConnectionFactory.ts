@@ -51,17 +51,23 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         const endpointId: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_EndpointId, undefined);
         const language: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_RecoLanguage, undefined);
 
+        // The multichannel reliable-reconnect protocol expects a bare v2 URL: the service omits
+        // continuation headers when "format"/"language" query params are present, so drop them
+        // here and let the language travel inside speech.config / speech.context instead.
+        const multiChannelReconnect: boolean =
+            config.parameters.getProperty("SPEECH-EnableMultiChannelProcessing", "false").toLowerCase() === "true";
+
         if (endpointId) {
             if (!endpoint || endpoint.search(QueryParameterNames.CustomSpeechDeploymentId) === -1) {
                 queryParams[QueryParameterNames.CustomSpeechDeploymentId] = endpointId;
             }
-        } else if (language) {
+        } else if (language && !multiChannelReconnect) {
             if (!endpoint || endpoint.search(QueryParameterNames.Language) === -1) {
                 queryParams[QueryParameterNames.Language] = language;
             }
         }
 
-        if (!endpoint || endpoint.search(QueryParameterNames.Format) === -1) {
+        if (!multiChannelReconnect && (!endpoint || endpoint.search(QueryParameterNames.Format) === -1)) {
             queryParams[QueryParameterNames.Format] = config.parameters.getProperty(OutputFormatPropertyName, OutputFormat[OutputFormat.Simple]).toLowerCase();
         }
 

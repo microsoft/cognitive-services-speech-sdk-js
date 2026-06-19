@@ -18,4 +18,10 @@ export interface CtsAudioContinuation {
      * Audio information
      */
     audio?: CtsAudioInfo;
+
+    /**
+     * The service tag of the previous (aborted) request/turn. The service logs this to
+     * correlate multiple reconnects of the same session.
+     */
+    previousServiceTag?: string;
 }

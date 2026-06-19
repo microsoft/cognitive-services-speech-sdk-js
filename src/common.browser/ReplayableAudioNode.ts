@@ -99,6 +99,12 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             return;
         }
 
+        // The shrink point must only ever advance; ignore a stale/duplicate offset so the
+        // resume point never moves backwards (matches Carbon's PcmAudioBuffer::DiscardTill).
+        if (offset <= this.privLastShrinkOffset) {
+            return;
+        }
+
         this.privLastShrinkOffset = offset;
 
         // Find the start point in the buffers.

@@ -207,6 +207,17 @@ export class RequestSession {
         this.privConnectionAttempts = 0;
     }
 
+    /**
+     * The service has acknowledged audio up to `offset` (session-absolute, 100ns ticks); trim
+     * the replay buffer to that point so a reconnect resends only unacknowledged audio. Mirrors
+     * Carbon's OnAcknowledgedAudio -> ShrinkReplayBuffer (shrinkBuffers is monotonic).
+     */
+    public onServiceAcknowledgedAudio(offset: number): void {
+        if (!!this.privAudioNode) {
+            this.privAudioNode.shrinkBuffers(offset);
+        }
+    }
+
     public onAudioSent(bytesSent: number): void {
         this.privBytesSent += bytesSent;
         this.privRecognitionBytesSent += bytesSent;
