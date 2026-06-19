@@ -630,8 +630,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             const deviceInfo: ISpeechConfigAudioDevice = await this.audioSource.deviceInfo;
             this.privIsLiveAudio = deviceInfo.type && deviceInfo.type === type.Microphones;
 
-            // SeparateChannelProcessing activates per-channel (multichannel3) processing and the
-            // reliable-reconnect contract service-side (Carbon sets this for multichannel runs).
+            // SeparateChannelProcessing activates per-channel processing and the reliable-reconnect
+            // contract service-side (Carbon sets this for multichannel runs).
             if (this.privEnableReliableReconnect) {
                 deviceInfo.SeparateChannelProcessing = "true";
             }
