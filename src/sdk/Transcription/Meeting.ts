@@ -32,7 +32,6 @@ import {
     ConversationParticipantsChangedEventArgs,
     ConversationTranslationCanceledEventArgs,
     ConversationTranslationEventArgs,
-    ConversationTranslator,
     Participant,
     ParticipantChangedReason,
     PropertyCollection,
@@ -40,6 +39,7 @@ import {
     SpeechTranslationConfig,
 } from "../Exports.js";
 import { SpeechTranslationConfigImpl } from "../SpeechTranslationConfig.js";
+import { IConversationServiceHandler } from "./ConversationHandler.js";
 import { Callback, MeetingInfo, MeetingProperties, IMeeting } from "./IMeeting.js";
 import { IParticipant, IUser, TranscriptionParticipant } from "./IParticipant.js";
 
@@ -143,7 +143,7 @@ export class MeetingImpl extends Meeting implements IDisposable {
     private privIsConnected: boolean;
     private privParticipants: InternalParticipants;
     private privIsReady: boolean;
-    private privConversationTranslator: ConversationTranslator;
+    private privConversationTranslator: IConversationServiceHandler & IDisposable;
     private privTranscriberRecognizer: TranscriberRecognizer;
     private privErrors: IErrorMessages = ConversationConnectionConfig.restErrors;
     private privConversationId: string;
@@ -318,7 +318,7 @@ export class MeetingImpl extends Meeting implements IDisposable {
             // connect to the conversation websocket
             this.privParticipants.meId = this.privRoom.participantId;
 
-            // Because ConversationTranslator manually sets up and manages the connection, Conversation
+            // Because the conversation recognizer sets up and manages the connection manually, the meeting
             // has to forward serviceRecognizer connection events that usually get passed automatically
             this.privConversationRecognizer.connected = this.onConnected;
             this.privConversationRecognizer.disconnected = this.onDisconnected;
