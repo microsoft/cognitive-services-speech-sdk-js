@@ -14,7 +14,7 @@ import { CogSvcsTokenCredential } from "./CogSvcsTokenCredential";
 
 /**
  * Defines the speech configuration types that can be created by the factory.
- * This allows us to use a generic approach similar to the C# implementation.
+ * This allows us to use a generic approach across both configuration types.
  */
 type ConfigType = sdk.SpeechConfig | sdk.SpeechTranslationConfig;
 

@@ -111,7 +111,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                         EnumTranslation.implTranslateErrorDetails(cancellationErrorCode));
 
                 } else {
-                    // Like the native SDK's, don't event / return an EndOfDictation message.
+                    // Don't event / return an EndOfDictation message.
                     if (simple.RecognitionStatus === RecognitionStatus.EndOfDictation) {
                         break;
                     }

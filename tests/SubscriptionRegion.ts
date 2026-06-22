@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 /**
- * Represents a subscription and region configuration matching the C# format.
+ * Represents a subscription and region configuration.
  */
 export interface SubscriptionRegion {
     /**

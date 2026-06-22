@@ -11,7 +11,7 @@ import { CtsAudioStream } from "./CtsAudioStream";
 export interface CtsAudioInfo {
     /**
      * Audio streams keyed by stream id. A null value is the opt-in marker telling the service
-     * the stream is continuation-capable (the reference C++ SDK sends "<id>":null).
+     * the stream is continuation-capable (the stream is opted in with "<id>":null).
      */
     streams?: Record<string, CtsAudioStream | null>;
 }

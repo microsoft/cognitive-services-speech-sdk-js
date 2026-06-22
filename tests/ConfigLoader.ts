@@ -6,7 +6,7 @@ import * as path from "path";
 import { SubscriptionRegion } from "./SubscriptionRegion";
 
 /**
- * Config loader that matches the C# implementation for loading subscription and region information.
+ * Config loader for loading subscription and region information.
  */
 export class ConfigLoader {
     private static _instance: ConfigLoader;
