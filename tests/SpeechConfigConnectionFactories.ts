@@ -20,7 +20,6 @@ type ConfigType = sdk.SpeechConfig | sdk.SpeechTranslationConfig;
 
 /**
  * Helper class for creating speech configurations based on different connection types.
- * This provides functionality similar to the C# implementation in Carbon's end-to-end tests.
  */
 export class SpeechConfigConnectionFactory {
     /**

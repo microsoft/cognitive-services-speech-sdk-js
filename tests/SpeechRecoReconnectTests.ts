@@ -247,15 +247,15 @@ test("Reconnect After timeout", (done: jest.DoneCallback): void => {
 }, 1000 * 60 * 2);
 
 // The multichannel reliable-reconnect tests require the connection-test environment (the
-// multichannel3-capable endpoint), so they run in the RunConnectionTests CI job. Jest routes
+// multichannel-capable endpoint), so they run in the RunConnectionTests CI job. Jest routes
 // them there because this describe block's name contains "Connection Tests".
 describe("Reliable Reconnect Connection Tests", (): void => {
 
 // Recognize a genuine multichannel WAV with the reliable-reconnect protocol enabled and
 // verify the service emits the X-Continuation-Token / X-Continuation-Audio-Streams-1-Offset
-// headers. Uses SpeechRecognizer (not ConversationTranscriber) because multichannel3 is
+// headers. Uses SpeechRecognizer (not ConversationTranscriber) because multichannel is
 // channel-based separation and the service rejects it alongside the speaker diarization that
-// ConversationTranscriber enables ("Multichannel3 is not supported with speaker diarization").
+// ConversationTranscriber enables.
 test("Reliable reconnect - multichannel audio receives continuation token", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Reliable reconnect - multichannel audio receives continuation token");
@@ -268,7 +268,7 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
     // itself, not a wall-clock time. Recognition must continue seamlessly after the reconnect.
     s.setServiceProperty("maxConnectionDurationSecs", "15", sdk.ServicePropertyChannel.UriQueryParameter);
 
-    // Genuine multichannel (2-channel) audio - this is what activates the multichannel3 /
+    // Genuine multichannel (2-channel) audio - this is what activates the
     // continuation contract server-side. The 2-channel PCM is looped forever so the turn stays
     // active past the forced drop, guaranteeing a mid-turn reconnect with recognition results
     // on BOTH sides of it (the test stops the turn itself once that is observed).
@@ -474,7 +474,7 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
         });
 }, 1000 * 60 * 2);
 
-// Verifies the two behaviors that align this SDK's audio plane with Carbon on a reliable
+// Verifies the two behaviors that align this SDK's audio plane on a reliable
 // reconnect:
 //   1. Offset rebasing - the per-stream offset header is turn-relative, so on the reconnected
 //      turn (which begins at a non-zero session offset) the continuation offset the SDK echoes
@@ -484,7 +484,7 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
 //      below what was already sent before the drop, and that it matches the value production code
 //      (ReconnectContinuationState.streamOffset) resolved.
 //   2. Replay-buffer trim - the buffer is shrunk forward to the service-acknowledged offset
-//      (Carbon's OnAcknowledgedAudio -> ShrinkReplayBuffer). After 15s+ of acknowledged audio the
+//      (the replay buffer is trimmed to the acknowledged offset). After 15s+ of acknowledged audio the
 //      replay node's buffer start offset must have advanced well past zero; if the trim were not
 //      wired the buffer would still begin at offset 0.
 test("Reliable reconnect - resends rebased absolute continuation offset and trims replay buffer", (done: jest.DoneCallback): void => {
@@ -643,7 +643,7 @@ test("Reliable reconnect - resends rebased absolute continuation offset and trim
                     expect(continuationState2.streamOffset).toBeGreaterThanOrEqual(afterMax);
 
                     // Replay-buffer trim: after 15s+ of acknowledged audio the replay node's buffer
-                    // start offset must have advanced past zero (Carbon's ShrinkReplayBuffer). If the
+                    // start offset must have advanced past zero (the replay buffer is trimmed). If the
                     // trim were not wired the buffer would still begin at offset 0.
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const requestSession: any = (r.internalData as any).privRequestSession;

@@ -36,17 +36,17 @@ export class ReconnectContinuationState {
 
     /**
      * The session-absolute resume offset (100ns ticks) most recently acknowledged by the
-     * service, or undefined if none has arrived. Mirrors Carbon's g_audioContinuationOffset;
-     * used both to populate the outgoing continuation block and to trim the replay buffer.
+     * service, or undefined if none has arrived. Used both to populate the outgoing
+     * continuation block and to trim the replay buffer.
      */
     public get streamOffset(): number | undefined {
         return this.privStreamOffset;
     }
 
     /**
-     * True when the continuation block must be emitted. Mirrors Carbon's AddAudioJsonToContext,
-     * which emits the block whenever any of the three signals is present (token, service tag or
-     * stream offset). The signals persist for the whole session, so the block keeps being
+     * True when the continuation block must be emitted. The block is emitted whenever any of
+     * the three signals is present (token, service tag or stream offset). The signals persist
+     * for the whole session, so the block keeps being
      * emitted on reconnects and subsequent turns once the first turn.start has been seen.
      */
     public get hasPendingContinuation(): boolean {
@@ -66,7 +66,7 @@ export class ReconnectContinuationState {
 
     /**
      * A turn has started ("turn.start"). The service tag arrives in the turn.start body (under
-     * "$.context.serviceTag"), not a header. Matching Carbon, the tag is stored unconditionally
+     * "$.context.serviceTag"), not a header. The tag is stored unconditionally
      * (empty string when absent) and the token/offset are NOT cleared: the offset is
      * session-global and the token persists until the service issues a new one.
      */
@@ -79,8 +79,8 @@ export class ReconnectContinuationState {
      * from an inbound message. Header names are case-insensitive, so matching is too. The
      * service tag is not a header; it comes from the turn.start body via onTurnStart().
      *
-     * The per-stream offset header is turn-relative. Like Carbon (offset + m_startingOffset),
-     * it is rebased onto the session-absolute timeline using `turnStartOffset`
+     * The per-stream offset header is turn-relative. It is rebased onto the session-absolute
+     * timeline using `turnStartOffset`
      * (RequestSession.currentTurnAudioOffset) - the same base used to rebase every other
      * service offset - so the stored offset stays in the same frame as results and replay.
      */
@@ -121,7 +121,7 @@ export class ReconnectContinuationState {
      */
     public buildAudioStreamsMetadata(): CtsAudioInfo {
         const streams: Record<string, CtsAudioStream | null> = {};
-        // Carbon opts the stream in with "<id>":null (not an empty object); only the null marker
+        // The stream is opted in with "<id>":null (not an empty object); only the null marker
         // enables the continuation contract service-side.
         streams[this.privDefaultStreamId] = null;
         return { streams };
@@ -136,7 +136,7 @@ export class ReconnectContinuationState {
             return undefined;
         }
 
-        // Carbon always emits "token" and "previousServiceTag" (defaulting to "") and adds the
+        // Always emit "token" and "previousServiceTag" (defaulting to "") and add the
         // audio stream offset only when one is known.
         const continuation: CtsAudioContinuation = {
             previousServiceTag: this.privServiceTag ?? "",

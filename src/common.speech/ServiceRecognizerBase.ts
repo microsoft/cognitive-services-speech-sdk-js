@@ -631,7 +631,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             this.privIsLiveAudio = deviceInfo.type && deviceInfo.type === type.Microphones;
 
             // SeparateChannelProcessing activates per-channel processing and the reliable-reconnect
-            // contract service-side (Carbon sets this for multichannel runs).
+            // contract service-side.
             if (this.privEnableReliableReconnect) {
                 deviceInfo.SeparateChannelProcessing = "true";
             }
@@ -847,8 +847,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         connectionMessage.additionalHeaders,
                         this.privRequestSession.currentTurnAudioOffset);
 
-                    // Trim the replay buffer to the service-acknowledged offset (Carbon's
-                    // OnAcknowledgedAudio) so a reconnect resends only unacknowledged audio.
+                    // Trim the replay buffer to the service-acknowledged offset so a reconnect
+                    // resends only unacknowledged audio.
                     const acknowledgedOffset = this.privContinuationState.streamOffset;
                     if (acknowledgedOffset !== undefined) {
                         this.privRequestSession.onServiceAcknowledgedAudio(acknowledgedOffset);
@@ -900,7 +900,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     case "turn.end":
                         await this.sendTelemetryData();
                         // Reliable reconnect: turn.end does NOT clear the continuation state; the
-                        // token/offset/service tag persist for the session (matches Carbon).
+                        // token/offset/service tag persist for the session.
                         if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) {
                             this.privMustReportEndOfStream = false;
                             await this.cancelRecognitionLocal(CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined);

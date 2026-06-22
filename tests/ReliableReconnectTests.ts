@@ -61,7 +61,7 @@ describe("ReconnectContinuationState", (): void => {
     });
 
     it("emits the continuation once a turn.start has been seen, even before any token", (): void => {
-        // Matching Carbon, the service tag stored on turn.start is enough to make the
+        // The service tag stored on turn.start is enough to make the
         // continuation block present; the token then defaults to "" and the offset is omitted
         // until one is known.
         const state = new ReconnectContinuationState();
@@ -109,7 +109,7 @@ describe("ReconnectContinuationState", (): void => {
         state.onTurnStart("tag");
         state.updateFromHeaders({ "X-Continuation-Token": "t" });
 
-        // Matching Carbon, the audio offset is only added when a stream offset is known.
+        // The audio offset is only added when a stream offset is known.
         expect(state.buildContinuationContext()).toEqual({
             token: "t",
             previousServiceTag: "tag"
@@ -128,7 +128,7 @@ describe("ReconnectContinuationState", (): void => {
     });
 
     it("persists token and offset across a new turn.start, updating only the service tag", (): void => {
-        // Matching Carbon, turn.start does not clear the token or the session-global offset;
+        // turn.start does not clear the token or the session-global offset;
         // it only overwrites the stored service tag with the new turn's value.
         const state = new ReconnectContinuationState();
         state.onTurnStart("tag-1");
@@ -166,9 +166,9 @@ describe("ReconnectContinuationState", (): void => {
     });
 
     it("rebases the turn-relative offset header onto the session-absolute timeline", (): void => {
-        // Carbon treats the per-stream offset header as turn-relative and adds the turn-start
-        // base (m_startingOffset) before storing it. The SDK passes currentTurnAudioOffset as
-        // that base, so a header of 100 on a turn that began at 5000 resolves to 5100.
+        // The per-stream offset header is turn-relative; the turn-start base is added before
+        // storing it. The SDK passes currentTurnAudioOffset as that base, so a header of 100 on
+        // a turn that began at 5000 resolves to 5100.
         const state = new ReconnectContinuationState();
         state.onTurnStart("tag");
         state.updateFromHeaders({ "X-Continuation-Audio-Streams-1-Offset": "100" }, 5000);
@@ -257,7 +257,7 @@ describe("ServiceRecognizerBase reliable reconnect wiring", (): void => {
         });
     });
 
-    it("keeps the continuation section across turn boundaries (Carbon parity)", (): void => {
+    it("keeps the continuation section across turn boundaries", (): void => {
         const rec = createTestRecognizer();
         rec.privContinuationState.onTurnStart("tag");
         rec.privContinuationState.updateFromHeaders({ "X-Continuation-Token": "tok" });

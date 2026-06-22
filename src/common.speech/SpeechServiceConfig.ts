@@ -112,8 +112,8 @@ export interface ISpeechConfigAudioDevice {
     samplerate: number;
     bitspersample: number;
     channelcount: number;
-    // Activates separate channel (multichannel3) processing and the reliable-reconnect contract
-    // service-side; Carbon sends "true" here for multichannel runs.
+    // Activates separate channel processing and the reliable-reconnect contract
+    // service-side; set to "true" for multichannel runs.
     SeparateChannelProcessing?: string;
 }
 

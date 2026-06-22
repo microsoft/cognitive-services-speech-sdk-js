@@ -717,7 +717,6 @@ describe("Service based tests", (): void => {
         });
     });
 
-    // Mirrors Carbon synthesizer_utils.cpp:346-350
     test("testSynthesisLatencyProperties", (done: jest.DoneCallback): void => {
         console.info("Name: testSynthesisLatencyProperties");
         BuildSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
@@ -753,7 +752,6 @@ describe("Service based tests", (): void => {
         });
     });
 
-    // Mirrors Carbon speech_synthesizer_tests.cpp:444-461
     // Verifies connection reuse (2nd request has connectionLatency === 0) and
     // the additive identity: firstByteLatency === connectionLatency + networkLatency + serviceLatency
     test("testSynthesisLatencyPropertiesConnectionReuse", (done: jest.DoneCallback): void => {
