@@ -3,7 +3,6 @@
 
 /**
  * Defines the different connection types that can be used for speech recognition.
- * This mirrors the C# implementation in Carbon's end-to-end tests.
  */
 export enum SpeechConnectionType {
     /**

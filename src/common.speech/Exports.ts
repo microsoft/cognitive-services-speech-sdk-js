@@ -35,6 +35,7 @@ export * from "./ServiceMessages/DetailedSpeechPhrase.js";
 export * from "./ServiceMessages/SimpleSpeechPhrase.js";
 export * from "./RequestSession.js";
 export * from "./SpeechContext.js";
+export * from "./ReconnectContinuationState.js";
 export * from "./DynamicGrammarBuilder.js";
 export * from "./DialogServiceAdapter.js";
 export * from "./AgentConfig.js";

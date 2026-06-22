@@ -13,6 +13,7 @@ import { TranslationContext } from "./Translation/TranslationContext";
 import { SynthesisContext } from "./Synthesis/SynthesisContext";
 import { PronunciationScoreContext } from "./PronunciationScore/PronunciationScoreContext";
 import { CtsAudioContinuation } from "./MultichannelAudio/CtsAudioContinuation";
+import { CtsAudioInfo } from "./MultichannelAudio/CtsAudioInfo";
 import { Dictation } from "./Scenario/Dictation";
 
 /**
@@ -26,6 +27,12 @@ export interface SpeechContext {
      * CTS Continuation token for audio stream
      */
     continuation?: CtsAudioContinuation;
+
+    /**
+     * Audio stream metadata for the turn (reliable reconnect protocol); its presence is a
+     * prerequisite for the service to return continuation headers.
+     */
+    audio?: CtsAudioInfo;
 
     /**
      * The invocation source.

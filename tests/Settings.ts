@@ -56,6 +56,7 @@ export class Settings {
     public static WaveFileExplicitPunc: string = Settings.InputDir + "explicitpunc1.wav";
     public static WaveFile8ch: string = Settings.InputDir + "Speech016_30s_xmos_8ch.wav";
     public static WaveFile8ch2: string = Settings.InputDir + "katiesteve.wav";
+    public static MultiChannelWaveFile: string = Settings.InputDir + "multi_channel_35sec.wav";
     public static WaveFileSingleChannel: string = Settings.InputDir + "katiesteve_mono.wav";
     public static WaveFile44k: string = Settings.InputDir + "whatstheweatherlike.44khz.wav";
     public static WaveFileMulaw: string = Settings.InputDir + "whatstheweatherlike.mulaw";
@@ -118,11 +119,9 @@ export class Settings {
             if (unifiedSpeechSub) {
                 Settings.SpeechSubscriptionKey = unifiedSpeechSub.Key;
                 Settings.SpeechRegion = unifiedSpeechSub.Region;
-                /* Skip for now until endpoing is fully supported
                 if (unifiedSpeechSub.Endpoint) {
                     Settings.SpeechEndpoint = unifiedSpeechSub.Endpoint;
                 }
-                */
             }
 
             // Load the conversation transcription subscription

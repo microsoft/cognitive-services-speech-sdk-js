@@ -18,8 +18,11 @@ export class SpeechServiceConfig {
                 const replacement: { [k: string ]: any } = {};
                 for (const k in value) {
                     if (Object.hasOwnProperty.call(value, k)) {
+                        // SeparateChannelProcessing must keep its PascalCase form to match the
+                        // server-side (case-sensitive) multichannel/continuation contract.
+                        const outKey: string = k === "SeparateChannelProcessing" ? k : (k && k.charAt(0).toLowerCase() + k.substring(1));
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        replacement[k && k.charAt(0).toLowerCase() + k.substring(1)] = value[k];
+                        replacement[outKey] = value[k];
                     }
                 }
                 return replacement;
@@ -109,6 +112,9 @@ export interface ISpeechConfigAudioDevice {
     samplerate: number;
     bitspersample: number;
     channelcount: number;
+    // Activates separate channel processing and the reliable-reconnect contract
+    // service-side; set to "true" for multichannel runs.
+    SeparateChannelProcessing?: string;
 }
 
 export enum connectivity {

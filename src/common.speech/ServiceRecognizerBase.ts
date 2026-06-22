@@ -36,6 +36,7 @@ import {
     AutoDetectSourceLanguagesOpenRangeOptionName,
     DynamicGrammarBuilder,
     ISpeechConfigAudioDevice,
+    ReconnectContinuationState,
     RequestSession,
     SpeechContext,
     SpeechDetected,
@@ -89,6 +90,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privAudioSource: IAudioSource;
     private privIsLiveAudio: boolean = false;
     private privAverageBytesPerMs: number = 0;
+    private privEnableReliableReconnect: boolean = false;
+    private privContinuationState: ReconnectContinuationState;
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId?: string | null;
@@ -137,6 +140,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privDynamicGrammar = new DynamicGrammarBuilder();
         this.privSpeechContext = new SpeechContext(this.privDynamicGrammar);
         this.privAgentConfig = new AgentConfig();
+        // Multi-channel always relies on the continuation/resume protocol, so reliable reconnect
+        // is enabled implicitly whenever multi-channel processing is active.
+        this.privEnableReliableReconnect =
+            this.privRecognizerConfig.parameters.getProperty("SPEECH-EnableMultiChannelProcessing", "false").toLowerCase() === "true";
+        this.privContinuationState = new ReconnectContinuationState();
         const webWorkerLoadType: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.WebWorkerLoadType, "on").toLowerCase();
         if (webWorkerLoadType === "on" && typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {
             this.privSetTimeout = Timeout.setTimeout;
@@ -608,6 +616,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privRequestSession.startNewRecognition();
         this.privRequestSession.listenForServiceTelemetry(this.privAudioSource.events);
 
+        if (this.privEnableReliableReconnect) {
+            this.privContinuationState.reset();
+        }
+
         // Start the connection to the service. The promise this will create is stored and will be used by configureConnection().
         const conPromise: Promise<IConnection> = this.connectImpl();
         let audioNode: ReplayableAudioNode;
@@ -617,6 +629,12 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             const format: AudioStreamFormatImpl = await this.audioSource.format;
             const deviceInfo: ISpeechConfigAudioDevice = await this.audioSource.deviceInfo;
             this.privIsLiveAudio = deviceInfo.type && deviceInfo.type === type.Microphones;
+
+            // SeparateChannelProcessing activates per-channel processing and the reliable-reconnect
+            // contract service-side.
+            if (this.privEnableReliableReconnect) {
+                deviceInfo.SeparateChannelProcessing = "true";
+            }
 
             audioNode = new ReplayableAudioNode(audioStreamNode, format.avgBytesPerSec);
             await this.privRequestSession.onAudioSourceAttachCompleted(audioNode, false);
@@ -822,10 +840,38 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             const connectionMessage = SpeechConnectionMessage.fromConnectionMessage(message);
 
             if (connectionMessage.requestId.toLowerCase() === this.privRequestSession.requestId.toLowerCase()) {
+                if (this.privEnableReliableReconnect) {
+                    // Capture the continuation token + per-stream resume offset (the offset header
+                    // is turn-relative and gets rebased onto the session-absolute timeline).
+                    this.privContinuationState.updateFromHeaders(
+                        connectionMessage.additionalHeaders,
+                        this.privRequestSession.currentTurnAudioOffset);
+
+                    // Trim the replay buffer to the service-acknowledged offset so a reconnect
+                    // resends only unacknowledged audio.
+                    const acknowledgedOffset = this.privContinuationState.streamOffset;
+                    if (acknowledgedOffset !== undefined) {
+                        this.privRequestSession.onServiceAcknowledgedAudio(acknowledgedOffset);
+                    }
+                }
                 switch (connectionMessage.path.toLowerCase()) {
                     case "turn.start":
                         this.privMustReportEndOfStream = true;
                         this.privRequestSession.onServiceTurnStartResponse();
+                        if (this.privEnableReliableReconnect) {
+                            // The reliable-reconnect service tag is delivered in the
+                            // turn.start body under "$.context.serviceTag" (not a header).
+                            let turnStartServiceTag: string | undefined;
+                            try {
+                                if (connectionMessage.textBody && connectionMessage.textBody.length > 0) {
+                                    const turnStartBody = JSON.parse(connectionMessage.textBody) as { context?: { serviceTag?: string } };
+                                    turnStartServiceTag = turnStartBody?.context?.serviceTag;
+                                }
+                            } catch {
+                                turnStartServiceTag = undefined;
+                            }
+                            this.privContinuationState.onTurnStart(turnStartServiceTag);
+                        }
                         break;
 
                     case "speech.startdetected":
@@ -853,6 +899,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
                     case "turn.end":
                         await this.sendTelemetryData();
+                        // Reliable reconnect: turn.end does NOT clear the continuation state; the
+                        // token/offset/service tag persist for the session.
                         if (this.privRequestSession.isSpeechEnded && this.privMustReportEndOfStream) {
                             this.privMustReportEndOfStream = false;
                             await this.cancelRecognitionLocal(CancellationReason.EndOfStream, CancellationErrorCode.NoError, undefined);
@@ -891,9 +939,33 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privSpeechContext.setSpeakerDiarizationAudioOffsetMs(audioOffsetMs);
     }
 
+    // The stream id tagged onto outgoing audio messages when reliable reconnect is enabled.
+    // Undefined disables the X-StreamId header, preserving legacy behavior.
+    private get audioStreamId(): string | undefined {
+        return this.privEnableReliableReconnect ? this.privContinuationState.defaultStreamId : undefined;
+    }
+
+    // Injects the reliable-reconnect sections into speech.context: the audio.streams marker
+    // (always present) and the continuation section (only when resuming an interrupted turn).
+    private applyReconnectContinuation(): void {
+        const context = this.privSpeechContext.getContext();
+        context.audio = this.privContinuationState.buildAudioStreamsMetadata();
+
+        const continuation = this.privContinuationState.buildContinuationContext();
+        if (continuation !== undefined) {
+            context.continuation = continuation;
+        } else {
+            delete context.continuation;
+        }
+    }
+
     protected sendSpeechContext(connection: IConnection, generateNewRequestId: boolean): Promise<void> {
         if (this.privEnableSpeakerId) {
             this.updateSpeakerDiarizationAudioOffset();
+        }
+
+        if (this.privEnableReliableReconnect) {
+            this.applyReconnectContinuation();
         }
 
         const speechContextJson = this.speechContext.toJSON();
@@ -975,7 +1047,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             "audio",
             this.privRequestSession.requestId,
             "audio/x-wav",
-            format.header
+            format.header,
+            this.audioStreamId
         ));
     }
 
@@ -1130,7 +1203,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                     this.privRequestSession.isRecognizing &&
                     this.privRequestSession.recogNumber === startRecogNumber) {
                     connection.send(
-                        new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload)
+                        new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, payload, this.audioStreamId)
                     ).catch((): void => {
                         // eslint-disable-next-line @typescript-eslint/no-empty-function
                         this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition).catch((): void => { });
@@ -1231,7 +1304,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
     private async sendFinalAudio(): Promise<void> {
         const connection: IConnection = await this.fetchConnection();
-        await connection.send(new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, null));
+        await connection.send(new SpeechConnectionMessage(MessageType.Binary, "audio", this.privRequestSession.requestId, null, null, this.audioStreamId));
         return;
     }
 

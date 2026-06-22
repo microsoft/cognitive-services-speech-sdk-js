@@ -284,3 +284,135 @@ describe("Time tests", () => {
         fillReadBuffer();
     });
 });
+
+// These tests prove the byte-level guarantee that makes reliable reconnection safe:
+// across a (simulated) disconnect the node must resend every audio byte the service has
+// not acknowledged - exactly once, in order, with no gap and no duplicate. This is the
+// SDK half of the contract; the service uses the continuation offset we send to discard
+// any small overlap that page rounding could introduce.
+describe("Byte continuity across a simulated reconnect", () => {
+    // Default input format is 16 kHz / 16-bit / mono => 32000 bytes per second.
+    const bytesPerSecond: number = defaultAudioFormat.avgBytesPerSec;
+    // 3200 bytes == 0.1s == 1,000,000 ticks. Whole, even-byte boundaries keep tick math exact.
+    const chunkBytes: number = 3200;
+    const totalChunks: number = 10;
+
+    // A deterministic underlying source: it hands out fixed-size chunks carved from a known
+    // byte stream, then reports end-of-stream. Because the bytes are a known function of their
+    // position, the bytes that come back out of the ReplayableAudioNode can be matched, byte for
+    // byte, against the original stream.
+    const buildDeterministicNode: (original: Uint8Array) => IAudioStreamNode =
+        (original: Uint8Array): IAudioStreamNode => {
+            let produced: number = 0; // bytes already produced by the underlying source.
+            return {
+                detach: (): Promise<void> => Promise.resolve(),
+                id: (): string => "byte-continuity",
+                read: (): Promise<IStreamChunk<ArrayBuffer>> => {
+                    if (produced >= original.byteLength) {
+                        return Promise.resolve<IStreamChunk<ArrayBuffer>>({
+                            buffer: new ArrayBuffer(0),
+                            isEnd: true,
+                            timeReceived: produced,
+                        });
+                    }
+
+                    const chunk: ArrayBuffer = original.buffer.slice(produced, produced + chunkBytes);
+                    produced += chunkBytes;
+
+                    return Promise.resolve<IStreamChunk<ArrayBuffer>>({
+                        buffer: chunk,
+                        isEnd: false,
+                        timeReceived: produced,
+                    });
+                },
+            };
+        };
+
+    const byteToTicks: (byteOffset: number) => number =
+        (byteOffset: number): number => (byteOffset / bytesPerSecond) * 1e7;
+
+    // Reads chunks until the underlying source is exhausted, returning every byte that flowed
+    // out in order. This is the byte stream that would be (re)sent to the service.
+    const drainToEnd: (node: ReplayableAudioNode) => Promise<number[]> =
+        async (node: ReplayableAudioNode): Promise<number[]> => {
+            const bytes: number[] = [];
+            for (; ;) {
+                const chunk: IStreamChunk<ArrayBuffer> = await node.read();
+                if (chunk.isEnd) {
+                    break;
+                }
+                bytes.push(...new Uint8Array(chunk.buffer));
+            }
+            return bytes;
+        };
+
+    test("resends every unacknowledged byte exactly once - acknowledged on a page boundary", async (): Promise<void> => {
+        const total: number = totalChunks * chunkBytes;
+        const original: Uint8Array = new Uint8Array(total);
+        for (let i: number = 0; i < total; i++) {
+            original[i] = i % 256;
+        }
+
+        const node: ReplayableAudioNode = new ReplayableAudioNode(buildDeterministicNode(original), bytesPerSecond);
+
+        // Connection 1: read (and "send") the first 6 chunks. All 6 are retained for replay.
+        for (let i: number = 0; i < 6; i++) {
+            await node.read();
+        }
+
+        // The service acknowledges the first 3 chunks (byte 9600). Chunks 4-6 were sent but
+        // are NOT acknowledged, so on reconnect they must be resent.
+        const ackByte: number = 3 * chunkBytes; // 9600 - exactly a page boundary.
+        node.shrinkBuffers(byteToTicks(ackByte));
+
+        // Reconnect: replay from the acknowledged offset, then continue with brand new audio.
+        node.replay();
+        const resent: number[] = await drainToEnd(node);
+
+        // No missing, no duplicate: connection 2 carries exactly the original stream from the
+        // acknowledged byte to the end.
+        expect(resent).toEqual(Array.from(original.slice(ackByte)));
+
+        // What the service ends up holding: the prefix it acknowledged on connection 1 plus
+        // everything connection 2 resent. It must reconstruct the original audio byte for byte.
+        const serviceView: number[] = [
+            ...Array.from(original.slice(0, ackByte)),
+            ...resent,
+        ];
+        expect(serviceView).toEqual(Array.from(original));
+        expect(serviceView.length).toEqual(total);
+    });
+
+    test("resumes exactly at the acknowledged byte - acknowledged mid page", async (): Promise<void> => {
+        const total: number = totalChunks * chunkBytes;
+        const original: Uint8Array = new Uint8Array(total);
+        for (let i: number = 0; i < total; i++) {
+            original[i] = (i * 7 + 13) % 256;
+        }
+
+        const node: ReplayableAudioNode = new ReplayableAudioNode(buildDeterministicNode(original), bytesPerSecond);
+
+        for (let i: number = 0; i < 6; i++) {
+            await node.read();
+        }
+
+        // Acknowledge a byte in the MIDDLE of chunk 4 (still an even / sample boundary). The node
+        // keeps the whole page containing the ack point, but replay must resume at the exact ack
+        // byte so the already-acknowledged head of that page is not resent.
+        const ackByte: number = 3 * chunkBytes + 1400; // 11000
+        node.shrinkBuffers(byteToTicks(ackByte));
+
+        node.replay();
+        const resent: number[] = await drainToEnd(node);
+
+        // Replay starts exactly at the acknowledged byte, not at the page boundary: no acknowledged
+        // audio is replayed (no duplicate) and nothing after the ack is dropped (no gap).
+        expect(resent).toEqual(Array.from(original.slice(ackByte)));
+
+        const serviceView: number[] = [
+            ...Array.from(original.slice(0, ackByte)),
+            ...resent,
+        ];
+        expect(serviceView).toEqual(Array.from(original));
+    });
+});

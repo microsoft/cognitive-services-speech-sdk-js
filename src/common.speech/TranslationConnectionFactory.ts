@@ -124,7 +124,6 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
         const translationVoice: string = config.parameters.getProperty(PropertyId.SpeechServiceConnection_TranslationVoice, undefined);
         if (translationVoice !== undefined) {
             queryParams.voice = translationVoice;
-            // Updated to match C++ implementation
             queryParams.features = "requireVoice";
         }
     }
