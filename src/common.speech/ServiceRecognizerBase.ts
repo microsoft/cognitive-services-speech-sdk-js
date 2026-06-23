@@ -30,7 +30,6 @@ import {
     SpeechRecognitionResult,
     OutputFormat
 } from "../sdk/Exports.js";
-import { Callback } from "../sdk/Transcription/IConversation.js";
 import {
     AgentConfig,
     AutoDetectSourceLanguagesOpenRangeOptionName,
@@ -529,10 +528,6 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return this.privAgentConfig;
     }
 
-    public set conversationTranslatorToken(token: string) {
-        this.privRecognizerConfig.parameters.setProperty(PropertyId.ConversationTranslator_Token, token);
-    }
-
     public set authentication(auth: IAuthentication) {
         this.privAuthentication = auth;
     }
@@ -687,7 +682,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return Promise.resolve();
     }
 
-    public connectAsync(cb?: Callback, err?: Callback): void {
+    public connectAsync(cb?: (result?: any) => void, err?: (result?: any) => void): void {
         this.connectImpl().then((): void => {
             try {
                 if (!!cb) {

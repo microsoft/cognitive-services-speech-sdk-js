@@ -53,21 +53,13 @@ export { ConnectionMessage } from "./ConnectionMessage.js";
 export { AutoDetectSourceLanguageConfig } from "./AutoDetectSourceLanguageConfig.js";
 export { AutoDetectSourceLanguageResult } from "./AutoDetectSourceLanguageResult.js";
 export { SourceLanguageConfig } from "./SourceLanguageConfig.js";
-export { Conversation,
-    ConversationExpirationEventArgs,
-    ConversationInfo,
-    ConversationParticipantsChangedEventArgs,
-    ConversationTranslationCanceledEventArgs,
-    ConversationTranslationEventArgs,
-    ConversationTranslationResult,
-    ConversationTranscriber,
+export { ConversationTranscriber,
     ConversationTranscriptionResult,
     Meeting,
     MeetingInfo,
     MeetingTranscriber,
     IParticipant,
     Participant,
-    ParticipantChangedReason,
     User,
     VoiceSignature
     } from "./Transcription/Exports.js";
