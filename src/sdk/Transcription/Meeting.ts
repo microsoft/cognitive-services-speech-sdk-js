@@ -137,7 +137,7 @@ export class MeetingImpl extends Meeting implements IDisposable {
     }
 
     public get participants(): Participant[] {
-        return this.toParticipants(true);
+        return this.privParticipants.participants.map((p: IInternalParticipant): Participant => this.toParticipant(p));
     }
 
     public get transcriberRecognizer(): TranscriberRecognizer {
@@ -246,16 +246,7 @@ export class MeetingImpl extends Meeting implements IDisposable {
     }
 
     /** Participant Helpers */
-    private toParticipants(includeHost: boolean): Participant[] {
-        const participants: Participant[] = this.privParticipants.participants.map((p: IInternalParticipant): Participant => ( this.toParticipant(p) ) );
-        if (!includeHost) {
-            return participants.filter((p: Participant): boolean => p.isHost === false);
-        } else {
-            return participants;
-        }
-    }
-
     private toParticipant(p: IInternalParticipant): Participant {
-        return new Participant(p.id, p.avatar, p.displayName, p.isHost, p.isMuted, p.isUsingTts, p.preferredLanguage, p.voice);
+        return new Participant(p.id, p.preferredLanguage, p.voice);
     }
 }

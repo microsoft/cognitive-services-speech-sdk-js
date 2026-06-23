@@ -5,22 +5,15 @@
  * The user who is participating in the meeting.
  */
 export interface IInternalParticipant {
-    avatar?: string;
-    displayName?: string;
     id?: string;
-    isHost?: boolean;
-    isMuted?: boolean;
-    isUsingTts?: boolean;
-    profanity?: boolean;
     preferredLanguage?: string;
-    translateToLanguages?: string[];
     voice?: string;
 }
 
 /** Users participating in the meeting */
 export class InternalParticipants {
 
-    public constructor(public participants: IInternalParticipant[] = [], public meId?: string) {
+    public constructor(public participants: IInternalParticipant[] = []) {
 
     }
 
@@ -65,19 +58,5 @@ export class InternalParticipants {
      */
     public deleteParticipant(id: string): void {
         this.participants = this.participants.filter((p: IInternalParticipant): boolean => p.id !== id);
-    }
-
-    /**
-     * Helper to return the meeting host.
-     */
-    public get host(): IInternalParticipant {
-        return this.participants.find((p: IInternalParticipant): boolean => p.isHost === true );
-    }
-
-    /**
-     * Helper to return the current user.
-     */
-    public get me(): IInternalParticipant {
-        return this.getParticipant(this.meId);
     }
 }
