@@ -339,7 +339,12 @@ test("TranslateVoiceInvalidVoice", (done: jest.DoneCallback): void => {
         try {
             stopReco = true;
             if (!pass) {
-                expect(e.errorDetails).toContain(voiceName);
+                // The service no longer echoes the requested voice name in the error for
+                // an invalid synthesis voice; it now returns a generic BadRequest. Verify
+                // the invalid voice still surfaces as an error cancellation rather than
+                // matching the exact (service-versioned) error text.
+                expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.Error]);
+                expect(e.errorDetails).toBeTruthy();
             } else {
                 expect(sdk.CancellationReason[e.reason]).toEqual(sdk.CancellationReason[sdk.CancellationReason.EndOfStream]);
             }
