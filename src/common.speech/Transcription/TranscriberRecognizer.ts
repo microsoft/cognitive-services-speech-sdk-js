@@ -7,8 +7,6 @@ import { Contracts } from "../../sdk/Contracts.js";
 import {
     AudioConfig,
     CancellationEventArgs,
-    Conversation,
-    ConversationInfo,
     Meeting,
     MeetingInfo,
     MeetingTranscriber,
@@ -40,9 +38,7 @@ export class TranscriberRecognizer extends Recognizer {
     public canceled: (sender: Recognizer, event: CancellationEventArgs) => void;
 
     private privDisposedRecognizer: boolean;
-    private privConversation: Conversation;
     private privMeeting: Meeting;
-    private isMeetingRecognizer: boolean;
 
     /**
      * TranscriberRecognizer constructor.
@@ -63,7 +59,6 @@ export class TranscriberRecognizer extends Recognizer {
 
         super(audioConfig, speechTranslationConfigImpl.properties, new TranscriberConnectionFactory());
         this.privDisposedRecognizer = false;
-        this.isMeetingRecognizer = false;
     }
 
     public get speechRecognitionLanguage(): string {
@@ -85,30 +80,14 @@ export class TranscriberRecognizer extends Recognizer {
         this.properties.setProperty(PropertyId.SpeechServiceAuthorization_Token, token);
     }
 
-    public set conversation(c: Conversation) {
-        Contracts.throwIfNullOrUndefined(c, "Conversation");
-        this.isMeetingRecognizer = false;
-        this.privConversation = c;
-    }
-
-    public getConversationInfo(): ConversationInfo {
-        Contracts.throwIfNullOrUndefined(this.privConversation, "Conversation");
-        return this.privConversation.conversationInfo;
-    }
-
     public set meeting(m: Meeting) {
         Contracts.throwIfNullOrUndefined(m, "Meeting");
-        this.isMeetingRecognizer = true;
         this.privMeeting = m;
     }
 
     public getMeetingInfo(): MeetingInfo {
         Contracts.throwIfNullOrUndefined(this.privMeeting, "Meeting");
         return this.privMeeting.meetingInfo;
-    }
-
-    public IsMeetingRecognizer(): boolean {
-        return this.isMeetingRecognizer;
     }
 
     public startContinuousRecognitionAsync(cb?: () => void, err?: (e: string) => void): void {
@@ -123,13 +102,6 @@ export class TranscriberRecognizer extends Recognizer {
         if (!this.privDisposedRecognizer) {
             await this.dispose(true);
         }
-    }
-
-    // Push async join/leave conversation message via serviceRecognizer
-    public async pushConversationEvent(conversationInfo: ConversationInfo, command: string): Promise<void> {
-        const reco = (this.privReco) as TranscriptionServiceRecognizer;
-        Contracts.throwIfNullOrUndefined(reco, "serviceRecognizer");
-        await reco.sendSpeechEventAsync(conversationInfo, command);
     }
 
     // Push async join/leave meeting message via serviceRecognizer
@@ -154,7 +126,6 @@ export class TranscriberRecognizer extends Recognizer {
     }
 
     public connectMeetingCallbacks(transcriber: MeetingTranscriber): void {
-        this.isMeetingRecognizer = true;
         this.canceled = (s: any, e: CancellationEventArgs): void => {
             if (!!transcriber.canceled) {
                 transcriber.canceled(transcriber, e);
