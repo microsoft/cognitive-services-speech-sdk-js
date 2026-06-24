@@ -18,7 +18,7 @@
 
 // Break the barrel-export circular dependency chains before any imports
 // The chain is: sdk/Exports → AudioInputStream → common.speech/Exports → Transcription/Exports
-//             → ConversationTranslatorRecognizer → SessionEventArgs (not yet resolved)
+//             → TranscriberRecognizer → SessionEventArgs (not yet resolved)
 jest.mock("../src/sdk/Audio/AudioConfig", () => ({}));
 jest.mock("../src/sdk/Audio/AudioInputStream", () => ({}));
 jest.mock("../src/sdk/Audio/AudioOutputStream", () => ({}));

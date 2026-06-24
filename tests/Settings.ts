@@ -17,8 +17,6 @@ export class Settings {
 
     public static SpeechTestEndpointId: string = "<<YOUR_TEST_ENDPOINT_ID>>";
 
-    public static ConversationTranslatorSwedenEndpoint: string = "wss://transcribe.westus.cts.speech.microsoft.com/speech/recognition/dynamicaudio";
-
     // Endpoint and key for timeout testing.
     // Endpoint should reduce standard speech timeout to value specified in SpeechServiceTimeoutSeconds
     // If undefined, production timeout of 10 seconds will be used, but at the cost of greatly increased test
@@ -84,9 +82,6 @@ export class Settings {
         Settings.InputDir + "myVoiceIsMyPassportVerifyMe03.wav",
     ];
 
-    public static ConversationTranslatorHost: string = "";
-    public static ConversationTranslatorSpeechHost: string = "";
-
     public static proxyServer: string;
     public static proxyPort: number;
 
@@ -137,13 +132,6 @@ export class Settings {
             if (customVoiceSub) {
                 Settings.CustomVoiceSubscriptionKey = customVoiceSub.Key;
                 Settings.CustomVoiceRegion = customVoiceSub.Region;
-            }
-
-            // Load the conversation translator settings
-            const conversationTranslatorSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.CONVERSATION_TRANSLATOR);
-            if (conversationTranslatorSub) {
-                // These might be set from other configuration values
-                // but we'll use the region and key if available
             }
 
             const botSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.DIALOG_SUBSCRIPTION);

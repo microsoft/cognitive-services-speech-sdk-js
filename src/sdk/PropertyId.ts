@@ -437,30 +437,6 @@ export enum PropertyId {
     SpeechServiceConnection_Host,
 
     /**
-     * Set the host for service calls to the Conversation Translator REST management and websocket calls.
-     */
-    ConversationTranslator_Host,
-
-    /**
-     * Optionally set the the host's display name.
-     * Used when joining a conversation.
-     */
-    ConversationTranslator_Name,
-
-    /**
-     * Optionally set a value for the X-CorrelationId request header.
-     * Used for troubleshooting errors in the server logs. It should be a valid guid.
-     */
-    ConversationTranslator_CorrelationId,
-
-    /**
-     * Set the conversation token to be sent to the speech service. This enables the
-     * service to service call from the speech service to the Conversation Translator service for relaying
-     * recognitions. For internal use.
-     */
-    ConversationTranslator_Token,
-
-    /**
      * The reference text of the audio for pronunciation evaluation.
      * For this and the following pronunciation assessment parameters, see
      * https://docs.microsoft.com/azure/cognitive-services/speech-service/rest-speech-to-text#pronunciation-assessment-parameters for details.

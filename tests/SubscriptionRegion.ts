@@ -44,7 +44,6 @@ export class SubscriptionsRegionsKeys {
     public static readonly CONVERSATION_TRANSCRIPTION_SUBSCRIPTION: string = "ConversationTranscriptionPrincetonSubscription";
     public static readonly CUSTOM_VOICE_SUBSCRIPTION: string = "CustomVoiceSubscription";
     public static readonly DIALOG_SUBSCRIPTION: string = "DialogSubscription";
-    public static readonly CONVERSATION_TRANSLATOR: string = "ConversationTranslatorSubscription";
     public static readonly AAD_SPEECH_CLIENT_SECRET: string = "AADSpeechClientSecret";
     public static readonly CUSTOM_VOICE_REGION: string = "CustomVoiceRegion";
 }
