@@ -34,6 +34,7 @@
     "ws": false,
     "fs": false,
     "agent-base": false,
+    "http": false,
     "tls": false,
     "net": false
   },
@@ -107,9 +108,8 @@
   "dependencies": {
     "@azure/core-auth": "^1.9.0",
     "@types/webrtc": "^0.0.37",
-    "agent-base": "^6.0.1",
     "bent": "^7.3.12",
-    "https-proxy-agent": "^4.0.0",
+    "https-proxy-agent": "^7.0.6",
     "uuid": "^11.1.1",
     "ws": "^8.21.0"
   },
