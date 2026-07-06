@@ -1,0 +1,39 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "clean": {
+      "cache": false,
+      "outputs": []
+    },
+    "lint": {
+      "outputs": []
+    },
+    "build:tsc": {
+      "dependsOn": ["clean", "lint"],
+      "outputs": ["distrib/lib/**"]
+    },
+    "copy:audioworklet:lib": {
+      "dependsOn": ["build:tsc"],
+      "outputs": ["distrib/lib/src/common.browser/speech-processor.js"]
+    },
+    "build:bundle": {
+      "dependsOn": ["copy:audioworklet:lib"],
+      "outputs": [
+        "distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle.js",
+        "distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle.js.map",
+        "distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle.d.ts"
+      ]
+    },
+    "copy:audioworklet:browser": {
+      "dependsOn": ["build:bundle"],
+      "outputs": ["distrib/browser/speech-processor.js"]
+    },
+    "build:compress": {
+      "dependsOn": ["copy:audioworklet:browser"],
+      "outputs": [
+        "distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js",
+        "distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js.map"
+      ]
+    }
+  }
+}

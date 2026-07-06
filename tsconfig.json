@@ -10,6 +10,18 @@
     "noImplicitAny": true,
     "removeComments": false,
     "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "outDir": "distrib/lib",
+    "rootDir": "."
+  },
+  "include": [
+    "src/**/*.ts",
+    "microsoft.cognitiveservices.speech.sdk.ts"
+  ],
+  "exclude": [
+    "src/common.browser/__mocks__/**",
+    "node_modules",
+    "distrib",
+    "tests"
+  ]
 }
