@@ -81,8 +81,8 @@
   "scripts": {
     "clean": "rimraf distrib",
     "build:tsc": "tsc -p tsconfig.json",
-    "copy:audioworklet:lib": "node scripts/copy-file.mjs src/audioworklet/speech-processor.js distrib/lib/src/common.browser/speech-processor.js",
-    "copy:audioworklet:browser": "node scripts/copy-file.mjs src/audioworklet/speech-processor.js distrib/browser/speech-processor.js",
+    "copy:audioworklet:lib": "node scripts/copy-file.cjs src/audioworklet/speech-processor.js distrib/lib/src/common.browser/speech-processor.js",
+    "copy:audioworklet:browser": "node scripts/copy-file.cjs src/audioworklet/speech-processor.js distrib/browser/speech-processor.js",
     "build:bundle": "webpack --config webpack.config.cjs",
     "build:compress": "terser distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle.js -o distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js --source-map \"url='microsoft.cognitiveservices.speech.sdk.bundle-min.js.map'\"",
     "build": "turbo run build:compress",
