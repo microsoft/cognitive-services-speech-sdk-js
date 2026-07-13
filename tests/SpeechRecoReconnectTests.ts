@@ -306,7 +306,7 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
     let serviceReturnedServiceTag: boolean = false;
     let lastServiceToken: string = "";
     let lastServiceTag: string = "";
-    // Per-channel results the service returns ("Channel":0 / "Channel":1). Both channels of
+    // Per-channel results the service returns (result.channel 0 / 1). Both channels of
     // the multichannel audio must be seen for the test to pass.
     const channelsSeen: Set<number> = new Set<number>();
     let disconnects: number = 0;
@@ -382,16 +382,11 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
             bucket.push(e.result.text);
         }
         // Record which channel this result came from so we can assert both channels of the
-        // multichannel audio produced output.
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const phrase: any = JSON.parse(e.result.json);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            if (phrase && typeof phrase.Channel === "number") {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                channelsSeen.add(phrase.Channel as number);
-            }
-        } catch { /* ignore non-JSON results */ }
+        // multichannel audio produced output. Read the strongly-typed SpeechRecognitionResult.channel
+        // property rather than hand-parsing the raw phrase JSON.
+        if (typeof e.result.channel === "number") {
+            channelsSeen.add(e.result.channel);
+        }
     };
 
     r.canceled = (o: sdk.Recognizer, e: sdk.SpeechRecognitionCanceledEventArgs): void => {
@@ -439,9 +434,10 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
                     expect(lastServiceToken).not.toEqual("");
                     expect(lastServiceTag).not.toEqual("");
 
-                    // Both channels of the multichannel audio must have produced results.
-                    expect(channelsSeen.has(0)).toEqual(true);
-                    expect(channelsSeen.has(1)).toEqual(true);
+                    // Both channels of the multichannel audio must have produced results:
+                    // the exact set of channel values seen must be {0, 1} - no more, no fewer,
+                    // and specifically those two values.
+                    expect(Array.from(channelsSeen).sort()).toEqual([0, 1]);
 
                     // Prove the SDK ingested the continuation info through its PRODUCTION
                     // path (ReconnectContinuationState.updateFromHeaders), not just the
@@ -572,20 +568,9 @@ test("Reliable reconnect - resends rebased absolute continuation offset and trim
     r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
         if (e.result.text) {
             (disconnects > 0 ? resultsAfterReconnect : resultsBeforeReconnect).push(e.result.text);
-            // The channel lives only in the raw service JSON; default to 0 if absent.
-            let channel: number = 0;
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const resultJson: any = JSON.parse(
-                    e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult, "{}"));
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                if (typeof resultJson.Channel === "number") {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    channel = resultJson.Channel as number;
-                }
-            } catch {
-                // Leave channel at 0 if the JSON is missing or unparseable.
-            }
+            // Read the strongly-typed SpeechRecognitionResult.channel property (defaults to 0
+            // in non-multichannel scenarios) rather than hand-parsing the raw service JSON.
+            const channel: number = typeof e.result.channel === "number" ? e.result.channel : 0;
             recognizedSpans.push({
                 afterReconnect: disconnects > 0,
                 channel,

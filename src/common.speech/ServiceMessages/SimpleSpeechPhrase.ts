@@ -11,6 +11,7 @@ export interface ISimpleSpeechPhrase {
     Duration?: number;
     PrimaryLanguage?: IPrimaryLanguage;
     SpeakerId?: string;
+    Channel?: number;
     [key: string]: any;
 }
 
@@ -71,6 +72,10 @@ export class SimpleSpeechPhrase implements ISimpleSpeechPhrase {
 
     public get SpeakerId(): string {
         return this.privSimpleSpeechPhrase.SpeakerId;
+    }
+
+    public get Channel(): number {
+        return this.privSimpleSpeechPhrase.Channel === undefined ? 0 : this.privSimpleSpeechPhrase.Channel;
     }
 
     private mapRecognitionStatus(status: any): RecognitionStatus {

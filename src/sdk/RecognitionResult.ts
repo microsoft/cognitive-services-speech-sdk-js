@@ -18,6 +18,7 @@ export class RecognitionResult {
     private privErrorDetails: string;
     private privJson: string;
     private privProperties: PropertyCollection;
+    private privChannel: number;
 
     /**
      * Creates and initializes an instance of this class.
@@ -32,9 +33,10 @@ export class RecognitionResult {
      * @param {string} errorDetails - Error details, if provided.
      * @param {string} json - Additional Json, if provided.
      * @param {PropertyCollection} properties - Additional properties, if provided.
+     * @param {number} channel - The audio channel the result was recognized on. Defaults to 0 in non-multichannel scenarios.
      */
     public constructor(resultId?: string, reason?: ResultReason, text?: string, duration?: number,
-                offset?: number, language?: string, languageDetectionConfidence?: string, errorDetails?: string, json?: string, properties?: PropertyCollection) {
+                offset?: number, language?: string, languageDetectionConfidence?: string, errorDetails?: string, json?: string, properties?: PropertyCollection, channel?: number) {
         this.privResultId = resultId;
         this.privReason = reason;
         this.privText = text;
@@ -45,6 +47,7 @@ export class RecognitionResult {
         this.privErrorDetails = errorDetails;
         this.privJson = json;
         this.privProperties = properties;
+        this.privChannel = channel === undefined ? 0 : channel;
     }
 
     /**
@@ -155,5 +158,17 @@ export class RecognitionResult {
      */
     public get properties(): PropertyCollection {
         return this.privProperties;
+    }
+
+    /**
+     * The audio channel the result was recognized on. In non-multichannel
+     * scenarios this defaults to 0.
+     * @member RecognitionResult.prototype.channel
+     * @function
+     * @public
+     * @returns {number} The zero-based audio channel index of the result.
+     */
+    public get channel(): number {
+        return this.privChannel;
     }
 }

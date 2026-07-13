@@ -24,12 +24,13 @@ export class SpeechRecognitionResult extends RecognitionResult {
      * @param {string} errorDetails - Error details, if provided.
      * @param {string} json - Additional Json, if provided.
      * @param {PropertyCollection} properties - Additional properties, if provided.
+     * @param {number} channel - The audio channel the result was recognized on. Defaults to 0 in non-multichannel scenarios.
      */
     public constructor(resultId?: string, reason?: ResultReason, text?: string,
                        duration?: number, offset?: number, language?: string,
                        languageDetectionConfidence?: string, speakerId?: string, errorDetails?: string,
-                       json?: string, properties?: PropertyCollection) {
-        super(resultId, reason, text, duration, offset, language, languageDetectionConfidence, errorDetails, json, properties);
+                       json?: string, properties?: PropertyCollection, channel?: number) {
+        super(resultId, reason, text, duration, offset, language, languageDetectionConfidence, errorDetails, json, properties, channel);
         this.privSpeakerId = speakerId;
     }
 
