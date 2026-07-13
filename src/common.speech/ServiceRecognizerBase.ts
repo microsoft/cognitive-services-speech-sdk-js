@@ -142,7 +142,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         // Multi-channel always relies on the continuation/resume protocol, so reliable reconnect
         // is enabled implicitly whenever multi-channel processing is active.
         this.privEnableReliableReconnect =
-            this.privRecognizerConfig.parameters.getProperty("SPEECH-EnableMultiChannelProcessing", "false").toLowerCase() === "true";
+            this.privRecognizerConfig.parameters.getProperty(PropertyId.Speech_EnableMultiChannelProcessing, "false").toLowerCase() === "true";
         this.privContinuationState = new ReconnectContinuationState();
         const webWorkerLoadType: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.WebWorkerLoadType, "on").toLowerCase();
         if (webWorkerLoadType === "on" && typeof (Blob) !== "undefined" && typeof (Worker) !== "undefined") {

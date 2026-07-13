@@ -281,6 +281,12 @@ export enum PropertyId {
     Speech_StartEventSensitivity,
 
     /**
+     * A boolean value specifying whether to process stereo input channels separately (instead of downmixing).
+     * Default is false.
+     */
+    Speech_EnableMultiChannelProcessing,
+
+    /**
      * A boolean value specifying whether audio logging is enabled in the service or not.
      * Audio and content logs are stored either in Microsoft-owned storage, or in your own storage account linked
      * to your Cognitive Services subscription (Bring Your Own Storage (BYOS) enabled Speech resource).
