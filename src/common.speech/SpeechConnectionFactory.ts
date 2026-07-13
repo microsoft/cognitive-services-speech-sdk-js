@@ -55,7 +55,7 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
         // continuation headers when "format"/"language" query params are present, so drop them
         // here and let the language travel inside speech.config / speech.context instead.
         const multiChannelReconnect: boolean =
-            config.parameters.getProperty("SPEECH-EnableMultiChannelProcessing", "false").toLowerCase() === "true";
+            config.parameters.getProperty(PropertyId.Speech_EnableMultiChannelProcessing, "false").toLowerCase() === "true";
 
         if (endpointId) {
             if (!endpoint || endpoint.search(QueryParameterNames.CustomSpeechDeploymentId) === -1) {

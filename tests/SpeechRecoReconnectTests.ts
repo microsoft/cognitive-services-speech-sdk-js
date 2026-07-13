@@ -66,9 +66,8 @@ const BuildReliableReconnectConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfi
     }
 
     // Opt in to multi-channel processing, which implicitly enables the reliable reconnect
-    // protocol (no public SDK API yet, so use the private property).
-    s.setProperty("SPEECH-EnableMultiChannelProcessing", "true");
-    s.setServiceProperty("setfeature", "multichannel3", sdk.ServicePropertyChannel.UriQueryParameter);
+    // protocol.
+    s.setProperty(PropertyId.Speech_EnableMultiChannelProcessing, "true");
 
     expect(s).not.toBeUndefined();
     return s;
