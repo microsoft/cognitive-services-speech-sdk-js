@@ -460,6 +460,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
                 expect(result).not.toBeUndefined();
                 expect(result.errorDetails).toBeUndefined();
                 expect(result.reason).toEqual(sdk.ResultReason.RecognizedSpeech);
+                expect(result.channel).toEqual(0);
 
                 // Check that latency property is set on final result
                 const latency = result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_RecognitionLatencyMs);
@@ -1261,7 +1262,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         s.speechRecognitionLanguage = "en-US";
         s.outputFormat = sdk.OutputFormat.Detailed;
         s.setProperty(sdk.PropertyId.Recognizer_StopTimeoutMs, "100");
-        s.setProperty("SPEECH-TransmitLengthBeforThrottleMs", "60000"); // large value to avoid throttling 
+        s.setProperty("SPEECH-TransmitLengthBeforThrottleMs", "60000"); // large value to avoid throttling
 
         const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.InputDir + "aboutSpeechSdk.wav");
 

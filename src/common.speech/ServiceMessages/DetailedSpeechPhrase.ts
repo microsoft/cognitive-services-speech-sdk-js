@@ -12,6 +12,7 @@ export interface IDetailedSpeechPhrase {
     PrimaryLanguage?: IPrimaryLanguage;
     DisplayText?: string;
     SpeakerId?: string;
+    Channel?: number;
     [key: string]: any;
 }
 
@@ -99,6 +100,9 @@ export class DetailedSpeechPhrase implements IDetailedSpeechPhrase {
     }
     public get SpeakerId(): string {
         return this.privDetailedSpeechPhrase.SpeakerId;
+    }
+    public get Channel(): number {
+        return this.privDetailedSpeechPhrase.Channel === undefined ? 0 : this.privDetailedSpeechPhrase.Channel;
     }
     private mapRecognitionStatus(status: any): RecognitionStatus {
         if (typeof status === "string") {

@@ -128,7 +128,8 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                             undefined, // Speaker Id
                             undefined,
                             simple.asJson(),
-                            resultProps);
+                            resultProps,
+                            simple.Channel);
                     } else {
                         const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
                         resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, detailed.asJson());
@@ -144,7 +145,8 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                             undefined, // Speaker Id
                             undefined,
                             detailed.asJson(),
-                            resultProps);
+                            resultProps,
+                            detailed.Channel);
                     }
 
                     const event: SpeechRecognitionEventArgs = new SpeechRecognitionEventArgs(result, result.offset, this.privRequestSession.sessionId);
