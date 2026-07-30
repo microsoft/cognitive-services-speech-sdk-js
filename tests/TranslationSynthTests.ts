@@ -196,7 +196,8 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback): void => {
                     byteCount += rEvents[i].byteLength;
                 }
 
-                const result: Uint8Array = new Uint8Array(byteCount);
+                const resultBuffer: ArrayBuffer = new ArrayBuffer(byteCount);
+                const result: Uint8Array = new Uint8Array(resultBuffer);
 
                 byteCount = 0;
                 for (let i: number = 0; i < synthFragmentCount; i++) {
@@ -206,10 +207,10 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback): void => {
 
                 let config: sdk.AudioConfig;
                 if (typeof File !== "undefined") {
-                    const inputStream: File = ByteBufferAudioFile.Load([result]);
+                    const inputStream: File = ByteBufferAudioFile.Load([resultBuffer]);
                     config = sdk.AudioConfig.fromWavFileInput(inputStream);
                 } else {
-                    const b: Buffer = Buffer.from(result, result.byteOffset, result.byteLength);
+                    const b: Buffer = Buffer.from(result);
                     config = sdk.AudioConfig.fromWavFileInput(b);
                 }
                 const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
