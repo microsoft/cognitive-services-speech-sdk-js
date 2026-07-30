@@ -32,7 +32,7 @@ module.exports = {
                     sourceMap: true, 
                     inlineSourceMap: false,
                     // Ensure ts-jest respects the project's tsconfig settings
-                    tsconfig: 'tsconfig.json',
+                    tsconfig: 'tsconfig.test.json',
                     diagnostics: {
                         // Improve error reporting
                         warnOnly: true,
@@ -57,7 +57,7 @@ module.exports = {
                     sourceMap: true, 
                     inlineSourceMap: false,
                     // Ensure ts-jest respects the project's tsconfig settings
-                    tsconfig: 'tsconfig.json',
+                    tsconfig: 'tsconfig.test.json',
                     diagnostics: {
                         // Improve error reporting
                         warnOnly: true,
