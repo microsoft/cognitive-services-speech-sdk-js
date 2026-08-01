@@ -227,7 +227,7 @@ test("Test new connection on empty push stream for translator", (done: jest.Done
         const stream = fs.createReadStream(Settings.EvenLongerWaveFile, { highWaterMark: chunkSize });
 
         stream.on("data", (arrayBuffer: Buffer): void => {
-            pushStream.write(arrayBuffer.slice());
+            pushStream.write(Uint8Array.from(arrayBuffer).buffer);
             if (!reconnected) {
                 // Using very small chunks, we paused for pauseInSeconds after reading each chunk,
                 // elongating the read time for the file.

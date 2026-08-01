@@ -63,7 +63,7 @@ test("PullAudioOutputStreamImpl basic test", (done: jest.DoneCallback) => {
     for (let i: number = 0; i < size; i++) {
         abView[i] = i % 256;
     }
-    ps.write(abView);
+    ps.write(ab);
 
     let bytesRead: number = 0;
     const audioBuffer = new ArrayBuffer(size);

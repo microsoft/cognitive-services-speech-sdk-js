@@ -35,7 +35,7 @@ module.exports = {
                     tsconfig: 'tsconfig.test.json',
                     diagnostics: {
                         // Improve error reporting
-                        warnOnly: true,
+                        warnOnly: false,
                         pretty: true
                     }
                 }]
@@ -60,7 +60,7 @@ module.exports = {
                     tsconfig: 'tsconfig.test.json',
                     diagnostics: {
                         // Improve error reporting
-                        warnOnly: true,
+                        warnOnly: false,
                         pretty: true
                     }
                 }]
