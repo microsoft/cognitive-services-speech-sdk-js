@@ -44,6 +44,9 @@ module.exports = {
             testPathIgnorePatterns: ["/lib/", "/node_modules/", "/src/"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "jsdom",
+            testEnvironmentOptions: {
+                customExportConditions: ["node", "node-addons"]
+            },
             setupFilesAfterEnv: [configFile, './jest.setup.js']
         },
         {
