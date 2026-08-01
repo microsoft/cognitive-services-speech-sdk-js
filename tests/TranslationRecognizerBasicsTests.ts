@@ -608,7 +608,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         console.info("Name: InitialSilenceTimeout (File)");
         const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
         const bigFileBuffer: ArrayBuffer = new ArrayBuffer(1024 * 1024);
-        const bigFile: File = ByteBufferAudioFile.Load([audioFormat.header, bigFileBuffer]);
+        const bigFile: File | Buffer = ByteBufferAudioFile.Load([audioFormat.header, bigFileBuffer]);
 
         const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(bigFile);
 

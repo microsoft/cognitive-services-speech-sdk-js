@@ -205,14 +205,8 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback): void => {
                     byteCount += rEvents[i].byteLength;
                 }
 
-                let config: sdk.AudioConfig;
-                if (typeof File !== "undefined") {
-                    const inputStream: File = ByteBufferAudioFile.Load([resultBuffer]);
-                    config = sdk.AudioConfig.fromWavFileInput(inputStream);
-                } else {
-                    const b: Buffer = Buffer.from(result);
-                    config = sdk.AudioConfig.fromWavFileInput(b);
-                }
+                const inputStream: File | Buffer = ByteBufferAudioFile.Load([resultBuffer]);
+                const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(inputStream);
                 const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
                 objsToClose.push(speechConfig);
                 speechConfig.speechRecognitionLanguage = "de-DE";

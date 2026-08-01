@@ -280,14 +280,8 @@ test("BadWavFileProducesError", async (): Promise<void> => {
 
     console.info("SpeechConfig created");
     const bigFileBuffer: ArrayBuffer = new ArrayBuffer(1024 * 1024);
-    let config: sdk.AudioConfig;
-    if (typeof File !== "undefined") {
-        const inputStream: File = ByteBufferAudioFile.Load([bigFileBuffer]);
-        config = sdk.AudioConfig.fromWavFileInput(inputStream);
-    } else {
-        const b: Buffer = Buffer.from(bigFileBuffer);
-        config = sdk.AudioConfig.fromWavFileInput(b);
-    }
+    const inputStream: File | Buffer = ByteBufferAudioFile.Load([bigFileBuffer]);
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(inputStream);
 
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
     objsToClose.push(r);
