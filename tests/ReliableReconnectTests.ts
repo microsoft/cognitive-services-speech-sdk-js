@@ -214,14 +214,19 @@ interface TestableRecognizer {
     privSpeechContext: SpeechContext;
     privContinuationState: ReconnectContinuationState;
     privEnableReliableReconnect: boolean;
+    privRequestSession: {
+        currentTurnAudioOffset: number;
+    };
+    readonly serviceOffsetBase: number;
     applyReconnectContinuation(): void;
 }
 
-function createTestRecognizer(): TestableRecognizer {
+function createTestRecognizer(enableReliableReconnect: boolean = true, currentTurnAudioOffset: number = 0): TestableRecognizer {
     const instance = Object.create(ServiceRecognizerBase.prototype) as TestableRecognizer;
     instance.privSpeechContext = new SpeechContext(new DynamicGrammarBuilder());
     instance.privContinuationState = new ReconnectContinuationState();
-    instance.privEnableReliableReconnect = true;
+    instance.privEnableReliableReconnect = enableReliableReconnect;
+    instance.privRequestSession = { currentTurnAudioOffset };
     return instance;
 }
 
@@ -230,6 +235,18 @@ function getContext(rec: TestableRecognizer): SpeechServiceContext {
 }
 
 describe("ServiceRecognizerBase reliable reconnect wiring", (): void => {
+
+    it("uses session-absolute service offsets when reliable reconnect is enabled", (): void => {
+        const rec = createTestRecognizer(true, 5000);
+
+        expect(rec.serviceOffsetBase).toEqual(0);
+    });
+
+    it("preserves turn-relative service offsets when reliable reconnect is disabled", (): void => {
+        const rec = createTestRecognizer(false, 5000);
+
+        expect(rec.serviceOffsetBase).toEqual(5000);
+    });
 
     it("injects audio.streams but no continuation on a fresh turn", (): void => {
         const rec = createTestRecognizer();
