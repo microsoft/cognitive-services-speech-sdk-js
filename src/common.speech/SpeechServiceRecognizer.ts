@@ -56,7 +56,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
         switch (connectionMessage.path.toLowerCase()) {
             case "speech.hypothesis":
             case "speech.fragment":
-                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                const hypothesis: SpeechHypothesis = SpeechHypothesis.fromJSON(connectionMessage.textBody, this.serviceOffsetBase);
                 resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, hypothesis.asJson());
 
                 const hypothesisLatencyMs = this.privRequestSession.onHypothesis(hypothesis.Offset);
@@ -92,7 +92,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                 processed = true;
                 break;
             case "speech.phrase":
-                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                const simple: SimpleSpeechPhrase = SimpleSpeechPhrase.fromJSON(connectionMessage.textBody, this.serviceOffsetBase);
                 resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, simple.asJson());
 
                 const resultReason: ResultReason = EnumTranslation.implTranslateRecognitionResult(simple.RecognitionStatus, this.privExpectContentAssessmentResponse);
@@ -132,7 +132,7 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                             resultProps,
                             simple.Channel);
                     } else {
-                        const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                        const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody, this.serviceOffsetBase);
                         resultProps.setProperty(PropertyId.SpeechServiceResponse_JsonResult, detailed.asJson());
 
                         result = new SpeechRecognitionResult(
