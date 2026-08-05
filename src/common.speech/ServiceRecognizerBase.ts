@@ -870,7 +870,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         break;
 
                     case "speech.startdetected":
-                        const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
+                        const speechStartDetected: SpeechDetected = SpeechDetected.fromJSON(connectionMessage.textBody, this.serviceOffsetBase);
                         const speechStartEventArgs = new RecognitionEventArgs(speechStartDetected.Offset, this.privRequestSession.sessionId);
                         if (!!this.privRecognizer.speechStartDetected) {
                             this.privRecognizer.speechStartDetected(this.privRecognizer, speechStartEventArgs);
@@ -885,8 +885,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                             // If the request was empty, the JSON returned is empty.
                             json = "{ Offset: 0 }";
                         }
-                        const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json, this.privRequestSession.currentTurnAudioOffset);
-                        const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset + this.privRequestSession.currentTurnAudioOffset, this.privRequestSession.sessionId);
+                        const speechStopDetected: SpeechDetected = SpeechDetected.fromJSON(json, this.serviceOffsetBase);
+                        const speechStopEventArgs = new RecognitionEventArgs(speechStopDetected.Offset, this.privRequestSession.sessionId);
                         if (!!this.privRecognizer.speechEndDetected) {
                             this.privRecognizer.speechEndDetected(this.privRecognizer, speechStopEventArgs);
                         }
@@ -938,6 +938,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     // Undefined disables the X-StreamId header, preserving legacy behavior.
     private get audioStreamId(): string | undefined {
         return this.privEnableReliableReconnect ? this.privContinuationState.defaultStreamId : undefined;
+    }
+
+    protected get serviceOffsetBase(): number {
+        return this.privEnableReliableReconnect ? 0 : this.privRequestSession.currentTurnAudioOffset;
     }
 
     // Injects the reliable-reconnect sections into speech.context: the audio.streams marker
