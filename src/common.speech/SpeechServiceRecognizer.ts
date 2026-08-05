@@ -75,7 +75,8 @@ export class SpeechServiceRecognizer extends ServiceRecognizerBase {
                     undefined, // Speaker Id
                     undefined,
                     hypothesis.asJson(),
-                    resultProps);
+                    resultProps,
+                    hypothesis.Channel);
 
                 const ev = new SpeechRecognitionEventArgs(result, hypothesis.Offset, this.privRequestSession.sessionId);
 
