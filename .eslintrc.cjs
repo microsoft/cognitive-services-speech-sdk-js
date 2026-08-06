@@ -30,7 +30,7 @@ module.exports = {
         "eslint-plugin-jsdoc",
         "eslint-plugin-import",
         "@typescript-eslint",
-        "@typescript-eslint/tslint"
+        "@stylistic"
     ],
     "rules": {
         "@typescript-eslint/adjacent-overload-signatures": "error",
@@ -40,31 +40,9 @@ module.exports = {
                 "default": "array"
             }
         ],
-        "@typescript-eslint/ban-types": [
-            "error",
-            {
-                "types": {
-                    "Object": {
-                        "message": "Avoid using the `Object` type. Did you mean `object`?"
-                    },
-                    "Function": {
-                        "message": "Avoid using the `Function` type. Prefer a specific function type, like `() => void`."
-                    },
-                    "Boolean": {
-                        "message": "Avoid using the `Boolean` type. Did you mean `boolean`?"
-                    },
-                    "Number": {
-                        "message": "Avoid using the `Number` type. Did you mean `number`?"
-                    },
-                    "String": {
-                        "message": "Avoid using the `String` type. Did you mean `string`?"
-                    },
-                    "Symbol": {
-                        "message": "Avoid using the `Symbol` type. Did you mean `symbol`?"
-                    }
-                }
-            }
-        ],
+        "@typescript-eslint/no-empty-object-type": "error",
+        "@typescript-eslint/no-unsafe-function-type": "error",
+        "@typescript-eslint/no-wrapper-object-types": "error",
         "@typescript-eslint/consistent-type-assertions": "error",
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/dot-notation": "error",
@@ -93,7 +71,7 @@ module.exports = {
                 "allowTypedFunctionExpressions": false
             }
         ],
-        "@typescript-eslint/member-delimiter-style": [
+        "@stylistic/member-delimiter-style": [
             "error",
             {
                 "multiline": {
@@ -128,14 +106,14 @@ module.exports = {
         "@typescript-eslint/prefer-for-of": "error",
         "@typescript-eslint/prefer-function-type": "error",
         "@typescript-eslint/prefer-namespace-keyword": "error",
-        "@typescript-eslint/quotes": [
+        "@stylistic/quotes": [
             "error",
             "double",
             {
                 "avoidEscape": true
             }
         ],
-        "@typescript-eslint/semi": [
+        "@stylistic/semi": [
             "error",
             "always"
         ],
@@ -147,7 +125,7 @@ module.exports = {
                 "lib": "always"
             }
         ],
-        "@typescript-eslint/type-annotation-spacing": "error",
+        "@stylistic/type-annotation-spacing": "error",
         "@typescript-eslint/typedef": [
             "error",
             {
@@ -158,6 +136,15 @@ module.exports = {
             }
         ],
         "@typescript-eslint/unified-signatures": "error",
+        "@typescript-eslint/no-unused-vars": "warn",
+        "@typescript-eslint/prefer-promise-reject-errors": "off",
+        "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+        "@typescript-eslint/no-misused-promises": "off",
+        "@typescript-eslint/no-unsafe-enum-comparison": "warn",
+        "@typescript-eslint/no-unsafe-return": "warn",
+        "@typescript-eslint/no-base-to-string": "warn",
+        "@typescript-eslint/only-throw-error": "off",
+        "@typescript-eslint/no-wrapper-object-types": "warn",
         "arrow-body-style": "error",
         "arrow-parens": [
             "error",
@@ -242,24 +229,6 @@ module.exports = {
             }
         ],
         "use-isnan": "error",
-        "valid-typeof": "off",
-        "@typescript-eslint/tslint/config": [
-            "error",
-            {
-                "rules": {
-                    "import-spacing": true,
-                    "object-literal-sort-keys": true,
-                    "whitespace": [
-                        true,
-                        "check-branch",
-                        "check-decl",
-                        "check-operator",
-                        "check-separator",
-                        "check-type",
-                        "check-typecast"
-                    ]
-                }
-            }
-        ]
+        "valid-typeof": "off"
     }
 };

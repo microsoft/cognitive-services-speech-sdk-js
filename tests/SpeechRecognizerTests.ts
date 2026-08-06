@@ -279,15 +279,9 @@ test("BadWavFileProducesError", async (): Promise<void> => {
     s.speechRecognitionLanguage = Settings.WaveFileLanguage;
 
     console.info("SpeechConfig created");
-    const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
-    let config: sdk.AudioConfig;
-    if (typeof File !== "undefined") {
-        const inputStream: File = ByteBufferAudioFile.Load([bigFileBuffer.buffer]);
-        config = sdk.AudioConfig.fromWavFileInput(inputStream);
-    } else {
-        const b: Buffer = Buffer.from(bigFileBuffer, bigFileBuffer.byteOffset, bigFileBuffer.byteLength);
-        config = sdk.AudioConfig.fromWavFileInput(b);
-    }
+    const bigFileBuffer: ArrayBuffer = new ArrayBuffer(1024 * 1024);
+    const inputStream: File | Buffer = ByteBufferAudioFile.Load([bigFileBuffer]);
+    const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(inputStream);
 
     const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
     objsToClose.push(r);
@@ -1299,7 +1293,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
         // open the file and push it to the push stream.
         fs.createReadStream(Settings.LongerWaveFile).on("data", (arrayBuffer: Buffer): void => {
-            pushStream.write(arrayBuffer.slice());
+            pushStream.write(Uint8Array.from(arrayBuffer).buffer);
         }).on("end", (): void => {
             pushStream.close();
         });
@@ -2284,7 +2278,7 @@ Settings.testIfDOMCondition("Push Stream Async", async (): Promise<void> => {
     const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
     fs.createReadStream(Settings.WaveFile).on("data", (buffer: Buffer): void => {
-        p.write(buffer.buffer);
+        p.write(Uint8Array.from(buffer).buffer);
     }).on("end", (): void => {
         p.close();
     });

@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "node"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "microsoft.cognitiveservices.speech.sdk.ts"
+  ],
+  "exclude": [
+    "src/common.browser/__mocks__/**",
+    "node_modules",
+    "distrib"
+  ]
+}

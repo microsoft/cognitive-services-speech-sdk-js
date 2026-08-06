@@ -196,7 +196,7 @@ export class FileAudioSource implements IAudioSource {
             reader.readAsArrayBuffer(header);
         } else {
             const h: Buffer = header as Buffer;
-            processHeader(h.buffer.slice(h.byteOffset, h.byteOffset + h.byteLength));
+            processHeader(h.buffer.slice(h.byteOffset, h.byteOffset + h.byteLength) as ArrayBuffer);
         }
         return headerResult.promise;
     }
@@ -242,7 +242,7 @@ export class FileAudioSource implements IAudioSource {
                 reader.readAsArrayBuffer(chunk);
             } else {
                 const c: Buffer = chunk as Buffer;
-                processFile(c.buffer.slice(c.byteOffset, c.byteOffset + c.byteLength));
+                processFile(c.buffer.slice(c.byteOffset, c.byteOffset + c.byteLength) as ArrayBuffer);
             }
 
             return stream;

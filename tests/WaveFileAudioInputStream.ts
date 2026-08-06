@@ -7,7 +7,7 @@ import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 export class WaveFileAudioInput {
 
     public static getAudioConfigFromFile(filename: string): sdk.AudioConfig {
-        if (typeof File === "undefined") {
+        if (typeof window === "undefined") {
             return sdk.AudioConfig.fromWavFileInput(fs.readFileSync(filename), filename);
         } else {
             const f: File = WaveFileAudioInput.LoadFile(filename);
@@ -21,7 +21,8 @@ export class WaveFileAudioInput {
 
         const arrayBuffer: ArrayBuffer = Uint8Array.from(fileContents).buffer;
         const parts: ArrayBuffer[] = [arrayBuffer];
-        const file: File = new File(parts, filename);
+        const FileConstructor: typeof File = typeof window === "undefined" ? File : window.File;
+        const file: File = new FileConstructor(parts, filename);
 
         return (file);
     }

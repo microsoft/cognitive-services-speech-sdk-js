@@ -31,9 +31,12 @@ module.exports = {
                     // Match source map configuration with project's tsconfig and gulp build
                     sourceMap: true, 
                     inlineSourceMap: false,
-                    // Enable pathMapping to ensure correct line number reporting
-                    pathMapping: {
-                        '^(.*)\\.js$': '$1.ts'
+                    // Ensure ts-jest respects the project's tsconfig settings
+                    tsconfig: 'tsconfig.test.json',
+                    diagnostics: {
+                        // Improve error reporting
+                        warnOnly: false,
+                        pretty: true
                     }
                 }]
             },
@@ -41,20 +44,10 @@ module.exports = {
             testPathIgnorePatterns: ["/lib/", "/node_modules/", "/src/"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "jsdom",
-            collectCoverage: false,
-            setupFilesAfterEnv: [configFile, './jest.setup.js'],
-            testTimeout : 20000,
-            globals: {
-                'ts-jest': {
-                    // Ensure ts-jest respects the project's tsconfig settings
-                    tsconfig: 'tsconfig.json',
-                    diagnostics: {
-                        // Improve error reporting
-                        warnOnly: true,
-                        pretty: true
-                    }
-                }
-            }
+            testEnvironmentOptions: {
+                customExportConditions: ["node", "node-addons"]
+            },
+            setupFilesAfterEnv: [configFile, './jest.setup.js']
         },
         {
             displayName: "node",
@@ -66,9 +59,12 @@ module.exports = {
                     // Match source map configuration with project's tsconfig and gulp build
                     sourceMap: true, 
                     inlineSourceMap: false,
-                    // Enable pathMapping to ensure correct line number reporting
-                    pathMapping: {
-                        '^(.*)\\.js$': '$1.ts'
+                    // Ensure ts-jest respects the project's tsconfig settings
+                    tsconfig: 'tsconfig.test.json',
+                    diagnostics: {
+                        // Improve error reporting
+                        warnOnly: false,
+                        pretty: true
                     }
                 }]
             },
@@ -76,22 +72,11 @@ module.exports = {
             testPathIgnorePatterns: ["/lib/", "/node_modules/", "/src/"],
             moduleFileExtensions: ["ts", "js", "jsx", "json", "node"],
             testEnvironment: "node",
-            collectCoverage: false,
-            setupFilesAfterEnv: [configFile, './jest.setup.js'],
-            testTimeout : 30000,
-            globals: {
-                'ts-jest': {
-                    // Ensure ts-jest respects the project's tsconfig settings
-                    tsconfig: 'tsconfig.json',
-                    diagnostics: {
-                        // Improve error reporting
-                        warnOnly: true,
-                        pretty: true
-                    }
-                }
-            }
+            setupFilesAfterEnv: [configFile, './jest.setup.js']
         }
     ],
+    collectCoverage: false,
+    testTimeout: 30000,
     reporters: [ "default", "jest-junit" ],
     testEnvironment: "node"
 };

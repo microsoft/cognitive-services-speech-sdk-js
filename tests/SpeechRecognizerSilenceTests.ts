@@ -133,10 +133,10 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (push)");
             const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
-            const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
+            const bigFileBuffer: ArrayBuffer = new ArrayBuffer(1024 * 1024);
             const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
-            p.write(bigFileBuffer.buffer);
+            p.write(bigFileBuffer);
             p.close();
 
             testInitialSilenceTimeout(config, done);
@@ -146,8 +146,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             // eslint-disable-next-line no-console
             console.info("Name: InitialSilenceTimeout (File)");
             const audioFormat: AudioStreamFormatImpl = sdk.AudioStreamFormat.getDefaultInputFormat() as AudioStreamFormatImpl;
-            const bigFileBuffer: Uint8Array = new Uint8Array(1024 * 1024);
-            const bigFile: File = ByteBufferAudioFile.Load([audioFormat.header, bigFileBuffer.buffer]);
+            const bigFileBuffer: ArrayBuffer = new ArrayBuffer(1024 * 1024);
+            const bigFile: File | Buffer = ByteBufferAudioFile.Load([audioFormat.header, bigFileBuffer]);
 
             const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(bigFile);
 
@@ -284,8 +284,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
 
-        const emptyBuffer: Uint8Array = new Uint8Array(1 * 1024);
-        p.write(emptyBuffer.buffer);
+        const emptyBuffer: ArrayBuffer = new ArrayBuffer(1 * 1024);
+        p.write(emptyBuffer);
         p.close();
 
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
@@ -388,13 +388,13 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         console.info("Name: Silence After Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
-        const bigFileBuffer: Uint8Array = new Uint8Array(32 * 1024 * 30); // ~30 seconds.
+        const bigFileBuffer: ArrayBuffer = new ArrayBuffer(32 * 1024 * 30); // ~30 seconds.
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
         p.write(WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile));
-        p.write(bigFileBuffer.buffer);
+        p.write(bigFileBuffer);
         p.close();
 
         const r: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(s, config);
@@ -473,12 +473,12 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         console.info("Name: Silence Then Speech");
         // Pump valid speech and then silence until at least one speech end cycle hits.
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
-        const bigFileBuffer: Uint8Array = new Uint8Array(32 * 1024 * 30); // ~30 seconds.
+        const bigFileBuffer: ArrayBuffer = new ArrayBuffer(32 * 1024 * 30); // ~30 seconds.
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
         const s: sdk.SpeechConfig = BuildSpeechConfig();
         objsToClose.push(s);
 
-        p.write(bigFileBuffer.buffer);
+        p.write(bigFileBuffer);
         p.write(WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile));
         p.close();
 

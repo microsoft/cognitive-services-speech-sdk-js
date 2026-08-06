@@ -4,12 +4,28 @@
     "module": "commonjs",
     "lib": ["es2015"],
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "strict": false,
+    "strictNullChecks": false,
     "preserveConstEnums": true,
     "sourceMap": true,
     "declaration": true,
     "noImplicitAny": true,
+    "strictPropertyInitialization": false,
     "removeComments": false,
     "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "outDir": "distrib/lib",
+    "rootDir": "."
+  },
+  "include": [
+    "src/**/*.ts",
+    "microsoft.cognitiveservices.speech.sdk.ts"
+  ],
+  "exclude": [
+    "src/common.browser/__mocks__/**",
+    "node_modules",
+    "distrib",
+    "tests"
+  ]
 }
