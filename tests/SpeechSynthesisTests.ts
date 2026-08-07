@@ -124,16 +124,41 @@ const CheckSynthesisResult: (result: sdk.SpeechSynthesisResult, reason: sdk.Resu
         }
     };
 
-const CheckBinaryEqual: (arr1: ArrayBuffer, arr2: ArrayBuffer) => void =
-    (arr1: ArrayBuffer, arr2: ArrayBuffer): void => {
-        expect(arr1).not.toBeUndefined();
-        expect(arr2).not.toBeUndefined();
-        expect(arr1.byteLength).toEqual(arr2.byteLength);
-        const view1: Uint8Array = new Uint8Array(arr1);
-        const view2: Uint8Array = new Uint8Array(arr2);
-        for (let i: number = 0; i < arr1.byteLength; i++) {
-            expect(view1[i]).toEqual(view2[i]);
+const CheckRiffPcmComplete: (result: sdk.SpeechSynthesisResult) => number =
+    (result: sdk.SpeechSynthesisResult): number => {
+        if (!result.audioData || result.audioData.byteLength < 44) {
+            throw new Error("Expected a RIFF PCM buffer with a complete 44-byte header.");
         }
+
+        const view: DataView = new DataView(result.audioData);
+        expect(String.fromCharCode(...new Uint8Array(result.audioData, 0, 4))).toEqual("RIFF");
+        expect(String.fromCharCode(...new Uint8Array(result.audioData, 8, 4))).toEqual("WAVE");
+        expect(String.fromCharCode(...new Uint8Array(result.audioData, 12, 4))).toEqual("fmt ");
+        expect(view.getUint16(20, true)).toEqual(1);
+        expect(String.fromCharCode(...new Uint8Array(result.audioData, 36, 4))).toEqual("data");
+
+        const byteRate: number = view.getUint32(28, true);
+        const dataLength: number = view.getUint32(40, true);
+        if (byteRate === 0 || dataLength === 0) {
+            throw new Error("Expected RIFF PCM audio with a positive byte rate and data length.");
+        }
+
+        expect(result.audioData.byteLength).toEqual(dataLength + 44);
+        return dataLength * 1e7 / byteRate;
+    };
+
+const CheckRiffPcmFormatsEqual: (arr1: ArrayBuffer, arr2: ArrayBuffer) => void =
+    (arr1: ArrayBuffer, arr2: ArrayBuffer): void => {
+        const format1: Uint8Array = new Uint8Array(arr1, 8, 28);
+        const format2: Uint8Array = new Uint8Array(arr2, 8, 28);
+        expect(Array.from(format1)).toEqual(Array.from(format2));
+    };
+
+const CheckSynthesisDurationsSimilar: (duration1: number, duration2: number) => void =
+    (duration1: number, duration2: number): void => {
+        const longerDuration: number = Math.max(duration1, duration2);
+        expect(longerDuration).toBeGreaterThan(0);
+        expect(Math.abs(duration1 - duration2) / longerDuration).toBeLessThan(0.1);
     };
 
 const ReadPullAudioOutputStream: (stream: sdk.PullAudioOutputStream, length?: number, done?: jest.DoneCallback) => void =
@@ -1124,6 +1149,7 @@ describe("Service based tests", (): void => {
         BuildSpeechConfig().then((speechConfig: sdk.SpeechConfig): void => {
             objsToClose.push(speechConfig);
             speechConfig.speechSynthesisVoiceName = "en-US-AvaNeural";
+            speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
 
             const s: sdk.SpeechSynthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
             expect(s).not.toBeUndefined();
@@ -1146,7 +1172,10 @@ describe("Service based tests", (): void => {
                 // eslint-disable-next-line no-console
                 console.info("speaking ssml finished.");
                 CheckSynthesisResult(result, sdk.ResultReason.SynthesizingAudioCompleted);
-                CheckBinaryEqual(r.audioData, result.audioData);
+                const textDuration: number = CheckRiffPcmComplete(r);
+                const ssmlDuration: number = CheckRiffPcmComplete(result);
+                CheckRiffPcmFormatsEqual(r.audioData, result.audioData);
+                CheckSynthesisDurationsSimilar(textDuration, ssmlDuration);
                 done();
             }, (e: string): void => {
                 done(e);
