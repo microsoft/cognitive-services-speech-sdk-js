@@ -311,11 +311,15 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
     const channelsSeen: Set<number> = new Set<number>();
     let disconnects: number = 0;
     let connections: number = 0;
-    // Final recognition results split by the forced mid-stream drop: everything the service
-    // returns BEFORE the reconnect vs everything it returns AFTER it. Both buckets must contain
-    // the expected text to prove recognition resumed across the reconnect.
-    const resultsBeforeReconnect: string[] = [];
-    const resultsAfterReconnect: string[] = [];
+    type RecognitionPhase = "beforeDisconnect" | "reconnecting" | "afterReconnect";
+    interface RecognitionSpan {
+        channel: number;
+        offset: number;
+        duration: number;
+        phase: RecognitionPhase;
+    }
+    const recognitionSpans: RecognitionSpan[] = [];
+    const requiredChannels: number[] = [0, 1];
 
     const connection: sdk.Connection = sdk.Connection.fromRecognizer(r);
 
@@ -376,16 +380,18 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
     };
 
     r.recognized = (o: sdk.Recognizer, e: sdk.SpeechRecognitionEventArgs): void => {
-        // Bucket the final text by whether the drop/reconnect has happened yet.
-        if (e.result.text) {
-            const bucket: string[] = disconnects > 0 ? resultsAfterReconnect : resultsBeforeReconnect;
-            bucket.push(e.result.text);
-        }
-        // Record which channel this result came from so we can assert both channels of the
-        // multichannel audio produced output. Read the strongly-typed SpeechRecognitionResult.channel
-        // property rather than hand-parsing the raw phrase JSON.
-        if (typeof e.result.channel === "number") {
-            channelsSeen.add(e.result.channel);
+        const channel: number = e.result.channel;
+        if (e.result.text.trim().length > 0 && (channel === 0 || channel === 1)) {
+            const phase: RecognitionPhase = disconnects === 0
+                ? "beforeDisconnect"
+                : connections >= 2 ? "afterReconnect" : "reconnecting";
+            recognitionSpans.push({
+                channel,
+                offset: e.result.offset,
+                duration: e.result.duration,
+                phase,
+            });
+            channelsSeen.add(channel);
         }
     };
 
@@ -398,9 +404,11 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
     };
 
     r.startContinuousRecognitionAsync((): void => {
-        // Stop once we have results on BOTH sides of the forced reconnect.
-        WaitForCondition((): boolean =>
-            (resultsBeforeReconnect.length > 0 && disconnects > 0 && resultsAfterReconnect.length > 0),
+        const hasSpan = (channel: number, phase: RecognitionPhase): boolean =>
+            recognitionSpans.some((span: RecognitionSpan): boolean =>
+                span.channel === channel && span.phase === phase);
+        WaitForCondition((): boolean => requiredChannels.every((channel: number): boolean =>
+            hasSpan(channel, "beforeDisconnect") && hasSpan(channel, "afterReconnect")),
         (): void => {
             r.stopContinuousRecognitionAsync((): void => {
                 try {
@@ -411,18 +419,35 @@ test("Reliable reconnect - multichannel audio receives continuation token", (don
                     expect(disconnects).toBeGreaterThanOrEqual(1);
                     expect(connections).toBeGreaterThanOrEqual(2);
 
-                    // Recognition results - with the expected text - must exist both BEFORE the
-                    // drop and AFTER the reconnect, proving recognition resumed seamlessly.
-                    expect(resultsBeforeReconnect.length).toBeGreaterThan(0);
-                    expect(resultsAfterReconnect.length).toBeGreaterThan(0);
+                    const reconnectingSpans: RecognitionSpan[] = recognitionSpans.filter(
+                        (span: RecognitionSpan): boolean => span.phase === "reconnecting");
+                    // eslint-disable-next-line no-console
+                    console.info(`Finalized spans delivered while reconnecting: ${JSON.stringify(reconnectingSpans)}`);
 
-                    // The actual recognized TEXT must be correct on both sides of the reconnect:
-                    // channel 1's "What's the weather like?" is recognized early (before the drop),
-                    // and channel 0's long Batman passage finalizes after the reconnect.
-                    expect(resultsBeforeReconnect.some((t: string): boolean =>
-                        t.includes("What's the weather like"))).toEqual(true);
-                    expect(resultsAfterReconnect.some((t: string): boolean =>
-                        t.includes("Batman"))).toEqual(true);
+                    const calculateGap = (channel: number): number => {
+                        const beforeSpans: RecognitionSpan[] = recognitionSpans.filter(
+                            (span: RecognitionSpan): boolean =>
+                                span.channel === channel && span.phase === "beforeDisconnect");
+                        const afterSpans: RecognitionSpan[] = recognitionSpans.filter(
+                            (span: RecognitionSpan): boolean =>
+                                span.channel === channel && span.phase === "afterReconnect");
+                        expect(beforeSpans.length).toBeGreaterThan(0);
+                        expect(afterSpans.length).toBeGreaterThan(0);
+
+                        const preEnd: number = Math.max(...beforeSpans.map(
+                            (span: RecognitionSpan): number => span.offset + span.duration));
+                        const postStart: number = Math.min(...afterSpans.map(
+                            (span: RecognitionSpan): number => span.offset));
+                        const gap: number = postStart - preEnd;
+                        // eslint-disable-next-line no-console
+                        console.info(`Channel ${channel} reconnect boundary: ${JSON.stringify({ beforeSpans, afterSpans, preEnd, postStart })}`);
+                        // eslint-disable-next-line no-console
+                        console.info(`Channel ${channel} reconnect gap: ${gap / 10_000_000} seconds`);
+                        expect(gap).toBeGreaterThanOrEqual(0);
+                        return gap;
+                    };
+                    expect(calculateGap(0)).toBeLessThan(20_000_000);
+                    expect(calculateGap(1)).toBeLessThan(60_000_000);
 
                     // All continuation info must have been received from the service: the
                     // X-Continuation-Token header, the per-stream

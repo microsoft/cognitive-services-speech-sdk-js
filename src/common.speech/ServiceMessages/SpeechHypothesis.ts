@@ -10,6 +10,7 @@ export interface ISpeechHypothesis {
     Duration: number;
     PrimaryLanguage?: IPrimaryLanguage;
     SpeakerId?: string;
+    Channel?: number;
     [key: string]: any;
 }
 
@@ -55,5 +56,9 @@ export class SpeechHypothesis implements ISpeechHypothesis {
 
     public get SpeakerId(): string {
         return this.privSpeechHypothesis.SpeakerId;
+    }
+
+    public get Channel(): number {
+        return this.privSpeechHypothesis.Channel === undefined ? 0 : this.privSpeechHypothesis.Channel;
     }
 }

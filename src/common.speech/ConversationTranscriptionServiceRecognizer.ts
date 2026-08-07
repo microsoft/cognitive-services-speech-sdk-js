@@ -89,7 +89,8 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
                     hypothesis.SpeakerId,
                     undefined,
                     hypothesis.asJson(),
-                    resultProps);
+                    resultProps,
+                    hypothesis.Channel);
 
                 const ev = new ConversationTranscriptionEventArgs(result, hypothesis.Duration, this.privRequestSession.sessionId);
 
@@ -136,7 +137,8 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
                                 simple.SpeakerId,
                                 undefined,
                                 simple.asJson(),
-                                resultProps);
+                                resultProps,
+                                simple.Channel);
                         } else {
                             const detailed: DetailedSpeechPhrase = DetailedSpeechPhrase.fromJSON(connectionMessage.textBody, this.privRequestSession.currentTurnAudioOffset);
 
@@ -151,7 +153,8 @@ export class ConversationTranscriptionServiceRecognizer extends ServiceRecognize
                                 simple.SpeakerId,
                                 undefined,
                                 detailed.asJson(),
-                                resultProps);
+                                resultProps,
+                                detailed.Channel);
                         }
 
                         const event: ConversationTranscriptionEventArgs = new ConversationTranscriptionEventArgs(result, result.offset, this.privRequestSession.sessionId);

@@ -290,13 +290,13 @@ describe.each([true, false])("Service based tests", (forceNodeWebSocket: boolean
         console.info("Name: Silence After Speech - AutoDetect set");
         // Pump valid speech and then silence until at least one speech end cycle hits.
         const p: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
-        const bigFileBuffer: Uint8Array = new Uint8Array(32 * 1024 * 30); // ~30 seconds.
+        const bigFileBuffer: ArrayBuffer = new ArrayBuffer(32 * 1024 * 30); // ~30 seconds.
         const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
         const s: sdk.SpeechConfig = await BuildSpeechConfig();
         objsToClose.push(s);
 
         p.write(WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile));
-        p.write(bigFileBuffer.buffer);
+        p.write(bigFileBuffer);
         p.close();
 
         const r: sdk.SpeechRecognizer = BuildRecognizerFromPushStream(s, config);

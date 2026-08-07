@@ -30,6 +30,10 @@ jobs:
   variables:
     ArtifactOut: $(Build.ArtifactStagingDirectory)/Out/JavaScript
   steps:
+  - task: UseNode@1
+    displayName: Use Node.js 20
+    inputs:
+      version: '20.x'
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
@@ -40,12 +44,11 @@ jobs:
         eq(variables['Build.SourceBranch'], 'refs/heads/master'),
         or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')))
   - bash: |
+      set -euo pipefail
       npm ci
       ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
-      echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
-      env
     displayName: Install packages and set version from package.json
   - bash: |
       ./ci/update-version-in-code.sh
@@ -89,19 +92,23 @@ jobs:
   pool:
     name: $(WindowsPipelineName)
   timeoutInMinutes: 60
-  condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  condition: and(succeeded(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
   variables:
     SPEECHSDK_RUN_TESTS: true
   dependsOn: Build
   steps:
+  - task: UseNode@1
+    displayName: Use Node.js 20
+    inputs:
+      version: '20.x'
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
+      set -euo pipefail
       npm ci
       ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
-      echo "SDK version = $(SPEECHSDK_SEMVER2NOMETA)"
     displayName: Install packages and set version from package.json
   - bash: |
       ./ci/update-version-in-code.sh
@@ -111,14 +118,14 @@ jobs:
       set -u -e -x -o pipefail
       npm run test:non-connection
     displayName: Run tests
-    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+    condition: and(succeeded(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
   - task: PublishTestResults@2
     displayName: Publish test results
     inputs:
       testRunner: JUnit
       testResultsFiles: 'test-javascript-junit.xml'
       failTaskOnFailedTests: true
-    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+    condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
   - task: DownloadBuildArtifacts@1
     displayName: Download artifacts
     inputs:
@@ -137,24 +144,28 @@ jobs:
 
         npm run bundle
     displayName: Run Test Bundle
-    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+    condition: and(succeeded(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
 - job: RunConnectionTests
   dependsOn: Build
   pool:
     name: CarbonUbuntu2204Hosted
   timeoutInMinutes: 60
-  condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+  condition: and(succeeded(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
   variables:
     SPEECHSDK_RUN_TESTS: true
   steps:
+  - task: UseNode@1
+    displayName: Use Node.js 20
+    inputs:
+      version: '20.x'
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
+      set -euo pipefail
       npm ci
       ./ci/set-version.sh
       echo "COLLECTION_ID=$(System.CollectionId)"
       echo "DEFINITION_ID=$(System.DefinitionId)"
-      echo "SDK version = $SPEECHSDK_SEMVER2NOMETA"
     displayName: Install packages and set version from package.json
   - bash: |
       ./ci/update-version-in-code.sh
@@ -227,13 +238,13 @@ jobs:
       . ci/functions.sh
       . ci/load-build-secrets.sh
 
-      tts_port=$(find_free_port)  
+      tts_port=$(find_free_port)
       echo "TTS Port: $tts_port"
 
       host_ip=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')
       echo "Host IP: $host_ip"
 
-      TTS_URL="ws://$host_ip:$tts_port"  
+      TTS_URL="ws://$host_ip:$tts_port"
       vsts_setvar TTS_CONTAINER_URL "$TTS_URL"
 
       docker create -p $tts_port:5000 --memory 14g --cpus 4 --name tts_container mcr.microsoft.com/azure-cognitive-services/speechservices/neural-text-to-speech:latest EULA=accept Billing=https://$SPEECHSDK_SPEECH_REGION.api.cognitive.microsoft.com/ ApiKey=$SPEECHSDK_SPEECH_KEY
@@ -244,12 +255,12 @@ jobs:
       . ci/functions.sh
       . ci/load-build-secrets.sh
 
-      sr_port=$(find_free_port)  
+      sr_port=$(find_free_port)
       echo "SR Port: $sr_port"
 
-      host_ip=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')  
+      host_ip=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')
       echo "Host IP: $host_ip"
-      SR_URL="ws://$host_ip:$sr_port"  
+      SR_URL="ws://$host_ip:$sr_port"
       vsts_setvar SR_CONTAINER_URL "$SR_URL"
 
       docker create -p $sr_port:5000 --memory 6g --cpus 4 --name sr_container mcr.microsoft.com/azure-cognitive-services/speechservices/speech-to-text:latest EULA=accept Billing=https://$SPEECHSDK_SPEECH_REGION.api.cognitive.microsoft.com/ ApiKey=$SPEECHSDK_SPEECH_KEY
@@ -260,12 +271,12 @@ jobs:
       . ci/functions.sh
       . ci/load-build-secrets.sh
 
-      lid_port=$(find_free_port)  
+      lid_port=$(find_free_port)
       echo "LID Port: $lid_port"
 
-      host_ip=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')  
+      host_ip=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')
       echo "Host IP: $host_ip"
-      LID_URL="ws://$host_ip:$lid_port"  
+      LID_URL="ws://$host_ip:$lid_port"
       vsts_setvar LID_CONTAINER_URL "$LID_URL"
 
       docker create -p $lid_port:5003   --memory 1g --cpus 4 --name lid_container mcr.microsoft.com/azure-cognitive-services/speechservices/language-detection:latest EULA=accept Billing=https://$SPEECHSDK_SPEECH_REGION.api.cognitive.microsoft.com/ ApiKey=$SPEECHSDK_SPEECH_KEY
@@ -276,17 +287,17 @@ jobs:
       export ENABLE_PRIVATE_LINK_TESTS=true
       npm run test:connection
     displayName: Run tests
-    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+    condition: and(succeeded(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
   - task: PublishTestResults@2
     displayName: Publish test results
     inputs:
       testRunner: JUnit
       testResultsFiles: 'test-javascript-junit.xml'
       failTaskOnFailedTests: true
-    condition: eq(variables['SPEECHSDK_RUN_TESTS'], 'true')
+    condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
   - bash: |
       set -u -e -x -o pipefail
-      
+
       docker stop tts_container
       docker stop sr_container
       docker stop lid_container
@@ -320,10 +331,10 @@ jobs:
       archiveFile: '*.*'
       replaceExistingArchive: false
     condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
-  - task: PublishBuildArtifacts@1  
+  - task: PublishBuildArtifacts@1
     retryCountOnTaskFailure: 5
-    inputs:  
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)/DockerLogs'  
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/DockerLogs'
       ArtifactName: TestRunBackup
     condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
     displayName: Publish Docker logs

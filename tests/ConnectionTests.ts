@@ -487,7 +487,7 @@ test("testAudioMessagesSent", (done: jest.DoneCallback): void => {
 
     expect(r.outputFormat).toEqual(sdk.OutputFormat.Detailed);
 
-    const sourceAudio: ArrayBuffer = fs.readFileSync(Settings.WaveFile);
+    const sourceAudio: ArrayBuffer = Uint8Array.from(fs.readFileSync(Settings.WaveFile)).buffer;
 
     const con: sdk.Connection = sdk.Connection.fromRecognizer(r);
 

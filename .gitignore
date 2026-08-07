@@ -26,3 +26,7 @@ test*.mp3
 report[\.0-9]*json
 junit.xml
 TEST_LOG.txt
+
+# Turborepo local cache
+.turbo/
+

@@ -316,7 +316,7 @@ describe("Byte continuity across a simulated reconnect", () => {
                         });
                     }
 
-                    const chunk: ArrayBuffer = original.buffer.slice(produced, produced + chunkBytes);
+                    const chunk: ArrayBuffer = Uint8Array.from(original.subarray(produced, produced + chunkBytes)).buffer;
                     produced += chunkBytes;
 
                     return Promise.resolve<IStreamChunk<ArrayBuffer>>({
