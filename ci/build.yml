@@ -31,9 +31,9 @@ jobs:
     ArtifactOut: $(Build.ArtifactStagingDirectory)/Out/JavaScript
   steps:
   - task: UseNode@1
-    displayName: Use Node.js 20
+    displayName: Use Node.js 22
     inputs:
-      version: '20.x'
+      version: '22.x'
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
@@ -98,9 +98,9 @@ jobs:
   dependsOn: Build
   steps:
   - task: UseNode@1
-    displayName: Use Node.js 20
+    displayName: Use Node.js 22
     inputs:
-      version: '20.x'
+      version: '22.x'
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
@@ -155,9 +155,9 @@ jobs:
     SPEECHSDK_RUN_TESTS: true
   steps:
   - task: UseNode@1
-    displayName: Use Node.js 20
+    displayName: Use Node.js 22
     inputs:
-      version: '20.x'
+      version: '22.x'
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
