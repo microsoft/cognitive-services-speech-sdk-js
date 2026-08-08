@@ -47,6 +47,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
     const wsMock = ws as unknown as jest.Mock;
     const originalWebSocket = (globalThis as any).WebSocket;
     const originalWindow = (globalThis as any).window;
+    const originalSelf = (globalThis as any).self;
 
     afterEach((): void => {
         jest.clearAllMocks();
@@ -62,12 +63,20 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
         } else {
             (globalThis as any).window = originalWindow;
         }
+        if (originalSelf === undefined) {
+            delete (globalThis as any).self;
+        } else {
+            (globalThis as any).self = originalSelf;
+        }
     });
 
-    testIfNode("uses the global WebSocket path in Node when no proxy is configured", async (): Promise<void> => {
-        const browserSocket = createFakeSocket();
-        const browserWebSocketMock = jest.fn(() => browserSocket);
-        (globalThis as any).WebSocket = browserWebSocketMock;
+    testIfNode("uses the npm ws path in Node even when global WebSocket exists", async (): Promise<void> => {
+        const nativeWebSocketMock = jest.fn(() => createFakeSocket());
+        const nodeSocket = createFakeSocket();
+        delete (globalThis as any).window;
+        delete (globalThis as any).self;
+        (globalThis as any).WebSocket = nativeWebSocketMock;
+        wsMock.mockImplementation(() => nodeSocket);
 
         const adapter = new WebsocketMessageAdapter(
             "wss://example.test/speech",
@@ -80,10 +89,61 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
 
         const openPromise = adapter.open();
 
-        expect(browserWebSocketMock).toHaveBeenCalledWith("wss://example.test/speech");
+        expect(nativeWebSocketMock).not.toHaveBeenCalled();
+        expect(wsMock).toHaveBeenCalledTimes(1);
+
+        nodeSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: nodeSocket });
+        await openPromise;
+    });
+
+    test("uses native WebSocket in a Web Worker", async (): Promise<void> => {
+        const workerSocket = createFakeSocket();
+        const nativeWebSocketMock = jest.fn(() => workerSocket);
+        delete (globalThis as any).window;
+        (globalThis as any).self = {};
+        (globalThis as any).WebSocket = nativeWebSocketMock;
+
+        const adapter = new WebsocketMessageAdapter(
+            "wss://example.test/speech",
+            "connection-id",
+            formatter,
+            undefined as any,
+            {},
+            false,
+        );
+
+        const openPromise = adapter.open();
+
+        expect(nativeWebSocketMock).toHaveBeenCalledWith("wss://example.test/speech");
         expect(wsMock).not.toHaveBeenCalled();
 
-        browserSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: browserSocket });
+        workerSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: workerSocket });
+        await openPromise;
+    });
+
+    test("uses npm ws when explicitly forced in a browser runtime", async (): Promise<void> => {
+        const nativeWebSocketMock = jest.fn(() => createFakeSocket());
+        const nodeSocket = createFakeSocket();
+        (globalThis as any).window = {};
+        (globalThis as any).WebSocket = nativeWebSocketMock;
+        WebsocketMessageAdapter.forceNpmWebSocket = true;
+        wsMock.mockImplementation(() => nodeSocket);
+
+        const adapter = new WebsocketMessageAdapter(
+            "wss://example.test/speech",
+            "connection-id",
+            formatter,
+            undefined as any,
+            {},
+            false,
+        );
+
+        const openPromise = adapter.open();
+
+        expect(nativeWebSocketMock).not.toHaveBeenCalled();
+        expect(wsMock).toHaveBeenCalledTimes(1);
+
+        nodeSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: nodeSocket });
         await openPromise;
     });
 
@@ -253,7 +313,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
         await openPromise;
     });
 
-    testIfNode("uses the browser WebSocket path when a browser global is present even if proxy is configured", async (): Promise<void> => {
+    test("uses the browser WebSocket path when a browser global is present even if proxy is configured", async (): Promise<void> => {
         const browserSocket = createFakeSocket();
         const browserWebSocketMock = jest.fn(() => browserSocket);
         (globalThis as any).window = {};

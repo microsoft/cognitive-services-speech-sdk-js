@@ -76,8 +76,12 @@ export class WebsocketMessageAdapter {
     private privHeaders: { [key: string]: string };
     private privLastErrorReceived: string;
     private privEnableCompression: boolean;
+    private privConnectionEstablishmentTimer: ReturnType<typeof setTimeout>;
+    private privConnectionEstablishmentSettled: boolean = false;
+    private privConnectionCleanupStarted: boolean = false;
 
     public static forceNpmWebSocket: boolean = false;
+    private static readonly connectionEstablishmentTimeoutMs: number = 30000;
 
     public constructor(
         uri: string,
@@ -128,12 +132,15 @@ export class WebsocketMessageAdapter {
         this.privCertificateValidatedDeferral = new Deferred<void>();
 
         this.privConnectionState = ConnectionState.Connecting;
+        this.privConnectionEstablishmentTimer = setTimeout((): void => {
+            this.failConnectionEstablishment(1006, "WebSocket connection establishment timed out.", true);
+        }, WebsocketMessageAdapter.connectionEstablishmentTimeoutMs);
 
         try {
 
-            const proxyConfiguredInNode: boolean = typeof window === "undefined" && !!this.proxyInfo?.HostName;
+            const browserRuntime: boolean = typeof window !== "undefined" || typeof self !== "undefined";
 
-            if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket && !proxyConfiguredInNode) {
+            if (browserRuntime && typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 // Browser handles cert checks.
                 this.privCertificateValidatedDeferral.resolve();
 
@@ -172,7 +179,7 @@ export class WebsocketMessageAdapter {
                 Events.instance.onEvent(new BackgroundEvent(reason));
             });
         } catch (error) {
-            this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(500, error as string));
+            this.failConnectionEstablishment(500, String(error), false);
             return this.privConnectionEstablishDeferral.promise;
         }
 
@@ -180,6 +187,9 @@ export class WebsocketMessageAdapter {
 
         this.privWebsocketClient.onopen = (): void => {
             this.privCertificateValidatedDeferral.promise.then((): void => {
+                if (!this.beginConnectionEstablishmentSettlement()) {
+                    return;
+                }
                 this.privConnectionState = ConnectionState.Connected;
                 this.onEvent(new ConnectionEstablishedEvent(this.privConnectionId));
                 this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(200, ""));
@@ -191,22 +201,24 @@ export class WebsocketMessageAdapter {
         this.privWebsocketClient.onerror = (e: { error: any; message: string; type: string; target: WebSocket | ws }): void => {
             this.onEvent(new ConnectionErrorEvent(this.privConnectionId, e.message, e.type));
             this.privLastErrorReceived = e.message;
+            if (this.privConnectionState === ConnectionState.Connecting) {
+                this.failConnectionEstablishment(1006, e.message || e.type, true);
+            }
         };
 
         this.privWebsocketClient.onclose = (e: { wasClean: boolean; code: number; reason: string; target: WebSocket | ws }): void => {
             if (this.privConnectionState === ConnectionState.Connecting) {
-                this.privConnectionState = ConnectionState.Disconnected;
-                // this.onEvent(new ConnectionEstablishErrorEvent(this.connectionId, e.code, e.reason));
-                this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(e.code, e.reason + " " + this.privLastErrorReceived));
+                this.failConnectionEstablishment(e.code, e.reason + " " + this.privLastErrorReceived, false);
+                return;
+            } else if (this.privConnectionCleanupStarted) {
+                return;
             } else {
                 this.privConnectionState = ConnectionState.Disconnected;
                 this.privWebsocketClient = null;
                 this.onEvent(new ConnectionClosedEvent(this.privConnectionId, e.code, e.reason));
             }
 
-            this.onClose(e.code, e.reason).catch((reason: string): void => {
-                Events.instance.onEvent(new BackgroundEvent(reason));
-            });
+            this.startConnectionCleanup(e.code, e.reason);
         };
 
         this.privWebsocketClient.onmessage = (e: { data: ws.Data; type: string; target: WebSocket | ws }): void => {
@@ -328,6 +340,48 @@ export class WebsocketMessageAdapter {
         await this.privSendMessageQueue.drainAndDispose((pendingSendItem: ISendItem): void => {
             pendingSendItem.sendStatusDeferral.reject(closeReason);
         }, closeReason);
+    }
+
+    private beginConnectionEstablishmentSettlement(): boolean {
+        if (this.privConnectionEstablishmentSettled) {
+            return false;
+        }
+
+        this.privConnectionEstablishmentSettled = true;
+        if (this.privConnectionEstablishmentTimer !== undefined) {
+            clearTimeout(this.privConnectionEstablishmentTimer);
+            this.privConnectionEstablishmentTimer = undefined;
+        }
+        return true;
+    }
+
+    private failConnectionEstablishment(statusCode: number, reason: string, teardownProvider: boolean): void {
+        if (!this.beginConnectionEstablishmentSettlement()) {
+            return;
+        }
+
+        this.privConnectionState = ConnectionState.Disconnected;
+        this.privConnectionEstablishDeferral.resolve(new ConnectionOpenResponse(statusCode, reason));
+        this.startConnectionCleanup(statusCode, reason);
+
+        if (teardownProvider && this.privWebsocketClient) {
+            try {
+                this.privWebsocketClient.close(1000, reason);
+            } catch (error) {
+                Events.instance.onEvent(new BackgroundEvent(`WebSocket teardown failed: ${String(error)}`));
+            }
+        }
+    }
+
+    private startConnectionCleanup(code: number, reason: string): void {
+        if (this.privConnectionCleanupStarted || !this.privDisconnectDeferral) {
+            return;
+        }
+
+        this.privConnectionCleanupStarted = true;
+        this.onClose(code, reason).catch((error: string): void => {
+            Events.instance.onEvent(new BackgroundEvent(error));
+        });
     }
 
     private async processSendQueue(): Promise<void> {
