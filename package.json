@@ -127,8 +127,5 @@
     }
   },
   "sideEffects": false,
-  "packageManager": "npm@10.9.3",
-  "engines": {
-    "node": ">=20"
-  }
+  "packageManager": "npm@10.9.3"
 }
