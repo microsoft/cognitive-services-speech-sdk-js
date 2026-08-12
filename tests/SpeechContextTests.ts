@@ -125,3 +125,38 @@ test("Grammar updates post call", (): void => {
     expect(phrase).not.toBeUndefined();
     expect(phrase.text).toEqual("newPhrase");
 });
+
+test("Model name only, no options", (): void => {
+    const dgBuilder: DynamicGrammarBuilder = new DynamicGrammarBuilder();
+    const speechContext: SpeechContext = new SpeechContext(dgBuilder);
+
+    speechContext.setModel("my-custom-model");
+
+    const retObj: ServiceSpeechContext = JSON.parse(speechContext.toJSON()) as ServiceSpeechContext;
+    expect(retObj.model).not.toBeUndefined();
+    expect(retObj.model.name).toEqual("my-custom-model");
+    expect(retObj.model.options).toBeUndefined();
+});
+
+test("Model name and options", (): void => {
+    const dgBuilder: DynamicGrammarBuilder = new DynamicGrammarBuilder();
+    const speechContext: SpeechContext = new SpeechContext(dgBuilder);
+
+    speechContext.setModel("my-custom-model", JSON.stringify({ foo: "bar", count: 3 }));
+
+    const retObj: ServiceSpeechContext = JSON.parse(speechContext.toJSON()) as ServiceSpeechContext;
+    expect(retObj.model).not.toBeUndefined();
+    expect(retObj.model.name).toEqual("my-custom-model");
+    expect(retObj.model.options).toEqual({ foo: "bar", count: 3 });
+});
+
+test("Model block omitted when no name", (): void => {
+    const dgBuilder: DynamicGrammarBuilder = new DynamicGrammarBuilder();
+    const speechContext: SpeechContext = new SpeechContext(dgBuilder);
+
+    speechContext.setModel("");
+    speechContext.setModel(undefined, JSON.stringify({ foo: "bar" }));
+
+    const retObj: ServiceSpeechContext = JSON.parse(speechContext.toJSON()) as ServiceSpeechContext;
+    expect(retObj.model).toBeUndefined();
+});

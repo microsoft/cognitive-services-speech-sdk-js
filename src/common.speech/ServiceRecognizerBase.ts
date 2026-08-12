@@ -330,6 +330,16 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privSpeechContext.getContext().phraseDetection = phraseDetection;
     }
 
+    protected setModelJson(): void {
+        // The model name/options are advanced, service-level properties set via the generic
+        // property bag (mirrors the C++ SPEECH-ModelName / SPEECH-ModelOptions properties).
+        const modelName: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-ModelName", undefined);
+        if (modelName) {
+            const modelOptions: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-ModelOptions", undefined);
+            this.privSpeechContext.setModel(modelName, modelOptions);
+        }
+    }
+
     protected setOutputDetailLevelJson(): void {
         const requestWordLevelTimestamps: string = this.privRecognizerConfig.parameters.getProperty(PropertyId.SpeechServiceResponse_RequestWordLevelTimestamps, "false").toLowerCase();
         if (requestWordLevelTimestamps === "true") {
@@ -604,6 +614,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.setProfanityOptionJson();
         this.setPostProcessingOptionJson();
         this.setStableIntermediateThresholdJson();
+        this.setModelJson();
 
         this.privSuccessCallback = successCallback;
         this.privErrorCallback = errorCallBack;

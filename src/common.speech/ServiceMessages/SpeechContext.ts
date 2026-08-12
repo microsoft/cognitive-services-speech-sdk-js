@@ -15,6 +15,7 @@ import { PronunciationScoreContext } from "./PronunciationScore/PronunciationSco
 import { CtsAudioContinuation } from "./MultichannelAudio/CtsAudioContinuation";
 import { CtsAudioInfo } from "./MultichannelAudio/CtsAudioInfo";
 import { Dictation } from "./Scenario/Dictation";
+import { Model } from "./Model/Model";
 
 /**
  * The speech context type.
@@ -83,6 +84,11 @@ export interface SpeechContext {
      * The pronunciaion score configuration.
      */
     pronunciationScore?: PronunciationScoreContext;
+
+    /**
+     * The model to use for speech recognition. Omitted when no model is configured.
+     */
+    model?: Model;
 
     /**
      * Allow adding ability to add custom context attributes.

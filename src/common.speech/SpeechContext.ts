@@ -5,6 +5,7 @@ import {
     DynamicGrammarBuilder,
 } from "./Exports.js";
 import { Dgi } from "./ServiceMessages/Dgi/Dgi.js";
+import { Model } from "./ServiceMessages/Model/Model.js";
 import { RecognitionMode } from "./ServiceMessages/PhraseDetection/PhraseDetectionContext.js";
 import { OutputFormat, PhraseOption } from "./ServiceMessages/PhraseOutput/PhraseOutput.js";
 import { PronunciationAssessmentOptions } from "./ServiceMessages/PronunciationScore/PronunciationAssessmentOptions.js";
@@ -93,6 +94,24 @@ export class SpeechContext {
 
     public setSpeakerDiarizationAudioOffsetMs(audioOffsetMs: number): void {
         this.privContext.phraseDetection.speakerDiarization.audioOffsetMs = audioOffsetMs;
+    }
+
+    /**
+     * Sets the model block in speech.context. Mirrors the C++ AddModelJsonToContext semantics:
+     * the whole model block is omitted when no name is provided, and "options" is emitted only
+     * when the (JSON string) options blob is present.
+     * @param name The custom model name. An empty/undefined value clears the model block.
+     * @param options Optional JSON string of arbitrary model options.
+     */
+    public setModel(name: string, options?: string): void {
+        if (!name) {
+            return;
+        }
+        const model: Model = { name };
+        if (options) {
+            model.options = JSON.parse(options) as object;
+        }
+        this.privContext.model = model;
     }
 
     public toJSON(): string {
