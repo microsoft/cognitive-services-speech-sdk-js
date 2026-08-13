@@ -5,6 +5,8 @@
 import { KeyCredential, TokenCredential } from "@azure/core-auth";
 import {
     ForceDictationPropertyName,
+    ModelNamePropertyName,
+    ModelOptionsPropertyName,
     OutputFormatPropertyName,
     ServicePropertiesPropertyName
 } from "../common.speech/Exports.js";
@@ -23,7 +25,8 @@ import {
  * Speech translation configuration.
  * @class SpeechTranslationConfig
  */
-export abstract class SpeechTranslationConfig extends SpeechConfig {
+export abstract class
+SpeechTranslationConfig extends SpeechConfig {
 
     /**
      * Creates an instance of recognizer config.
@@ -491,6 +494,16 @@ export class SpeechTranslationConfigImpl extends SpeechTranslationConfig {
 
     public setProfanity(profanity: ProfanityOption): void {
         this.privSpeechProperties.setProperty(PropertyId.SpeechServiceResponse_ProfanityOption, ProfanityOption[profanity]);
+    }
+
+    public setModel(name: string, options?: object): void {
+        if (!name) {
+            return;
+        }
+        this.privSpeechProperties.setProperty(ModelNamePropertyName, name);
+        if (options !== undefined && options !== null) {
+            this.privSpeechProperties.setProperty(ModelOptionsPropertyName, JSON.stringify(options));
+        }
     }
 
     public enableAudioLogging(): void {

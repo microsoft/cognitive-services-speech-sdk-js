@@ -156,6 +156,40 @@ test("Unset param return default", (): void => {
     s.close();
 });
 
+test("setModel name only writes ModelName, leaves ModelOptions unset", (): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+
+    s.setModel("my-custom-model");
+
+    expect(s.getProperty("SPEECH-ModelName")).toEqual("my-custom-model");
+    expect(s.getProperty("SPEECH-ModelOptions")).toBeUndefined();
+
+    s.close();
+});
+
+test("setModel name and options serializes options as JSON", (): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+
+    s.setModel("my-custom-model", { foo: "bar", count: 3 });
+
+    expect(s.getProperty("SPEECH-ModelName")).toEqual("my-custom-model");
+    expect(JSON.parse(s.getProperty("SPEECH-ModelOptions"))).toEqual({ foo: "bar", count: 3 });
+
+    s.close();
+});
+
+test("setModel no-ops on empty name", (): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+
+    s.setModel("");
+
+    expect(s.getProperty("SPEECH-ModelName")).toBeUndefined();
+    expect(s.getProperty("SPEECH-ModelOptions")).toBeUndefined();
+
+    s.close();
+});
+
+
 test("Create Recognizer", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 

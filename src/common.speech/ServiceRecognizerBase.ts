@@ -35,6 +35,8 @@ import {
     AutoDetectSourceLanguagesOpenRangeOptionName,
     DynamicGrammarBuilder,
     ISpeechConfigAudioDevice,
+    ModelNamePropertyName,
+    ModelOptionsPropertyName,
     ReconnectContinuationState,
     RequestSession,
     SpeechContext,
@@ -333,9 +335,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected setModelJson(): void {
         // The model name/options are advanced, service-level properties set via the generic
         // property bag (mirrors the C++ SPEECH-ModelName / SPEECH-ModelOptions properties).
-        const modelName: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-ModelName", undefined);
+        const modelName: string = this.privRecognizerConfig.parameters.getProperty(ModelNamePropertyName, undefined);
         if (modelName) {
-            const modelOptions: string = this.privRecognizerConfig.parameters.getProperty("SPEECH-ModelOptions", undefined);
+            const modelOptions: string = this.privRecognizerConfig.parameters.getProperty(ModelOptionsPropertyName, undefined);
             this.privSpeechContext.setModel(modelName, modelOptions);
         }
     }
