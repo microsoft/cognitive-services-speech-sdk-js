@@ -5,6 +5,8 @@
 import { KeyCredential, TokenCredential } from "@azure/core-auth";
 import {
     ForceDictationPropertyName,
+    ModelNamePropertyName,
+    ModelOptionsPropertyName,
     OutputFormatPropertyName,
     ServicePropertiesPropertyName
 } from "../common.speech/Exports.js";
@@ -349,6 +351,19 @@ export abstract class SpeechConfig {
     public abstract setProfanity(profanity: ProfanityOption): void;
 
     /**
+     * Sets the custom model to use for speech recognition, with optional model options.
+     * The model block is only sent to the service when a non-empty name is provided; the
+     * options are only sent when supplied. Mirrors the C++ SPEECH-ModelName / SPEECH-ModelOptions
+     * behavior.
+     * @member SpeechConfig.prototype.setModel
+     * @function
+     * @public
+     * @param {string} name - The custom model name.
+     * @param {object} [options] - Optional, arbitrary model options object.
+     */
+    public abstract setModel(name: string, options?: object): void;
+
+    /**
      * Enable audio logging in service.
      * Audio and content logs are stored either in Microsoft-owned storage, or in your own storage account linked
      * to your Cognitive Services subscription (Bring Your Own Storage (BYOS) enabled Speech resource).
@@ -544,6 +559,16 @@ export class SpeechConfigImpl extends SpeechConfig {
 
     public setProfanity(profanity: ProfanityOption): void {
         this.privProperties.setProperty(PropertyId.SpeechServiceResponse_ProfanityOption, ProfanityOption[profanity]);
+    }
+
+    public setModel(name: string, options?: object): void {
+        if (!name) {
+            return;
+        }
+        this.privProperties.setProperty(ModelNamePropertyName, name);
+        if (options !== undefined && options !== null) {
+            this.privProperties.setProperty(ModelOptionsPropertyName, JSON.stringify(options));
+        }
     }
 
     public enableAudioLogging(): void {

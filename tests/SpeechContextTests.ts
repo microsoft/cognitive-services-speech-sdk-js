@@ -125,3 +125,61 @@ test("Grammar updates post call", (): void => {
     expect(phrase).not.toBeUndefined();
     expect(phrase.text).toEqual("newPhrase");
 });
+
+test("Model name only, no options", (): void => {
+    const dgBuilder: DynamicGrammarBuilder = new DynamicGrammarBuilder();
+    const speechContext: SpeechContext = new SpeechContext(dgBuilder);
+
+    speechContext.setModel("my-custom-model");
+
+    const retObj: ServiceSpeechContext = JSON.parse(speechContext.toJSON()) as ServiceSpeechContext;
+    expect(retObj.model).not.toBeUndefined();
+    expect(retObj.model.name).toEqual("my-custom-model");
+    expect(retObj.model.options).toBeUndefined();
+});
+
+test("Model name and options", (): void => {
+    const dgBuilder: DynamicGrammarBuilder = new DynamicGrammarBuilder();
+    const speechContext: SpeechContext = new SpeechContext(dgBuilder);
+
+    speechContext.setModel("my-custom-model", JSON.stringify({ foo: "bar", count: 3 }));
+
+    const retObj: ServiceSpeechContext = JSON.parse(speechContext.toJSON()) as ServiceSpeechContext;
+    expect(retObj.model).not.toBeUndefined();
+    expect(retObj.model.name).toEqual("my-custom-model");
+    expect(retObj.model.options).toEqual({ foo: "bar", count: 3 });
+});
+
+test("Model block omitted when no name", (): void => {
+    const dgBuilder: DynamicGrammarBuilder = new DynamicGrammarBuilder();
+    const speechContext: SpeechContext = new SpeechContext(dgBuilder);
+
+    speechContext.setModel("");
+    speechContext.setModel(undefined, JSON.stringify({ foo: "bar" }));
+
+    const retObj: ServiceSpeechContext = JSON.parse(speechContext.toJSON()) as ServiceSpeechContext;
+    expect(retObj.model).toBeUndefined();
+});
+
+test("Model name with special characters is escaped", (): void => {
+    const dgBuilder: DynamicGrammarBuilder = new DynamicGrammarBuilder();
+    const speechContext: SpeechContext = new SpeechContext(dgBuilder);
+
+    // Name containing characters that would break JSON if not escaped:
+    // double quote, backslash, newline, and tab.
+    const nastyName: string = "ev\"il\\name\n\tend";
+    speechContext.setModel(nastyName);
+
+    const raw: string = speechContext.toJSON();
+
+    // The raw serialized JSON must contain the escaped forms, not the literal characters.
+    expect(raw).toContain("\\\"");   // "  ->  \"
+    expect(raw).toContain("\\\\");   // \  ->  \\
+    expect(raw).toContain("\\n");    // newline -> \n
+    expect(raw).toContain("\\t");    // tab -> \t
+
+    // And it must still be valid JSON that round-trips back to the exact input.
+    const retObj: ServiceSpeechContext = JSON.parse(raw) as ServiceSpeechContext;
+    expect(retObj.model).not.toBeUndefined();
+    expect(retObj.model.name).toEqual(nastyName);
+});
