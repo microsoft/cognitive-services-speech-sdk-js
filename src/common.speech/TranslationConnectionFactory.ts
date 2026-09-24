@@ -50,7 +50,10 @@ export class TranslationConnectionFactory extends ConnectionFactoryBase {
                 // We need to generate the path, and we need to check for a redirect.
                 endpointUrl.pathname = this.universalUri;
 
-                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString());
+                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(
+                    endpointUrl.toString(),
+                    true,
+                    ProxyInfo.fromRecognizerConfig(config));
             }
         }
 

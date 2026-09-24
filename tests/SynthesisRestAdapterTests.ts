@@ -1,7 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { RestMessageAdapter } from "../src/common.browser/Exports";
+import {
+    ProxyInfo,
+    RestMessageAdapter,
+    RestRequestType,
+} from "../src/common.browser/Exports";
+import { HttpRequest } from "../src/common.browser/HttpRequest";
+import type { IHttpResponse } from "../src/common.browser/HttpRequest";
 import { ConnectionFactoryBase } from "../src/common.speech/ConnectionFactoryBase";
 import {
     AuthInfo,
@@ -130,42 +136,81 @@ describe("SynthesisRestAdapter voices/list URI resolution", (): void => {
 
 describe("ConnectionFactoryBase.getRedirectUrlFromEndpoint protocol handling", (): void => {
     const regionalHttpsUrl = "https://eastus.tts.speech.microsoft.com/cognitiveservices/websocket/v1";
-    let originalFetch: typeof globalThis.fetch;
-
-    beforeEach((): void => {
-        originalFetch = globalThis.fetch;
-    });
 
     afterEach((): void => {
-        globalThis.fetch = originalFetch;
         jest.restoreAllMocks();
     });
 
     test("converts to wss by default (WebSocket callers)", async (): Promise<void> => {
-        globalThis.fetch = jest.fn().mockResolvedValue({
+        jest.spyOn(HttpRequest, "request").mockResolvedValue({
+            body: regionalHttpsUrl,
+            headers: {},
             status: 200,
-            text: (): Promise<string> => Promise.resolve(regionalHttpsUrl),
-        }) as never;
+            statusText: "OK",
+        });
 
         const result: string = await ConnectionFactoryBase.getRedirectUrlFromEndpoint("https://mycustom.cognitiveservices.azure.com/tts/cognitiveservices/websocket/v1");
         expect(new URL(result).protocol).toEqual("wss:");
     });
 
     test("keeps https when useWebSocketProtocol is false (REST callers)", async (): Promise<void> => {
-        globalThis.fetch = jest.fn().mockResolvedValue({
+        jest.spyOn(HttpRequest, "request").mockResolvedValue({
+            body: regionalHttpsUrl,
+            headers: {},
             status: 200,
-            text: (): Promise<string> => Promise.resolve(regionalHttpsUrl),
-        }) as never;
+            statusText: "OK",
+        });
 
         const result: string = await ConnectionFactoryBase.getRedirectUrlFromEndpoint("https://mycustom.cognitiveservices.azure.com/tts/cognitiveservices/websocket/v1", false);
         expect(new URL(result).protocol).toEqual("https:");
     });
 
     test("returns the original endpoint on a non-200 response", async (): Promise<void> => {
-        globalThis.fetch = jest.fn().mockResolvedValue({ status: 404 }) as never;
+        jest.spyOn(HttpRequest, "request").mockResolvedValue({
+            body: "",
+            headers: {},
+            status: 404,
+            statusText: "Not Found",
+        });
 
         const endpoint = "https://mycustom.cognitiveservices.azure.com/tts/cognitiveservices/websocket/v1";
         const result: string = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpoint, false);
         expect(result).toEqual(endpoint);
+    });
+});
+
+describe("RestMessageAdapter IPv6 transport options", (): void => {
+
+    afterEach((): void => {
+        jest.restoreAllMocks();
+    });
+
+    test("forwards IPv6 opt-in and proxy configuration to HTTP requests", async (): Promise<void> => {
+        const parameters = new PropertyCollection();
+        parameters.setProperty(PropertyId.SpeechServiceConnection_EnableIpv6, "true");
+        parameters.setProperty(PropertyId.SpeechServiceConnection_ProxyHostName, "::1");
+        parameters.setProperty(PropertyId.SpeechServiceConnection_ProxyPort, "8080");
+        const proxyInfo: ProxyInfo = ProxyInfo.fromParameters(parameters);
+        const response: IHttpResponse = {
+            body: "{}",
+            headers: {},
+            status: 200,
+            statusText: "OK",
+        };
+        const requestSpy = jest.spyOn(HttpRequest, "request").mockResolvedValue(response);
+        const adapter = new RestMessageAdapter({
+            headers: {},
+            proxyInfo,
+        });
+
+        await adapter.request(RestRequestType.Get, "https://example.test/voices");
+
+        expect(requestSpy).toHaveBeenCalledWith(
+            "GET",
+            "https://example.test/voices",
+            {},
+            null,
+            true,
+            proxyInfo);
     });
 });

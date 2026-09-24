@@ -85,7 +85,10 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
                 // We need to generate the path, and we need to check for a redirect.
                 endpointUrl.pathname = this.universalUri + config.recognitionEndpointVersion;
 
-                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString());
+                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(
+                    endpointUrl.toString(),
+                    true,
+                    ProxyInfo.fromRecognizerConfig(config));
             }
         }
 
@@ -136,4 +139,3 @@ export class SpeechConnectionFactory extends ConnectionFactoryBase {
 
 
 }
-

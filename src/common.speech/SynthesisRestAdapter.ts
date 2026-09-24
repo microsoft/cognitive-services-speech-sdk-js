@@ -1,6 +1,7 @@
 import {
     IRequestOptions,
     IRestResponse,
+    ProxyInfo,
     RestConfigBase,
     RestMessageAdapter,
     RestRequestType,
@@ -23,6 +24,7 @@ export class SynthesisRestAdapter {
     private privEndpoint: string;
     private privIsCustomEndpoint: boolean;
     private privAuthentication: IAuthentication;
+    private privProxyInfo: ProxyInfo;
 
     public constructor(config: SynthesizerConfig, authentication: IAuthentication) {
 
@@ -34,8 +36,13 @@ export class SynthesisRestAdapter {
             endpoint = config.parameters.getProperty(PropertyId.SpeechServiceConnection_Host, `https://${region}.tts.speech${hostSuffix}`);
         }
         this.privEndpoint = endpoint;
+        this.privProxyInfo = ProxyInfo.fromParameters(config.parameters);
 
-        const options: IRequestOptions = RestConfigBase.requestOptions;
+        const options: IRequestOptions = {
+            ...RestConfigBase.requestOptions,
+            headers: { ...RestConfigBase.requestOptions.headers },
+            proxyInfo: this.privProxyInfo,
+        };
         this.privRestAdapter = new RestMessageAdapter(options);
         this.privAuthentication = authentication;
     }
@@ -78,7 +85,7 @@ export class SynthesisRestAdapter {
             // host together with the Ocp-Apim-Custom-Domain-Name parameter (or, when no redirect applies,
             // falls back to the original host). We then point the resolved URL at the voices/list path.
             endpointUrl.pathname = "/tts/cognitiveservices/websocket/v1";
-            const resolved: string = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString(), false);
+            const resolved: string = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString(), false, this.privProxyInfo);
             const resolvedUrl: URL = new URL(resolved);
             resolvedUrl.pathname = voicesPath;
             resolvedUrl.searchParams.delete("GenerateRedirectResponse");

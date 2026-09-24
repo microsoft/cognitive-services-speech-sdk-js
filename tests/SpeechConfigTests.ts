@@ -156,6 +156,19 @@ test("Unset param return default", (): void => {
     s.close();
 });
 
+test("IPv6 opt-in property is available through SpeechConfig", (): void => {
+    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const propertyName: string = sdk.PropertyId[sdk.PropertyId.SpeechServiceConnection_EnableIpv6];
+
+    expect(propertyName).toEqual("SpeechServiceConnection_EnableIpv6");
+    expect(s.getProperty(propertyName)).toBeUndefined();
+
+    s.setProperty(propertyName, "true");
+    expect(s.getProperty(propertyName)).toEqual("true");
+
+    s.close();
+});
+
 test("setModel name only writes ModelName, leaves ModelOptions unset", (): void => {
     const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
 
