@@ -1351,8 +1351,8 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
 
         const formatTestFiles: { file: string; sampleRate: number; bitRate: number; channels: number; formatTag: sdk.AudioFormatTag }[] = [
             { file: Settings.WaveFile44k, sampleRate: 44100, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.PCM },
-            { file: Settings.WaveFileAlaw, sampleRate: 16000, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.ALaw },
-            { file: Settings.WaveFileMulaw, sampleRate: 16000, bitRate: 16, channels: 1, formatTag: sdk.AudioFormatTag.MuLaw },
+            { file: Settings.WaveFileAlaw, sampleRate: 16000, bitRate: 8, channels: 1, formatTag: sdk.AudioFormatTag.ALaw },
+            { file: Settings.WaveFileMulaw, sampleRate: 16000, bitRate: 8, channels: 1, formatTag: sdk.AudioFormatTag.MuLaw },
         ];
 
         for (const testFile of formatTestFiles) {
