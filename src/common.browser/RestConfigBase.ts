@@ -2,12 +2,14 @@
 // Licensed under the MIT license.
 
 import { IErrorMessages } from "../common/Exports.js";
+import type { ProxyInfo } from "./ProxyInfo.js";
 /**
  * HTTP request helper
  */
 export interface IRequestOptions {
     headers?: {[key: string]: string};
     ignoreCache?: boolean;
+    proxyInfo?: ProxyInfo;
     timeout?: number;
 }
 

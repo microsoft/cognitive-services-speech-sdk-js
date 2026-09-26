@@ -22,6 +22,9 @@ import * as tls from "tls";
 import { HttpsProxyAgent } from "https-proxy-agent";
 
 import { WebsocketMessageAdapter } from "../src/common.browser/WebsocketMessageAdapter";
+import { ProxyInfo } from "../src/common.browser/ProxyInfo";
+import type { PropertyCollection } from "../src/sdk/PropertyCollection";
+import { PropertyId } from "../src/sdk/PropertyId";
 
 const testIfNode: jest.It = (typeof window !== "undefined") ? test.skip : test;
 
@@ -42,6 +45,33 @@ const formatter: any = {
     fromConnectionMessage: jest.fn(),
     toConnectionMessage: jest.fn(),
 };
+
+const createProxyInfo = (
+    hostName?: string,
+    port?: number,
+    userName?: string,
+    password?: string,
+    enableIpv6: boolean = false): ProxyInfo => {
+
+    const values = new Map<PropertyId, string>([
+        [PropertyId.SpeechServiceConnection_ProxyHostName, hostName],
+        [PropertyId.SpeechServiceConnection_ProxyPort, port?.toString()],
+        [PropertyId.SpeechServiceConnection_ProxyUserName, userName],
+        [PropertyId.SpeechServiceConnection_ProxyPassword, password],
+        [PropertyId.SpeechServiceConnection_EnableIpv6, enableIpv6.toString()],
+    ]);
+    const properties: Pick<PropertyCollection, "getProperty"> = {
+        getProperty: (key: PropertyId | string, defaultValue?: string | number | boolean): string =>
+            values.get(key as PropertyId) ?? (defaultValue === undefined ? undefined : String(defaultValue)),
+    };
+
+    return ProxyInfo.fromParameters(properties);
+};
+
+test("propagates the IPv6 opt-in property to transport configuration", (): void => {
+    expect(createProxyInfo().EnableIpv6).toBe(false);
+    expect(createProxyInfo(undefined, undefined, undefined, undefined, true).EnableIpv6).toBe(true);
+});
 
 describe("WebsocketMessageAdapter transport selection", (): void => {
     const wsMock = ws as unknown as jest.Mock;
@@ -64,10 +94,11 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
         }
     });
 
-    testIfNode("uses the global WebSocket path in Node when no proxy is configured", async (): Promise<void> => {
-        const browserSocket = createFakeSocket();
-        const browserWebSocketMock = jest.fn(() => browserSocket);
+    testIfNode("uses the configurable ws path in Node when no proxy is configured", async (): Promise<void> => {
+        const browserWebSocketMock = jest.fn(() => createFakeSocket());
+        const nodeSocket = createFakeSocket();
         (globalThis as any).WebSocket = browserWebSocketMock;
+        wsMock.mockImplementation(() => nodeSocket);
 
         const adapter = new WebsocketMessageAdapter(
             "wss://example.test/speech",
@@ -80,10 +111,10 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
 
         const openPromise = adapter.open();
 
-        expect(browserWebSocketMock).toHaveBeenCalledWith("wss://example.test/speech");
-        expect(wsMock).not.toHaveBeenCalled();
+        expect(browserWebSocketMock).not.toHaveBeenCalled();
+        expect(wsMock).toHaveBeenCalledWith("wss://example.test/speech", expect.objectContaining({ agent: expect.anything() }));
 
-        browserSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: browserSocket });
+        nodeSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: nodeSocket });
         await openPromise;
     });
 
@@ -97,7 +128,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
             "wss://example.test/speech",
             "connection-id",
             formatter,
-            { HostName: "localhost", Port: 8880 } as any,
+            createProxyInfo("localhost", 8880),
             {},
             false,
         );
@@ -121,7 +152,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
             "wss://example.test/speech",
             "connection-id",
             formatter,
-            { HostName: "proxy.example", Port: 8080, UserName: "user", Password: "pass" } as any,
+            createProxyInfo("proxy.example", 8080, "user", "pass"),
             {},
             false,
         );
@@ -136,6 +167,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
         expect(agent.proxy.port).toBe("8080");
         expect(agent.proxy.username).toBe("user");
         expect(agent.proxy.password).toBe("pass");
+        expect(agent.connectOpts.family).toBe(4);
 
         nodeSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: nodeSocket });
         await openPromise;
@@ -149,7 +181,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
             "wss://example.test/speech",
             "connection-id",
             formatter,
-            { HostName: "::1", Port: 8080 } as any,
+            createProxyInfo("::1", 8080, undefined, undefined, true),
             {},
             false,
         );
@@ -160,9 +192,27 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
 
         expect(agent.proxy.hostname).toBe("[::1]");
         expect(agent.proxy.port).toBe("8080");
+        expect(agent.connectOpts.family).toBe(0);
 
         nodeSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: nodeSocket });
         await openPromise;
+    });
+
+    testIfNode("rejects an IPv6 proxy host when IPv6 is disabled", async (): Promise<void> => {
+        const adapter = new WebsocketMessageAdapter(
+            "wss://example.test/speech",
+            "connection-id",
+            formatter,
+            createProxyInfo("::1", 8080),
+            {},
+            false,
+        );
+
+        const response = await adapter.open();
+
+        expect(response.statusCode).toBe(500);
+        expect(String(response.reason)).toEqual(expect.stringContaining("IPv6 is disabled"));
+        expect(wsMock).not.toHaveBeenCalled();
     });
 
     testIfNode("preserves percent sequences in proxy credentials", async (): Promise<void> => {
@@ -173,7 +223,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
             "wss://example.test/speech",
             "connection-id",
             formatter,
-            { HostName: "proxy.example", Port: 8080, UserName: "user%41", Password: "pass%word" } as any,
+            createProxyInfo("proxy.example", 8080, "user%41", "pass%word"),
             {},
             false,
         );
@@ -212,10 +262,68 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
 
         expect(agent.createConnection({ host: "example.test", port: 443 })).toBe(tlsSocket);
         expect(tlsConnectMock).toHaveBeenCalledWith(expect.objectContaining({
+            family: 4,
             requestOCSP: true,
             servername: "example.test",
             secureEndpoint: true,
         }));
+
+        nodeSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: nodeSocket });
+        await openPromise;
+    });
+
+    testIfNode("enables dual-stack address selection for direct Node connections", async (): Promise<void> => {
+        const nodeSocket = createFakeSocket();
+        const tlsSocket = createFakeSocket();
+        const tlsConnectMock = tls.connect as unknown as jest.Mock;
+        tlsConnectMock.mockReturnValue(tlsSocket);
+        wsMock.mockImplementation(() => nodeSocket);
+        delete (globalThis as any).WebSocket;
+
+        const adapter = new WebsocketMessageAdapter(
+            "wss://example.test/speech",
+            "connection-id",
+            formatter,
+            createProxyInfo(undefined, undefined, undefined, undefined, true),
+            {},
+            false,
+        );
+
+        const openPromise = adapter.open();
+        const options = wsMock.mock.calls[0][1] as ws.ClientOptions;
+        const agent = options.agent as any;
+
+        expect(agent.createConnection({ host: "example.test", port: 443 })).toBe(tlsSocket);
+        expect(tlsConnectMock).toHaveBeenCalledWith(expect.objectContaining({
+            family: 0,
+            requestOCSP: true,
+            servername: "example.test",
+            secureEndpoint: true,
+        }));
+
+        nodeSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: nodeSocket });
+        await openPromise;
+    });
+
+    testIfNode("rejects a direct IPv6 literal when IPv6 is disabled", async (): Promise<void> => {
+        const nodeSocket = createFakeSocket();
+        wsMock.mockImplementation(() => nodeSocket);
+        delete (globalThis as any).WebSocket;
+
+        const adapter = new WebsocketMessageAdapter(
+            "wss://[::1]/speech",
+            "connection-id",
+            formatter,
+            undefined as any,
+            {},
+            false,
+        );
+
+        const openPromise = adapter.open();
+        const options = wsMock.mock.calls[0][1] as ws.ClientOptions;
+        const agent = options.agent as any;
+
+        expect(() => agent.createConnection({ host: "::1", port: 443 })).toThrow("IPv6 is disabled");
 
         nodeSocket.onclose({ wasClean: false, code: 1000, reason: "closed", target: nodeSocket });
         await openPromise;
@@ -244,6 +352,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
 
         expect(agent.createConnection({ host: "example.test", port: 80 })).toBe(netSocket);
         expect(netConnectMock).toHaveBeenCalledWith(expect.objectContaining({
+            family: 4,
             requestOCSP: true,
             servername: "example.test",
             secureEndpoint: false,
@@ -253,7 +362,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
         await openPromise;
     });
 
-    testIfNode("uses the browser WebSocket path when a browser global is present even if proxy is configured", async (): Promise<void> => {
+    testIfNode("leaves address-family selection to the browser", async (): Promise<void> => {
         const browserSocket = createFakeSocket();
         const browserWebSocketMock = jest.fn(() => browserSocket);
         (globalThis as any).window = {};
@@ -263,7 +372,7 @@ describe("WebsocketMessageAdapter transport selection", (): void => {
             "wss://example.test/speech",
             "connection-id",
             formatter,
-            { HostName: "proxy.example", Port: 8080, UserName: "user", Password: "pass" } as any,
+            createProxyInfo("proxy.example", 8080, "user", "pass", true),
             {},
             false,
         );

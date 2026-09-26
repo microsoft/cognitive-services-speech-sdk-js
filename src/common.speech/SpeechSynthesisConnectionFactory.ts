@@ -65,7 +65,10 @@ export class SpeechSynthesisConnectionFactory implements ISynthesisConnectionFac
                 // We need to generate the path, and we need to check for a redirect.
                 endpointUrl.pathname = this.synthesisUri;
 
-                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(endpointUrl.toString());
+                endpoint = await ConnectionFactoryBase.getRedirectUrlFromEndpoint(
+                    endpointUrl.toString(),
+                    true,
+                    ProxyInfo.fromParameters(config.parameters));
             }
         }
 

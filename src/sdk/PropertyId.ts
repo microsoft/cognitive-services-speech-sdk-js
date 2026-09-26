@@ -615,4 +615,12 @@ export enum PropertyId {
      * @member PropertyId.SpeechSynthesis_RtfTimeoutThreshold
      */
     SpeechSynthesis_RtfTimeoutThreshold,
+
+    /**
+     * Enables IPv6 for Speech service connections in Node.js. When enabled, the SDK may resolve and connect to
+     * either IPv6 or IPv4 addresses. The default is false. In browser environments, address-family selection is controlled
+     * by the browser and operating system, and this property has no effect.
+     * @member PropertyId.SpeechServiceConnection_EnableIpv6
+     */
+    SpeechServiceConnection_EnableIpv6,
 }

@@ -131,9 +131,9 @@ export class WebsocketMessageAdapter {
 
         try {
 
-            const proxyConfiguredInNode: boolean = typeof window === "undefined" && !!this.proxyInfo?.HostName;
+            const browserWebSocketAvailable: boolean = typeof window !== "undefined" && typeof WebSocket !== "undefined";
 
-            if (typeof WebSocket !== "undefined" && !WebsocketMessageAdapter.forceNpmWebSocket && !proxyConfiguredInNode) {
+            if (browserWebSocketAvailable && !WebsocketMessageAdapter.forceNpmWebSocket) {
                 // Browser handles cert checks.
                 this.privCertificateValidatedDeferral.resolve();
 
@@ -362,9 +362,15 @@ export class WebsocketMessageAdapter {
 
         const agent: DirectWebsocketAgent = new http.Agent() as DirectWebsocketAgent;
         agent.createConnection = (options: WebsocketAgentConnectParameters[1]): net.Socket => {
+            const host: string = options.host?.replace(/^\[|\]$/g, "").split("%")[0];
+            if (!this.proxyInfo?.EnableIpv6 && net.isIPv6(host)) {
+                throw new Error("IPv6 is disabled for this Speech service connection.");
+            }
+
             const secureEndpoint = (options as WebsocketAgentConnectOptions).secureEndpoint ?? protocol.toLocaleLowerCase() === "https:";
             const socketOptions: WebsocketAgentConnectOptions = addOcspOptions({
                 ...options,
+                family: this.proxyInfo?.EnableIpv6 ? 0 : 4,
                 secureEndpoint,
             });
             return socketOptions.secureEndpoint ? tls.connect(socketOptions) : net.connect(socketOptions);
@@ -374,19 +380,15 @@ export class WebsocketMessageAdapter {
     }
 
     private static GetProxyAgent(proxyInfo: ProxyInfo): WebsocketAgent {
-        const proxyHost: string = proxyInfo.HostName.includes(":") && !proxyInfo.HostName.startsWith("[")
-            ? `[${proxyInfo.HostName}]`
-            : proxyInfo.HostName;
-        const proxyUrl: URL = new URL(`http://${proxyHost}:${proxyInfo.Port}`);
-        if (!!proxyInfo.UserName) {
-            const proxyPassword: string = proxyInfo.Password === undefined ? "" : proxyInfo.Password;
-            proxyUrl.username = encodeURIComponent(proxyInfo.UserName);
-            proxyUrl.password = encodeURIComponent(proxyPassword);
+        if (!proxyInfo.EnableIpv6 && proxyInfo.IsIpv6Host) {
+            throw new Error("IPv6 is disabled for this Speech service proxy connection.");
         }
 
         // https-proxy-agent handles Proxy-Authorization natively from URL credentials.
         // OCSP stapling is configured via addOcspOptions on the socket options below.
-        const proxyAgent: HttpsProxyAgent<string> = new HttpsProxyAgent(proxyUrl.toString());
+        const proxyAgent: HttpsProxyAgent<string> = new HttpsProxyAgent(proxyInfo.Url.toString(), {
+            family: proxyInfo.EnableIpv6 ? 0 : 4,
+        });
         const connect = proxyAgent.connect.bind(proxyAgent) as (request: WebsocketAgentConnectParameters[0], options: WebsocketAgentConnectOptions) => Promise<net.Socket>;
         proxyAgent.connect = (request: WebsocketAgentConnectParameters[0], options: WebsocketAgentConnectParameters[1]): Promise<net.Socket> =>
             connect(request, addOcspOptions(options));

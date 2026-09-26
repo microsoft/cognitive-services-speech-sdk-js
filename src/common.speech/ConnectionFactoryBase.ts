@@ -4,6 +4,8 @@
 import {
     ServicePropertiesPropertyName,
 } from "../common.speech/Exports.js";
+import { HttpRequest, IHttpResponse } from "../common.browser/HttpRequest.js";
+import { ProxyInfo } from "../common.browser/ProxyInfo.js";
 import { ConnectionRedirectEvent, Events, IConnection, IStringDictionary } from "../common/Exports.js";
 import { PropertyId } from "../sdk/Exports.js";
 import { AuthInfo, IConnectionFactory, RecognizerConfig } from "./Exports.js";
@@ -71,7 +73,7 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
         }
     }
 
-    public static async getRedirectUrlFromEndpoint(endpoint: string, useWebSocketProtocol: boolean = true): Promise<string> {
+    public static async getRedirectUrlFromEndpoint(endpoint: string, useWebSocketProtocol: boolean = true, proxyInfo?: ProxyInfo): Promise<string> {
         // make a rest call to the endpoint to get the redirect url
         const redirectUrl: URL = new URL(endpoint);
         redirectUrl.protocol = "https:";
@@ -82,14 +84,19 @@ export abstract class ConnectionFactoryBase implements IConnectionFactory {
         const redirectedUrlString: string = redirectUrl.toString();
         Events.instance.onEvent(new ConnectionRedirectEvent("", redirectedUrlString, undefined, "ConnectionFactoryBase: redirectUrl request"));
 
-        const redirectResponse: Response = await fetch(redirectedUrlString);
+        const redirectResponse: IHttpResponse = await HttpRequest.request(
+            "GET",
+            redirectedUrlString,
+            {},
+            undefined,
+            proxyInfo?.EnableIpv6 ?? false,
+            proxyInfo);
 
         if (redirectResponse.status !== 200) {
             return endpoint;
         }
 
-        // Fix: properly read the response text
-        const redirectUrlString = await redirectResponse.text();
+        const redirectUrlString: string = redirectResponse.body;
 
         Events.instance.onEvent(new ConnectionRedirectEvent("", redirectUrlString, endpoint, "ConnectionFactoryBase: redirectUrlString"));
 

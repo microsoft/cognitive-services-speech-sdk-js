@@ -35,6 +35,7 @@
     "fs": false,
     "agent-base": false,
     "http": false,
+    "https": false,
     "tls": false,
     "net": false
   },
