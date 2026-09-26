@@ -209,7 +209,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
     }
 
     public pause(): void {
-        if (!this.privIsPaused && this.privAudio !== undefined) {
+        if (this.privAudio !== undefined) {
             this.privAudio.pause();
             this.privIsPaused = true;
         }
@@ -217,6 +217,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
 
     public resume(cb?: () => void, err?: (error: string) => void): void {
         if (this.privIsPaused && this.privAudio !== undefined) {
+            this.privIsPaused = false;
             this.privAudio.play().then((): void => {
                 if (!!cb) {
                     cb();
@@ -226,7 +227,6 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                     err(error);
                 }
             });
-            this.privIsPaused = false;
         }
     }
 
@@ -271,6 +271,7 @@ export class SpeakerAudioDestination implements IAudioDestination, IPlayer {
                 this.onAudioStart(this);
             }
             this.privAudio.onended = (): void => {
+                this.privIsPaused = false;
                 if (!!this.onAudioEnd) {
                     this.onAudioEnd(this);
                 }
