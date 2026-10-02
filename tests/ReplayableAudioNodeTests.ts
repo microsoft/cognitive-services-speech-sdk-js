@@ -416,3 +416,157 @@ describe("Byte continuity across a simulated reconnect", () => {
         expect(serviceView).toEqual(Array.from(original));
     });
 });
+
+// Inline commit: replayStartBytes is where the replayed audio starts, so that commits are
+// re-sent at their original position. Each case reads 20 buffers, shrinks, replays, and
+// checks that the first replayed chunk starts at replayStartBytes and that the end of that
+// chunk is what lastReadEndBytes reports.
+describe("Replay start position", () => {
+    const fill = async (node: ReplayableAudioNode, count: number): Promise<void> => {
+        for (let i = 0; i < count; i++) {
+            await node.read();
+        }
+    };
+
+    const bytesToOffset = (bytes: number): number => (bytes / defaultAudioFormat.avgBytesPerSec) * 1e7;
+
+    test.each([
+        ["no shrink", 0, 0],
+        ["shrink at a buffer boundary", 10 * targetBytes, 10 * targetBytes],
+        ["shrink inside a buffer", 1.5 * targetBytes, 1.5 * targetBytes],
+    ])("Replay after %s", async (_name: string, shrinkBytes: number, expectedStart: number): Promise<void> => {
+        const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat.avgBytesPerSec);
+        await fill(testNode, 20);
+        expect(testNode.bufferedBytes).toEqual(20 * targetBytes);
+
+        if (shrinkBytes > 0) {
+            testNode.shrinkBuffers(bytesToOffset(shrinkBytes));
+        }
+        const serialBefore: number = testNode.replaySerial;
+        testNode.replay();
+        expect(testNode.replaySerial).toEqual(serialBefore + 1);
+        expect(testNode.replayStartBytes).toEqual(expectedStart);
+
+        // The first replayed chunk runs from replayStartBytes to the end of its buffer.
+        const chunk: IStreamChunk<ArrayBuffer> = await testNode.read();
+        const bufferEnd: number = (Math.floor(expectedStart / targetBytes) + 1) * targetBytes;
+        expect(chunk.buffer.byteLength).toEqual(bufferEnd - expectedStart);
+        expect(testNode.lastReadEndBytes).toEqual(bufferEnd);
+    });
+
+    test("Replay with nothing to replay starts at the end of the audio read", async (): Promise<void> => {
+        const testNode: ReplayableAudioNode = new ReplayableAudioNode(testAudioNode, defaultAudioFormat.avgBytesPerSec);
+        testNode.replay();
+        expect(testNode.replayStartBytes).toEqual(0);
+
+        await fill(testNode, 3);
+        // Shrinking past all the audio leaves nothing to replay.
+        testNode.shrinkBuffers(bytesToOffset(3 * targetBytes));
+        testNode.replay();
+        expect(testNode.replayStartBytes).toEqual(3 * targetBytes);
+
+        // The next read is new audio, which follows directly.
+        await testNode.read();
+        expect(testNode.lastReadEndBytes).toEqual(4 * targetBytes);
+    });
+});
+
+// A replay requested while a read is waiting for new data (e.g. the service ends a turn while
+// the application is not writing). The replayed audio must come first, and the new data must
+// be returned once, after it.
+describe("Replay requested during a waiting read", () => {
+    const chunkBytes: number = 3200;
+    const bytesPerSecond: number = 32000;
+
+    // Returns three audio chunks at once, then waits for data supplied through push().
+    const makeSource = (): { source: IAudioStreamNode; push: (c: IStreamChunk<ArrayBuffer>) => void } => {
+        let reads: number = 0;
+        const queued: IStreamChunk<ArrayBuffer>[] = [];
+        let waiter: (c: IStreamChunk<ArrayBuffer>) => void;
+        const source: IAudioStreamNode = {
+            detach: undefined,
+            id: (): string => "source",
+            read: (): Promise<IStreamChunk<ArrayBuffer>> => {
+                if (reads++ < 3) {
+                    return Promise.resolve({ buffer: new ArrayBuffer(chunkBytes), isEnd: false, timeReceived: reads });
+                }
+                if (queued.length > 0) {
+                    return Promise.resolve(queued.shift());
+                }
+                return new Promise((resolve: (c: IStreamChunk<ArrayBuffer>) => void): void => {
+                    waiter = resolve;
+                });
+            },
+        };
+        const push = (c: IStreamChunk<ArrayBuffer>): void => {
+            if (waiter !== undefined) {
+                const w: (c: IStreamChunk<ArrayBuffer>) => void = waiter;
+                waiter = undefined;
+                w(c);
+            } else {
+                queued.push(c);
+            }
+        };
+        return { push, source };
+    };
+
+    const describeRead = (node: ReplayableAudioNode, c: IStreamChunk<ArrayBuffer>): string =>
+        c.buffer ? `${c.buffer.byteLength}@${node.lastReadEndBytes}` : (c.isEnd ? "END" : "MARKER");
+
+    // Reads three chunks, has the service acknowledge the first two, and starts a read that
+    // waits for data.
+    const setUp = async (): Promise<{ node: ReplayableAudioNode; push: (c: IStreamChunk<ArrayBuffer>) => void; waiting: Promise<IStreamChunk<ArrayBuffer>> }> => {
+        const { source, push } = makeSource();
+        const node: ReplayableAudioNode = new ReplayableAudioNode(source, bytesPerSecond);
+        for (let i = 0; i < 3; i++) {
+            await node.read();
+        }
+        node.shrinkBuffers((2 * chunkBytes / bytesPerSecond) * 1e7);
+        const waiting: Promise<IStreamChunk<ArrayBuffer>> = node.read();
+        return { node, push, waiting };
+    };
+
+    test("New audio is returned once, after the replayed audio", async (): Promise<void> => {
+        const { node, push, waiting } = await setUp();
+        node.replay();
+        expect(node.replayStartBytes).toEqual(2 * chunkBytes);
+
+        push({ buffer: new ArrayBuffer(1000), isEnd: false, timeReceived: 99 });
+        push({ buffer: new ArrayBuffer(500), isEnd: false, timeReceived: 100 });
+        const seen: string[] = [describeRead(node, await waiting)];
+        for (let i = 0; i < 2; i++) {
+            seen.push(describeRead(node, await node.read()));
+        }
+        expect(seen).toEqual(["3200@9600", "1000@10600", "500@11100"]);
+    });
+
+    test("A commit marker is held until the replayed audio is returned", async (): Promise<void> => {
+        const { node, push, waiting } = await setUp();
+        node.replay();
+
+        push({ buffer: null, commit: { token: 1 }, isEnd: false, timeReceived: 99 });
+        push({ buffer: new ArrayBuffer(1000), isEnd: false, timeReceived: 100 });
+        const seen: string[] = [describeRead(node, await waiting)];
+        for (let i = 0; i < 2; i++) {
+            seen.push(describeRead(node, await node.read()));
+        }
+        expect(seen).toEqual(["3200@9600", "MARKER", "1000@10600"]);
+        // The marker is at the end of the replayed audio, which is its original position.
+        expect(node.bufferedBytes).toEqual(10600);
+    });
+
+    test("End of stream is held until the replayed audio is returned", async (): Promise<void> => {
+        const { node, push, waiting } = await setUp();
+        node.replay();
+
+        push({ buffer: null, isEnd: true, timeReceived: 99 });
+        const seen: string[] = [describeRead(node, await waiting), describeRead(node, await node.read())];
+        expect(seen).toEqual(["3200@9600", "END"]);
+    });
+
+    test("Without a replay the waiting read returns the new data", async (): Promise<void> => {
+        const { node, push, waiting } = await setUp();
+        push({ buffer: new ArrayBuffer(1000), isEnd: false, timeReceived: 99 });
+        expect(describeRead(node, await waiting)).toEqual("1000@10600");
+    });
+});

@@ -18,10 +18,13 @@ import {
     ChunkedArrayBufferStream,
     Events,
     EventSource,
+    EventType,
     IAudioSource,
     IAudioStreamNode,
+    ICommitMarker,
+    InvalidOperationError,
     IStreamChunk,
-    Stream,
+    PlatformEvent,
 } from "../../common/Exports.js";
 import { createNoDashGuid } from "../../common/Guid.js";
 import { AudioStreamFormat, PullAudioInputStreamCallback } from "../Exports.js";
@@ -109,6 +112,36 @@ export abstract class PushAudioInputStream extends AudioInputStream {
     public abstract write(dataBuffer: ArrayBuffer): void;
 
     /**
+     * Requests that the audio written so far be finalized as a completed
+     * segment, without ending or restarting the current recognition turn.
+     *
+     * The call is non-blocking. The commit is anchored to the audio written before the call,
+     * so write the audio for the segment first, then call this method.
+     *
+     * The request is advisory. A token is issued as soon as the request is recorded, but there
+     * is no guarantee that it will be acknowledged: the service may not support inline commit,
+     * or the session may end first. Applications must tolerate a token that is never echoed.
+     * A commit not yet delivered when the stream is closed is discarded, since end of audio
+     * finalizes the same audio.
+     *
+     * Supported with SpeechRecognizer, TranslationRecognizer and ConversationTranscriber,
+     * for PCM, A-law and mu-law audio.
+     *
+     * Throws if the stream has been closed, or if channelId is not an integer from 0 to
+     * 4294967295.
+     * @member PushAudioInputStream.prototype.commit
+     * @function
+     * @public
+     * @param {number} channelId - Optional 0-based index of the channel to commit on
+     * multichannel input. If omitted, the commit applies to all channels.
+     * @returns {number} A token greater than 0 that the recognition result acknowledging
+     * the commit carries in its commitToken property, or 0 if the request was rejected:
+     * more than one commit within 100 ms on this stream, or an audio format that does not
+     * support commit.
+     */
+    public abstract commit(channelId?: number): number;
+
+    /**
      * Closes the stream.
      * @member PushAudioInputStream.prototype.close
      * @function
@@ -127,7 +160,11 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     private privFormat: AudioStreamFormatImpl;
     private privId: string;
     private privEvents: EventSource<AudioSourceEvent>;
-    private privStream: Stream<ArrayBuffer>;
+    private privStream: ChunkedArrayBufferStream;
+    private privNextCommitToken: number = 1;
+    private privLastCommitTime: number = undefined;
+    private privUndeliveredCommits: ICommitMarker[] = [];
+    private static readonly CommitMinIntervalMs: number = 100;
 
     /**
      * Creates and initalizes an instance with the given values.
@@ -175,7 +212,57 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
      * @public
      */
     public close(): void {
+        // Inline commit: end of audio finalizes everything written, which is the boundary any
+        // undelivered commit asked for. Discard such commits so they cannot be sent later.
+        for (const marker of this.privUndeliveredCommits) {
+            if (!marker.delivered) {
+                marker.discarded = true;
+                PushAudioInputStreamImpl.log(`Discarding commit token=${marker.token}: end of audio was signalled before it was delivered`, EventType.Warning);
+            }
+        }
+        this.privUndeliveredCommits = [];
         this.privStream.close();
+    }
+
+    /**
+     * Requests a segmentation boundary after the audio written so far.
+     * @member PushAudioInputStreamImpl.prototype.commit
+     * @function
+     * @public
+     * @param {number} channelId - Optional 0-based channel index; all channels if omitted.
+     * @returns {number} A token greater than 0, or 0 if the request was rejected.
+     */
+    public commit(channelId?: number): number {
+        if (channelId !== undefined && !(Number.isInteger(channelId) && channelId >= 0 && channelId <= 0xFFFFFFFF)) {
+            throw new Error(`channelId must be an integer from 0 to 4294967295 (got ${String(channelId)})`);
+        }
+
+        if (this.privStream.isClosed) {
+            throw new InvalidOperationError("Stream closed");
+        }
+
+        // Only uncompressed formats: for encoded audio a byte position does not denote a
+        // position in the audio that is recognized. 1 = PCM, 6 = A-law, 7 = mu-law.
+        const formatTag: number = this.privFormat.formatTag;
+        if (formatTag !== 1 && formatTag !== 6 && formatTag !== 7) {
+            PushAudioInputStreamImpl.log(`Commit rejected: inline commit is not supported for compressed or encoded audio (formatTag=${String(formatTag)})`, EventType.Error);
+            return 0;
+        }
+
+        const now: number = PushAudioInputStreamImpl.monotonicNow();
+        if (this.privLastCommitTime !== undefined && now - this.privLastCommitTime < PushAudioInputStreamImpl.CommitMinIntervalMs) {
+            PushAudioInputStreamImpl.log(`Commit rejected by rate limit: ${Math.round(now - this.privLastCommitTime)} ms since previous successful commit (min ${PushAudioInputStreamImpl.CommitMinIntervalMs} ms)`, EventType.Error);
+            return 0;
+        }
+
+        const token: number = this.privNextCommitToken++;
+        const marker: ICommitMarker = { channelId, token };
+        this.privStream.writeCommitMarker(marker);
+        this.privUndeliveredCommits = this.privUndeliveredCommits.filter((m: ICommitMarker): boolean => !m.delivered);
+        this.privUndeliveredCommits.push(marker);
+        this.privLastCommitTime = now;
+        PushAudioInputStreamImpl.log(`Commit token=${token} channel=${channelId === undefined ? "all" : channelId}`, EventType.Debug);
+        return token;
     }
 
     public id(): string {
@@ -194,13 +281,25 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
         await this.turnOn();
         const stream = this.privStream;
         this.onEvent(new AudioStreamNodeAttachedEvent(this.privId, audioNodeId));
+        let detached: boolean = false;
         return {
             detach: async (): Promise<void> => {
+                // A read still waiting for data belongs to the session that is ending. Cancel it
+                // so that it does not take, and lose, the next data written, which belongs to
+                // the next reader.
+                detached = true;
+                stream.cancelPendingReads();
                 this.onEvent(new AudioStreamNodeDetachedEvent(this.privId, audioNodeId));
                 return this.turnOff();
             },
             id: (): string => audioNodeId,
-            read: (): Promise<IStreamChunk<ArrayBuffer>> => stream.read(),
+            read: (): Promise<IStreamChunk<ArrayBuffer>> => {
+                if (detached) {
+                    // Nothing more for a detached node; data is left in the stream.
+                    return Promise.resolve({ buffer: null, isEnd: true, timeReceived: Date.now() });
+                }
+                return stream.read();
+            },
         };
     }
 
@@ -231,6 +330,14 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     private onEvent(event: AudioSourceEvent): void {
         this.privEvents.onEvent(event);
         Events.instance.onEvent(event);
+    }
+
+    private static log(message: string, eventType: EventType): void {
+        Events.instance.onEvent(new PlatformEvent(`PushAudioInputStream: ${message}`, eventType));
+    }
+
+    private static monotonicNow(): number {
+        return (typeof performance !== "undefined" && typeof performance.now === "function") ? performance.now() : Date.now();
     }
 
     private toBuffer(arrayBuffer: ArrayBuffer): Buffer {

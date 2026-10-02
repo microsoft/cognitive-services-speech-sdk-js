@@ -10,8 +10,10 @@ import {
     ConnectionState,
     createNoDashGuid,
     EventSource,
+    EventType,
     IAudioSource,
     IAudioStreamNode,
+    ICommitMarker,
     IConnection,
     IDisposable,
     IStreamChunk,
@@ -49,6 +51,8 @@ import {
     IAuthentication,
 } from "./IAuthentication.js";
 import { IConnectionFactory } from "./IConnectionFactory.js";
+import { InlineCommitSender } from "./InlineCommitSender.js";
+import { InlineCommitTracker } from "./InlineCommitTracker.js";
 import { RecognizerConfig } from "./RecognizerConfig.js";
 import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 import { Segmentation, SegmentationMode } from "./ServiceMessages/PhraseDetection/Segmentation.js";
@@ -93,6 +97,10 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privAverageBytesPerMs: number = 0;
     private privEnableReliableReconnect: boolean = false;
     private privContinuationState: ReconnectContinuationState;
+    // Inline commit: unacknowledged commits of the current session, and a commit held until
+    // the current turn has sent its first audio message (the wave header), which opens the
+    // turn for the service.
+    private privCommitSender: InlineCommitSender = new InlineCommitSender((): string => this.privRequestSession.requestId);
     protected privSpeechContext: SpeechContext;
     protected privRequestSession: RequestSession;
     protected privConnectionId?: string | null;
@@ -622,6 +630,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         this.privErrorCallback = errorCallBack;
 
         this.privRequestSession.startNewRecognition();
+        this.privCommitSender.reset("start of a new recognition");
         this.privRequestSession.listenForServiceTelemetry(this.privAudioSource.events);
 
         if (this.privEnableReliableReconnect) {
@@ -685,6 +694,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 await this.privRequestSession.turnCompletionPromise;
             } finally {
                 await this.privRequestSession.dispose();
+                this.privCommitSender.reset("end of recognition");
             }
         }
         return;
@@ -906,6 +916,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         break;
 
                     case "turn.end":
+                        this.privCommitSender.onTurnClosed("the turn ended");
                         await this.sendTelemetryData();
                         // Reliable reconnect: turn.end does NOT clear the continuation state; the
                         // token/offset/service tag persist for the session.
@@ -927,11 +938,16 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         break;
 
                     default:
+                        const commitToken: number = InlineCommitSender.tokenFromMessage(connectionMessage);
                         if (!await this.processTypeSpecificMessages(connectionMessage)) {
                             // here are some messages that the derived class has not processed, dispatch them to connect class
                             if (!!this.privServiceEvents) {
                                 this.serviceEvents.onEvent(new ServiceEvent(connectionMessage.path.toLowerCase(), connectionMessage.textBody));
                             }
+                        }
+                        // Inline commit: bookkeeping only; the result has already been delivered.
+                        if (commitToken !== 0) {
+                            this.privCommitSender.onAcknowledged(commitToken);
                         }
                 }
             }
@@ -982,6 +998,8 @@ export abstract class ServiceRecognizerBase implements IDisposable {
 
         const speechContextJson = this.speechContext.toJSON();
         if (generateNewRequestId) {
+            // Inline commit: a new request id starts a new turn, which opens with its wave header.
+            this.privCommitSender.onNewTurn();
             this.privRequestSession.onSpeechContext();
         }
 
@@ -1054,7 +1072,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     protected async sendWaveHeader(connection: IConnection): Promise<void> {
         const format: AudioStreamFormatImpl = await this.audioSource.format;
         // this.writeBufferToConsole(format.header);
-        return connection.send(new SpeechConnectionMessage(
+        const sendPromise: Promise<void> = connection.send(new SpeechConnectionMessage(
             MessageType.Binary,
             "audio",
             this.privRequestSession.requestId,
@@ -1062,6 +1080,45 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             format.header,
             this.audioStreamId
         ));
+
+        // Inline commit: the turn is now open; release a commit held until this point. It is
+        // queued on the connection after the header.
+        this.privCommitSender.onTurnAudioStarted(connection);
+
+        return sendPromise;
+    }
+
+    // Inline commit: whether this recognizer type sends commits; others discard them with a
+    // log. Enabled for SpeechRecognizer, TranslationRecognizer and ConversationTranscriber.
+    protected get supportsInlineCommit(): boolean {
+        return false;
+    }
+
+    // Inline commit: handles a commit marker read from the audio stream.
+    private onCommitMarkerRead(marker: ICommitMarker, connection: IConnection, startRecogNumber: number, offsetBytes: number): void {
+        if (marker.discarded) {
+            InlineCommitTracker.log(`skipping commit token=${marker.token} discarded at end of audio`, EventType.Debug);
+            return;
+        }
+
+        // The marker has left the stream, so it belongs to this session whatever happens next.
+        marker.delivered = true;
+
+        // Read by this session, but recognition stopped before it was handled (the read was
+        // already complete). The session is ending, so the commit is discarded, as a commit
+        // still pending at teardown is. Commits not yet read stay in the stream for the next
+        // reader; reads still waiting at stop are cancelled (see the push stream's detach).
+        if (!this.privRequestSession.isRecognizing || this.privRequestSession.recogNumber !== startRecogNumber) {
+            InlineCommitTracker.log(`discarding commit token=${marker.token}: read as recognition stopped`, EventType.Warning);
+            return;
+        }
+
+        if (!this.supportsInlineCommit) {
+            InlineCommitTracker.log(`discarding commit token=${marker.token}: inline commit is not supported by this recognizer type`, EventType.Warning);
+            return;
+        }
+
+        this.privCommitSender.onCommitRead(connection, marker.token, marker.channelId, offsetBytes);
     }
 
     protected postConnectImplOverride: (connection: Promise<IConnection>) => Promise<IConnection> = undefined;
@@ -1168,6 +1225,21 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         const maxSendUnthrottledBytes: number = audioFormat.avgBytesPerSec / 1000 * parseInt(fastLaneSizeMs, 10);
         const startRecogNumber: number = this.privRequestSession.recogNumber;
 
+        // Inline commit: byte positions for placing commits come from the replayable node.
+        const replayNode: ReplayableAudioNode = audioStreamNode instanceof ReplayableAudioNode ? audioStreamNode : undefined;
+        let lastReplaySerial: number = replayNode !== undefined ? replayNode.replaySerial : 0;
+
+        // Inline commit: audio is being replayed (new connection or new turn). Re-place pending
+        // commits relative to the replayed audio; those at its start go first. Checked before
+        // each read and again after it, because a replay can be requested while a read is
+        // waiting for data, and that read then returns replayed audio.
+        const handleReplay = (connection: IConnection): void => {
+            if (replayNode !== undefined && replayNode.replaySerial !== lastReplaySerial) {
+                lastReplaySerial = replayNode.replaySerial;
+                this.privCommitSender.onReplay(connection, replayNode.replayStartBytes);
+            }
+        };
+
         const readAndUploadCycle = async (): Promise<void> => {
             // If speech is done, stop sending audio.
             if (!this.privIsDisposed &&
@@ -1176,11 +1248,31 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                 this.privRequestSession.recogNumber === startRecogNumber) {
 
                 const connection: IConnection = await this.fetchConnection();
+
+                // Recognition may have stopped while connecting. Do not read then: the read would
+                // take data meant for the next recognition.
+                if (this.privIsDisposed ||
+                    !this.privRequestSession.isRecognizing ||
+                    this.privRequestSession.recogNumber !== startRecogNumber) {
+                    return;
+                }
+
+                handleReplay(connection);
+
                 const audioStreamChunk: IStreamChunk<ArrayBuffer> = await audioStreamNode.read();
                 // we have a new audio chunk to upload.
                 if (this.privRequestSession.isSpeechEnded) {
                     // If service already recognized audio end then don't send any more audio
                     return;
+                }
+
+                handleReplay(connection);
+
+                // Inline commit: a commit marker carries no audio and is not end of stream.
+                if (!!audioStreamChunk && !!audioStreamChunk.commit) {
+                    this.onCommitMarkerRead(audioStreamChunk.commit, connection, startRecogNumber,
+                        replayNode !== undefined ? replayNode.bufferedBytes : 0);
+                    return readAndUploadCycle();
                 }
 
                 let payload: ArrayBuffer;
@@ -1220,6 +1312,11 @@ export abstract class ServiceRecognizerBase implements IDisposable {
                         // eslint-disable-next-line @typescript-eslint/no-empty-function
                         this.privRequestSession.onServiceTurnEndResponse(this.privRecognizerConfig.isContinuousRecognition).catch((): void => { });
                     });
+
+                    // Inline commit: re-send pending commits that the audio sent so far has reached.
+                    if (payload !== null && replayNode !== undefined) {
+                        this.privCommitSender.onAudioSent(connection, replayNode.lastReadEndBytes);
+                    }
 
                     if (!audioStreamChunk?.isEnd) {
                         // this.writeBufferToConsole(payload);
@@ -1323,6 +1420,9 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     // Takes an established websocket connection to the endpoint and sends speech configuration information.
     private async configureConnection(): Promise<IConnection> {
         const connection: IConnection = await this.connectImpl();
+        // Inline commit: a turn on a new connection opens with its wave header. A held commit
+        // is dropped; it is still pending and re-sent with the replayed audio if applicable.
+        this.privCommitSender.onTurnClosed("the connection was replaced");
         if (this.configConnectionOverride !== undefined) {
             return this.configConnectionOverride(connection);
         }

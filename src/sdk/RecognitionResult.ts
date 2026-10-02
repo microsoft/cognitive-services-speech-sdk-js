@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { commitTokenFromJson } from "../common.speech/CommitToken.js";
 import { PropertyCollection, ResultReason } from "./Exports.js";
 
 /**
@@ -19,6 +20,7 @@ export class RecognitionResult {
     private privJson: string;
     private privProperties: PropertyCollection;
     private privChannel: number;
+    private privCommitToken: number;
 
     /**
      * Creates and initializes an instance of this class.
@@ -170,5 +172,21 @@ export class RecognitionResult {
      */
     public get channel(): number {
         return this.privChannel;
+    }
+
+    /**
+     * The token of the commit (see PushAudioInputStream.commit) that this
+     * result acknowledges, or 0 if the result is not a commit acknowledgment.
+     * An acknowledgment may carry no recognized text.
+     * @member RecognitionResult.prototype.commitToken
+     * @function
+     * @public
+     * @returns {number} The commit token, or 0.
+     */
+    public get commitToken(): number {
+        if (this.privCommitToken === undefined) {
+            this.privCommitToken = commitTokenFromJson(this.privJson);
+        }
+        return this.privCommitToken;
     }
 }

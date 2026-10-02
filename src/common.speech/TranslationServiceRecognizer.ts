@@ -43,6 +43,11 @@ import { SpeechConnectionMessage } from "./SpeechConnectionMessage.Internal.js";
 export class TranslationServiceRecognizer extends ConversationServiceRecognizer {
     private privTranslationRecognizer: TranslationRecognizer;
 
+    // Inline commit is supported by this recognizer type.
+    protected get supportsInlineCommit(): boolean {
+        return true;
+    }
+
     public constructor(
         authentication: IAuthentication,
         connectionFactory: IConnectionFactory,
