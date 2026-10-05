@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { IStreamChunk, Stream } from "./Exports.js";
+import { ICommitMarker, IStreamChunk, Stream } from "./Exports.js";
 
 export class ChunkedArrayBufferStream extends Stream<ArrayBuffer> {
     private privTargetChunkSize: number;
@@ -54,16 +54,34 @@ export class ChunkedArrayBufferStream extends Stream<ArrayBuffer> {
         }
     }
 
+    // Inline commit: queues a marker after all audio written so far, including any
+    // partially filled chunk, which is written out first as a short chunk.
+    public writeCommitMarker(marker: ICommitMarker): void {
+        this.flush();
+        super.writeStreamChunk({
+            buffer: null,
+            commit: marker,
+            isEnd: false,
+            timeReceived: Date.now(),
+        });
+    }
+
     public close(): void {
         // Send whatever is pending, then close the base class.
+        this.flush();
+
+        super.close();
+    }
+
+    private flush(): void {
         if (0 !== this.privNextBufferReadyBytes && !this.isClosed) {
             super.writeStreamChunk({
                 buffer: this.privNextBufferToWrite.slice(0, this.privNextBufferReadyBytes),
                 isEnd: false,
                 timeReceived: this.privNextBufferStartTime,
             });
+            this.privNextBufferReadyBytes = 0;
+            this.privNextBufferToWrite = undefined;
         }
-
-        super.close();
     }
 }

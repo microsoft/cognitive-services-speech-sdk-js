@@ -18,6 +18,15 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     private privBufferedBytes: number = 0;
     private privReplay: boolean = false;
     private privLastChunkAcquiredTime: number = 0;
+    // Inline commit: byte positions in this node's domain (bytes read through the node since
+    // it was created) used to place commits relative to the audio sent.
+    private privLastReadEndBytes: number = 0;
+    private privReplayStartBytes: number = 0;
+    private privReplaySerial: number = 0;
+    // A chunk without audio (commit marker or end of stream) read while a replay was
+    // requested, returned once the replay is complete.
+    private privHeldChunk: IStreamChunk<ArrayBuffer> = undefined;
+    private privHasHeldChunk: boolean = false;
 
     public constructor(audioSource: IAudioStreamNode, bytesPerSecond: number) {
         this.privAudioNode = audioSource;
@@ -35,24 +44,11 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     public read(): Promise<IStreamChunk<ArrayBuffer>> {
         // if there is a replay request to honor.
         if (!!this.privReplay && this.privBuffers.length !== 0) {
-            // Find the start point in the buffers.
-            // Offsets are in 100ns increments.
-            // So how many bytes do we need to seek to get the right offset?
-            const offsetToSeek: number = this.privReplayOffset - this.privBufferStartOffset;
-
-            let bytesToSeek: number = Math.round(offsetToSeek * this.privBytesPerSecond * 1e-7);
-            if (0 !== (bytesToSeek % 2)) {
-                bytesToSeek++;
-            }
-
-            let i: number = 0;
-
-            while (i < this.privBuffers.length && bytesToSeek >= this.privBuffers[i].chunk.buffer.byteLength) {
-                bytesToSeek -= this.privBuffers[i++].chunk.buffer.byteLength;
-            }
+            const { index: i, bytesIntoBuffer: bytesToSeek } = this.seekReplayPosition();
 
             if (i < this.privBuffers.length) {
                 const retVal: ArrayBuffer = this.privBuffers[i].chunk.buffer.slice(bytesToSeek);
+                this.privLastReadEndBytes = this.privBuffers[i].byteOffset + bytesToSeek + retVal.byteLength;
 
                 this.privReplayOffset += (retVal.byteLength / this.privBytesPerSecond) * 1e+7;
 
@@ -69,14 +65,65 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             }
         }
 
+        if (this.privHasHeldChunk) {
+            const held: IStreamChunk<ArrayBuffer> = this.privHeldChunk;
+            this.privHeldChunk = undefined;
+            this.privHasHeldChunk = false;
+            return Promise.resolve(held);
+        }
+
         return this.privAudioNode.read()
-            .then((result: IStreamChunk<ArrayBuffer>): IStreamChunk<ArrayBuffer> => {
+            .then((result: IStreamChunk<ArrayBuffer>): IStreamChunk<ArrayBuffer> | Promise<IStreamChunk<ArrayBuffer>> => {
                 if (result && result.buffer && this.privBuffers) {
                     this.privBuffers.push(new BufferEntry(result, this.privBufferSerial++, this.privBufferedBytes));
                     this.privBufferedBytes += result.buffer.byteLength;
                 }
+
+                // A replay was requested while this read was waiting for data. The replayed
+                // audio comes first: new audio has been added to the replay buffers above and is
+                // returned once, in order, at the end of the replay. A chunk without audio (a
+                // commit marker or end of stream) is held until the replay is complete, since it
+                // follows all the audio read before it.
+                if (this.isReplayPending()) {
+                    if (!result || !result.buffer) {
+                        this.privHeldChunk = result;
+                        this.privHasHeldChunk = true;
+                    }
+                    return this.read();
+                }
+
+                if (result && result.buffer) {
+                    this.privLastReadEndBytes = this.privBufferedBytes;
+                }
                 return result;
             });
+    }
+
+    // Whether read() would return replayed audio.
+    private isReplayPending(): boolean {
+        return !!this.privReplay && this.privBuffers !== undefined && this.privBuffers.length !== 0 &&
+            this.seekReplayPosition().index < this.privBuffers.length;
+    }
+
+    // Inline commit: total bytes of new (not replayed) audio read through this node. When a
+    // commit marker is read, this is the position of the commit.
+    public get bufferedBytes(): number {
+        return this.privBufferedBytes;
+    }
+
+    // Inline commit: the position just after the audio returned by the latest read.
+    public get lastReadEndBytes(): number {
+        return this.privLastReadEndBytes;
+    }
+
+    // Inline commit: the position where the latest replay request starts (equal to
+    // bufferedBytes if there is nothing to replay), and a counter of replay requests.
+    public get replayStartBytes(): number {
+        return this.privReplayStartBytes;
+    }
+
+    public get replaySerial(): number {
+        return this.privReplaySerial;
     }
 
     public detach(): Promise<void> {
@@ -89,6 +136,41 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             this.privReplay = true;
             this.privReplayOffset = this.privLastShrinkOffset;
         }
+        this.privReplayStartBytes = this.findReplayStartBytes();
+        this.privReplaySerial++;
+    }
+
+    // Same seek as in read(), expressed as a byte position.
+    private findReplayStartBytes(): number {
+        if (!this.privReplay || this.privBuffers === undefined || this.privBuffers.length === 0) {
+            return this.privBufferedBytes;
+        }
+
+        const { index: i, bytesIntoBuffer: bytesToSeek } = this.seekReplayPosition();
+        return i < this.privBuffers.length ? this.privBuffers[i].byteOffset + bytesToSeek : this.privBufferedBytes;
+    }
+
+    // Finds where the replay continues: the buffer index and the byte position within that
+    // buffer that correspond to the current replay offset. An index equal to the number of
+    // buffers means that there is nothing left to replay. Shared by read() and
+    // findReplayStartBytes() so that commits are placed exactly where the replayed audio
+    // starts. Requires privBuffers to be defined.
+    private seekReplayPosition(): { index: number; bytesIntoBuffer: number } {
+        // Offsets are in 100ns increments.
+        // So how many bytes do we need to seek to get the right offset?
+        const offsetToSeek: number = this.privReplayOffset - this.privBufferStartOffset;
+
+        let bytesToSeek: number = Math.round(offsetToSeek * this.privBytesPerSecond * 1e-7);
+        if (0 !== (bytesToSeek % 2)) {
+            bytesToSeek++;
+        }
+
+        let i: number = 0;
+        while (i < this.privBuffers.length && bytesToSeek >= this.privBuffers[i].chunk.buffer.byteLength) {
+            bytesToSeek -= this.privBuffers[i++].chunk.buffer.byteLength;
+        }
+
+        return { bytesIntoBuffer: bytesToSeek, index: i };
     }
 
     // Shrinks the existing audio buffers to start at the new offset, or at the

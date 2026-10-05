@@ -55,6 +55,7 @@ export class Settings {
     public static WaveFile8ch: string = Settings.InputDir + "Speech016_30s_xmos_8ch.wav";
     public static WaveFile8ch2: string = Settings.InputDir + "katiesteve.wav";
     public static MultiChannelWaveFile: string = Settings.InputDir + "multi_channel_35sec.wav";
+    public static InlineCommitWaveFile: string = Settings.InputDir + "audiogap.wav";
     public static WaveFileSingleChannel: string = Settings.InputDir + "katiesteve_mono.wav";
     public static WaveFile44k: string = Settings.InputDir + "whatstheweatherlike.44khz.wav";
     public static WaveFileMulaw: string = Settings.InputDir + "whatstheweatherlike.mulaw";

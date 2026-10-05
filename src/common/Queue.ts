@@ -80,6 +80,28 @@ export class Queue<TItem> implements IQueue<TItem> {
         return this.privList.length();
     }
 
+    // Removes the pending dequeue requests, so that items added later are not handed to them.
+    // Their promises are left pending on purpose. Once removed here, nothing references the
+    // deferrals, so they and any continuations awaiting them are garbage collected; this does
+    // not leak. They must not be resolved instead: a caller such as Stream.read() treats an
+    // undefined or end-of-stream item as end of stream and disposes this queue, which would
+    // end the stream for every later reader.
+    public cancelPendingDequeues(): void {
+        if (this.isDisposed() || this.privIsDisposing) {
+            return;
+        }
+        const remaining = new List<{ type: SubscriberType; deferral: Deferred<TItem> }>();
+        while (this.privSubscribers.length() > 0) {
+            const subscriber = this.privSubscribers.removeFirst();
+            if (subscriber.type !== SubscriberType.Dequeue) {
+                remaining.add(subscriber);
+            }
+        }
+        while (remaining.length() > 0) {
+            this.privSubscribers.add(remaining.removeFirst());
+        }
+    }
+
     public isDisposed(): boolean {
         return this.privSubscribers == null;
     }
