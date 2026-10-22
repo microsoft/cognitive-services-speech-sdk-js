@@ -27,6 +27,8 @@ export class ReplayableAudioNode implements IAudioStreamNode {
     // requested, returned once the replay is complete.
     private privHeldChunk: IStreamChunk<ArrayBuffer> = undefined;
     private privHasHeldChunk: boolean = false;
+    private privHasEndChunk: boolean = false;
+    private privEndChunk: IStreamChunk<ArrayBuffer> = undefined;
 
     public constructor(audioSource: IAudioStreamNode, bytesPerSecond: number) {
         this.privAudioNode = audioSource;
@@ -72,9 +74,17 @@ export class ReplayableAudioNode implements IAudioStreamNode {
             return Promise.resolve(held);
         }
 
+        if (this.privHasEndChunk) {
+            return Promise.resolve(this.privEndChunk);
+        }
+
         return this.privAudioNode.read()
             .then((result: IStreamChunk<ArrayBuffer>): IStreamChunk<ArrayBuffer> | Promise<IStreamChunk<ArrayBuffer>> => {
-                if (result && result.buffer && this.privBuffers) {
+                if (!result || result.isEnd) {
+                    this.privHasEndChunk = true;
+                    this.privEndChunk = result;
+                }
+                if (result && result.buffer && result.buffer.byteLength > 0 && this.privBuffers) {
                     this.privBuffers.push(new BufferEntry(result, this.privBufferSerial++, this.privBufferedBytes));
                     this.privBufferedBytes += result.buffer.byteLength;
                 }
