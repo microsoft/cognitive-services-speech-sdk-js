@@ -434,6 +434,44 @@ describe("SpeechRecognizer EOF reconnect integration", (): void => {
         });
     });
 
+    testIfNode("closes after stop times out without turn.end", async (): Promise<void> => {
+        const input: Buffer = pcmInput();
+        const service: EofTestService = new EofTestService("speech-close-after-stop-timeout", input);
+        service.onMessage = (peer: PeerConnection, message: PeerMessage): void => {
+            if (message.path === "speech.context" && service.connections.indexOf(peer) === 0) {
+                peer.send("turn.start", {}, message.turn.requestId);
+            } else if (message.path === "audio" && message.body.length > 0 &&
+                Buffer.concat(message.turn.pcm).length === input.length) {
+                peer.send("speech.hypothesis", { Text: simulatedText, Offset: 0, Duration: 4000000 }, message.turn.requestId);
+            }
+            // Deliberately withhold turn.end so stop must time out and disconnect.
+        };
+        await service.run(async (): Promise<void> => {
+            const config: sdk.SpeechConfig = configFor(service);
+            config.setProperty(sdk.PropertyId.Recognizer_StopTimeoutMs, "100");
+            const stream: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+            service.resources.push(stream);
+            const recognizer: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(config, sdk.AudioConfig.fromStreamInput(stream));
+            service.clients.push(recognizer);
+            let hypothesisReceived: boolean = false;
+            recognizer.recognizing = (): void => {
+                hypothesisReceived = true;
+                service.record("recognizing");
+            };
+            stream.write(new Uint8Array(input).buffer);
+            await start(recognizer);
+            await service.until((): boolean => hypothesisReceived, "Service turn was not processed before stop");
+            await expect(stop(recognizer)).rejects.toThrow("Stop operation timed out after 100ms");
+            service.record("public-stop-timed-out");
+            expect(service.connections).toHaveLength(1);
+            expect(service.connections[0].turns[0].eofs).toBeGreaterThanOrEqual(1);
+            expect(Buffer.concat(service.connections[0].turns[0].pcm)).toEqual(input);
+            await service.closeClient(recognizer);
+            await service.until((): boolean => service.connections[0].socket.readyState === WebSocket.CLOSED,
+                "Timed-out recognition transport did not close");
+        });
+    });
+
     testIfNode.each<TerminalScenario>([
         // Closing at EOF must finish without a recognition result. Wait for exact
         // original audio/EOF, close publicly, and require the sole peer socket to close.

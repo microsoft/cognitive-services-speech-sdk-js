@@ -776,6 +776,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         await this.cancelRecognitionLocal(CancellationReason.Error,
             CancellationErrorCode.NoError,
             "Disconnecting");
+        this.privRequestSession.onDisconnected();
 
         if (this.disconnectOverride !== undefined) {
             await this.disconnectOverride();
