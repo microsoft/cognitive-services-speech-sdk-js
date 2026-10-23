@@ -356,6 +356,84 @@ describe("SpeechRecognizer EOF reconnect integration", (): void => {
         });
     });
 
+    // Restart the same open push stream from either public stop notification. The
+    // sessionStopped event can precede the stop callback; old cleanup must not stop
+    // the new recognition or consume its input.
+    testIfNode.each(["sessionStopped", "stop-callback"])("restarts push recognition from %s", async (restartFrom: string): Promise<void> => {
+        const inputs: Buffer[] = [pcmInput(), pcmInput(93)];
+        const service: EofTestService = new EofTestService(`speech-push-restart-${restartFrom}`, inputs[0]);
+        const operations: Promise<void>[] = [];
+        let hypotheses: number = 0;
+        let stopped: number = 0;
+        let restarted: boolean = false;
+        service.onMessage = (peer: PeerConnection, message: PeerMessage): void => {
+            const turn: AudioTurn = message.turn;
+            if (message.path === "speech.context") {
+                peer.send("turn.start", {}, turn.requestId);
+            } else if (message.path === "audio" && message.body.length === 0) {
+                peer.send("turn.end", {}, turn.requestId);
+            } else if (message.path === "audio" && turn.pcm.length > 0) {
+                const index: number = peer.turns.indexOf(turn);
+                const received: Buffer = Buffer.concat(turn.pcm);
+                expect(received).toEqual(inputs[index].subarray(0, received.length));
+                if (received.length === inputs[index].length) {
+                    peer.send("speech.hypothesis", { Text: simulatedText, Offset: 0, Duration: 4000000 }, turn.requestId);
+                }
+            }
+        };
+        await service.run(async (): Promise<void> => {
+            const stream: sdk.PushAudioInputStream = sdk.AudioInputStream.createPushStream();
+            service.resources.push(stream);
+            const audio: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(stream);
+            const recognizer: sdk.SpeechRecognizer = new sdk.SpeechRecognizer(configFor(service), audio);
+            service.clients.push(recognizer);
+            const restart = (): void => {
+                expect(restarted).toBe(false);
+                restarted = true;
+                const operation: Promise<void> = start(recognizer).then((): void => {
+                    service.record("public-restart-completed");
+                    stream.write(new Uint8Array(inputs[1]).buffer);
+                });
+                operations.push(operation);
+                void operation.catch((error: unknown): void => service.fail(error));
+            };
+            recognizer.sessionStopped = (): void => {
+                stopped++;
+                service.record("session-stopped", { stopped });
+                if (stopped === 1 && restartFrom === "sessionStopped") {
+                    restart();
+                }
+            };
+            recognizer.recognizing = (_sender: sdk.Recognizer, event: sdk.SpeechRecognitionEventArgs): void => {
+                hypotheses++;
+                service.record("recognizing", { hypotheses, text: event.result.text });
+                expect(event.result.reason).toBe(sdk.ResultReason.RecognizingSpeech);
+                const operation: Promise<void> = stop(recognizer).then((): void => {
+                    service.record("public-stop-completed", { hypotheses });
+                    if (!restarted && restartFrom === "stop-callback") {
+                        restart();
+                    }
+                });
+                operations.push(operation);
+                void operation.catch((error: unknown): void => service.fail(error));
+            };
+            recognizer.canceled = (_sender: sdk.Recognizer, event: sdk.SpeechRecognitionCanceledEventArgs): void =>
+                service.fail(new Error(`Unexpected cancellation: ${event.errorDetails}`));
+            stream.write(new Uint8Array(inputs[0]).buffer);
+            await start(recognizer);
+            await service.until((): boolean => hypotheses === 2 && stopped === 2, "Restarted push recognition did not complete");
+            await Promise.all(operations);
+            expect(service.connections).toHaveLength(1);
+            const turns: AudioTurn[] = service.connections[0].turns;
+            expect(turns).toHaveLength(2);
+            turns.forEach((turn: AudioTurn, index: number): void => {
+                expect(turn.headers).toBe(1);
+                expect(turn.eofs).toBeGreaterThanOrEqual(1);
+                expect(Buffer.concat(turn.pcm)).toEqual(inputs[index]);
+            });
+        });
+    });
+
     testIfNode.each<TerminalScenario>([
         // Closing at EOF must finish without a recognition result. Wait for exact
         // original audio/EOF, close publicly, and require the sole peer socket to close.

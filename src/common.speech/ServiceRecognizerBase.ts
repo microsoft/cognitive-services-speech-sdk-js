@@ -90,6 +90,7 @@ export abstract class ServiceRecognizerBase implements IDisposable {
     private privAuthFetchEventId: string;
     private privIsDisposed: boolean;
     private privAudioUploadWait: Deferred<void>;
+    private privStopPromise: Promise<void>;
     private privMustReportEndOfStream: boolean;
     private privConnectionEvents: EventSource<ConnectionEvent>;
     private privServiceEvents: EventSource<ServiceEvent>;
@@ -692,7 +693,18 @@ export abstract class ServiceRecognizerBase implements IDisposable {
         return;
     }
 
-    public async stopRecognizing(): Promise<void> {
+    public stopRecognizing(): Promise<void> {
+        if (this.privStopPromise === undefined) {
+            // sessionStopped can restart recognition before stop cleanup completes.
+            // Every caller must wait for that cleanup before starting another session.
+            this.privStopPromise = this.stopRecognizingImpl().finally((): void => {
+                this.privStopPromise = undefined;
+            });
+        }
+        return this.privStopPromise;
+    }
+
+    private async stopRecognizingImpl(): Promise<void> {
         if (this.privRequestSession.isRecognizing) {
             let stopFailed: boolean = false;
             try {
