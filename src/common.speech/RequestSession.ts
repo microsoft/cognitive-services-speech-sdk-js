@@ -168,6 +168,12 @@ export class RequestSession {
         }
     }
 
+    public onDisconnected(): void {
+        // A disconnected turn cannot receive turn.end; release its stop waiter without replaying audio.
+        this.privInTurn = false;
+        this.privTurnDeferral.resolve();
+    }
+
     public onSpeechContext(): void {
         this.privRequestId = createNoDashGuid();
     }

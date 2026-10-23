@@ -69,6 +69,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
     private privConnectionLoop: Promise<void>;
     private terminateMessageLoop: boolean;
     private agentConfigSent: boolean;
+    private privConfiguredConnection: IConnection;
     private privLastResult: SpeechRecognitionResult;
     private privEvents: EventSource<DialogEvent>;
 
@@ -140,6 +141,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         this.terminateMessageLoop = true;
         this.agentConfigSent = false;
+        this.privConfiguredConnection = undefined;
         return;
     }
 
@@ -281,6 +283,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         errorCode: CancellationErrorCode,
         error: string): Promise<void> {
 
+        const successCallback = this.privSuccessCallback;
+        this.privSuccessCallback = undefined;
+        this.privErrorCallback = undefined;
         this.terminateMessageLoop = true;
 
         if (!!this.privRequestSession.isRecognizing) {
@@ -288,9 +293,6 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         }
 
         if (!!this.privDialogServiceConnector.canceled) {
-            const properties: PropertyCollection = new PropertyCollection();
-            properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
-
             const cancelEvent: SpeechRecognitionCanceledEventArgs = new SpeechRecognitionCanceledEventArgs(
                 cancellationReason,
                 error,
@@ -302,26 +304,27 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
                 this.privDialogServiceConnector.canceled(this.privDialogServiceConnector, cancelEvent);
                 /* eslint-disable no-empty */
             } catch { }
+        }
 
-            if (!!this.privSuccessCallback) {
-                const result: SpeechRecognitionResult = new SpeechRecognitionResult(
-                    undefined, // ResultId
-                    ResultReason.Canceled,
-                    undefined, // Text
-                    undefined, // Duration
-                    undefined, // Offset
-                    undefined, // Language
-                    undefined, // Language Detection Confidence
-                    undefined, // Speaker Id
-                    error,
-                    undefined, // Json
-                    properties);
-                try {
-                    this.privSuccessCallback(result);
-                    this.privSuccessCallback = undefined;
-                    /* eslint-disable no-empty */
-                } catch { }
-            }
+        if (!!successCallback) {
+            const properties: PropertyCollection = new PropertyCollection();
+            properties.setProperty(CancellationErrorCodePropertyName, CancellationErrorCode[errorCode]);
+            const result: SpeechRecognitionResult = new SpeechRecognitionResult(
+                undefined, // ResultId
+                ResultReason.Canceled,
+                undefined, // Text
+                undefined, // Duration
+                undefined, // Offset
+                undefined, // Language
+                undefined, // Language Detection Confidence
+                undefined, // Speaker Id
+                error,
+                undefined, // Json
+                properties);
+            try {
+                successCallback(result);
+                /* eslint-disable no-empty */
+            } catch { }
         }
     }
 
@@ -336,6 +339,7 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
         this.privErrorCallback = errorCallback;
 
         this.privRequestSession.startNewRecognition();
+        const recogNumber: number = this.privRequestSession.recogNumber;
         this.privRequestSession.listenForServiceTelemetry(this.privDialogAudioSource.events);
 
         this.privRecognizerConfig.parameters.setProperty(PropertyId.Speech_SessionId, this.privRequestSession.sessionId);
@@ -358,7 +362,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
             await conPromise;
             await preAudioPromise;
         } catch (error) {
-            await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error as string);
+            if (this.privRequestSession.recogNumber === recogNumber) {
+                await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.ConnectionFailure, error as string);
+            }
             return Promise.resolve();
         }
 
@@ -372,7 +378,9 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
         // /* eslint-disable no-empty */
         audioSendPromise.then((): void => { /* add? return true;*/ }, async (error: string): Promise<void> => {
-            await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
+            if (this.privRequestSession.recogNumber === recogNumber) {
+                await this.cancelRecognition(this.privRequestSession.sessionId, this.privRequestSession.requestId, CancellationReason.Error, CancellationErrorCode.RuntimeError, error);
+            }
         });
     }
 
@@ -538,11 +546,13 @@ export class DialogServiceAdapter extends ServiceRecognizerBase {
 
     // Takes an established websocket connection to the endpoint and sends speech configuration information.
     private async configConnection(connection: IConnection): Promise<IConnection> {
-        if (this.terminateMessageLoop) {
-            this.terminateMessageLoop = false;
+        // A replacement needs agent and turn initialization, not just buffered audio.
+        if (this.terminateMessageLoop ||
+            (this.privConfiguredConnection !== undefined && this.privConfiguredConnection !== connection)) {
             return Promise.reject("Connection to service terminated.");
         }
 
+        this.privConfiguredConnection = connection;
         await this.sendSpeechServiceConfig(connection, this.privRequestSession, this.privRecognizerConfig.SpeechServiceConfig.serialize());
         await this.sendAgentConfig(connection);
         return connection;
