@@ -1433,12 +1433,13 @@ export abstract class ServiceRecognizerBase implements IDisposable {
             return;
         }
 
+        const failedTransportCloseTimeoutMs: number = 5000;
         let timer: ReturnType<typeof setTimeout>;
         try {
             const deadline = new Promise<void>((_resolve: () => void, reject: (reason: Error) => void): void => {
                 timer = setTimeout((): void => {
-                    reject(new Error("Failed transport did not close within 5000 ms"));
-                }, 5000);
+                    reject(new Error(`Failed transport did not close within ${failedTransportCloseTimeoutMs} ms`));
+                }, failedTransportCloseTimeoutMs);
             });
             await Promise.race([connection.dispose("EOF audio send failed"), deadline, stopped]);
             if (isCurrent() && connection.state() !== ConnectionState.Disconnected) {
