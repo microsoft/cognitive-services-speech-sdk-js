@@ -13,9 +13,11 @@ steps:
     azureSubscription: 'ADO -> Speech Services - DEV - SDK' # Azure subscription
     keyVaultName: "CarbonSDK-CICD"
     secretsFilter: 'CarbonSubscriptionsJson'
-- task: file-creator@6
-  inputs:
-    filepath: '$(Build.SourcesDirectory)/secrets/test.subscriptions.regions.json'
-    filecontent: '$(CarbonSubscriptionsJson)'
-    fileoverwrite: true
+- bash: |
+    set -euo pipefail
+    : "${CARBON_SUBSCRIPTIONS_JSON:?CarbonSubscriptionsJson is required}"
+    mkdir -p "$BUILD_SOURCESDIRECTORY/secrets"
+    printf '%s' "$CARBON_SUBSCRIPTIONS_JSON" > "$BUILD_SOURCESDIRECTORY/secrets/test.subscriptions.regions.json"
+  env:
+    CARBON_SUBSCRIPTIONS_JSON: $(CarbonSubscriptionsJson)
   displayName: "Ensure subscriptions .json file"
