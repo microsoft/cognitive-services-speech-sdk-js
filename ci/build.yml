@@ -31,9 +31,9 @@ jobs:
     ArtifactOut: $(Build.ArtifactStagingDirectory)/Out/JavaScript
   steps:
   - task: UseNode@1
-    displayName: Use Node.js 24
+    displayName: Use Node.js 20
     inputs:
-      version: '24.x'
+      version: '20.x'
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
@@ -98,9 +98,9 @@ jobs:
   dependsOn: Build
   steps:
   - task: UseNode@1
-    displayName: Use Node.js 24
+    displayName: Use Node.js 20
     inputs:
-      version: '24.x'
+      version: '20.x'
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
@@ -155,9 +155,9 @@ jobs:
     SPEECHSDK_RUN_TESTS: true
   steps:
   - task: UseNode@1
-    displayName: Use Node.js 24
+    displayName: Use Node.js 20
     inputs:
-      version: '24.x'
+      version: '20.x'
   - bash: ./ci/check-git-head.sh
     displayName: Repository checks
   - bash: |
@@ -298,20 +298,29 @@ jobs:
   - bash: |
       set -u -e -x -o pipefail
 
-      containers=$(docker ps --all --format '{{.Names}}')
-      DOCKER_LOG_DIR="$BUILD_ARTIFACTSTAGINGDIRECTORY/DockerLogs"
-      for container in tts_container sr_container lid_container; do
-        if ! printf '%s\n' "$containers" | grep -Fxq "$container"; then
-          echo "Container $container was not created; skipping cleanup."
-          continue
-        fi
+      docker stop tts_container
+      docker stop sr_container
+      docker stop lid_container
 
-        docker stop "$container"
-        mkdir -p "$DOCKER_LOG_DIR"
-        docker logs "$container" > "$DOCKER_LOG_DIR/$container.log"
-        echo "##vso[task.setvariable variable=DockerLogsAvailable]true"
-        docker rm "$container"
-      done
+      docker logs tts_container > tts_container.log
+      ls -l tts_container.log
+
+      docker logs sr_container > sr_container.log
+      ls -l tts_container.log
+
+      docker logs lid_container > lid_container.log
+      ls -l tts_container.log
+
+      docker rm tts_container
+      docker rm sr_container
+      docker rm lid_container
+
+      DOCKER_LOG_DIR=$(Build.ArtifactStagingDirectory)/DockerLogs
+      mkdir -p $DOCKER_LOG_DIR
+      # Copy logs to the artifacts directory
+      cp tts_container.log $DOCKER_LOG_DIR/tts_container.log
+      cp sr_container.log $DOCKER_LOG_DIR/sr_container.log
+      cp lid_container.log $DOCKER_LOG_DIR/lid_container.log
     displayName: Stop Containers and export logs
     condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
   - task: ArchiveFiles@2
@@ -321,11 +330,11 @@ jobs:
       includeRootFolder: false
       archiveFile: '*.*'
       replaceExistingArchive: false
-    condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'), eq(variables['DockerLogsAvailable'], 'true'))
+    condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
   - task: PublishBuildArtifacts@1
     retryCountOnTaskFailure: 5
     inputs:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)/DockerLogs'
       ArtifactName: TestRunBackup
-    condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'), eq(variables['DockerLogsAvailable'], 'true'))
+    condition: and(succeededOrFailed(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
     displayName: Publish Docker logs
