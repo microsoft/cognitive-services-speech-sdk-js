@@ -84,6 +84,8 @@ CustomVoiceRegion:CUSTOM_VOICE_REGION
 
 ### Run a subset of tests
 
+Live dialog service tests are disabled by default because test bot resources are unavailable. Set `SPEECHSDK_TEST_DIALOG_SERVICE=true` in the environment, or set `Settings.DialogServiceTestsEnabled = "true"` in `secrets\TestConfiguration.ts`, to enable them. Offline dialog API tests and local-server tests still run.
+
 * Edit the file `jest.config.js`. Replace the regex expressions in `testRegex: "tests/.*Tests\\.ts$"` with one that defines the test file (or files)
 you want to run. For example, to only run tests defined in `AutoSourceLangDetectionTests.ts`, replace it with `testRegex: "tests/AutoSourceLangDetectionTests.ts"`. Do this is for the two project `jsdom` and `node`.
 

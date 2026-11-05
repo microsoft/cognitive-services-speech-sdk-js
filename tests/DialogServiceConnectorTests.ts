@@ -50,6 +50,9 @@ type Callback = (result?: any) => void;
 // eslint-disable-next-line no-console
 const consoleInfo = console.info;
 const simpleMessageObj = { speak: "This is speech", text: "This is text", type: "message" };
+const testIfDialogServiceEnabled: jest.It = Settings.DialogServiceTestsEnabled === "true" ? test : test.skip;
+const testIfDOMAndDialogServiceEnabled: jest.It =
+    Settings.DialogServiceTestsEnabled === "true" ? Settings.testIfDOMCondition : test.skip;
 
 // eslint-disable-next-line no-console
 console.info = (...args: any[]): void => {
@@ -203,7 +206,7 @@ test("Output format, default", (): void => {
     expect(dialogConfig.outputFormat).toEqual(sdk.OutputFormat.Simple);
 });
 
-test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback): void => {
+testIfDialogServiceEnabled("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Create BotFrameworkConfig, invalid optional botId");
 
@@ -230,7 +233,7 @@ test("Create BotFrameworkConfig, invalid optional botId", (done: jest.DoneCallba
         });
 }, 15000);
 
-test("Connect / Disconnect", (done: jest.DoneCallback): void => {
+testIfDialogServiceEnabled("Connect / Disconnect", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Connect / Disconnect");
 
@@ -274,7 +277,7 @@ test("Connect / Disconnect", (done: jest.DoneCallback): void => {
     });
 });
 
-test("GetDetailedOutputFormat", (done: jest.DoneCallback): void => {
+testIfDialogServiceEnabled("GetDetailedOutputFormat", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: GetDetailedOutputFormat");
 
@@ -300,7 +303,7 @@ test("GetDetailedOutputFormat", (done: jest.DoneCallback): void => {
     WaitForCondition((): boolean => (recoCounter === 1), done);
 });
 
-test("ListenOnceAsync", (done: jest.DoneCallback): void => {
+testIfDialogServiceEnabled("ListenOnceAsync", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: ListenOnceAsync");
 
@@ -372,7 +375,7 @@ test("ListenOnceAsync", (done: jest.DoneCallback): void => {
     WaitForCondition((): boolean => (turnStatusCounter === 1), done);
 });
 
-Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.DoneCallback): void => {
+testIfDOMAndDialogServiceEnabled("ListenOnceAsync with audio response", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: ListenOnceAsync with audio response");
 
@@ -464,7 +467,7 @@ Settings.testIfDOMCondition("ListenOnceAsync with audio response", (done: jest.D
         });
 }, 15000);
 
-Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (done: jest.DoneCallback): void => {
+testIfDOMAndDialogServiceEnabled("Successive ListenOnceAsync with audio response", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Successive ListenOnceAsync with audio response");
 
@@ -553,7 +556,7 @@ Settings.testIfDOMCondition("Successive ListenOnceAsync with audio response", (d
     });
 }, 15000);
 
-test("Successive ListenOnceAsync calls", (done: jest.DoneCallback): void => {
+testIfDialogServiceEnabled("Successive ListenOnceAsync calls", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Successive ListenOnceAsync calls");
 
@@ -625,7 +628,7 @@ test("Successive ListenOnceAsync calls", (done: jest.DoneCallback): void => {
     });
 }, 15000);
 
-test("ListenOnceAsync with silence returned", (done: jest.DoneCallback): void => {
+testIfDialogServiceEnabled("ListenOnceAsync with silence returned", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: ListenOnceAsync with silence returned");
 
@@ -694,7 +697,7 @@ test("ListenOnceAsync with silence returned", (done: jest.DoneCallback): void =>
     });
 }, 15000);
 
-test("Send/Receive messages", (done: jest.DoneCallback): void => {
+testIfDialogServiceEnabled("Send/Receive messages", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Send/Receive messages");
 
@@ -738,7 +741,7 @@ test("Send/Receive messages", (done: jest.DoneCallback): void => {
     WaitForCondition((): boolean => (activityCount >= 1), done);
 });
 
-test("Send multiple messages", (done: jest.DoneCallback): void => {
+testIfDialogServiceEnabled("Send multiple messages", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Send multiple messages");
 
@@ -787,7 +790,7 @@ test("Send multiple messages", (done: jest.DoneCallback): void => {
     WaitForCondition((): boolean => (activityCount >= 4), done);
 });
 
-test("Send/Receive messages during ListenOnce", (done: jest.DoneCallback): void => {
+testIfDialogServiceEnabled("Send/Receive messages during ListenOnce", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Send/Receive messages during ListenOnce");
 
@@ -891,7 +894,7 @@ describe("Agent config message tests", (): void => {
         observedAgentConfig = undefined;
     });
 
-    test("Agent connection id can be set", (done: jest.DoneCallback): void => {
+    testIfDialogServiceEnabled("Agent connection id can be set", (done: jest.DoneCallback): void => {
         const testConnectionId: string = "thisIsTheTestConnectionId";
         const dialogConfig: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         dialogConfig.setProperty(sdk.PropertyId.Conversation_Agent_Connection_Id, testConnectionId);
@@ -1103,7 +1106,7 @@ describe.each([
         return result;
     }
 
-    test(`Validate: ${description}`, (done: jest.DoneCallback): void => {
+    testIfDialogServiceEnabled(`Validate: ${description}`, (done: jest.DoneCallback): void => {
         try {
             const config = getConfig();
             connector = new sdk.DialogServiceConnector(config);
@@ -1177,7 +1180,7 @@ describe.each([
     successExpected: boolean,
 ) => {
 
-    test(`${description}`, (done: jest.DoneCallback): void => {
+    testIfDialogServiceEnabled(`${description}`, (done: jest.DoneCallback): void => {
         const config: sdk.BotFrameworkConfig = BuildBotFrameworkConfig();
         config.setProperty("SPEECH-KeywordsToDetect", keywords);
         if (durations !== undefined) {
