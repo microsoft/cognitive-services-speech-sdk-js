@@ -28,6 +28,7 @@ export class Settings {
     public static BotSecret: string = "<<YOUR_BOT_SECRET>>";
     public static BotSubscription: string = "<<YOUR_BOT_SUBSCRIPTION>>";
     public static BotRegion: string = "<<YOUR_BOT_REGION>>";
+    public static DialogServiceTestsEnabled: string = process.env.SPEECHSDK_TEST_DIALOG_SERVICE ?? "false";
 
     public static ConversationTranscriptionKey: string = "<<YOUR_TRANSCRIPTION_SUBSCRIPTION_KEY>>";
     public static ConversationTranscriptionRegion: string = "<<YOUR_TRANSCRIPTION_REGION>>";
