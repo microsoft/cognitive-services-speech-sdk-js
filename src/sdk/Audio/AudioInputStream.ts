@@ -308,7 +308,7 @@ export class PushAudioInputStreamImpl extends PushAudioInputStream implements IA
     }
 
     public turnOff(): Promise<void> {
-        return;
+        return Promise.resolve();
     }
 
     public get events(): EventSource<AudioSourceEvent> {
@@ -505,7 +505,7 @@ export class PullAudioInputStreamImpl extends PullAudioInputStream implements IA
     }
 
     public turnOff(): Promise<void> {
-        return;
+        return Promise.resolve();
     }
 
     public get events(): EventSource<AudioSourceEvent> {
