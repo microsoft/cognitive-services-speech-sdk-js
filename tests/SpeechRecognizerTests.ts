@@ -42,13 +42,13 @@ import { ConnectionStartEvent, createNoDashGuid, IDetachable, Deferred } from ".
 import { Events, PlatformEvent } from "../src/common/Exports";
 import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { validateTelemetry } from "./TelemetryUtil";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { closeAsyncObjects, RepeatingPullStream, WaitForCondition, WaitForConditionAsync } from "./Utilities";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
-import { DefaultAzureCredential } from "@azure/identity";
 import { SpeechServiceType } from "./SpeechServiceTypes";
 
 const FIRST_EVENT_ID: number = 1;
@@ -106,7 +106,7 @@ export const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechConfig, file
 const BuildSpeechConfig: (connectionType?: SpeechConnectionType) => Promise<sdk.SpeechConfig> = async (connectionType?: SpeechConnectionType): Promise<sdk.SpeechConfig> => {
 
     if (undefined === connectionType) {
-        connectionType = SpeechConnectionType.Subscription;
+        connectionType = SpeechConnectionType.UnifiedEntraIdTokenAuth;
     }
 
     const s: sdk.SpeechConfig = await SpeechConfigConnectionFactory.getSpeechRecognitionConfig(connectionType);
@@ -209,7 +209,7 @@ test("speech.event from service", (done: jest.DoneCallback): void => {
 test("testSpeechRecognizer1", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: testSpeechRecognizer1");
-    const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const speechConfig: sdk.SpeechConfig = EntraAuth.speechConfig();
     expect(speechConfig).not.toBeUndefined();
 
     const config: sdk.AudioConfig = WaveFileAudioInput.getAudioConfigFromFile(Settings.WaveFile);
@@ -480,7 +480,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         await done.promise;
     });
 
-    test("testGetOutputFormatDetailed with authorization token", async (): Promise<void> => {
+    EntraAuth.testIfUnifiedKey("testGetOutputFormatDetailed with authorization token", async (): Promise<void> => {
         console.info("Name: testGetOutputFormatDetailed");
         const done: Deferred<void> = new Deferred<void>();
 
@@ -560,7 +560,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         await done.promise;
     }, 20000);
 
-    test("fromEndPoint with Subscription key", async (): Promise<void> => {
+    EntraAuth.testIfUnifiedKey("fromEndPoint with Subscription key", async (): Promise<void> => {
         // eslint-disable-next-line no-console
         console.info("Name: fromEndPoint with Subscription key");
         const done: Deferred<void> = new Deferred<void>();
@@ -1537,7 +1537,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
         console.info("Name: AADTokenCredential");
         const done: Deferred<void> = new Deferred<void>();
 
-        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), new DefaultAzureCredential());
+        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), EntraAuth.getCredential());
         objsToClose.push(s);
 
         const fileBuffer: ArrayBuffer = WaveFileAudioInput.LoadArrayFromFile(Settings.WaveFile);

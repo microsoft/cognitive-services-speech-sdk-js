@@ -30,6 +30,7 @@ import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
 import { SpeechServiceType } from "./SpeechServiceTypes";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
@@ -143,9 +144,9 @@ const BuildSpeechTranslationConfig: () => sdk.SpeechTranslationConfig = (): sdk.
 
     let s: sdk.SpeechTranslationConfig;
     if (undefined === Settings.SpeechEndpoint) {
-        s = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        s = EntraAuth.translationConfig();
     } else {
-        s = sdk.SpeechTranslationConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+        s = EntraAuth.translationConfigFromEndpoint(new URL(Settings.SpeechEndpoint));
     }
 
     if (undefined !== Settings.proxyServer) {

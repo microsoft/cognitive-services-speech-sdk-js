@@ -17,6 +17,7 @@ import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener } from "../src/common.browser/Exports";
 import { Events, IDetachable, PlatformEvent } from "../src/common/Exports";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
 import { closeAsyncObjects, sleep } from "./Utilities";
@@ -75,8 +76,8 @@ const enableInlineCommit = (config: sdk.SpeechConfig, postRefinement: boolean = 
 // inlineCommit is false.
 const BuildSpeechConfig = async (inlineCommit: boolean = true): Promise<sdk.SpeechConfig> => {
     const s: sdk.SpeechConfig = inlineCommit ?
-        sdk.SpeechConfig.fromEndpoint(kInlineCommitEndpoint(), Settings.SpeechSubscriptionKey) :
-        await SpeechConfigConnectionFactory.getSpeechRecognitionConfig(SpeechConnectionType.Subscription);
+        EntraAuth.speechConfigFromEndpoint(kInlineCommitEndpoint()) :
+        await SpeechConfigConnectionFactory.getSpeechRecognitionConfig(SpeechConnectionType.UnifiedEntraIdTokenAuth);
     expect(s).not.toBeUndefined();
     if (undefined !== Settings.proxyServer) {
         s.setProxy(Settings.proxyServer, Settings.proxyPort);
@@ -94,7 +95,7 @@ const BuildSpeechConfig = async (inlineCommit: boolean = true): Promise<sdk.Spee
 // As BuildSpeechConfig and BuildRecognizerFromWaveFile in TranslationRecognizerTests.ts.
 const kTargetLanguage: string = "de-DE";
 const BuildTranslationConfig = (): sdk.SpeechTranslationConfig => {
-    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(kInlineCommitEndpoint(), Settings.SpeechSubscriptionKey);
+    const s: sdk.SpeechTranslationConfig = EntraAuth.translationConfigFromEndpoint(kInlineCommitEndpoint());
     expect(s).not.toBeUndefined();
     if (undefined !== Settings.proxyServer) {
         s.setProxy(Settings.proxyServer, Settings.proxyPort);
@@ -109,7 +110,7 @@ const BuildTranslationConfig = (): sdk.SpeechTranslationConfig => {
 // As BuildReliableReconnectConfig in SpeechRecoReconnectTests.ts: multichannel processing.
 // Without PostRefinement, which multichannel does not support.
 const BuildMultichannelConfig = (): sdk.SpeechConfig => {
-    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(withMultirecognizer(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+    const s: sdk.SpeechConfig = EntraAuth.speechConfigFromEndpoint(withMultirecognizer(Settings.SpeechEndpoint));
     if (undefined !== Settings.proxyServer) {
         s.setProxy(Settings.proxyServer, Settings.proxyPort);
     }

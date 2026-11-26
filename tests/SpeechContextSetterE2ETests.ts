@@ -41,6 +41,7 @@ import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener } from "../src/common.browser/Exports";
 import { Events } from "../src/common/Exports";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
@@ -72,32 +73,30 @@ afterEach(async (): Promise<void> => {
 });
 
 // ---------------------------------------------------------------------------
-// Helper: check that subscription credentials are configured
+// Helper: check that the Speech region is configured (the tests use Microsoft Entra ID, see EntraAuth.ts)
 // ---------------------------------------------------------------------------
 
 function requireCredentials(): void {
-    if (!Settings.SpeechSubscriptionKey
-        || Settings.SpeechSubscriptionKey === "<<YOUR_SUBSCRIPTION_KEY>>"
-        || !Settings.SpeechRegion
+    if (!Settings.SpeechRegion
         || Settings.SpeechRegion === "<<YOUR_REGION>>") {
         throw new Error(
-            "Speech subscription key and region must be configured to run E2E tests. " +
+            "Speech region must be configured to run E2E tests. " +
             "See tests/CONFIGURATION.md for setup instructions."
         );
     }
 }
 
 // ---------------------------------------------------------------------------
-// Helper: build a SpeechConfig (subscription-based)
+// Helper: build a SpeechConfig (Microsoft Entra ID)
 // ---------------------------------------------------------------------------
 
 function buildSpeechConfig(): sdk.SpeechConfig {
     requireCredentials();
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechEndpoint) {
-        s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        s = EntraAuth.speechConfig();
     } else {
-        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+        s = EntraAuth.speechConfigFromEndpoint(new URL(Settings.SpeechEndpoint));
         s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
     }
     if (undefined !== Settings.proxyServer) {

@@ -7,6 +7,7 @@ import { SimpleSpeechPhrase } from "../src/common.speech/Exports";
 import { Events } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import * as fs from "fs";
@@ -72,9 +73,9 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechEndpoint) {
-        s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        s = EntraAuth.speechConfig();
     } else {
-        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+        s = EntraAuth.speechConfigFromEndpoint(new URL(Settings.SpeechEndpoint));
         s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
     }
 
@@ -232,7 +233,7 @@ describe.each([true])("Service based tests", (forceNodeWebSocket: boolean): void
             // eslint-disable-next-line no-console
             console.info("Name: InitialBabbleTimeout");
 
-            const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+            const s: sdk.SpeechConfig = EntraAuth.speechConfig();
             expect(s).not.toBeUndefined();
 
             s.speechRecognitionLanguage = "es-MX";

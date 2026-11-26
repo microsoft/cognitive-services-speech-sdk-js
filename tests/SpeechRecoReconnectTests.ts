@@ -6,6 +6,7 @@ import { SimpleSpeechPhrase } from "../src/common.speech/Exports";
 import { Events } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
 import { WaitForCondition } from "./Utilities";
@@ -41,9 +42,9 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechEndpoint) {
-        s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        s = EntraAuth.speechConfig();
     } else {
-        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+        s = EntraAuth.speechConfigFromEndpoint(new URL(Settings.SpeechEndpoint));
         s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
     }
 
@@ -60,7 +61,7 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 const BuildReliableReconnectConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
     const endpoint: URL = new URL(Settings.SpeechEndpoint);
 
-    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(endpoint, Settings.SpeechSubscriptionKey);
+    const s: sdk.SpeechConfig = EntraAuth.speechConfigFromEndpoint(endpoint);
     if (undefined !== Settings.proxyServer) {
         s.setProxy(Settings.proxyServer, Settings.proxyPort);
     }

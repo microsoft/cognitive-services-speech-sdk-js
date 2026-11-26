@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { DefaultAzureCredential } from "@azure/identity";
+import { TokenCredential } from "@azure/core-auth";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import {
     ConsoleLoggingListener,
@@ -14,6 +14,7 @@ import {
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { ConfigLoader } from "./ConfigLoader";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
 import { SubscriptionsRegionsKeys } from "./SubscriptionRegion";
@@ -42,11 +43,9 @@ beforeEach((): void => {
 
 jest.retryTimes(Settings.RetryCount);
 
-// Entra ID (AAD) token-credential tests require an AAD-enabled Speech resource and an environment where a
-// managed identity / service principal can be resolved (e.g. the connection-test pipeline that also sets up
-// the right managed identity). They are gated through the exact same runConnectionTest helper the STT
-// connection tests use, so they are skipped on normal CI runs (where DefaultAzureCredential cannot resolve a
-// single identity) and only execute in the dedicated connection-test pipeline.
+// Entra ID (AAD) token-credential tests require an AAD-enabled Speech resource and a Microsoft Entra ID credential
+// (tests/EntraAuth.ts: workload identity federation in Azure Pipelines). They are gated through the exact same
+// runConnectionTest helper the STT connection tests use, so they only execute in the connection-test run.
 const EntraIdTokenCredentialTest: jest.It = SpeechConfigConnectionFactory.runConnectionTest(SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth);
 
 afterEach(async (): Promise<void> => {
@@ -79,7 +78,7 @@ const BuildRecognizerFromWaveFile: (speechConfig?: sdk.SpeechTranslationConfig) 
 };
 
 const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
-    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s: sdk.SpeechTranslationConfig = EntraAuth.translationConfig();
     expect(s).not.toBeUndefined();
     return s;
 };
@@ -106,7 +105,7 @@ const BuildEntraIdTokenCredentialEndpoint: () => URL = (): URL => {
 // Builds a SpeechTranslationConfig that authenticates with an Entra ID (AAD) TokenCredential
 // instead of a subscription key. Requires an Entra ID enabled Speech resource.
 const BuildSpeechConfigWithTokenCredential: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
-    const credential: DefaultAzureCredential = new DefaultAzureCredential();
+    const credential: TokenCredential = EntraAuth.getCredential();
     const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromEndpoint(BuildEntraIdTokenCredentialEndpoint(), credential);
     expect(s).not.toBeUndefined();
     return s;
@@ -207,7 +206,7 @@ test("TranslateVoiceRoundTrip", (done: jest.DoneCallback): void => {
 
                 const inputStream: File | Buffer = ByteBufferAudioFile.Load([resultBuffer]);
                 const config: sdk.AudioConfig = sdk.AudioConfig.fromWavFileInput(inputStream);
-                const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+                const speechConfig: sdk.SpeechConfig = EntraAuth.speechConfig();
                 objsToClose.push(speechConfig);
                 speechConfig.speechRecognitionLanguage = "de-DE";
 
@@ -447,7 +446,7 @@ test("TranslateVoiceUSToGerman", (done: jest.DoneCallback): void => {
                 p.close();
 
                 const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
-                const s2: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+                const s2: sdk.SpeechConfig = EntraAuth.speechConfig();
                 objsToClose.push(s2);
                 s2.speechRecognitionLanguage = "de-DE";
 
@@ -565,7 +564,7 @@ test.skip("MultiPhrase", (done: jest.DoneCallback): void => {
                 p.close();
 
                 const config: sdk.AudioConfig = sdk.AudioConfig.fromStreamInput(p);
-                const s2: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+                const s2: sdk.SpeechConfig = EntraAuth.speechConfig();
                 objsToClose.push(s2);
                 s2.speechRecognitionLanguage = "de-DE";
 
@@ -635,7 +634,7 @@ test.skip("MultiPhrase", (done: jest.DoneCallback): void => {
 test("Config is copied on construction", (): void => {
     // eslint-disable-next-line no-console
     console.info("Name: Config is copied on construction");
-    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s: sdk.SpeechTranslationConfig = EntraAuth.translationConfig();
     expect(s).not.toBeUndefined();
     s.speechRecognitionLanguage = "en-US";
     s.addTargetLanguage("en-US");

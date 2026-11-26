@@ -111,10 +111,13 @@ export class Settings {
         const initialized = configLoader.initialize();
 
         if (initialized) {
+            // Keys can be empty: local (key) authentication is off on most test resources, and the tests use
+            // Microsoft Entra ID (tests/EntraAuth.ts). Keep the placeholder keys then, so tests that only check
+            // the key APIs still get a non-empty key.
             // Load the unified speech subscription
             const unifiedSpeechSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.UNIFIED_SPEECH_SUBSCRIPTION);
             if (unifiedSpeechSub) {
-                Settings.SpeechSubscriptionKey = unifiedSpeechSub.Key;
+                Settings.SpeechSubscriptionKey = unifiedSpeechSub.Key || Settings.SpeechSubscriptionKey;
                 Settings.SpeechRegion = unifiedSpeechSub.Region;
                 if (unifiedSpeechSub.Endpoint) {
                     Settings.SpeechEndpoint = unifiedSpeechSub.Endpoint;
@@ -125,20 +128,20 @@ export class Settings {
             const conversationTranscriptionSub = configLoader.getSubscriptionRegion(
                 SubscriptionsRegionsKeys.CONVERSATION_TRANSCRIPTION_SUBSCRIPTION);
             if (conversationTranscriptionSub) {
-                Settings.ConversationTranscriptionKey = conversationTranscriptionSub.Key;
+                Settings.ConversationTranscriptionKey = conversationTranscriptionSub.Key || Settings.ConversationTranscriptionKey;
                 Settings.ConversationTranscriptionRegion = conversationTranscriptionSub.Region;
             }
 
             // Load the custom voice subscription
             const customVoiceSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.CUSTOM_VOICE_SUBSCRIPTION);
             if (customVoiceSub) {
-                Settings.CustomVoiceSubscriptionKey = customVoiceSub.Key;
+                Settings.CustomVoiceSubscriptionKey = customVoiceSub.Key || Settings.CustomVoiceSubscriptionKey;
                 Settings.CustomVoiceRegion = customVoiceSub.Region;
             }
 
             const botSub = configLoader.getSubscriptionRegion(SubscriptionsRegionsKeys.DIALOG_SUBSCRIPTION);
             if (botSub) {
-                Settings.BotSubscription = botSub.Key;
+                Settings.BotSubscription = botSub.Key || Settings.BotSubscription;
                 Settings.BotRegion = botSub.Region;
             }
         }

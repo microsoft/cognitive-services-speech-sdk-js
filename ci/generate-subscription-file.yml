@@ -21,3 +21,22 @@ steps:
   env:
     CARBON_SUBSCRIPTIONS_JSON: $(CarbonSubscriptionsJson)
   displayName: "Ensure subscriptions .json file"
+# The tests use Microsoft Entra ID (tests/EntraAuth.ts) through workload identity federation: Azure DevOps issues
+# federation (OIDC) tokens for a service connection only to stages that reference it, and this task is that
+# reference. It also passes the IDs of the service connection to the test steps (SERVICE_APP_ID,
+# SERVICE_TENANT_ID, SERVICE_CONNECTION_ID); the test steps must also map SYSTEM_ACCESSTOKEN.
+- task: AzureCLI@2
+  displayName: "Set Microsoft Entra ID (workload identity federation) variables"
+  inputs:
+    azureSubscription: 'Speedme-Dev-Carbon'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      set -euo pipefail
+      if [ -z "${AZURESUBSCRIPTION_CLIENT_ID:-}" ] || [ -z "${AZURESUBSCRIPTION_TENANT_ID:-}" ] || [ -z "${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}" ]; then
+        echo "##vso[task.logissue type=warning]AzureCLI@2 did not set AZURESUBSCRIPTION_* variables; Microsoft Entra ID tests fall back to DefaultAzureCredential."
+        exit 0
+      fi
+      echo "##vso[task.setvariable variable=SERVICE_APP_ID]$AZURESUBSCRIPTION_CLIENT_ID"
+      echo "##vso[task.setvariable variable=SERVICE_TENANT_ID]$AZURESUBSCRIPTION_TENANT_ID"
+      echo "##vso[task.setvariable variable=SERVICE_CONNECTION_ID]$AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"

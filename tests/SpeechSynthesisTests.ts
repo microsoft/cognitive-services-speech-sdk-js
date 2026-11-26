@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 import * as fs from "fs";
 import bent, { BentResponse } from "bent";
-import { DefaultAzureCredential } from "@azure/identity";
+import { TokenCredential } from "@azure/core-auth";
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { ConsoleLoggingListener } from "../src/common.browser/Exports";
 import { HeaderNames } from "../src/common.speech/HeaderNames";
@@ -15,6 +15,7 @@ import {
     PlatformEvent
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import {
     closeAsyncObjects,
     WaitForCondition
@@ -45,11 +46,9 @@ beforeEach((): void => {
 
 jest.retryTimes(Settings.RetryCount);
 
-// Entra ID (AAD) token-credential tests require an AAD-enabled Speech resource and an environment where a
-// managed identity / service principal can be resolved (e.g. the connection-test pipeline that also sets up
-// the right managed identity). They are gated through the exact same runConnectionTest helper the STT
-// connection tests use, so they are skipped on normal CI runs (where DefaultAzureCredential cannot resolve a
-// single identity) and only execute in the dedicated connection-test pipeline.
+// Entra ID (AAD) token-credential tests require an AAD-enabled Speech resource and a Microsoft Entra ID credential
+// (tests/EntraAuth.ts: workload identity federation in Azure Pipelines). They are gated through the exact same
+// runConnectionTest helper the STT connection tests use, so they only execute in the connection-test run.
 const EntraIdTokenCredentialTest: jest.It = SpeechConfigConnectionFactory.runConnectionTest(SpeechConnectionType.CloudFromEndpointWithEntraIdTokenAuth);
 
 afterEach(async (): Promise<void> => {
@@ -61,7 +60,7 @@ afterEach(async (): Promise<void> => {
 const BuildSpeechConfig: (connectionType?: SpeechConnectionType) => Promise<sdk.SpeechConfig> = async (connectionType?: SpeechConnectionType): Promise<sdk.SpeechConfig> => {
 
     if (undefined === connectionType) {
-        connectionType = SpeechConnectionType.Subscription;
+        connectionType = SpeechConnectionType.UnifiedEntraIdTokenAuth;
     }
 
     const s: sdk.SpeechConfig = await SpeechConfigConnectionFactory.getSpeechSynthesisConfig(connectionType);
@@ -246,7 +245,7 @@ test("testGetVoicesAsyncDefault", async (): Promise<void> => {
     }
 });
 
-test("testGetVoicesAsyncAuthWithToken", (done: jest.DoneCallback): void => {
+EntraAuth.testIfUnifiedKey("testGetVoicesAsyncAuthWithToken", (done: jest.DoneCallback): void => {
     // eslint-disable-next-line no-console
     console.info("Name: testGetVoicesAsyncAuthWithToken");
 
@@ -1358,7 +1357,7 @@ describe("Service based tests", (): void => {
         });
     });
 
-    test("testSpeechSynthesizer: authentication with authorization token", (done: jest.DoneCallback): void => {
+    EntraAuth.testIfUnifiedKey("testSpeechSynthesizer: authentication with authorization token", (done: jest.DoneCallback): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizer authentication with authorization token");
 
@@ -1417,7 +1416,7 @@ describe("Service based tests", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerWithEntraIdTokenCredential");
 
-        const credential: DefaultAzureCredential = new DefaultAzureCredential();
+        const credential: TokenCredential = EntraAuth.getCredential();
         const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(BuildEntraIdTokenCredentialEndpoint(), credential);
         objsToClose.push(speechConfig);
         expect(speechConfig).not.toBeUndefined();
@@ -1444,7 +1443,7 @@ describe("Service based tests", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testGetVoicesAsyncWithEntraIdTokenCredential");
 
-        const credential: DefaultAzureCredential = new DefaultAzureCredential();
+        const credential: TokenCredential = EntraAuth.getCredential();
         const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(BuildEntraIdTokenCredentialEndpoint(), credential);
         objsToClose.push(speechConfig);
         expect(speechConfig).not.toBeUndefined();
@@ -1470,7 +1469,7 @@ describe("Service based tests", (): void => {
         // eslint-disable-next-line no-console
         console.info("Name: testSpeechSynthesizerPullStreamWithEntraIdTokenCredential");
 
-        const credential: DefaultAzureCredential = new DefaultAzureCredential();
+        const credential: TokenCredential = EntraAuth.getCredential();
         const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromEndpoint(BuildEntraIdTokenCredentialEndpoint(), credential);
         objsToClose.push(speechConfig);
         expect(speechConfig).not.toBeUndefined();
@@ -1553,7 +1552,7 @@ describe("Service based tests", (): void => {
     const BuildStreamingSpeechConfig = async (): Promise<sdk.SpeechConfig> => {
         // Text input streaming (bidirectional) requires the v2 WebSocket endpoint.
         const v2Endpoint = `wss://${Settings.SpeechRegion}.tts.speech.microsoft.com/cognitiveservices/websocket/v2`;
-        const streamConfig = sdk.SpeechConfig.fromEndpoint(new URL(v2Endpoint), Settings.SpeechSubscriptionKey);
+        const streamConfig = EntraAuth.speechConfigFromEndpoint(new URL(v2Endpoint));
         streamConfig.speechSynthesisLanguage = "en-US";
         streamConfig.speechSynthesisVoiceName = "en-US-AvaMultilingualNeural";
         if (undefined !== Settings.proxyServer) {
@@ -2021,7 +2020,8 @@ describe("Service based tests", (): void => {
             },
         });
 
-        const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.CustomVoiceSubscriptionKey, Settings.CustomVoiceRegion);
+        const speechConfig: sdk.SpeechConfig = sdk.SpeechConfig.fromAuthorizationToken(
+            EntraAuth.getSpeechToken(SubscriptionsRegionsKeys.CUSTOM_VOICE_SUBSCRIPTION), Settings.CustomVoiceRegion);
         expect(speechConfig).not.toBeUndefined();
         speechConfig.endpointId = Settings.CustomVoiceEndpointId;
         speechConfig.speechSynthesisVoiceName = Settings.CustomVoiceVoiceName;

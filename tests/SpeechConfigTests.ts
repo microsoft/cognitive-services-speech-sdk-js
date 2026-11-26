@@ -16,6 +16,7 @@ import {
 } from "../src/common/Exports";
 import { createNoDashGuid } from "../src/common/Guid";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
@@ -415,7 +416,7 @@ test("testClose", (): void => {
 });
 
 test("bad segmentation silence value", (done: jest.DoneCallback): void => {
-    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s: sdk.SpeechConfig = EntraAuth.speechConfig();
     objsToClose.push(s);
 
     s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, "150000000");
@@ -437,7 +438,7 @@ test("bad segmentation silence value", (done: jest.DoneCallback): void => {
 }, 30000);
 
 test("Silence timeout only", (done: jest.DoneCallback): void => {
-    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s: sdk.SpeechConfig = EntraAuth.speechConfig();
     objsToClose.push(s);
 
     s.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, "4000");
@@ -458,7 +459,7 @@ test("Silence timeout only", (done: jest.DoneCallback): void => {
 }, 30000);
 
 test("Maximum segmentation only", (done: jest.DoneCallback): void => {
-    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s: sdk.SpeechConfig = EntraAuth.speechConfig();
     objsToClose.push(s);
 
     s.setProperty(sdk.PropertyId.Speech_SegmentationMaximumTimeMs, "60000");
@@ -478,7 +479,7 @@ test("Maximum segmentation only", (done: jest.DoneCallback): void => {
 }, 30000);
 
 test("Speech start event sensitivity", (done: jest.DoneCallback): void => {
-    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s: sdk.SpeechConfig = EntraAuth.speechConfig();
     objsToClose.push(s);
 
     s.setProperty(sdk.PropertyId.Speech_StartEventSensitivity, "medium");
@@ -514,7 +515,7 @@ describe("NPM proxy test", (): void => {
 
     // Require manual setup of a proxy server.
     test.skip("valid proxy set", (done: jest.DoneCallback): void => {
-        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        const s: sdk.SpeechConfig = EntraAuth.speechConfig();
         objsToClose.push(s);
 
         // Fiddler default port
@@ -563,7 +564,7 @@ describe("NPM proxy test", (): void => {
 });
 
 Settings.testIfDOMCondition("Proxy has no effect on browser WebSocket", (done: jest.DoneCallback): void => {
-    const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s: sdk.SpeechConfig = EntraAuth.speechConfig();
     objsToClose.push(s);
 
     // Fiddler default port
@@ -946,7 +947,7 @@ describe("Connection URL Tests", (): void => {
 
         let recoDone: boolean = false;
 
-        const s: sdk.SpeechConfig = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        const s: sdk.SpeechConfig = EntraAuth.speechConfig();
         objsToClose.push(s);
 
         s.enableDictation();

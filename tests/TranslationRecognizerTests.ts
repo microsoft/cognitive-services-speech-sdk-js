@@ -13,6 +13,7 @@ import {
 } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import {
     closeAsyncObjects,
     WaitForCondition,
@@ -22,7 +23,6 @@ import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
 import { SpeechConnectionType } from "./SpeechConnectionTypes";
 import { SpeechServiceType } from "./SpeechServiceTypes";
-import { DefaultAzureCredential } from "@azure/identity";
 
 
 let objsToClose: any[];
@@ -74,7 +74,7 @@ const BuildRecognizerFromWaveFile = async (speechConfig?: sdk.SpeechTranslationC
 
 const BuildSpeechConfig = async (connectionType?: SpeechConnectionType): Promise<sdk.SpeechTranslationConfig> => {
     if (undefined === connectionType) {
-        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        const s: sdk.SpeechTranslationConfig = EntraAuth.translationConfig();
         expect(s).not.toBeUndefined();
 
         if (undefined !== Settings.proxyServer) {
