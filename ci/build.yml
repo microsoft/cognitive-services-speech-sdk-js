@@ -119,6 +119,9 @@ jobs:
       npm run test:non-connection
     displayName: Run tests
     condition: and(succeeded(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
+    env:
+      # Workload identity federation for the Microsoft Entra ID tests (see generate-subscription-file.yml).
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
   - task: PublishTestResults@2
     displayName: Publish test results
     inputs:
@@ -288,6 +291,9 @@ jobs:
       npm run test:connection
     displayName: Run tests
     condition: and(succeeded(), eq(variables['SPEECHSDK_RUN_TESTS'], 'true'))
+    env:
+      # Workload identity federation for the Microsoft Entra ID tests (see generate-subscription-file.yml).
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
   - task: PublishTestResults@2
     displayName: Publish test results
     inputs:

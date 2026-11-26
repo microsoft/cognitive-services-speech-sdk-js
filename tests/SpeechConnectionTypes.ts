@@ -79,4 +79,10 @@ export enum SpeechConnectionType {
      * Connect to a private link resource using the legacy path with Entra ID (AAD) token authentication.
      */
     LegacyPrivateLinkWithEntraIdTokenAuth,
+
+    /**
+     * Connect to the unified Speech resource region with a Microsoft Entra ID token
+     * ("aad#<resourceId>#<accessToken>"). Default for tests that do not test a connection type.
+     */
+    UnifiedEntraIdTokenAuth,
 }

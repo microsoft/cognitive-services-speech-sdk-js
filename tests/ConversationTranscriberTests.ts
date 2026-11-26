@@ -17,10 +17,11 @@
 /* eslint-disable no-console */
 
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
-import { DefaultAzureCredential, AzurePipelinesCredential } from "@azure/identity";
+import { AzurePipelinesCredential } from "@azure/identity";
 import { ConsoleLoggingListener, WebsocketMessageAdapter } from "../src/common.browser/Exports";
 import { Events, EventType, PlatformEvent, Deferred } from "../src/common/Exports";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 import { closeAsyncObjects, RepeatingPullStream, WaitForCondition } from "./Utilities";
 import { SpeechConfigConnectionFactory } from "./SpeechConfigConnectionFactories";
@@ -74,7 +75,7 @@ export const BuildTranscriberFromWaveFile: (speechConfig?: sdk.SpeechConfig, fil
 const BuildSpeechConfig = async (connectionType?: SpeechConnectionType): Promise<sdk.SpeechConfig> => {
 
     if (undefined === connectionType) {
-        connectionType = SpeechConnectionType.Subscription;
+        connectionType = SpeechConnectionType.UnifiedEntraIdTokenAuth;
     }
 
     const s: sdk.SpeechConfig = await SpeechConfigConnectionFactory.getSpeechRecognitionConfig(connectionType);
@@ -94,11 +95,11 @@ const BuildSpeechConfigLegacy = (useTokenCredential: boolean = false): sdk.Speec
 
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechEndpoint) {
-        s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        s = EntraAuth.speechConfig();
     } else if (useTokenCredential) {
-        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), new DefaultAzureCredential());
+        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), EntraAuth.getCredential());
     } else {
-        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+        s = EntraAuth.speechConfigFromEndpoint(new URL(Settings.SpeechEndpoint));
         s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
     }
 

@@ -34,6 +34,11 @@ export interface SubscriptionRegion {
      * Optional secret value.
      */
     Secret?: string;
+
+    /**
+     * The Microsoft Entra ID tenant (optional).
+     */
+    TenantId?: string;
 }
 
 /**

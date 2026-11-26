@@ -15,6 +15,7 @@ import {
 import { AudioStreamFormatImpl } from "../src/sdk/Audio/AudioStreamFormat";
 import { ByteBufferAudioFile } from "./ByteBufferAudioFile";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { validateTelemetry } from "./TelemetryUtil";
 import {
     closeAsyncObjects,
@@ -80,7 +81,7 @@ const BuildRecognizerFromWaveFile = async (speechConfig?: sdk.SpeechTranslationC
 
 const BuildSpeechConfig = async (connectionType?: SpeechConnectionType): Promise<sdk.SpeechTranslationConfig> => {
     if (undefined === connectionType) {
-        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        const s: sdk.SpeechTranslationConfig = EntraAuth.translationConfig();
         expect(s).not.toBeUndefined();
         return s;
     } else {
@@ -748,7 +749,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         const done: Deferred<void> = new Deferred<void>();
         // eslint-disable-next-line no-console
         console.info("Name: Default mic is used when audio config is not specified. (once)");
-        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        const s: sdk.SpeechTranslationConfig = EntraAuth.translationConfig();
         expect(s).not.toBeUndefined();
         s.speechRecognitionLanguage = "en-US";
         s.addTargetLanguage("en-US");
@@ -774,7 +775,7 @@ describe.each([false])("Service based tests", (forceNodeWebSocket: boolean): voi
         const done: Deferred<void> = new Deferred<void>();
         // eslint-disable-next-line no-console
         console.info("Name: Default mic is used when audio config is not specified. (Cont)");
-        const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        const s: sdk.SpeechTranslationConfig = EntraAuth.translationConfig();
         expect(s).not.toBeUndefined();
         s.speechRecognitionLanguage = "en-US";
         s.addTargetLanguage("en-US");

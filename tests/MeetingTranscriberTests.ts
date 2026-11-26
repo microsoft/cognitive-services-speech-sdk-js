@@ -11,6 +11,7 @@ import {
 } from "../src/common/Exports";
 
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { closeAsyncObjects } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
@@ -59,7 +60,7 @@ const CreateMeeting: (speechConfig?: sdk.SpeechTranslationConfig) => sdk.Meeting
 };
 
 const BuildSpeechConfig: () => sdk.SpeechTranslationConfig = (): sdk.SpeechTranslationConfig => {
-    const s: sdk.SpeechTranslationConfig = sdk.SpeechTranslationConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+    const s: sdk.SpeechTranslationConfig = EntraAuth.translationConfig();
     expect(s).not.toBeUndefined();
     return s;
 };

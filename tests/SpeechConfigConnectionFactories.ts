@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { AzureKeyCredential } from "@azure/core-auth";
-import { DefaultAzureCredential, TokenCredential } from "@azure/identity";
+import { TokenCredential } from "@azure/identity";
 // We'll use dynamic require instead of static import for fetch
 import * as sdk from "../microsoft.cognitiveservices.speech.sdk";
 import { Settings } from "./Settings";
@@ -11,6 +11,7 @@ import { SpeechServiceType } from "./SpeechServiceTypes";
 import { ConfigLoader } from "./ConfigLoader";
 import { SubscriptionRegion, SubscriptionsRegionsKeys } from "./SubscriptionRegion";
 import { CogSvcsTokenCredential } from "./CogSvcsTokenCredential";
+import { EntraAuth } from "./EntraAuth";
 
 /**
  * Defines the speech configuration types that can be created by the factory.
@@ -45,7 +46,7 @@ export class SpeechConfigConnectionFactory {
      * Convenience method that calls getSpeechConfig with TextToSpeech serviceType
      */
     public static async getSpeechSynthesisConfig(
-        connectionType: SpeechConnectionType = SpeechConnectionType.Subscription
+        connectionType: SpeechConnectionType = SpeechConnectionType.UnifiedEntraIdTokenAuth
     ): Promise<sdk.SpeechConfig> {
         return this.getSpeechConfig(connectionType, SpeechServiceType.TextToSpeech, false);
     }
@@ -55,7 +56,7 @@ export class SpeechConfigConnectionFactory {
      * Convenience method that calls getSpeechConfig with SpeechRecognition serviceType
      */
     public static async getSpeechRecognitionConfig(
-        connectionType: SpeechConnectionType = SpeechConnectionType.Subscription
+        connectionType: SpeechConnectionType = SpeechConnectionType.UnifiedEntraIdTokenAuth
     ): Promise<sdk.SpeechConfig> {
         return this.getSpeechConfig(connectionType, SpeechServiceType.SpeechRecognition, false);
     }
@@ -65,7 +66,7 @@ export class SpeechConfigConnectionFactory {
      * Convenience method that calls getSpeechConfig with LanguageIdentification serviceType
      */
     public static async getLanguageIdentificationConfig(
-        connectionType: SpeechConnectionType = SpeechConnectionType.Subscription
+        connectionType: SpeechConnectionType = SpeechConnectionType.UnifiedEntraIdTokenAuth
     ): Promise<sdk.SpeechConfig> {
         return this.getSpeechConfig(connectionType, SpeechServiceType.LanguageIdentification, false);
     }
@@ -79,6 +80,9 @@ export class SpeechConfigConnectionFactory {
         isTranslationConfig: boolean
     ): Promise<T> {
         switch (connectionType) {
+            case SpeechConnectionType.UnifiedEntraIdTokenAuth:
+                return this.buildAuthorizationConfig<T>(EntraAuth.getSpeechToken(), Settings.SpeechRegion, isTranslationConfig);
+
             case SpeechConnectionType.Subscription:
                 return this.buildSubscriptionConfig<T>(isTranslationConfig);
 
@@ -200,37 +204,19 @@ export class SpeechConfigConnectionFactory {
     }
 
     /**
-     * Gets an Azure AD token for the specified subscription key from the SubscriptionsRegionsMap.
-     * Uses the DefaultAzureCredential from @azure/identity to acquire tokens.
+     * Gets a Microsoft Entra ID speech token ("aad#<resourceId>#<accessToken>") for the specified entry of the
+     * SubscriptionsRegionsMap. The access token comes from EntraAuth (workload identity federation in Azure
+     * Pipelines, DefaultAzureCredential otherwise).
      *
-     * @param subscriptionKey The key in the SubscriptionsRegionsMap that contains AAD configuration
-     * @returns A promise that resolves to the access token
+     * @param subscriptionKey The key in the SubscriptionsRegionsMap that contains the resource ID
+     * @returns A promise that resolves to the speech token
      */
-    private static async getAadToken(subscriptionKey: string): Promise<string> {
+    private static getAadToken(subscriptionKey: string): Promise<string> {
         try {
-            // Get the subscription region details
-            const subscriptionRegion = this.getSubscriptionRegion(subscriptionKey);
-
-            if (!subscriptionRegion.ResourceId) {
-                throw new Error(`No ResourceId found for subscription key: ${subscriptionKey}`);
-            }
-
-            const scope = "https://cognitiveservices.azure.com/.default";
-
-            // Create DefaultAzureCredential to handle various authentication scenarios
-            const credential = new DefaultAzureCredential();
-
-            // Get token from the credential
-            const tokenResponse = await credential.getToken(scope);
-
-            if (!tokenResponse || !tokenResponse.token) {
-                throw new Error("Failed to acquire token from Azure AD");
-            }
-
-            return "aad#" + subscriptionRegion.ResourceId + "#" + tokenResponse.token;
+            return Promise.resolve(EntraAuth.getSpeechToken(subscriptionKey));
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`Error getting AAD token: ${errorMessage}`);
+            return Promise.reject(new Error(`Error getting AAD token: ${errorMessage}`));
         }
     }
 
@@ -374,7 +360,7 @@ export class SpeechConfigConnectionFactory {
             ? this.deriveTextToSpeechEntraIdEndpoint(endpoint)
             : endpoint;
 
-        const credential = new DefaultAzureCredential();
+        const credential = EntraAuth.getCredential();
         return this.buildEndpointWithTokenCredential<T>(credential, resolvedEndpoint, isTranslationConfig);
     }
 
@@ -506,7 +492,7 @@ export class SpeechConfigConnectionFactory {
             throw new Error("Endpoint is not defined for the AAD private link subscription");
         }
 
-        const credential = new DefaultAzureCredential();
+        const credential = EntraAuth.getCredential();
         return this.buildEndpointWithTokenCredential<T>(credential, endpoint, isTranslationConfig);
     }
 
@@ -568,6 +554,20 @@ export class SpeechConfigConnectionFactory {
      */
     public static runConnectionTest(connectionType: SpeechConnectionType): jest.It {
         if (process.env.RUN_CONNECTION_TYPE_TESTS !== "true") {
+            return test.skip;
+        }
+
+        // These connection types need the unified Speech resource key (containers need it for billing). Local
+        // (key) authentication is off on that resource, so its key in the subscriptions JSON can be empty.
+        if (!EntraAuth.hasUnifiedKey &&
+            (connectionType === SpeechConnectionType.Subscription ||
+                connectionType === SpeechConnectionType.CloudFromEndpointWithKeyAuth ||
+                connectionType === SpeechConnectionType.CloudFromEndpointWithKeyCredentialAuth ||
+                connectionType === SpeechConnectionType.CloudFromEndpointWithCogSvcsTokenAuth ||
+                connectionType === SpeechConnectionType.LegacyCogSvcsTokenAuth ||
+                connectionType === SpeechConnectionType.CloudFromHost ||
+                connectionType === SpeechConnectionType.ContainerFromHost ||
+                connectionType === SpeechConnectionType.ContainerFromEndpoint)) {
             return test.skip;
         }
 

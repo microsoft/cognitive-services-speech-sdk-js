@@ -14,6 +14,7 @@ import {
     Events,
 } from "../src/common/Exports";
 import { Settings } from "./Settings";
+import { EntraAuth } from "./EntraAuth";
 import { closeAsyncObjects, WaitForCondition } from "./Utilities";
 import { WaveFileAudioInput } from "./WaveFileAudioInputStream";
 
@@ -69,9 +70,9 @@ const BuildSpeechConfig: () => sdk.SpeechConfig = (): sdk.SpeechConfig => {
 
     let s: sdk.SpeechConfig;
     if (undefined === Settings.SpeechEndpoint) {
-        s = sdk.SpeechConfig.fromSubscription(Settings.SpeechSubscriptionKey, Settings.SpeechRegion);
+        s = EntraAuth.speechConfig();
     } else {
-        s = sdk.SpeechConfig.fromEndpoint(new URL(Settings.SpeechEndpoint), Settings.SpeechSubscriptionKey);
+        s = EntraAuth.speechConfigFromEndpoint(new URL(Settings.SpeechEndpoint));
         s.setProperty(sdk.PropertyId.SpeechServiceConnection_Region, Settings.SpeechRegion);
     }
 
